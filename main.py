@@ -12,6 +12,11 @@ from create_addon.create_addon_mian import Create_addon_Dialog
 from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
 from minor_features.discord_status_main import discord_status_clear, update_discord_status
 from minor_features.addon_functions import archive_addon, delete_addon, launch_addon
+from minor_features.update_check import check_updates
+
+
+
+
 
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -20,6 +25,12 @@ stop_discord_thread = threading.Event()
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
+
+app_version = '1.0.0'
+
+
+
+
 
 class Widget(QWidget):
 
@@ -34,13 +45,14 @@ class Widget(QWidget):
         self.preferences_dialog = None
         self.Create_addon_Dialog = None
         self.Delete_addon_Dialog = None
+        check_updates("https://github.com/dertwist/Hammer5Tools", app_version)
 
         try:
             if get_config_bool('APP', 'first_launch'):
                 self.open_documentation()
+                set_config_bool('APP', 'first_launch', 'False')
         except:
             pass
-
         self.start_socket_server()
 
     def setup_tray_icon(self):
@@ -145,7 +157,8 @@ class Widget(QWidget):
         webbrowser.open("https://twitter.com/der_twist")
 
     def open_documentation(self):
-        Documentation_Dialog(self).show()
+        Documentation_Dialog(app_version, self).show()
+
 
     def on_tray_icon_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
@@ -198,6 +211,8 @@ def DiscordStatusMain_do():
         time.sleep(1)
 
 if __name__ == "__main__":
+    # Check for updates at launc
+
     # Create a lock file to ensure single instance
     lock_file = open(LOCK_FILE, 'w')
     try:
