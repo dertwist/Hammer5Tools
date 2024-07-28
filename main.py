@@ -15,9 +15,6 @@ from minor_features.addon_functions import archive_addon, delete_addon, launch_a
 from minor_features.update_check import check_updates
 
 
-
-
-
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
 stop_discord_thread = threading.Event()
@@ -27,9 +24,6 @@ SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
 
 app_version = '1.0.0'
-
-
-
 
 
 class Widget(QWidget):
