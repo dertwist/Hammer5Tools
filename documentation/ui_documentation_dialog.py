@@ -115,7 +115,7 @@ class Ui_documentation_dialog(object):
 "<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style="
                         "\" font-size:16pt; font-weight:700;\">BatchCreator:</span><span style=\" font-size:12pt;\"><br />Allows you to edit multiple files with the same parameters at one time. For example, if you have a modular set with 15 models, it is tedious to use the default Model/Material Editor, but with BatchCreator, you can do it all with one click.</span></p>\n"
 "<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:700;\">SmartProp Editor:</span><span style=\" font-size:12pt;\"><br />A tool that helps with smartprops creation in the game.</span></p></body></html>", None))
-        self.label.setText(QCoreApplication.translate("documentation_dialog", u"Version: 1.2.7", None))
+        self.label.setText(QCoreApplication.translate("documentation_dialog", u"Version: 1.0", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.About), QCoreApplication.translate("documentation_dialog", u"About", None))
         self.textBrowser.setHtml(QCoreApplication.translate("documentation_dialog", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"

@@ -1,10 +1,11 @@
-import sys, os, subprocess, threading, portalocker, tempfile, webbrowser, time
+import sys, os, subprocess, threading, portalocker, tempfile, webbrowser, time, socket
 from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMessageBox
 from PySide6.QtGui import QIcon, QAction
 from ui_form import Ui_Widget
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
-from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool
+from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, \
+    get_config_bool, set_config_bool
 from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
 from loading_editor.loading_editor_main import Loading_editorMainWindow
 from create_addon.create_addon_mian import Create_addon_Dialog
@@ -15,6 +16,7 @@ from minor_features.addon_functions import archive_addon, delete_addon, launch_a
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
 stop_discord_thread = threading.Event()
+
 
 class Widget(QWidget):
 
@@ -29,6 +31,13 @@ class Widget(QWidget):
         self.preferences_dialog = None
         self.Create_addon_Dialog = None
         self.Delete_addon_Dialog = None
+
+        try:
+            if get_config_bool('APP', 'first_launch'):
+                self.open_documentation()
+        except:
+            pass
+
 
     def setup_tray_icon(self):
         self.tray_icon = QSystemTrayIcon(QIcon.fromTheme(":/icons/appicon.ico"), self)
@@ -120,7 +129,8 @@ class Widget(QWidget):
         archive_addon(cs2_path, get_addon_name)
 
     def SteamNoLogonFix(self):
-        self.thread = SteamNoLogoFixThreadClass(parent=None, addon_name=get_addon_name(), NCM_mode=get_config_bool('LAUNCH', 'ncm_mode'))
+        self.thread = SteamNoLogoFixThreadClass(parent=None, addon_name=get_addon_name(),
+                                                NCM_mode=get_config_bool('LAUNCH', 'ncm_mode'))
         self.thread.start()
         self.thread.stop()
 
@@ -139,42 +149,46 @@ class Widget(QWidget):
 
     def show_minimize_message_once(self):
         if get_config_bool('APP', 'minimize_message_shown'):
-            self.tray_icon.showMessage("Hammer5Tools", "Application minimized to tray.", QSystemTrayIcon.Information, 2000)
+            self.tray_icon.showMessage("Hammer5Tools", "Application minimized to tray.", QSystemTrayIcon.Information,
+                                       2000)
             set_config_bool('APP', 'minimize_message_shown', 'False')
 
-
     def exit_application(self):
-        if hasattr(self, 'discord_thread') and self.discord_thread.is_alive():
-            stop_discord_thread.set()
-            self.discord_thread.join(timeout=1)
-            set_config_bool('DISCORD_STATUS', 'running_state', 'False')
-            discord_status_clear()
+        discord_status_clear()
+        stop_discord_thread.set()
 
+        # Ensure all threads are properly stopped
+        if hasattr(self, 'discord_thread') and self.discord_thread.is_alive():
+            self.discord_thread.join()
+
+        # Explicitly delete the tray icon
+        self.tray_icon.hide()
+        self.tray_icon.deleteLater()
+
+        QApplication.quit()
         QApplication.instance().quit()
+        QApplication.exit(1)
+
+
 def DiscordStatusMain_do():
     while not stop_discord_thread.is_set():
-        set_config_bool('DISCORD_STATUS', 'running_state', True)
         update_discord_status()
         time.sleep(1)
 
+
 if __name__ == "__main__":
-    lock_file_path = os.path.join(tempfile.gettempdir(), "hammer5tools.lock")
-    lock_file = open(lock_file_path, "w")
-    try:
-        portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
-    except portalocker.LockException:
-        app = QApplication(sys.argv)
-        QMessageBox.critical(None, "Hammer5tools - Error", "Another instance of Hammer5tools is already running.\nIf you want to restart the app, use the exit action from the tray icon.")
-        sys.exit(1)
+
 
     app = QApplication(sys.argv)
     app.setStyleSheet(QT_Stylesheet_global)
     widget = Widget()
     widget.show()
+
     if get_config_bool('DISCORD_STATUS', 'show_status'):
         widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
         widget.discord_thread.start()
     else:
         print('Discord status updates are disabled.')
+
 
     sys.exit(app.exec())
