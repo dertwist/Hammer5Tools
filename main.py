@@ -17,6 +17,9 @@ steam_path = get_steam_path()
 cs2_path = get_cs2_path()
 stop_discord_thread = threading.Event()
 
+LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
+SOCKET_HOST = 'localhost'
+SOCKET_PORT = 65432
 
 class Widget(QWidget):
 
@@ -38,6 +41,7 @@ class Widget(QWidget):
         except:
             pass
 
+        self.start_socket_server()
 
     def setup_tray_icon(self):
         self.tray_icon = QSystemTrayIcon(QIcon.fromTheme(":/icons/appicon.ico"), self)
@@ -169,15 +173,46 @@ class Widget(QWidget):
         QApplication.instance().quit()
         QApplication.exit(1)
 
+    def start_socket_server(self):
+        self.socket_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.socket_server.bind((SOCKET_HOST, SOCKET_PORT))
+            self.socket_server.listen(1)
+            threading.Thread(target=self.listen_for_connections, daemon=True).start()
+        except socket.error:
+            print("Socket already in use. Another instance might be running.")
+            sys.exit(0)
+
+    def listen_for_connections(self):
+        while True:
+            conn, _ = self.socket_server.accept()
+            conn.recv(1024)  # Read the message
+            self.show()
+            self.raise_()
+            self.activateWindow()
+            conn.close()
 
 def DiscordStatusMain_do():
     while not stop_discord_thread.is_set():
         update_discord_status()
         time.sleep(1)
 
-
 if __name__ == "__main__":
-
+    # Create a lock file to ensure single instance
+    lock_file = open(LOCK_FILE, 'w')
+    try:
+        portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
+    except portalocker.LockException:
+        # If the lock file is already locked, bring the existing instance to the foreground
+        print("Another instance is already running. Bringing it to the foreground.")
+        try:
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.connect((SOCKET_HOST, SOCKET_PORT))
+            client_socket.send(b"SHOW")
+            client_socket.close()
+        except socket.error:
+            print("Failed to connect to the existing instance.")
+        sys.exit(0)
 
     app = QApplication(sys.argv)
     app.setStyleSheet(QT_Stylesheet_global)
@@ -189,6 +224,5 @@ if __name__ == "__main__":
         widget.discord_thread.start()
     else:
         print('Discord status updates are disabled.')
-
 
     sys.exit(app.exec())
