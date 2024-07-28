@@ -1,6 +1,5 @@
 {
     "files": [
-        "batch_creator_init.py",
         "form.ui",
         "main.py",
         "build.bat",

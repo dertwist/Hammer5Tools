@@ -66,6 +66,7 @@ def default_settings():
         set_config_bool('LAUNCH', 'ncm_mode_setup', 'False')
         set_config_bool('APP', 'minimize_message_shown', 'True')
         set_config_bool('APP', 'start_with_system', 'False')
+        set_config_bool('APP', 'first_launch', 'True')
         os.makedirs(os.path.join(config_dir, 'presets'), exist_ok=True)
     print(f"Configuration file path: {config_file_path}")
 
@@ -85,9 +86,6 @@ def get_cs2_path():
         counter_strikke_2_path = (get_counter_strike_path_from_registry()).replace("\\\\", "\\")
         set_config_value('PATHS', 'Cs2', counter_strikke_2_path)
         return counter_strikke_2_path
-
-
-
 
 
 def get_steam_path():

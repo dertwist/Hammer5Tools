@@ -18,7 +18,6 @@ SHOW_PROJECT_NAME_KEY = 'show_project_name'
 
 start_time = time.time()
 
-
 def update_rpc(display_name, custom_display_text, elapsed_time):
     if elapsed_time < 3600:
         minutes, seconds = divmod(elapsed_time, 60)
@@ -32,7 +31,7 @@ def update_rpc(display_name, custom_display_text, elapsed_time):
         state=f"{display_name}",
         details=f"{custom_display_text} | Elapsed: {elapsed_time_str}",
         large_image="https://i.imgur.com/Zvsv8t5.png",
-        buttons=[{"label": "Hammer5Tools", "url": "https://example.com"}]
+        buttons=[{"label": "Hammer5Tools", "url": "https://github.com/dertwist/Hammer5Tools"}]
     )
     logging.info(f"Running {display_name}")
 
