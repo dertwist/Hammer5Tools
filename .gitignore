@@ -9,6 +9,7 @@ dist/
 __pycache__/
 .qtcreator/
 .build/
+hammer5tools
 debug.kv3
 settings.cfg
 see_test.txt

@@ -61,5 +61,6 @@
         <file>images/tooltip/tooltip_ncm_01.png</file>
         <file>icons/arrow_drop_down_16dp.svg</file>
         <file>icons/archive_16dp_666666_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>images/help/about/tooltip_help.png</file>
     </qresource>
 </RCC>
