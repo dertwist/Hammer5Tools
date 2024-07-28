@@ -1,0 +1,180 @@
+import sys, os, subprocess, threading, portalocker, tempfile, webbrowser, time
+from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMessageBox
+from PySide6.QtGui import QIcon, QAction
+from ui_form import Ui_Widget
+from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
+from documentation.documentation import Documentation_Dialog
+from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool
+from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
+from loading_editor.loading_editor_main import Loading_editorMainWindow
+from create_addon.create_addon_mian import Create_addon_Dialog
+from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
+from minor_features.discord_status_main import discord_status_clear, update_discord_status
+from minor_features.addon_functions import archive_addon, delete_addon, launch_addon
+
+steam_path = get_steam_path()
+cs2_path = get_cs2_path()
+stop_discord_thread = threading.Event()
+
+class Widget(QWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.ui = Ui_Widget()
+        self.ui.setupUi(self)
+        self.setup_tray_icon()
+        self.setup_tabs()
+        self.populate_addon_combobox()
+        self.setup_buttons()
+        self.preferences_dialog = None
+        self.Create_addon_Dialog = None
+        self.Delete_addon_Dialog = None
+
+    def setup_tray_icon(self):
+        self.tray_icon = QSystemTrayIcon(QIcon.fromTheme(":/icons/appicon.ico"), self)
+        self.tray_icon.setToolTip("Hammer5Tools")
+        self.tray_menu = QMenu()
+        self.tray_menu.addAction(QAction("Show", self, triggered=self.show))
+        self.tray_menu.addAction(QAction("Exit", self, triggered=self.exit_application))
+        self.tray_icon.setContextMenu(self.tray_menu)
+        self.tray_icon.activated.connect(self.on_tray_icon_activated)
+        self.tray_icon.show()
+
+    def setup_tabs(self):
+        self.SoundEventEditorMainWidget = SoundEventEditorMainWidget()
+        self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
+        self.LoadingEditorMainWindow = Loading_editorMainWindow()
+        self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
+
+    def populate_addon_combobox(self):
+        exclude_addons = {"workshop_items", "addon_template"}
+        try:
+            for item in os.listdir(os.path.join(cs2_path, "content", "csgo_addons")):
+                if os.path.isdir(os.path.join(cs2_path, "content", "csgo_addons", item)) and item not in exclude_addons:
+                    self.ui.ComboBoxSelectAddon.addItem(item)
+            if not get_addon_name():
+                set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
+        except:
+            print("Wrong Cs2 Path")
+
+    def setup_buttons(self):
+        self.ui.Launch_Addon_Button.clicked.connect(launch_addon)
+        self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)
+        self.ui.ComboBoxSelectAddon.currentIndexChanged.connect(self.selected_addon_name)
+        self.ui.ComboBoxSelectAddon.setCurrentText(get_addon_name())
+        self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
+        self.ui.create_new_addon_button.clicked.connect(self.open_create_addon_dialog)
+        self.ui.delete_addon_button.clicked.connect(self.delete_addon)
+        self.ui.archive_addon_button.clicked.connect(self.archive_addon)
+        self.ui.check_Box_NCM_Mode.setChecked(get_config_bool('LAUNCH', 'ncm_mode'))
+        self.ui.check_Box_NCM_Mode.stateChanged.connect(self.handle_ncm_mode_checkbox)
+        self.ui.open_addons_folder_button.clicked.connect(self.open_addons_folder)
+        self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
+        self.ui.documentation_button.clicked.connect(self.open_documentation)
+
+    def closeEvent(self, event):
+        event.ignore()
+        self.hide()
+        self.show_minimize_message_once()
+
+    def selected_addon_name(self, index):
+        set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
+        self.ui.soundeditor_tab.layout().removeWidget(self.SoundEventEditorMainWidget)
+        self.SoundEventEditorMainWidget.deleteLater()
+        self.SoundEventEditorMainWidget = SoundEventEditorMainWidget()
+        self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
+
+    def open_addons_folder(self):
+        addon_name = self.ui.ComboBoxSelectAddon.currentText()
+        folder_name = self.ui.open_addons_folder_downlist.currentText()
+        folder_path = r"\game\csgo_addons" if folder_name == "Game" else r"\content\csgo_addons"
+        subprocess.Popen(f"explorer {cs2_path}{folder_path}\\{addon_name}")
+        print(f"explorer {cs2_path}{folder_path}\\{addon_name}")
+
+    def open_preferences_dialog(self):
+        if self.preferences_dialog is None:
+            self.preferences_dialog = PreferencesDialog(self)
+            self.preferences_dialog.show()
+            self.preferences_dialog.finished.connect(self.preferences_dialog_closed)
+
+    def preferences_dialog_closed(self):
+        self.preferences_dialog = None
+
+    def open_create_addon_dialog(self):
+        if self.Create_addon_Dialog is None:
+            self.Create_addon_Dialog = Create_addon_Dialog(self)
+            self.Create_addon_Dialog.show()
+            self.Create_addon_Dialog.finished.connect(self.create_addon_dialog_closed)
+
+    def create_addon_dialog_closed(self):
+        self.Create_addon_Dialog = None
+        addon = get_addon_name()
+        self.ui.ComboBoxSelectAddon.clear()
+        self.populate_addon_combobox()
+        self.ui.ComboBoxSelectAddon.setCurrentText(addon)
+
+    def delete_addon(self):
+        delete_addon(self.ui, cs2_path, get_addon_name)
+
+    def archive_addon(self):
+        archive_addon(cs2_path, get_addon_name)
+
+    def SteamNoLogonFix(self):
+        self.thread = SteamNoLogoFixThreadClass(parent=None, addon_name=get_addon_name(), NCM_mode=get_config_bool('LAUNCH', 'ncm_mode'))
+        self.thread.start()
+        self.thread.stop()
+
+    def handle_ncm_mode_checkbox(self):
+        set_config_bool('LAUNCH', 'ncm_mode', self.ui.check_Box_NCM_Mode.isChecked())
+
+    def open_my_twitter(self):
+        webbrowser.open("https://twitter.com/der_twist")
+
+    def open_documentation(self):
+        Documentation_Dialog(self).show()
+
+    def on_tray_icon_activated(self, reason):
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.show()
+
+    def show_minimize_message_once(self):
+        if get_config_bool('APP', 'minimize_message_shown'):
+            self.tray_icon.showMessage("Hammer5Tools", "Application minimized to tray.", QSystemTrayIcon.Information, 2000)
+            set_config_bool('APP', 'minimize_message_shown', 'False')
+
+
+    def exit_application(self):
+        if hasattr(self, 'discord_thread') and self.discord_thread.is_alive():
+            stop_discord_thread.set()
+            self.discord_thread.join(timeout=1)
+            set_config_bool('DISCORD_STATUS', 'running_state', 'False')
+            discord_status_clear()
+
+        QApplication.instance().quit()
+def DiscordStatusMain_do():
+    while not stop_discord_thread.is_set():
+        set_config_bool('DISCORD_STATUS', 'running_state', True)
+        update_discord_status()
+        time.sleep(1)
+
+if __name__ == "__main__":
+    lock_file_path = os.path.join(tempfile.gettempdir(), "hammer5tools.lock")
+    lock_file = open(lock_file_path, "w")
+    try:
+        portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
+    except portalocker.LockException:
+        app = QApplication(sys.argv)
+        QMessageBox.critical(None, "Hammer5tools - Error", "Another instance of Hammer5tools is already running.\nIf you want to restart the app, use the exit action from the tray icon.")
+        sys.exit(1)
+
+    app = QApplication(sys.argv)
+    app.setStyleSheet(QT_Stylesheet_global)
+    widget = Widget()
+    widget.show()
+    if get_config_bool('DISCORD_STATUS', 'show_status'):
+        widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
+        widget.discord_thread.start()
+    else:
+        print('Discord status updates are disabled.')
+
+    sys.exit(app.exec())

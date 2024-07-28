@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SoundEvent_Editor_MainWindow</class>
+ <widget class="QMainWindow" name="SoundEvent_Editor_MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1035</width>
+    <height>660</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: #1C1C1C;</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="frame">
+      <property name="maximumSize">
+       <size>
+        <width>400</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>8</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>340</width>
+           <height>5</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QTreeView" name="audio_files_explorer">
+         <property name="styleSheet">
+          <string notr="true">/* styles/treeview.qss */
+
+/* General application background */
+/* TreeView specific styles */
+QTreeView {
+    color: #E3E3E3;
+    border: 1px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    font: 580 10pt &quot;Segoe UI&quot;;
+}
+
+QTreeView::item {
+    height: 20px;
+}
+
+QTreeView::item:selected {
+    background-color: #272729;
+    color: #E3E3E3;
+}
+
+QTreeView::item:hover {
+    background-color: #272729;
+    color: #E3E3E3;
+}
+
+/* Branch icons */
+QTreeView::branch:closed:has-children {
+    /* Ensure this path is correct and the image exists */
+    image: url(:/icons/arrow_drop_down_16dp.svg);
+}
+
+QTreeView::branch:open:has-children {
+    /* Ensure this path is correct and the image exists */
+    image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}
+
+/* Header styles */
+QHeaderView::section {
+    background-color: #1d1d1f;
+    color: #E3E3E3;
+    font: 600 10pt &quot;Segoe UI&quot;;
+    height: 16px;
+    border: 0px;
+    border-bottom: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+}
+
+/* QHeaderView::section:hover {
+    background-color: #565656;
+}
+
+QHeaderView::section:pressed {
+    background-color: #444444;
+} */
+
+
+
+
+QLineEdit {
+    border: 1px solid #CCCCCC;
+    border-radius: 2px;
+    color: #E3E3E3;
+	font: 700 10pt &quot;Segoe UI&quot;;
+margin: 0px;
+padding: 0px;
+}
+QLineEdit:focus {
+    border: 1px solid #008CBA;
+    background-color: #1C1C1C;
+margin: 0px;
+padding: 0px;
+}
+QLineEdit::selection {
+    color: white;
+}</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="frame_5">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="Import_Audio_button">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>18</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 600 10pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 4px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+            </property>
+            <property name="text">
+             <string>Import Audio</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="sound_event_editor_viewport_widget"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="sizeGripEnabled">
+    <bool>true</bool>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
