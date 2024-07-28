@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Hammer5Tools Documentation</string>
+   <string>Help</string>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: #1C1C1C;</string>
@@ -97,9 +97,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="version">
          <property name="text">
-          <string>Version: 1.0</string>
+          <string>Version: 1.0.0</string>
          </property>
         </widget>
        </item>
