@@ -19,6 +19,7 @@ soundevent_editor.cfg
 *.a
 *.core
 *.moc
+*.moc
 *.o
 *.obj
 *.orig
