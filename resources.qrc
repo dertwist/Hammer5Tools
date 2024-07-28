@@ -1,0 +1,65 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>appicon.ico</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>icons/folder_open.svg</file>
+        <file>icons/add_photo_alternate_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/arrow_drop_down_circle_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/bookmarks_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/change_circle_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/check_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/clear_all_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/close_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/create_new_folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/description_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/discover_tune_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/do_not_disturb_on_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/done_all_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/download_done_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/draft_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/edit_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20 (1).svg</file>
+        <file>icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/edit_note_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/filter_alt_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/find_in_page_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/format_list_numbered_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/image_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/imagesmode_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/label_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/more_up_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/open_in_new_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/open_with_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/output_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/place_item_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/post_add_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/publish_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/redo_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/search_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/settings_b_roll_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/star_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/start_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/task_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/terminal_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/public_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/developer_guide_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/menu_book_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>images/tooltip/tooltip_ncm_01.png</file>
+        <file>icons/arrow_drop_down_16dp.svg</file>
+        <file>icons/archive_16dp_666666_FILL0_wght400_GRAD0_opsz20.svg</file>
+    </qresource>
+</RCC>

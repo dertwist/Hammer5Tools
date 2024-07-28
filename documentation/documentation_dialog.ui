@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>documentation_dialog</class>
+ <widget class="QDialog" name="documentation_dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1122</width>
+    <height>770</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1100</width>
+    <height>720</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Hammer5Tools Documentation</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: #1C1C1C;</string>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>false</bool>
+  </property>
+  <property name="modal">
+   <bool>false</bool>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="tabPosition">
+      <enum>QTabWidget::North</enum>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <property name="elideMode">
+      <enum>Qt::ElideNone</enum>
+     </property>
+     <property name="documentMode">
+      <bool>false</bool>
+     </property>
+     <property name="tabsClosable">
+      <bool>false</bool>
+     </property>
+     <property name="tabBarAutoHide">
+      <bool>false</bool>
+     </property>
+     <widget class="QWidget" name="About">
+      <attribute name="title">
+       <string>About</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QTextBrowser" name="textBrowser_3">
+         <property name="styleSheet">
+          <string notr="true">border: 0px;
+margin: 3px;</string>
+         </property>
+         <property name="html">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:22pt; font-weight:700;&quot;&gt;Hammer 5 Tools&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;A sweet of tools for Counter-Strike 2 Workshop.&lt;br /&gt;There are a bunch of useful tools for mapping:&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16pt; font-weight:700;&quot;&gt;Loading Editor:&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;&lt;br /&gt;With this tool, you can add images, descriptions, and icons to the loading screen.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16pt; font-weight:700;&quot;&gt;SoundEvent Editor:&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;&lt;br /&gt;A tool for more comfortable sound editing within the game.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16pt; font-weight:700;&quot;&gt;Hotkey Editor:&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;&lt;br /&gt;Edit default keyboard shortcuts and add your own!&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16pt; font-weight:700;&quot;&gt;BatchCreator:&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;&lt;br /&gt;Allows you to edit multiple files with the same parameters at one time. For example, if you have a modular set with 15 models, it is tedious to use the default Model/Material Editor, but with BatchCreator, you can do it all with one click.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:16pt; font-weight:700;&quot;&gt;SmartProp Editor:&lt;/span&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;&lt;br /&gt;A tool that helps with smartprops creation in the game.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Version: 1.2.7</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="loading_editor">
+      <attribute name="title">
+       <string>Loading Editor</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QTextBrowser" name="textBrowser">
+         <property name="styleSheet">
+          <string notr="true">border: 0px;
+margin: 3px;</string>
+         </property>
+         <property name="html">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-weight:580;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:22pt; font-weight:580;&quot;&gt;Loading editor&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:22pt; font-weight:580;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec ipsum elit, aliquam vitae mi ut, auctor sollicitudin libero. Maecenas quam purus, ullamcorper ut ultricies quis, accumsan vitae nisi. Donec vel bibendum orci. Sed lacinia, elit nec sagittis vehicula, magna odio facilisis lectus, non rutrum ante quam auctor eros. Sed ut tortor ac justo sollicitudin vehicula sed ac quam. Proin sed est non ipsum imperdiet sollicitudin eget sit amet elit. Maecenas semper semper ullamcorper. Vestibulum venenatis auctor massa sed lobortis. Vestibulum sed nisl pharetra, porta purus eget, finibus arcu. Vestibulum quis pretium dui.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Morbi sit amet rutrum nisi. Phasellus egestas sed est ac tempus. Suspendisse vel nisi finibus, fringilla eros eu, hendrerit arcu. Cras gravida est sed dui rutrum hendrerit. Aliquam tortor lectus, pulvinar a auctor sit amet, finibus in nunc. Nulla lectus elit, accumsan vitae augue eu, vestibulum condimentum metus. Duis fringilla mollis nisi, sit amet sollicitudin ante vestibulum nec. Aliquam erat volutpat. Donec commodo egestas lorem, at mattis felis ornare a. Pellentesque maximus non leo nec dignissim. Vestibulum a tellus eget quam sodales molestie vel non erat. Nunc sed dolor in neque cursus viverra.&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Donec vitae elit iaculis velit placerat mollis quis quis velit. Nunc scelerisque dignissim molestie. Praesent dignissim posuere nulla non tempor. Nulla scelerisque ultrices quam congue sodales. Donec sed purus a odio dignissim mollis. Pellentesque tempus enim odio. Maecenas interdum ullamcorper sem sed molestie. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed gravida sapien ac pellentesque rutrum. Praesent venenatis elit ex, vitae accumsan neque sollicitudin id. Ut rhoncus consectetur fermentum. Donec pulvinar sem lacinia neque malesuada maximus nec a odio. Nunc venenatis lectus sed nunc malesuada porta. Nunc pellentesque fringilla est et molestie. Sed nisi sem, varius a ipsum a, tempor tempor ligula.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Donec imperdiet venenatis tortor at luctus. Proin non justo pretium mauris faucibus consequat non quis neque. Mauris tempor congue suscipit. Nunc mi dui, scelerisque et ullamcorper sed, volutpat nec massa. Maecenas sit amet tristique leo. Suspendisse potenti. Donec nibh nisl, fringilla sed ligula vel, fermentum molestie diam.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Proin vestibulum lorem quis quam suscipit, et efficitur mi commodo. Praesent ac metus erat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Praesent erat lacus, aliquam quis sapien in, venenatis finibus enim. Proin et est malesuada, cursus nulla porttitor, molestie eros. Maecenas tempus id metus in dictum. Ut ornare ante non lobortis pretium. Morbi et justo iaculis urna molestie faucibus. Duis viverra sem nec rhoncus tempor. Quisque ligula purus, sagittis ut imperdiet quis, luctus quis arcu. Etiam neque ipsum, vulputate non tellus vitae, vestibulum hendrerit velit. Vivamus semper est purus, nec suscipit felis volutpat ut. Aenean placerat nulla ligula, vel imperdiet elit rhoncus a. Nam porttitor nec lorem quis gravida. Etiam placerat vel magna in ornare.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec ipsum elit, aliquam vitae mi ut, auctor sollicitudin libero. Maecenas quam purus, ullamcorper ut ultricies quis, accumsan vitae nisi. Donec vel bibendum orci. Sed lacinia, elit nec sagittis vehicula, magna odio facilisis lectus, non rutrum ante quam auctor eros. Sed ut tortor ac justo sollicitudin vehicula sed ac quam. Proin sed est non ipsum imperdiet sollicitudin eget sit amet elit. Maecenas semper semper ullamcorper. Vestibulum venenatis auctor massa sed lobortis. Vestibulum sed nisl pharetra, porta purus eget, finibus arcu. Vestibulum quis pretium dui.\n\nMorbi sit amet rutrum nisi. Phasellus egestas sed est ac tempus. Suspendisse vel nisi finibus, fringilla eros eu, hendrerit arcu. Cras gravida est sed dui rutrum hendrerit. Aliquam tortor lectus, pulvinar a auctor sit amet, finibus in nunc. Nulla lectus elit, accumsan vitae augue eu, vestibulum condimentum metus. Duis fringilla mollis nisi, sit amet sollicitudin ante vestibulum nec. Aliquam erat volutpat. Donec commodo egestas lorem, at mattis felis ornare a. Pellentesque maximus non leo nec dignissim. Vestibulum a tellus eget quam sodales molestie vel non erat. Nunc sed dolor in neque cursus viverra.\n\nDonec vitae elit iaculis velit placerat mollis quis quis velit. Nunc scelerisque dignissim molestie. Praesent dignissim posuere nulla non tempor. Nulla scelerisque ultrices quam congue sodales. Donec sed purus a odio dignissim mollis. Pellentesque tempus enim odio. Maecenas interdum ullamcorper sem sed molestie. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed gravida sapien ac pellentesque rutrum. Praesent venenatis elit ex, vitae accumsan neque sollicitudin id. Ut rhoncus consectetur fermentum. Donec pulvinar sem lacinia neque malesuada maximus nec a odio. Nunc venenatis lectus sed nunc malesuada porta. Nunc pellentesque fringilla est et molestie. Sed nisi sem, varius a ipsum a, tempor tempor ligula.\n\nDonec imperdiet venenatis tortor at luctus. Proin non justo pretium mauris faucibus consequat non quis neque. Mauris tempor congue suscipit. Nunc mi dui, scelerisque et ullamcorper sed, volutpat nec massa. Maecenas sit amet tristique leo. Suspendisse potenti. Donec nibh nisl, fringilla sed ligula vel, fermentum molestie diam.\n\nProin vestibulum lorem quis quam suscipit, et efficitur mi commodo. Praesent ac metus erat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Praesent erat lacus, aliquam quis sapien in, venenatis finibus enim. Proin et est malesuada, cursus nulla porttitor, molestie eros. Maecenas tempus id metus in dictum. Ut ornare ante non lobortis pretium. Morbi et justo iaculis urna molestie faucibus. Duis viverra sem nec rhoncus tempor. Quisque ligula purus, sagittis ut imperdiet quis, luctus quis arcu. Etiam neque ipsum, vulputate non tellus vitae, vestibulum hendrerit velit. Vivamus semper est purus, nec suscipit felis volutpat ut. Aenean placerat nulla ligula, vel imperdiet elit rhoncus a. Nam porttitor nec lorem quis gravida. Etiam placerat vel magna in ornare.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec ipsum elit, aliquam vitae mi ut, auctor sollicitudin libero. Maecenas quam purus, ullamcorper ut ultricies quis, accumsan vitae nisi. Donec vel bibendum orci. Sed lacinia, elit nec sagittis vehicula, magna odio facilisis lectus, non rutrum ante quam auctor eros. Sed ut tortor ac justo sollicitudin vehicula sed ac quam. Proin sed est non ipsum imperdiet sollicitudin eget sit amet elit. Maecenas semper semper ullamcorper. Vestibulum venenatis auctor massa sed lobortis. Vestibulum sed nisl pharetra, porta purus eget, finibus arcu. Vestibulum quis pretium dui.\n\nMorbi sit amet rutrum nisi. Phasellus egestas sed est ac tempus. Suspendisse vel nisi finibus, fringilla eros eu, hendrerit arcu. Cras gravida est sed dui rutrum hendrerit. Aliquam tortor lectus, pulvinar a auctor sit amet, finibus in nunc. Nulla lectus elit, accumsan vitae augue eu, vestibulum condimentum metus. Duis fringilla mollis nisi, sit amet sollicitudin ante vestibulum nec. Aliquam erat volutpat. Donec commodo egestas lorem, at mattis felis ornare a. Pellentesque maximus non leo nec dignissim. Vestibulum a tellus eget quam sodales molestie vel non erat. Nunc sed dolor in neque cursus viverra.\n\nDonec vitae elit iaculis velit placerat mollis quis quis velit. Nunc scelerisque dignissim molestie. Praesent dignissim posuere nulla non tempor. Nulla scelerisque ultrices quam congue sodales. Donec sed purus a odio dignissim mollis. Pellentesque tempus enim odio. Maecenas interdum ullamcorper sem sed molestie. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed gravida sapien ac pellentesque rutrum. Praesent venenatis elit ex, vitae accumsan neque sollicitudin id. Ut rhoncus consectetur fermentum. Donec pulvinar sem lacinia neque malesuada maximus nec a odio. Nunc venenatis lectus sed nunc malesuada porta. Nunc pellentesque fringilla est et molestie. Sed nisi sem, varius a ipsum a, tempor tempor ligula.\n\nDonec imperdiet venenatis tortor at luctus. Proin non justo pretium mauris faucibus consequat non quis neque. Mauris tempor congue suscipit. Nunc mi dui, scelerisque et ullamcorper sed, volutpat nec massa. Maecenas sit amet tristique leo. Suspendisse potenti. Donec nibh nisl, fringilla sed ligula vel, fermentum molestie diam.\n\nProin vestibulum lorem quis quam suscipit, et efficitur mi commodo. Praesent ac metus erat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Praesent erat lacus, aliquam quis sapien in, venenatis finibus enim. Proin et est malesuada, cursus nulla porttitor, molestie eros. Maecenas tempus id metus in dictum. Ut ornare ante non lobortis pretium. Morbi et justo iaculis urna molestie faucibus. Duis viverra sem nec rhoncus tempor. Quisque ligula purus, sagittis ut imperdiet quis, luctus quis arcu. Etiam neque ipsum, vulputate non tellus vitae, vestibulum hendrerit velit. Vivamus semper est purus, nec suscipit felis volutpat ut. Aenean placerat nulla ligula, vel imperdiet elit rhoncus a. Nam porttitor nec lorem quis gravida. Etiam placerat vel magna in ornare.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec ipsum elit, aliquam vitae mi ut, auctor sollicitudin libero. Maecenas quam purus, ullamcorper ut ultricies quis, accumsan vitae nisi. Donec vel bibendum orci. Sed lacinia, elit nec sagittis vehicula, magna odio facilisis lectus, non rutrum ante quam auctor eros. Sed ut tortor ac justo sollicitudin vehicula sed ac quam. Proin sed est non ipsum imperdiet sollicitudin eget sit amet elit. Maecenas semper semper ullamcorper. Vestibulum venenatis auctor massa sed lobortis. Vestibulum sed nisl pharetra, porta purus eget, finibus arcu. Vestibulum quis pretium dui.\n\nMorbi sit amet rutrum nisi. Phasellus egestas sed est ac tempus. Suspendisse vel nisi finibus, fringilla eros eu, hendrerit arcu. Cras gravida est sed dui rutrum hendrerit. Aliquam tortor lectus, pulvinar a auctor sit amet, finibus in nunc. Nulla lectus elit, accumsan vitae augue eu, vestibulum condimentum metus. Duis fringilla mollis nisi, sit amet sollicitudin ante vestibulum nec. Aliquam erat volutpat. Donec commodo egestas lorem, at mattis felis ornare a. Pellentesque maximus non leo nec dignissim. Vestibulum a tellus eget quam sodales molestie vel non erat. Nunc sed dolor in neque cursus viverra.\n\nDonec vitae elit iaculis velit placerat mollis quis quis velit. Nunc scelerisque dignissim molestie. Praesent dignissim posuere nulla non tempor. Nulla scelerisque ultrices quam congue sodales. Donec sed purus a odio dignissim mollis. Pellentesque tempus enim odio. Maecenas interdum ullamcorper sem sed molestie. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed gravida sapien ac pellentesque rutrum. Praesent venenatis elit ex, vitae accumsan neque sollicitudin id. Ut rhoncus consectetur fermentum. Donec pulvinar sem lacinia neque malesuada maximus nec a odio. Nunc venenatis lectus sed nunc malesuada porta. Nunc pellentesque fringilla est et molestie. Sed nisi sem, varius a ipsum a, tempor tempor ligula.\n\nDonec imperdiet venenatis tortor at luctus. Proin non justo pretium mauris faucibus consequat non quis neque. Mauris tempor congue suscipit. Nunc mi dui, scelerisque et ullamcorper sed, volutpat nec massa. Maecenas sit amet tristique leo. Suspendisse potenti. Donec nibh nisl, fringilla sed ligula vel, fermentum molestie diam.\n\nProin vestibulum lorem quis quam suscipit, et efficitur mi commodo. Praesent ac metus erat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Praesent erat lacus, aliquam quis sapien in, venenatis finibus enim. Proin et est malesuada, cursus nulla porttitor, molestie eros. Maecenas tempus id metus in dictum. Ut ornare ante non lobortis pretium. Morbi et justo iaculis urna molestie faucibus. Duis viverra sem nec rhoncus tempor. Quisque ligula purus, sagittis ut imperdiet quis, luctus quis arcu. Etiam neque ipsum, vulputate non tellus vitae, vestibulum hendrerit velit. Vivamus semper est purus, nec suscipit felis volutpat ut. Aenean placerat nulla ligula, vel imperdiet elit rhoncus a. Nam porttitor nec lorem quis gravida. Etiam placerat vel magna in ornare.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec ipsum elit, aliquam vitae mi ut, auctor sollicitudin libero. Maecenas quam purus, ullamcorper ut ultricies quis, accumsan vitae nisi. Donec vel bibendum orci. Sed lacinia, elit nec sagittis vehicula, magna odio facilisis lectus, non rutrum ante quam auctor eros. Sed ut tortor ac justo sollicitudin vehicula sed ac quam. Proin sed est non ipsum imperdiet sollicitudin eget sit amet elit. Maecenas semper semper ullamcorper. Vestibulum venenatis auctor massa sed lobortis. Vestibulum sed nisl pharetra, porta purus eget, finibus arcu. Vestibulum quis pretium dui.\n\nMorbi sit amet rutrum nisi. Phasellus egestas sed est ac tempus. Suspendisse vel nisi finibus, fringilla eros eu, hendrerit arcu. Cras gravida est sed dui rutrum hendrerit. Aliquam tortor lectus, pulvinar a auctor sit amet, finibus in nunc. Nulla lectus elit, accumsan vitae augue eu, vestibulum condimentum metus. Duis fringilla mollis nisi, sit amet sollicitudin ante vestibulum nec. Aliquam erat volutpat. Donec commodo egestas lorem, at mattis felis ornare a. Pellentesque maximus non leo nec dignissim. Vestibulum a tellus eget quam sodales molestie vel non erat. Nunc sed dolor in neque cursus viverra.\n\nDonec vitae elit iaculis velit placerat mollis quis quis velit. Nunc scelerisque dignissim molestie. Praesent dignissim posuere nulla non tempor. Nulla scelerisque ultrices quam congue sodales. Donec sed purus a odio dignissim mollis. Pellentesque tempus enim odio. Maecenas interdum ullamcorper sem sed molestie. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed gravida sapien ac pellentesque rutrum. Praesent venenatis elit ex, vitae accumsan neque sollicitudin id. Ut rhoncus consectetur fermentum. Donec pulvinar sem lacinia neque malesuada maximus nec a odio. Nunc venenatis lectus sed nunc malesuada porta. Nunc pellentesque fringilla est et molestie. Sed nisi sem, varius a ipsum a, tempor tempor ligula.\n\nDonec imperdiet venenatis tortor at luctus. Proin non justo pretium mauris faucibus consequat non quis neque. Mauris tempor congue suscipit. Nunc mi dui, scelerisque et ullamcorper sed, volutpat nec massa. Maecenas sit amet tristique leo. Suspendisse potenti. Donec nibh nisl, fringilla sed ligula vel, fermentum molestie diam.\n\nProin vestibulum lorem quis quam suscipit, et efficitur mi commodo. Praesent ac metus erat. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Praesent erat lacus, aliquam quis sapien in, venenatis finibus enim. Proin et est malesuada, cursus nulla porttitor, molestie eros. Maecenas tempus id metus in dictum. Ut ornare ante non lobortis pretium. Morbi et justo iaculis urna molestie faucibus. Duis viverra sem nec rhoncus tempor. Quisque ligula purus, sagittis ut imperdiet quis, luctus quis arcu. Etiam neque ipsum, vulputate non tellus vitae, vestibulum hendrerit velit. Vivamus semper est purus, nec suscipit felis volutpat ut. Aenean placerat nulla ligula, vel imperdiet elit rhoncus a. Nam porttitor nec lorem quis gravida. Etiam placerat vel magna in ornare.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-weight:580;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_4">
+      <attribute name="title">
+       <string>SoundEvent Editor</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QTextBrowser" name="textBrowser_2">
+         <property name="styleSheet">
+          <string notr="true">border: 0px;
+margin: 3px;</string>
+         </property>
+         <property name="html">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-weight:580;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:22pt; font-weight:580;&quot;&gt;SoundEvent editor&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:22pt; font-weight:580;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:11pt;&quot;&gt;Ah yes.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-weight:580;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,93 @@
+# This file is used to ignore files which are generated
+# ----------------------------------------------------------------------------
+build/
+main.build/
+main.onefile-build/
+main.dist/
+dist/
+.idea
+__pycache__/
+.qtcreator/
+.build/
+debug.kv3
+settings.cfg
+see_test.txt
+soundevent_editor.cfg
+*~
+*.autosave
+*.a
+*.core
+*.moc
+*.o
+*.obj
+*.orig
+*.rej
+*.so
+*.so.*
+*_pch.h.cpp
+*_resource.rc
+*.qm
+.#*
+*.*#
+core
+!core/
+tags
+.DS_Store
+.directory
+*.debug
+Makefile*
+*.prl
+*.app
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+Thumbs.db
+*.res
+*.rc
+/.qmake.cache
+/.qmake.stash
+
+# qtcreator generated files
+*.pro.user*
+CMakeLists.txt.user*
+
+# xemacs temporary files
+*.flc
+
+# Vim temporary files
+.*.swp
+
+# Visual Studio generated files
+*.ib_pdb_index
+*.idb
+*.ilk
+*.pdb
+*.sln
+*.suo
+*.vcproj
+*vcproj.*.*.user
+*.ncb
+*.sdf
+*.opensdf
+*.vcxproj
+*vcxproj.*
+
+# MinGW generated files
+*.Debug
+*.Release
+
+# Python byte code
+*.pyc
+
+# Binaries
+# --------
+*.dll
+*.exe
+
+autopytoexe.exe.lnk
+.codiumai
+dist/Hammer5Tools.zip.002
+dist/Hammer5Tools.zip.001
+dist/debug.kv3
+/dist
+.idea

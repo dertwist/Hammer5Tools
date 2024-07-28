@@ -1,0 +1,17 @@
+{
+    "files": [
+        "batch_creator_init.py",
+        "form.ui",
+        "main.py",
+        "build.bat",
+        "resources.qrc",
+        "preferences.py",
+        "preferences.ui",
+        "basic_operations.py",
+        "documentation/documentation_dialog.ui",
+        "soudevent_editor/soundevenet_editor_mainwindow.ui",
+        "create_addon/create_addon_dialog.ui",
+        "loading_editor/loading_editor_image_frame_widget.ui",
+        "loading_editor/loading_editor_mainwindow.ui"
+    ]
+}
