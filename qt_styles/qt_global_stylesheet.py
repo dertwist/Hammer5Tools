@@ -542,7 +542,7 @@ QScrollBar:horizontal
     margin: 3px 15px 3px 15px;
     border: 1px transparent #2A2929;
     border-radius: 4px;
-    background-color: yellow;    /* #2A2929; */
+    background-color: #2A2929;
 }
 
 QScrollBar::handle:horizontal
