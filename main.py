@@ -4,15 +4,15 @@ from PySide6.QtGui import QIcon, QAction
 from ui_form import Ui_Widget
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
-from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, \
-    get_config_bool, set_config_bool
+from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool
 from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
 from loading_editor.loading_editor_main import Loading_editorMainWindow
 from create_addon.create_addon_mian import Create_addon_Dialog
 from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
 from minor_features.discord_status_main import discord_status_clear, update_discord_status
-from minor_features.addon_functions import archive_addon, delete_addon, launch_addon
+from minor_features.addon_functions import delete_addon, launch_addon
 from minor_features.update_check import check_updates
+from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
 
 
 steam_path = get_steam_path()
@@ -23,7 +23,7 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
 
-app_version = '1.0.0'
+app_version = '1.1.0'
 
 
 class Widget(QWidget):
@@ -75,6 +75,12 @@ class Widget(QWidget):
                 set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
         except:
             print("Wrong Cs2 Path")
+    def refresh_addon_combobox(self):
+        addon = get_addon_name()
+        self.ui.ComboBoxSelectAddon.clear()
+        self.populate_addon_combobox()
+        print(addon)
+        self.ui.ComboBoxSelectAddon.setCurrentText(addon)
 
     def setup_buttons(self):
         self.ui.Launch_Addon_Button.clicked.connect(launch_addon)
@@ -84,7 +90,7 @@ class Widget(QWidget):
         self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
         self.ui.create_new_addon_button.clicked.connect(self.open_create_addon_dialog)
         self.ui.delete_addon_button.clicked.connect(self.delete_addon)
-        self.ui.archive_addon_button.clicked.connect(self.archive_addon)
+        self.ui.export_and_import_addon_button.clicked.connect(self.open_export_and_import_addon)
         self.ui.check_Box_NCM_Mode.setChecked(get_config_bool('LAUNCH', 'ncm_mode'))
         self.ui.check_Box_NCM_Mode.stateChanged.connect(self.handle_ncm_mode_checkbox)
         self.ui.open_addons_folder_button.clicked.connect(self.open_addons_folder)
@@ -107,8 +113,7 @@ class Widget(QWidget):
         addon_name = self.ui.ComboBoxSelectAddon.currentText()
         folder_name = self.ui.open_addons_folder_downlist.currentText()
         folder_path = r"\game\csgo_addons" if folder_name == "Game" else r"\content\csgo_addons"
-        subprocess.Popen(f"explorer {cs2_path}{folder_path}\\{addon_name}")
-        print(f"explorer {cs2_path}{folder_path}\\{addon_name}")
+        os.startfile(f"{cs2_path}{folder_path}\\{addon_name}")
 
     def open_preferences_dialog(self):
         if self.preferences_dialog is None:
@@ -127,17 +132,15 @@ class Widget(QWidget):
 
     def create_addon_dialog_closed(self):
         self.Create_addon_Dialog = None
-        addon = get_addon_name()
-        self.ui.ComboBoxSelectAddon.clear()
-        self.populate_addon_combobox()
-        self.ui.ComboBoxSelectAddon.setCurrentText(addon)
+        self.refresh_addon_combobox()
 
     def delete_addon(self):
         delete_addon(self.ui, cs2_path, get_addon_name)
 
-    def archive_addon(self):
-        archive_addon(cs2_path, get_addon_name)
-
+    def open_export_and_import_addon(self):
+        dialog = export_and_import_addon_dialog(self)
+        dialog.finished.connect(self.refresh_addon_combobox)
+        dialog.show()
     def SteamNoLogonFix(self):
         self.thread = SteamNoLogoFixThreadClass(parent=None, addon_name=get_addon_name(),
                                                 NCM_mode=get_config_bool('LAUNCH', 'ncm_mode'))

@@ -62,5 +62,7 @@
         <file>icons/arrow_drop_down_16dp.svg</file>
         <file>icons/archive_16dp_666666_FILL0_wght400_GRAD0_opsz20.svg</file>
         <file>images/help/about/tooltip_help.png</file>
+        <file>icons/download_2_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/upload_2_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
     </qresource>
 </RCC>

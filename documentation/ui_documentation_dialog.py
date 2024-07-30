@@ -107,7 +107,7 @@ class Ui_documentation_dialog(object):
 "li.checked::marker { content: \"\\2612\"; }\n"
 "</style></head><body style=\" font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:22pt; font-weight:700;\">Hammer 5 Tools</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt;\">A sweet of tools for Counter-Strike 2 Workshop.<br />There are a bunch of useful tools for mapping:</span></p>\n"
+"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt;\">A bumch of tools for Counter-Strike 2 Workshop.<br />There are a bunch of useful tools for mapping:</span></p>\n"
 "<p style=\" margin-top:12px; margin-bottom:12px; ma"
                         "rgin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:700;\">Loading Editor:</span><span style=\" font-size:12pt;\"><br />With this tool, you can add images, descriptions, and icons to the loading screen.</span></p>\n"
 "<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:700;\">SoundEvent Editor:</span><span style=\" font-size:12pt;\"><br />A tool for more comfortable sound editing within the game.</span></p>\n"
@@ -120,6 +120,7 @@ class Ui_documentation_dialog(object):
 "<p style=\" margin-top:0px; "
                         "margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-weight:700;\">Use tooltips for understanding the program: </span></p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt;\">For almost all buttons, an explanation appears when you hold your cursor over a button.</span></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\":/images/help/about/tooltip_help.png\" /></p></body></html>", None))
         self.version.setText(QCoreApplication.translate("documentation_dialog", u"Version: 1.0.0", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.About), QCoreApplication.translate("documentation_dialog", u"About", None))
