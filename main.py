@@ -13,6 +13,7 @@ from minor_features.discord_status_main import discord_status_clear, update_disc
 from minor_features.addon_functions import delete_addon, launch_addon
 from minor_features.update_check import check_updates
 from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
+from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
 
 
 steam_path = get_steam_path()
@@ -64,6 +65,8 @@ class Widget(QWidget):
         self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
         self.LoadingEditorMainWindow = Loading_editorMainWindow()
         self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
+        self.BatchCreator_MainWindow = BatchCreatorMainWindow()
+        self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
 
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
@@ -231,10 +234,13 @@ if __name__ == "__main__":
     widget = Widget()
     widget.show()
 
-    if get_config_bool('DISCORD_STATUS', 'show_status'):
-        widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
-        widget.discord_thread.start()
-    else:
-        print('Discord status updates are disabled.')
+    try:
+        if get_config_bool('DISCORD_STATUS', 'show_status'):
+            widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
+            widget.discord_thread.start()
+        else:
+            print('Discord status updates are disabled.')
+    except:
+        "The status of the discord was not started"
 
     sys.exit(app.exec())

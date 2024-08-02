@@ -394,10 +394,58 @@ QListView {
     /* -------------------------- */
 
 
+
+
+
+QPlainTextEdit {
+
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+
+
+QPlainTextEdit:focus {
+
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+QPlainTextEdit:hover {
+    background-color: #414956;
+    color: white;
+}
+QPlainTextEdit:pressed {
+    background-color: red;
+    background-color: #1C1C1C;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+
+}
+
+
+
+
 QLineEdit {
     border: 1px solid #CCCCCC;
-    border-radius: 5px;
-    padding: 5px;
+    border-radius: 2px;
+    padding: 2px;
     color: #E3E3E3;
 }
 QLineEdit:focus {
@@ -408,6 +456,28 @@ QLineEdit::selection {
     background-color: #414956;
     color: white;
 }
+
+
+
+
+QTextEdit {
+    border: 1px solid #CCCCCC;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    padding: 2px;
+    color: #E3E3E3;
+}
+QTextEdit:focus {
+    border: 1px solid #008CBA;
+    background-color: #E0F7FA;
+}
+QTextEdit::selection {
+    background-color: #414956;
+    color: white;
+}
+
+
+
 
 /* QListWidget item and selection styles */
 QListWidget {
@@ -733,6 +803,49 @@ QHeaderView::section:pressed {
     background-color: #444444;
 } */
 
+
+
+
+/* --------------------------------------------------------------------------------------------- Menubar ---------------------------------------------------------------------------------------------*/
+
+
+QMenuBar {
+    background-color: #333;
+    color: white;
+}
+
+QMenuBar::item {
+    background-color: #333;
+    color: white;
+    padding-left: 12px;
+    padding-right: 12px; /* Added padding-right to make items wider */
+    padding-bottom: 12px;
+    padding-top: 6px;
+}
+
+QMenuBar::item:selected {
+    background-color: #555;
+}
+
+QMenuBar::item:pressed {
+    background-color: #777;
+}
+
+QMenu::item:selected {
+    background-color: #555;
+}
+/* --------------------------------------------------------------------------------------------- Statusbar ---------------------------------------------------------------------------------------------*/
+
+
+QStatusBar {
+    background-color: #1C1C1C;
+    color: #E3E3E3;
+    font: 600 10pt "Segoe UI";
+    border-top: 1px solid #4A4A4A;
+}
+QStatusBar::item {
+    border: none;
+}
 
 
 """
