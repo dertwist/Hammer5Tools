@@ -25,6 +25,7 @@ SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
 
 app_version = '1.1.1'
+batchcreator_version = '0.0.1'
 
 
 class Widget(QWidget):
@@ -66,7 +67,7 @@ class Widget(QWidget):
         self.LoadingEditorMainWindow = Loading_editorMainWindow()
         self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
         # BatchCreator Initialization
-        self.BatchCreator_MainWindow = BatchCreatorMainWindow()
+        self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
         self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
 
     def populate_addon_combobox(self):
@@ -117,7 +118,7 @@ class Widget(QWidget):
 
         self.ui.BatchCreator_tab.layout().removeWidget(self.BatchCreator_MainWindow)
         self.BatchCreator_MainWindow.deleteLater()
-        self.BatchCreator_MainWindow = BatchCreatorMainWindow()
+        self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
         self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
 
     def open_addons_folder(self):
