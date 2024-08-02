@@ -62,13 +62,8 @@ class Widget(QWidget):
         self.tray_icon.show()
 
     def setup_tabs(self):
-        self.SoundEventEditorMainWidget = SoundEventEditorMainWidget()
-        self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
         self.LoadingEditorMainWindow = Loading_editorMainWindow()
         self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
-        # BatchCreator Initialization
-        self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
-        self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
 
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
@@ -91,7 +86,11 @@ class Widget(QWidget):
         self.ui.Launch_Addon_Button.clicked.connect(launch_addon)
         self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)
         self.ui.ComboBoxSelectAddon.currentIndexChanged.connect(self.selected_addon_name)
+        # if index 0, loads tabs
+        if self.ui.ComboBoxSelectAddon.currentText() == get_addon_name():
+            self.selected_addon_name()
         self.ui.ComboBoxSelectAddon.setCurrentText(get_addon_name())
+
         self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
         self.ui.create_new_addon_button.clicked.connect(self.open_create_addon_dialog)
         self.ui.delete_addon_button.clicked.connect(self.delete_addon)
@@ -107,17 +106,26 @@ class Widget(QWidget):
         self.hide()
         self.show_minimize_message_once()
 
-    def selected_addon_name(self, index):
+    def selected_addon_name(self):
         set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
-        self.ui.soundeditor_tab.layout().removeWidget(self.SoundEventEditorMainWidget)
-        self.SoundEventEditorMainWidget.deleteLater()
+        try:
+            self.ui.soundeditor_tab.layout().removeWidget(self.SoundEventEditorMainWidget)
+            self.SoundEventEditorMainWidget.deleteLater()
+        except:
+            pass
         self.SoundEventEditorMainWidget = SoundEventEditorMainWidget()
         self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
 
 
 
-        self.ui.BatchCreator_tab.layout().removeWidget(self.BatchCreator_MainWindow)
-        self.BatchCreator_MainWindow.deleteLater()
+        try:
+            layout = self.ui.BatchCreator_tab.layout()
+            if self.BatchCreator_MainWindow:
+                layout.removeWidget(self.BatchCreator_MainWindow)
+                self.BatchCreator_MainWindow.deleteLater()
+                self.BatchCreator_MainWindow = None
+        except Exception as e:
+            print(f"Error while cleaning up BatchCreator_MainWindow: {e}")
         self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
         self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
 

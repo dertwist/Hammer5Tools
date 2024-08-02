@@ -4,14 +4,24 @@ from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSel
 from BatchCreator.BatchCreator_file_parser import bc_get_config_value, bc_set_config_value
 
 class CustomFileSystemModel(QFileSystemModel):
+    NAME_COLUMN = 0
+    SIZE_COLUMN = 1
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._cache = {}
+
     def data(self, index, role):
-        if role == Qt.DecorationRole:
-            if self.isDir(index) and index.column() != 1:  # Assuming column 1 is the size column
-                return QIcon('://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg')
-        elif role == Qt.DisplayRole and index.column() == 0:  # Assuming column 0 is the name column
+        if role == Qt.DecorationRole and self.isDir(index) and index.column() != self.SIZE_COLUMN:
+            return QIcon('://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg')
+        elif role == Qt.DisplayRole and index.column() == self.NAME_COLUMN:
+            file_path = self.filePath(index)
+            if file_path in self._cache:
+                return self._cache[file_path]
             file_name = super().data(index, role)
             if not self.isDir(index):
-                file_name = QFileInfo(file_name).completeBaseName()  # Remove the file extension
+                file_name = QFileInfo(file_name).completeBaseName()
+            self._cache[file_path] = file_name
             return file_name
         return super().data(index, role)
 
@@ -33,10 +43,11 @@ class CustomFileSystemModel(QFileSystemModel):
         if not data.hasUrls():
             return False
 
+        parent_path = self.filePath(parent)
         for url in data.urls():
             source_path = url.toLocalFile()
             file_name = QDir(source_path).dirName()
-            destination_path = self.filePath(parent) + '/' + file_name
+            destination_path = QDir(parent_path).absoluteFilePath(file_name)
             if QDir(source_path).exists():
                 QDir().rename(source_path, destination_path)
             else:
@@ -63,63 +74,39 @@ class MiniWindowsExplorer(QMainWindow):
     def __init__(self, parent=None, tree_directory=None, addon=None):
         super().__init__(parent)
 
-        # Initialize the model first
         self.model = CustomFileSystemModel()
         self.model.setRootPath(tree_directory)
 
-        # Set up the tree view
         self.tree = QTreeView(self)
         self.tree.setModel(self.model)
-
         self.tree.setRootIndex(self.model.index(tree_directory))
 
-        # Hide all columns except "Name" (column 0) and "Size" (column 1)
         for column in range(self.model.columnCount()):
-            if column not in (0, 1):
+            if column not in (CustomFileSystemModel.NAME_COLUMN, CustomFileSystemModel.SIZE_COLUMN):
                 self.tree.setColumnHidden(column, True)
 
-        # Set up the layout for the widget
         self.layout = QVBoxLayout(self)
         self.layout.addWidget(self.tree)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-        # Set the delegate for padding
-        self.tree.setItemDelegateForColumn(1, QStyledItemDelegate())
-
-        # Set the default width of the size column to 15% of the tree view's width
+        self.tree.setItemDelegateForColumn(CustomFileSystemModel.SIZE_COLUMN, QStyledItemDelegate())
         self.tree.header().setStretchLastSection(False)
-        self.tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.tree.header().setSectionResizeMode(1, QHeaderView.Interactive)
+        self.tree.header().setSectionResizeMode(CustomFileSystemModel.NAME_COLUMN, QHeaderView.Stretch)
+        self.tree.header().setSectionResizeMode(CustomFileSystemModel.SIZE_COLUMN, QHeaderView.Interactive)
 
-        # Enable drag and drop
         self.tree.setDragEnabled(True)
         self.tree.setAcceptDrops(True)
         self.tree.setDropIndicatorShown(True)
         self.tree.setDragDropMode(QTreeView.InternalMove)
-
-        # Enable multi-selection
         self.tree.setSelectionMode(QTreeView.ExtendedSelection)
-
-        # Connect context menu
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.open_context_menu)
-
-        # Connect mouse events
         self.tree.viewport().installEventFilter(self)
-
-        # Connect key events
         self.tree.installEventFilter(self)
 
         self.addon = addon
-
-        # Connect directory change signal
         self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
-
-        # Call the method to select the last opened path after initialization
         self.select_last_opened_path()
-        # Save the initial path
-
-
 
     def select_last_opened_path(self):
         last_opened_path = bc_get_config_value('MINI_EXPLORER_LAST_PATH', self.addon)
@@ -135,23 +122,14 @@ class MiniWindowsExplorer(QMainWindow):
         current_path = self.model.filePath(current)
         self.save_current_path(current_path)
 
-    # ... rest of the class methods ...
-
-
-
     def eventFilter(self, source, event):
         if event.type() == QMouseEvent.MouseButtonPress:
-            if event.button() == Qt.LeftButton:
+            if event.button() in (Qt.LeftButton, Qt.RightButton):
                 index = self.tree.indexAt(event.pos())
                 if not index.isValid():
                     self.tree.clearSelection()
-            elif event.button() == Qt.RightButton:
-                index = self.tree.indexAt(event.pos())
-                if not index.isValid():
-                    self.tree.clearSelection()
-        elif event.type() == QKeyEvent.KeyPress:
-            if event.key() == Qt.Key_Delete:
-                self.delete_selected_items()
+        elif event.type() == QKeyEvent.KeyPress and event.key() == Qt.Key_Delete:
+            self.delete_selected_items()
         return super().eventFilter(source, event)
 
     def open_context_menu(self, position):
@@ -159,42 +137,46 @@ class MiniWindowsExplorer(QMainWindow):
         menu = QMenu()
 
         if index.isValid():
-            # Context menu for folders and files
             if self.model.isDir(index):
-                open_folder_action = QAction("Open Folder in Explorer", self)
-                open_folder_action.triggered.connect(lambda: self.open_folder_in_explorer(index))
-                menu.addAction(open_folder_action)
-
-                rename_action = QAction("Rename Folder", self)
-                rename_action.triggered.connect(lambda: self.rename_item(index))
-                menu.addAction(rename_action)
-
-                delete_action = QAction("Remove Folder", self)
-                delete_action.triggered.connect(lambda: self.delete_item(index))
-                menu.addAction(delete_action)
-
-                new_folder_action = QAction("New Folder", self)
-                new_folder_action.triggered.connect(lambda: self.create_folder(index))
-                menu.addAction(new_folder_action)
+                self.add_folder_actions(menu, index)
             else:
-                open_action = QAction("Open File", self)
-                open_action.triggered.connect(lambda: self.open_file(index))
-                menu.addAction(open_action)
-
-                rename_action = QAction("Rename File", self)
-                rename_action.triggered.connect(lambda: self.rename_item(index))
-                menu.addAction(rename_action)
-
-                delete_action = QAction("Remove File", self)
-                delete_action.triggered.connect(lambda: self.delete_item(index))
-                menu.addAction(delete_action)
+                self.add_file_actions(menu, index)
         else:
-            # Context menu for empty space
             create_folder_action = QAction("Create Folder", self)
             create_folder_action.triggered.connect(lambda: self.create_folder(self.tree.rootIndex()))
             menu.addAction(create_folder_action)
 
         menu.exec_(self.tree.viewport().mapToGlobal(position))
+
+    def add_folder_actions(self, menu, index):
+        open_folder_action = QAction("Open Folder in Explorer", self)
+        open_folder_action.triggered.connect(lambda: self.open_folder_in_explorer(index))
+        menu.addAction(open_folder_action)
+
+        rename_action = QAction("Rename Folder", self)
+        rename_action.triggered.connect(lambda: self.rename_item(index))
+        menu.addAction(rename_action)
+
+        delete_action = QAction("Remove Folder", self)
+        delete_action.triggered.connect(lambda: self.delete_item(index))
+        menu.addAction(delete_action)
+
+        new_folder_action = QAction("New Folder", self)
+        new_folder_action.triggered.connect(lambda: self.create_folder(index))
+        menu.addAction(new_folder_action)
+
+    def add_file_actions(self, menu, index):
+        open_action = QAction("Open File", self)
+        open_action.triggered.connect(lambda: self.open_file(index))
+        menu.addAction(open_action)
+
+        rename_action = QAction("Rename File", self)
+        rename_action.triggered.connect(lambda: self.rename_item(index))
+        menu.addAction(rename_action)
+
+        delete_action = QAction("Remove File", self)
+        delete_action.triggered.connect(lambda: self.delete_item(index))
+        menu.addAction(delete_action)
 
     def open_folder_in_explorer(self, index):
         folder_path = self.model.filePath(index)
@@ -224,7 +206,7 @@ class MiniWindowsExplorer(QMainWindow):
         if not indexes:
             return
 
-        paths = [self.model.filePath(index) for index in indexes if index.column() == 0]
+        paths = [self.model.filePath(index) for index in indexes if index.column() == CustomFileSystemModel.NAME_COLUMN]
         reply = QMessageBox.question(self, 'Remove Items', f"Are you sure you want to remove the selected items?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             for path in paths:
@@ -238,16 +220,11 @@ class MiniWindowsExplorer(QMainWindow):
         default_folder_name = "New Folder"
         new_folder_path = QDir(parent_path).absoluteFilePath(default_folder_name)
 
-        # Ensure the folder name is unique
         counter = 1
         while QDir(new_folder_path).exists():
             new_folder_path = QDir(parent_path).absoluteFilePath(f"{default_folder_name} ({counter})")
             counter += 1
 
         QDir(parent_path).mkdir(QFileInfo(new_folder_path).fileName())
-
-        # Find the index of the newly created folder
         new_folder_index = self.model.index(new_folder_path)
-
-        # Switch to renaming mode
         self.tree.edit(new_folder_index)
