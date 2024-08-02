@@ -25,7 +25,7 @@ SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
 
 app_version = '1.1.1'
-batchcreator_version = '0.0.1'
+batchcreator_version = '0.1.0'
 
 
 class Widget(QWidget):
