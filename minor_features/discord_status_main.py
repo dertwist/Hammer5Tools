@@ -58,7 +58,6 @@ def update_discord_status():
                 return elapsed_time
 
         RPC.clear()
-        logging.info("No matching process or window found")
         start_time = time.time()
     except Exception as e:
         logging.error(f"An error occurred: {e}")
