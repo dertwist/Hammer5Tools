@@ -443,13 +443,14 @@ QPlainTextEdit:pressed {
 
 
 QLineEdit {
-    border: 1px solid #CCCCCC;
+    border: 2px solid #CCCCCC;
+    border-color: rgba(80, 80, 80, 255);
     border-radius: 2px;
     padding: 2px;
     color: #E3E3E3;
 }
 QLineEdit:focus {
-    border: 1px solid #008CBA;
+    border: 2px solid #008CBA;
     border-color: rgba(80, 80, 80, 255);
 }
 QLineEdit::selection {
@@ -461,14 +462,14 @@ QLineEdit::selection {
 
 
 QTextEdit {
-    border: 1px solid #CCCCCC;
+    border: 2px solid #CCCCCC;
     border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
     padding: 2px;
     color: #E3E3E3;
 }
 QTextEdit:focus {
-    border: 1px solid #008CBA;
+    border: 2px solid #008CBA;
     background-color: #E3E3E3;
 }
 QTextEdit::selection {
