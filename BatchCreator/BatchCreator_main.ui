@@ -220,7 +220,50 @@
         </widget>
        </item>
        <item>
-        <widget class="QPlainTextEdit" name="kv3_QplainTextEdit"/>
+        <widget class="QPlainTextEdit" name="kv3_QplainTextEdit">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="plainText">
+          <string>// THIS FILE IS AUTO-GENERATED
+
+Layer0
+{
+	shader &quot;csgo_weapon.vfx&quot;
+
+	//---- Ambient Occlusion ----
+	TextureAmbientOcclusion &quot;weapons/models/knife/knife_karambit/materials/karambit_ao.png&quot;
+
+	//---- Color ----
+	g_flModelTintAmount &quot;1.000&quot;
+	g_flTexCoordRotation &quot;0.000&quot;
+	g_nScaleTexCoordUByModelScaleAxis &quot;0&quot; // None
+	g_nScaleTexCoordVByModelScaleAxis &quot;0&quot; // None
+	g_vColorTint &quot;[1.000000 1.000000 1.000000 0.000000]&quot;
+	g_vTexCoordCenter &quot;[0.500 0.500]&quot;
+	g_vTexCoordOffset &quot;[0.000 0.000]&quot;
+	g_vTexCoordScale &quot;[1.000 1.000]&quot;
+	g_vTexCoordScrollSpeed &quot;[0.000 0.000]&quot;
+	TextureColor1 &quot;weapons/models/knife/knife_karambit/materials/karambit_gold_a.png&quot;
+
+	//---- Fog ----
+	g_bFogEnabled &quot;1&quot;
+
+	//---- Lighting ----
+	g_flMetalnessTransitionBias &quot;2.000&quot;
+	g_vMetalnessRemapRange &quot;[0.000 0.903]&quot;
+	TextureMetalness1 &quot;weapons/models/knife/knife_karambit/materials/karambit_gold_m.png&quot;
+	TextureRoughness1 &quot;materials/default/default_rough.tga&quot;
+
+	//---- Normal Map ----
+	TextureNormal &quot;weapons/models/knife/knife_karambit/materials/karambit_normal.png&quot;
+
+	//---- Texture Address Mode ----
+	g_nTextureAddressModeU &quot;0&quot; // Wrap
+	g_nTextureAddressModeV &quot;0&quot; // Wrap
+}</string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="Import_Audio_button">

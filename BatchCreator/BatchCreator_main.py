@@ -1,12 +1,80 @@
 from BatchCreator.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 from BatchCreator.BatchCreator_mini_windows_explorer import MiniWindowsExplorer
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QApplication, QLabel
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag
-from PySide6.QtCore import Qt, QUrl, QMimeData
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QApplication
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QSyntaxHighlighter, QTextCharFormat, QColor
+from PySide6.QtCore import Qt, QUrl, QMimeData, QRegularExpression
 from preferences import get_addon_name, get_cs2_path
 import os
 
+
 cs2_path = get_cs2_path()
+
+
+
+
+from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
+from PySide6.QtCore import QRegularExpression
+
+class CustomHighlighter(QSyntaxHighlighter):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.highlighting_rules = []
+
+        # Define the format for the custom text
+        custom_format = QTextCharFormat()
+        custom_format.setForeground(QColor("#C78662"))
+
+        # Define the format for the new keywords
+        keyword_format = QTextCharFormat()
+        keyword_format.setForeground(QColor("#FF5733"))  # Example color, change as needed
+
+        # Define the format for text within quotes
+        quoted_text_format = QTextCharFormat()
+        quoted_text_format.setForeground(QColor("#6bc7c4"))
+
+        # Define the format for FOLDER_PATH pattern
+        folder_path_format = QTextCharFormat()
+        folder_path_format.setForeground(QColor("#C78662"))  # Example color, change as needed
+
+        # Define the format for ASSET_NAME pattern
+        asset_name_format = QTextCharFormat()
+        asset_name_format.setForeground(QColor("#C78662"))  # Example color, change as needed
+
+        # Define the new keyword patterns
+        keyword_patterns = [
+            r"\bTextureAmbientOcclusion\b",
+            r"\bTextureColor1\b",
+            r"\bTextureRoughness1\b",
+            r"\bTextureMetalness1\b",
+            r"\bTextureNormal\b"
+        ]
+
+        # Add the keyword patterns and their format to the highlighting rules
+        for pattern in keyword_patterns:
+            regex = QRegularExpression(pattern)
+            self.highlighting_rules.append((regex, keyword_format))
+
+        # Add the pattern for text within quotes
+        quoted_text_pattern = QRegularExpression(r'"\s*[^"]+\s*"')
+        self.highlighting_rules.append((quoted_text_pattern, quoted_text_format))
+
+        # Define the patterns to be highlighted
+        patterns = [
+            (r"%%#\$%%FOLDER_PATH%%\$#%%", folder_path_format),
+            (r"%%#\$%%ASSET_NAME%%\$#%%", asset_name_format)
+        ]
+
+        # Add the existing patterns and their format to the highlighting rules
+        for pattern, format in patterns:
+            regex = QRegularExpression(pattern)
+            self.highlighting_rules.append((regex, format))
+
+    def highlightBlock(self, text):
+        for pattern, format in self.highlighting_rules:
+            match_iterator = pattern.globalMatch(text)
+            while match_iterator.hasNext():
+                match = match_iterator.next()
+                self.setFormat(match.capturedStart(), match.capturedLength(), format)
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -14,7 +82,10 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
 
-        tree_directory = rf"{cs2_path}\content\csgo_addons\{get_addon_name()}"
+        # Apply the custom highlighter to the QPlainTextEdit widget
+        self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
+
+        tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
 
         # Initialize the mini windows explorer
         self.mini_explorer = MiniWindowsExplorer(self.ui.MiniWindows_explorer, tree_directory)
@@ -33,68 +104,51 @@ class BatchCreatorMainWindow(QMainWindow):
         # Connect the selection change event to the custom slot
         self.mini_explorer.tree.selectionModel().selectionChanged.connect(self.update_status_line)
 
-        self.ui.folder_path_template.setAcceptDrops(True)
-        self.ui.folder_path_template.dragEnterEvent = self.label_dragEnterEvent
-        self.ui.folder_path_template.dropEvent = lambda event: self.label_dropEvent(event, self.ui.folder_path_template)
-        self.ui.folder_path_template.mousePressEvent = lambda event: self.label_mousePressEvent(event, self.ui.folder_path_template)
+        # Set up drag and drop for labels
+        self.setup_drag_and_drop(self.ui.folder_path_template, "Folder path")
+        self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
 
-        self.ui.assets_name_template.setAcceptDrops(True)
-        self.ui.assets_name_template.dragEnterEvent = self.label_dragEnterEvent
-        self.ui.assets_name_template.dropEvent = lambda event: self.label_dropEvent(event, self.ui.assets_name_template)
-        self.ui.assets_name_template.mousePressEvent = lambda event: self.label_mousePressEvent(event, self.ui.assets_name_template)
+    # ... rest of the class methods ...
+
+    def setup_drag_and_drop(self, widget, default_text):
+        widget.setAcceptDrops(True)
+        widget.dragEnterEvent = self.label_dragEnterEvent
+        widget.dropEvent = lambda event: self.label_dropEvent(event, widget)
+        widget.mousePressEvent = lambda event: self.label_mousePressEvent(event, widget, default_text)
 
     def label_dragEnterEvent(self, event: QDragEnterEvent):
-        # Accept the event if it contains text data
         if event.mimeData().hasText():
             event.acceptProposedAction()
 
     def label_dropEvent(self, event: QDropEvent, widget):
-        # Handle text drops for label
         if event.mimeData().hasText():
             widget.setText(event.mimeData().text())
             event.acceptProposedAction()
 
-    def label_mousePressEvent(self, event, widget):
+    def label_mousePressEvent(self, event, widget, default_text):
         if event.button() == Qt.LeftButton:
             mimeData = QMimeData()
-            if widget.text() == "Folder path":
-                mimeData.setText("%%#$%%FOLDER_PATH%%$#%%")
-            elif widget.text() == "Asset name":
-                mimeData.setText("%%#$%%ASSET_NAME%%$#%%")
-            else:
-                pass
+            mimeData.setText(f"%%#$%%{default_text.upper().replace(' ', '_')}%%$#%%")
             drag = QDrag(self)
             drag.setMimeData(mimeData)
             drag.exec(Qt.MoveAction)
 
     def copy_status_line_to_clipboard(self):
-        # Get the text from Status_Line_Qedit
-        status_line_text = self.ui.Status_Line_Qedit.toPlainText()
-        # Copy the text to the clipboard
         clipboard = QApplication.clipboard()
-        clipboard.setText(status_line_text)
+        clipboard.setText(self.ui.Status_Line_Qedit.toPlainText())
 
     def update_status_line(self, selected, deselected):
-        # Get the selected indexes
         indexes = self.mini_explorer.tree.selectionModel().selectedIndexes()
         if indexes:
-            # Get the first selected index
             index = indexes[0]
-            # Get the file path from the model
             file_path = self.mini_explorer.model.filePath(index)
-            # Check if the selected item is a directory
             if self.mini_explorer.model.isDir(index):
-                # Normalize paths and remove the base path
-                base_path = os.path.normpath(rf"{cs2_path}\content\csgo_addons\{get_addon_name()}")
-                file_path = os.path.normpath(file_path)
-                relative_path = os.path.relpath(file_path, base_path)
-                print(relative_path)
+                base_path = os.path.normpath(os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()))
+                relative_path = os.path.relpath(os.path.normpath(file_path), base_path)
                 self.ui.Status_Line_Qedit.setPlainText(relative_path)
             else:
-                # Clear the status line if the selected item is not a directory
                 self.ui.Status_Line_Qedit.clear()
         else:
-            # Clear the status line if no item is selected
             self.ui.Status_Line_Qedit.clear()
 
     def dragEnterEvent(self, event: QDragEnterEvent):
@@ -105,8 +159,6 @@ class BatchCreatorMainWindow(QMainWindow):
         urls = event.mimeData().urls()
         if urls:
             file_path = urls[0].toLocalFile()
-            # Check which label is the target of the drop event
-            if self.childAt(event.position().toPoint()) == self.ui.assets_name_template:
-                self.ui.assets_name_template.setText(file_path)
-            elif self.childAt(event.position().toPoint()) == self.ui.folder_path_template:
-                self.ui.folder_path_template.setText(file_path)
+            target_widget = self.childAt(event.position().toPoint())
+            if target_widget in [self.ui.assets_name_template, self.ui.folder_path_template]:
+                target_widget.setText(file_path)

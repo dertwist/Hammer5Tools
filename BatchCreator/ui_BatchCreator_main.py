@@ -146,6 +146,7 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.kv3_QplainTextEdit = QPlainTextEdit(self.frame)
         self.kv3_QplainTextEdit.setObjectName(u"kv3_QplainTextEdit")
+        self.kv3_QplainTextEdit.setStyleSheet(u"")
 
         self.verticalLayout.addWidget(self.kv3_QplainTextEdit)
 
@@ -200,6 +201,44 @@ class Ui_BatchCreator_MainWindow(object):
         self.Copy_from_status_line_toolButton.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"...", None))
         self.folder_path_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Folder path", None))
         self.assets_name_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Asset name", None))
+        self.kv3_QplainTextEdit.setPlainText(QCoreApplication.translate("BatchCreator_MainWindow", u"// THIS FILE IS AUTO-GENERATED\n"
+"\n"
+"Layer0\n"
+"{\n"
+"	shader \"csgo_weapon.vfx\"\n"
+"\n"
+"	//---- Ambient Occlusion ----\n"
+"	TextureAmbientOcclusion \"weapons/models/knife/knife_karambit/materials/karambit_ao.png\"\n"
+"\n"
+"	//---- Color ----\n"
+"	g_flModelTintAmount \"1.000\"\n"
+"	g_flTexCoordRotation \"0.000\"\n"
+"	g_nScaleTexCoordUByModelScaleAxis \"0\" // None\n"
+"	g_nScaleTexCoordVByModelScaleAxis \"0\" // None\n"
+"	g_vColorTint \"[1.000000 1.000000 1.000000 0.000000]\"\n"
+"	g_vTexCoordCenter \"[0.500 0.500]\"\n"
+"	g_vTexCoordOffset \"[0.000 0.000]\"\n"
+"	g_vTexCoordScale \"[1.000 1.000]\"\n"
+"	g_vTexCoordScrollSpeed \"[0.000 0.000]\"\n"
+"	TextureColor1 \"weapons/models/knife/knife_karambit/materials/karambit_gold_a.png\"\n"
+"\n"
+"	//---- Fog ----\n"
+"	g_bFogEnabled \"1\"\n"
+"\n"
+"	//---- Lighting ----\n"
+"	g_flMetalnessTransitionBias \"2.000\"\n"
+"	g_vMetalnessRemapRange \"[0.000 0.903]\"\n"
+"	TextureMetalness1 \"weapons/models/knife/knife_karambit/materials/karambit_gold_m.png\"\n"
+"	TextureRoughne"
+                        "ss1 \"materials/default/default_rough.tga\"\n"
+"\n"
+"	//---- Normal Map ----\n"
+"	TextureNormal \"weapons/models/knife/knife_karambit/materials/karambit_normal.png\"\n"
+"\n"
+"	//---- Texture Address Mode ----\n"
+"	g_nTextureAddressModeU \"0\" // Wrap\n"
+"	g_nTextureAddressModeV \"0\" // Wrap\n"
+"}", None))
         self.Import_Audio_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Process all", None))
     # retranslateUi
 
