@@ -31,6 +31,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout = QHBoxLayout(self.centralwidget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.frame_2 = QFrame(self.centralwidget)
         self.frame_2.setObjectName(u"frame_2")
         self.frame_2.setMaximumSize(QSize(330, 16777215))
@@ -67,6 +68,15 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.Copy_from_status_line_toolButton)
 
+        self.file_initialize_button = QToolButton(self.frame_3)
+        self.file_initialize_button.setObjectName(u"file_initialize_button")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/add_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.file_initialize_button.setIcon(icon1)
+        self.file_initialize_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.file_initialize_button)
+
 
         self.verticalLayout_2.addWidget(self.frame_3)
 
@@ -80,6 +90,11 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout = QVBoxLayout(self.frame)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.status_label = QLabel(self.frame)
+        self.status_label.setObjectName(u"status_label")
+
+        self.verticalLayout.addWidget(self.status_label)
+
         self.frame_4 = QFrame(self.frame)
         self.frame_4.setObjectName(u"frame_4")
         self.frame_4.setFrameShape(QFrame.StyledPanel)
@@ -150,7 +165,94 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.verticalLayout.addWidget(self.kv3_QplainTextEdit)
 
-        self.Import_Audio_button = QPushButton(self.frame)
+        self.frame_5 = QFrame(self.frame)
+        self.frame_5.setObjectName(u"frame_5")
+        self.frame_5.setFrameShape(QFrame.StyledPanel)
+        self.frame_5.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_4 = QHBoxLayout(self.frame_5)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.open_button = QPushButton(self.frame_5)
+        self.open_button.setObjectName(u"open_button")
+        self.open_button.setMinimumSize(QSize(0, 18))
+        self.open_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_button.setIcon(icon2)
+        self.open_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_4.addWidget(self.open_button)
+
+        self.save_button = QPushButton(self.frame_5)
+        self.save_button.setObjectName(u"save_button")
+        self.save_button.setMinimumSize(QSize(0, 18))
+        self.save_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_button.setIcon(icon3)
+        self.save_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_4.addWidget(self.save_button)
+
+        self.Import_Audio_button = QPushButton(self.frame_5)
         self.Import_Audio_button.setObjectName(u"Import_Audio_button")
         self.Import_Audio_button.setMinimumSize(QSize(0, 18))
         self.Import_Audio_button.setStyleSheet(u"\n"
@@ -183,8 +285,15 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Import_Audio_button.setIcon(icon4)
+        self.Import_Audio_button.setIconSize(QSize(20, 20))
 
-        self.verticalLayout.addWidget(self.Import_Audio_button)
+        self.horizontalLayout_4.addWidget(self.Import_Audio_button)
+
+
+        self.verticalLayout.addWidget(self.frame_5)
 
 
         self.horizontalLayout.addWidget(self.frame)
@@ -199,6 +308,8 @@ class Ui_BatchCreator_MainWindow(object):
     def retranslateUi(self, BatchCreator_MainWindow):
         BatchCreator_MainWindow.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"MainWindow", None))
         self.Copy_from_status_line_toolButton.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"...", None))
+        self.file_initialize_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"...", None))
+        self.status_label.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Oppened File: BatchCreator version:", None))
         self.folder_path_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Folder path", None))
         self.assets_name_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Asset name", None))
         self.kv3_QplainTextEdit.setPlainText(QCoreApplication.translate("BatchCreator_MainWindow", u"// THIS FILE IS AUTO-GENERATED\n"
@@ -239,6 +350,8 @@ class Ui_BatchCreator_MainWindow(object):
 "	g_nTextureAddressModeU \"0\" // Wrap\n"
 "	g_nTextureAddressModeV \"0\" // Wrap\n"
 "}", None))
+        self.open_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Open", None))
+        self.save_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Save", None))
         self.Import_Audio_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Process all", None))
     # retranslateUi
 

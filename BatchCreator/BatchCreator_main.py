@@ -1,86 +1,26 @@
 from BatchCreator.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 from BatchCreator.BatchCreator_mini_windows_explorer import MiniWindowsExplorer
 from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QApplication
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QSyntaxHighlighter, QTextCharFormat, QColor
-from PySide6.QtCore import Qt, QUrl, QMimeData, QRegularExpression
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag
+from PySide6.QtCore import Qt, QMimeData
 from preferences import get_addon_name, get_cs2_path
 import os
-
+from BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
+import configparser
 
 cs2_path = get_cs2_path()
 
+version = "v0.1.0"
 
-
-
-from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
-from PySide6.QtCore import QRegularExpression
-
-class CustomHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.highlighting_rules = []
-
-        # Define the format for the custom text
-        custom_format = QTextCharFormat()
-        custom_format.setForeground(QColor("#C78662"))
-
-        # Define the format for the new keywords
-        keyword_format = QTextCharFormat()
-        keyword_format.setForeground(QColor("#FF5733"))  # Example color, change as needed
-
-        # Define the format for text within quotes
-        quoted_text_format = QTextCharFormat()
-        quoted_text_format.setForeground(QColor("#6bc7c4"))
-
-        # Define the format for FOLDER_PATH pattern
-        folder_path_format = QTextCharFormat()
-        folder_path_format.setForeground(QColor("#C78662"))  # Example color, change as needed
-
-        # Define the format for ASSET_NAME pattern
-        asset_name_format = QTextCharFormat()
-        asset_name_format.setForeground(QColor("#C78662"))  # Example color, change as needed
-
-        # Define the new keyword patterns
-        keyword_patterns = [
-            r"\bTextureAmbientOcclusion\b",
-            r"\bTextureColor1\b",
-            r"\bTextureRoughness1\b",
-            r"\bTextureMetalness1\b",
-            r"\bTextureNormal\b"
-        ]
-
-        # Add the keyword patterns and their format to the highlighting rules
-        for pattern in keyword_patterns:
-            regex = QRegularExpression(pattern)
-            self.highlighting_rules.append((regex, keyword_format))
-
-        # Add the pattern for text within quotes
-        quoted_text_pattern = QRegularExpression(r'"\s*[^"]+\s*"')
-        self.highlighting_rules.append((quoted_text_pattern, quoted_text_format))
-
-        # Define the patterns to be highlighted
-        patterns = [
-            (r"%%#\$%%FOLDER_PATH%%\$#%%", folder_path_format),
-            (r"%%#\$%%ASSET_NAME%%\$#%%", asset_name_format)
-        ]
-
-        # Add the existing patterns and their format to the highlighting rules
-        for pattern, format in patterns:
-            regex = QRegularExpression(pattern)
-            self.highlighting_rules.append((regex, format))
-
-    def highlightBlock(self, text):
-        for pattern, format in self.highlighting_rules:
-            match_iterator = pattern.globalMatch(text)
-            while match_iterator.hasNext():
-                match = match_iterator.next()
-                self.setFormat(match.capturedStart(), match.capturedLength(), format)
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
+
+        # Initialize the path of the currently opened file
+        self.current_file_path = None
 
         # Apply the custom highlighter to the QPlainTextEdit widget
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
@@ -101,20 +41,21 @@ class BatchCreatorMainWindow(QMainWindow):
         # Connect the tool button click to the copy function
         self.ui.Copy_from_status_line_toolButton.clicked.connect(self.copy_status_line_to_clipboard)
 
-        # Connect the selection change event to the custom slot
-        self.mini_explorer.tree.selectionModel().selectionChanged.connect(self.update_status_line)
 
         # Set up drag and drop for labels
         self.setup_drag_and_drop(self.ui.folder_path_template, "Folder path")
         self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
+        self.ui.file_initialize_button.clicked.connect(self.file_initialize)
 
-    # ... rest of the class methods ...
+        # Connect save and open buttons
+        self.ui.save_button.clicked.connect(self.save_file)
+        self.ui.open_button.clicked.connect(self.open_file)
 
     def setup_drag_and_drop(self, widget, default_text):
         widget.setAcceptDrops(True)
         widget.dragEnterEvent = self.label_dragEnterEvent
         widget.dropEvent = lambda event: self.label_dropEvent(event, widget)
-        widget.mousePressEvent = lambda event: self.label_mousePressEvent(event, widget, default_text)
+        widget.mousePressEvent = lambda event: self.label_mousePressEvent(event, default_text)
 
     def label_dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasText():
@@ -125,7 +66,7 @@ class BatchCreatorMainWindow(QMainWindow):
             widget.setText(event.mimeData().text())
             event.acceptProposedAction()
 
-    def label_mousePressEvent(self, event, widget, default_text):
+    def label_mousePressEvent(self, event, default_text):
         if event.button() == Qt.LeftButton:
             mimeData = QMimeData()
             mimeData.setText(f"%%#$%%{default_text.upper().replace(' ', '_')}%%$#%%")
@@ -137,19 +78,28 @@ class BatchCreatorMainWindow(QMainWindow):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.ui.Status_Line_Qedit.toPlainText())
 
-    def update_status_line(self, selected, deselected):
+    def update_status_line(self):
         indexes = self.mini_explorer.tree.selectionModel().selectedIndexes()
         if indexes:
             index = indexes[0]
             file_path = self.mini_explorer.model.filePath(index)
             if self.mini_explorer.model.isDir(index):
-                base_path = os.path.normpath(os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()))
-                relative_path = os.path.relpath(os.path.normpath(file_path), base_path)
-                self.ui.Status_Line_Qedit.setPlainText(relative_path)
+                base_name = os.path.basename(os.path.normpath(file_path))
+                self.ui.Status_Line_Qedit.setPlainText(base_name)
+                self.ui.status_label.setText(
+                    f"Opened File: <span style='color: #b0c27c;'>{base_name}</span> BatchCreator version: <span style='color: #7cc29b;'>{version}</span>")
+                self.current_file_path = None  # No file is currently opened
             else:
-                self.ui.Status_Line_Qedit.clear()
+                base_name = os.path.basename(os.path.normpath(file_path))
+                self.ui.Status_Line_Qedit.setPlainText(base_name)
+                self.ui.status_label.setText(
+                    f"Opened File: <span style='color: #b0c27c;'>{base_name}</span> BatchCreator version: <span style='color: #7cc29b;'>{version}</span>")
+                self.current_file_path = file_path  # Store the path of the opened file
         else:
             self.ui.Status_Line_Qedit.clear()
+            self.ui.status_label.setText(
+                f"Opened File: None BatchCreator version: <span style='color: red;'>{version}</span>")
+            self.current_file_path = None  # No file is currently opened
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -162,3 +112,72 @@ class BatchCreatorMainWindow(QMainWindow):
             target_widget = self.childAt(event.position().toPoint())
             if target_widget in [self.ui.assets_name_template, self.ui.folder_path_template]:
                 target_widget.setText(file_path)
+
+    def file_initialize(self):
+        path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), self.ui.Status_Line_Qedit.toPlainText())
+        file_name = os.path.relpath(self.ui.Status_Line_Qedit.toPlainText())
+        path_clear = os.path.dirname(os.path.normpath(path))
+        if not path_clear:
+            print("No path provided.")
+            return
+
+        # Define the file extension
+        file_extension = ".hammer5tools_batch"
+
+        # Create the full file path
+        file_path = os.path.join(path_clear, f"{file_name}{file_extension}")
+
+        # Create a ConfigParser object
+        config = configparser.ConfigParser()
+
+        # Add sections and key-value pairs
+        config['APP'] = {
+            'name': 'BatchCreator',
+            'version': version
+        }
+        config['CONTENT'] = {
+            'file': ""
+        }
+        config['EXCEPTIONS'] = {
+            'example': 'name.extension'
+        }
+
+        try:
+            # Write the configuration to a file
+            with open(file_path, 'w') as configfile:
+                config.write(configfile)
+
+            print(f"File created at: {file_path}")
+        except Exception as e:
+            print(f"Failed to create file: {e}")
+
+    def save_file(self):
+        if self.current_file_path:
+            try:
+                with open(self.current_file_path, 'w') as file:
+                    file.write(self.ui.kv3_QplainTextEdit.toPlainText())
+                print(f"File saved at: {self.current_file_path}")
+            except Exception as e:
+                print(f"Failed to save file: {e}")
+        else:
+            print("No file is currently opened to save.")
+
+    def open_file(self):
+        indexes = self.mini_explorer.tree.selectionModel().selectedIndexes()
+        if indexes:
+            index = indexes[0]
+            file_path = self.mini_explorer.model.filePath(index)
+            if not self.mini_explorer.model.isDir(index):
+                try:
+                    with open(file_path, 'r') as file:
+                        content = file.read()
+                        self.ui.kv3_QplainTextEdit.setPlainText(content)
+                    self.current_file_path = file_path  # Store the path of the opened file
+                    print(f"File opened from: {file_path}")
+                except Exception as e:
+                    print(f"Failed to open file: {e}")
+            else:
+                print("Selected item is a directory, not a file.")
+        else:
+            print("No file selected.")
+        self.update_status_line()
