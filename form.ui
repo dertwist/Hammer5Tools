@@ -95,7 +95,7 @@
       <string notr="true">background-color: #1d1d1f;</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <property name="tabsClosable">
       <bool>false</bool>
@@ -150,37 +150,11 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="BatchCreator">
+     <widget class="QWidget" name="BatchCreator_tab">
       <attribute name="title">
        <string>BatchCreator</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <widget class="QLabel" name="label_10">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">font: 24pt &quot;Segoe UI&quot;;</string>
-         </property>
-         <property name="text">
-          <string>Will be soon</string>
-         </property>
-         <property name="scaledContents">
-          <bool>false</bool>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="margin">
-          <number>0</number>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <layout class="QVBoxLayout" name="verticalLayout_2"/>
      </widget>
      <widget class="QWidget" name="smartpropeditor_tab">
       <attribute name="title">
