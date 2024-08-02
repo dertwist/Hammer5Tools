@@ -1,60 +1,46 @@
 from BatchCreator.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 from BatchCreator.BatchCreator_mini_windows_explorer import MiniWindowsExplorer
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QApplication
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QApplication, QMessageBox
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag
 from PySide6.QtCore import Qt, QMimeData
 from preferences import get_addon_name, get_cs2_path
 import os
 from BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
-from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse,batch_creator_file_parser_initialize
-from PySide6.QtWidgets import QMessageBox
+from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse, batch_creator_file_parser_initialize, batch_creator_file_parser_output
 
 cs2_path = get_cs2_path()
-
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, version, parent=None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
-        self.version = version  # Store version as an instance variable
-
-        # Initialize the path of the currently opened file
+        self.version = version
         self.current_file_path = None
 
-        # Apply the custom highlighter to the QPlainTextEdit widget
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
-
         tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
-
-        # Initialize the mini windows explorer
         self.mini_explorer = MiniWindowsExplorer(self.ui.MiniWindows_explorer, tree_directory)
 
-        # Set up the layout for the audio_files_explorer widget
-        self.audio_files_explorer_layout = QVBoxLayout(self.ui.MiniWindows_explorer)
-        self.audio_files_explorer_layout.addWidget(self.mini_explorer.tree)
-        self.audio_files_explorer_layout.setContentsMargins(0, 0, 0, 0)
+        self.setup_ui()
+        self.setup_connections()
+        self.update_top_status_line()
 
-        self.mini_explorer.tree.selectionModel().selectionChanged.connect(self.update_status_line)
-
-        # Disable editing for Status_Line_Qedit
+    def setup_ui(self):
+        layout = QVBoxLayout(self.ui.MiniWindows_explorer)
+        layout.addWidget(self.mini_explorer.tree)
+        layout.setContentsMargins(0, 0, 0, 0)
         self.ui.Status_Line_Qedit.setReadOnly(True)
+        self.setAcceptDrops(True)
 
-        # Connect the tool button click to the copy function
+    def setup_connections(self):
+        self.mini_explorer.tree.selectionModel().selectionChanged.connect(self.update_status_line)
         self.ui.Copy_from_status_line_toolButton.clicked.connect(self.copy_status_line_to_clipboard)
-
-        # Set up drag and drop for labels
-        self.setup_drag_and_drop(self.ui.folder_path_template, "Folder path")
-        self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
         self.ui.file_initialize_button.clicked.connect(self.file_initialize)
-
-        # Connect save and open buttons
         self.ui.save_button.clicked.connect(self.save_file)
         self.ui.open_button.clicked.connect(self.open_file)
-
-        # Connect drag and drop events for the main window
-        self.setAcceptDrops(True)
-        self.update_top_status_line()
+        self.setup_drag_and_drop(self.ui.folder_path_template, "Folder path")
+        self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
 
     def setup_drag_and_drop(self, widget, default_text):
         widget.setAcceptDrops(True)
@@ -83,28 +69,6 @@ class BatchCreatorMainWindow(QMainWindow):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.ui.Status_Line_Qedit.toPlainText())
 
-    def update_top_status_line(self):
-        indexes = self.mini_explorer.tree.selectionModel().selectedIndexes()
-        if indexes:
-            index = indexes[0]
-            file_path = self.mini_explorer.model.filePath(index)
-            if self.mini_explorer.model.isDir(index):
-                base_name = os.path.basename(os.path.normpath(file_path))
-                self.ui.status_label.setText(
-                    f"Opened File: <span style='color: #b0c27c;'>{base_name}</span> BatchCreator version: <span style='color: #7cc29b;'>{self.version}</span>")
-                self.current_file_path = None  # No file is currently opened
-            else:
-                base_name = os.path.basename(os.path.normpath(file_path))
-                self.ui.Status_Line_Qedit.setPlainText(base_name)
-                self.ui.status_label.setText(
-                    f"Opened File: <span style='color: #b0c27c;'>{base_name}</span> BatchCreator version: <span style='color: #7cc29b;'>{self.version}</span>")
-                self.current_file_path = file_path  # Store the path of the opened file
-        else:
-            self.ui.Status_Line_Qedit.clear()
-            self.ui.status_label.setText(
-                f"Opened File: None BatchCreator version: <span style='color: #7cc29b;'>{self.version}</span>")
-            self.current_file_path = None  # No file is currently opened
-
     def update_status_line(self):
         indexes = self.mini_explorer.tree.selectionModel().selectedIndexes()
         if indexes:
@@ -112,6 +76,25 @@ class BatchCreatorMainWindow(QMainWindow):
             file_path = self.mini_explorer.model.filePath(index)
             base_name = os.path.basename(os.path.normpath(file_path))
             self.ui.Status_Line_Qedit.setPlainText(base_name)
+        else:
+            self.ui.Status_Line_Qedit.clear()
+
+
+
+    def update_top_status_line(self):
+        indexes = self.mini_explorer.tree.selectionModel().selectedIndexes()
+        if indexes:
+            index = indexes[0]
+            file_path = self.mini_explorer.model.filePath(index)
+            base_name = os.path.basename(os.path.normpath(file_path))
+            self.ui.status_label.setText(
+                f"Opened File: <span style='color: #b0c27c;'>{base_name}</span> BatchCreator version: <span style='color: #7cc29b;'>{self.version}</span>")
+            self.current_file_path = file_path if not self.mini_explorer.model.isDir(index) else None
+        else:
+            self.ui.Status_Line_Qedit.clear()
+            self.ui.status_label.setText(
+                f"Opened File: None BatchCreator version: <span style='color: #7cc29b;'>{self.version}</span>")
+            self.current_file_path = None
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -127,37 +110,19 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def file_initialize(self):
         path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), self.ui.Status_Line_Qedit.toPlainText())
-        file_name = os.path.splitext(self.ui.Status_Line_Qedit.toPlainText())[0]  # Correctly derive the file name
+        file_name = os.path.splitext(self.ui.Status_Line_Qedit.toPlainText())[0]
         path_clear = os.path.dirname(os.path.normpath(path))
-        print(path_clear)
         if not path_clear:
             print("No path provided.")
             return
 
-        # Define the file extension
-        file_extension = ".hammer5tools_batch"
-
-        # Create the full file path
-        file_path = os.path.join(path_clear, f"{file_name}{file_extension}")
-
-        config = batch_creator_file_parser_initialize(self.version)
-        try:
-            # Write the configuration to a file
-            with open(file_path, 'w') as configfile:
-                config.write(configfile)
-
-            print(f"File created at: {file_path}")
-        except Exception as e:
-            print(f"Failed to create file: {e}")
+        file_path = os.path.join(path_clear, f"{file_name}.hammer5tools_batch")
+        batch_creator_file_parser_initialize(self.version, file_path)
 
     def save_file(self):
         if self.current_file_path:
-            try:
-                with open(self.current_file_path, 'w') as file:
-                    file.write(self.ui.kv3_QplainTextEdit.toPlainText())
-                print(f"File saved at: {self.current_file_path}")
-            except Exception as e:
-                print(f"Failed to save file: {e}")
+            exceptions = batch_creator_file_parser_parse(self.current_file_path)[2]
+            batch_creator_file_parser_output(self.version, self.ui.kv3_QplainTextEdit.toPlainText(), exceptions,self.current_file_path)
         else:
             print("No file is currently opened to save.")
 
@@ -167,23 +132,18 @@ class BatchCreatorMainWindow(QMainWindow):
             index = indexes[0]
             file_path = self.mini_explorer.model.filePath(index)
             if not self.mini_explorer.model.isDir(index):
-                file_extension = os.path.splitext(file_path)[1]
-                if file_extension != ".hammer5tools_batch":
-                    QMessageBox.warning(self, "Invalid File Extension",
-                                        "Please select a file with the .hammer5tools_batch extension.")
+                if os.path.splitext(file_path)[1] != ".hammer5tools_batch":
+                    QMessageBox.warning(self, "Invalid File Extension", "Please select a file with the .hammer5tools_batch extension.")
                     return
-
                 try:
-                    with open(file_path, 'r') as file:
-                        content = file.read()
-                        self.ui.kv3_QplainTextEdit.setPlainText(content)
-                    self.current_file_path = file_path  # Store the path of the opened file
+                    content = batch_creator_file_parser_parse(file_path)[1]
+                    self.ui.kv3_QplainTextEdit.setPlainText(content)
+                    self.current_file_path = file_path
                     print(f"File opened from: {file_path}")
                 except Exception as e:
                     QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
             else:
-                QMessageBox.information(self, "Folder Selected",
-                                        "You have selected a folder. Please select a file to open.")
+                QMessageBox.information(self, "Folder Selected", "You have selected a folder. Please select a file to open.")
         else:
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
         self.update_top_status_line()
