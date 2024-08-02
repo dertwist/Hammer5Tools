@@ -413,9 +413,9 @@ QPlainTextEdit {
 
 
 
-QPlainTextEdit:focus {
+QPlainTextEdit{
 
-    font: 700 10pt "Segoe UI";
+    font: 580 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -469,7 +469,7 @@ QTextEdit {
 }
 QTextEdit:focus {
     border: 1px solid #008CBA;
-    background-color: #E0F7FA;
+    background-color: #E3E3E3;
 }
 QTextEdit::selection {
     background-color: #414956;
@@ -484,7 +484,7 @@ QListWidget {
     border: 1px solid #CCCCCC;
     border-radius: 5px;
     padding: 5px;
-    background-color: #FFFFFF;
+    background-color: #E3E3E3;
 }
 QListWidget::item {
     padding: 5px;
