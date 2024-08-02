@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent
-from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QModelIndex, QFileInfo, QItemSelectionModel
+from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
+from BatchCreator.BatchCreator_file_parser import bc_get_config_value, bc_set_config_value
 
 class CustomFileSystemModel(QFileSystemModel):
     def data(self, index, role):
@@ -57,15 +58,19 @@ class CustomFileSystemModel(QFileSystemModel):
             return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | Qt.ItemIsDropEnabled | default_flags
         return default_flags
 
+
 class MiniWindowsExplorer(QMainWindow):
-    def __init__(self, parent=None, tree_directory=None):
+    def __init__(self, parent=None, tree_directory=None, addon=None):
         super().__init__(parent)
+
+        # Initialize the model first
         self.model = CustomFileSystemModel()
         self.model.setRootPath(tree_directory)
 
         # Set up the tree view
         self.tree = QTreeView(self)
         self.tree.setModel(self.model)
+
         self.tree.setRootIndex(self.model.index(tree_directory))
 
         # Hide all columns except "Name" (column 0) and "Size" (column 1)
@@ -104,6 +109,35 @@ class MiniWindowsExplorer(QMainWindow):
 
         # Connect key events
         self.tree.installEventFilter(self)
+
+        self.addon = addon
+
+        # Connect directory change signal
+        self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
+
+        # Call the method to select the last opened path after initialization
+        self.select_last_opened_path()
+        # Save the initial path
+
+
+
+    def select_last_opened_path(self):
+        last_opened_path = bc_get_config_value('MINI_EXPLORER_LAST_PATH', self.addon)
+        if last_opened_path:
+            last_opened_index = self.model.index(last_opened_path)
+            self.tree.selectionModel().select(last_opened_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+            self.tree.scrollTo(last_opened_index)
+
+    def save_current_path(self, path):
+        bc_set_config_value('MINI_EXPLORER_LAST_PATH', self.addon, path)
+
+    def on_directory_changed(self, current, previous):
+        current_path = self.model.filePath(current)
+        self.save_current_path(current_path)
+
+    # ... rest of the class methods ...
+
+
 
     def eventFilter(self, source, event):
         if event.type() == QMouseEvent.MouseButtonPress:
