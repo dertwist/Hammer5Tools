@@ -1,4 +1,30 @@
-import configparser
+import configparser, os
+from preferences import config_dir
+
+config_file_path = os.path.join(config_dir, 'batch_creator.cfg')
+os.makedirs(config_dir, exist_ok=True)
+config = configparser.ConfigParser()
+
+def bc_set_config_value(section, key, value):
+    if not config.has_section(section):
+        config.add_section(section)
+    config.set(section, key, value)
+    with open(config_file_path, 'w') as configfile:
+        config.write(configfile)
+
+def bc_get_config_value(section, key):
+    if config.has_section(section) and config.has_option(section, key):
+        return config.get(section, key)
+    return None
+
+def default_settings():
+    if os.path.exists(config_file_path):
+        config.read(config_file_path)
+    else:
+        bc_set_config_value('MINI_EXPLORER_LAST_PATH', '', '')
+    print(f"Configuration file path: {config_file_path}")
+
+default_settings()
 
 def batch_creator_file_parser_parse(config_file):
     # Create a ConfigParser object

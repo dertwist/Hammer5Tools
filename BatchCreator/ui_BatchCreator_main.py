@@ -252,10 +252,10 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.horizontalLayout_4.addWidget(self.save_button)
 
-        self.Import_Audio_button = QPushButton(self.frame_5)
-        self.Import_Audio_button.setObjectName(u"Import_Audio_button")
-        self.Import_Audio_button.setMinimumSize(QSize(0, 18))
-        self.Import_Audio_button.setStyleSheet(u"\n"
+        self.process_all_button = QPushButton(self.frame_5)
+        self.process_all_button.setObjectName(u"process_all_button")
+        self.process_all_button.setMinimumSize(QSize(0, 18))
+        self.process_all_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
@@ -287,10 +287,10 @@ class Ui_BatchCreator_MainWindow(object):
 "    }")
         icon4 = QIcon()
         icon4.addFile(u":/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Import_Audio_button.setIcon(icon4)
-        self.Import_Audio_button.setIconSize(QSize(20, 20))
+        self.process_all_button.setIcon(icon4)
+        self.process_all_button.setIconSize(QSize(20, 20))
 
-        self.horizontalLayout_4.addWidget(self.Import_Audio_button)
+        self.horizontalLayout_4.addWidget(self.process_all_button)
 
 
         self.verticalLayout.addWidget(self.frame_5)
@@ -352,6 +352,6 @@ class Ui_BatchCreator_MainWindow(object):
 "}", None))
         self.open_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Open", None))
         self.save_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Save", None))
-        self.Import_Audio_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Process all", None))
+        self.process_all_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Process all", None))
     # retranslateUi
 

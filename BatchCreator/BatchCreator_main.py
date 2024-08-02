@@ -7,6 +7,7 @@ from preferences import get_addon_name, get_cs2_path
 import os
 from BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
 from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse, batch_creator_file_parser_initialize, batch_creator_file_parser_output
+from BatchCreator.BatchCreator_process import batchcreator_process_all
 
 cs2_path = get_cs2_path()
 
@@ -20,7 +21,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
         tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
-        self.mini_explorer = MiniWindowsExplorer(self.ui.MiniWindows_explorer, tree_directory)
+        self.mini_explorer = MiniWindowsExplorer(self.ui.MiniWindows_explorer, tree_directory, get_addon_name())
 
         self.setup_ui()
         self.setup_connections()
@@ -41,7 +42,11 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.open_button.clicked.connect(self.open_file)
         self.setup_drag_and_drop(self.ui.folder_path_template, "Folder path")
         self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
+        self.ui.process_all_button.clicked.connect(self.process_all)
 
+
+    def process_all(self):
+        batchcreator_process_all(self.current_file_path)
     def setup_drag_and_drop(self, widget, default_text):
         widget.setAcceptDrops(True)
         widget.dragEnterEvent = self.label_dragEnterEvent
