@@ -46,8 +46,8 @@ class CustomHighlighter(QSyntaxHighlighter):
 
         # Define the patterns to be highlighted
         patterns = [
-            (r"%%#\$%%FOLDER_PATH%%\$#%%", folder_path_format),
-            (r"%%#\$%%ASSET_NAME%%\$#%%", asset_name_format)
+            (r"#\$FOLDER_PATH\$#", folder_path_format),
+            (r"#\$ASSET_NAME\$#", asset_name_format)
         ]
 
         # Add the existing patterns and their format to the highlighting rules
