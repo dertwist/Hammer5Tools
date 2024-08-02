@@ -75,12 +75,12 @@ class BatchCreatorMainWindow(QMainWindow):
         clipboard.setText(self.ui.Status_Line_Qedit.toPlainText())
 
     def update_status_line(self):
-        indexes = self.mini_explorer.tree.selectionModel().selectedIndexes()
-        if indexes:
-            index = indexes[0]
+        index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
+        if self.mini_explorer.model.isDir(index):
             file_path = self.mini_explorer.model.filePath(index)
-            base_name = os.path.basename(os.path.normpath(file_path))
-            self.ui.Status_Line_Qedit.setPlainText(base_name)
+            root_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
+            relative_path = os.path.relpath(file_path, root_directory)
+            self.ui.Status_Line_Qedit.setPlainText(relative_path)
         else:
             self.ui.Status_Line_Qedit.clear()
 
@@ -114,12 +114,16 @@ class BatchCreatorMainWindow(QMainWindow):
                 target_widget.setText(file_path)
 
     def file_initialize(self):
-        path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), self.ui.Status_Line_Qedit.toPlainText())
-        file_name = os.path.splitext(self.ui.Status_Line_Qedit.toPlainText())[0]
+        path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(),
+                            self.ui.Status_Line_Qedit.toPlainText())
+        file_name = os.path.basename(os.path.normpath(os.path.splitext(self.ui.Status_Line_Qedit.toPlainText())[0]))
+        print(file_name + ' file name')
         path_clear = os.path.dirname(os.path.normpath(path))
-        print(path_clear)
-        if not path_clear:
+        print(path_clear + ' path_clear')
+        if file_name == '.':
             print("No path provided.")
+            QMessageBox.warning(self, "Invalid Path",
+                                "Select folder.")
             return
 
         file_path = os.path.join(path_clear, f"{file_name}.hammer5tools_batch")
