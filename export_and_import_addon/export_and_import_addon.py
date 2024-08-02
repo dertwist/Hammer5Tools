@@ -109,7 +109,7 @@ class export_and_import_addon_dialog(QDialog):
         try:
             # Extract the zip file to the addons directory
             with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-                zip_ref.extractall(os.path.join(cs2_path, "content", "csgo_addons", addon_name))
+                zip_ref.extractall(os.path.join(cs2_path))
             print(f"Imported addon: {addon_name}")
             QMessageBox.information(self, 'Import Successful', f"Addon '{addon_name}' imported successfully.")
         except Exception as e:
