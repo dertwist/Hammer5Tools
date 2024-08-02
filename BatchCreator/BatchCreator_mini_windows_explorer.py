@@ -127,6 +127,10 @@ class MiniWindowsExplorer(QMainWindow):
         if index.isValid():
             # Context menu for folders and files
             if self.model.isDir(index):
+                open_folder_action = QAction("Open Folder in Explorer", self)
+                open_folder_action.triggered.connect(lambda: self.open_folder_in_explorer(index))
+                menu.addAction(open_folder_action)
+
                 rename_action = QAction("Rename Folder", self)
                 rename_action.triggered.connect(lambda: self.rename_item(index))
                 menu.addAction(rename_action)
@@ -153,6 +157,10 @@ class MiniWindowsExplorer(QMainWindow):
             menu.addAction(create_folder_action)
 
         menu.exec_(self.tree.viewport().mapToGlobal(position))
+
+    def open_folder_in_explorer(self, index):
+        folder_path = self.model.filePath(index)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(folder_path))
 
     def open_file(self, index):
         file_path = self.model.filePath(index)
