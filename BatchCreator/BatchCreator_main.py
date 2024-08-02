@@ -1,14 +1,13 @@
 from BatchCreator.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 from BatchCreator.BatchCreator_mini_windows_explorer import MiniWindowsExplorer
 from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QApplication, QMessageBox
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag
 from PySide6.QtCore import Qt, QMimeData
 from preferences import get_addon_name, get_cs2_path
 import os
 from BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
 from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse, batch_creator_file_parser_initialize, batch_creator_file_parser_output
 from BatchCreator.BatchCreator_process import batchcreator_process_all
-
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence
 cs2_path = get_cs2_path()
 
 class BatchCreatorMainWindow(QMainWindow):
@@ -44,9 +43,13 @@ class BatchCreatorMainWindow(QMainWindow):
         self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
         self.ui.process_all_button.clicked.connect(self.process_all)
 
+        # Create a shortcut for saving the file with Ctrl+S
+        save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
+        save_shortcut.activated.connect(self.save_file)
 
     def process_all(self):
         batchcreator_process_all(self.current_file_path)
+
     def setup_drag_and_drop(self, widget, default_text):
         widget.setAcceptDrops(True)
         widget.dragEnterEvent = self.label_dragEnterEvent
@@ -84,8 +87,6 @@ class BatchCreatorMainWindow(QMainWindow):
         else:
             self.ui.Status_Line_Qedit.clear()
 
-
-
     def update_top_status_line(self):
         indexes = self.mini_explorer.tree.selectionModel().selectedIndexes()
         if indexes:
@@ -114,8 +115,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 target_widget.setText(file_path)
 
     def file_initialize(self):
-        path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(),
-                            self.ui.Status_Line_Qedit.toPlainText())
+        path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(),self.ui.Status_Line_Qedit.toPlainText())
         file_name = os.path.basename(os.path.normpath(os.path.splitext(self.ui.Status_Line_Qedit.toPlainText())[0]))
         print(file_name + ' file name')
         path_clear = os.path.dirname(os.path.normpath(path))
