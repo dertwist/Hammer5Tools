@@ -38,24 +38,27 @@ def batch_creator_file_parser_parse(config_file):
 
     # Extract values from the configuration
     version = config.get('APP', 'version', fallback=None)
-    content = json.loads(config.get('CONTENT','file',fallback=None))
+    content = json.loads(config.get('FILE','content',fallback=None))
+    extension = config.get('FILE', 'extension', fallback=None)
     exceptions = config.get('EXCEPTIONS', 'ignore_list', fallback=None)
 
-    return version, content, exceptions
+    return version, content, exceptions, extension
 
-def batch_creator_file_parser_output(version, content, exceptions, file_path):
+def batch_creator_file_parser_output(version, content, exceptions, extension, file_path):
     config = configparser.ConfigParser()
     # Add sections and key-value pairs
     config['APP'] = {
         'name': 'BatchCreator',
         'version': version
     }
-    config['CONTENT'] = {
-        'file': json.dumps(content)
+    config['FILE'] = {
+        'content': json.dumps(content),
+        'extension': extension
     }
     config['EXCEPTIONS'] = {
         'ignore_list': exceptions
     }
+
     try:
         with open(file_path, 'w') as configfile:
             config.write(configfile)
@@ -72,8 +75,9 @@ def batch_creator_file_parser_initialize(version,file_path):
         'name': 'BatchCreator',
         'version': version
     }
-    config['CONTENT'] = {
-        'file': json.dumps('')
+    config['FILE'] = {
+        'content': json.dumps(''),
+        'extension': 'vmdl'
     }
     config['EXCEPTIONS'] = {
         'ignore_list': 'name.extension,name.extension,relative_path'

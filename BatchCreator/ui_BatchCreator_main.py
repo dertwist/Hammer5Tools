@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QHeaderView,
-    QLabel, QMainWindow, QPlainTextEdit, QPushButton,
-    QSizePolicy, QTextEdit, QToolButton, QTreeView,
-    QVBoxLayout, QWidget)
+    QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
+    QPushButton, QSizePolicy, QTextEdit, QToolButton,
+    QTreeView, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_BatchCreator_MainWindow(object):
@@ -164,6 +164,11 @@ class Ui_BatchCreator_MainWindow(object):
         self.kv3_QplainTextEdit.setStyleSheet(u"")
 
         self.verticalLayout.addWidget(self.kv3_QplainTextEdit)
+
+        self.extension_lineEdit = QLineEdit(self.frame)
+        self.extension_lineEdit.setObjectName(u"extension_lineEdit")
+
+        self.verticalLayout.addWidget(self.extension_lineEdit)
 
         self.frame_5 = QFrame(self.frame)
         self.frame_5.setObjectName(u"frame_5")
@@ -312,44 +317,9 @@ class Ui_BatchCreator_MainWindow(object):
         self.status_label.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Oppened File: BatchCreator version:", None))
         self.folder_path_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Folder path", None))
         self.assets_name_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Asset name", None))
-        self.kv3_QplainTextEdit.setPlainText(QCoreApplication.translate("BatchCreator_MainWindow", u"// THIS FILE IS AUTO-GENERATED\n"
-"\n"
-"Layer0\n"
-"{\n"
-"	shader \"csgo_weapon.vfx\"\n"
-"\n"
-"	//---- Ambient Occlusion ----\n"
-"	TextureAmbientOcclusion \"weapons/models/knife/knife_karambit/materials/karambit_ao.png\"\n"
-"\n"
-"	//---- Color ----\n"
-"	g_flModelTintAmount \"1.000\"\n"
-"	g_flTexCoordRotation \"0.000\"\n"
-"	g_nScaleTexCoordUByModelScaleAxis \"0\" // None\n"
-"	g_nScaleTexCoordVByModelScaleAxis \"0\" // None\n"
-"	g_vColorTint \"[1.000000 1.000000 1.000000 0.000000]\"\n"
-"	g_vTexCoordCenter \"[0.500 0.500]\"\n"
-"	g_vTexCoordOffset \"[0.000 0.000]\"\n"
-"	g_vTexCoordScale \"[1.000 1.000]\"\n"
-"	g_vTexCoordScrollSpeed \"[0.000 0.000]\"\n"
-"	TextureColor1 \"weapons/models/knife/knife_karambit/materials/karambit_gold_a.png\"\n"
-"\n"
-"	//---- Fog ----\n"
-"	g_bFogEnabled \"1\"\n"
-"\n"
-"	//---- Lighting ----\n"
-"	g_flMetalnessTransitionBias \"2.000\"\n"
-"	g_vMetalnessRemapRange \"[0.000 0.903]\"\n"
-"	TextureMetalness1 \"weapons/models/knife/knife_karambit/materials/karambit_gold_m.png\"\n"
-"	TextureRoughne"
-                        "ss1 \"materials/default/default_rough.tga\"\n"
-"\n"
-"	//---- Normal Map ----\n"
-"	TextureNormal \"weapons/models/knife/knife_karambit/materials/karambit_normal.png\"\n"
-"\n"
-"	//---- Texture Address Mode ----\n"
-"	g_nTextureAddressModeU \"0\" // Wrap\n"
-"	g_nTextureAddressModeV \"0\" // Wrap\n"
-"}", None))
+        self.kv3_QplainTextEdit.setPlainText("")
+        self.kv3_QplainTextEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Content", None))
+        self.extension_lineEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"File extension (vmdl, vmat etc).", None))
         self.open_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Open", None))
         self.save_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Save", None))
         self.process_all_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Process all", None))

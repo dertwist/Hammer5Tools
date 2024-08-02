@@ -9,6 +9,7 @@ from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_pars
 from BatchCreator.BatchCreator_process import batchcreator_process_all
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence
 cs2_path = get_cs2_path()
+from packaging import version
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, version, parent=None):
@@ -68,7 +69,7 @@ class BatchCreatorMainWindow(QMainWindow):
     def label_mousePressEvent(self, event, default_text):
         if event.button() == Qt.LeftButton:
             mimeData = QMimeData()
-            mimeData.setText(f"%%#$%%{default_text.upper().replace(' ', '_')}%%$#%%")
+            mimeData.setText(f"#${default_text.upper().replace(' ', '_')}$#")
             drag = QDrag(self)
             drag.setMimeData(mimeData)
             drag.exec(Qt.MoveAction)
@@ -133,7 +134,9 @@ class BatchCreatorMainWindow(QMainWindow):
     def save_file(self):
         if self.current_file_path:
             exceptions = batch_creator_file_parser_parse(self.current_file_path)[2]
-            batch_creator_file_parser_output(self.version, self.ui.kv3_QplainTextEdit.toPlainText(), exceptions,self.current_file_path)
+            content = self.ui.kv3_QplainTextEdit.toPlainText()
+            extension = self.ui.extension_lineEdit.text()
+            batch_creator_file_parser_output(self.version, content, exceptions, extension,  self.current_file_path)
         else:
             print("No file is currently opened to save.")
 
@@ -144,17 +147,28 @@ class BatchCreatorMainWindow(QMainWindow):
             file_path = self.mini_explorer.model.filePath(index)
             if not self.mini_explorer.model.isDir(index):
                 if os.path.splitext(file_path)[1] != ".hammer5tools_batch":
-                    QMessageBox.warning(self, "Invalid File Extension", "Please select a file with the .hammer5tools_batch extension.")
+                    QMessageBox.warning(self, "Invalid File Extension",
+                                        "Please select a file with the .hammer5tools_batch extension.")
                     return
                 try:
+                    version_file = batch_creator_file_parser_parse(file_path)[0]
                     content = batch_creator_file_parser_parse(file_path)[1]
+                    extension = batch_creator_file_parser_parse(file_path)[3]
+
+                    # Compare versions
+                    if version.parse(self.version) > version.parse(version_file):
+                        QMessageBox.information(self, "Newer Version Available",
+                                                f"The current version ({self.version}) is newer than the file version ({version_file}).")
+
                     self.ui.kv3_QplainTextEdit.setPlainText(content)
+                    self.ui.extension_lineEdit.setText(extension)
                     self.current_file_path = file_path
                     print(f"File opened from: {file_path}")
                 except Exception as e:
                     QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
             else:
-                QMessageBox.information(self, "Folder Selected", "You have selected a folder. Please select a file to open.")
+                QMessageBox.information(self, "Folder Selected",
+                                        "You have selected a folder. Please select a file to open.")
         else:
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
         self.update_top_status_line()

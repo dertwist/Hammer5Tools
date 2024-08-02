@@ -450,7 +450,7 @@ QLineEdit {
 }
 QLineEdit:focus {
     border: 1px solid #008CBA;
-    background-color: #E0F7FA;
+    border-color: rgba(80, 80, 80, 255);
 }
 QLineEdit::selection {
     background-color: #414956;
