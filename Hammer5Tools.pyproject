@@ -12,6 +12,7 @@
         "create_addon/create_addon_dialog.ui",
         "loading_editor/loading_editor_image_frame_widget.ui",
         "loading_editor/loading_editor_mainwindow.ui",
-        "export_and_import_addon/export_and_import_addon.ui"
+        "export_and_import_addon/export_and_import_addon.ui",
+        "BatchCreator/BatchCreator_main.ui"
     ]
 }

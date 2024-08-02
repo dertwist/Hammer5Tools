@@ -64,5 +64,65 @@
         <file>images/help/about/tooltip_help.png</file>
         <file>icons/download_2_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
         <file>icons/upload_2_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</file>
+        <file>icons/123_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/add_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/add_task_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/all_match_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/apps_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/arrow_back_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/arrow_forward_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/arrow_outward_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/arrow_top_left_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/assistant_navigation_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/bottom_panel_close_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/cancel_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/category_search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/check_box_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/check_box_outline_blank_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/check_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/clock_loader_20_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/clock_loader_40_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/clock_loader_60_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/close_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/content_cut_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/copy_all_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/create_new_folder_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/density_medium_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/done_outline_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/download_for_offline_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/dynamic_form_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/enable_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/expand_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/expand_circle_down_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/filter_list_off_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/folder_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/forward_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/home_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/install_desktop_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/menu_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/more_horiz_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/more_vert_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/output_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/radio_button_partial_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/radio_button_unchecked_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/repartition_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/restore_from_trash_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/star_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/subdirectory_arrow_right_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/sync_alt_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/system_update_alt_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/toggle_off_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/token_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/undo_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/unfold_less_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/zoom_in_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
     </qresource>
 </RCC>

@@ -92,22 +92,11 @@ class Ui_Widget(object):
         self.verticalLayout_3.addWidget(self.label)
 
         self.MainWindowTools_tabs.addTab(self.hotkeyeditor_tab, "")
-        self.BatchCreator = QWidget()
-        self.BatchCreator.setObjectName(u"BatchCreator")
-        self.verticalLayout_2 = QVBoxLayout(self.BatchCreator)
+        self.BatchCreator_tab = QWidget()
+        self.BatchCreator_tab.setObjectName(u"BatchCreator_tab")
+        self.verticalLayout_2 = QVBoxLayout(self.BatchCreator_tab)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.label_10 = QLabel(self.BatchCreator)
-        self.label_10.setObjectName(u"label_10")
-        sizePolicy1.setHeightForWidth(self.label_10.sizePolicy().hasHeightForWidth())
-        self.label_10.setSizePolicy(sizePolicy1)
-        self.label_10.setStyleSheet(u"font: 24pt \"Segoe UI\";")
-        self.label_10.setScaledContents(False)
-        self.label_10.setAlignment(Qt.AlignCenter)
-        self.label_10.setMargin(0)
-
-        self.verticalLayout_2.addWidget(self.label_10)
-
-        self.MainWindowTools_tabs.addTab(self.BatchCreator, "")
+        self.MainWindowTools_tabs.addTab(self.BatchCreator_tab, "")
         self.smartpropeditor_tab = QWidget()
         self.smartpropeditor_tab.setObjectName(u"smartpropeditor_tab")
         self.verticalLayout_4 = QVBoxLayout(self.smartpropeditor_tab)
@@ -300,7 +289,7 @@ class Ui_Widget(object):
 
         self.retranslateUi(Widget)
 
-        self.MainWindowTools_tabs.setCurrentIndex(0)
+        self.MainWindowTools_tabs.setCurrentIndex(3)
 
 
         QMetaObject.connectSlotsByName(Widget)
@@ -321,8 +310,7 @@ class Ui_Widget(object):
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.soundeditor_tab), QCoreApplication.translate("Widget", u"SoundEvent Editor", None))
         self.label.setText(QCoreApplication.translate("Widget", u"Will be soon", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.hotkeyeditor_tab), QCoreApplication.translate("Widget", u"Hotkey Editor", None))
-        self.label_10.setText(QCoreApplication.translate("Widget", u"Will be soon", None))
-        self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.BatchCreator), QCoreApplication.translate("Widget", u"BatchCreator", None))
+        self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.BatchCreator_tab), QCoreApplication.translate("Widget", u"BatchCreator", None))
         self.label_2.setText(QCoreApplication.translate("Widget", u"Will be soon", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.smartpropeditor_tab), QCoreApplication.translate("Widget", u"SmartProp Editor", None))
         self.label_4.setText(QCoreApplication.translate("Widget", u"Will be soon", None))
