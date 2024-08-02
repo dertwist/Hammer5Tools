@@ -117,11 +117,13 @@ class BatchCreatorMainWindow(QMainWindow):
         path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), self.ui.Status_Line_Qedit.toPlainText())
         file_name = os.path.splitext(self.ui.Status_Line_Qedit.toPlainText())[0]
         path_clear = os.path.dirname(os.path.normpath(path))
+        print(path_clear)
         if not path_clear:
             print("No path provided.")
             return
 
         file_path = os.path.join(path_clear, f"{file_name}.hammer5tools_batch")
+        print(file_path)
         batch_creator_file_parser_initialize(self.version, file_path)
 
     def save_file(self):
