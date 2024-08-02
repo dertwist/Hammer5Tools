@@ -157,7 +157,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
                     # Compare versions
                     if version.parse(self.version) > version.parse(version_file):
-                        QMessageBox.information(self, "Newer Version Available",
+                        QMessageBox.information(self, "Attention",
                                                 f"The current version ({self.version}) is newer than the file version ({version_file}).")
 
                     self.ui.kv3_QplainTextEdit.setPlainText(content)
