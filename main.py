@@ -65,6 +65,7 @@ class Widget(QWidget):
         self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
         self.LoadingEditorMainWindow = Loading_editorMainWindow()
         self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
+        # BatchCreator Initialization
         self.BatchCreator_MainWindow = BatchCreatorMainWindow()
         self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
 
@@ -111,6 +112,13 @@ class Widget(QWidget):
         self.SoundEventEditorMainWidget.deleteLater()
         self.SoundEventEditorMainWidget = SoundEventEditorMainWidget()
         self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
+
+
+
+        self.ui.BatchCreator_tab.layout().removeWidget(self.BatchCreator_MainWindow)
+        self.BatchCreator_MainWindow.deleteLater()
+        self.BatchCreator_MainWindow = BatchCreatorMainWindow()
+        self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
 
     def open_addons_folder(self):
         addon_name = self.ui.ComboBoxSelectAddon.currentText()
