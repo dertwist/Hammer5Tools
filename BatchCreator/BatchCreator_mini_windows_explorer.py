@@ -138,6 +138,10 @@ class MiniWindowsExplorer(QMainWindow):
                 delete_action = QAction("Remove Folder", self)
                 delete_action.triggered.connect(lambda: self.delete_item(index))
                 menu.addAction(delete_action)
+
+                new_folder_action = QAction("New Folder", self)
+                new_folder_action.triggered.connect(lambda: self.create_folder(index))
+                menu.addAction(new_folder_action)
             else:
                 open_action = QAction("Open File", self)
                 open_action.triggered.connect(lambda: self.open_file(index))
