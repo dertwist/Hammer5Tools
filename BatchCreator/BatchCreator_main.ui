@@ -31,11 +31,17 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QFrame" name="frame_2">
+     <widget class="QFrame" name="left_vertical_frame">
       <property name="maximumSize">
        <size>
-        <width>330</width>
+        <width>340</width>
         <height>16777215</height>
+       </size>
+      </property>
+      <property name="baseSize">
+       <size>
+        <width>330</width>
+        <height>0</height>
        </size>
       </property>
       <property name="frameShape">
@@ -68,7 +74,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QFrame" name="frame_3">
+        <widget class="QFrame" name="horizontal_frame">
          <property name="maximumSize">
           <size>
            <width>16777215</width>
