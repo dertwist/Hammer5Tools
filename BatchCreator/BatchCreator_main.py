@@ -8,6 +8,7 @@ from BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
 from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse, batch_creator_file_parser_initialize, batch_creator_file_parser_output
 from BatchCreator.BatchCreator_process import batchcreator_process_all
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence
+from PySide6.QtWidgets import QMessageBox, QPushButton
 cs2_path = get_cs2_path()
 from packaging import version
 
@@ -84,6 +85,7 @@ class BatchCreatorMainWindow(QMainWindow):
             file_path = self.mini_explorer.model.filePath(index)
             root_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
             relative_path = os.path.relpath(file_path, root_directory)
+            relative_path = os.path.normpath(relative_path)
             self.ui.Status_Line_Qedit.setPlainText(relative_path)
         else:
             self.ui.Status_Line_Qedit.clear()
@@ -127,7 +129,7 @@ class BatchCreatorMainWindow(QMainWindow):
                                 "Select folder.")
             return
 
-        file_path = os.path.join(path_clear, f"{file_name}.hammer5tools_batch")
+        file_path = os.path.join(path_clear, f"{file_name}.h5t_batch")
         print(file_path)
         batch_creator_file_parser_initialize(self.version, file_path)
 
@@ -146,24 +148,23 @@ class BatchCreatorMainWindow(QMainWindow):
             index = indexes[0]
             file_path = self.mini_explorer.model.filePath(index)
             if not self.mini_explorer.model.isDir(index):
-                if os.path.splitext(file_path)[1] != ".hammer5tools_batch":
-                    QMessageBox.warning(self, "Invalid File Extension",
-                                        "Please select a file with the .hammer5tools_batch extension.")
+                if os.path.splitext(file_path)[1] != ".h5t_batch":
+                    msg_box = QMessageBox(self)
+                    msg_box.setIcon(QMessageBox.Warning)
+                    msg_box.setWindowTitle("Invalid File Extension")
+                    msg_box.setText("Please select a file with the .h5t_batch extension.")
+                    open_anyway_button = QPushButton("Open Anyway")
+                    msg_box.addButton(open_anyway_button, QMessageBox.AcceptRole)
+                    msg_box.addButton(QMessageBox.Cancel)
+                    response = msg_box.exec()
+
+                    if response == QMessageBox.AcceptRole:
+                        print('test')
+                        self._open_file_content(file_path)
+                        self.update_top_status_line()
                     return
                 try:
-                    version_file = batch_creator_file_parser_parse(file_path)[0]
-                    content = batch_creator_file_parser_parse(file_path)[1]
-                    extension = batch_creator_file_parser_parse(file_path)[3]
-
-                    # Compare versions
-                    if version.parse(self.version) > version.parse(version_file):
-                        QMessageBox.information(self, "Attention",
-                                                f"The current version ({self.version}) is newer than the file version ({version_file}).")
-
-                    self.ui.kv3_QplainTextEdit.setPlainText(content)
-                    self.ui.extension_lineEdit.setText(extension)
-                    self.current_file_path = file_path
-                    print(f"File opened from: {file_path}")
+                    self._open_file_content(file_path)
                 except Exception as e:
                     QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
             else:
@@ -172,3 +173,18 @@ class BatchCreatorMainWindow(QMainWindow):
         else:
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
         self.update_top_status_line()
+
+    def _open_file_content(self, file_path):
+        version_file = batch_creator_file_parser_parse(file_path)[0]
+        content = batch_creator_file_parser_parse(file_path)[1]
+        extension = batch_creator_file_parser_parse(file_path)[3]
+
+        # Compare versions
+        if version.parse(self.version) > version.parse(version_file):
+            QMessageBox.information(self, "Attention",
+                                    f"The current version ({self.version}) is newer than the file version ({version_file}).")
+
+        self.ui.kv3_QplainTextEdit.setPlainText(content)
+        self.ui.extension_lineEdit.setText(extension)
+        self.current_file_path = file_path
+        print(f"File opened from: {file_path}")
