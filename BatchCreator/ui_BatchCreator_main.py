@@ -32,34 +32,35 @@ class Ui_BatchCreator_MainWindow(object):
         self.horizontalLayout = QHBoxLayout(self.centralwidget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.frame_2 = QFrame(self.centralwidget)
-        self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setMaximumSize(QSize(330, 16777215))
-        self.frame_2.setFrameShape(QFrame.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_2 = QVBoxLayout(self.frame_2)
+        self.left_vertical_frame = QFrame(self.centralwidget)
+        self.left_vertical_frame.setObjectName(u"left_vertical_frame")
+        self.left_vertical_frame.setMaximumSize(QSize(340, 16777215))
+        self.left_vertical_frame.setBaseSize(QSize(330, 0))
+        self.left_vertical_frame.setFrameShape(QFrame.StyledPanel)
+        self.left_vertical_frame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_2 = QVBoxLayout(self.left_vertical_frame)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.MiniWindows_explorer = QTreeView(self.frame_2)
+        self.MiniWindows_explorer = QTreeView(self.left_vertical_frame)
         self.MiniWindows_explorer.setObjectName(u"MiniWindows_explorer")
         self.MiniWindows_explorer.setMaximumSize(QSize(16777215, 16777215))
 
         self.verticalLayout_2.addWidget(self.MiniWindows_explorer)
 
-        self.frame_3 = QFrame(self.frame_2)
-        self.frame_3.setObjectName(u"frame_3")
-        self.frame_3.setMaximumSize(QSize(16777215, 32))
-        self.frame_3.setFrameShape(QFrame.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_2 = QHBoxLayout(self.frame_3)
+        self.horizontal_frame = QFrame(self.left_vertical_frame)
+        self.horizontal_frame.setObjectName(u"horizontal_frame")
+        self.horizontal_frame.setMaximumSize(QSize(16777215, 32))
+        self.horizontal_frame.setFrameShape(QFrame.StyledPanel)
+        self.horizontal_frame.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_2 = QHBoxLayout(self.horizontal_frame)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.Status_Line_Qedit = QTextEdit(self.frame_3)
+        self.Status_Line_Qedit = QTextEdit(self.horizontal_frame)
         self.Status_Line_Qedit.setObjectName(u"Status_Line_Qedit")
 
         self.horizontalLayout_2.addWidget(self.Status_Line_Qedit)
 
-        self.Copy_from_status_line_toolButton = QToolButton(self.frame_3)
+        self.Copy_from_status_line_toolButton = QToolButton(self.horizontal_frame)
         self.Copy_from_status_line_toolButton.setObjectName(u"Copy_from_status_line_toolButton")
         icon = QIcon()
         icon.addFile(u":/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
@@ -68,7 +69,7 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.Copy_from_status_line_toolButton)
 
-        self.file_initialize_button = QToolButton(self.frame_3)
+        self.file_initialize_button = QToolButton(self.horizontal_frame)
         self.file_initialize_button.setObjectName(u"file_initialize_button")
         icon1 = QIcon()
         icon1.addFile(u":/icons/add_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
@@ -78,10 +79,10 @@ class Ui_BatchCreator_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.file_initialize_button)
 
 
-        self.verticalLayout_2.addWidget(self.frame_3)
+        self.verticalLayout_2.addWidget(self.horizontal_frame)
 
 
-        self.horizontalLayout.addWidget(self.frame_2)
+        self.horizontalLayout.addWidget(self.left_vertical_frame)
 
         self.frame = QFrame(self.centralwidget)
         self.frame.setObjectName(u"frame")

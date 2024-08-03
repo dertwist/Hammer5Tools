@@ -134,7 +134,8 @@ class MiniWindowsExplorer(QMainWindow):
                 if not index.isValid():
                     self.tree.clearSelection()
         elif event.type() == QKeyEvent.KeyPress and event.key() == Qt.Key_Delete:
-            self.delete_selected_items()
+            if self.tree.selectionModel().hasSelection():  # Check if there is any selection
+                self.delete_selected_items()
         return super().eventFilter(source, event)
 
     def open_context_menu(self, position):
