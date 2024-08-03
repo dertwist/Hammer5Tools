@@ -1,4 +1,3 @@
-import sys
 import time
 import psutil
 import pygetwindow as gw
@@ -9,8 +8,12 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 client_id = '1265275649543897202'
-RPC = Presence(client_id)
-RPC.connect()
+try:
+    RPC = Presence(client_id)
+    RPC.connect()
+except:
+    print('Discord not running')
+    pass
 
 DISCORD_STATUS = 'DISCORD_STATUS'
 CUSTOM_STATUS_KEY = 'custom_status'
