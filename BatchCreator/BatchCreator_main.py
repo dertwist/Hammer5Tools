@@ -8,7 +8,8 @@ from BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
 from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse, batch_creator_file_parser_initialize, batch_creator_file_parser_output
 from BatchCreator.BatchCreator_process import batchcreator_process_all
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence
-from PySide6.QtWidgets import QMessageBox, QPushButton
+from PySide6.QtWidgets import QMessageBox
+
 cs2_path = get_cs2_path()
 from packaging import version
 
@@ -28,12 +29,14 @@ class BatchCreatorMainWindow(QMainWindow):
         self.setup_connections()
         self.update_top_status_line()
 
+
     def setup_ui(self):
         layout = QVBoxLayout(self.ui.MiniWindows_explorer)
         layout.addWidget(self.mini_explorer.tree)
         layout.setContentsMargins(0, 0, 0, 0)
         self.ui.Status_Line_Qedit.setReadOnly(True)
         self.setAcceptDrops(True)
+
 
     def setup_connections(self):
         self.mini_explorer.tree.selectionModel().selectionChanged.connect(self.update_status_line)
@@ -80,15 +83,18 @@ class BatchCreatorMainWindow(QMainWindow):
         clipboard.setText(self.ui.Status_Line_Qedit.toPlainText())
 
     def update_status_line(self):
-        index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
-        if self.mini_explorer.model.isDir(index):
-            file_path = self.mini_explorer.model.filePath(index)
-            root_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
-            relative_path = os.path.relpath(file_path, root_directory)
-            relative_path = os.path.normpath(relative_path)
-            self.ui.Status_Line_Qedit.setPlainText(relative_path)
-        else:
-            self.ui.Status_Line_Qedit.clear()
+        try:
+            index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
+            if self.mini_explorer.model.isDir(index):
+                file_path = self.mini_explorer.model.filePath(index)
+                root_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
+                relative_path = os.path.relpath(file_path, root_directory)
+                relative_path = os.path.normpath(relative_path)
+                self.ui.Status_Line_Qedit.setPlainText(relative_path)
+            else:
+                self.ui.Status_Line_Qedit.clear()
+        except:
+            pass
 
     def update_top_status_line(self):
         indexes = self.mini_explorer.tree.selectionModel().selectedIndexes()
