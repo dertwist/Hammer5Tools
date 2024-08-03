@@ -24,7 +24,7 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
 
-app_version = '1.3.1'
+app_version = '1.3.2'
 batchcreator_version = '1.0.2'
 class Widget(QWidget):
     def __init__(self, parent=None):
@@ -171,8 +171,7 @@ class Widget(QWidget):
         dialog.finished.connect(self.refresh_addon_combobox)
         dialog.show()
     def SteamNoLogonFix(self):
-        self.thread = SteamNoLogoFixThreadClass(parent=None, addon_name=get_addon_name(),
-                                                NCM_mode=get_config_bool('LAUNCH', 'ncm_mode'))
+        self.thread = SteamNoLogoFixThreadClass()
         self.thread.start()
         self.thread.stop()
 

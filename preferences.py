@@ -67,6 +67,7 @@ def default_settings():
         set_config_bool('APP', 'minimize_message_shown', 'True')
         set_config_bool('APP', 'start_with_system', 'False')
         set_config_bool('APP', 'first_launch', 'True')
+        set_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix', 'False')
         os.makedirs(os.path.join(config_dir, 'presets'), exist_ok=True)
     print(f"Configuration file path: {config_file_path}")
 
@@ -129,6 +130,8 @@ class PreferencesDialog(QDialog):
             self.ui.checkBox_show_in_hammer_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_status'))
             self.ui.checkBox_hide_project_name_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_project_name'))
             self.ui.editline_custom_discord_status.setText(get_config_value('DISCORD_STATUS', 'custom_status'))
+            # other
+            self.ui.launch_addon_after_nosteamlogon_fix.setChecked(get_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix'))
             #     start with system
             self.ui.checkBox_start_with_system.setChecked(get_config_bool('APP', 'start_with_system'))
         except:
@@ -157,6 +160,9 @@ class PreferencesDialog(QDialog):
         set_config_value('DISCORD_STATUS', 'show_status',str(self.ui.checkBox_show_in_hammer_discord_status.isChecked()))
         set_config_value('DISCORD_STATUS', 'show_project_name',str(self.ui.checkBox_hide_project_name_discord_status.isChecked()))
         set_config_value('DISCORD_STATUS', 'custom_status', self.ui.editline_custom_discord_status.text())
+
+        # other
+        set_config_value('OTHER', 'launch_addon_after_nosteamlogon_fix', str(self.ui.launch_addon_after_nosteamlogon_fix.isChecked()))
 
 
 
