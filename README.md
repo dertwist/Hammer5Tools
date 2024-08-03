@@ -7,8 +7,11 @@
 
 
 <p align="center">
-    <a href="https://discord.gg/JzcHMFbCEC">
+    <a href="https://github.com/dertwist/Hammer5Tools/releases/latest">
         <img src="https://raw.githubusercontent.com/garlontas/buttons/main/buttons/150x44/windows-download.svg" width="196">
+    </a>
+    <a href="https://discord.gg/JzcHMFbCEC">
+        <img src="readme/discord_header_0.png" width="196">
     </a>
 </p>
 
@@ -35,6 +38,6 @@ A tool that helps with smartprops creation in the game.
 | Loading Editor | Done |
 | SoundEvent Editor | In process |
 | Hotkey Editor | planned |
-| BatchCreator | planned |
+| BatchCreator | Done |
 | SmartProp Editor | planned |
 | Sync Editor | planned |
