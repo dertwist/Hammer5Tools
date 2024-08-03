@@ -3,10 +3,9 @@ from preferences import config_dir
 
 config_file_path = os.path.join(config_dir, 'batch_creator.cfg')
 os.makedirs(config_dir, exist_ok=True)
-
+config = configparser.ConfigParser()
 
 def bc_set_config_value(section, key, value):
-    config = configparser.ConfigParser()
     if not config.has_section(section):
         config.add_section(section)
     config.set(section, key, value)
@@ -14,13 +13,11 @@ def bc_set_config_value(section, key, value):
         config.write(configfile)
 
 def bc_get_config_value(section, key):
-    config = configparser.ConfigParser()
     if config.has_section(section) and config.has_option(section, key):
         return config.get(section, key)
     return None
 
 def default_settings():
-    config = configparser.ConfigParser()
     if os.path.exists(config_file_path):
         config.read(config_file_path)
     else:
