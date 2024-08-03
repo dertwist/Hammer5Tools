@@ -126,8 +126,11 @@ class Widget(QWidget):
                 self.BatchCreator_MainWindow = None
         except Exception as e:
             print(f"Error while cleaning up BatchCreator_MainWindow: {e}")
-        self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
-        self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
+        try:
+            self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
+            self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
+        except Exception as e:
+            print(f"Error while set up BatchCreator_MainWindow: {e}")
 
     def open_addons_folder(self):
         addon_name = self.ui.ComboBoxSelectAddon.currentText()
