@@ -2,9 +2,10 @@ import requests, os
 from PySide6.QtWidgets import QMessageBox, QPushButton
 import webbrowser
 from PySide6.QtCore import Qt
+from packaging import version
+from PySide6.QtGui import QIcon
 
-
-def check_updates(repo_url, current_version):
+def check_updates(repo_url, current_version, silent):
     # Extract the owner and repo name from the URL
     parts = repo_url.rstrip('/').split('/')
     owner = parts[-2]
@@ -24,33 +25,55 @@ def check_updates(repo_url, current_version):
         print(f"Latest version: {latest_version}")
         print(f"Release notes: {release_notes}")
 
-        # Compare the current version with the latest version
-        if current_version == latest_version:
-            print("You are using the latest version.")
-        else:
+        # Compare the current version with the latest version using packaging.version
+        if version.parse(current_version) < version.parse(latest_version):
             print(f"A new version is available: {latest_version}. You are using version: {current_version}.")
             show_update_notification(latest_version, release_notes, owner, repo)
+        else:
+            print("You are using the latest version.")
+            if not silent:
+                show_update_check_result_notification(latest_version, release_notes, owner, repo)
     else:
         print(f"Failed to fetch releases. Status code: {response.status_code}")
 
-
 def show_update_notification(latest_version, release_notes, owner, repo):
     msg_box = QMessageBox()
+    msg_box.setWindowIcon(QIcon.fromTheme(":/icons/appicon.ico"))
     msg_box.setIcon(QMessageBox.Information)
-    msg_box.setWindowTitle("New Update Available")
+    msg_box.setWindowTitle("Updater")
     msg_box.setTextFormat(Qt.RichText)  # Ensure the text format is set to RichText
 
     # Replace newlines with HTML line breaks
     formatted_release_notes = release_notes.replace('\n', '<br>')
 
-    msg_box.setText(f"<h2>Version: {latest_version}</h2>\n\n"
+    msg_box.setText(f"<h2>New version available: {latest_version}</h2>\n\n"
                     f"Release notes:<br>{formatted_release_notes}")
 
-    download_button = QPushButton("Download")
+    download_button = QPushButton("Update")
     download_button.clicked.connect(lambda: show_install_dialog())
     msg_box.addButton(download_button, QMessageBox.ActionRole)
 
-    change_log_button = QPushButton("Visit Change Log")
+    change_log_button = QPushButton("ReleaseNotes")
+    api_url = f"https://github.com/{owner}/{repo}/releases/latest"
+    change_log_button.clicked.connect(lambda: os.startfile(api_url))
+    msg_box.addButton(change_log_button, QMessageBox.ActionRole)
+
+    msg_box.setStandardButtons(QMessageBox.Ok)
+    msg_box.exec()
+
+def show_update_check_result_notification(latest_version, release_notes, owner, repo):
+    msg_box = QMessageBox()
+    msg_box.setWindowIcon(QIcon.fromTheme(":/icons/appicon.ico"))
+    msg_box.setIcon(QMessageBox.Information)
+    msg_box.setWindowTitle("Updater")
+    msg_box.setTextFormat(Qt.RichText)  # Ensure the text format is set to RichText
+
+    # Replace newlines with HTML line breaks
+    formatted_release_notes = release_notes.replace('\n', '<br>')
+
+    msg_box.setText(f"<h2>You have the latest version: {latest_version}</h2>\n\n"
+                    f"Release notes:<br>{formatted_release_notes}")
+    change_log_button = QPushButton("ReleaseNotes")
     api_url = f"https://github.com/{owner}/{repo}/releases/latest"
     change_log_button.clicked.connect(lambda: os.startfile(api_url))
     msg_box.addButton(change_log_button, QMessageBox.ActionRole)
