@@ -24,8 +24,8 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
 
-app_version = '1.2.1'
-batchcreator_version = '1.0.0'
+app_version = '1.3.0'
+batchcreator_version = '1.0.1'
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -62,6 +62,7 @@ class Widget(QWidget):
         self.LoadingEditorMainWindow = Loading_editorMainWindow()
         self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
 
+
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
         try:
@@ -73,16 +74,19 @@ class Widget(QWidget):
         except:
             print("Wrong Cs2 Path")
     def refresh_addon_combobox(self):
+        self.ui.ComboBoxSelectAddon.currentTextChanged.disconnect(self.selected_addon_name)
         addon = get_addon_name()
         self.ui.ComboBoxSelectAddon.clear()
         self.populate_addon_combobox()
         print(addon)
         self.ui.ComboBoxSelectAddon.setCurrentText(addon)
+        self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
 
     def setup_buttons(self):
         self.ui.Launch_Addon_Button.clicked.connect(launch_addon)
         self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)
-        self.ui.ComboBoxSelectAddon.currentIndexChanged.connect(self.selected_addon_name)
+        # self.ui.ComboBoxSelectAddon.currentIndexChanged.connect(self.selected_addon_name)
+        self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
         # if index 0, loads tabs
         if self.ui.ComboBoxSelectAddon.currentText() == get_addon_name():
             self.selected_addon_name()
@@ -118,19 +122,20 @@ class Widget(QWidget):
         self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
 
         # Clean up BatchCreator_MainWindow
+        # Clean up BatchCreator_MainWindow
         try:
             if hasattr(self, 'BatchCreator_MainWindow') and self.BatchCreator_MainWindow:
                 self.BatchCreator_MainWindow.deleteLater()
-                self.BatchCreator_MainWindow = None
+                print('1')
         except Exception as e:
-            print(f"Error while cleaning up BatchCreator_MainWindow: {e}")
+            print('Error while cleaning up BatchCreator_MainWindow:', e)
 
         # Create a new instance of BatchCreatorMainWindow
         try:
             self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
             self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
         except Exception as e:
-            print(f"Error while setting up BatchCreator_MainWindow: {e}")
+            print('Error while setting up BatchCreator_MainWindow:', e)
 
     def open_addons_folder(self):
         addon_name = self.ui.ComboBoxSelectAddon.currentText()
