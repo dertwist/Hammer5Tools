@@ -1,5 +1,5 @@
-import sys, os, subprocess, threading, portalocker, tempfile, webbrowser, time, socket
-from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMessageBox
+import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logging
+from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu
 from PySide6.QtGui import QIcon, QAction
 from ui_form import Ui_Widget
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
@@ -26,10 +26,7 @@ SOCKET_PORT = 65432
 
 app_version = '1.2.1'
 batchcreator_version = '1.0.0'
-
-
 class Widget(QWidget):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_Widget()
@@ -111,18 +108,18 @@ class Widget(QWidget):
 
         # Clean up SoundEventEditorMainWidget
         try:
-            if self.SoundEventEditorMainWidget:
+            if hasattr(self, 'SoundEventEditorMainWidget') and self.SoundEventEditorMainWidget:
                 self.SoundEventEditorMainWidget.deleteLater()
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
-        # Create a new instance of SoundEventEditorMainWidget
+        # # Check if the current tab is the soundeditor_tab
         self.SoundEventEditorMainWidget = SoundEventEditorMainWidget()
         self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
 
         # Clean up BatchCreator_MainWindow
         try:
-            if self.BatchCreator_MainWindow:
+            if hasattr(self, 'BatchCreator_MainWindow') and self.BatchCreator_MainWindow:
                 self.BatchCreator_MainWindow.deleteLater()
                 self.BatchCreator_MainWindow = None
         except Exception as e:

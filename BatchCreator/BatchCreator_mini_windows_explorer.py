@@ -8,6 +8,7 @@ from BatchCreator.BatchCreator_file_parser import bc_get_config_value, bc_set_co
 class CustomFileSystemModel(QFileSystemModel):
     NAME_COLUMN = 0
     SIZE_COLUMN = 1
+    CACHE_LIMIT = 100  # Set a limit for the cache size
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -28,8 +29,15 @@ class CustomFileSystemModel(QFileSystemModel):
             if not self.isDir(index):
                 file_name = QFileInfo(file_name).completeBaseName()
             self._cache[file_path] = file_name
+            if len(self._cache) > self.CACHE_LIMIT:
+                self._clean_cache()  # Clean up the cache if it exceeds the limit
             return file_name
         return super().data(index, role)
+
+    def _clean_cache(self):
+        # Implement logic to clean up the cache, for example, removing the oldest entries
+        # Here you can decide how to clean up the cache based on your requirements
+        self._cache = {}  # Resetting the cache in this example
     def supportedDropActions(self):
         return Qt.MoveAction
 
