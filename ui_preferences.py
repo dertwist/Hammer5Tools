@@ -624,6 +624,55 @@ class Ui_preferences_dialog(object):
 
         self.verticalLayout_4.addWidget(self.frame_11)
 
+        self.frame_17 = QFrame(self.onter_preferences_tab)
+        self.frame_17.setObjectName(u"frame_17")
+        self.frame_17.setStyleSheet(u"background-color: #1C1C1C;")
+        self.frame_17.setFrameShape(QFrame.NoFrame)
+        self.frame_17.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_18 = QHBoxLayout(self.frame_17)
+        self.horizontalLayout_18.setSpacing(18)
+        self.horizontalLayout_18.setObjectName(u"horizontalLayout_18")
+        self.horizontalLayout_18.setContentsMargins(9, 9, 9, 9)
+        self.launch_addon_after_nosteamlogon_fix = QCheckBox(self.frame_17)
+        self.launch_addon_after_nosteamlogon_fix.setObjectName(u"launch_addon_after_nosteamlogon_fix")
+        self.launch_addon_after_nosteamlogon_fix.setEnabled(True)
+        self.launch_addon_after_nosteamlogon_fix.setMinimumSize(QSize(96, 32))
+        self.launch_addon_after_nosteamlogon_fix.setLayoutDirection(Qt.LeftToRight)
+        self.launch_addon_after_nosteamlogon_fix.setStyleSheet(u"QCheckBox {\n"
+"    font: 580 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"    padding-left: 4px;\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:unchecked {\n"
+"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"/* -------------------------- */\n"
+"\n"
+"\n"
+"QCheckBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.launch_addon_after_nosteamlogon_fix.setTristate(False)
+
+        self.horizontalLayout_18.addWidget(self.launch_addon_after_nosteamlogon_fix)
+
+
+        self.verticalLayout_4.addWidget(self.frame_17)
+
         self.frame_15 = QFrame(self.onter_preferences_tab)
         self.frame_15.setObjectName(u"frame_15")
         self.frame_15.setStyleSheet(u"background-color: #1C1C1C;")
@@ -863,6 +912,7 @@ class Ui_preferences_dialog(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Discord_status), QCoreApplication.translate("preferences_dialog", u"Discord Status", None))
         self.setup_ncm_mode.setText(QCoreApplication.translate("preferences_dialog", u"Setup NCM mode", None))
         self.checkBox_start_with_system.setText(QCoreApplication.translate("preferences_dialog", u"Start with system", None))
+        self.launch_addon_after_nosteamlogon_fix.setText(QCoreApplication.translate("preferences_dialog", u"Launch the addon after NoSteamLogon fix", None))
         self.check_update_button.setText(QCoreApplication.translate("preferences_dialog", u"Check Update", None))
         self.version_label.setText(QCoreApplication.translate("preferences_dialog", u"TextLabel", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.onter_preferences_tab), QCoreApplication.translate("preferences_dialog", u"Other", None))
