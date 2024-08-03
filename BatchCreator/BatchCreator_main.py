@@ -153,16 +153,15 @@ class BatchCreatorMainWindow(QMainWindow):
                     msg_box.setIcon(QMessageBox.Warning)
                     msg_box.setWindowTitle("Invalid File Extension")
                     msg_box.setText("Please select a file with the .h5t_batch extension.")
-                    open_anyway_button = QPushButton("Open Anyway")
-                    msg_box.addButton(open_anyway_button, QMessageBox.AcceptRole)
-                    msg_box.addButton(QMessageBox.Cancel)
+                    msg_box.addButton("Open Anyway", QMessageBox.AcceptRole)
+                    msg_box.addButton("Cancel", QMessageBox.RejectRole)
                     response = msg_box.exec()
 
-                    if response == QMessageBox.AcceptRole:
-                        print('test')
+                    if response == 2:
                         self._open_file_content(file_path)
                         self.update_top_status_line()
-                    return
+                    else:
+                        return
                 try:
                     self._open_file_content(file_path)
                 except Exception as e:
@@ -175,16 +174,18 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_top_status_line()
 
     def _open_file_content(self, file_path):
-        version_file = batch_creator_file_parser_parse(file_path)[0]
-        content = batch_creator_file_parser_parse(file_path)[1]
-        extension = batch_creator_file_parser_parse(file_path)[3]
+        try:
+            version_file, content, _, extension = batch_creator_file_parser_parse(file_path)
 
-        # Compare versions
-        if version.parse(self.version) > version.parse(version_file):
-            QMessageBox.information(self, "Attention",
-                                    f"The current version ({self.version}) is newer than the file version ({version_file}).")
+            # Compare versions
+            if version.parse(self.version) > version.parse(version_file):
+                QMessageBox.information(self, "Attention",
+                                        f"The current version ({self.version}) is newer than the file version ({version_file}).")
 
-        self.ui.kv3_QplainTextEdit.setPlainText(content)
-        self.ui.extension_lineEdit.setText(extension)
-        self.current_file_path = file_path
-        print(f"File opened from: {file_path}")
+            self.ui.kv3_QplainTextEdit.setPlainText(content)
+            self.ui.extension_lineEdit.setText(extension)
+            self.current_file_path = file_path
+            print(f"File opened from: {file_path}")
+
+        except Exception as e:
+            QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")

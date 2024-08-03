@@ -16,6 +16,10 @@ class CustomFileSystemModel(QFileSystemModel):
     def data(self, index, role):
         if role == Qt.DecorationRole and self.isDir(index) and index.column() != self.SIZE_COLUMN:
             return QIcon('://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg')
+        elif role == Qt.DecorationRole and not self.isDir(index) and index.column() == self.NAME_COLUMN:
+            file_path = self.filePath(index)
+            if file_path.endswith('.h5t_batch'):
+                return QIcon('://icons/terminal_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg')  # Provide the path to the custom icon
         elif role == Qt.DisplayRole and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
             if file_path in self._cache:
@@ -26,7 +30,6 @@ class CustomFileSystemModel(QFileSystemModel):
             self._cache[file_path] = file_name
             return file_name
         return super().data(index, role)
-
     def supportedDropActions(self):
         return Qt.MoveAction
 
