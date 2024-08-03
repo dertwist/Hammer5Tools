@@ -108,29 +108,32 @@ class Widget(QWidget):
 
     def selected_addon_name(self):
         set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
+
+        # Clean up SoundEventEditorMainWidget
         try:
-            self.ui.soundeditor_tab.layout().removeWidget(self.SoundEventEditorMainWidget)
-            self.SoundEventEditorMainWidget.deleteLater()
-        except:
-            pass
+            if self.SoundEventEditorMainWidget:
+                self.SoundEventEditorMainWidget.deleteLater()
+        except Exception as e:
+            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
+
+        # Create a new instance of SoundEventEditorMainWidget
         self.SoundEventEditorMainWidget = SoundEventEditorMainWidget()
         self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
 
-
-
+        # Clean up BatchCreator_MainWindow
         try:
-            layout = self.ui.BatchCreator_tab.layout()
             if self.BatchCreator_MainWindow:
-                layout.removeWidget(self.BatchCreator_MainWindow)
                 self.BatchCreator_MainWindow.deleteLater()
                 self.BatchCreator_MainWindow = None
         except Exception as e:
             print(f"Error while cleaning up BatchCreator_MainWindow: {e}")
+
+        # Create a new instance of BatchCreatorMainWindow
         try:
             self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
             self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
         except Exception as e:
-            print(f"Error while set up BatchCreator_MainWindow: {e}")
+            print(f"Error while setting up BatchCreator_MainWindow: {e}")
 
     def open_addons_folder(self):
         addon_name = self.ui.ComboBoxSelectAddon.currentText()
