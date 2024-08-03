@@ -4,6 +4,7 @@ import webbrowser
 from PySide6.QtCore import Qt
 from packaging import version
 from PySide6.QtGui import QIcon
+import markdown2
 
 def check_updates(repo_url, current_version, silent):
     # Extract the owner and repo name from the URL
@@ -44,10 +45,10 @@ def show_update_notification(latest_version, release_notes, owner, repo):
     msg_box.setTextFormat(Qt.RichText)  # Ensure the text format is set to RichText
 
     # Replace newlines with HTML line breaks
-    formatted_release_notes = release_notes.replace('\n', '<br>')
+    formatted_release_notes = markdown2.markdown(release_notes)
 
     msg_box.setText(f"<h2>New version available: {latest_version}</h2>\n\n"
-                    f"Release notes:<br>{formatted_release_notes}")
+                    f"Release notes:{formatted_release_notes}")
 
     download_button = QPushButton("Update")
     download_button.clicked.connect(lambda: show_install_dialog())
@@ -68,11 +69,10 @@ def show_update_check_result_notification(latest_version, release_notes, owner, 
     msg_box.setWindowTitle("Updater")
     msg_box.setTextFormat(Qt.RichText)  # Ensure the text format is set to RichText
 
-    # Replace newlines with HTML line breaks
-    formatted_release_notes = release_notes.replace('\n', '<br>')
-
+    # Convert Markdown to HTML
+    formatted_release_notes = markdown2.markdown(release_notes)
     msg_box.setText(f"<h2>You have the latest version: {latest_version}</h2>\n\n"
-                    f"Release notes:<br>{formatted_release_notes}")
+                    f"Release notes:{formatted_release_notes}")
     change_log_button = QPushButton("ReleaseNotes")
     api_url = f"https://github.com/{owner}/{repo}/releases/latest"
     change_log_button.clicked.connect(lambda: os.startfile(api_url))
