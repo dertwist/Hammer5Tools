@@ -38,6 +38,6 @@ A tool that helps with smartprops creation in the game.
 | Loading Editor | Done |
 | SoundEvent Editor | In process |
 | Hotkey Editor | planned |
-| BatchCreator | planned |
+| BatchCreator | Done |
 | SmartProp Editor | planned |
 | Sync Editor | planned |
