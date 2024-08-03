@@ -104,6 +104,9 @@ class SoundEvent_Editor_MiniWindowsExplorer(QMainWindow):
 
         # Connect key events
         self.tree.installEventFilter(self)
+    def closeEvent(self, event):
+        del self.model  # Explicitly delete the CustomFileSystemModel instance
+        event.accept()
 
     def eventFilter(self, source, event):
         if event.type() == QMouseEvent.MouseButtonPress:

@@ -9,9 +9,8 @@ from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_pars
 from BatchCreator.BatchCreator_process import batchcreator_process_all
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence
 from PySide6.QtWidgets import QMessageBox
-
-cs2_path = get_cs2_path()
 from packaging import version
+cs2_path = get_cs2_path()
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, version, parent=None):

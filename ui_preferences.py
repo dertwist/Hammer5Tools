@@ -533,6 +533,7 @@ class Ui_preferences_dialog(object):
         self.onter_preferences_tab = QWidget()
         self.onter_preferences_tab.setObjectName(u"onter_preferences_tab")
         self.verticalLayout_4 = QVBoxLayout(self.onter_preferences_tab)
+        self.verticalLayout_4.setSpacing(0)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.frame_11 = QFrame(self.onter_preferences_tab)
@@ -622,6 +623,62 @@ class Ui_preferences_dialog(object):
 
 
         self.verticalLayout_4.addWidget(self.frame_11)
+
+        self.frame_15 = QFrame(self.onter_preferences_tab)
+        self.frame_15.setObjectName(u"frame_15")
+        self.frame_15.setStyleSheet(u"background-color: #1C1C1C;")
+        self.frame_15.setFrameShape(QFrame.NoFrame)
+        self.frame_15.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_17 = QHBoxLayout(self.frame_15)
+        self.horizontalLayout_17.setSpacing(18)
+        self.horizontalLayout_17.setObjectName(u"horizontalLayout_17")
+        self.horizontalLayout_17.setContentsMargins(9, 9, 9, 9)
+        self.check_update_button = QPushButton(self.frame_15)
+        self.check_update_button.setObjectName(u"check_update_button")
+        self.check_update_button.setStyleSheet(u"    QLabel {\n"
+"        font-family: Sergo UI;\n"
+"        color: #9D9D9D;\n"
+"    }\n"
+"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+
+        self.horizontalLayout_17.addWidget(self.check_update_button)
+
+        self.version_label = QLabel(self.frame_15)
+        self.version_label.setObjectName(u"version_label")
+
+        self.horizontalLayout_17.addWidget(self.version_label)
+
+
+        self.verticalLayout_4.addWidget(self.frame_15)
 
         self.verticalSpacer_3 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -786,7 +843,7 @@ class Ui_preferences_dialog(object):
 
         self.retranslateUi(preferences_dialog)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(2)
 
 
         QMetaObject.connectSlotsByName(preferences_dialog)
@@ -806,6 +863,8 @@ class Ui_preferences_dialog(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Discord_status), QCoreApplication.translate("preferences_dialog", u"Discord Status", None))
         self.setup_ncm_mode.setText(QCoreApplication.translate("preferences_dialog", u"Setup NCM mode", None))
         self.checkBox_start_with_system.setText(QCoreApplication.translate("preferences_dialog", u"Start with system", None))
+        self.check_update_button.setText(QCoreApplication.translate("preferences_dialog", u"Check Update", None))
+        self.version_label.setText(QCoreApplication.translate("preferences_dialog", u"TextLabel", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.onter_preferences_tab), QCoreApplication.translate("preferences_dialog", u"Other", None))
         self.open_presets_folder_button.setText(QCoreApplication.translate("preferences_dialog", u" Presets", None))
         self.open_settings_folder_button.setText(QCoreApplication.translate("preferences_dialog", u" Settings", None))

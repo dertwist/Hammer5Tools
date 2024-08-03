@@ -7,10 +7,10 @@ from PySide6.QtWidgets import QDialog
 from ui_preferences import Ui_preferences_dialog
 import os, configparser, subprocess
 from distutils.util import strtobool
-import webbrowser
 from minor_features.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
 from minor_features.NCM_mode_setup_main import NCM_mode_setup
 import winreg as reg
+from minor_features.update_check import check_updates
 
 # config -------------------------------------------------------------------------------
 # Get the path to the user's AppData directory
@@ -109,12 +109,12 @@ def set_addon_name(addon_name_set):
 
 
 class PreferencesDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, app_version, parent=None):
         super().__init__(parent)
         self.ui = Ui_preferences_dialog()
         self.ui.setupUi(self)
 
-
+        self.app_version = app_version
 
 
 
@@ -141,8 +141,10 @@ class PreferencesDialog(QDialog):
         self.ui.preferences_apply_button.clicked.connect(self.apply_preferences)
         self.ui.setup_ncm_mode.clicked.connect(self.setup_ncm_mode)
         self.ui.open_presets_folder_button.clicked.connect(self.open_presets_folder)
+        self.ui.check_update_button.clicked.connect(self.check_update)
 
-
+        # version
+        self.ui.version_label.setText(f"Version: {app_version}")
 
     def apply_preferences(self):
         # paths
@@ -200,3 +202,5 @@ class PreferencesDialog(QDialog):
     def open_presets_folder(self):
         path = get_config_value('PATHS', 'user_presets')
         subprocess.Popen(['explorer', path], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    def check_update(self):
+        check_updates("https://github.com/dertwist/Hammer5Tools", self.app_version, False)
