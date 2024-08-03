@@ -25,20 +25,14 @@ class BatchCreatorMainWindow(QMainWindow):
         tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
         self.mini_explorer = MiniWindowsExplorer(self.ui.MiniWindows_explorer, tree_directory, get_addon_name())
 
-        self.setup_ui()
-        self.setup_connections()
-        self.update_top_status_line()
-
-
-    def setup_ui(self):
         layout = QVBoxLayout(self.ui.MiniWindows_explorer)
         layout.addWidget(self.mini_explorer.tree)
         layout.setContentsMargins(0, 0, 0, 0)
         self.ui.Status_Line_Qedit.setReadOnly(True)
         self.setAcceptDrops(True)
+        self.update_top_status_line()
 
 
-    def setup_connections(self):
         self.mini_explorer.tree.selectionModel().selectionChanged.connect(self.update_status_line)
         self.ui.Copy_from_status_line_toolButton.clicked.connect(self.copy_status_line_to_clipboard)
         self.ui.file_initialize_button.clicked.connect(self.file_initialize)
