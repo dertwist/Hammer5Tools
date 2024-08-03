@@ -30,17 +30,25 @@ def batch_creator_file_parser_parse(config_file):
     config = configparser.ConfigParser()
     # Create a ConfigParser object
 
-    # Read the configuration file
-    config.read(config_file)
+    try:
+        # Read the configuration file
+        config.read(config_file)
 
-    # Extract values from the configuration
-    version = config.get('APP', 'version', fallback=None)
-    content = json.loads(config.get('FILE','content',fallback=None))
-    extension = config.get('FILE', 'extension', fallback=None)
-    exceptions = config.get('EXCEPTIONS', 'ignore_list', fallback=None)
+        # Extract values from the configuration
+        version = config.get('APP', 'version', fallback=None)
+        content = json.loads(config.get('FILE', 'content', fallback=None))
+        extension = config.get('FILE', 'extension', fallback=None)
+        exceptions = config.get('EXCEPTIONS', 'ignore_list', fallback=None)
 
-    return version, content, exceptions, extension
+        return version, content, exceptions, extension
 
+    except (configparser.Error, json.JSONDecodeError) as e:
+        # Handle specific exceptions that may occur during reading or parsing
+        print(f"An error occurred: {e}")
+        # You can choose to log the error, raise a custom exception, or handle it in any other way
+
+        # Return default values or handle the error accordingly
+        return None, None, None, None
 def batch_creator_file_parser_output(version, content, exceptions, extension, file_path):
     config = configparser.ConfigParser()
     # Add sections and key-value pairs
