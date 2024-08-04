@@ -21,7 +21,7 @@ def default_settings():
     if os.path.exists(config_file_path):
         config.read(config_file_path)
     else:
-        bc_set_config_value('MINI_EXPLORER_LAST_PATH', '', '')
+        bc_set_config_value('MINI_EXPLORER_LAST_PATH', 'addon_test', 'path')
     print(f"Configuration file path: {config_file_path}")
 
 default_settings()

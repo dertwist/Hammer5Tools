@@ -84,9 +84,12 @@ def get_cs2_path():
             raise ValueError("value cs2 not found or empty")
         return counter_strikke_2_path
     except:
-        counter_strikke_2_path = (get_counter_strike_path_from_registry()).replace("\\\\", "\\")
-        set_config_value('PATHS', 'Cs2', counter_strikke_2_path)
-        return counter_strikke_2_path
+        try:
+            counter_strikke_2_path = (get_counter_strike_path_from_registry()).replace("\\\\", "\\")
+            set_config_value('PATHS', 'Cs2', counter_strikke_2_path)
+            return counter_strikke_2_path
+        except:
+            pass
 
 
 def get_steam_path():
