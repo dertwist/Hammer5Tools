@@ -482,17 +482,43 @@ QTextEdit::selection {
 
 /* QListWidget item and selection styles */
 QListWidget {
-    border: 1px solid #CCCCCC;
-    border-radius: 5px;
-    padding: 5px;
-    background-color: #E3E3E3;
+    border: 2px solid #CCCCCC;
+    border-color: rgba(80, 80, 80, 255);
+    border-radius: 2px;
+    padding: 2px;
+    color: #E3E3E3;
 }
 QListWidget::item {
-    padding: 5px;
+    padding: 0px;
 }
 QListWidget::item:selected {
     background-color: #414956;
-    color: white;
+    color:white;
+}
+
+QListWidget::item:hover {
+    background-color: #414956;
+}
+
+/* QListView item and selection styles */
+
+QListView {
+    border: 2px solid #CCCCCC;
+    border-color: rgba(80, 80, 80, 255);
+    border-radius: 2px;
+    padding: 2px;
+    color: #E3E3E3;
+}
+QListView::item {
+    padding: 0px;
+}
+QListView::item:selected {
+    background-color: #414956;
+    color:white;
+}
+
+QListView::item:hover {
+    background-color: #414956;
 }
 
 /* QTableWidget header and cell styles */

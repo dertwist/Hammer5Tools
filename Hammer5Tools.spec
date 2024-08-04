@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('appicon.ico', '.'), ('images', 'images/')],
+    datas=[('appicon.ico', '.'), ('images', 'images/'), ('qt_styles', 'qt_styles/')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
