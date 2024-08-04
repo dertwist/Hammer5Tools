@@ -7,11 +7,13 @@ import os
 from BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
 from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse, batch_creator_file_parser_initialize, batch_creator_file_parser_output
 from BatchCreator.BatchCreator_process import batchcreator_process_all
+from BatchCreator.BatchCreator_process_dialog import BatchCreator_process_Dialog
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence
 from PySide6.QtWidgets import QMessageBox
 from packaging import version
 cs2_path = get_cs2_path()
 
+process = {}
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, version, parent=None):
         super().__init__(parent)
@@ -40,13 +42,12 @@ class BatchCreatorMainWindow(QMainWindow):
         self.setup_drag_and_drop(self.ui.folder_path_template, "Folder path")
         self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
         self.ui.process_all_button.clicked.connect(self.process_all)
+        self.ui.process_options_button.clicked.connect(self.process_options)
+
 
         # Create a shortcut for saving the file with Ctrl+S
         save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
         save_shortcut.activated.connect(self.save_file)
-
-    def process_all(self):
-        batchcreator_process_all(self.current_file_path)
 
     def setup_drag_and_drop(self, widget, default_text):
         widget.setAcceptDrops(True)
@@ -134,10 +135,11 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def save_file(self):
         if self.current_file_path:
-            exceptions = batch_creator_file_parser_parse(self.current_file_path)[2]
             content = self.ui.kv3_QplainTextEdit.toPlainText()
             extension = self.ui.extension_lineEdit.text()
-            batch_creator_file_parser_output(self.version, content, exceptions, extension,  self.current_file_path)
+            global process
+            print(process)
+            batch_creator_file_parser_output(self.version, content, process, extension,  self.current_file_path)
         else:
             print("No file is currently opened to save.")
 
@@ -172,10 +174,20 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
         self.update_top_status_line()
 
+    def process_all(self):
+        batchcreator_process_all(current_path_file=self.current_file_path, preview=False, process=process)
+    def process_options(self):
+        # Check if the dialog is already open
+        if not hasattr(self, 'process_dialog') or not self.process_dialog.isVisible():
+            # global process
+            self.process_dialog = BatchCreator_process_Dialog(process=process, current_file_path=self.current_file_path)
+            self.process_dialog.show()
+
     def _open_file_content(self, file_path):
         try:
-            version_file, content, _, extension = batch_creator_file_parser_parse(file_path)
-
+            global process
+            version_file, content, extension, process = batch_creator_file_parser_parse(file_path)
+            print(file_path)
             # Compare versions
             if version.parse(self.version) > version.parse(version_file):
                 QMessageBox.information(self, "Attention",
@@ -184,6 +196,13 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.kv3_QplainTextEdit.setPlainText(content)
             self.ui.extension_lineEdit.setText(extension)
             self.current_file_path = file_path
+
+            # if hasattr(self, 'process_dialog') and self.process_dialog.isVisible():
+            #     self.process_dialog.close()
+            #     self.process_dialog = BatchCreator_process_Dialog(process=process, current_file_path=self.current_file_path)
+            #     self.process_dialog.show()
+            # else:
+            #     pass
             print(f"File opened from: {file_path}")
 
         except Exception as e:

@@ -25,7 +25,7 @@ SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
 
 app_version = '1.3.3'
-batchcreator_version = '1.0.2'
+batchcreator_version = '1.1.0'
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
