@@ -1,5 +1,6 @@
 import configparser, os, json
 from preferences import config_dir
+from distutils.util import strtobool
 
 config_file_path = os.path.join(config_dir, 'batch_creator.cfg')
 os.makedirs(config_dir, exist_ok=True)
@@ -17,6 +18,12 @@ def bc_get_config_value(section, key):
         return config.get(section, key)
     return None
 
+
+def bc_set_config_bool(section,key, bool):
+    return bc_set_config_value(section, key, str(bool))
+
+def bc_get_config_bool(section,key):
+    return bool(strtobool(bc_get_config_value(section, key)))
 def default_settings():
     if os.path.exists(config_file_path):
         config.read(config_file_path)
@@ -37,10 +44,13 @@ def batch_creator_file_parser_parse(config_file):
         # Extract values from the configuration
         version = config.get('APP', 'version', fallback=None)
         content = json.loads(config.get('FILE', 'content', fallback=None))
+        process = {}
+        process_config_values = ['ignore_list', 'custom_files', 'custom_output', 'load_from_the_folder', 'algorithm','output_to_the_folder', 'ignore_extensions']
+        for value in process_config_values:
+            process[value] = (config.get('PROCESS', value, fallback=None))
         extension = config.get('FILE', 'extension', fallback=None)
-        exceptions = config.get('EXCEPTIONS', 'ignore_list', fallback=None)
 
-        return version, content, exceptions, extension
+        return version, content, extension, process
 
     except (configparser.Error, json.JSONDecodeError) as e:
         # Handle specific exceptions that may occur during reading or parsing
@@ -49,7 +59,7 @@ def batch_creator_file_parser_parse(config_file):
 
         # Return default values or handle the error accordingly
         return None, None, None, None
-def batch_creator_file_parser_output(version, content, exceptions, extension, file_path):
+def batch_creator_file_parser_output(version, content, process, extension, file_path):
     config = configparser.ConfigParser()
     # Add sections and key-value pairs
     config['APP'] = {
@@ -60,10 +70,10 @@ def batch_creator_file_parser_output(version, content, exceptions, extension, fi
         'content': json.dumps(content),
         'extension': extension
     }
-    config['EXCEPTIONS'] = {
-        'ignore_list': exceptions
-    }
-
+    config['PROCESS'] = {}
+    print(process)
+    for value in process:
+        config['PROCESS'][str(value)] = str(process[value])
     try:
         with open(file_path, 'w') as configfile:
             config.write(configfile)
@@ -84,8 +94,14 @@ def batch_creator_file_parser_initialize(version,file_path):
         'content': json.dumps(''),
         'extension': 'vmdl'
     }
-    config['EXCEPTIONS'] = {
-        'ignore_list': 'name.extension,name.extension,relative_path'
+    config['PROCESS'] = {
+        'ignore_list': 'name.extension,name.extension,relative_path',
+        'custom_files': 'name.extension,name.extension',
+        'custom_output': 'relative_path',
+        'load_from_the_folder': 'True',
+        'algorithm': '0',
+        'output_to_the_folder': 'True',
+        'ignore_extensions': 'blend,vmdl,vmat'
     }
 
     try:
