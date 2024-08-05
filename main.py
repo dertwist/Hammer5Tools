@@ -24,7 +24,7 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
 
-app_version = '1.4.0'
+app_version = '1.4.1'
 batchcreator_version = '1.1.0'
 class Widget(QWidget):
     def __init__(self, parent=None):

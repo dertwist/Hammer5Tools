@@ -43,7 +43,7 @@ class export_and_import_addon_dialog(QDialog):
         iclude_content_folders = []
 
         # Define the folders to exclude
-        excluded_folders = {'panorama', 'postprocess', 'resource', 'smartprops', 'maps', 'materials', 'models', 'soundevents'}
+        excluded_folders = {'panorama', 'postprocess', 'resource', 'smartprops', 'maps', 'materials', 'models', 'soundevents', 'weapons'}
 
         # List the directories in the root of game_folder
         for dir_name in os.listdir(game_folder):
