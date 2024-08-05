@@ -286,6 +286,9 @@ class DraggableLineEdit(QLineEdit):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.text())
 
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSlider, QLabel, QHBoxLayout
+from PySide6.QtCore import Qt
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -308,19 +311,6 @@ class MainWindow(QWidget):
         pitch_slider.setMaximum(100)
         main_layout.addWidget(DraggableWidget(pitch_label))
         main_layout.addWidget(DraggableWidget(pitch_slider))
-
-        # XYZ input parameter
-        xyz_label = DraggableLabel("XYZ Input Parameter")
-        xyz_widget = QWidget()
-        xyz_layout = QHBoxLayout(xyz_widget)
-        x_input = DraggableLineEdit("X")
-        y_input = DraggableLineEdit("Y")
-        z_input = DraggableLineEdit("Z")
-        xyz_layout.addWidget(DraggableWidget(x_input))  # Wrap each input in DraggableWidget
-        xyz_layout.addWidget(DraggableWidget(y_input))  # Wrap each input in DraggableWidget
-        xyz_layout.addWidget(DraggableWidget(z_input))  # Wrap each input in DraggableWidget
-        main_layout.addWidget(DraggableWidget(xyz_label))
-        main_layout.addWidget(DraggableWidget(xyz_widget))
 
         # Set the main layout for the window
         self.setLayout(main_layout)
