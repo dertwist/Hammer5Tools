@@ -22,7 +22,7 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 SOCKET_HOST = 'localhost'
 SOCKET_PORT = 65432
 
-app_version = '1.4.1'
+app_version = '1.4.2'
 batchcreator_version = '1.1.0'
 
 class Widget(QWidget):
@@ -166,6 +166,11 @@ class Widget(QWidget):
 
     def open_documentation(self):
         Documentation_Dialog(app_version, self).show()
+
+def DiscordStatusMain_do():
+    while not stop_discord_thread.is_set():
+        update_discord_status()
+        time.sleep(1)
 
 if __name__ == "__main__":
     lock_file = open(LOCK_FILE, 'w')
