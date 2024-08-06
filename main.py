@@ -1,4 +1,4 @@
-import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logging
+import sys, os, threading, portalocker, tempfile, webbrowser, time, logging
 from PySide6.QtWidgets import QApplication, QWidget
 from ui_form import Ui_Widget
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
@@ -18,11 +18,7 @@ steam_path = get_steam_path()
 cs2_path = get_cs2_path()
 stop_discord_thread = threading.Event()
 
-LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
-SOCKET_HOST = 'localhost'
-SOCKET_PORT = 65432
-
-app_version = '1.4.2'
+app_version = '1.4.3'
 batchcreator_version = '1.1.0'
 
 class Widget(QWidget):
@@ -173,18 +169,6 @@ def DiscordStatusMain_do():
         time.sleep(1)
 
 if __name__ == "__main__":
-    lock_file = open(LOCK_FILE, 'w')
-    try:
-        portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
-    except portalocker.LockException:
-        try:
-            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client_socket.connect((SOCKET_HOST, SOCKET_PORT))
-            client_socket.send(b"SHOW")
-            client_socket.close()
-        except socket.error:
-            print("Failed to connect to the existing instance.")
-        sys.exit(0)
 
     app = QApplication(sys.argv)
     app.setStyleSheet(QT_Stylesheet_global)
@@ -198,6 +182,6 @@ if __name__ == "__main__":
         else:
             print('Discord status updates are disabled.')
     except:
-        "The status of the discord was not started"
+        print("Failed to start Discord status updates.")
 
     sys.exit(app.exec())
