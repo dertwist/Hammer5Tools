@@ -7,13 +7,18 @@ import zipfile
 import io
 from tqdm import tqdm
 
-version = 'v1.0.0'
+version = 'v1.0.1'
 print(f'Updater version: {version}')
 
 path = 'DOWNLOAD_TMP'
 # path = 'hammer5tools/DOWNLOAD_TMP'
 # URL of the GitHub repository
 url = 'https://github.com/dertwist/Hammer5Tools/releases/latest/download/Hammer5Tools.zip'
+
+for process in psutil.process_iter():
+    if process.name() == 'Hammer5Tools.exe':
+        process.kill()
+        print('Hammer5Tools.exe process killed successfully.')
 
 # Send a GET request to the URL
 response = requests.get(url, stream=True)  # Set stream=True to enable streaming
