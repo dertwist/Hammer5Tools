@@ -1,5 +1,6 @@
-import sys, os, threading, portalocker, tempfile, webbrowser, time, logging
-from PySide6.QtWidgets import QApplication, QWidget
+import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logging
+from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu
+from PySide6.QtGui import QIcon, QAction
 from ui_form import Ui_Widget
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
@@ -13,19 +14,23 @@ from minor_features.addon_functions import delete_addon, launch_addon
 from minor_features.update_check import check_updates
 from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
 from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
+import ctypes
+import winsound
 
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
 stop_discord_thread = threading.Event()
 
+LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
+
 app_version = '1.4.3'
 batchcreator_version = '1.1.0'
-
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
+        self.setup_tray_icon()
         self.setup_tabs()
         self.populate_addon_combobox()
         self.setup_buttons()
@@ -41,9 +46,20 @@ class Widget(QWidget):
         except:
             pass
 
+    def setup_tray_icon(self):
+        self.tray_icon = QSystemTrayIcon(QIcon.fromTheme(":/icons/appicon.ico"), self)
+        self.tray_icon.setToolTip("Hammer5Tools")
+        self.tray_menu = QMenu()
+        self.tray_menu.addAction(QAction("Show", self, triggered=self.show))
+        self.tray_menu.addAction(QAction("Exit", self, triggered=self.exit_application))
+        self.tray_icon.setContextMenu(self.tray_menu)
+        self.tray_icon.activated.connect(self.on_tray_icon_activated)
+        self.tray_icon.show()
+
     def setup_tabs(self):
         self.LoadingEditorMainWindow = Loading_editorMainWindow()
         self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
+
 
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
@@ -55,7 +71,6 @@ class Widget(QWidget):
                 set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
         except:
             print("Wrong Cs2 Path")
-
     def refresh_addon_combobox(self):
         self.ui.ComboBoxSelectAddon.currentTextChanged.disconnect(self.selected_addon_name)
 
@@ -85,6 +100,11 @@ class Widget(QWidget):
         self.ui.open_addons_folder_button.clicked.connect(self.open_addons_folder)
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
         self.ui.documentation_button.clicked.connect(self.open_documentation)
+
+    def closeEvent(self, event):
+        event.ignore()
+        self.hide()
+        self.show_minimize_message_once()
 
     def selected_addon_name(self):
         set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
@@ -148,7 +168,6 @@ class Widget(QWidget):
         dialog = export_and_import_addon_dialog(self)
         dialog.finished.connect(self.refresh_addon_combobox)
         dialog.show()
-
     def SteamNoLogonFix(self):
         self.thread = SteamNoLogoFixThreadClass()
         self.thread.start()
@@ -163,12 +182,59 @@ class Widget(QWidget):
     def open_documentation(self):
         Documentation_Dialog(app_version, self).show()
 
+
+    def on_tray_icon_activated(self, reason):
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.show()
+
+    def show_minimize_message_once(self):
+        if get_config_bool('APP', 'minimize_message_shown'):
+            self.tray_icon.showMessage("Hammer5Tools", "Application minimized to tray.", QSystemTrayIcon.Information,
+                                       2000)
+            set_config_bool('APP', 'minimize_message_shown', 'False')
+
+    def exit_application(self):
+        discord_status_clear()
+        stop_discord_thread.set()
+
+        # Ensure all threads are properly stopped
+        if hasattr(self, 'discord_thread') and self.discord_thread.is_alive():
+            self.discord_thread.join()
+
+        # Explicitly delete the tray icon
+        self.tray_icon.hide()
+        self.tray_icon.deleteLater()
+
+        QApplication.quit()
+        QApplication.instance().quit()
+        QApplication.exit(1)
+
+
 def DiscordStatusMain_do():
     while not stop_discord_thread.is_set():
         update_discord_status()
         time.sleep(1)
 
 if __name__ == "__main__":
+
+    def bring_to_front(window_title):
+        hwnd = ctypes.windll.user32.FindWindowW(None, window_title)
+        if hwnd:
+            ctypes.windll.user32.SetForegroundWindow(hwnd)
+            # Play default system sound
+            winsound.MessageBeep(winsound.MB_ICONASTERISK)
+
+    bring_to_front("Hammer 5 Tools")
+    # Check for updates at launch
+
+    # Create a lock file to ensure single instance
+    lock_file = open(LOCK_FILE, 'w')
+    try:
+        portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
+    except portalocker.LockException:
+        # If the lock file is already locked, bring the existing instance to the foreground
+        print("Another instance is already running. Bringing it to the foreground.")
+        sys.exit(0)
 
     app = QApplication(sys.argv)
     app.setStyleSheet(QT_Stylesheet_global)
@@ -182,6 +248,6 @@ if __name__ == "__main__":
         else:
             print('Discord status updates are disabled.')
     except:
-        print("Failed to start Discord status updates.")
+        "The status of the discord was not started"
 
     sys.exit(app.exec())
