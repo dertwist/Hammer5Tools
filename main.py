@@ -23,7 +23,7 @@ stop_discord_thread = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
-app_version = '1.4.3'
+app_version = '1.2.3'
 batchcreator_version = '1.1.0'
 class Widget(QWidget):
     def __init__(self, parent=None):
@@ -205,9 +205,11 @@ class Widget(QWidget):
         self.tray_icon.hide()
         self.tray_icon.deleteLater()
 
+
         QApplication.quit()
         QApplication.instance().quit()
         QApplication.exit(1)
+        sys.exit(0)
 
 
 def DiscordStatusMain_do():
@@ -223,6 +225,7 @@ if __name__ == "__main__":
             ctypes.windll.user32.SetForegroundWindow(hwnd)
             # Play default system sound
             winsound.MessageBeep(winsound.MB_ICONASTERISK)
+            sys.exit(0)
 
     bring_to_front("Hammer 5 Tools")
     # Check for updates at launch

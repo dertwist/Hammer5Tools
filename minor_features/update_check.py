@@ -1,4 +1,4 @@
-import requests, os
+import requests, os, psutil
 from PySide6.QtWidgets import QMessageBox, QPushButton
 import webbrowser
 from PySide6.QtCore import Qt
@@ -92,4 +92,4 @@ def show_install_dialog():
 
     if response == QMessageBox.Yes:
         # Run the updater executable
-        os.startfile('Hammer5Tools_Updater.exe')
+        psutil.Popen(['cmd', '/c', 'Hammer5Tools_Updater.exe'])
