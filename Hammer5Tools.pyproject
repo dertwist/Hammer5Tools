@@ -2,7 +2,6 @@
     "files": [
         "form.ui",
         "main.py",
-        "build.bat",
         "resources.qrc",
         "preferences.py",
         "preferences.ui",
