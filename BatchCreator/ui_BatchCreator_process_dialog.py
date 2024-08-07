@@ -247,6 +247,46 @@ class Ui_BatchCreator_process_Dialog(object):
 
         self.verticalLayout.addWidget(self.frame_4)
 
+        self.frame_7 = QFrame(BatchCreator_process_Dialog)
+        self.frame_7.setObjectName(u"frame_7")
+        self.frame_7.setFrameShape(QFrame.StyledPanel)
+        self.frame_7.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_5 = QHBoxLayout(self.frame_7)
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.label = QLabel(self.frame_7)
+        self.label.setObjectName(u"label")
+
+        self.horizontalLayout_5.addWidget(self.label)
+
+        self.ignore_extensions_lineEdit = QLineEdit(self.frame_7)
+        self.ignore_extensions_lineEdit.setObjectName(u"ignore_extensions_lineEdit")
+
+        self.horizontalLayout_5.addWidget(self.ignore_extensions_lineEdit)
+
+
+        self.verticalLayout.addWidget(self.frame_7)
+
+        self.frame_8 = QFrame(BatchCreator_process_Dialog)
+        self.frame_8.setObjectName(u"frame_8")
+        self.frame_8.setFrameShape(QFrame.StyledPanel)
+        self.frame_8.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_6 = QHBoxLayout(self.frame_8)
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.horizontalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.label_2 = QLabel(self.frame_8)
+        self.label_2.setObjectName(u"label_2")
+
+        self.horizontalLayout_6.addWidget(self.label_2)
+
+        self.ignore_files_lineEdit = QLineEdit(self.frame_8)
+        self.ignore_files_lineEdit.setObjectName(u"ignore_files_lineEdit")
+
+        self.horizontalLayout_6.addWidget(self.ignore_files_lineEdit)
+
+
+        self.verticalLayout.addWidget(self.frame_8)
+
         self.output_folder = QLabel(BatchCreator_process_Dialog)
         self.output_folder.setObjectName(u"output_folder")
 
@@ -390,11 +430,6 @@ class Ui_BatchCreator_process_Dialog(object):
 
         self.verticalLayout.addWidget(self.frame)
 
-        self.ignore_extensions_lineEdit = QLineEdit(BatchCreator_process_Dialog)
-        self.ignore_extensions_lineEdit.setObjectName(u"ignore_extensions_lineEdit")
-
-        self.verticalLayout.addWidget(self.ignore_extensions_lineEdit)
-
 
         self.retranslateUi(BatchCreator_process_Dialog)
 
@@ -408,11 +443,14 @@ class Ui_BatchCreator_process_Dialog(object):
         self.toolButton.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"...", None))
         self.choose_output_button.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Choose output", None))
         self.output_to_the_folder_checkBox.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Output to the folder", None))
+        self.label.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Extensions ignore:", None))
+        self.ignore_extensions_lineEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Ignore extensions: .blend", None))
+        self.label_2.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Files ignore:", None))
+        self.ignore_files_lineEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Ignore extensions: .blend", None))
         self.output_folder.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Output folder:", None))
         self.algorithm_select_comboBox.setItemText(0, QCoreApplication.translate("BatchCreator_process_Dialog", u"Process without interpretation", None))
         self.algorithm_select_comboBox.setItemText(1, QCoreApplication.translate("BatchCreator_process_Dialog", u"Remove underscore from the end", None))
 
         self.process_button.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Process", None))
-        self.ignore_extensions_lineEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Ignore extensions: .blend", None))
     # retranslateUi
 
