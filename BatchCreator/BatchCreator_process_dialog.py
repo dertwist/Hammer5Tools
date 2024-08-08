@@ -4,6 +4,7 @@ from distutils.util import strtobool
 from BatchCreator.BatchCreator_process import batchcreator_process_all
 import os
 from preferences import  get_cs2_path, get_addon_name
+import ast
 
 class BatchCreator_process_Dialog(QDialog):
     def __init__(self, process, current_file_path, parent=None):
@@ -58,10 +59,11 @@ class BatchCreator_process_Dialog(QDialog):
         self.process['algorithm'] = index
         self.process_preview()
 
+    # noinspection PyTypeChecker
     def on_pressed_choose_output_button(self):
-        file_path = QFileDialog.getExistingDirectory(self, "Select Folder to Process", options=QFileDialog.ShowDirsOnly)
+        file_path = QFileDialog.getExistingDirectory(self, "Select Folder to Process", os.path.join(get_cs2_path(),'content', 'csgo_addons', get_addon_name()), options=QFileDialog.ShowDirsOnly)
         if file_path:
-            self.process['custom_output'] = file_path
+            self.process['custom_output'] = os.path.relpath(file_path,(os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())))
             self.process_preview()
     def on_pressed_select_files_to_process_button(self):
         file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Files to Process", "", "All Files (*)")
@@ -74,20 +76,43 @@ class BatchCreator_process_Dialog(QDialog):
         files = batchcreator_process_all(self.current_file_path, preview=True, process=self.process)
         self.ui.Input_files_preview_scrollarea.clear()
         self.ui.output_files_preview_scrollarea.clear()
-        ignore_list = self.process['ignore_list']
-        ignore_list = [item.strip() for item in ignore_list.split(',')]
-        print(type(ignore_list))
-        print(ignore_list)
-        for index, item in enumerate(files[1]):
-            if item in ignore_list:
-                print(item)
-                pass
-            else:
+
+        def str_to_bool(value):
+                try:
+                    return bool(strtobool(self.process[value]))
+                except:
+                    return self.process[value]
+        if str_to_bool('load_from_the_folder'):
+            for index, item in enumerate(files[1]):
                 label = QLabel(item)
                 # Update the QPushButton stylesheet to make it smaller
                 remove_button = QPushButton('Ignore')
-                remove_button.setStyleSheet(
-                    "QPushButton { font-size: 10px; width: 16px; padding: 2px; margin: 0px;}")
+                # noinspection PyTypeChecker
+                remove_button.setStyleSheet("""
+                    QPushButton {
+                        font: 700 9pt "Segoe UI";
+                        border: 2px solid black;
+                        border-radius: 4px;
+                        border-color: rgba(80, 80, 80, 255);
+                        height: 18px;
+                        padding-top: 2px;
+                        padding-bottom: 2px;
+                        padding-left: 4px;
+                        padding-right: 4px;
+                        color: #c4c4c4;
+                        background-color: #1C1C1C;
+                    }
+                    QPushButton:hover {
+                        background-color: #414956;
+                        color: white;
+                    }
+                    QPushButton:pressed {
+                        background-color: #2d323b;
+                        margin: 1px;
+                        margin-left: 2px;
+                        margin-right: 2px;
+                    }
+                """)
 
                 def ignore_item(item):
                     # Get the current scroll position
@@ -107,6 +132,7 @@ class BatchCreator_process_Dialog(QDialog):
                 item_widget = QWidget()
                 h_layout = QHBoxLayout()
                 h_layout.addWidget(label)
+                remove_button.setMaximumWidth(64)
                 h_layout.addWidget(remove_button)
                 item_widget.setLayout(h_layout)
 
@@ -115,8 +141,22 @@ class BatchCreator_process_Dialog(QDialog):
 
                 self.ui.Input_files_preview_scrollarea.addItem(list_item)
                 self.ui.Input_files_preview_scrollarea.setItemWidget(list_item, item_widget)
+        else:
+            files_list = ast.literal_eval(self.process['custom_files'])
+            for item in files_list:
+                label = QLabel(item)
+                list_item = QListWidgetItem() # Set the size hint for the item
+
+                self.ui.Input_files_preview_scrollarea.addItem(list_item)
+                self.ui.Input_files_preview_scrollarea.setItemWidget(list_item, label)
         self.ui.ignore_files_lineEdit.setText(self.process['ignore_list'])
+
         for item in files[0]:
             label = QLabel(item + f".{files[2]}")
             self.ui.output_files_preview_scrollarea.addItem(label.text())
-        self.ui.output_folder.setText(f'Output folder: {os.path.relpath(files[3], (os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())))}')
+
+        if str_to_bool('output_to_the_folder'):
+            self.ui.output_folder.setText(f'Output folder: {os.path.relpath(files[3], (os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())))}')
+
+        else:
+            self.ui.output_folder.setText(f'Output folder: {self.process['custom_output']}')
