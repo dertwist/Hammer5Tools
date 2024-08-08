@@ -90,11 +90,11 @@ class BatchCreator_process_Dialog(QDialog):
                 # noinspection PyTypeChecker
                 remove_button.setStyleSheet("""
                     QPushButton {
-                        font: 700 9pt "Segoe UI";
+                        font: 700 8pt "Segoe UI";
                         border: 2px solid black;
                         border-radius: 4px;
                         border-color: rgba(80, 80, 80, 255);
-                        height: 18px;
+                        height: 16px;
                         padding-top: 2px;
                         padding-bottom: 2px;
                         padding-left: 4px;
@@ -134,7 +134,9 @@ class BatchCreator_process_Dialog(QDialog):
                 h_layout.addWidget(label)
                 remove_button.setMaximumWidth(64)
                 h_layout.addWidget(remove_button)
+                h_layout.setContentsMargins(0, 4, 0, 0)
                 item_widget.setLayout(h_layout)
+
 
                 list_item = QListWidgetItem()
                 list_item.setSizeHint(item_widget.sizeHint())  # Set the size hint for the item
@@ -150,8 +152,9 @@ class BatchCreator_process_Dialog(QDialog):
                 self.ui.Input_files_preview_scrollarea.addItem(list_item)
                 self.ui.Input_files_preview_scrollarea.setItemWidget(list_item, label)
         self.ui.ignore_files_lineEdit.setText(self.process['ignore_list'])
-
+        self.ui.output_files_preview_scrollarea.clear()
         for item in files[0]:
+
             label = QLabel(item + f".{files[2]}")
             self.ui.output_files_preview_scrollarea.addItem(label.text())
 
