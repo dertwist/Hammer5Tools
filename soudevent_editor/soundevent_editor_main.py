@@ -4,9 +4,9 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QScrollBar
 from PySide6.QtCore import Qt, QMimeData, QPropertyAnimation, QPoint
 from PySide6.QtGui import QDrag, QPixmap
 from soudevent_editor.ui_soundevenet_editor_mainwindow import Ui_SoundEvent_Editor_MainWindow
+from soudevent_editor.soundevent_editor_viewport import SoundEventEditor_Viewport_Window
 from preferences import get_config_value, get_cs2_path, get_addon_name
 from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_Editor_MiniWindowsExplorer
-from soudevent_editor.soundevent_editor_viewport import SoundEventEditor_Viewport_Window
 
 
 class SoundEventEditorMainWidget(QMainWindow):

@@ -8,7 +8,6 @@ from PySide6.QtGui import QAction, QCursor
 import json
 import keyvalues3 as kv3
 from soudevent_editor.toolbar_functions import export_to_file, quick_export_to_file, tree_item_to_dict, convert_children_to_list
-from soudevent_editor.data import data, square_brackets_group, data_kv3
 from preferences import get_addon_name, get_cs2_path
 from soudevent_editor.presets_manager import PresetsManager
 
@@ -65,10 +64,7 @@ class SoundEventEditor_Viewport_Window(QMainWindow):
         self.tree.setHeaderLabels(["Key", "Value"])
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.open_menu)
-        self.tree.itemChanged.connect(self.on_item_changed)
 
-        # Enable single selection
-        self.tree.setSelectionMode(QTreeWidget.SingleSelection)
 
         # Enable checkboxes
         self.tree.setSelectionBehavior(QTreeWidget.SelectRows)
@@ -102,30 +98,9 @@ class SoundEventEditor_Viewport_Window(QMainWindow):
         container.setLayout(main_layout)
         self.setCentralWidget(container)
 
-        try:
-            debug_data_kv3 = kv3.read(r"see_test.txt")
-            print(debug_data_kv3.value)
-        except:
-            pass
-        # debug_data_kv3 = kv3.read(data_kv3)
-
-
-        self.populate_tree(data)
 
         toolbar = QToolBar()
         self.addToolBar(toolbar)
-
-        export_button = QPushButton("Export to Path")
-        export_button.clicked.connect(lambda: export_to_file(self.tree, square_brackets_group, self.update_debug_window))
-        toolbar.addWidget(export_button)
-
-        load_button = QPushButton("Load from File")
-        load_button.clicked.connect(self.load_file)
-        toolbar.addWidget(load_button)
-
-        quick_export_button = QPushButton("Quick Export")
-        quick_export_button.clicked.connect(lambda: quick_export_to_file(self.tree, square_brackets_group, self.update_debug_window))
-        toolbar.addWidget(quick_export_button)
 
         self.tree.setDragEnabled(True)
         self.tree.setAcceptDrops(True)
@@ -151,59 +126,7 @@ class SoundEventEditor_Viewport_Window(QMainWindow):
             item = self.tree.topLevelItem(i)
             item.setSelected(True)
 
-    def dropEvent(self, event):
-        item = self.tree.currentItem()
-        if not item:
-            return
 
-        parent = item.parent() or self.tree.invisibleRootItem()
-        dropped_item = event.source().currentItem()
-        if not dropped_item:
-            return
-
-        new_item = QTreeWidgetItem(dropped_item.text(0))
-        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
-
-        index = self.tree.indexOfTopLevelItem(item)
-        if index >= 0:
-            parent.insertChild(index, new_item)
-        else:
-            parent.addChild(new_item)
-
-        event.accept()
-        self.update_debug_window()
-
-    def populate_tree(self, data, parent=None):
-        if parent is None:
-            parent = self.tree.invisibleRootItem()
-
-        if isinstance(data, dict):
-            for key, value in data.items():
-                item = QTreeWidgetItem([key, ""])
-                item.setFlags(item.flags() | Qt.ItemIsEditable)
-                parent.addChild(item)
-                self.populate_tree(value, item)
-        elif isinstance(data, list):
-            for value in data:
-                if isinstance(value, list):
-                    list_item = QTreeWidgetItem(["[ ... ]", ""])
-                    list_item.setFlags(list_item.flags() | Qt.ItemIsEditable)
-                    parent.addChild(list_item)
-                    self.populate_tree(value, list_item)
-                else:
-                    list_item = QTreeWidgetItem(["", str(value)])
-                    list_item.setFlags(list_item.flags() | Qt.ItemIsEditable)
-                    parent.addChild(list_item)
-        else:
-            parent.setText(1, str(data))
-            parent.setFlags(parent.flags() | Qt.ItemIsEditable)
-
-    def update_volume_value(self, item, value):
-        item.setText(1, f"{value:.2f}")
-        self.update_debug_window()
-
-    def on_item_changed(self, item, column):
-        self.update_debug_window()
 
     def open_menu(self, position):
         menu = QMenu()
@@ -225,67 +148,7 @@ class SoundEventEditor_Viewport_Window(QMainWindow):
 
         menu.exec(self.tree.viewport().mapToGlobal(position))
 
-    def invert_selection(self):
-        for i in range(self.tree.topLevelItemCount()):
-            item = self.tree.topLevelItem(i)
-            item.setSelected(not item.isSelected())
 
-    def move_item(self, item, direction):
-        if not item:
-            return
-        parent = item.parent() or self.tree.invisibleRootItem()
-        index = parent.indexOfChild(item)
-        new_index = index + direction
-
-        if 0 <= new_index < parent.childCount():
-            parent.takeChild(index)
-            parent.insertChild(new_index, item)
-        self.update_debug_window()
-
-    def add_item(self, item):
-        key, ok = QInputDialog.getText(self, "Add Item", "Enter key:")
-        if ok and key:
-            new_item = QTreeWidgetItem([key])
-            new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
-            if item:
-                item.addChild(new_item)
-            else:
-                self.tree.addTopLevelItem(new_item)
-        self.update_debug_window()
-
-    def edit_item(self, item):
-        if item:
-            self.tree.editItem(item, 0)
-        self.update_debug_window()
-
-    def remove_item(self, item):
-        if item:
-            parent = item.parent() or self.tree.invisibleRootItem()
-            index = parent.indexOfChild(item)
-            parent.takeChild(index)
-        self.update_debug_window()
-
-    def load_file(self):
-        path_to_file = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
-        print(path_to_file)
-        bt_config = kv3.read(path_to_file)
-
-        # Clear the tree before loading new data
-        self.tree.clear()
-
-        data = bt_config.value
-        self.populate_tree(data)
-        print(data)
-        self.update_debug_window()
-
-    def update_debug_window(self):
-        root = self.tree.invisibleRootItem()
-        data = tree_item_to_dict(root)
-        data = kv3.write(data, 'debug.kv3')
-        with open('debug.kv3', 'r') as file:
-            data = file.read()
-        self.debug_window.setPlainText(data)
-        self.debug_window.setStyleSheet("color: #E3E3E3;")
 
 def main():
     app = QApplication(sys.argv)  # Create an application instance
