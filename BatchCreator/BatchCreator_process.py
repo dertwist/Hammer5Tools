@@ -64,6 +64,7 @@ def batchcreator_process_all(current_path_file, process, preview):
     folder_path = (os.path.splitext(current_path_file))[0]
     prefix_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
     folder_path_relative = os.path.relpath(folder_path, prefix_path)
+    folder_path_relative = folder_path_relative.replace('\\', '/')
 
     algorithm = int(process['algorithm'])
 
