@@ -18,7 +18,7 @@ QLabel {
     color: #E3E3E3;
 }
 
-/* QPushButton default and hover styles */
+/* ========================================================== */
 QPushButton {
 
     font: 700 10pt "Segoe UI";
@@ -44,7 +44,7 @@ QPushButton:pressed {
     margin-left: 2px;
     margin-right: 2px;
 }
-/* -------------------------- */
+/* ========================================================== */
 
 
 QToolTip {
@@ -60,7 +60,7 @@ QToolTip {
     color: #E3E3E3;
     background-color: #1C1C1C;
     }
-/* -------------------------- */
+/* ========================================================== */
 
 
 
@@ -93,7 +93,7 @@ QToolButton:pressed {
 
 
 
-/* -------------------------- */
+/* ========================================================== */
 QTabWidget::pane {
     background-color: solid red;
     border-radius: 0px;
@@ -101,7 +101,7 @@ QTabWidget::pane {
     border-color: #363639;
     background-color: #1d1d1f;
 }
-
+/* ========================================================== */
 QTabBar::tab {
     background-color: #323232;
     color: #9A9F91;
@@ -145,7 +145,7 @@ QTabBar::tab:selected {
 }
 
 
-/* -------------------------- */
+/* ========================================================== */
 
 QComboBox {
     font: 700 10pt "Segoe UI";
@@ -193,7 +193,7 @@ QComboBox::drop-down {
     background-color: #1C1C1C;
 }
 
-/* Style the drop-down list view */
+
 QComboBox QAbstractItemView {
     border: 2px solid gray;
     border-color: rgba(80, 80, 80, 255);
@@ -201,7 +201,7 @@ QComboBox QAbstractItemView {
     background-color: #1C1C1C;
 }
 
-/* Style individual items in the drop-down list */
+
 QComboBox QAbstractItemView::item {
     height: 16px; /* Set the height of each item */
     padding: 4px; /* Add padding to each item */
@@ -213,7 +213,7 @@ QComboBox QAbstractItemView::item {
     border-color: rgba(255, 255, 255, 10);
 }
 
-/* Style the selected item in the drop-down list */
+
 QComboBox QAbstractItemView::item:selected {
     height: 16px; /* Set the height of each item */
     padding: 4px; /* Add padding to each item */
@@ -225,7 +225,7 @@ QComboBox QAbstractItemView::item:selected {
     outline: none; /* Remove outline */
 }
 
-/* -------------------------- */
+/* ========================================================== */
 
 
 
@@ -274,11 +274,8 @@ QPlainTextEdit:pressed {
 }
 
 
-    /* -------------------------- */
+/* ========================================================== */
 
-
-
-/* QProgressBar - General Style */
 QProgressBar {
     border: 2px solid #4CAF50; /* Border color */
     border-radius: 5px;        /* Rounded corners */
@@ -291,7 +288,7 @@ QProgressBar {
     border-color: rgba(80, 80, 80, 255);
 }
 
-/* QProgressBar - Chunk Style */
+
 QProgressBar::chunk {
     background-color: #414956; /* Chunk color */
     width: 20px;               /* Chunk width */
@@ -301,8 +298,7 @@ QProgressBar::chunk {
 
 
 
-
-    /* -------------------------- */
+/* ========================================================== */
 
 
 
@@ -349,7 +345,7 @@ QTextBrowser:pressed {
 
 }
 
-/* -------------------------- */
+/* ========================================================== */
 
 QCheckBox {
     font: 700 10pt "Segoe UI";
@@ -372,7 +368,7 @@ QCheckBox::indicator:checked {
     image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
 }
 
-/* -------------------------- */
+/* ========================================================== */
 
 
 QCheckBox:hover {
@@ -391,7 +387,7 @@ QListView {
 }
 
 
-    /* -------------------------- */
+/* ========================================================== */
 
 
 
@@ -477,16 +473,78 @@ QTextEdit::selection {
     color: white;
 }
 
+/* ========================================================== */
+
+QDoubleSpinBox {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    padding-left: 2px;
+    padding-right: 2px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+QDoubleSpinBox:focus {
+}
+
+QDoubleSpinBox:hover {
+}
+
+QDoubleSpinBox:pressed {
+	background-color: #121212;
+}
+
+QDoubleSpinBox::up-button {
+    border: 0px solid black;
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    border-left: 2px solid black;
+    border-bottom: 0px solid black;
+    border-top-right-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+	width:16px;
+    margin:0px;
+}
+
+QDoubleSpinBox::up-arrow {
+    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    width: 20px;
+    height: 20px;
+}
+
+QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+	border: 0px solid black;
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+border-bottom-right-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+	width:16px;
+    margin:0px;
+}
+
+QDoubleSpinBox::down-arrow {
+    image: url(://icons/arrow_drop_down_16dp.svg);
+    width: 20px;
+    height: 20px;
+}
 
 
-/* QListWidget item and selection styles */
+/* ========================================================== */
+
+
+
+/* ========================================================== */
 QScrollArea {
     border: 2px solid #CCCCCC;
     border-color: rgba(80, 80, 80, 255);
     border-radius: 2px;
     color: #E3E3E3;
 }
-/* QListWidget item and selection styles */
+/* ========================================================== */
 QListWidget {
     border: 2px solid #CCCCCC;
     border-color: rgba(80, 80, 80, 255);
@@ -506,7 +564,7 @@ QListWidget::item:hover {
     background-color: #414956;
 }
 
-/* QListView item and selection styles */
+/* ========================================================== */
 
 QListView {
     border: 2px solid #CCCCCC;
@@ -527,7 +585,7 @@ QListView::item:hover {
     background-color: #414956;
 }
 
-/* QTableWidget header and cell styles */
+/* ========================================================== */
 QHeaderView::section {
     background-color: #D0D0D0;
     padding: 5px;
@@ -568,7 +626,6 @@ QMenu::item:selected {
 QWidget {
     background-color: #151515;
     outline: none;
-        /* icon-size: 20px 20px; */
 }
 
 QWidget:item:checked {
@@ -635,7 +692,7 @@ QMenu::indicator:unchecked {
 
 
 
-/* --------------------------------------------------- */
+/* ========================================================== */
 
 
 
@@ -705,6 +762,8 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal
     background: none;
 }
 
+/* ========================================================== */
+
 QScrollBar:vertical
 {
     background-color: #2A2929;
@@ -769,20 +828,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
     background: none;
 }
 
-/* -------------------------- */
+/* ========================================================== */
 
 
-
-
-
-
-
-/* tree */
-
-/* styles/treeview.qss */
-
-/* General application background */
-/* TreeView specific styles */
 QTreeView {
     color: #E3E3E3;
     border: 1px solid black;
@@ -805,18 +853,15 @@ QTreeView::item:hover {
     color: #E3E3E3;
 }
 
-/* Branch icons */
 QTreeView::branch:closed:has-children {
-    /* Ensure this path is correct and the image exists */
     image: url(:/icons/arrow_drop_down_16dp.svg);
 }
 
 QTreeView::branch:open:has-children {
-    /* Ensure this path is correct and the image exists */
     image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
 }
 
-/* Header styles */
+/* ========================================================== */
 QHeaderView::section {
     background-color: #1d1d1f;
     color: #E3E3E3;
@@ -839,7 +884,7 @@ QHeaderView::section:pressed {
 
 
 
-/* --------------------------------------------------------------------------------------------- Menubar ---------------------------------------------------------------------------------------------*/
+/* ========================================================== */
 
 
 QMenuBar {
@@ -851,7 +896,7 @@ QMenuBar::item {
     background-color: #333;
     color: white;
     padding-left: 12px;
-    padding-right: 12px; /* Added padding-right to make items wider */
+    padding-right: 12px; 
     padding-bottom: 12px;
     padding-top: 6px;
 }
@@ -867,7 +912,7 @@ QMenuBar::item:pressed {
 QMenu::item:selected {
     background-color: #555;
 }
-/* --------------------------------------------------------------------------------------------- Statusbar ---------------------------------------------------------------------------------------------*/
+/* ========================================================== */
 
 
 QStatusBar {
