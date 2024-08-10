@@ -15,6 +15,7 @@
         "BatchCreator/BatchCreator_main.ui",
         "BatchCreator/BatchCreator_process_dialog.ui",
         "soudevent_editor/properties/legacy_property.ui",
-        "soudevent_editor/properties/volume_property.ui"
+        "soudevent_editor/properties/volume_property.ui",
+        "popup_menu/popup_menu.ui"
     ]
 }

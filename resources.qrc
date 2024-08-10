@@ -130,5 +130,35 @@
         <file>images/help/about/presets_04.png</file>
         <file>icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
         <file>icons/keyboard_double_arrow_right_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/add_box_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/arrow_back_ios_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/arrow_downward_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/arrow_drop_down_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/arrow_forward_ios_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/backspace_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/bolt_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/bookmark_add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/bookmark_added_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/bookmark_check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/bookmark_star_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/chevron_left_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/chevron_right_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/done_all_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/double_arrow_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/favorite_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/filter_list_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/manage_search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/menu_open_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/new_label_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/open_in_full_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/radio_button_checked_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/remove_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/select_check_box_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>icons/sort_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
     </qresource>
 </RCC>
