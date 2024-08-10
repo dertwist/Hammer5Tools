@@ -63,17 +63,16 @@
 }
 
 .QFrame::hover {
-    background-color: #414956;
 }
 .QFrame::selected {
     background-color: #414956;
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <property name="lineWidth">
       <number>0</number>
