@@ -46,16 +46,11 @@ class SoundEventEditorMainWidget(QMainWindow):
 
     def add_property(self, name, value):
         legacy_property = LegacyProperty(name=name, value=value, status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
-        item = QListWidgetItem()
-        item.setText(name)  # Set the text for the item as the 'name' parameter
-        item.setSizeHint(QSize(0, 50))
 
-        # Assuming self.ui.soundevent_properties is a QVBoxLayout
-        # Insert the legacy_property at the beginning of the layout to add it on top
         self.soundevent_properties_layout.insertWidget(0, legacy_property)
-
-        # Add a vertical spacer at the end of the layout to keep it at the bottom
         self.soundevent_properties_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        name = legacy_property.name
+        self.ui.status_bar.setText(f"Created: {name}")
 
         # Print indexes, names, and values for all elements in the list
         for index in range(self.soundevent_properties_layout.count()):
