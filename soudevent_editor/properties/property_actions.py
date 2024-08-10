@@ -41,7 +41,6 @@ class PropertyActions:
                             self.widget_list.layout().insertWidget(target_index, source_widget)
 
         event.accept()
-
     @staticmethod
     def show_context_menu(self, event, property_class):
         context_menu = QMenu()

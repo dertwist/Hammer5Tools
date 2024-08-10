@@ -222,10 +222,6 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.verticalLayout_2 = QVBoxLayout(self.soundevent_properties)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setSizeConstraint(QLayout.SetFixedSize)
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.verticalLayout_2.addItem(self.verticalSpacer)
-
         self.scrollArea.setWidget(self.soundevent_properties)
 
         self.verticalLayout_3.addWidget(self.scrollArea)
