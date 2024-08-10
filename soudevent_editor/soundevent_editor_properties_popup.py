@@ -26,14 +26,18 @@ class PropertiesPopup(QObject):
         menu = QMenu()
         menu.setWindowFlags(Qt.Popup)
 
-        menu.setFixedWidth(240)
-        menu.setFixedHeight(400)
+        menu.setFixedWidth(340)
+        # Set a fixed height to accommodate 16 elements
+        menu.setMaximumHeight(8 * 32)  # Assuming item_height is the height of each element in the menu
 
         search_bar = QLineEdit(menu)
         search_bar.setPlaceholderText("Search properties...")
 
+
+
         # Set stylesheet to remove top, right, and left borders
         search_bar.setStyleSheet("border-top: 0px; border-right: 0px; border-left: 0px;")
+        # Set stylesheet for menu to remove top, right, and left borders
 
         search_bar.textChanged.connect(lambda text: self.filter_presets(menu, text))
         search_action = QWidgetAction(menu)
@@ -43,7 +47,6 @@ class PropertiesPopup(QObject):
         self.populate_popup(menu)
 
         cursor_pos = QCursor.pos()
-        print(f"Cursor position: {cursor_pos}")  # Debugging statement
         menu.exec(cursor_pos)
 
     def filter_presets(self, menu, text):
