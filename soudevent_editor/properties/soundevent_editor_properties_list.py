@@ -67,6 +67,3 @@ soundevent_editor_properties = [
 
 
 ]
-for item in soundevent_editor_properties:
-    for key, value in item.items():
-        print(key, value)
