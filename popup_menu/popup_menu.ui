@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>PoPupMenu</class>
+ <widget class="QWidget" name="PoPupMenu">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -65,6 +65,7 @@
         <height>748</height>
        </rect>
       </property>
+      <layout class="QVBoxLayout" name="verticalLayout_3"/>
      </widget>
     </widget>
    </item>
