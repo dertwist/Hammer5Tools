@@ -30,7 +30,7 @@ if __name__ == "__main__":
     scroll_area.setWidget(widget_list)
 
     for number in range(8):
-        legacy_property = LegacyProperty(name=f"{number + 1}: test", value='example_value', status_bar=status_bar)
+        legacy_property = LegacyProperty(name=f"{number + 1}: test", value='example_value', status_bar=status_bar, widget_list=widget_list)
         legacy_property.setProperty("customData", legacy_property)
         widget_layout.addWidget(legacy_property)
         print(f"Element {number + 1}: {legacy_property.name} - {legacy_property.value}")
