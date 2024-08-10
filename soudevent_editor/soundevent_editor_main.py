@@ -1,14 +1,15 @@
 import sys
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu
+    QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QAction,QCursor
 from soudevent_editor.ui_soundevenet_editor_mainwindow import Ui_SoundEvent_Editor_MainWindow
 from preferences import get_config_value, get_cs2_path, get_addon_name
 from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_Editor_MiniWindowsExplorer
-from soudevent_editor.soundevent_editor_properties_popup import PropertiesPopup
+# from soudevent_editor.soundevent_editor_properties_popup import PropertiesPopup
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
+from popup_menu.popup_menu_main import PopupMenu
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
 from soudevent_editor.properties.volume_property import  VolumeProperty
@@ -37,8 +38,8 @@ class SoundEventEditorMainWidget(QMainWindow):
         container.setLayout(self.ui.horizontalLayout)
         self.setCentralWidget(container)
 
-        self.properties_manager = PropertiesPopup()
-        self.properties_manager.add_property_signal.connect(lambda name, value: self.add_property(name, value))
+        self.popup_menu = PopupMenu()
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.add_property(name, value))
 
         self.soundevent_properties_widget = QWidget()
         self.soundevent_properties_layout = QVBoxLayout(self.ui.soundevent_properties)
@@ -65,11 +66,10 @@ class SoundEventEditorMainWidget(QMainWindow):
     def keyPressEvent(self, event):
         focus_widget = QApplication.focusWidget()
 
-        if focus_widget == self.ui.scrollArea:
+        if isinstance(focus_widget, QScrollArea) and focus_widget.viewport().underMouse():
             if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                print("Ctrl + F pressed")  # Debugging statement
-                self.properties_manager.show_popup()
-                event.accept()  # Indicate that the event has been handled
+                self.popup_menu.show()
+                event.accept()
             elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
                 self.select_all_items()
                 event.accept()

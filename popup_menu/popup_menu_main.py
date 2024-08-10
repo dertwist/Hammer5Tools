@@ -7,6 +7,7 @@ from PySide6.QtCore import Signal
 from popup_menu.ui_popup_menu import Ui_PoPupMenu
 class PopupMenu(QDialog):
     label_clicked = Signal(str)  # Define a signal that takes a string as an argument
+    add_property_signal = Signal(str,str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -18,20 +19,59 @@ class PopupMenu(QDialog):
         layout = QVBoxLayout(self.ui.scrollArea)
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setContentsMargins(0,0,2,0)
 
         for i in range(16):
             label = QLabel(f"Element {i + 1}")
             label.mousePressEvent = lambda event, text=label.text(): self.label_clicked.emit(text)
 
-            # Create a horizontal layout for each element
-            element_layout = QHBoxLayout()
-            element_layout.addWidget(label)  # Add the label to the horizontal layout
 
-            # Create and add QToolButtons to the same horizontal layout as the label
-            for j in range(2):  # Add 2 QToolButtons to each element
-                tool_button = QToolButton()
-                tool_button.setText(f"Button {j + 1}")
-                element_layout.addWidget(tool_button)  # Add the button to the horizontal layout
+            element_layout = QHBoxLayout()
+            element_layout.setContentsMargins(0,0,0,0)
+            element_layout.addWidget(label)
+
+            label.setStyleSheet("""
+            QLabel {
+                border-bottom: 0.5px solid black;  
+                border-radius: 0px; border-color: 
+                rgba(40, 40, 40, 255);
+            }
+            QLabel:hover {
+                background-color: #414956;
+            }
+            """)
+
+            tool_button = QToolButton()
+
+            tool_button.setStyleSheet("""QToolButton {
+                font: 700 10pt "Segoe UI";
+                border: 2px solid black;
+                border-radius: 2px;
+                border-color: rgba(80, 80, 80, 255);
+                height:12px;
+                width:12px;
+                color: #E3E3E3;
+                background-color: #1C1C1C;
+            }
+            QToolButton:hover {
+                background-color: #414956;
+                color: white;
+            }
+            QToolButton:pressed {
+                background-color: #1C1C1C;
+                margin:  0px;
+                margin-left: 0px;
+                margin-right: 0px;
+                font: 700 10pt "Sego";
+            
+            }
+            """)
+
+            bookmark_icon_added = QIcon("://icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+            bookmark_icon_add = QIcon("://icons/bookmark_add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+            tool_button.setIcon(bookmark_icon_add)
+            tool_button.setIconSize(QSize(24, 24))
+            element_layout.addWidget(tool_button)
 
             scroll_layout.addLayout(element_layout)
 
