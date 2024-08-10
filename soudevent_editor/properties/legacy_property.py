@@ -1,19 +1,55 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout,QMenu
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QAction,QCursor
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMenu, QLabel, QLineEdit
 from soudevent_editor.properties.ui_legacy_property import Ui_LegacyPropertyWidet
 
+from PySide6.QtWidgets import QWidget, QSizePolicy
+from PySide6.QtGui import QDrag
+
 class LegacyProperty(QWidget):
-    def __init__(self, name, value, status_bar):
+    def __init__(self, name, value, status_bar, widget_list):
         super().__init__()
         self.ui = Ui_LegacyPropertyWidet()
         self.ui.setupUi(self)
+        self.setAcceptDrops(True)
+        self.widget_list = widget_list
         self.name = name
         self.value = value
-        self.status_bar = status_bar  # Make status_bar an instance variable
+        self.status_bar = status_bar
         self.init_ui()
 
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag_start_position = event.pos()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.LeftButton:
+            drag = QDrag(self)
+            mime_data = QMimeData()
+            mime_data.setText(self.name)
+            drag.setMimeData(mime_data)
+            drag.exec()
+
+    def dragEnterEvent(self, event):
+        event.accept()
+
+    def dropEvent(self, event):
+        if event.source() == self:
+            return
+
+        mime_data = event.mimeData()
+        if mime_data.hasText():
+            name = mime_data.text()
+            source_index = self.widget_list.layout().indexOf(self)
+            target_index = self.widget_list.layout().indexOf(event.source())
+
+            if source_index != -1 and target_index != -1:
+                self.widget_list.layout().takeAt(source_index)
+                self.widget_list.layout().insertWidget(target_index, self)
+
+        event.accept()
     def init_ui(self):
         self.ui.label.setText(self.name)
         self.ui.lineEdit.setText(self.value)
