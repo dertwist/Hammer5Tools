@@ -16,7 +16,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QHeaderView,
-    QLineEdit, QMainWindow, QPushButton, QScrollArea,
+    QListWidget, QListWidgetItem, QMainWindow, QPushButton,
     QSizePolicy, QSpacerItem, QToolButton, QTreeView,
     QVBoxLayout, QWidget)
 import rc_resources
@@ -57,22 +57,10 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.verticalLayout.setSpacing(6)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.scrollArea = QScrollArea(self.frame)
-        self.scrollArea.setObjectName(u"scrollArea")
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollAreaWidgetContents = QWidget()
-        self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 396, 312))
-        self.verticalLayout_2 = QVBoxLayout(self.scrollAreaWidgetContents)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.pushButton = QPushButton(self.scrollAreaWidgetContents)
-        self.pushButton.setObjectName(u"pushButton")
+        self.soundevents_list = QListWidget(self.frame)
+        self.soundevents_list.setObjectName(u"soundevents_list")
 
-        self.verticalLayout_2.addWidget(self.pushButton)
-
-        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-
-        self.verticalLayout.addWidget(self.scrollArea)
+        self.verticalLayout.addWidget(self.soundevents_list)
 
         self.verticalSpacer_2 = QSpacerItem(340, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
 
@@ -170,7 +158,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.Import_Audio_button = QPushButton(self.frame_5)
         self.Import_Audio_button.setObjectName(u"Import_Audio_button")
-        self.Import_Audio_button.setMinimumSize(QSize(0, 18))
+        self.Import_Audio_button.setMinimumSize(QSize(0, 32))
         self.Import_Audio_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
@@ -216,23 +204,60 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.frame_3.setFrameShadow(QFrame.Raised)
         self.verticalLayout_3 = QVBoxLayout(self.frame_3)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.sound_event_editor_viewport_widget = QHBoxLayout()
-        self.sound_event_editor_viewport_widget.setObjectName(u"sound_event_editor_viewport_widget")
+        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.soundevent_properties = QListWidget(self.frame_3)
+        QListWidgetItem(self.soundevent_properties)
+        self.soundevent_properties.setObjectName(u"soundevent_properties")
+        self.soundevent_properties.setStyleSheet(u"QListWidget {\n"
+"    border: 2px solid #CCCCCC;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 2px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"}\n"
+"QListWidget::item {\n"
+"    padding: 0px;\n"
+"}\n"
+"QListWidget::item:selected {\n"
+"    border: 2px solid #CCCCCC;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 2px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"}\n"
+"\n"
+"QListWidget::item:hover {\n"
+"    border: 2px solid #CCCCCC;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 2px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"}\n"
+"")
 
-        self.verticalLayout_3.addLayout(self.sound_event_editor_viewport_widget)
+        self.verticalLayout_3.addWidget(self.soundevent_properties)
 
         self.frame_2 = QFrame(self.frame_3)
         self.frame_2.setObjectName(u"frame_2")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.frame_2.sizePolicy().hasHeightForWidth())
+        self.frame_2.setSizePolicy(sizePolicy)
+        self.frame_2.setMaximumSize(QSize(16777215, 38))
         self.frame_2.setFrameShape(QFrame.StyledPanel)
         self.frame_2.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.frame_2)
+        self.horizontalLayout_2.setSpacing(6)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.frame_4 = QFrame(self.frame_2)
         self.frame_4.setObjectName(u"frame_4")
         self.frame_4.setFrameShape(QFrame.StyledPanel)
         self.frame_4.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_4 = QHBoxLayout(self.frame_4)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.toolButton = QToolButton(self.frame_4)
         self.toolButton.setObjectName(u"toolButton")
         icon = QIcon()
@@ -244,7 +269,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
         self.Import_Audio_button_2 = QPushButton(self.frame_4)
         self.Import_Audio_button_2.setObjectName(u"Import_Audio_button_2")
-        self.Import_Audio_button_2.setMinimumSize(QSize(0, 18))
+        self.Import_Audio_button_2.setMinimumSize(QSize(0, 32))
         self.Import_Audio_button_2.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
@@ -281,6 +306,42 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.frame_4)
 
+        self.Import_Audio_button_3 = QPushButton(self.frame_2)
+        self.Import_Audio_button_3.setObjectName(u"Import_Audio_button_3")
+        self.Import_Audio_button_3.setMinimumSize(QSize(0, 32))
+        self.Import_Audio_button_3.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+
+        self.horizontalLayout_2.addWidget(self.Import_Audio_button_3)
+
 
         self.verticalLayout_3.addWidget(self.frame_2)
 
@@ -289,12 +350,6 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
 
         self.verticalLayout_4.addWidget(self.frame_7)
-
-        self.lineEdit = QLineEdit(self.frame_6)
-        self.lineEdit.setObjectName(u"lineEdit")
-        self.lineEdit.setReadOnly(True)
-
-        self.verticalLayout_4.addWidget(self.lineEdit)
 
 
         self.horizontalLayout.addWidget(self.frame_6)
@@ -308,10 +363,16 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
     def retranslateUi(self, SoundEvent_Editor_MainWindow):
         SoundEvent_Editor_MainWindow.setWindowTitle(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"MainWindow", None))
-        self.pushButton.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"PushButton", None))
         self.Import_Audio_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Import audio", None))
+
+        __sortingEnabled = self.soundevent_properties.isSortingEnabled()
+        self.soundevent_properties.setSortingEnabled(False)
+        ___qlistwidgetitem = self.soundevent_properties.item(0)
+        ___qlistwidgetitem.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"New Item", None));
+        self.soundevent_properties.setSortingEnabled(__sortingEnabled)
+
         self.toolButton.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
         self.Import_Audio_button_2.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Quick setup", None))
-        self.lineEdit.setPlaceholderText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Status line", None))
+        self.Import_Audio_button_3.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Save", None))
     # retranslateUi
 
