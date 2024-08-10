@@ -304,43 +304,38 @@ QLineEdit::selection {
               <number>0</number>
              </property>
              <item>
-              <widget class="QListWidget" name="soundevent_properties">
-               <property name="styleSheet">
-                <string notr="true">QListWidget {
-    border: 2px solid #CCCCCC;
-    border-color: rgba(80, 80, 80, 255);
-    border-radius: 2px;
-    padding: 2px;
-    color: #E3E3E3;
-}
-QListWidget::item {
-    padding: 0px;
-}
-QListWidget::item:selected {
-    border: 2px solid #CCCCCC;
-    border-color: rgba(80, 80, 80, 255);
-    border-radius: 2px;
-    padding: 2px;
-    color: #E3E3E3;
-}
-
-QListWidget::item:hover {
-    border: 2px solid #CCCCCC;
-    border-color: rgba(80, 80, 80, 255);
-    border-radius: 2px;
-    padding: 2px;
-    color: #E3E3E3;
-}
-</string>
+              <widget class="QLabel" name="status_bar">
+               <property name="text">
+                <string>TextLabel</string>
                </property>
-               <item>
-                <property name="text">
-                 <string>New Item</string>
+              </widget>
+             </item>
+             <item>
+              <widget class="QScrollArea" name="scrollArea">
+               <property name="lineWidth">
+                <number>0</number>
+               </property>
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+               </property>
+               <widget class="QWidget" name="soundevent_properties">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>621</width>
+                  <height>588</height>
+                 </rect>
                 </property>
-                <property name="toolTip">
-                 <string extracomment="fsdfsdfsd"/>
-                </property>
-               </item>
+                <layout class="QVBoxLayout" name="verticalLayout_2">
+                 <property name="sizeConstraint">
+                  <enum>QLayout::SetFixedSize</enum>
+                 </property>
+                </layout>
+               </widget>
               </widget>
              </item>
              <item>
