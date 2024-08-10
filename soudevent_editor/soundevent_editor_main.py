@@ -8,6 +8,7 @@ from soudevent_editor.ui_soundevenet_editor_mainwindow import Ui_SoundEvent_Edit
 from preferences import get_config_value, get_cs2_path, get_addon_name
 from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_Editor_MiniWindowsExplorer
 from soudevent_editor.soundevent_editor_properties_popup import PropertiesPopup
+from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
 
@@ -35,46 +36,40 @@ class SoundEventEditorMainWidget(QMainWindow):
         container.setLayout(self.ui.horizontalLayout)
         self.setCentralWidget(container)
 
-        self.presets_manager = PropertiesPopup()
-        self.presets_manager.add_property_signal.connect(self.add_property)
+        self.properties_manager = PropertiesPopup()
+        self.properties_manager.add_property_signal.connect(lambda name, value: self.add_property(name, value))
 
-    def create_context_menu(self, item):
-        context_menu = QMenu()
+        self.soundevent_properties_widget = QWidget()
+        self.soundevent_properties_layout = QVBoxLayout(self.ui.soundevent_properties)
+        self.soundevent_properties_widget.setLayout(self.soundevent_properties_layout)
+        self.ui.scrollArea.setWidget(self.soundevent_properties_widget)
 
-        delete_action = QAction("Delete", self)
-        duplicate_action = QAction("Duplicate", self)
-        help_action = QAction("Help", self)
-
-        delete_action.triggered.connect(lambda: self.delete_item(item))
-        duplicate_action.triggered.connect(lambda: self.duplicate_item(item))
-        help_action.triggered.connect(lambda: self.show_help(item))
-
-        context_menu.addAction(delete_action)
-        context_menu.addAction(duplicate_action)
-        context_menu.addAction(help_action)
-
-        return context_menu
-
-    def add_property(self, element):
-        legacy_property = LegacyProperty(name=element, value='test')
-
+    def add_property(self, name, value):
+        legacy_property = LegacyProperty(name=name, value=value, status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
         item = QListWidgetItem()
+        item.setText(name)  # Set the text for the item as the 'name' parameter
         item.setSizeHint(QSize(0, 50))
-        self.ui.soundevent_properties.addItem(item)
 
-        self.ui.soundevent_properties.setItemWidget(item, legacy_property)
+        # Assuming self.ui.soundevent_properties is a QVBoxLayout
+        # Insert the legacy_property at the beginning of the layout to add it on top
+        self.soundevent_properties_layout.insertWidget(0, legacy_property)
 
-        context_menu = self.create_context_menu(item)
+        # Add a vertical spacer at the end of the layout to keep it at the bottom
+        self.soundevent_properties_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        legacy_property.setContextMenuPolicy(Qt.ActionsContextMenu)
-        legacy_property.customContextMenuRequested.connect(
-            lambda pos, item=item: self.show_context_menu(pos, item, context_menu))
+        # Extracting name and value for setting variables
+        property_name = legacy_property.name
+        property_value = legacy_property.value
 
-    def show_context_menu(self, pos, item, context_menu):
-        item_widget = self.ui.soundevent_properties.itemWidget(item)
-        item_widget.setContextMenuPolicy(Qt.ActionsContextMenu)
-        item_widget.customContextMenuRequested.connect(
-            lambda: self.show_context_menu(pos, item, context_menu))
+        # Example usage of the extracted variables
+        print(f"Property Name: {property_name}")
+        print(f"Property Value: {property_value}")
+
+        # Print indexes, names, and values for all elements in the list
+        for index in range(self.soundevent_properties_layout.count()):
+            widget = self.soundevent_properties_layout.itemAt(index).widget()
+            if isinstance(widget, LegacyProperty):
+                print(f"Index: {index}, Name: {widget.name}, Value: {widget.value}")
 
     def delete_item(self, item):
         # Implement the logic to delete the item from the list
@@ -89,16 +84,13 @@ class SoundEventEditorMainWidget(QMainWindow):
 
 
     def keyPressEvent(self, event):
-        if self.ui.soundevent_properties.hasFocus():  # Check if the focus is on self.ui.soundevent_property
-            if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                print("Ctrl + F pressed")  # Debugging statement
-                self.presets_manager.show_popup()
-                event.accept()  # Indicate that the event has been handled
-            elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
-                self.select_all_items()
-                event.accept()
-        else:
-            super().keyPressEvent(event)
+        if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+            print("Ctrl + F pressed")  # Debugging statement
+            self.properties_manager.show_popup()
+            event.accept()  # Indicate that the event has been handled
+        elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
+            self.select_all_items()
+            event.accept()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
