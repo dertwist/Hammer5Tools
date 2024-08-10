@@ -10,8 +10,9 @@ class PopupMenu(QDialog):
     label_clicked = Signal(str)
     add_property_signal = Signal(str, str)
 
-    def __init__(self, parent=None):
+    def __init__(self, properties, parent=None):
         super().__init__(parent)
+        self.properties = properties
         self.ui = Ui_PoPupMenu()
         self.ui.setupUi(self)
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
@@ -25,30 +26,33 @@ class PopupMenu(QDialog):
         scroll_layout.setContentsMargins(0, 0, 2, 0)
         scroll_layout.addSpacerItem( QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        for i in range(16):
-            label = QLabel(f"Element {i + 1}")
-            label.mousePressEvent = lambda event, text=label.text(): self.label_clicked.emit(text)
 
-            element_layout = QHBoxLayout()
-            element_layout.setContentsMargins(0, 0, 0, 0)
-            element_layout.addWidget(label)
-            scroll_layout.insertLayout(scroll_layout.count() - 1, element_layout)
-            label.setStyleSheet("""
-            QLabel {
-                 font: 580 10pt "Segoe UI";
-                border-bottom: 0.5px solid black;  
-                border-radius: 0px; border-color: 
-                rgba(40, 40, 40, 255);
-                padding-top:8px;
-            }
-            QLabel:hover {
-                background-color: #414956;
-            }
-            """)
+        for item in self.properties:
+            for key, value in item.items():
+                label = QLabel(key)
+                label.mousePressEvent = lambda event, key=key, value=value: self.add_property_signal.emit(key, value)
 
-            scroll_layout.addLayout(element_layout)
+                element_layout = QHBoxLayout()
+                element_layout.setContentsMargins(0, 0, 0, 0)
+                element_layout.addWidget(label)
+                scroll_layout.insertLayout(scroll_layout.count() - 1, element_layout)
+                label.setStyleSheet("""
+                QLabel {
+                     font: 580 10pt "Segoe UI";
+                    border-bottom: 0.5px solid black;  
+                    border-radius: 0px; border-color: 
+                    rgba(40, 40, 40, 255);
+                    padding-top:8px;
+                }
+                QLabel:hover {
+                    background-color: #414956;
+                }
+                """)
+
+                scroll_layout.addLayout(element_layout)
 
         self.ui.scrollArea.setWidget(scroll_content)
+        self.ui.lineEdit.setFocus()
 
     def event(self, event):
         if event.type() == QEvent.WindowDeactivate:

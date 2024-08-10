@@ -10,6 +10,7 @@ from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_
 # from soudevent_editor.soundevent_editor_properties_popup import PropertiesPopup
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 from popup_menu.popup_menu_main import PopupMenu
+from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
 from soudevent_editor.properties.volume_property import  VolumeProperty
@@ -38,7 +39,7 @@ class SoundEventEditorMainWidget(QMainWindow):
         container.setLayout(self.ui.horizontalLayout)
         self.setCentralWidget(container)
 
-        self.popup_menu = PopupMenu()
+        self.popup_menu = PopupMenu(soundevent_editor_properties)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.add_property(name, value))
 
         self.soundevent_properties_widget = QWidget()
