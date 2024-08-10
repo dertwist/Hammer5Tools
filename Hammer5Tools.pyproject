@@ -14,6 +14,7 @@
         "export_and_import_addon/export_and_import_addon.ui",
         "BatchCreator/BatchCreator_main.ui",
         "BatchCreator/BatchCreator_process_dialog.ui",
-        "soudevent_editor/properties/legacy_property.ui"
+        "soudevent_editor/properties/legacy_property.ui",
+        "soudevent_editor/properties/volume_property.ui"
     ]
 }

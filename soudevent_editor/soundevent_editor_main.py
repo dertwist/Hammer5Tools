@@ -57,40 +57,23 @@ class SoundEventEditorMainWidget(QMainWindow):
         # Add a vertical spacer at the end of the layout to keep it at the bottom
         self.soundevent_properties_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-        # Extracting name and value for setting variables
-        property_name = legacy_property.name
-        property_value = legacy_property.value
-
-        # Example usage of the extracted variables
-        print(f"Property Name: {property_name}")
-        print(f"Property Value: {property_value}")
-
         # Print indexes, names, and values for all elements in the list
         for index in range(self.soundevent_properties_layout.count()):
             widget = self.soundevent_properties_layout.itemAt(index).widget()
             if isinstance(widget, LegacyProperty):
                 print(f"Index: {index}, Name: {widget.name}, Value: {widget.value}")
 
-    def delete_item(self, item):
-        # Implement the logic to delete the item from the list
-        self.ui.soundevent_properties.takeItem(self.ui.soundevent_properties.row(item))
-
-    def duplicate_item(self, item):
-        duplicated_item = item.clone()
-        self.ui.soundevent_properties.addItem(duplicated_item)
-
-    def show_help(self, item):
-        print(f"Help for item: {item.text()}")
-
-
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-            print("Ctrl + F pressed")  # Debugging statement
-            self.properties_manager.show_popup()
-            event.accept()  # Indicate that the event has been handled
-        elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
-            self.select_all_items()
-            event.accept()
+        focus_widget = QApplication.focusWidget()
+
+        if focus_widget == self.ui.scrollArea:
+            if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                print("Ctrl + F pressed")  # Debugging statement
+                self.properties_manager.show_popup()
+                event.accept()  # Indicate that the event has been handled
+            elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
+                self.select_all_items()
+                event.accept()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
