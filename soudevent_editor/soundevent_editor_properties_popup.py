@@ -4,6 +4,15 @@ from PySide6.QtGui import QCursor
 from PySide6.QtCore import Qt
 from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
 from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QScrollArea
+
+import json
+from PySide6.QtWidgets import QTreeWidgetItem, QInputDialog, QMenu, QLineEdit, QWidgetAction, QVBoxLayout, QWidget, QLabel
+from PySide6.QtGui import QCursor
+from PySide6.QtCore import Qt
+from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
+from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QScrollArea
 
 
 class PropertiesPopup(QObject):
@@ -18,6 +27,7 @@ class PropertiesPopup(QObject):
         menu.setWindowFlags(Qt.Popup)
 
         menu.setFixedWidth(240)
+        menu.setFixedHeight(400)
 
         search_bar = QLineEdit(menu)
         search_bar.setPlaceholderText("Search properties...")
