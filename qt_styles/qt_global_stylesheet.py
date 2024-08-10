@@ -479,7 +479,13 @@ QTextEdit::selection {
 
 
 
-
+/* QListWidget item and selection styles */
+QScrollArea {
+    border: 2px solid #CCCCCC;
+    border-color: rgba(80, 80, 80, 255);
+    border-radius: 2px;
+    color: #E3E3E3;
+}
 /* QListWidget item and selection styles */
 QListWidget {
     border: 2px solid #CCCCCC;
