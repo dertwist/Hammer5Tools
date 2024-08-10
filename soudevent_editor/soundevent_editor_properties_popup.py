@@ -51,3 +51,4 @@ class PropertiesPopup(QObject):
     def add_property(self, key, value):
         print(f"Applying preset: {key} = {value}")
         self.add_property_signal.emit(key, value)
+

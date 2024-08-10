@@ -16,9 +16,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QHeaderView,
-    QListWidget, QListWidgetItem, QMainWindow, QPushButton,
-    QSizePolicy, QSpacerItem, QToolButton, QTreeView,
-    QVBoxLayout, QWidget)
+    QLabel, QLayout, QListWidget, QListWidgetItem,
+    QMainWindow, QPushButton, QScrollArea, QSizePolicy,
+    QSpacerItem, QToolButton, QTreeView, QVBoxLayout,
+    QWidget)
 import rc_resources
 
 class Ui_SoundEvent_Editor_MainWindow(object):
@@ -205,37 +206,29 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.verticalLayout_3 = QVBoxLayout(self.frame_3)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.soundevent_properties = QListWidget(self.frame_3)
-        QListWidgetItem(self.soundevent_properties)
-        self.soundevent_properties.setObjectName(u"soundevent_properties")
-        self.soundevent_properties.setStyleSheet(u"QListWidget {\n"
-"    border: 2px solid #CCCCCC;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 2px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"}\n"
-"QListWidget::item {\n"
-"    padding: 0px;\n"
-"}\n"
-"QListWidget::item:selected {\n"
-"    border: 2px solid #CCCCCC;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 2px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"}\n"
-"\n"
-"QListWidget::item:hover {\n"
-"    border: 2px solid #CCCCCC;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 2px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"}\n"
-"")
+        self.status_bar = QLabel(self.frame_3)
+        self.status_bar.setObjectName(u"status_bar")
 
-        self.verticalLayout_3.addWidget(self.soundevent_properties)
+        self.verticalLayout_3.addWidget(self.status_bar)
+
+        self.scrollArea = QScrollArea(self.frame_3)
+        self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setLineWidth(0)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.soundevent_properties = QWidget()
+        self.soundevent_properties.setObjectName(u"soundevent_properties")
+        self.soundevent_properties.setGeometry(QRect(0, 0, 621, 588))
+        self.verticalLayout_2 = QVBoxLayout(self.soundevent_properties)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setSizeConstraint(QLayout.SetFixedSize)
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.verticalLayout_2.addItem(self.verticalSpacer)
+
+        self.scrollArea.setWidget(self.soundevent_properties)
+
+        self.verticalLayout_3.addWidget(self.scrollArea)
 
         self.frame_2 = QFrame(self.frame_3)
         self.frame_2.setObjectName(u"frame_2")
@@ -364,13 +357,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
     def retranslateUi(self, SoundEvent_Editor_MainWindow):
         SoundEvent_Editor_MainWindow.setWindowTitle(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"MainWindow", None))
         self.Import_Audio_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Import audio", None))
-
-        __sortingEnabled = self.soundevent_properties.isSortingEnabled()
-        self.soundevent_properties.setSortingEnabled(False)
-        ___qlistwidgetitem = self.soundevent_properties.item(0)
-        ___qlistwidgetitem.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"New Item", None));
-        self.soundevent_properties.setSortingEnabled(__sortingEnabled)
-
+        self.status_bar.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"TextLabel", None))
         self.toolButton.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
         self.Import_Audio_button_2.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Quick setup", None))
         self.Import_Audio_button_3.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Save", None))
