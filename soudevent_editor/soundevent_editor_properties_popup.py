@@ -33,11 +33,8 @@ class PropertiesPopup(QObject):
         search_bar = QLineEdit(menu)
         search_bar.setPlaceholderText("Search properties...")
 
-
-
-        # Set stylesheet to remove top, right, and left borders
         search_bar.setStyleSheet("border-top: 0px; border-right: 0px; border-left: 0px;")
-        # Set stylesheet for menu to remove top, right, and left borders
+
 
         search_bar.textChanged.connect(lambda text: self.filter_presets(menu, text))
         search_action = QWidgetAction(menu)
