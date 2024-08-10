@@ -63,7 +63,8 @@ soundevent_editor_properties = [
     {'reverb_wet': '1.0'},
     {'pitch': '1'},
     {'position_relative_to_player': 'false'},
-    {'use_world_position': 'false'}
+    {'use_world_position': 'false'},
+    {'base': 'test'}
 
 
 ]
