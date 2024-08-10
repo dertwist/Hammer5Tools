@@ -48,7 +48,6 @@ class Ui_LegacyPropertyWidet(object):
 "}\n"
 "\n"
 ".QFrame::hover {\n"
-"    background-color: #414956;\n"
 "}\n"
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"

@@ -11,6 +11,7 @@ from soudevent_editor.soundevent_editor_properties_popup import PropertiesPopup
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
+from soudevent_editor.properties.volume_property import  VolumeProperty
 
 
 class SoundEventEditorMainWidget(QMainWindow):
@@ -45,11 +46,14 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.ui.scrollArea.setWidget(self.soundevent_properties_widget)
 
     def add_property(self, name, value):
-        legacy_property = LegacyProperty(name=name, value=value, status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+        if name == 'volume':
+            property_class = VolumeProperty(name=name, value=value, status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+        else:
+            property_class = LegacyProperty(name=name, value=value, status_bar=self.ui.status_bar, widget_list=self.soundevent_properties_layout)
 
-        self.soundevent_properties_layout.insertWidget(0, legacy_property)
+        self.soundevent_properties_layout.insertWidget(0, property_class)
         self.soundevent_properties_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        name = legacy_property.name
+        name = property_class.name
         self.ui.status_bar.setText(f"Created: {name}")
 
         # Print indexes, names, and values for all elements in the list
