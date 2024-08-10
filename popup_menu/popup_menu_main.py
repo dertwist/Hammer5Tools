@@ -20,7 +20,6 @@ class PopupMenu(QDialog):
 
         self.ui.lineEdit.textChanged.connect(self.search_text_changed)
 
-        layout = QVBoxLayout(self.ui.scrollArea)
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
         scroll_layout.setContentsMargins(0, 0, 2, 0)
@@ -46,37 +45,6 @@ class PopupMenu(QDialog):
                 background-color: #414956;
             }
             """)
-
-            tool_button = QToolButton()
-
-            tool_button.setStyleSheet("""QToolButton {
-                font: 700 10pt "Segoe UI";
-                border: 2px solid black;
-                border-radius: 2px;
-                border-color: rgba(80, 80, 80, 255);
-                height: 12px;
-                width: 12px;
-                color: #E3E3E3;
-                background-color: #1C1C1C;
-            }
-            QToolButton:hover {
-                background-color: #414956;
-                color: white;
-            }
-            QToolButton:pressed {
-                background-color: #1C1C1C;
-                margin: 0px;
-                margin-left: 0px;
-                margin-right: 0px;
-                font: 700 10pt "Sego";
-            }
-            """)
-
-            bookmark_icon_added = QIcon("://icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
-            bookmark_icon_add = QIcon("://icons/bookmark_add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
-            tool_button.setIcon(bookmark_icon_add)
-            tool_button.setIconSize(QSize(24, 24))
-            # element_layout.addWidget(tool_button)
 
             scroll_layout.addLayout(element_layout)
 
