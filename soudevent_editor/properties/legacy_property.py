@@ -11,6 +11,7 @@ class LegacyProperty(QWidget):
         self.setAcceptDrops(True)
         self.ui.lineEdit.setAcceptDrops(False)
         self.widget_list = widget_list
+        self.ui.lineEdit = self.ui.lineEdit
         self.name = name
         self.value = value
         self.status_bar = status_bar
