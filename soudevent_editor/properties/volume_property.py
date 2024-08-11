@@ -29,7 +29,6 @@ class VolumeProperty(QWidget):
 
     def update_horizontalSlider(self):
         self.value = self.ui.horizontalSlider.value() / 10
-        print(self.value)
         self.ui.doubleSpinBox.setValue(self.value)
 
     def update_doubleSpinBox(self):
