@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QMenu
+from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
 
@@ -41,12 +41,14 @@ class PropertyActions:
                             self.widget_list.layout().insertWidget(target_index, source_widget)
 
         event.accept()
+
+    # noinspection PyTypeChecker
     @staticmethod
     def show_context_menu(self, event, property_class):
         context_menu = QMenu()
         delete_action = QAction("Delete", context_menu)
-        duplicate_action = QAction("Duplicate", context_menu)
-        context_menu.addActions([delete_action, duplicate_action])
+        copy_action = QAction("Copy", context_menu)  # Change 'Duplicate' to 'Copy'
+        context_menu.addActions([delete_action, copy_action])  # Replace 'duplicate_action' with 'copy_action'
 
         action = context_menu.exec(QCursor.pos())
 
@@ -54,8 +56,6 @@ class PropertyActions:
             self.deleteLater()
             self.status_bar.setText(f"Deleted: {self.ui.label.text()}")
 
-        elif action == duplicate_action:
-            new_item = property_class(name=self.ui.label.text(), value=self.ui.lineEdit.text(), status_bar=self.status_bar)
-            new_item.setContextMenuPolicy(Qt.CustomContextMenu)
-            new_item.customContextMenuRequested.connect(self.show_context_menu)
-            self.widget_list.layout().addWidget(new_item)
+        elif action == copy_action:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(f"hammer5tools:soundeventeditor;;{self.name};;{self.value}")
