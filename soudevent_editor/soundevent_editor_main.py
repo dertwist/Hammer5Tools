@@ -46,6 +46,7 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.soundevent_properties_layout = QVBoxLayout(self.ui.soundevent_properties)
         self.soundevent_properties_widget.setLayout(self.soundevent_properties_layout)
         self.ui.scrollArea.setWidget(self.soundevent_properties_widget)
+        self.ui.scrollArea.setFocusPolicy(Qt.StrongFocus)
 
     def add_property(self, name, value):
         if name == 'volume':
@@ -74,7 +75,27 @@ class SoundEventEditorMainWidget(QMainWindow):
             elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
                 self.select_all_items()
                 event.accept()
+            elif event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
+                self.paste_action()
+                event.accept()
 
+    def contextMenuEvent(self, event):
+        context_menu = QMenu(self)
+
+        paste_action = QAction("Paste", self)
+        paste_action.triggered.connect(self.paste_action)
+        context_menu.addAction(paste_action)
+        context_menu.exec_(event.globalPos())
+
+    def paste_action(self):
+        clipboard = QApplication.clipboard()
+        clipboard_text = clipboard.text()
+        clipboard_data = clipboard_text.split(';;')
+
+        if clipboard_data[0] == "hammer5tools:soundeventeditor":
+            self.add_property(clipboard_data[1], clipboard_data[2])
+        else:
+            print("Clipboard data format is not valid.")
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SoundEventEditorMainWidget()
