@@ -269,10 +269,26 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.verticalLayout_3.setSpacing(6)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.status_bar = QLabel(self.frame_3)
+        self.frame_9 = QFrame(self.frame_3)
+        self.frame_9.setObjectName(u"frame_9")
+        self.frame_9.setFrameShape(QFrame.StyledPanel)
+        self.frame_9.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_7 = QHBoxLayout(self.frame_9)
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
+        self.status_bar = QLabel(self.frame_9)
         self.status_bar.setObjectName(u"status_bar")
 
-        self.verticalLayout_3.addWidget(self.status_bar)
+        self.horizontalLayout_7.addWidget(self.status_bar)
+
+        self.version = QLabel(self.frame_9)
+        self.version.setObjectName(u"version")
+        self.version.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.horizontalLayout_7.addWidget(self.version)
+
+
+        self.verticalLayout_3.addWidget(self.frame_9)
 
         self.scrollArea = QScrollArea(self.frame_3)
         self.scrollArea.setObjectName(u"scrollArea")
@@ -281,7 +297,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.scrollArea.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
         self.soundevent_properties = QWidget()
         self.soundevent_properties.setObjectName(u"soundevent_properties")
-        self.soundevent_properties.setGeometry(QRect(0, 0, 621, 588))
+        self.soundevent_properties.setGeometry(QRect(0, 0, 621, 586))
         self.verticalLayout_2 = QVBoxLayout(self.soundevent_properties)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setSizeConstraint(QLayout.SetFixedSize)
@@ -424,7 +440,8 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.create_new_soundevent.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Creane new sound event", None))
         self.Import_audio_options_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
         self.Import_audio_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Import audio", None))
-        self.status_bar.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"TextLabel", None))
+        self.status_bar.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Status", None))
+        self.version.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Version", None))
         self.quick_setup_options_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
         self.quick_setup_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Quick setup", None))
         self.save_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Save", None))

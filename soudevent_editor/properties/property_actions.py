@@ -54,7 +54,6 @@ class PropertyActions:
 
         if action == delete_action:
             self.deleteLater()
-            self.status_bar.setText(f"Deleted: {self.ui.label.text()}")
 
         elif action == copy_action:
             clipboard = QApplication.clipboard()

@@ -122,11 +122,14 @@ class MiniWindowsExplorer(QMainWindow):
         self.select_last_opened_path()
 
     def select_last_opened_path(self):
-        last_opened_path = bc_get_config_value('MINI_EXPLORER_LAST_PATH', self.addon)
-        if last_opened_path:
-            last_opened_index = self.model.index(last_opened_path)
-            self.tree.selectionModel().select(last_opened_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
-            self.tree.scrollTo(last_opened_index)
+        try:
+            last_opened_path = bc_get_config_value('MINI_EXPLORER_LAST_PATH', self.addon)
+            if last_opened_path:
+                last_opened_index = self.model.index(last_opened_path)
+                self.tree.selectionModel().select(last_opened_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+                self.tree.scrollTo(last_opened_index)
+        except:
+            pass
 
     def save_current_path(self, path):
         bc_set_config_value('MINI_EXPLORER_LAST_PATH', self.addon, path)
