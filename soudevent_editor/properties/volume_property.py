@@ -4,7 +4,7 @@ from soudevent_editor.properties.ui_volume_property import Ui_LegacyPropertyWide
 from soudevent_editor.properties.property_actions import PropertyActions
 
 class VolumeProperty(QWidget):
-    def __init__(self, name, value, status_bar, widget_list):
+    def __init__(self, name, display_name, value, status_bar, widget_list):
         super().__init__()
         self.ui = Ui_LegacyPropertyWidet()
         self.ui.setupUi(self)
@@ -13,6 +13,7 @@ class VolumeProperty(QWidget):
         self.ui.doubleSpinBox.setAcceptDrops(False)
         self.widget_list = widget_list
         self.name = name
+        self.ui.label.setText(display_name)
         self.value = float(value)
         self.status_bar = status_bar
         self.init_ui()
