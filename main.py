@@ -7,13 +7,17 @@ from documentation.documentation import Documentation_Dialog
 from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool
 from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
 from loading_editor.loading_editor_main import Loading_editorMainWindow
+
 from create_addon.create_addon_mian import Create_addon_Dialog
 from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
 from minor_features.discord_status_main import discord_status_clear, update_discord_status
 from minor_features.addon_functions import delete_addon, launch_addon
+
 from minor_features.update_check import check_updates
+
 from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
 from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
+
 import ctypes
 import winsound
 
@@ -23,8 +27,9 @@ stop_discord_thread = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
-app_version = '1.5.1'
+app_version = '1.6.0'
 batchcreator_version = '1.2.2'
+soundevent_editor_version = '0.1.0'
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -117,7 +122,7 @@ class Widget(QWidget):
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
         # # Check if the current tab is the soundeditor_tab
-        self.SoundEventEditorMainWidget = SoundEventEditorMainWidget()
+        self.SoundEventEditorMainWidget = SoundEventEditorMainWidget(soundevent_editor_version)
         self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
 
         # Clean up BatchCreator_MainWindow
@@ -194,7 +199,10 @@ class Widget(QWidget):
             set_config_bool('APP', 'minimize_message_shown', 'False')
 
     def exit_application(self):
-        discord_status_clear()
+        try:
+            discord_status_clear()
+        except:
+            pass
         stop_discord_thread.set()
 
         # Ensure all threads are properly stopped
