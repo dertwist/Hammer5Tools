@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 from popup_menu.popup_menu_main import PopupMenu
 from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
 from soudevent_editor.soundevent_editor_kv3_parser import child_merge,child_key, parse_kv3
+import keyvalues3 as kv3
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
 from soudevent_editor.properties.volume_property import  VolumeProperty
@@ -51,30 +52,67 @@ class SoundEventEditorMainWidget(QMainWindow):
 
         self.ui.soundevents_list.itemClicked.connect(self.on_soundevent_clicked)
         self.populate_soundevent_list()
+
+        self.ui.save_button.clicked.connect(self.save)
+
+
+
     def populate_soundevent_list(self):
         global soundevents_data
         soundevents_data = parse_kv3(os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts'))
         for key, _ in soundevents_data.items():
             self.ui.soundevents_list.addItem(key)
 
+
+    def save(self):
+        data = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
+        soundevent = self.ui.soundevents_list.currentItem().text()
+        data = {soundevent: data}
+        print(kv3.write(data, sys.stdout))
+
+        pass
+    def get_element_layout_kv3(self, layout, data_out):
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if widget:
+                item = {widget.name: widget.value}
+                data_out = child_merge(data_out, item)
+                print(item)
+        return data_out
     def clear_layout(self, layout):
         while layout.count():
             child = layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
+
     def on_soundevent_clicked(self, item):
         global soundevents_data
-        self.clear_layout(self.soundevent_properties_layout)
         item_text = item.text()
-        if item_text in soundevents_data:
-            details = soundevents_data[item_text]
-            for key, value in details.items():
-                value = str(value)
-                self.add_property(key,value)
+        if self.soundevent_properties_layout.count() != 0:
+            data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
+            self.clear_layout(self.soundevent_properties_layout)
+            if item_text in soundevents_data:
+                details = soundevents_data[item_text]
+                for key, value in details.items():
+                    value = str(value)
+                    self.add_property(key, value)
+            del soundevents_data[item_text]
+            properties_data = {item_text: data_out}
+            soundevents_data = child_merge(soundevents_data, properties_data)
+        else:
+            self.clear_layout(self.soundevent_properties_layout)
+            if item_text in soundevents_data:
+                details = soundevents_data[item_text]
+                for key, value in details.items():
+                    value = str(value)
+                    self.add_property(key, value)
+
 
     def add_property(self, name, value):
         if name == 'volume':
-            property_class = VolumeProperty(name=name, value=value, status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+            property_class = VolumeProperty(name=name, display_name="Volume", value=value, status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+        elif name == 'pitch':
+            property_class = VolumeProperty(name=name, display_name="Pitch", value=value,status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
         else:
             property_class = LegacyProperty(name=name, value=value, status_bar=self.ui.status_bar, widget_list=self.soundevent_properties_layout)
 
@@ -83,11 +121,10 @@ class SoundEventEditorMainWidget(QMainWindow):
         name = property_class.name
         self.ui.status_bar.setText(f"Created: {name}")
 
-        # Print indexes, names, and values for all elements in the list
-        for index in range(self.soundevent_properties_layout.count()):
-            widget = self.soundevent_properties_layout.itemAt(index).widget()
-            if isinstance(widget, LegacyProperty):
-                print(f"Index: {index}, Name: {widget.name}, Value: {widget.value}")
+        # for index in range(self.soundevent_properties_layout.count()):
+        #     widget = self.soundevent_properties_layout.itemAt(index).widget()
+        #     if isinstance(widget, LegacyProperty):
+        #         print(f"Index: {index}, Name: {widget.name}, Value: {widget.value}")
 
     def keyPressEvent(self, event):
         focus_widget = QApplication.focusWidget()
