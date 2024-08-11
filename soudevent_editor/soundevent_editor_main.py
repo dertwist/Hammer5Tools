@@ -19,10 +19,11 @@ from soudevent_editor.properties.legacy_property import LegacyProperty
 from soudevent_editor.properties.volume_property import  VolumeProperty
 
 class SoundEventEditorMainWidget(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, version, parent=None):
         super().__init__(parent)
         self.ui = Ui_SoundEvent_Editor_MainWindow()
         self.ui.setupUi(self)
+        self.ui.version.setText(f"Soundevent Editor version: v{version}")
 
         # Set up the custom file system model
         counter_strike_2_path = get_cs2_path()
@@ -66,9 +67,9 @@ class SoundEventEditorMainWidget(QMainWindow):
 
     def save(self):
         global soundevents_data
-        soundevent = self.ui.soundevents_list.currentItem()
-        self.on_soundevent_clicked(soundevent)
-        print(kv3.write(soundevents_data, sys.stdout))
+        self.merge_global_data()
+        kv3.write(soundevents_data, (os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts')))
+        self.ui.status_bar.setText(f"Saved and exported")
 
         pass
     def get_element_layout_kv3(self, layout, data_out):
@@ -77,7 +78,6 @@ class SoundEventEditorMainWidget(QMainWindow):
             if widget:
                 item = {widget.name: widget.value}
                 data_out = child_merge(data_out, item)
-                print(item)
         return data_out
     def clear_layout(self, layout):
         while layout.count():
@@ -85,27 +85,42 @@ class SoundEventEditorMainWidget(QMainWindow):
             if child.widget():
                 child.widget().deleteLater()
 
+
+    def merge_global_data(self):
+        data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
+        global soundevents_data
+        item_text = self.ui.soundevents_list.currentItem().text()
+        del soundevents_data[item_text]
+        properties_data = {item_text: data_out}
+        soundevents_data = child_merge(soundevents_data, properties_data)
     def on_soundevent_clicked(self, item):
         global soundevents_data
         item_text = item.text()
-        if self.soundevent_properties_layout.count() != 0:
-            data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
-            self.clear_layout(self.soundevent_properties_layout)
-            if item_text in soundevents_data:
-                details = soundevents_data[item_text]
-                for key, value in details.items():
-                    value = str(value)
-                    self.add_property(key, value)
-            del soundevents_data[item_text]
-            properties_data = {item_text: data_out}
-            soundevents_data = child_merge(soundevents_data, properties_data)
-        else:
-            self.clear_layout(self.soundevent_properties_layout)
-            if item_text in soundevents_data:
-                details = soundevents_data[item_text]
-                for key, value in details.items():
-                    value = str(value)
-                    self.add_property(key, value)
+        self.ui.status_bar.setText(f"Selected: {item_text}")
+        self.clear_layout(self.soundevent_properties_layout)
+        if item_text in soundevents_data:
+            details = soundevents_data[item_text]
+            for key, value in details.items():
+                value = str(value)
+                self.add_property(key, value)
+
+        # if self.soundevent_properties_layout.count() != 0:
+        #     data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
+        #     self.clear_layout(self.soundevent_properties_layout)
+        #     if item_text in soundevents_data:
+        #         details = soundevents_data[item_text]
+        #         for key, value in details.items():
+        #             value = str(value)
+        #             self.add_property(key, value)
+        #     del soundevents_data[item_text]
+        #     properties_data = {item_text: data_out}
+        #     soundevents_data = child_merge(soundevents_data, properties_data)
+        # else:
+        #     if item_text in soundevents_data:
+        #         details = soundevents_data[item_text]
+        #         for key, value in details.items():
+        #             value = str(value)
+        #             self.add_property(key, value)
 
 
     def add_property(self, name, value):
@@ -119,7 +134,6 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.soundevent_properties_layout.insertWidget(0, property_class)
         self.soundevent_properties_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
         name = property_class.name
-        self.ui.status_bar.setText(f"Created: {name}")
 
         # for index in range(self.soundevent_properties_layout.count()):
         #     widget = self.soundevent_properties_layout.itemAt(index).widget()
@@ -138,6 +152,10 @@ class SoundEventEditorMainWidget(QMainWindow):
                 event.accept()
             elif event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
                 self.paste_action()
+                event.accept()
+        if isinstance(focus_widget, QScrollArea) and focus_widget.viewport().underMouse():
+            if event.key() == Qt.Key_S and event.modifiers() == Qt.ControlModifier:
+                self.save()
                 event.accept()
 
     def contextMenuEvent(self, event):
