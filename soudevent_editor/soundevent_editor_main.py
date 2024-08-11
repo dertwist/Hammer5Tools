@@ -65,10 +65,10 @@ class SoundEventEditorMainWidget(QMainWindow):
 
 
     def save(self):
-        data = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
-        soundevent = self.ui.soundevents_list.currentItem().text()
-        data = {soundevent: data}
-        print(kv3.write(data, sys.stdout))
+        global soundevents_data
+        soundevent = self.ui.soundevents_list.currentItem()
+        self.on_soundevent_clicked(soundevent)
+        print(kv3.write(soundevents_data, sys.stdout))
 
         pass
     def get_element_layout_kv3(self, layout, data_out):
