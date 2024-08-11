@@ -131,9 +131,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         global data_kv3
-        for parent in data.keys():
-            data_out = child_key(data, parent)
-            data_kv3 = child_merge(data_kv3, data_out)
+
 
         self.setWindowTitle("List and Detail Viewer")
         self.setGeometry(100, 100, 800, 600)
