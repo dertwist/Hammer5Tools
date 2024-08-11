@@ -1,3 +1,4 @@
+import os.path
 import sys
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea
@@ -11,10 +12,10 @@ from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 from popup_menu.popup_menu_main import PopupMenu
 from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
+from soudevent_editor.soundevent_editor_kv3_parser import child_merge,child_key, parse_kv3
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
 from soudevent_editor.properties.volume_property import  VolumeProperty
-
 
 class SoundEventEditorMainWidget(QMainWindow):
     def __init__(self, parent=None):
@@ -47,6 +48,29 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.soundevent_properties_widget.setLayout(self.soundevent_properties_layout)
         self.ui.scrollArea.setWidget(self.soundevent_properties_widget)
         self.ui.scrollArea.setFocusPolicy(Qt.StrongFocus)
+
+        self.ui.soundevents_list.itemClicked.connect(self.on_soundevent_clicked)
+        self.populate_soundevent_list()
+    def populate_soundevent_list(self):
+        global soundevents_data
+        soundevents_data = parse_kv3(os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts'))
+        for key, _ in soundevents_data.items():
+            self.ui.soundevents_list.addItem(key)
+
+    def clear_layout(self, layout):
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+    def on_soundevent_clicked(self, item):
+        global soundevents_data
+        self.clear_layout(self.soundevent_properties_layout)
+        item_text = item.text()
+        if item_text in soundevents_data:
+            details = soundevents_data[item_text]
+            for key, value in details.items():
+                value = str(value)
+                self.add_property(key,value)
 
     def add_property(self, name, value):
         if name == 'volume':

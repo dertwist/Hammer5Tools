@@ -58,10 +58,25 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.verticalLayout.setSpacing(6)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.frame_8 = QFrame(self.frame)
+        self.frame_8.setObjectName(u"frame_8")
+        self.frame_8.setFrameShape(QFrame.StyledPanel)
+        self.frame_8.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_6 = QHBoxLayout(self.frame_8)
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.horizontalLayout_6.setContentsMargins(0, 0, 0, 0)
+
+        self.verticalLayout.addWidget(self.frame_8)
+
         self.soundevents_list = QListWidget(self.frame)
         self.soundevents_list.setObjectName(u"soundevents_list")
 
         self.verticalLayout.addWidget(self.soundevents_list)
+
+        self.pushButton = QPushButton(self.frame)
+        self.pushButton.setObjectName(u"pushButton")
+
+        self.verticalLayout.addWidget(self.pushButton)
 
         self.verticalSpacer_2 = QSpacerItem(340, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
 
@@ -352,6 +367,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
     def retranslateUi(self, SoundEvent_Editor_MainWindow):
         SoundEvent_Editor_MainWindow.setWindowTitle(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"MainWindow", None))
+        self.pushButton.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"PushButton", None))
         self.Import_Audio_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Import audio", None))
         self.status_bar.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"TextLabel", None))
         self.toolButton.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
