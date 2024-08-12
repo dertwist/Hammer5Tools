@@ -66,55 +66,19 @@ class PopupMenu(QDialog):
         super().showEvent(event)
 
     def search_text_changed(self):
-        search_text = self.ui.lineEdit.text().lower()  # Get the text from the QLineEdit and convert to lowercase for case-insensitive search
+        search_text = self.ui.lineEdit.text().lower()
 
-        scroll_content = self.ui.scrollArea.widget()  # Get the scroll area widget contents
+        scroll_content = self.ui.scrollArea.widget()
         for i in range(scroll_content.layout().count()):
             element_layout_item = scroll_content.layout().itemAt(i)
 
             if element_layout_item is not None:
-                element_layout = element_layout_item.layout()  # Get the layout of each element
+                element_layout = element_layout_item.layout()
 
                 if element_layout is not None:
-                    label = element_layout.itemAt(0).widget()  # Get the label widget from the layout
-                    # tool_button = element_layout.itemAt(1).widget()  # Get the tool button widget from the layout
+                    label = element_layout.itemAt(0).widget()
 
-                    if search_text in label.text().lower():  # Check if the search text is present in the label text
-                        element_layout.itemAt(0).widget().show()  # Show the label if it matches the search text
-                        # tool_button.show()  # Show the tool button if it matches the search text
+                    if search_text in label.text().lower():
+                        element_layout.itemAt(0).widget().show()
                     else:
-                        element_layout.itemAt(0).widget().hide()  # Hide the label if it doesn't match the search text
-                        # tool_button.hide()  # Hide the tool button if it doesn't match the search text
-class MyWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-
-        self.setWindowTitle("Simple Window with Popup Menu")
-        self.setGeometry(100, 100, 400, 200)
-
-        self.overlay_widget = PopupMenu(self)  # Set the parent widget as MyWindow
-
-        # Create a shortcut to trigger overlay_widget.show() when Ctrl + F is pressed
-        shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
-        shortcut.activated.connect(self.show_overlay)
-
-        self.label = QLabel("Hello, World!", self)  # Define label as an attribute of MyWindow
-        self.label.move(50, 50)  # Set the position of the label
-
-        # Create a QPushButton to trigger the overlay_widget
-        button = QPushButton("Show Overlay", self)
-        button.clicked.connect(self.overlay_widget.show)  # Show the existing instance of OverlayDialog
-        self.overlay_widget = PopupMenu(self)
-        self.overlay_widget.label_clicked.connect(self.set_main_window_label)
-
-    def set_main_window_label(self, text):
-        # Set the label in the main window
-        self.label.setText(text)
-
-    def show_overlay(self):
-        self.overlay_widget.show()
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MyWindow()
-    window.show()
-    sys.exit(app.exec())
+                        element_layout.itemAt(0).widget().hide()
