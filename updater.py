@@ -10,15 +10,24 @@ from tqdm import tqdm
 version = 'v1.0.1'
 print(f'Updater version: {version}')
 
+
+def kill_main_app():
+    processes = [process for process in psutil.process_iter() if process.name() == 'Hammer5Tools.exe']
+
+    if processes:
+        for process in processes:
+            process.kill()
+            print('Hammer5Tools.exe process killed successfully.')
+    else:
+        print('Hammer5Tools.exe process not found.')
+
+
+kill_main_app()
+
 path = 'DOWNLOAD_TMP'
 # path = 'hammer5tools/DOWNLOAD_TMP'
 # URL of the GitHub repository
 url = 'https://github.com/dertwist/Hammer5Tools/releases/latest/download/Hammer5Tools.zip'
-
-for process in psutil.process_iter():
-    if process.name() == 'Hammer5Tools.exe':
-        process.kill()
-        print('Hammer5Tools.exe process killed successfully.')
 
 # Send a GET request to the URL
 response = requests.get(url, stream=True)  # Set stream=True to enable streaming
@@ -88,5 +97,7 @@ if os.path.exists(path):
     if success:
         print("Successful updated")
         os.startfile('Hammer5Tools.exe')
+    else:
+        print("Update was unsuccessful, try to update manually")
 
     shutil.rmtree(path)
