@@ -8,11 +8,12 @@ from PySide6.QtGui import QAction,QCursor
 from soudevent_editor.ui_soundevenet_editor_mainwindow import Ui_SoundEvent_Editor_MainWindow
 from preferences import get_config_value, get_cs2_path, get_addon_name
 from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_Editor_MiniWindowsExplorer
-# from soudevent_editor.soundevent_editor_properties_popup import PropertiesPopup
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea, QInputDialog
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 from popup_menu.popup_menu_main import PopupMenu
 from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
 from soudevent_editor.soundevent_editor_kv3_parser import child_merge,child_key, parse_kv3
+
 import keyvalues3 as kv3
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
@@ -56,13 +57,32 @@ class SoundEventEditorMainWidget(QMainWindow):
 
         self.ui.save_button.clicked.connect(self.save)
 
+        self.ui.create_new_soundevent.clicked.connect(self.create_new_soundevent)
+
+    def create_new_soundevent(self):
+        existing_items = [self.ui.soundevents_list.item(item).text() for item in
+                          range(self.ui.soundevents_list.count())]
+
+        new_soundevent_name = 'new.soundevent'
+        unique_name = new_soundevent_name
+        counter = 1
+
+        while unique_name in existing_items:
+            unique_name = f'{new_soundevent_name}_{counter}'
+            counter += 1
+
+        self.ui.soundevents_list.addItem(unique_name)
+        self.merge_global_data()
 
 
     def populate_soundevent_list(self):
         global soundevents_data
-        soundevents_data = parse_kv3(os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts'))
+        soundevents_data = parse_kv3(
+            os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts'))
         for key, _ in soundevents_data.items():
-            self.ui.soundevents_list.addItem(key)
+            item = QListWidgetItem(key)
+            self.ui.soundevents_list.addItem(item)
+
 
 
     def save(self):
@@ -90,7 +110,10 @@ class SoundEventEditorMainWidget(QMainWindow):
         data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
         global soundevents_data
         item_text = self.ui.soundevents_list.currentItem().text()
-        del soundevents_data[item_text]
+        try:
+            del soundevents_data[item_text]
+        except:
+            pass
         properties_data = {item_text: data_out}
         soundevents_data = child_merge(soundevents_data, properties_data)
     def on_soundevent_clicked(self, item):
@@ -161,9 +184,19 @@ class SoundEventEditorMainWidget(QMainWindow):
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
 
-        paste_action = QAction("Paste", self)
-        paste_action.triggered.connect(self.paste_action)
-        context_menu.addAction(paste_action)
+        if self.ui.soundevents_list is QApplication.focusWidget():
+            delete_action = QAction("Delete", self)
+            delete_action.triggered.connect(self.delete_action)
+            context_menu.addAction(delete_action)
+
+            rename_action = QAction("Rename", self)
+            rename_action.triggered.connect(self.rename_action)
+            context_menu.addAction(rename_action)
+        else:
+            paste_action = QAction("Paste", self)
+            paste_action.triggered.connect(self.paste_action)
+            context_menu.addAction(paste_action)
+
         context_menu.exec_(event.globalPos())
 
     def paste_action(self):
@@ -175,6 +208,27 @@ class SoundEventEditorMainWidget(QMainWindow):
             self.add_property(clipboard_data[1], clipboard_data[2])
         else:
             print("Clipboard data format is not valid.")
+
+    def delete_action(self):
+        selected_item = self.ui.soundevents_list.currentItem()
+        if selected_item:
+            item_text = selected_item.text()
+            self.ui.soundevents_list.takeItem(self.ui.soundevents_list.row(selected_item))
+            global soundevents_data
+            del soundevents_data[item_text]
+            # Perform any additional deletion logic here
+
+    def rename_action(self):
+        selected_item = self.ui.soundevents_list.currentItem()
+        global soundevents_data
+        if selected_item:
+            item_text = selected_item.text()  # Get the current text of the selected item
+            new_name, ok = QInputDialog.getText(self, 'Rename Soundevent', 'Enter new name:')
+            if ok and new_name:
+                # Update the key in the soundevents_data dictionary
+                soundevents_data[new_name] = soundevents_data.pop(item_text)
+                selected_item.setText(new_name)  # Update the displayed text in the UI
+                # Perform any additional renaming logic here
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SoundEventEditorMainWidget()
