@@ -1,5 +1,7 @@
+import os.path
+
 from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox
-from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent
+from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QModelIndex, QFileInfo, QItemSelectionModel
 
 class CustomFileSystemModel(QFileSystemModel):
@@ -40,7 +42,11 @@ class CustomFileSystemModel(QFileSystemModel):
                 QDir().rename(source_path, destination_path)
             else:
                 QFile().rename(source_path, destination_path)
-        return True
+        source_path = data.urls()[0].toLocalFile()
+        print(source_path)
+        return source_path
+
+
 
     def setData(self, index, value, role):
         if role == Qt.EditRole:
@@ -62,6 +68,8 @@ class SoundEvent_Editor_MiniWindowsExplorer(QMainWindow):
         super().__init__(parent)
         self.model = CustomFileSystemModel()
         self.model.setRootPath(tree_directory)
+
+        self.tree_directory = tree_directory
 
         # Set up the tree view
         self.tree = QTreeView(self)
@@ -104,6 +112,10 @@ class SoundEvent_Editor_MiniWindowsExplorer(QMainWindow):
 
         # Connect key events
         self.tree.installEventFilter(self)
+
+
+
+
     def closeEvent(self, event):
         del self.model  # Explicitly delete the CustomFileSystemModel instance
         event.accept()
@@ -149,6 +161,10 @@ class SoundEvent_Editor_MiniWindowsExplorer(QMainWindow):
                 delete_action = QAction("Remove File", self)
                 delete_action.triggered.connect(lambda: self.delete_item(index))
                 menu.addAction(delete_action)
+
+                copy_path_action = QAction("Copy File Path", self)
+                copy_path_action.triggered.connect(lambda: self.copy_file_path(index))
+                menu.addAction(copy_path_action)
         else:
             # Context menu for empty space
             create_folder_action = QAction("Create Folder", self)
@@ -189,6 +205,17 @@ class SoundEvent_Editor_MiniWindowsExplorer(QMainWindow):
                     QDir(path).removeRecursively()
                 else:
                     QFile(path).remove()
+
+
+    def copy_file_path(self, index):
+        file_path = self.model.filePath(index)
+        file_path = os.path.relpath(file_path, self.tree_directory)
+        file_path = file_path.replace('\\', '/')
+        file_path = file_path.lower()
+        root, ext = os.path.splitext(file_path)
+        file_path = root + '.vsnd'
+        clipboard = QGuiApplication.clipboard()
+        clipboard.setText(file_path)
 
     def create_folder(self, parent_index):
         parent_path = self.model.filePath(parent_index)
