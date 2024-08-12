@@ -145,14 +145,20 @@ QSlider::add-page:horizontal {
 }
 </string>
         </property>
+        <property name="minimum">
+         <number>-99</number>
+        </property>
         <property name="maximum">
          <number>99</number>
         </property>
         <property name="singleStep">
          <number>1</number>
         </property>
+        <property name="value">
+         <number>10</number>
+        </property>
         <property name="sliderPosition">
-         <number>15</number>
+         <number>10</number>
         </property>
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -223,7 +229,7 @@ QDoubleSpinBox::down-arrow {
          <number>1</number>
         </property>
         <property name="minimum">
-         <double>0.000000000000000</double>
+         <double>-9.900000000000000</double>
         </property>
         <property name="maximum">
          <double>9.900000000000000</double>
