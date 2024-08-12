@@ -10,46 +10,10 @@ soundevent_editor_properties = [
     {'badsp_presetse': 'reverb_9_mediumChamber'},
     {'soundevent_01': ''},
     {'randomize_position_hemisphere': 'false'},
-    {'distance_volume_mapping_curve': """		[
-			[
-				0.0, 1.0, 0.0, 0.0,
-				2.0, 3.0,
-			],
-			[
-				500.0, 1.0, 0.0, 0.0,
-				2.0, 3.0,
-			],
-		]"""},
-    {'fadetime_volume_mapping_curve': """		[
-			[
-				0.0, 1.0, 0.0, 0.0,
-				2.0, 3.0,
-			],
-			[
-				500.0, 1.0, 0.0, 0.0,
-				2.0, 3.0,
-			],
-		]"""},
-    {'distance_unfiltered_stereo_mapping_curve': """		[
-			[
-				0.0, 1.0, 0.0, 0.0,
-				2.0, 3.0,
-			],
-			[
-				500.0, 1.0, 0.0, 0.0,
-				2.0, 3.0,
-			],
-		]"""},
-    {'time_volume_mapping_curve': """		[
-			[
-				0.0, 1.0, 0.0, 0.0,
-				2.0, 3.0,
-			],
-			[
-				500.0, 1.0, 0.0, 0.0,
-				2.0, 3.0,
-			],
-		]"""},
+    {'distance_volume_mapping_curve': "[[97.14286, 1.0, -0.001763, -0.001763, 2.0, 3.0], [2000.0, 0.0, -0.000526, -0.000526, 1.0, 1.0]]"},
+    {'fadetime_volume_mapping_curve': "[[0.0, 1.0, -1.223776, -1.223776, 2.0, 3.0], [0.691429, 0.0, 0.0, 0.0, 2.0, 3.0]]"},
+    {'distance_unfiltered_stereo_mapping_curve': "[[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [300.0, 0.0, 0.0, 0.0, 2.0, 3.0]]"},
+    {'time_volume_mapping_curve': "[[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [1.0, 1.0, 0.0, 0.0, 2.0, 3.0]]"},
     {'type': 'csgo_mega'},
     {'mixgroup': 'Amb_Common'},
     {'occlusion_intensity': '0.0'},
