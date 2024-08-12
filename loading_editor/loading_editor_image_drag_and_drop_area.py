@@ -1,7 +1,7 @@
 import sys, os
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QPushButton, QWidget, QHBoxLayout, QScrollArea, QStackedLayout
-from PySide6.QtGui import QPixmap, QDragEnterEvent, QDropEvent, QDrag
-from PySide6.QtCore import Qt, QMimeData
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QHBoxLayout, QScrollArea, QStackedLayout
+from PySide6.QtGui import QPixmap, QDragEnterEvent, QDropEvent
+from PySide6.QtCore import Qt
 from loading_editor.ui_loading_editor_image_frame_widget import Ui_loading_editor_image_frame_widget_ui
 
 class ImageFrame(QWidget):
@@ -26,7 +26,7 @@ class ImageFrame(QWidget):
 
     def load_image(self):
         pixmap = QPixmap(self.image_path)
-        max_size = 200  # Set maximum size (both width and height)
+        max_size = 200
         pixmap = pixmap.scaled(max_size, max_size, Qt.KeepAspectRatio)
         self.image_label.setPixmap(pixmap)
         picture_name = os.path.basename(self.image_path)
@@ -49,7 +49,7 @@ class loading_editor_image_drag_and_drop_area_window(QMainWindow):
 
         self.scroll_area = QScrollArea(self.central_widget)
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setStyleSheet("border: 0px;")  # Remove the border from the scroll area
+        self.scroll_area.setStyleSheet("border: 0px;")
 
         self.scroll_widget = QWidget()
         self.scroll_layout = QVBoxLayout(self.scroll_widget)
