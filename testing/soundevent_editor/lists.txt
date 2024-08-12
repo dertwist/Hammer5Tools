@@ -1,2 +1,0 @@
-"List1": ["parameter":"1.0"]
-"List2": ["paramete1":"2.0"]
