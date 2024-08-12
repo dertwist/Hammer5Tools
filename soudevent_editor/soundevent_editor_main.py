@@ -43,9 +43,6 @@ class SoundEventEditorMainWidget(QMainWindow):
         container.setLayout(self.ui.horizontalLayout)
         self.setCentralWidget(container)
 
-        self.popup_menu = PopupMenu(soundevent_editor_properties)
-        self.popup_menu.add_property_signal.connect(lambda name, value: self.add_property(name, value))
-
         self.soundevent_properties_widget = QWidget()
         self.soundevent_properties_layout = QVBoxLayout(self.ui.soundevent_properties)
         self.soundevent_properties_widget.setLayout(self.soundevent_properties_layout)
@@ -151,6 +148,12 @@ class SoundEventEditorMainWidget(QMainWindow):
             property_class = VolumeProperty(name=name, display_name="Volume", value=value, status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
         elif name == 'pitch':
             property_class = VolumeProperty(name=name, display_name="Pitch", value=value,status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+        elif name == 'delay':
+            property_class = VolumeProperty(name=name, display_name="Delay", value=value,status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+        elif name == 'volume_random_min':
+            property_class = VolumeProperty(name=name, display_name="Volume Random Minimum", value=value,status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+        elif name == 'volume_random_max':
+            property_class = VolumeProperty(name=name, display_name="Volume Random Maximum", value=value,status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
         else:
             property_class = LegacyProperty(name=name, value=value, status_bar=self.ui.status_bar, widget_list=self.soundevent_properties_layout)
 
@@ -168,7 +171,28 @@ class SoundEventEditorMainWidget(QMainWindow):
 
         if isinstance(focus_widget, QScrollArea) and focus_widget.viewport().underMouse():
             if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                elements_in_popupmenu = soundevent_editor_properties
+                def get_names_from_layout(layout):
+                    names = []
+                    for i in range(layout.count()):
+                        widget = layout.itemAt(i).widget()
+                        if widget:
+                            names.append(widget.name)
+                    return names
+                names_to_remove = get_names_from_layout(self.soundevent_properties_layout)
+                elements_in_popupmenu_out = {}
+                for index, item in enumerate(elements_in_popupmenu):
+                    for key, value in item.items():
+                        if key in names_to_remove:
+                            pass
+                        else:
+                            elements_in_popupmenu_out.update({key: value})
+
+                elements_in_popupmenu_out = [elements_in_popupmenu_out]
+                self.popup_menu = PopupMenu(elements_in_popupmenu_out)
+                self.popup_menu.add_property_signal.connect(lambda name, value: self.add_property(name, value))
                 self.popup_menu.show()
+                print(soundevent_editor_properties)
                 event.accept()
             elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
                 self.select_all_items()

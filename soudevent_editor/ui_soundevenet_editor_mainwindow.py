@@ -16,10 +16,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QHeaderView,
-    QLabel, QLayout, QLineEdit, QListWidget,
-    QListWidgetItem, QMainWindow, QPushButton, QScrollArea,
-    QSizePolicy, QSpacerItem, QToolButton, QTreeView,
-    QVBoxLayout, QWidget)
+    QLabel, QLayout, QListWidget, QListWidgetItem,
+    QMainWindow, QPushButton, QScrollArea, QSizePolicy,
+    QSpacerItem, QToolButton, QTreeView, QVBoxLayout,
+    QWidget)
 import rc_resources
 
 class Ui_SoundEvent_Editor_MainWindow(object):
@@ -290,11 +290,6 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
         self.verticalLayout_3.addWidget(self.frame_9)
 
-        self.lineEdit = QLineEdit(self.frame_3)
-        self.lineEdit.setObjectName(u"lineEdit")
-
-        self.verticalLayout_3.addWidget(self.lineEdit)
-
         self.scrollArea = QScrollArea(self.frame_3)
         self.scrollArea.setObjectName(u"scrollArea")
         self.scrollArea.setLineWidth(0)
@@ -302,7 +297,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.scrollArea.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
         self.soundevent_properties = QWidget()
         self.soundevent_properties.setObjectName(u"soundevent_properties")
-        self.soundevent_properties.setGeometry(QRect(0, 0, 621, 556))
+        self.soundevent_properties.setGeometry(QRect(0, 0, 621, 586))
         self.verticalLayout_2 = QVBoxLayout(self.soundevent_properties)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setSizeConstraint(QLayout.SetFixedSize)

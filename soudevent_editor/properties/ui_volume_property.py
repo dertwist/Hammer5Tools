@@ -105,9 +105,11 @@ class Ui_LegacyPropertyWidet(object):
 "    height: 8px;\n"
 "}\n"
 "")
+        self.horizontalSlider.setMinimum(-99)
         self.horizontalSlider.setMaximum(99)
         self.horizontalSlider.setSingleStep(1)
-        self.horizontalSlider.setSliderPosition(15)
+        self.horizontalSlider.setValue(10)
+        self.horizontalSlider.setSliderPosition(10)
         self.horizontalSlider.setOrientation(Qt.Horizontal)
 
         self.horizontalLayout_2.addWidget(self.horizontalSlider)
@@ -172,7 +174,7 @@ class Ui_LegacyPropertyWidet(object):
 "    height: 20px;\n"
 "}")
         self.doubleSpinBox.setDecimals(1)
-        self.doubleSpinBox.setMinimum(0.000000000000000)
+        self.doubleSpinBox.setMinimum(-9.900000000000000)
         self.doubleSpinBox.setMaximum(9.900000000000000)
         self.doubleSpinBox.setSingleStep(0.100000000000000)
 
