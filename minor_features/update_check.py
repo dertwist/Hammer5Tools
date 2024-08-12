@@ -1,10 +1,11 @@
 import requests, os, psutil
-from PySide6.QtWidgets import QMessageBox, QPushButton
+from PySide6.QtWidgets import QMessageBox, QPushButton, QApplication
 import webbrowser
 from PySide6.QtCore import Qt
 from packaging import version
 from PySide6.QtGui import QIcon
 import markdown2
+import sys
 
 def check_updates(repo_url, current_version, silent):
     # Extract the owner and repo name from the URL
@@ -91,5 +92,9 @@ def show_install_dialog():
     response = install_msg_box.exec()
 
     if response == QMessageBox.Yes:
-        # Run the updater executable
-        psutil.Popen(['cmd', '/c', 'Hammer5Tools_Updater.exe'])
+        psutil.Popen(['Hammer5Tools_Updater.exe'])
+        QApplication.quit()
+        QApplication.instance().quit()
+        QApplication.exit(1)
+        sys.exit(0)
+        # os.system('Hammer5Tools_Updater.exe')

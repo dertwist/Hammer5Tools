@@ -10,7 +10,7 @@ from loading_editor.loading_editor_main import Loading_editorMainWindow
 
 from create_addon.create_addon_mian import Create_addon_Dialog
 from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
-from minor_features.discord_status_main import discord_status_clear, update_discord_status
+
 from minor_features.addon_functions import delete_addon, launch_addon
 
 from minor_features.update_check import check_updates
@@ -27,9 +27,9 @@ stop_discord_thread = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
-app_version = '1.6.0'
+app_version = '1.6.3'
 batchcreator_version = '1.2.2'
-soundevent_editor_version = '0.1.0'
+soundevent_editor_version = '0.2.0'
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -254,6 +254,7 @@ if __name__ == "__main__":
 
     try:
         if get_config_bool('DISCORD_STATUS', 'show_status'):
+            from minor_features.discord_status_main import discord_status_clear, update_discord_status
             widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
             widget.discord_thread.start()
         else:
