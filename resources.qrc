@@ -160,5 +160,7 @@
         <file>icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
         <file>icons/select_check_box_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
         <file>icons/sort_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
+        <file>images/help/header.png</file>
+        <file>icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</file>
     </qresource>
 </RCC>
