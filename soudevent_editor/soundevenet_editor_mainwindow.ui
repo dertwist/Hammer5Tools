@@ -430,7 +430,7 @@ QLineEdit::selection {
                 <item>
                  <widget class="QLabel" name="status_bar">
                   <property name="text">
-                   <string>Status</string>
+                   <string>Press Ctrl + F to add a property</string>
                   </property>
                  </widget>
                 </item>
