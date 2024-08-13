@@ -172,15 +172,23 @@ class SoundEventEditorMainWidget(QMainWindow):
         elif name == 'retrigger_radius':
             property_class = VolumeProperty(name=name, display_name="Retrigger radius", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=19999)
         elif name == 'retrigger_interval_max':
-            property_class = VolumeProperty(name=name, display_name="Retrigger interval maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=999)
+            property_class = VolumeProperty(name=name, display_name="Retrigger interval maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=99)
         elif name == 'retrigger_interval_min':
-            property_class = VolumeProperty(name=name, display_name="Retrigger interval minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=999)
+            property_class = VolumeProperty(name=name, display_name="Retrigger interval minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=99)
         elif name == 'randomize_position_max_radius':
             property_class = VolumeProperty(name=name, display_name="Randomize position maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=19999)
         elif name == 'randomize_position_min_radius':
             property_class = VolumeProperty(name=name, display_name="Randomize position minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=19999)
         elif name == 'reverb_wet':
             property_class = VolumeProperty(name=name, display_name="Reverb wet", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
+        elif name == 'block_distance':
+            property_class = VolumeProperty(name=name, display_name="Block distance", value=value,widget_list=self.soundevent_properties_layout, min_value=-999, max_value=999)
+        elif name == 'vsnd_duration':
+            property_class = VolumeProperty(name=name, display_name="Vsound duration", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=9999)
+        elif name == 'occlusion_intensity':
+            property_class = VolumeProperty(name=name, display_name="Occlusion intensity", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
+        elif name == 'distance_effect_mix':
+            property_class = VolumeProperty(name=name, display_name="Distance effect mix", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
 
         # origin
         elif name == 'position':
@@ -210,6 +218,12 @@ class SoundEventEditorMainWidget(QMainWindow):
             property_class = CheckboxProperty(name=name, display_name="Use distance unfiltered stereo mapping curve", value=value,widget_list=self.soundevent_properties_layout)
         elif name == 'restrict_source_reverb':
             property_class = CheckboxProperty(name=name, display_name="Restrict source reverb", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'block_match_entity':
+            property_class = CheckboxProperty(name=name, display_name="Block match entity", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'block_matching_events':
+            property_class = CheckboxProperty(name=name, display_name="Block matching events", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_distance_volume_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use distance volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
         else:
             property_class = LegacyProperty(name=name, value=value, widget_list=self.soundevent_properties_layout)
 
