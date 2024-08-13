@@ -1,5 +1,7 @@
 import os.path
 import sys
+import time
+
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea
 )
@@ -10,9 +12,13 @@ from preferences import get_config_value, get_cs2_path, get_addon_name
 from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_Editor_MiniWindowsExplorer
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea, QInputDialog
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QProgressBar
 from popup_menu.popup_menu_main import PopupMenu
+
 from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
 from soudevent_editor.soundevent_editor_kv3_parser import child_merge,child_key, parse_kv3
+from soudevent_editor.soundevent_editor_recompile_all import compile
+
 
 import keyvalues3 as kv3
 
@@ -31,10 +37,10 @@ class SoundEventEditorMainWidget(QMainWindow):
         # Set up the custom file system model
         counter_strike_2_path = get_cs2_path()
         addon_name = get_addon_name()
-        tree_directory = rf"{counter_strike_2_path}\content\csgo_addons\{addon_name}\sounds"
+        self.tree_directory = rf"{counter_strike_2_path}\content\csgo_addons\{addon_name}\sounds"
 
         # Initialize the mini windows explorer
-        self.mini_explorer = SoundEvent_Editor_MiniWindowsExplorer(self.ui.audio_files_explorer, tree_directory)
+        self.mini_explorer = SoundEvent_Editor_MiniWindowsExplorer(self.ui.audio_files_explorer, self.tree_directory)
 
         # Set up the layout for the audio_files_explorer widget
         self.audio_files_explorer_layout = QVBoxLayout(self.ui.audio_files_explorer)
@@ -55,6 +61,7 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.populate_soundevent_list()
 
         self.ui.save_button.clicked.connect(self.save)
+        self.ui.recompile_all_button.clicked.connect(self.recomppile_all)
 
         self.ui.create_new_soundevent.clicked.connect(self.create_new_soundevent)
 
@@ -158,6 +165,22 @@ class SoundEventEditorMainWidget(QMainWindow):
             property_class = VolumeProperty(name=name, display_name="Volume random minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
         elif name == 'volume_random_max':
             property_class = VolumeProperty(name=name, display_name="Volume random maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
+        elif name == 'pitch_random_min':
+            property_class = VolumeProperty(name=name, display_name="Pitch random minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
+        elif name == 'pitch_random_max':
+            property_class = VolumeProperty(name=name, display_name="Pitch random maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
+        elif name == 'retrigger_radius':
+            property_class = VolumeProperty(name=name, display_name="Retrigger radius", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=19999)
+        elif name == 'retrigger_interval_max':
+            property_class = VolumeProperty(name=name, display_name="Retrigger interval maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=999)
+        elif name == 'retrigger_interval_min':
+            property_class = VolumeProperty(name=name, display_name="Retrigger interval minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=999)
+        elif name == 'randomize_position_max_radius':
+            property_class = VolumeProperty(name=name, display_name="Randomize position maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=19999)
+        elif name == 'randomize_position_min_radius':
+            property_class = VolumeProperty(name=name, display_name="Randomize position minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=19999)
+        elif name == 'reverb_wet':
+            property_class = VolumeProperty(name=name, display_name="Reverb wet", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
 
         # origin
         elif name == 'position':
@@ -192,14 +215,6 @@ class SoundEventEditorMainWidget(QMainWindow):
 
         self.soundevent_properties_layout.insertWidget(0, property_class)
         self.soundevent_properties_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        name = property_class.name
-
-        # for index in range(self.soundevent_properties_layout.count()):
-        #     widget = self.soundevent_properties_layout.itemAt(index).widget()
-        #     if isinstance(widget, LegacyProperty):
-        #         print(f"Index: {index}, Name: {widget.name}, Value: {widget.value}")
-
-
 
     def keyPressEvent(self, event):
         focus_widget = QApplication.focusWidget()
@@ -301,6 +316,26 @@ class SoundEventEditorMainWidget(QMainWindow):
             new_item_text = f"{item_text}_copy"
             soundevents_data[new_item_text] = duplicated_data
             self.ui.soundevents_list.addItem(new_item_text)
+
+    def recomppile_all(self):
+        total_files = len(os.listdir(self.tree_directory))
+        progress_bar = QProgressBar()
+        progress_bar.setMaximum(total_files)
+        progress_bar.show()
+        progress_bar.setFixedWidth(300)
+        progress_bar.setWindowTitle("Compiling...")
+
+        for index, file_name in enumerate(os.listdir(self.tree_directory), start=1):
+            file_path = os.path.join(self.tree_directory, file_name)
+            compile(file_path)
+            progress_bar.setValue(index)
+            QApplication.processEvents()  # Update the GUI to show the progress
+
+        compile(os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts'))
+
+        # Hide or reset the progress bar after the loop completes
+        progress_bar.hide()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SoundEventEditorMainWidget()

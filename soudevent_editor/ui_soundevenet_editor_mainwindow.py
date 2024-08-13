@@ -416,10 +416,10 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.save_button)
 
-        self.quick_setup_button_2 = QPushButton(self.frame_2)
-        self.quick_setup_button_2.setObjectName(u"quick_setup_button_2")
-        self.quick_setup_button_2.setMinimumSize(QSize(0, 32))
-        self.quick_setup_button_2.setStyleSheet(u"\n"
+        self.recompile_all_button = QPushButton(self.frame_2)
+        self.recompile_all_button.setObjectName(u"recompile_all_button")
+        self.recompile_all_button.setMinimumSize(QSize(0, 32))
+        self.recompile_all_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
@@ -451,10 +451,10 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 "    }")
         icon5 = QIcon()
         icon5.addFile(u":/icons/menu_open_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.quick_setup_button_2.setIcon(icon5)
-        self.quick_setup_button_2.setIconSize(QSize(20, 20))
+        self.recompile_all_button.setIcon(icon5)
+        self.recompile_all_button.setIconSize(QSize(20, 20))
 
-        self.horizontalLayout_2.addWidget(self.quick_setup_button_2)
+        self.horizontalLayout_2.addWidget(self.recompile_all_button)
 
 
         self.verticalLayout_3.addWidget(self.frame_2)
@@ -485,6 +485,6 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.quick_setup_options_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
         self.quick_setup_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Quick setup", None))
         self.save_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Save", None))
-        self.quick_setup_button_2.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Recompile All", None))
+        self.recompile_all_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Recompile All", None))
     # retranslateUi
 
