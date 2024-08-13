@@ -416,6 +416,46 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.save_button)
 
+        self.quick_setup_button_2 = QPushButton(self.frame_2)
+        self.quick_setup_button_2.setObjectName(u"quick_setup_button_2")
+        self.quick_setup_button_2.setMinimumSize(QSize(0, 32))
+        self.quick_setup_button_2.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/menu_open_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.quick_setup_button_2.setIcon(icon5)
+        self.quick_setup_button_2.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.quick_setup_button_2)
+
 
         self.verticalLayout_3.addWidget(self.frame_2)
 
@@ -445,5 +485,6 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.quick_setup_options_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
         self.quick_setup_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Quick setup", None))
         self.save_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Save", None))
+        self.quick_setup_button_2.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Recompile All", None))
     # retranslateUi
 
