@@ -27,9 +27,9 @@ stop_discord_thread = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
-app_version = '1.6.3'
+app_version = '1.6.4'
 batchcreator_version = '1.2.2'
-soundevent_editor_version = '0.3.0'
+soundevent_editor_version = '0.3.1'
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
