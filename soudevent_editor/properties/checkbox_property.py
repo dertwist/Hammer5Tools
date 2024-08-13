@@ -1,40 +1,30 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt
-from soudevent_editor.properties.ui_legacy_property import Ui_LegacyPropertyWidet
+from soudevent_editor.properties.ui_checkbox_property import Ui_PropertyWidet
 from soudevent_editor.properties.property_actions import PropertyActions
-import ast
+from distutils.util import strtobool
 
-class LegacyProperty(QWidget):
-    def __init__(self, name, value, widget_list):
+class CheckboxProperty(QWidget):
+    def __init__(self, name, display_name, value, widget_list):
         super().__init__()
-        self.ui = Ui_LegacyPropertyWidet()
+        self.ui = Ui_PropertyWidet()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
-        self.ui.lineEdit.setAcceptDrops(False)
+        self.ui.checkBox.setAcceptDrops(False)
         self.widget_list = widget_list
-        self.ui.lineEdit = self.ui.lineEdit
         self.name = name
-
-        if '[' in value and ']' in value:
-            self.value = ast.literal_eval(value)
-            for item in self.value:
-                print(item)
-        else:
-            self.value = value
-
+        self.ui.label.setText(display_name)
+        self.value = bool(strtobool(value))
+        self.ui.checkBox.setChecked(self.value)
         self.init_ui()
 
-
     def init_ui(self):
-        self.ui.label.setText(self.name)
-        self.ui.lineEdit.setText(str(self.value))
-        self.ui.lineEdit.textChanged.connect(self.update_value_from_lineedit)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
+    def update_checkbox_on_change(self):
+        self.ui.checkBox.isChecked(self.value)
 
-    def update_value_from_lineedit(self):
-        self.value = ast.literal_eval(self.ui.lineEdit.text())
 
     mousePressEvent = PropertyActions.mousePressEvent
     mouseMoveEvent = PropertyActions.mouseMoveEvent

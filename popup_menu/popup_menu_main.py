@@ -10,7 +10,7 @@ class PopupMenu(QDialog):
     label_clicked = Signal(str)
     add_property_signal = Signal(str, str)
 
-    def __init__(self, properties, parent=None):
+    def __init__(self, properties, add_once=False, parent=None):
         super().__init__(parent)
         self.properties = properties
         self.ui = Ui_PoPupMenu()
@@ -25,12 +25,17 @@ class PopupMenu(QDialog):
         scroll_layout = QVBoxLayout(scroll_content)
         scroll_layout.setContentsMargins(0, 0, 2, 0)
         scroll_layout.addSpacerItem( QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        self.scroll_layout = scroll_layout
 
 
         for item in self.properties:
             for key, value in item.items():
                 label = QLabel(key)
-                label.mousePressEvent = lambda event, key=key, value=value: self.add_property_signal.emit(key, value)
+                if add_once:
+                    label.mousePressEvent = lambda event, key=key, value=value: self.remove_element(label, key, value)
+                else:
+                    label.mousePressEvent = lambda event, key=key, value=value: self.add_property_signal.emit(key, value)
+
 
                 element_layout = QHBoxLayout()
                 element_layout.setContentsMargins(0, 0, 0, 0)
@@ -54,6 +59,26 @@ class PopupMenu(QDialog):
         self.ui.scrollArea.setWidget(scroll_content)
         self.ui.lineEdit.setFocus()
 
+    def remove_element(self, label, key, value):
+        self.add_property_signal.emit(key, value)
+        scroll_content = self.ui.scrollArea.widget()
+        for i in range(scroll_content.layout().count()):
+            element_layout_item = scroll_content.layout().itemAt(i)
+
+            if element_layout_item is not None:
+                element_layout = element_layout_item.layout()
+
+                if element_layout is not None:
+                    current_label = element_layout.itemAt(0).widget()
+
+                    if current_label.text() == key:
+                        item = scroll_content.layout().takeAt(i)
+                        if item is not None:
+                            widget = item.widget()
+                            if widget is not None and not isinstance(widget, QSpacerItem):
+                                widget.deleteLater()
+                                print(key)
+                        break
     def event(self, event):
         if event.type() == QEvent.WindowDeactivate:
             self.close()
