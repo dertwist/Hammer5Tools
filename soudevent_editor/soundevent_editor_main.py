@@ -252,6 +252,10 @@ class SoundEventEditorMainWidget(QMainWindow):
             rename_action = QAction("Rename", self)
             rename_action.triggered.connect(self.rename_action)
             context_menu.addAction(rename_action)
+
+            duplicate_action = QAction("Duplicate", self)
+            duplicate_action.triggered.connect(self.duplicate_action)
+            context_menu.addAction(duplicate_action)
         else:
             paste_action = QAction("Paste", self)
             paste_action.triggered.connect(self.paste_action)
@@ -287,6 +291,16 @@ class SoundEventEditorMainWidget(QMainWindow):
             if ok and new_name:
                 soundevents_data[new_name] = soundevents_data.pop(item_text)
                 selected_item.setText(new_name)
+
+    def duplicate_action(self):
+        selected_item = self.ui.soundevents_list.currentItem()
+        global soundevents_data
+        if selected_item:
+            item_text = selected_item.text()
+            duplicated_data = soundevents_data[item_text].copy()
+            new_item_text = f"{item_text}_copy"
+            soundevents_data[new_item_text] = duplicated_data
+            self.ui.soundevents_list.addItem(new_item_text)
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SoundEventEditorMainWidget()
