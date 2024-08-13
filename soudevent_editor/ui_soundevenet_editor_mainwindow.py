@@ -480,7 +480,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.create_new_soundevent.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Creane new sound event", None))
         self.Import_audio_options_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
         self.Import_audio_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Import audio", None))
-        self.status_bar.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Status", None))
+        self.status_bar.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Press Ctrl + F to add a property", None))
         self.version.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Version", None))
         self.quick_setup_options_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
         self.quick_setup_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Quick setup", None))
