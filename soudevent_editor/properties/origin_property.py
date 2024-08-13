@@ -20,8 +20,6 @@ class OriginProperty(QWidget):
 
         if '[' in value and ']' in value:
             self.value = ast.literal_eval(value)
-            for item in self.value:
-                print(item)
         else:
             self.value = value
 
