@@ -17,7 +17,9 @@ from soudevent_editor.soundevent_editor_kv3_parser import child_merge,child_key,
 import keyvalues3 as kv3
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
-from soudevent_editor.properties.volume_property import  VolumeProperty
+from soudevent_editor.properties.volume_property import VolumeProperty
+from soudevent_editor.properties.checkbox_property import CheckboxProperty
+from soudevent_editor.properties.origin_property import OriginProperty
 
 class SoundEventEditorMainWidget(QMainWindow):
     def __init__(self, version, parent=None):
@@ -144,18 +146,49 @@ class SoundEventEditorMainWidget(QMainWindow):
 
 
     def add_property(self, name, value):
+
+        # value
         if name == 'volume':
-            property_class = VolumeProperty(name=name, display_name="Volume", value=value, status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+            property_class = VolumeProperty(name=name, display_name="Volume", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
         elif name == 'pitch':
-            property_class = VolumeProperty(name=name, display_name="Pitch", value=value,status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+            property_class = VolumeProperty(name=name, display_name="Pitch", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
         elif name == 'delay':
-            property_class = VolumeProperty(name=name, display_name="Delay", value=value,status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+            property_class = VolumeProperty(name=name, display_name="Delay", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
         elif name == 'volume_random_min':
-            property_class = VolumeProperty(name=name, display_name="Volume Random Minimum", value=value,status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+            property_class = VolumeProperty(name=name, display_name="Volume random minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
         elif name == 'volume_random_max':
-            property_class = VolumeProperty(name=name, display_name="Volume Random Maximum", value=value,status_bar=self.ui.status_bar,widget_list=self.soundevent_properties_layout)
+            property_class = VolumeProperty(name=name, display_name="Volume random maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
+
+        # origin
+        elif name == 'position':
+            property_class = OriginProperty(name=name, display_name="Position", value=value,widget_list=self.soundevent_properties_layout)
+        # bool
+        elif name == 'enable_child_events':
+            property_class = CheckboxProperty(name=name, display_name="Enable child events", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'enable_retrigger':
+            property_class = CheckboxProperty(name=name, display_name="Enable retrigger", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_time_volume_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use time volume_mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_time_volume_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use time volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'override_dsp_preset':
+            property_class = CheckboxProperty(name=name, display_name="Override dsp preset", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'set_child_position':
+            property_class = CheckboxProperty(name=name, display_name="Set child position", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'position_relative_to_player':
+            property_class = CheckboxProperty(name=name, display_name="Position relative to player", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_world_position':
+            property_class = CheckboxProperty(name=name, display_name="Use world position", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'randomize_position_hemisphere':
+            property_class = CheckboxProperty(name=name, display_name="Randomize position hemisphere", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_time_volume_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use time volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_distance_unfiltered_stereo_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use distance unfiltered stereo mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'restrict_source_reverb':
+            property_class = CheckboxProperty(name=name, display_name="Restrict source reverb", value=value,widget_list=self.soundevent_properties_layout)
         else:
-            property_class = LegacyProperty(name=name, value=value, status_bar=self.ui.status_bar, widget_list=self.soundevent_properties_layout)
+            property_class = LegacyProperty(name=name, value=value, widget_list=self.soundevent_properties_layout)
 
         self.soundevent_properties_layout.insertWidget(0, property_class)
         self.soundevent_properties_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
@@ -166,12 +199,13 @@ class SoundEventEditorMainWidget(QMainWindow):
         #     if isinstance(widget, LegacyProperty):
         #         print(f"Index: {index}, Name: {widget.name}, Value: {widget.value}")
 
+
+
     def keyPressEvent(self, event):
         focus_widget = QApplication.focusWidget()
 
         if isinstance(focus_widget, QScrollArea) and focus_widget.viewport().underMouse():
             if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                elements_in_popupmenu = soundevent_editor_properties
                 def get_names_from_layout(layout):
                     names = []
                     for i in range(layout.count()):
@@ -180,20 +214,22 @@ class SoundEventEditorMainWidget(QMainWindow):
                             names.append(widget.name)
                     return names
                 names_to_remove = get_names_from_layout(self.soundevent_properties_layout)
-                elements_in_popupmenu_out = {}
-                for index, item in enumerate(elements_in_popupmenu):
+                elements_in_popupmenu = {}
+                for index, item in enumerate(soundevent_editor_properties):
                     for key, value in item.items():
                         if key in names_to_remove:
                             pass
                         else:
-                            elements_in_popupmenu_out.update({key: value})
+                            elements_in_popupmenu.update({key: value})
 
-                elements_in_popupmenu_out = [elements_in_popupmenu_out]
-                self.popup_menu = PopupMenu(elements_in_popupmenu_out)
+                elements_in_popupmenu = [elements_in_popupmenu]
+                self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
                 self.popup_menu.add_property_signal.connect(lambda name, value: self.add_property(name, value))
                 self.popup_menu.show()
-                print(soundevent_editor_properties)
+
                 event.accept()
+
+
             elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
                 self.select_all_items()
                 event.accept()
@@ -247,12 +283,10 @@ class SoundEventEditorMainWidget(QMainWindow):
         global soundevents_data
         if selected_item:
             item_text = selected_item.text()  # Get the current text of the selected item
-            new_name, ok = QInputDialog.getText(self, 'Rename Soundevent', 'Enter new name:')
+            new_name, ok = QInputDialog.getText(self, 'Rename Soundevent', 'Enter new name:', text=item_text)
             if ok and new_name:
-                # Update the key in the soundevents_data dictionary
                 soundevents_data[new_name] = soundevents_data.pop(item_text)
-                selected_item.setText(new_name)  # Update the displayed text in the UI
-                # Perform any additional renaming logic here
+                selected_item.setText(new_name)
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SoundEventEditorMainWidget()
