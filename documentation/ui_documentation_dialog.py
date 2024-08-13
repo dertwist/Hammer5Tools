@@ -15,161 +15,316 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QHBoxLayout, QLabel,
-    QSizePolicy, QTabWidget, QTextBrowser, QVBoxLayout,
+from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout,
+    QLabel, QPushButton, QSizePolicy, QVBoxLayout,
     QWidget)
+import rc_resources
 
 class Ui_documentation_dialog(object):
     def setupUi(self, documentation_dialog):
         if not documentation_dialog.objectName():
             documentation_dialog.setObjectName(u"documentation_dialog")
-        documentation_dialog.resize(1122, 770)
-        documentation_dialog.setMinimumSize(QSize(1100, 720))
+        documentation_dialog.resize(645, 540)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(documentation_dialog.sizePolicy().hasHeightForWidth())
+        documentation_dialog.setSizePolicy(sizePolicy)
+        documentation_dialog.setMinimumSize(QSize(645, 540))
+        documentation_dialog.setMaximumSize(QSize(645, 540))
         documentation_dialog.setStyleSheet(u"background-color: #1C1C1C;")
         documentation_dialog.setSizeGripEnabled(False)
         documentation_dialog.setModal(False)
-        self.horizontalLayout = QHBoxLayout(documentation_dialog)
-        self.horizontalLayout.setSpacing(0)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.tabWidget = QTabWidget(documentation_dialog)
-        self.tabWidget.setObjectName(u"tabWidget")
-        self.tabWidget.setEnabled(True)
-        self.tabWidget.setTabPosition(QTabWidget.North)
-        self.tabWidget.setElideMode(Qt.ElideNone)
-        self.tabWidget.setDocumentMode(False)
-        self.tabWidget.setTabsClosable(False)
-        self.tabWidget.setTabBarAutoHide(False)
-        self.About = QWidget()
-        self.About.setObjectName(u"About")
-        self.verticalLayout_3 = QVBoxLayout(self.About)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.textBrowser_3 = QTextBrowser(self.About)
-        self.textBrowser_3.setObjectName(u"textBrowser_3")
-        self.textBrowser_3.setStyleSheet(u"border: 0px;\n"
-"margin: 3px;")
-
-        self.verticalLayout_3.addWidget(self.textBrowser_3)
-
-        self.version = QLabel(self.About)
-        self.version.setObjectName(u"version")
-
-        self.verticalLayout_3.addWidget(self.version)
-
-        self.tabWidget.addTab(self.About, "")
-        self.loading_editor = QWidget()
-        self.loading_editor.setObjectName(u"loading_editor")
-        self.verticalLayout = QVBoxLayout(self.loading_editor)
+        self.verticalLayout = QVBoxLayout(documentation_dialog)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.textBrowser = QTextBrowser(self.loading_editor)
-        self.textBrowser.setObjectName(u"textBrowser")
-        self.textBrowser.setStyleSheet(u"border: 0px;\n"
-"margin: 3px;")
+        self.frame = QFrame(documentation_dialog)
+        self.frame.setObjectName(u"frame")
+        self.frame.setMinimumSize(QSize(0, 180))
+        self.frame.setMaximumSize(QSize(16777215, 180))
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_3 = QVBoxLayout(self.frame)
+        self.verticalLayout_3.setSpacing(6)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.label = QLabel(self.frame)
+        self.label.setObjectName(u"label")
+        self.label.setStyleSheet(u"image: url(:/images/help/header.png);")
+        self.label.setAlignment(Qt.AlignCenter)
 
-        self.verticalLayout.addWidget(self.textBrowser)
+        self.verticalLayout_3.addWidget(self.label)
 
-        self.tabWidget.addTab(self.loading_editor, "")
-        self.tab_4 = QWidget()
-        self.tab_4.setObjectName(u"tab_4")
-        self.verticalLayout_2 = QVBoxLayout(self.tab_4)
-        self.verticalLayout_2.setSpacing(0)
+        self.version = QLabel(self.frame)
+        self.version.setObjectName(u"version")
+        self.version.setMaximumSize(QSize(16777215, 16))
+        font = QFont()
+        font.setFamilies([u"Segoe UI Black"])
+        font.setPointSize(13)
+        self.version.setFont(font)
+        self.version.setAlignment(Qt.AlignCenter)
+
+        self.verticalLayout_3.addWidget(self.version)
+
+
+        self.verticalLayout.addWidget(self.frame)
+
+        self.frame_4 = QFrame(documentation_dialog)
+        self.frame_4.setObjectName(u"frame_4")
+        self.frame_4.setFrameShape(QFrame.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_2 = QVBoxLayout(self.frame_4)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.textBrowser_2 = QTextBrowser(self.tab_4)
-        self.textBrowser_2.setObjectName(u"textBrowser_2")
-        self.textBrowser_2.setStyleSheet(u"border: 0px;\n"
-"margin: 3px;")
+        self.label_3 = QLabel(self.frame_4)
+        self.label_3.setObjectName(u"label_3")
+        font1 = QFont()
+        font1.setPointSize(11)
+        self.label_3.setFont(font1)
+        self.label_3.setAlignment(Qt.AlignCenter)
 
-        self.verticalLayout_2.addWidget(self.textBrowser_2)
+        self.verticalLayout_2.addWidget(self.label_3)
 
-        self.tabWidget.addTab(self.tab_4, "")
+        self.label_4 = QLabel(self.frame_4)
+        self.label_4.setObjectName(u"label_4")
+        self.label_4.setMinimumSize(QSize(400, 200))
+        self.label_4.setStyleSheet(u"image: url(:/images/help/about/tooltip_help.png);")
+        self.label_4.setAlignment(Qt.AlignCenter)
 
-        self.horizontalLayout.addWidget(self.tabWidget)
+        self.verticalLayout_2.addWidget(self.label_4)
+
+
+        self.verticalLayout.addWidget(self.frame_4)
+
+        self.frame_2 = QFrame(documentation_dialog)
+        self.frame_2.setObjectName(u"frame_2")
+        self.frame_2.setFrameShape(QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_2 = QHBoxLayout(self.frame_2)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(9, 0, 9, 0)
+        self.online_help_loading_ediotor_button = QPushButton(self.frame_2)
+        self.online_help_loading_ediotor_button.setObjectName(u"online_help_loading_ediotor_button")
+        self.online_help_loading_ediotor_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon = QIcon()
+        icon.addFile(u":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.online_help_loading_ediotor_button.setIcon(icon)
+        self.online_help_loading_ediotor_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.online_help_loading_ediotor_button)
+
+        self.online_help_soundevent_editor_button = QPushButton(self.frame_2)
+        self.online_help_soundevent_editor_button.setObjectName(u"online_help_soundevent_editor_button")
+        self.online_help_soundevent_editor_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        self.online_help_soundevent_editor_button.setIcon(icon)
+        self.online_help_soundevent_editor_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.online_help_soundevent_editor_button)
+
+        self.online_help_batchcreator_button = QPushButton(self.frame_2)
+        self.online_help_batchcreator_button.setObjectName(u"online_help_batchcreator_button")
+        self.online_help_batchcreator_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        self.online_help_batchcreator_button.setIcon(icon)
+        self.online_help_batchcreator_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.online_help_batchcreator_button)
+
+
+        self.verticalLayout.addWidget(self.frame_2)
+
+        self.frame_3 = QFrame(documentation_dialog)
+        self.frame_3.setObjectName(u"frame_3")
+        self.frame_3.setFrameShape(QFrame.StyledPanel)
+        self.frame_3.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_3 = QHBoxLayout(self.frame_3)
+        self.horizontalLayout_3.setSpacing(6)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(9, 0, 9, 0)
+        self.report_a_bug_button = QPushButton(self.frame_3)
+        self.report_a_bug_button.setObjectName(u"report_a_bug_button")
+        self.report_a_bug_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/all_match_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.report_a_bug_button.setIcon(icon1)
+        self.report_a_bug_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_3.addWidget(self.report_a_bug_button)
+
+        self.github_page_button = QPushButton(self.frame_3)
+        self.github_page_button.setObjectName(u"github_page_button")
+        self.github_page_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/public_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.github_page_button.setIcon(icon2)
+        self.github_page_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_3.addWidget(self.github_page_button)
+
+
+        self.verticalLayout.addWidget(self.frame_3)
 
 
         self.retranslateUi(documentation_dialog)
-
-        self.tabWidget.setCurrentIndex(0)
-
 
         QMetaObject.connectSlotsByName(documentation_dialog)
     # setupUi
 
     def retranslateUi(self, documentation_dialog):
         documentation_dialog.setWindowTitle(QCoreApplication.translate("documentation_dialog", u"Help", None))
-        self.textBrowser_3.setHtml(QCoreApplication.translate("documentation_dialog", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"hr { height: 1px; border-width: 0; }\n"
-"li.unchecked::marker { content: \"\\2610\"; }\n"
-"li.checked::marker { content: \"\\2612\"; }\n"
-"</style></head><body style=\" font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:22pt; font-weight:700;\">Hammer 5 Tools</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt;\">A bumch of tools for Counter-Strike 2 Workshop.<br />There are a bunch of useful tools for mapping:</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; ma"
-                        "rgin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:700;\">Loading Editor:</span><span style=\" font-size:12pt;\"><br />With this tool, you can add images, descriptions, and icons to the loading screen.</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:700;\">SoundEvent Editor:</span><span style=\" font-size:12pt;\"><br />A tool for more comfortable sound editing within the game.</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:700;\">Hotkey Editor:</span><span style=\" font-size:12pt;\"><br />Edit default keyboard shortcuts and add your own!</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style="
-                        "\" font-size:16pt; font-weight:700;\">BatchCreator:</span><span style=\" font-size:12pt;\"><br />Allows you to edit multiple files with the same parameters at one time. For example, if you have a modular set with 15 models, it is tedious to use the default Model/Material Editor, but with BatchCreator, you can do it all with one click.</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:700;\">SmartProp Editor:</span><span style=\" font-size:12pt;\"><br />A tool that helps with smartprops creation in the game.</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
-"<p style=\" margin-top:0px; "
-                        "margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-weight:700;\">Use tooltips for understanding the program: </span></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt;\">For almost all buttons, an explanation appears when you hold your cursor over a button.</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\":/images/help/about/tooltip_help.png\" /></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px"
-                        "; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:22pt; font-weight:700;\">Minor features:</span></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-weight:700;\"> </span></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:700;\">Presets:</span></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt;\"><br /></span><img src=\":/images/help/about/presets_02.png\" /></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent"
-                        ":0; text-indent:0px;\"><img src=\":/images/help/about/presets_04.png\" /></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\":/images/help/about/presets_01.png\" /></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\":/images/help/about/presets_03.png\" /></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0"
-                        "; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:700;\">Import and export:</span><span style=\" font-size:12pt;\"><br />Allows for easily sharing addons with other people.</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><img src=\":/images/help/about/import_and_export.png\" /></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+        self.label.setText("")
         self.version.setText(QCoreApplication.translate("documentation_dialog", u"Version: 1.0.0", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.About), QCoreApplication.translate("documentation_dialog", u"About", None))
-        self.textBrowser.setHtml(QCoreApplication.translate("documentation_dialog", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"hr { height: 1px; border-width: 0; }\n"
-"li.unchecked::marker { content: \"\\2610\"; }\n"
-"li.checked::marker { content: \"\\2612\"; }\n"
-"</style></head><body style=\" font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-weight:580;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:22pt; font-weight:580;\">Loading editor</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; tex"
-                        "t-indent:0px; font-size:22pt; font-weight:580;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt;\">Main purpose is quick adding images to the loading screen.</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-weight:580;\"><br /></p></body></html>", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.loading_editor), QCoreApplication.translate("documentation_dialog", u"Loading Editor", None))
-        self.textBrowser_2.setHtml(QCoreApplication.translate("documentation_dialog", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"hr { height: 1px; border-width: 0; }\n"
-"li.unchecked::marker { content: \"\\2610\"; }\n"
-"li.checked::marker { content: \"\\2612\"; }\n"
-"</style></head><body style=\" font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-weight:580;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:22pt; font-weight:580;\">SoundEvent editor</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; "
-                        "text-indent:0px; font-size:22pt; font-weight:580;\"><br /></p>\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:11pt;\">Ah yes.</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:10pt; font-weight:580;\"><br /></p></body></html>", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QCoreApplication.translate("documentation_dialog", u"SoundEvent Editor", None))
+        self.label_3.setText(QCoreApplication.translate("documentation_dialog", u"Use tooltips for understanding the program: \n"
+"For almost all buttons, an explanation appears when you hold your cursor over a button.", None))
+        self.label_4.setText("")
+        self.online_help_loading_ediotor_button.setText(QCoreApplication.translate("documentation_dialog", u"Loading Editor", None))
+        self.online_help_soundevent_editor_button.setText(QCoreApplication.translate("documentation_dialog", u"SoundEvent Editor", None))
+        self.online_help_batchcreator_button.setText(QCoreApplication.translate("documentation_dialog", u"BatchCreator", None))
+        self.report_a_bug_button.setText(QCoreApplication.translate("documentation_dialog", u"Report a bug", None))
+        self.github_page_button.setText(QCoreApplication.translate("documentation_dialog", u"Github Page", None))
     # retranslateUi
 
