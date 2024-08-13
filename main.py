@@ -29,7 +29,7 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
 app_version = '1.6.3'
 batchcreator_version = '1.2.2'
-soundevent_editor_version = '0.2.0'
+soundevent_editor_version = '0.3.0'
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
