@@ -30,7 +30,12 @@ def child_merge(block_1, block_2):
     for key in set(block_1.keys()).union(block_2.keys()):
         if key in block_1 and key in block_2:
             # If both dictionaries have the same key, merge their values
-            merged_data[key] = {**block_1[key], **block_2[key]}
+            if isinstance(block_1[key], list) and isinstance(block_2[key], list):
+                # If both values are lists, concatenate them
+                merged_data[key] = block_1[key] + block_2[key]
+            else:
+                # If one or both values are not lists, merge them as before
+                merged_data[key] = {**block_1[key], **block_2[key]}
         elif key in block_1:
             # If the key is only in block_1
             merged_data[key] = block_1[key]
@@ -46,18 +51,16 @@ def child_key (data, key_child):
             data_out = child_merge(data_out, {key_child: {key: data[key_child][key]}})
             child_key(data[key_child], key)
     elif isinstance(data[key_child], list):
-        try:
-            for key in data[key_child]:
-                block_new = {key_child: key}
-                data_out = child_merge(data_out, block_new)
-                print(key,data[key_child])
-        except:
-            pass
+        for key in data[key_child]:
+            print(1, data[key_child], type( data[key_child]))
+            block_new = {key_child: key}
+            print(2,block_new)
+            data_out = child_merge(data_out, block_new)
+
         for key in data[key_child]:
             try:
                 block_new = {key_child: {key: data[key_child][key]}}
                 data_out = child_merge(data_out, block_new)
-                print(block_new)
             except:
                 pass
     elif isinstance(data[key_child], int):
@@ -66,7 +69,7 @@ def child_key (data, key_child):
     elif isinstance(data[key_child], float):
         try:
             for key in data[key_child]:
-                print(key_child, key, data[key_child][key])
+                print(3,key_child, key, data[key_child][key])
         except:
             pass
 
@@ -89,10 +92,11 @@ for parent in data.keys():
     data_kv3 = child_merge(data_kv3,data_out)
 
 
-print(data_kv3)
+# print(data_kv3)
 # data_kv3 = {'generic_data_type': 'CSmartPropRoot', 'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61}, {'_class': 'CSmartPropVariable_Int', 'm_VariableName': 'height', 'm_nElementID': 62}], '_editor': {'next_element_id': '62'}}
 # data_kv3 = data
 kv3.write(data_kv3, sys.stdout)
+kv3.write(data_kv3, 'output.vsmart')
 
 
 # for key, value in data.items():
