@@ -17,6 +17,7 @@ from minor_features.update_check import check_updates
 
 from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
 from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
+from smartprop_editor.main import SmartPropEditorMainWindow
 
 import ctypes
 import winsound
@@ -30,6 +31,7 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 app_version = '1.6.4'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '0.3.1'
+smartprop_editor_version = '0.0.1'
 class Widget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -113,6 +115,9 @@ class Widget(QWidget):
 
     def selected_addon_name(self):
         set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
+        # These tabs should be updated when addon name was changed
+
+        # SoundEventEditor
 
         # Clean up SoundEventEditorMainWidget
         try:
@@ -121,17 +126,16 @@ class Widget(QWidget):
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
-        # # Check if the current tab is the soundeditor_tab
         self.SoundEventEditorMainWidget = SoundEventEditorMainWidget(soundevent_editor_version)
         self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
 
-        # Clean up BatchCreator_MainWindow
-        # Clean up BatchCreator_MainWindow
         try:
             if hasattr(self, 'BatchCreator_MainWindow') and self.BatchCreator_MainWindow:
                 self.BatchCreator_MainWindow.close()
         except Exception as e:
             print('Error while cleaning up BatchCreator_MainWindow:', e)
+
+
 
         # Create a new instance of BatchCreatorMainWindow
         try:
@@ -140,6 +144,18 @@ class Widget(QWidget):
             self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
         except Exception as e:
             print('Error while setting up BatchCreator_MainWindow:', e)
+
+        # Smartprop editior
+        try:
+            if hasattr(self, 'SoundEventEditorMainWidget') and self.SmartPropEditorMainWindow:
+                self.SmartPropEditorMainWindow.deleteLater()
+        except Exception as e:
+            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
+
+        self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(smartprop_editor_version)
+        self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
+
+
 
     def open_addons_folder(self):
         addon_name = self.ui.ComboBoxSelectAddon.currentText()

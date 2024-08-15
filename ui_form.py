@@ -101,17 +101,6 @@ class Ui_Widget(object):
         self.smartpropeditor_tab.setObjectName(u"smartpropeditor_tab")
         self.verticalLayout_4 = QVBoxLayout(self.smartpropeditor_tab)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.label_2 = QLabel(self.smartpropeditor_tab)
-        self.label_2.setObjectName(u"label_2")
-        sizePolicy1.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
-        self.label_2.setSizePolicy(sizePolicy1)
-        self.label_2.setStyleSheet(u"font: 24pt \"Segoe UI\";")
-        self.label_2.setScaledContents(False)
-        self.label_2.setAlignment(Qt.AlignCenter)
-        self.label_2.setMargin(0)
-
-        self.verticalLayout_4.addWidget(self.label_2)
-
         self.MainWindowTools_tabs.addTab(self.smartpropeditor_tab, "")
         self.synchronization_tab = QWidget()
         self.synchronization_tab.setObjectName(u"synchronization_tab")
@@ -289,7 +278,7 @@ class Ui_Widget(object):
 
         self.retranslateUi(Widget)
 
-        self.MainWindowTools_tabs.setCurrentIndex(1)
+        self.MainWindowTools_tabs.setCurrentIndex(4)
 
 
         QMetaObject.connectSlotsByName(Widget)
@@ -311,7 +300,6 @@ class Ui_Widget(object):
         self.label.setText(QCoreApplication.translate("Widget", u"Will be soon", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.hotkeyeditor_tab), QCoreApplication.translate("Widget", u"Hotkey Editor", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.BatchCreator_tab), QCoreApplication.translate("Widget", u"BatchCreator", None))
-        self.label_2.setText(QCoreApplication.translate("Widget", u"Will be soon", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.smartpropeditor_tab), QCoreApplication.translate("Widget", u"SmartProp Editor", None))
         self.label_4.setText(QCoreApplication.translate("Widget", u"Will be soon", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.synchronization_tab), QCoreApplication.translate("Widget", u"Sync Editor", None))
