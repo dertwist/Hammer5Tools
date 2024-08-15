@@ -20,7 +20,7 @@ import keyvalues3 as kv3
 
 
 class SmartPropEditorMainWindow(QMainWindow):
-    def __init__(self, version, parent=None):
+    def __init__(self, version="1", parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
