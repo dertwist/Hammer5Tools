@@ -1,0 +1,115 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "length"
+			m_nElementID = 61
+		},
+				{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "height"
+			m_nElementID = 62
+		},
+	]
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_PickOne"
+			m_SelectionMode = "FIRST"
+			m_HandleShape = "CIRCLE"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Model"
+					m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl"
+					m_nElementID = 2
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_ModifyState"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_CreateSizer"
+									m_OutputVariableMaxY = "length"
+									m_flInitialMaxY = 64.0
+								},
+							]
+							m_nElementID = 18
+						},
+												{
+							_class = "CSmartPropElement_FitOnLine"
+							m_vEnd = 
+							{
+								m_Components = 
+								[
+									0.0,
+																		{
+										m_SourceName = "length"
+									},
+									0.0,
+								]
+							}
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_512.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 512.0
+										},
+									]
+									m_nElementID = 52
+								},
+							]
+							m_nElementID = 19
+						},
+					]
+					m_nElementID = 3
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_d.vmdl"
+							m_nElementID = 20
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 25.0, -26.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, -90.0]
+								},
+							]
+							m_sSmartProp = "smartprops/hvac_kit.vsmart"
+							m_nElementID = 21
+						},
+					]
+					m_nElementID = 4
+				},
+			]
+			m_nElementID = 1
+		},
+	]
+	_editor = 
+	{
+		next_element_id = 62
+	}
+}
