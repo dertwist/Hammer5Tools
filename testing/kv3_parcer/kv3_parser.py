@@ -5,11 +5,11 @@ data = {'m_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName':
 
 data_read = kv3.read('sample.vsmart')
 data = data_read
-print(type(data['_editor']))
-print(data['generic_data_type'])
-
-
-print(data['m_Variables'])
+# print(type(data['_editor']))
+# print(data['generic_data_type'])
+#
+#
+# print(data['m_Variables'])
 
 def child(data, key_child):
     data_out = {}
@@ -20,14 +20,23 @@ def child(data, key_child):
         print('str', key_child)
         data_out.update({key_child: data[key_child]})
     if isinstance(data[key_child], list):
-        for item in data[key_child]:
-            print(2,item)
-            if isinstance(item, list):
-                print(1, item)
-                child(data, item)
-            else:
-                print('list', key_child, data[key_child])
-                data_out.update({key_child: data[key_child]})
+        def list_child(data, key):
+            # print(data)
+            for item in data:
+                print('item', item)
+                for key_item in item.keys():
+                    print('key_item', key_item)
+                    if key_item == key:
+                        print('Found child')
+                        data_out.update({key_child: data})
+                        list_child(item[key], key)
+
+
+        if key_child == 'm_Children':
+            list_child(data[key_child], key_child)
+        else:
+            print('list', key_child, data[key_child])
+            data_out.update({key_child: data[key_child]})
     else:
         print('Do not match anyone')
     return data_out
