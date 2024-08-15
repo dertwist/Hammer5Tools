@@ -1,0 +1,23 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "length"
+			m_nElementID = 61
+		},
+
+		{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "height"
+			m_nElementID = 62
+		},
+	]
+	_editor = 
+	{
+		next_element_id = 62
+	}
+}
