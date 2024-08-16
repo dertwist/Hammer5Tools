@@ -15,8 +15,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
-    QLabel, QSizePolicy, QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
+    QLineEdit, QSizePolicy, QWidget)
 
 class Ui_PropertyWidet(object):
     def setupUi(self, PropertyWidet):
@@ -66,11 +66,10 @@ class Ui_PropertyWidet(object):
 
         self.horizontalLayout_2.addWidget(self.label)
 
-        self.comboBox = QComboBox(self.frame)
-        self.comboBox.setObjectName(u"comboBox")
-        self.comboBox.setEditable(True)
+        self.lineEdit = QLineEdit(self.frame)
+        self.lineEdit.setObjectName(u"lineEdit")
 
-        self.horizontalLayout_2.addWidget(self.comboBox)
+        self.horizontalLayout_2.addWidget(self.lineEdit)
 
 
         self.horizontalLayout.addWidget(self.frame)
