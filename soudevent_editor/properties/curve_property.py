@@ -67,7 +67,7 @@ class CurveProperty(QWidget):
                 custom_widget = CustomWidget(custom_list=item, first_value_d=self.first_value_d, second_value_d=self.second_value_d)
                 self.ui.listWidget.setItemWidget(item_widget, custom_widget)
                 self.widget_list.append(custom_widget)
-                custom_widget.valueChanged.connect(lambda value: self.on_update_value)
+                custom_widget.valueChanged.connect(self.on_update_value)
 
         self.calculate_height()
 
@@ -76,6 +76,7 @@ class CurveProperty(QWidget):
         for i in range(len(self.widget_list)):
             listout.append(self.widget_list[i].outputlist)
         self.value = listout
+        print('outlist', self.value)
 
 
     mousePressEvent = PropertyActions.mousePressEvent
@@ -103,8 +104,9 @@ class CurveProperty(QWidget):
         custom_widget = CustomWidget(custom_list=[0,0,0,0,0,0], first_value_d=self.first_value_d, second_value_d=self.second_value_d)
         self.ui.listWidget.setItemWidget(item_widget, custom_widget)
         self.widget_list.append(custom_widget)
-        custom_widget.valueChanged.connect(lambda value: self.on_update_value)
+        custom_widget.valueChanged.connect(self.on_update_value)
         self.calculate_height()
+        self.on_update_value()
     def show_context_menu(self, event):
 
         if self.ui.listWidget is QApplication.focusWidget():
