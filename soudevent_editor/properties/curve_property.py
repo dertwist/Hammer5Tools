@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QComboBox, QCompleter, QDoubleSpinBox, QHBoxLayout, QPushButton, QListWidgetItem, QMenu, QApplication, QSpacerItem, QSizePolicy
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QStandardItem, QStandardItemModel, QCursor,QAction
 from soudevent_editor.properties.ui_curve_property import Ui_PropertyWidet
 from soudevent_editor.properties.property_actions import PropertyActions
@@ -67,10 +67,11 @@ class CurveProperty(QWidget):
                 custom_widget = CustomWidget(custom_list=item, first_value_d=self.first_value_d, second_value_d=self.second_value_d)
                 self.ui.listWidget.setItemWidget(item_widget, custom_widget)
                 self.widget_list.append(custom_widget)
-                custom_widget.valueChanged.connect(lambda value: self.on_update_value(value))
+                custom_widget.valueChanged.connect(lambda value: self.on_update_value)
 
-    def on_update_value(self, list):
-        print(list)
+        self.calculate_height()
+
+    def on_update_value(self):
         listout = []
         for i in range(len(self.widget_list)):
             listout.append(self.widget_list[i].outputlist)
@@ -82,17 +83,28 @@ class CurveProperty(QWidget):
     dragEnterEvent = PropertyActions.dragEnterEvent
     dropEvent = PropertyActions.dropEvent
 
+    def calculate_height(self):
+        count = len(self.widget_list)
+        self.setMinimumSize(QSize(0, ((count * 34) + 65)))
+        self.setMaximumSize(QSize(16777215, ((count * 34) + 65)))
+
     def delete_item_from_list(self):
         item_widget = self.ui.listWidget.currentItem()
         if item_widget:
-            self.ui.listWidget.takeItem(self.ui.listWidget.row(item_widget))
+            row = self.ui.listWidget.row(item_widget)
+            self.ui.listWidget.takeItem(row)
+            del self.widget_list[row]  # Remove the corresponding widget from the list
+            item_widget = None
+            self.on_update_value()
+        self.calculate_height()
     def add_item_to_list(self):
         item_widget = QListWidgetItem()
         self.ui.listWidget.addItem(item_widget)
         custom_widget = CustomWidget(custom_list=[0,0,0,0,0,0], first_value_d=self.first_value_d, second_value_d=self.second_value_d)
         self.ui.listWidget.setItemWidget(item_widget, custom_widget)
         self.widget_list.append(custom_widget)
-        custom_widget.valueChanged.connect(lambda value: self.on_update_value(value))
+        custom_widget.valueChanged.connect(lambda value: self.on_update_value)
+        self.calculate_height()
     def show_context_menu(self, event):
 
         if self.ui.listWidget is QApplication.focusWidget():
