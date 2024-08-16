@@ -19,6 +19,7 @@
         "soudevent_editor/properties/checkbox_property.ui",
         "soudevent_editor/properties/origin_property.ui",
         "popup_menu/popup_menu.ui",
-        "smartprop_editor/main.ui"
+        "smartprop_editor/main.ui",
+        "soudevent_editor/import_audio_dialog.ui"
     ]
 }
