@@ -10,15 +10,14 @@ from PySide6.QtCore import Qt, Signal
 class CustomWidget(QWidget):
     valueChanged = Signal(list)
     outputlist = []
-    def __init__(self, custom_list, parent=None):
+    def __init__(self, custom_list, first_value_d, second_value_d, parent=None):
         super(CustomWidget, self).__init__(parent)
         self.lay = QHBoxLayout(self)
         self.lay.setAlignment(Qt.AlignLeft)
 
-
         for i in range(6):
             double_spin_box = QDoubleSpinBox()
-            double_spin_box.setPrefix("Value  " if i == 0 else "Volume " if i == 1 else "")
+            double_spin_box.setPrefix(f"{first_value_d}  " if i == 0 else f"{second_value_d} " if i == 1 else "")
             double_spin_box.setMaximum(99999)
             double_spin_box.setMinimum(-99999)
             double_spin_box.setValue(custom_list[i])
@@ -38,12 +37,14 @@ class CustomWidget(QWidget):
 
 
 class CurveProperty(QWidget):
-    def __init__(self, name, display_name, value, widget_list):
+    def __init__(self, name, display_name, value, widget_list, first_value_d, second_value_d):
         super().__init__()
         self.ui = Ui_PropertyWidet()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
-        self.widget_list = []  # Initialize widget_list as an empty list
+        self.widget_list = []
+        self.second_value_d = second_value_d
+        self.first_value_d = first_value_d
         self.display_name = display_name
         self.name = name
 
@@ -63,7 +64,7 @@ class CurveProperty(QWidget):
             if isinstance(item, list):
                 item_widget = QListWidgetItem()
                 self.ui.listWidget.addItem(item_widget)
-                custom_widget = CustomWidget(item)
+                custom_widget = CustomWidget(custom_list=item, first_value_d=self.first_value_d, second_value_d=self.second_value_d)
                 self.ui.listWidget.setItemWidget(item_widget, custom_widget)
                 self.widget_list.append(custom_widget)
                 custom_widget.valueChanged.connect(lambda value: self.on_update_value(value))
@@ -88,7 +89,7 @@ class CurveProperty(QWidget):
     def add_item_to_list(self):
         item_widget = QListWidgetItem()
         self.ui.listWidget.addItem(item_widget)
-        custom_widget = CustomWidget([0,0,0,0,0,0])
+        custom_widget = CustomWidget(custom_list=[0,0,0,0,0,0], first_value_d=self.first_value_d, second_value_d=self.second_value_d)
         self.ui.listWidget.setItemWidget(item_widget, custom_widget)
         self.widget_list.append(custom_widget)
         custom_widget.valueChanged.connect(lambda value: self.on_update_value(value))
