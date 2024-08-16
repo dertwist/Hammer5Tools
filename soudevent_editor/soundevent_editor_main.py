@@ -204,6 +204,8 @@ class SoundEventEditorMainWidget(QMainWindow):
             property_class = CurveProperty(name=name, display_name="Fadetime volume mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='FadeTime', second_value_d='Volume')
         elif name == 'distance_volume_mapping_curve':
             property_class = CurveProperty(name=name, display_name="Distance volume mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Distance', second_value_d='Volume')
+        elif name == 'distance_unfiltered_stereo_mapping_curve':
+            property_class = CurveProperty(name=name, display_name="Distance unfiltered stereo mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Distance', second_value_d='Stereo')
 
         # combobox
         elif name == 'base':
