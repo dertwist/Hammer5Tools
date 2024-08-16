@@ -27,7 +27,7 @@ class ComboboxProperty(QWidget):
         # self.ui.lineEdit.addItems(soundevents)  # Update comboBox method to lineEdit
 
         self.ui.lineEdit.setText(str(self.value))  # Update comboBox method to lineEdit
-        self.ui.lineEdit.setCompleter(QCompleter(soundevents, self.ui.lineEdit))  # Update comboBox method to lineEdit
+        self.ui.lineEdit.setCompleter(QCompleter(soundevents, self))  # Update comboBox method to lineEdit
         self.ui.lineEdit.textChanged.connect(self.update_value_from_lineedit)  # Update comboBox signal to lineEdit
 
         # Enable search functionality in the lineEdit
@@ -40,5 +40,9 @@ class ComboboxProperty(QWidget):
     def update_value_from_lineedit(self):  # Update method name
         self.value = self.ui.lineEdit.text()  # Update comboBox method to lineEdit
 
+    mousePressEvent = PropertyActions.mousePressEvent
+    mouseMoveEvent = PropertyActions.mouseMoveEvent
+    dragEnterEvent = PropertyActions.dragEnterEvent
+    dropEvent = PropertyActions.dropEvent
     def show_context_menu(self):
         PropertyActions.show_context_menu(self, event=self.event, property_class=self)

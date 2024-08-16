@@ -29,6 +29,7 @@ class LegacyProperty(QWidget):
         self.ui.label.setText(self.name)
         self.ui.lineEdit.setText(str(self.value))
         self.ui.lineEdit.textChanged.connect(self.update_value_from_lineedit)
+        self.ui.lineEdit.setClearButtonEnabled(True)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
