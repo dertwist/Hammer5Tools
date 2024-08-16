@@ -2,7 +2,7 @@
 import sys
 import keyvalues3 as kv3
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QTreeView, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QTreeView, QVBoxLayout, QWidget, QHeaderView
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 data = {'m_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61}, {'_class': 'CSmartPropVariable_Int', 'm_VariableName': 'height', 'm_nElementID': 62}], 'generic_data_type': 'CSmartPropRoot', '_editor': {'m_nElementID':'1'}}
 
@@ -64,6 +64,32 @@ import json
 
 
 def add_items(parent, data):
+    # for key, value in data.items():
+    #     print(key, value)
+    #     if isinstance(value, dict):
+    #         # Create a parent item for the dictionary key
+    #         parent_item = QStandardItem(str(key))
+    #         parent.appendRow(parent_item)
+    #         # Recursively call add_items for the nested dictionary
+    #         add_items(parent_item, value)
+    #     elif isinstance(value, list):
+    #         # Create a parent item for the list key
+    #         parent_item = QStandardItem(str(key))
+    #         parent.appendRow(parent_item)
+    #         # Iterate through the list and add items for each element
+    #         for index, item in enumerate(value):
+    #             item_key = QStandardItem(f"[{index}]")
+    #             parent_item.appendRow(item_key)
+    #             # Recursively call add_items for the list element
+    #             add_items(item_key, item)
+    #     else:
+    #         # Create items for non-dict and non-list values
+    #         key_item = QStandardItem(str(key))
+    #         value_item = QStandardItem(str(value))
+    #         parent.appendRow([key_item, value_item])
+
+
+
     for key, value in data.items():
         key_item = QStandardItem(key)
         if isinstance(value, dict):
@@ -71,34 +97,26 @@ def add_items(parent, data):
             parent.appendRow([key_item, value_item])
             add_items(key_item, value)
         elif isinstance(value, list):
-            def list_child(data, key):
-                # print(data)
-                # issue with adding output value to the data
-                for item in data:
-                    print('item', item)
-                    for key_item in item.keys():
-                        print('key_item', key_item)
-                        if key_item == key:
-                            print('Found child')
-                            print(item, key)
-
-                            list_parent = QStandardItem(key)
-                            parent.appendRow(list_parent)
-                            value_item = QStandardItem(str(key_item))
-                            # parent.appendRow(QStandardItem(str(data)))
-                            parent.appendRow(value_item)
-                            list_child(item[key], key)
-
-            if key == 'm_Children':
-                list_child(data[key], key)
             list_parent = QStandardItem(key)
             parent.appendRow(list_parent)
-            # for item in value:
-            #     item_key = QStandardItem("")
-            #     item_value = QStandardItem(str(item))
-            #     list_parent.appendRow([item_key, item_value])
-            #     print(value)
-            #     add_items(item_value, item)  # Pass item instead of value
+            try:
+                for item in value:
+                    if key == 'm_Children':
+                        if isinstance(item, dict):
+                            child_item = QStandardItem(item['_class'])
+                            list_parent.appendRow(child_item)
+                            print(item)
+                            if 'm_Children' in item:
+                                add_items(child_item, item)  # Recursively call add_items for the list element
+                    else:
+                        pass
+                        # if isinstance(item, dict):
+                        #     child_item = QStandardItem(item['_class'])  # Create an empty item for the list element
+                        #     list_parent.appendRow(child_item)
+                        #     add_items(child_item, item)  # Recursively call add_items for the list element
+            except:
+                pass
+
         else:
             value_item = QStandardItem(str(value))
             parent.appendRow([key_item, value_item])
@@ -125,12 +143,19 @@ add_items(root_item, data)
 tree_view.setModel(model)
 tree_view.expandAll()
 
+# Adjust the column widths to ensure 'Key' header has at least 50% of the width
+header = tree_view.header()
+header.setSectionResizeMode(0, QHeaderView.Stretch)  # Key column takes 50% of the width
+header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Value column adjusts to content
+
 # Add the tree view to the layout
 layout.addWidget(tree_view)
 window.setCentralWidget(central_widget)
 
 # Show the window
-window.resize(800, 600)
+window.resize(1400, 600)
 window.show()
+
+sys.exit(app.exec())
 
 sys.exit(app.exec())
