@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>684</width>
-    <height>199</height>
+    <width>1138</width>
+    <height>299</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>48</height>
+    <height>170</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -79,7 +79,7 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <property name="spacing">
-       <number>16</number>
+       <number>0</number>
       </property>
       <property name="leftMargin">
        <number>0</number>
@@ -93,17 +93,6 @@
       <property name="bottomMargin">
        <number>0</number>
       </property>
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="styleSheet">
-         <string notr="true">border:0px;
-background-color: rgba(255, 255, 255, 0);</string>
-        </property>
-        <property name="text">
-         <string>Volume</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QFrame" name="frame_2">
         <property name="styleSheet">
@@ -152,509 +141,68 @@ border-bottom: 0px;
           <number>0</number>
          </property>
          <item>
-          <widget class="QFrame" name="frame_3">
-           <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
+          <widget class="QLabel" name="label">
+           <property name="styleSheet">
+            <string notr="true">border:0px;
+background-color: rgba(255, 255, 255, 0);</string>
            </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
+           <property name="text">
+            <string>Volume</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QDoubleSpinBox" name="distance">
-              <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox {
-    font: 580 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
+          </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="listWidget">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QListWidget {
+    border: 2px solid #CCCCCC;
+    border-color: rgba(80, 80, 80, 255);
     border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    padding-left: 2px;
-    padding-right: 2px;
+    padding: 2px;
     color: #E3E3E3;
-    background-color: #1C1C1C;
+}
+QListWidget::item {
+    padding-top: 4px;
+padding-bottom: 4px;
+}
+QListWidget::item:selected {
 }
 
-QDoubleSpinBox:focus {
+QListWidget::item:hover {
 }
-
-QDoubleSpinBox:hover {
-}
-
-QDoubleSpinBox:pressed {
-	background-color: #121212;
-}
-
-QDoubleSpinBox::up-button {
-    border: 0px solid black;
-    subcontrol-origin: border;
-    subcontrol-position: top right;
-    border-left: 2px solid black;
-    border-bottom: 0px solid black;
-    border-top-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
-    width: 20px;
-    height: 20px;
-}
-
-QDoubleSpinBox::down-button {
-    subcontrol-origin: border;
-    subcontrol-position: bottom right;
-	border: 0px solid black;
-    border-left: 2px solid black;
-    border-top: 2px solid black;
-border-bottom-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::down-arrow {
-    image: url(://icons/arrow_drop_down_16dp.svg);
-    width: 20px;
-    height: 20px;
-}</string>
-              </property>
-              <property name="specialValueText">
-               <string/>
-              </property>
-              <property name="prefix">
-               <string>Distance </string>
-              </property>
-              <property name="decimals">
-               <number>2</number>
-              </property>
-              <property name="minimum">
-               <double>-19999.900000000001455</double>
-              </property>
-              <property name="maximum">
-               <double>19999.900000000001455</double>
-              </property>
-              <property name="singleStep">
-               <double>0.100000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="volume">
-              <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox {
-    font: 580 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    padding-left: 2px;
-    padding-right: 2px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-}
-
-QDoubleSpinBox:focus {
-}
-
-QDoubleSpinBox:hover {
-}
-
-QDoubleSpinBox:pressed {
-	background-color: #121212;
-}
-
-QDoubleSpinBox::up-button {
-    border: 0px solid black;
-    subcontrol-origin: border;
-    subcontrol-position: top right;
-    border-left: 2px solid black;
-    border-bottom: 0px solid black;
-    border-top-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
-    width: 20px;
-    height: 20px;
-}
-
-QDoubleSpinBox::down-button {
-    subcontrol-origin: border;
-    subcontrol-position: bottom right;
-	border: 0px solid black;
-    border-left: 2px solid black;
-    border-top: 2px solid black;
-border-bottom-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::down-arrow {
-    image: url(://icons/arrow_drop_down_16dp.svg);
-    width: 20px;
-    height: 20px;
-}</string>
-              </property>
-              <property name="prefix">
-               <string>Volume </string>
-              </property>
-              <property name="decimals">
-               <number>2</number>
-              </property>
-              <property name="minimum">
-               <double>0.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>1.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.100000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="volume_2">
-              <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox {
-    font: 580 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    padding-left: 2px;
-    padding-right: 2px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-}
-
-QDoubleSpinBox:focus {
-}
-
-QDoubleSpinBox:hover {
-}
-
-QDoubleSpinBox:pressed {
-	background-color: #121212;
-}
-
-QDoubleSpinBox::up-button {
-    border: 0px solid black;
-    subcontrol-origin: border;
-    subcontrol-position: top right;
-    border-left: 2px solid black;
-    border-bottom: 0px solid black;
-    border-top-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
-    width: 20px;
-    height: 20px;
-}
-
-QDoubleSpinBox::down-button {
-    subcontrol-origin: border;
-    subcontrol-position: bottom right;
-	border: 0px solid black;
-    border-left: 2px solid black;
-    border-top: 2px solid black;
-border-bottom-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::down-arrow {
-    image: url(://icons/arrow_drop_down_16dp.svg);
-    width: 20px;
-    height: 20px;
-}</string>
-              </property>
-              <property name="prefix">
-               <string/>
-              </property>
-              <property name="decimals">
-               <number>2</number>
-              </property>
-              <property name="minimum">
-               <double>0.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>1.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.100000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="volume_4">
-              <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox {
-    font: 580 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    padding-left: 2px;
-    padding-right: 2px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-}
-
-QDoubleSpinBox:focus {
-}
-
-QDoubleSpinBox:hover {
-}
-
-QDoubleSpinBox:pressed {
-	background-color: #121212;
-}
-
-QDoubleSpinBox::up-button {
-    border: 0px solid black;
-    subcontrol-origin: border;
-    subcontrol-position: top right;
-    border-left: 2px solid black;
-    border-bottom: 0px solid black;
-    border-top-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
-    width: 20px;
-    height: 20px;
-}
-
-QDoubleSpinBox::down-button {
-    subcontrol-origin: border;
-    subcontrol-position: bottom right;
-	border: 0px solid black;
-    border-left: 2px solid black;
-    border-top: 2px solid black;
-border-bottom-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::down-arrow {
-    image: url(://icons/arrow_drop_down_16dp.svg);
-    width: 20px;
-    height: 20px;
-}</string>
-              </property>
-              <property name="prefix">
-               <string/>
-              </property>
-              <property name="decimals">
-               <number>2</number>
-              </property>
-              <property name="minimum">
-               <double>0.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>1.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.100000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="volume_3">
-              <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox {
-    font: 580 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    padding-left: 2px;
-    padding-right: 2px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-}
-
-QDoubleSpinBox:focus {
-}
-
-QDoubleSpinBox:hover {
-}
-
-QDoubleSpinBox:pressed {
-	background-color: #121212;
-}
-
-QDoubleSpinBox::up-button {
-    border: 0px solid black;
-    subcontrol-origin: border;
-    subcontrol-position: top right;
-    border-left: 2px solid black;
-    border-bottom: 0px solid black;
-    border-top-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
-    width: 20px;
-    height: 20px;
-}
-
-QDoubleSpinBox::down-button {
-    subcontrol-origin: border;
-    subcontrol-position: bottom right;
-	border: 0px solid black;
-    border-left: 2px solid black;
-    border-top: 2px solid black;
-border-bottom-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::down-arrow {
-    image: url(://icons/arrow_drop_down_16dp.svg);
-    width: 20px;
-    height: 20px;
-}</string>
-              </property>
-              <property name="prefix">
-               <string/>
-              </property>
-              <property name="decimals">
-               <number>2</number>
-              </property>
-              <property name="minimum">
-               <double>0.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>1.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.100000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="volume_5">
-              <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox {
-    font: 580 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    padding-left: 2px;
-    padding-right: 2px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-}
-
-QDoubleSpinBox:focus {
-}
-
-QDoubleSpinBox:hover {
-}
-
-QDoubleSpinBox:pressed {
-	background-color: #121212;
-}
-
-QDoubleSpinBox::up-button {
-    border: 0px solid black;
-    subcontrol-origin: border;
-    subcontrol-position: top right;
-    border-left: 2px solid black;
-    border-bottom: 0px solid black;
-    border-top-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::up-arrow {
-    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
-    width: 20px;
-    height: 20px;
-}
-
-QDoubleSpinBox::down-button {
-    subcontrol-origin: border;
-    subcontrol-position: bottom right;
-	border: 0px solid black;
-    border-left: 2px solid black;
-    border-top: 2px solid black;
-border-bottom-right-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-}
-
-QDoubleSpinBox::down-arrow {
-    image: url(://icons/arrow_drop_down_16dp.svg);
-    width: 20px;
-    height: 20px;
-}</string>
-              </property>
-              <property name="prefix">
-               <string/>
-              </property>
-              <property name="decimals">
-               <number>2</number>
-              </property>
-              <property name="minimum">
-               <double>0.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>1.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.100000000000000</double>
-              </property>
-             </widget>
-            </item>
-           </layout>
+</string>
+           </property>
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAsNeeded</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAsNeeded</enum>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QAbstractScrollArea::AdjustIgnored</enum>
+           </property>
+           <property name="autoScroll">
+            <bool>true</bool>
+           </property>
+           <property name="resizeMode">
+            <enum>QListView::Adjust</enum>
+           </property>
+           <property name="layoutMode">
+            <enum>QListView::SinglePass</enum>
+           </property>
+           <property name="uniformItemSizes">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
         </layout>
        </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
       </item>
      </layout>
     </widget>

@@ -5,7 +5,7 @@ import time
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea
 )
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QAction,QCursor
 from soudevent_editor.ui_soundevenet_editor_mainwindow import Ui_SoundEvent_Editor_MainWindow
 from preferences import get_config_value, get_cs2_path, get_addon_name
@@ -27,6 +27,7 @@ from soudevent_editor.properties.volume_property import VolumeProperty
 from soudevent_editor.properties.checkbox_property import CheckboxProperty
 from soudevent_editor.properties.origin_property import OriginProperty
 from soudevent_editor.properties.combobox_property import ComboboxProperty
+from soudevent_editor.properties.curve_property import CurveProperty
 
 class SoundEventEditorMainWidget(QMainWindow):
     def __init__(self, version, parent=None):
@@ -97,6 +98,12 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.merge_global_data()
         kv3.write(soundevents_data, (os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts')))
         self.ui.status_bar.setText(f"Saved and exported")
+        self.clean_status_bar_timer = QTimer()
+        self.clean_status_bar_timer.timeout.connect(self.clean_status_bar)
+        self.clean_status_bar_timer.start(2000)
+
+    def clean_status_bar(self):
+        self.ui.status_bar.clear()
 
         pass
     def get_element_layout_kv3(self, layout, data_out):
@@ -190,7 +197,13 @@ class SoundEventEditorMainWidget(QMainWindow):
             property_class = VolumeProperty(name=name, display_name="Occlusion intensity", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
         elif name == 'distance_effect_mix':
             property_class = VolumeProperty(name=name, display_name="Distance effect mix", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
-
+        # curve
+        elif name == 'time_volume_mapping_curve':
+            property_class = CurveProperty(name=name, display_name="Time volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'fadetime_volume_mapping_curve':
+            property_class = CurveProperty(name=name, display_name="Fadetime volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'distance_volume_mapping_curve':
+            property_class = CurveProperty(name=name, display_name="Distance volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
 
         # combobox
         elif name == 'base':
