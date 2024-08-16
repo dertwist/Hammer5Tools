@@ -9,12 +9,16 @@ for root, _, files in os.walk(soundevents_folder):
         if file_name.endswith('.vsndevts'):  # Check if the file is a vsndevts file
             file_path = os.path.join(root, file_name)
 
-            # Apply the code snippet for each file
-            data = kv3.read(file_path)
+            try:
+                # Apply the code snippet for each file
+                data = kv3.read(file_path)
 
-            for key in data.keys():
-                print(key)
-                soundevents.append(key)  # Append the key to the soundevents list
+                for key in data.keys():
+                    print(key)
+                    soundevents.append(key)  # Append the key to the soundevents list
+
+            except UnicodeDecodeError as e:
+                print(f"Error decoding file: {file_path}. {e}")
 
 with open('sounds.txt', 'w') as file:
     for event in soundevents:
