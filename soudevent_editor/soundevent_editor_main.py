@@ -28,6 +28,7 @@ from soudevent_editor.properties.checkbox_property import CheckboxProperty
 from soudevent_editor.properties.origin_property import OriginProperty
 from soudevent_editor.properties.combobox_property import ComboboxProperty
 from soudevent_editor.properties.curve_property import CurveProperty
+from soudevent_editor.properties.files_property import FilesProperty
 
 class SoundEventEditorMainWidget(QMainWindow):
     def __init__(self, version, parent=None):
@@ -206,7 +207,9 @@ class SoundEventEditorMainWidget(QMainWindow):
             property_class = CurveProperty(name=name, display_name="Distance volume mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Distance', second_value_d='Volume')
         elif name == 'distance_unfiltered_stereo_mapping_curve':
             property_class = CurveProperty(name=name, display_name="Distance unfiltered stereo mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Distance', second_value_d='Stereo')
-
+        # files
+        elif name == 'vsnd_files_track_01':
+            property_class = FilesProperty(name=name, display_name="vsnd files_track_01", value=value,widget_list=self.soundevent_properties_layout)
         # combobox
         elif name == 'base':
             property_class = ComboboxProperty(name=name, display_name="Base", value=value,widget_list=self.soundevent_properties_layout)
