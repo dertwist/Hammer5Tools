@@ -22,7 +22,7 @@ class ComboboxProperty(QWidget):
         self.ui.label.setText(self.display_name)
 
         # Set the items to the comboBox
-        items = "test,test,test,te23st,t23est,Music.MatchStart.3kliksphilip_01,test,test,test,t23est,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,test,"
+        items = ""
         items_list = items.split(',')
         self.ui.comboBox.addItems(items_list)
 
