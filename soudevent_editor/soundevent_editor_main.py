@@ -199,11 +199,11 @@ class SoundEventEditorMainWidget(QMainWindow):
             property_class = VolumeProperty(name=name, display_name="Distance effect mix", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
         # curve
         elif name == 'time_volume_mapping_curve':
-            property_class = CurveProperty(name=name, display_name="Time volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+            property_class = CurveProperty(name=name, display_name="Time volume mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Time', second_value_d='Volume')
         elif name == 'fadetime_volume_mapping_curve':
-            property_class = CurveProperty(name=name, display_name="Fadetime volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+            property_class = CurveProperty(name=name, display_name="Fadetime volume mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='FadeTime', second_value_d='Volume')
         elif name == 'distance_volume_mapping_curve':
-            property_class = CurveProperty(name=name, display_name="Distance volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+            property_class = CurveProperty(name=name, display_name="Distance volume mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Distance', second_value_d='Volume')
 
         # combobox
         elif name == 'base':
