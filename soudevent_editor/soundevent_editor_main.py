@@ -26,6 +26,7 @@ from soudevent_editor.properties.legacy_property import LegacyProperty
 from soudevent_editor.properties.volume_property import VolumeProperty
 from soudevent_editor.properties.checkbox_property import CheckboxProperty
 from soudevent_editor.properties.origin_property import OriginProperty
+from soudevent_editor.properties.combobox_property import ComboboxProperty
 
 class SoundEventEditorMainWidget(QMainWindow):
     def __init__(self, version, parent=None):
@@ -190,6 +191,10 @@ class SoundEventEditorMainWidget(QMainWindow):
         elif name == 'distance_effect_mix':
             property_class = VolumeProperty(name=name, display_name="Distance effect mix", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
 
+
+        # combobox
+        elif name == 'base':
+            property_class = ComboboxProperty(name=name, display_name="Base", value=value,widget_list=self.soundevent_properties_layout)
         # origin
         elif name == 'position':
             property_class = OriginProperty(name=name, display_name="Position", value=value,widget_list=self.soundevent_properties_layout)
