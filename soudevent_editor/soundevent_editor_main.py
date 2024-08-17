@@ -16,7 +16,6 @@ from PySide6.QtWidgets import QProgressBar
 from popup_menu.popup_menu_main import PopupMenu
 
 from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
-from soudevent_editor.soundevent_editor_kv3_parser import parse_kv3
 from soudevent_editor.soundevent_editor_recompile_all import compile
 
 
@@ -88,6 +87,7 @@ class SoundEventEditorMainWidget(QMainWindow):
 
     def populate_soundevent_list(self):
         global soundevents_data
+        from soudevent_editor.soundevent_editor_kv3_parser import parse_kv3
         soundevents_data = parse_kv3(
             os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts'))
         for key, _ in soundevents_data.items():
@@ -221,6 +221,8 @@ class SoundEventEditorMainWidget(QMainWindow):
         elif name == 'vsnd_files_track_01':
             property_class = FilesProperty(name=name, display_name="vsnd files_track_01", value=value,tree_list=self.mini_explorer)
             # property_class.CreateFileFromSelection.connect(self.create_vsnd_from_selection)
+        elif name == 'soundevent_01':
+            property_class = FilesProperty(name=name, display_name="Sound Event 01", value=value,tree_list=self.mini_explorer)
         # combobox
         elif name == 'base':
             property_class = ComboboxProperty(name=name, display_name="Base", value=value,widget_list=self.soundevent_properties_layout)

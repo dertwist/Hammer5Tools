@@ -16,7 +16,7 @@ class FilesProperty(QWidget):
         self.widget_list = []
         self.display_name = display_name
         self.name = name
-        self.tree_list  = tree_list
+        self.tree_list = tree_list
         # self.ui.pushButton.clicked.connect(self.CreateFileFromSelection)
         self.ui.pushButton.clicked.connect(self.create_file_from_selction)
 
@@ -69,7 +69,7 @@ class FilesProperty(QWidget):
         if item_widget:
             row = self.ui.listWidget.row(item_widget)
             self.ui.listWidget.takeItem(row)
-            del row
+            del item_widget
         self.on_update_value()
         self.calculate_height()
     def add_item_to_list(self, item):
