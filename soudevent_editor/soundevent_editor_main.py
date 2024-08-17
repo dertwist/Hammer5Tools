@@ -30,6 +30,8 @@ from soudevent_editor.properties.combobox_property import ComboboxProperty
 from soudevent_editor.properties.curve_property import CurveProperty
 from soudevent_editor.properties.files_property import FilesProperty
 
+global clipboard_app
+
 class SoundEventEditorMainWidget(QMainWindow):
     def __init__(self, version, parent=None):
         super().__init__(parent)
@@ -160,6 +162,15 @@ class SoundEventEditorMainWidget(QMainWindow):
         #             value = str(value)
         #             self.add_property(key, value)
 
+    def create_vsnd_from_selection(self):
+        vsnd = self.mini_explorer.copy_file_path(self.mini_explorer.tree.currentIndex(), False)
+        global clipboard_app
+        clipboard_app = vsnd
+        print(vsnd)
+        for item_index in range(self.soundevent_properties_layout.count()):
+            item = self.soundevent_properties_layout.itemAt(item_index).widget()
+            if item:
+                print(item)
 
     def add_property(self, name, value):
 
@@ -209,7 +220,8 @@ class SoundEventEditorMainWidget(QMainWindow):
             property_class = CurveProperty(name=name, display_name="Distance unfiltered stereo mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Distance', second_value_d='Stereo')
         # files
         elif name == 'vsnd_files_track_01':
-            property_class = FilesProperty(name=name, display_name="vsnd files_track_01", value=value,widget_list=self.soundevent_properties_layout)
+            property_class = FilesProperty(name=name, display_name="vsnd files_track_01", value=value,tree_list=self.mini_explorer)
+            # property_class.CreateFileFromSelection.connect(self.create_vsnd_from_selection)
         # combobox
         elif name == 'base':
             property_class = ComboboxProperty(name=name, display_name="Base", value=value,widget_list=self.soundevent_properties_layout)

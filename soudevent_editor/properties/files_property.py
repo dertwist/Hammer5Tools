@@ -6,9 +6,9 @@ from soudevent_editor.properties.property_actions import PropertyActions
 import ast
 from PySide6.QtCore import Qt, Signal
 
-
 class FilesProperty(QWidget):
-    def __init__(self, name, display_name, value, widget_list):
+    CreateFileFromSelection = Signal()
+    def __init__(self, name, display_name, value, tree_list):
         super().__init__()
         self.ui = Ui_PropertyWidet()
         self.ui.setupUi(self)
@@ -16,6 +16,10 @@ class FilesProperty(QWidget):
         self.widget_list = []
         self.display_name = display_name
         self.name = name
+        self.tree_list  = tree_list
+        # self.ui.pushButton.clicked.connect(self.CreateFileFromSelection)
+        self.ui.pushButton.clicked.connect(self.create_file_from_selction)
+
 
         try:
             self.value = ast.literal_eval(value)
@@ -25,6 +29,10 @@ class FilesProperty(QWidget):
         self.init_ui()
 
     # Inside the CurveProperty class
+    def create_file_from_selction(self):
+        file = self.tree_list.copy_file_path(self.tree_list.tree.currentIndex(), False)
+        self.add_item_to_list(file)
+        print(file)
     def init_ui(self):
         self.ui.label.setText(self.display_name)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -44,6 +52,8 @@ class FilesProperty(QWidget):
         self.value = listout
 
 
+
+
     mousePressEvent = PropertyActions.mousePressEvent
     mouseMoveEvent = PropertyActions.mouseMoveEvent
     dragEnterEvent = PropertyActions.dragEnterEvent
@@ -59,16 +69,19 @@ class FilesProperty(QWidget):
         if item_widget:
             row = self.ui.listWidget.row(item_widget)
             self.ui.listWidget.takeItem(row)
-            del self.widget_list[row]  # Remove the corresponding widget from the list
-            item_widget = None
-            self.on_update_value()
+            del row
+        self.on_update_value()
         self.calculate_height()
-    def add_item_to_list(self):
-        item_widget = QListWidgetItem('vsnd')
+    def add_item_to_list(self, item):
+        if item:
+            item_widget = QListWidgetItem(item)
+        else:
+            item_widget = QListWidgetItem('vsnd')
         item_widget.setFlags(item_widget.flags() | Qt.ItemIsEditable)  # Allow item editing
         self.ui.listWidget.addItem(item_widget)
         self.ui.listWidget.itemChanged.connect(self.on_update_value)
         self.calculate_height()
+        self.on_update_value()
     def show_context_menu(self, event):
 
         if self.ui.listWidget is QApplication.focusWidget():
