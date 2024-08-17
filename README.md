@@ -36,8 +36,8 @@ A tool that helps with smartprops creation in the game.
 | Tool | Status |
 | ------ | ------ |
 | Loading Editor | Done |
-| SoundEvent Editor | In process |
+| SoundEvent Editor | Done |
 | Hotkey Editor | planned |
 | BatchCreator | Done |
-| SmartProp Editor | planned |
+| SmartProp Editor | In process |
 | Sync Editor | planned |
