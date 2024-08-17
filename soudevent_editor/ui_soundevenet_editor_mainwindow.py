@@ -16,10 +16,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QHeaderView,
-    QLabel, QLayout, QListWidget, QListWidgetItem,
-    QMainWindow, QPushButton, QScrollArea, QSizePolicy,
-    QSpacerItem, QToolButton, QTreeView, QVBoxLayout,
-    QWidget)
+    QLabel, QLayout, QLineEdit, QListWidget,
+    QListWidgetItem, QMainWindow, QPushButton, QScrollArea,
+    QSizePolicy, QSpacerItem, QToolButton, QTreeView,
+    QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_SoundEvent_Editor_MainWindow(object):
@@ -55,7 +55,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
         self.verticalLayout = QVBoxLayout(self.frame)
-        self.verticalLayout.setSpacing(6)
+        self.verticalLayout.setSpacing(5)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.frame_8 = QFrame(self.frame)
@@ -67,6 +67,11 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.horizontalLayout_6.setContentsMargins(0, 0, 0, 0)
 
         self.verticalLayout.addWidget(self.frame_8)
+
+        self.soundevents_list_search_bar = QLineEdit(self.frame)
+        self.soundevents_list_search_bar.setObjectName(u"soundevents_list_search_bar")
+
+        self.verticalLayout.addWidget(self.soundevents_list_search_bar)
 
         self.soundevents_list = QListWidget(self.frame)
         self.soundevents_list.setObjectName(u"soundevents_list")
@@ -206,11 +211,20 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.horizontalLayout_3 = QHBoxLayout(self.frame_5)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.open_sounds_folder_button = QToolButton(self.frame_5)
+        self.open_sounds_folder_button.setObjectName(u"open_sounds_folder_button")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_sounds_folder_button.setIcon(icon1)
+        self.open_sounds_folder_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_3.addWidget(self.open_sounds_folder_button)
+
         self.Import_audio_options_button = QToolButton(self.frame_5)
         self.Import_audio_options_button.setObjectName(u"Import_audio_options_button")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Import_audio_options_button.setIcon(icon1)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Import_audio_options_button.setIcon(icon2)
         self.Import_audio_options_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.Import_audio_options_button)
@@ -248,9 +262,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Import_audio_button.setIcon(icon2)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Import_audio_button.setIcon(icon3)
         self.Import_audio_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.Import_audio_button)
@@ -328,7 +342,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.quick_setup_options_button = QToolButton(self.frame_4)
         self.quick_setup_options_button.setObjectName(u"quick_setup_options_button")
-        self.quick_setup_options_button.setIcon(icon1)
+        self.quick_setup_options_button.setIcon(icon2)
         self.quick_setup_options_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.quick_setup_options_button)
@@ -366,9 +380,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.quick_setup_button.setIcon(icon3)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.quick_setup_button.setIcon(icon4)
         self.quick_setup_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.quick_setup_button)
@@ -409,9 +423,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_button.setIcon(icon4)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_button.setIcon(icon5)
         self.save_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.save_button)
@@ -449,9 +463,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/menu_open_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.recompile_all_button.setIcon(icon5)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/menu_open_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.recompile_all_button.setIcon(icon6)
         self.recompile_all_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.recompile_all_button)
@@ -477,14 +491,40 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
     def retranslateUi(self, SoundEvent_Editor_MainWindow):
         SoundEvent_Editor_MainWindow.setWindowTitle(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"MainWindow", None))
+        self.soundevents_list_search_bar.setPlaceholderText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Search...", None))
+#if QT_CONFIG(tooltip)
+        self.create_new_soundevent.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Create new soundevent</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.create_new_soundevent.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Creane new sound event", None))
+#if QT_CONFIG(tooltip)
+        self.open_sounds_folder_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Open sounds folder</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.open_sounds_folder_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
+#if QT_CONFIG(tooltip)
+        self.Import_audio_options_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Improt audio options (todo)</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.Import_audio_options_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
+#if QT_CONFIG(tooltip)
+        self.Import_audio_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Improt audio (todo)</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.Import_audio_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Import audio", None))
         self.status_bar.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Press Ctrl + F to add a property", None))
         self.version.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Version", None))
+#if QT_CONFIG(tooltip)
+        self.quick_setup_options_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Quick setup options (todo)</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.quick_setup_options_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"...", None))
+#if QT_CONFIG(tooltip)
+        self.quick_setup_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Quick setup (todo)</p><p>Create a new soundevent with templates</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.quick_setup_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Quick setup", None))
+#if QT_CONFIG(tooltip)
+        self.save_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Save file</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.save_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Save", None))
+#if QT_CONFIG(tooltip)
+        self.recompile_all_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Recompiles all sounds and sound events</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.recompile_all_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Recompile All", None))
     # retranslateUi
 
