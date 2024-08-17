@@ -163,7 +163,7 @@ class SoundEvent_Editor_MiniWindowsExplorer(QMainWindow):
                 menu.addAction(delete_action)
 
                 copy_path_action = QAction("Copy File Path", self)
-                copy_path_action.triggered.connect(lambda: self.copy_file_path(index))
+                copy_path_action.triggered.connect(lambda: self.copy_file_path(index, True))
                 menu.addAction(copy_path_action)
         else:
             # Context menu for empty space
@@ -207,15 +207,25 @@ class SoundEvent_Editor_MiniWindowsExplorer(QMainWindow):
                     QFile(path).remove()
 
 
-    def copy_file_path(self, index):
-        file_path = self.model.filePath(index)
-        file_path = os.path.relpath(file_path, self.tree_directory)
-        file_path = file_path.replace('\\', '/')
-        file_path = file_path.lower()
-        root, ext = os.path.splitext(file_path)
-        file_path = root + '.vsnd'
-        clipboard = QGuiApplication.clipboard()
-        clipboard.setText(file_path)
+    def copy_file_path(self, index, to_clipboard):
+        if to_clipboard:
+            file_path = self.model.filePath(index)
+            file_path = os.path.relpath(file_path, self.tree_directory)
+            file_path = file_path.replace('\\', '/')
+            file_path = file_path.lower()
+            root, ext = os.path.splitext(file_path)
+            file_path = root + '.vsnd'
+            clipboard = QGuiApplication.clipboard()
+            clipboard.setText(file_path)
+        else:
+            file_path = self.model.filePath(index)
+            file_path = os.path.relpath(file_path, self.tree_directory)
+            file_path = file_path.replace('\\', '/')
+            file_path = file_path.lower()
+            root, ext = os.path.splitext(file_path)
+            file_path = root + '.vsnd'
+            return file_path
+
 
     def create_folder(self, parent_index):
         parent_path = self.model.filePath(parent_index)
