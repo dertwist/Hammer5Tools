@@ -94,7 +94,7 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout">
              <property name="spacing">
-              <number>6</number>
+              <number>5</number>
              </property>
              <property name="leftMargin">
               <number>0</number>
@@ -133,10 +133,20 @@
               </widget>
              </item>
              <item>
+              <widget class="QLineEdit" name="soundevents_list_search_bar">
+               <property name="placeholderText">
+                <string>Search...</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QListWidget" name="soundevents_list"/>
              </item>
              <item>
               <widget class="QPushButton" name="create_new_soundevent">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create new soundevent&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="styleSheet">
                 <string notr="true">
     /* QPushButton default and hover styles */
@@ -305,7 +315,30 @@ QLineEdit::selection {
                  <number>0</number>
                 </property>
                 <item>
+                 <widget class="QToolButton" name="open_sounds_folder_button">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open sounds folder&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>...</string>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="../resources.qrc">
+                    <normaloff>:/icons/folder_open.svg</normaloff>:/icons/folder_open.svg</iconset>
+                  </property>
+                  <property name="iconSize">
+                   <size>
+                    <width>20</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <widget class="QToolButton" name="Import_audio_options_button">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Improt audio options (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
                   <property name="text">
                    <string>...</string>
                   </property>
@@ -328,6 +361,9 @@ QLineEdit::selection {
                     <width>0</width>
                     <height>32</height>
                    </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Improt audio (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="styleSheet">
                    <string notr="true">
@@ -534,6 +570,9 @@ QLineEdit::selection {
                    </property>
                    <item>
                     <widget class="QToolButton" name="quick_setup_options_button">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quick setup options (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
                      <property name="text">
                       <string>...</string>
                      </property>
@@ -556,6 +595,9 @@ QLineEdit::selection {
                        <width>0</width>
                        <height>32</height>
                       </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quick setup (todo)&lt;/p&gt;&lt;p&gt;Create a new soundevent with templates&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="styleSheet">
                       <string notr="true">
@@ -615,6 +657,9 @@ QLineEdit::selection {
                     <height>32</height>
                    </size>
                   </property>
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
                   <property name="styleSheet">
                    <string notr="true">
     /* QPushButton default and hover styles */
@@ -669,6 +714,9 @@ QLineEdit::selection {
                     <width>0</width>
                     <height>32</height>
                    </size>
+                  </property>
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Recompiles all sounds and sound events&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="styleSheet">
                    <string notr="true">

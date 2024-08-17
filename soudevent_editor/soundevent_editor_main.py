@@ -68,6 +68,26 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.ui.recompile_all_button.clicked.connect(self.recomppile_all)
 
         self.ui.create_new_soundevent.clicked.connect(self.create_new_soundevent)
+        # misc
+
+        self.ui.soundevents_list_search_bar.textChanged.connect(self.filter_soundevents_list)
+        self.ui.open_sounds_folder_button.clicked.connect(self.open_sounds_folder)
+
+    def open_sounds_folder(self):
+        if os.path.exists(self.tree_directory):
+            # Open the folder using Windows Explorer
+            os.startfile(self.tree_directory)
+        else:
+            print(f"Directory '{self.tree_directory}' does not exist.")
+
+    def filter_soundevents_list(self):
+        search_text = self.ui.soundevents_list_search_bar.text().lower()
+        for index in range(self.ui.soundevents_list.count()):
+            item = self.ui.soundevents_list.item(index)
+            if search_text in item.text().lower():
+                item.setHidden(False)
+            else:
+                item.setHidden(True)
 
     def create_new_soundevent(self):
         existing_items = [self.ui.soundevents_list.item(item).text() for item in
@@ -161,15 +181,6 @@ class SoundEventEditorMainWidget(QMainWindow):
         #             value = str(value)
         #             self.add_property(key, value)
 
-    def create_vsnd_from_selection(self):
-        vsnd = self.mini_explorer.copy_file_path(self.mini_explorer.tree.currentIndex(), False)
-        global clipboard_app
-        clipboard_app = vsnd
-        print(vsnd)
-        for item_index in range(self.soundevent_properties_layout.count()):
-            item = self.soundevent_properties_layout.itemAt(item_index).widget()
-            if item:
-                print(item)
 
     def add_property(self, name, value):
 
@@ -220,7 +231,6 @@ class SoundEventEditorMainWidget(QMainWindow):
         # files
         elif name == 'vsnd_files_track_01':
             property_class = FilesProperty(name=name, display_name="vsnd files_track_01", value=value,tree_list=self.mini_explorer)
-            # property_class.CreateFileFromSelection.connect(self.create_vsnd_from_selection)
         elif name == 'soundevent_01':
             property_class = FilesProperty(name=name, display_name="Sound Event 01", value=value,tree_list=self.mini_explorer)
         # combobox
