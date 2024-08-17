@@ -16,8 +16,11 @@ output_path = 'hammer5tools\\hammer5tools.zip'
 files_to_archive = [file for file in os.listdir(folder_path) if file != 'hammer5tools.zip']
 
 with zipfile.ZipFile(output_path, 'w') as archive:
-    for file in files_to_archive:
-        archive.write(os.path.join(folder_path, file), file)
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            if file != 'hammer5tools.zip':  # Exclude 'hammer5tools.zip'
+                file_path = os.path.join(root, file)
+                archive.write(file_path, os.path.relpath(file_path, folder_path))
 
 # Command 3 (commented out)
 # subprocess.run(['pyinstaller', '--name=Hammer5Tools', '--noconfirm', '--windowed', '--optimize=2', '--icon=appicon.ico', '--add-data=appicon.ico:.', '--add-data=images;images/', '--noupx', 'main.py'])
