@@ -4,7 +4,7 @@ from PySide6.QtGui import QIcon, QAction
 from ui_form import Ui_Widget
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
-from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool
+from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value
 from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
 from loading_editor.loading_editor_main import Loading_editorMainWindow
 
@@ -44,6 +44,8 @@ class Widget(QWidget):
         self.preferences_dialog = None
         self.Create_addon_Dialog = None
         self.Delete_addon_Dialog = None
+        self.current_tab(False)
+
         check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
 
         try:
@@ -52,7 +54,18 @@ class Widget(QWidget):
                 set_config_bool('APP', 'first_launch', 'False')
         except:
             pass
-
+    def current_tab(self, set):
+        if set:
+            try:
+                set_config_value('APP', 'current_tab', str(self.ui.MainWindowTools_tabs.currentIndex()))
+            except:
+                pass
+        else:
+            try:
+                current_tab = int(get_config_value('APP', 'current_tab'))
+                self.ui.MainWindowTools_tabs.setCurrentIndex(current_tab)
+            except:
+                pass
     def setup_tray_icon(self):
         self.tray_icon = QSystemTrayIcon(QIcon.fromTheme(":/icons/appicon.ico"), self)
         self.tray_icon.setToolTip("Hammer5Tools")
@@ -229,7 +242,7 @@ class Widget(QWidget):
         self.tray_icon.hide()
         self.tray_icon.deleteLater()
 
-
+        self.current_tab(True)
         QApplication.quit()
         QApplication.instance().quit()
         QApplication.exit(1)
