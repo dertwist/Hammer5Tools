@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QProgressBar
 from popup_menu.popup_menu_main import PopupMenu
 
 from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
-from soudevent_editor.soundevent_editor_kv3_parser import child_merge,child_key, parse_kv3
+from soudevent_editor.soundevent_editor_kv3_parser import parse_kv3
 from soudevent_editor.soundevent_editor_recompile_all import compile
 
 
@@ -114,14 +114,13 @@ class SoundEventEditorMainWidget(QMainWindow):
             widget = layout.itemAt(i).widget()
             if widget:
                 item = {widget.name: widget.value}
-                data_out = child_merge(data_out, item)
+                data_out.update(item)
         return data_out
     def clear_layout(self, layout):
         while layout.count():
             child = layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
-
 
     def merge_global_data(self):
         data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
@@ -132,7 +131,7 @@ class SoundEventEditorMainWidget(QMainWindow):
         except:
             pass
         properties_data = {item_text: data_out}
-        soundevents_data = child_merge(soundevents_data, properties_data)
+        soundevents_data.update(properties_data)
     def on_soundevent_clicked(self, item):
         global soundevents_data
         item_text = item.text()
