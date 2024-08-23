@@ -2,6 +2,9 @@ import os.path
 import sys
 import time
 
+import psutil
+import subprocess
+
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea
 )
@@ -68,6 +71,8 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.ui.save_button.clicked.connect(self.save)
         self.ui.recompile_all_button.clicked.connect(self.recomppile_all)
 
+        self.ui.open_output_file_button.clicked.connect(self.open_output_file)
+
         self.ui.create_new_soundevent.clicked.connect(self.create_new_soundevent)
 
         self.ui.create_new_soundevent_options_button.clicked.connect(self.CreateNewSoundEventOptions_Dialog_show)
@@ -76,6 +81,10 @@ class SoundEventEditorMainWidget(QMainWindow):
 
         self.ui.soundevents_list_search_bar.textChanged.connect(self.filter_soundevents_list)
         self.ui.open_sounds_folder_button.clicked.connect(self.open_sounds_folder)
+
+    def open_output_file(self):
+        file_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
+        subprocess.Popen(['notepad.exe', file_path])
     def CreateNewSoundEventOptions_Dialog_show(self):
         self.dialog = CreateNewSoundEventOptions_Dialog()
         self.dialog.show()
@@ -154,6 +163,7 @@ class SoundEventEditorMainWidget(QMainWindow):
     def merge_global_data(self):
         data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
         global soundevents_data
+        print(type(soundevents_data),'soundevents_data')
         item_text = self.ui.soundevents_list.currentItem().text()
         try:
             del soundevents_data[item_text]
