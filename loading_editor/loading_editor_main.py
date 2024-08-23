@@ -164,7 +164,13 @@ class Loading_editorMainWindow(QMainWindow):
     def icon_processs(self):
         svg_path = self.Svg_Drap_and_Drop_Area.loading_editor_get_svg()
         svg_path = os.path.normpath(svg_path)
-        svg_dst = get_cs2_path() +r"\content\csgo_addons" + '\\' + get_addon_name() + r'\panorama\images\map_icons' + "\\" + 'map_icon_' + get_addon_name() + '.svg'
+        folder_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
+
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        svg_dst = os.path.join(folder_path, "map_icon_" + get_addon_name() + ".svg")
+        print(svg_dst)
         if os.path.exists(svg_dst):
             os.remove(svg_dst)
         shutil.copy2(svg_path, svg_dst)

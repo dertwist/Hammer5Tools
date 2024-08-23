@@ -36,7 +36,7 @@ def update_rpc(display_name, custom_display_text, elapsed_time):
         large_image="https://i.imgur.com/Zvsv8t5.png",
         buttons=[{"label": "Hammer5Tools", "url": "https://github.com/dertwist/Hammer5Tools"}]
     )
-    logging.info(f"Running {display_name}")
+    # logging.info(f"Running {display_name}")
 
 
 def update_discord_status():

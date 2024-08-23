@@ -23,7 +23,8 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(640, 480)
+        Dialog.resize(600, 146)
+        Dialog.setMaximumSize(QSize(600, 600))
         Dialog.setStyleSheet(u"background-color: rgb(28, 28, 28);")
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
