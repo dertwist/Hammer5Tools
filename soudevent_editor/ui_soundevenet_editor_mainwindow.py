@@ -425,6 +425,46 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.recompile_all_button)
 
+        self.open_output_file_button = QPushButton(self.frame_2)
+        self.open_output_file_button.setObjectName(u"open_output_file_button")
+        self.open_output_file_button.setMinimumSize(QSize(0, 32))
+        self.open_output_file_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_output_file_button.setIcon(icon6)
+        self.open_output_file_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.open_output_file_button)
+
 
         self.verticalLayout_3.addWidget(self.frame_2)
 
@@ -477,5 +517,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.recompile_all_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Recompiles all sounds and sound events</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.recompile_all_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Recompile All", None))
+#if QT_CONFIG(tooltip)
+        self.open_output_file_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Opens soundevents_addon.vsndevts in notepad</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.open_output_file_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Open output file", None))
     # retranslateUi
 
