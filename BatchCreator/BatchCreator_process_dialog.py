@@ -11,7 +11,7 @@ class BatchCreator_process_Dialog(QDialog):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_process_Dialog()
         self.ui.setupUi(self)
-        self.setModal(True)  # Set the dialog as modal
+        self.setModal(True)
         self.process = process
         self.current_file_path = current_file_path
         # ['ignore_list', 'custom_files', 'custom_output', 'load_from_the_folder', 'algorithm','output_to_the_folder']

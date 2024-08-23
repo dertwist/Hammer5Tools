@@ -17,6 +17,7 @@ from popup_menu.popup_menu_main import PopupMenu
 
 from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
 from soudevent_editor.soundevent_editor_recompile_all import compile
+from soudevent_editor.create_new_soundevent_dialog import CreateNewSoundEventOptions_Dialog
 
 
 import keyvalues3 as kv3
@@ -68,10 +69,16 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.ui.recompile_all_button.clicked.connect(self.recomppile_all)
 
         self.ui.create_new_soundevent.clicked.connect(self.create_new_soundevent)
+
+        self.ui.create_new_soundevent_options_button.clicked.connect(self.CreateNewSoundEventOptions_Dialog_show)
+
         # misc
 
         self.ui.soundevents_list_search_bar.textChanged.connect(self.filter_soundevents_list)
         self.ui.open_sounds_folder_button.clicked.connect(self.open_sounds_folder)
+    def CreateNewSoundEventOptions_Dialog_show(self):
+        self.dialog = CreateNewSoundEventOptions_Dialog()
+        self.dialog.show()
 
     def open_sounds_folder(self):
         if os.path.exists(self.tree_directory):
@@ -90,8 +97,8 @@ class SoundEventEditorMainWidget(QMainWindow):
                 item.setHidden(True)
 
     def create_new_soundevent(self):
-        existing_items = [self.ui.soundevents_list.item(item).text() for item in
-                          range(self.ui.soundevents_list.count())]
+        global soundevents_data
+        existing_items = [self.ui.soundevents_list.item(item).text() for item in range(self.ui.soundevents_list.count())]
 
         new_soundevent_name = 'new.soundevent'
         unique_name = new_soundevent_name
@@ -100,16 +107,18 @@ class SoundEventEditorMainWidget(QMainWindow):
         while unique_name in existing_items:
             unique_name = f'{new_soundevent_name}_{counter}'
             counter += 1
+        new_sondevent = {unique_name: {'volume': 1.0, 'vsnd_files_track_01': ['bird_01.vsnd'], 'base': 'amb.base'}}
+        soundevents_data.update(new_sondevent)
 
         self.ui.soundevents_list.addItem(unique_name)
-        self.merge_global_data()
+
+
 
 
     def populate_soundevent_list(self):
         global soundevents_data
         from soudevent_editor.soundevent_editor_kv3_parser import parse_kv3
-        soundevents_data = parse_kv3(
-            os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts'))
+        soundevents_data = parse_kv3(os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts'))
         for key, _ in soundevents_data.items():
             item = QListWidgetItem(key)
             self.ui.soundevents_list.addItem(item)
