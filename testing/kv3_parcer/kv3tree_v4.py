@@ -8,13 +8,10 @@ import json
 
 import keyvalues3 as kv3
 
-# Sample JSON data
 
-# bt_config = kv3.read(r'E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_ankhor\smartprops\hvac_kit.vsmart')
 bt_config = kv3.read('sample.vsmart')
 
-data = bt_config.value
-print(data)
+data = bt_config
 # data = {
 #     'generic_data_type': 'CSmartPropRoot',
 #     'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61}],
@@ -23,8 +20,6 @@ print(data)
 #                     'm_nElementID': 2}]
 # }
 
-
-square_brackets_group = ['m_Children', 'm_Variables', 'm_Modifiers', 'm_vRandomRotationMin', 'm_vRandomRotationMax', 'm_vPosition']
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -51,7 +46,7 @@ class MainWindow(QMainWindow):
 
 
         quick_export_button = QPushButton("Quick Export")
-        quick_export_button.clicked.connect(self.quick_export_to_file())
+        quick_export_button.clicked.connect(self.quick_export_to_file)
         toolbar.addWidget(quick_export_button)
 
 
@@ -84,26 +79,27 @@ class MainWindow(QMainWindow):
     def populate_tree(self, data, parent=None):
         if parent is None:
             parent = self.tree.invisibleRootItem()
-
-        if isinstance(data, dict):
-            for key, value in data.items():
-                if key in square_brackets_group and isinstance(value, list):
-                    item = QTreeWidgetItem([key])
+        for key, value in data.items():
+            print(value, type(value))
+            if isinstance(value, dict):
+                item = QTreeWidgetItem([key])
+                item.setFlags(item.flags() | Qt.ItemIsEditable)
+                parent.addChild(item)
+                self.populate_tree(value, item)
+            elif isinstance(value, list):
+                print('list', key, value)
+                for key_value in value:
+                    item = QTreeWidgetItem([key_value])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
                     parent.addChild(item)
-                    for child_data in value:
-                        self.populate_tree(child_data, item)
-                else:
-                    item = QTreeWidgetItem([key])
-                    item.setFlags(item.flags() | Qt.ItemIsEditable)
-                    parent.addChild(item)
-                    self.populate_tree(value, item)
-        elif isinstance(data, list):
-            for value in data:
-                self.populate_tree(value, parent)
-        else:
-            parent.setText(1, str(data))
-            parent.setFlags(parent.flags() | Qt.ItemIsEditable)
+                    # self.populate_tree(key_value, parent)
+                if 'm_Children' == key:
+                    self.populate_tree(data[key], parent)
+                    print('sm_Children')
+            else:
+                pass
+                parent.setText(1, str(key))
+                parent.setFlags(parent.flags() | Qt.ItemIsEditable)
 
     def on_item_changed(self, item, column):
         # Handle item changes if necessary
