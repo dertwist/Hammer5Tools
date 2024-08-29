@@ -150,10 +150,29 @@ class Ui_MainWindow(object):
         self.verticalLayout_2 = QVBoxLayout(self.frame)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.search_bar_properties = QLineEdit(self.frame)
-        self.search_bar_properties.setObjectName(u"search_bar_properties")
+        self.label_2 = QLabel(self.frame)
+        self.label_2.setObjectName(u"label_2")
 
-        self.verticalLayout_2.addWidget(self.search_bar_properties)
+        self.verticalLayout_2.addWidget(self.label_2)
+
+        self.treeWidget_2 = QTreeWidget(self.frame)
+        __qtreewidgetitem1 = QTreeWidgetItem(self.treeWidget_2)
+        QTreeWidgetItem(__qtreewidgetitem1)
+        QTreeWidgetItem(__qtreewidgetitem1)
+        QTreeWidgetItem(__qtreewidgetitem1)
+        self.treeWidget_2.setObjectName(u"treeWidget_2")
+        self.treeWidget_2.header().setVisible(True)
+        self.treeWidget_2.header().setCascadingSectionResizes(False)
+        self.treeWidget_2.header().setDefaultSectionSize(280)
+        self.treeWidget_2.header().setHighlightSections(False)
+        self.treeWidget_2.header().setProperty("showSortIndicator", False)
+
+        self.verticalLayout_2.addWidget(self.treeWidget_2)
+
+        self.label_3 = QLabel(self.frame)
+        self.label_3.setObjectName(u"label_3")
+
+        self.verticalLayout_2.addWidget(self.label_3)
 
         self.properties_widget_list = QListWidget(self.frame)
         self.properties_widget_list.setObjectName(u"properties_widget_list")
@@ -216,53 +235,30 @@ class Ui_MainWindow(object):
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.label = QLabel(self.frame_2)
+        self.label.setObjectName(u"label")
+
+        self.verticalLayout_3.addWidget(self.label)
+
         self.search_bar_elements = QLineEdit(self.frame_2)
         self.search_bar_elements.setObjectName(u"search_bar_elements")
 
         self.verticalLayout_3.addWidget(self.search_bar_elements)
 
         self.elements_widget_tree = QTreeWidget(self.frame_2)
-        __qtreewidgetitem1 = QTreeWidgetItem()
-        __qtreewidgetitem1.setText(0, u"1");
-        self.elements_widget_tree.setHeaderItem(__qtreewidgetitem1)
+        __qtreewidgetitem2 = QTreeWidgetItem()
+        __qtreewidgetitem2.setText(0, u"Name");
+        self.elements_widget_tree.setHeaderItem(__qtreewidgetitem2)
+        __qtreewidgetitem3 = QTreeWidgetItem(self.elements_widget_tree)
+        QTreeWidgetItem(__qtreewidgetitem3)
+        QTreeWidgetItem(__qtreewidgetitem3)
+        QTreeWidgetItem(__qtreewidgetitem3)
+        __qtreewidgetitem4 = QTreeWidgetItem(__qtreewidgetitem3)
+        QTreeWidgetItem(__qtreewidgetitem4)
         self.elements_widget_tree.setObjectName(u"elements_widget_tree")
+        self.elements_widget_tree.header().setVisible(False)
 
         self.verticalLayout_3.addWidget(self.elements_widget_tree)
-
-        self.templates_button = QPushButton(self.frame_2)
-        self.templates_button.setObjectName(u"templates_button")
-        self.templates_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 600 10pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-
-        self.verticalLayout_3.addWidget(self.templates_button)
 
 
         self.horizontalLayout_4.addWidget(self.frame_2)
@@ -286,9 +282,45 @@ class Ui_MainWindow(object):
         self.cerate_file_button.setText(QCoreApplication.translate("MainWindow", u"Create", None))
         self.status_bar.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.version_label.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
-        self.search_bar_properties.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u"Variables", None))
+        ___qtreewidgetitem = self.treeWidget_2.headerItem()
+        ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
+        ___qtreewidgetitem.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
+
+        __sortingEnabled = self.treeWidget_2.isSortingEnabled()
+        self.treeWidget_2.setSortingEnabled(False)
+        ___qtreewidgetitem1 = self.treeWidget_2.topLevelItem(0)
+        ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"VariableCoordinateSpace", None));
+        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Cords", None));
+        ___qtreewidgetitem2 = ___qtreewidgetitem1.child(0)
+        ___qtreewidgetitem2.setText(1, QCoreApplication.translate("MainWindow", u"Element", None));
+        ___qtreewidgetitem2.setText(0, QCoreApplication.translate("MainWindow", u"Default Value", None));
+        ___qtreewidgetitem3 = ___qtreewidgetitem1.child(1)
+        ___qtreewidgetitem3.setText(0, QCoreApplication.translate("MainWindow", u"Display Name", None));
+        ___qtreewidgetitem4 = ___qtreewidgetitem1.child(2)
+        ___qtreewidgetitem4.setText(0, QCoreApplication.translate("MainWindow", u"Visible in editor", None));
+        self.treeWidget_2.setSortingEnabled(__sortingEnabled)
+
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
         self.save_button.setText(QCoreApplication.translate("MainWindow", u"Save", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.search_bar_elements.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
-        self.templates_button.setText(QCoreApplication.translate("MainWindow", u"Templates", None))
+
+        __sortingEnabled1 = self.elements_widget_tree.isSortingEnabled()
+        self.elements_widget_tree.setSortingEnabled(False)
+        ___qtreewidgetitem5 = self.elements_widget_tree.topLevelItem(0)
+        ___qtreewidgetitem5.setText(0, QCoreApplication.translate("MainWindow", u"Group", None));
+        ___qtreewidgetitem6 = ___qtreewidgetitem5.child(0)
+        ___qtreewidgetitem6.setText(0, QCoreApplication.translate("MainWindow", u"Modifiers", None));
+        ___qtreewidgetitem7 = ___qtreewidgetitem5.child(1)
+        ___qtreewidgetitem7.setText(0, QCoreApplication.translate("MainWindow", u"Selection Criteria", None));
+        ___qtreewidgetitem8 = ___qtreewidgetitem5.child(2)
+        ___qtreewidgetitem8.setText(0, QCoreApplication.translate("MainWindow", u"Model", None));
+        ___qtreewidgetitem9 = ___qtreewidgetitem5.child(3)
+        ___qtreewidgetitem9.setText(0, QCoreApplication.translate("MainWindow", u"PickOne", None));
+        ___qtreewidgetitem10 = ___qtreewidgetitem9.child(0)
+        ___qtreewidgetitem10.setText(0, QCoreApplication.translate("MainWindow", u"Model", None));
+        self.elements_widget_tree.setSortingEnabled(__sortingEnabled1)
+
     # retranslateUi
 

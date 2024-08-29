@@ -269,9 +269,74 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QLineEdit" name="search_bar_properties">
-               <property name="placeholderText">
-                <string>Search...</string>
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>Variables</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTreeWidget" name="treeWidget_2">
+               <attribute name="headerVisible">
+                <bool>true</bool>
+               </attribute>
+               <attribute name="headerCascadingSectionResizes">
+                <bool>false</bool>
+               </attribute>
+               <attribute name="headerDefaultSectionSize">
+                <number>280</number>
+               </attribute>
+               <attribute name="headerHighlightSections">
+                <bool>false</bool>
+               </attribute>
+               <attribute name="headerShowSortIndicator" stdset="0">
+                <bool>false</bool>
+               </attribute>
+               <column>
+                <property name="text">
+                 <string>Name</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Value</string>
+                </property>
+               </column>
+               <item>
+                <property name="text">
+                 <string>Cords</string>
+                </property>
+                <property name="text">
+                 <string>VariableCoordinateSpace</string>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Default Value</string>
+                 </property>
+                 <property name="text">
+                  <string>Element</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Display Name</string>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Visible in editor</string>
+                 </property>
+                </item>
+               </item>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Properties</string>
                </property>
               </widget>
              </item>
@@ -369,6 +434,13 @@
               <number>0</number>
              </property>
              <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Hierarchy</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QLineEdit" name="search_bar_elements">
                <property name="placeholderText">
                 <string>Search...</string>
@@ -377,50 +449,44 @@
              </item>
              <item>
               <widget class="QTreeWidget" name="elements_widget_tree">
+               <attribute name="headerVisible">
+                <bool>false</bool>
+               </attribute>
                <column>
                 <property name="text">
-                 <string notr="true">1</string>
+                 <string notr="true">Name</string>
                 </property>
                </column>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="templates_button">
-               <property name="styleSheet">
-                <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
-
-        font: 600 10pt &quot;Segoe UI&quot;;
-	
-
-        border: 2px solid black;
-        border-radius: 4px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QPushButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }</string>
-               </property>
-               <property name="text">
-                <string>Templates</string>
-               </property>
+               <item>
+                <property name="text">
+                 <string>Group</string>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Modifiers</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Selection Criteria</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Model</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>PickOne</string>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>Model</string>
+                  </property>
+                 </item>
+                </item>
+               </item>
               </widget>
              </item>
             </layout>

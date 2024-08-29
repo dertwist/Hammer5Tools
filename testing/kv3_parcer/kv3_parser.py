@@ -27,6 +27,7 @@ def add_items(parent, data):
         key_item = QStandardItem(key)
         if isinstance(value, dict):
                 print(1, value)
+                print(1, type(value))
                 value_item = QStandardItem("")
                 parent.appendRow([key_item, value_item])
                 if value == '_editor':
