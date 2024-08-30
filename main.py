@@ -46,7 +46,10 @@ class Widget(QWidget):
         self.Delete_addon_Dialog = None
         self.current_tab(False)
 
-        check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
+        try:
+            check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
+        except:
+            pass
 
         try:
             if get_config_bool('APP', 'first_launch'):
