@@ -32,7 +32,43 @@ class Ui_MainWindow(object):
         self.horizontalLayout = QHBoxLayout(self.centralwidget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.frame_3 = QFrame(self.centralwidget)
+        self.frame_9 = QFrame(self.centralwidget)
+        self.frame_9.setObjectName(u"frame_9")
+        self.frame_9.setFrameShape(QFrame.StyledPanel)
+        self.frame_9.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_5 = QVBoxLayout(self.frame_9)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.frame_8 = QFrame(self.frame_9)
+        self.frame_8.setObjectName(u"frame_8")
+        self.frame_8.setFrameShape(QFrame.StyledPanel)
+        self.frame_8.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_5 = QHBoxLayout(self.frame_8)
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.status_bar = QLineEdit(self.frame_8)
+        self.status_bar.setObjectName(u"status_bar")
+        self.status_bar.setReadOnly(True)
+
+        self.horizontalLayout_5.addWidget(self.status_bar)
+
+        self.version_label = QLabel(self.frame_8)
+        self.version_label.setObjectName(u"version_label")
+        self.version_label.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.horizontalLayout_5.addWidget(self.version_label)
+
+
+        self.verticalLayout_5.addWidget(self.frame_8)
+
+        self.frame_10 = QFrame(self.frame_9)
+        self.frame_10.setObjectName(u"frame_10")
+        self.frame_10.setFrameShape(QFrame.StyledPanel)
+        self.frame_10.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_6 = QHBoxLayout(self.frame_10)
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.horizontalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.frame_3 = QFrame(self.frame_10)
         self.frame_3.setObjectName(u"frame_3")
         self.frame_3.setMaximumSize(QSize(320, 16777215))
         self.frame_3.setFrameShape(QFrame.StyledPanel)
@@ -40,6 +76,11 @@ class Ui_MainWindow(object):
         self.verticalLayout = QVBoxLayout(self.frame_3)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.label_4 = QLabel(self.frame_3)
+        self.label_4.setObjectName(u"label_4")
+
+        self.verticalLayout.addWidget(self.label_4)
+
         self.treeWidget = QTreeWidget(self.frame_3)
         __qtreewidgetitem = QTreeWidgetItem()
         __qtreewidgetitem.setText(0, u"1");
@@ -105,37 +146,9 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.frame_4)
 
 
-        self.horizontalLayout.addWidget(self.frame_3)
+        self.horizontalLayout_6.addWidget(self.frame_3)
 
-        self.frame_6 = QFrame(self.centralwidget)
-        self.frame_6.setObjectName(u"frame_6")
-        self.frame_6.setFrameShape(QFrame.StyledPanel)
-        self.frame_6.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_4 = QVBoxLayout(self.frame_6)
-        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.frame_8 = QFrame(self.frame_6)
-        self.frame_8.setObjectName(u"frame_8")
-        self.frame_8.setFrameShape(QFrame.StyledPanel)
-        self.frame_8.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_5 = QHBoxLayout(self.frame_8)
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.status_bar = QLabel(self.frame_8)
-        self.status_bar.setObjectName(u"status_bar")
-
-        self.horizontalLayout_5.addWidget(self.status_bar)
-
-        self.version_label = QLabel(self.frame_8)
-        self.version_label.setObjectName(u"version_label")
-        self.version_label.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.horizontalLayout_5.addWidget(self.version_label)
-
-
-        self.verticalLayout_4.addWidget(self.frame_8)
-
-        self.frame_7 = QFrame(self.frame_6)
+        self.frame_7 = QFrame(self.frame_10)
         self.frame_7.setObjectName(u"frame_7")
         self.frame_7.setFrameShape(QFrame.StyledPanel)
         self.frame_7.setFrameShadow(QFrame.Raised)
@@ -264,10 +277,13 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.addWidget(self.frame_2)
 
 
-        self.verticalLayout_4.addWidget(self.frame_7)
+        self.horizontalLayout_6.addWidget(self.frame_7)
 
 
-        self.horizontalLayout.addWidget(self.frame_6)
+        self.verticalLayout_5.addWidget(self.frame_10)
+
+
+        self.horizontalLayout.addWidget(self.frame_9)
 
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -278,10 +294,11 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
+        self.status_bar.setText(QCoreApplication.translate("MainWindow", u"asfasfasdf", None))
+        self.version_label.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
+        self.label_4.setText(QCoreApplication.translate("MainWindow", u"Smartprops Explorer", None))
         self.toolButton.setText(QCoreApplication.translate("MainWindow", u"...", None))
         self.cerate_file_button.setText(QCoreApplication.translate("MainWindow", u"Create", None))
-        self.status_bar.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
-        self.version_label.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"Variables", None))
         ___qtreewidgetitem = self.treeWidget_2.headerItem()
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
