@@ -2,7 +2,7 @@ import subprocess
 import zipfile
 import os
 # Command 1
-# subprocess.run(['pyinstaller', '--name=Hammer5Tools', '--noconfirm', '--onefile', '--windowed', '--optimize=2', '--icon=appicon.ico', '--add-data=appicon.ico:.', '--add-data=images;images/', '--add-data=qt_styles;qt_styles/', '--noupx', '--distpath=hammer5tools', 'main.py'])
+subprocess.run(['pyinstaller', '--name=Hammer5Tools', '--noconfirm', '--onefile', '--windowed', '--optimize=2', '--icon=appicon.ico', '--add-data=appicon.ico:.', '--add-data=images;images/', '--add-data=qt_styles;qt_styles/', '--noupx', '--distpath=hammer5tools', 'main.py'])
 
 # Command 2
 subprocess.run(['pyinstaller', '--name=Hammer5Tools_Updater', '--noconfirm', '--onefile', '--optimize=2', '--icon=appicon.ico', '--noupx', '--distpath=hammer5tools', '--exclude-module=PySide6', '--exclude-module=PyQt5', '--exclude-module=numpy', '--exclude-module=PIL', '--exclude', 'matplotlib', '--exclude', 'pandas', 'updater.py'])
