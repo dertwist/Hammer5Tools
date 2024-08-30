@@ -53,7 +53,7 @@ else:
 
 
 # Read the version from updater.cfg file
-with open('updater.cfg', 'r') as file:
+with open(os.path.join(path,'updater.cfg'), 'r') as file:
     updater_version = file.read().strip()  # Assuming the version is stored as plain text in the file
 
 # Compare the versions
