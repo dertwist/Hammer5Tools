@@ -6,8 +6,8 @@ import requests
 import zipfile
 import io
 from tqdm import tqdm
-
-version = 'v1.0.1'
+import webbrowser
+version = 'v2.0.0'
 print(f'Updater version: {version}')
 
 
@@ -59,45 +59,57 @@ with open('updater.cfg', 'r') as file:
 # Compare the versions
 if updater_version > version:
     print('A newer version of updater is available. Please update your program manually from https://github.com/dertwist/Hammer5Tools/releases/latest.')
+    webbrowser.open('https://github.com/dertwist/Hammer5Tools/releases/latest/download/hammer5tools.zip')
+    webbrowser.open('https://github.com/dertwist/Hammer5Tools/releases/latest')
     shutil.rmtree(path)
-    input('Press Enter to close updater...')  # Pause the program and wait for user input
+    input('Press Enter to close updater...')
 
 if os.path.exists(path):
-    preset_path = os.path.join(path, 'presets')
+    success = True
     for process in psutil.process_iter():
         if process.name() == 'Hammer5Tools.exe':
             process.kill()
             print('Hammer5Tools.exe process killed successfully.')
-    presets = []
-    success = True  # Flag to track if all operations are successful
-    for preset in os.listdir(preset_path):
-        path_to_remove = os.path.abspath(os.path.join('presets', preset))
-        try:
-            shutil.rmtree(path_to_remove)
-        except (PermissionError, FileNotFoundError) as e:
-            print(f"Error while removing directory: {e}")
-            success = False  # Set flag to False if an error occurs
-        presets.append(preset)
 
+    # collect new files
+    folders = [os.path.join(path, 'presets'),os.path.join(path, 'hotkeys'), os.path.join(path, 'smartprop_editor_templates'), os.path.join(path, 'soundevent_editor_presets')]
+    new_elements = []
+    for path_folder in folders:
+        for path_item in os.listdir(path_folder):
+            full_path_item = os.path.join(path_folder, path_item)
+            new_elements.append(full_path_item)
+    # process
+    path_program = os.getcwd()
+    for item in new_elements:
+        print(path_program)
+        rem_path = os.path.join(path_program, (os.path.relpath(item, path)))
+        if os.path.isdir(rem_path):
+            shutil.rmtree(rem_path)
+        else:
+            os.remove(rem_path)
+        print(f'\033[91mRemoved: {rem_path}\033[0m')
+        shutil.move(item, rem_path)
+        print(f'\033[92mMoved: {item} to {rem_path}\033[0m')
+    # app
     try:
         os.remove(os.path.join('Hammer5Tools.exe'))
+        print('\033[92mHammer5Tools.exe Removed\033[0m')
     except Exception as e:
         print(f"An error occurred: {e}")
         success = False  # Set flag to False if an error occurs
 
     try:
         shutil.move(os.path.join(path, 'Hammer5Tools.exe'), os.path.join(os.getcwd(), 'Hammer5Tools.exe'))
+        print('\033[92mHammer5Tools.exe Moved\033[0m')
     except Exception as e:
         print(f"An error occurred: {e}")
         success = False  # Set flag to False if an error occurs
 
-    for preset in presets:
-        shutil.move(os.path.join(path, 'presets', preset), os.path.join('presets'))
-
     if success:
-        print("Successful updated")
+        print("\033[92mSuccessful updated\033[0m")
         os.startfile('Hammer5Tools.exe')
     else:
-        print("Update was unsuccessful, try to update manually")
+        print("\033[91mUpdate was unsuccessful, try to update manually\033[0m")
+        input('Press Enter to close updater...')
 
     shutil.rmtree(path)
