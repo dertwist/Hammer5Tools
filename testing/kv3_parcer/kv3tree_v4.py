@@ -1,10 +1,10 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication, QTreeWidget, QTreeWidgetItem, QMainWindow, QMenu,
-    QInputDialog, QMessageBox, QToolBar, QPushButton, QFileDialog
+    QInputDialog, QMessageBox, QToolBar, QPushButton, QFileDialog, QHeaderView
 )
 from PySide6.QtCore import Qt
-import json
+import json as vsmart
 
 import keyvalues3 as kv3
 
@@ -24,14 +24,26 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SmartProp Editor v1")
-        self.setGeometry(300, 300, 600, 400)
+        self.setGeometry(500, 500, 900, 500)
 
         self.tree = QTreeWidget(self)
         self.tree.setColumnCount(2)
         self.tree.setHeaderLabels(["Key", "Value"])
+
+        # Adjust the header font size
+        header_font = self.tree.headerItem().font(0)  # Get the font of the header label
+        header_font.setPointSize(12)  # Set the font size to 12 (adjust the size as needed)
+        self.tree.headerItem().setFont(0, header_font)  # Apply the modified font to the header label
+
+        header = self.tree.header()
+        header.setSectionResizeMode(1,QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.resizeSection(0, 500)
+
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.open_menu)
         self.tree.itemChanged.connect(self.on_item_changed)
+
         self.setCentralWidget(self.tree)
 
         self.populate_tree(data)
@@ -43,37 +55,12 @@ class MainWindow(QMainWindow):
         export_button.clicked.connect(self.export_to_file)
         toolbar.addWidget(export_button)
 
-
         quick_export_button = QPushButton("Quick Export")
         quick_export_button.clicked.connect(self.quick_export_to_file)
         toolbar.addWidget(quick_export_button)
 
-
         self.tree.setDragEnabled(True)
         self.tree.setAcceptDrops(True)
-        self.tree.setDragDropMode(QTreeWidget.InternalMove)
-
-
-    def dropEvent(self, event):
-        item = self.tree.currentItem()
-        if not item:
-            return
-
-        parent = item.parent() or self.tree.invisibleRootItem()
-        dropped_item = event.source().currentItem()
-        if not dropped_item:
-            return
-
-        new_item = QTreeWidgetItem(dropped_item.text(0))
-        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
-
-        index = self.tree.indexOfTopLevelItem(item)
-        if index >= 0:
-            parent.insertChild(index, new_item)
-        else:
-            parent.addChild(new_item)
-
-        event.accept()
 
     def populate_tree(self, data, parent=None):
         if parent is None:
@@ -100,6 +87,28 @@ class MainWindow(QMainWindow):
             parent.setFlags(parent.flags() | Qt.ItemIsEditable)
 
 
+    # Tree actions
+
+    def dropEvent(self, event):
+        item = self.tree.currentItem()
+        if not item:
+            return
+
+        parent = item.parent() or self.tree.invisibleRootItem()
+        dropped_item = event.source().currentItem()
+        if not dropped_item:
+            return
+
+        new_item = QTreeWidgetItem(dropped_item.text(0))
+        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
+
+        index = self.tree.indexOfTopLevelItem(item)
+        if index >= 0:
+            parent.insertChild(index, new_item)
+        else:
+            parent.addChild(new_item)
+
+        event.accept()
     def on_item_changed(self, item, column):
         # Handle item changes if necessary
         pass
@@ -171,7 +180,7 @@ class MainWindow(QMainWindow):
     # Convert m_Children to list format
 
 
-    def export_to_json(self, path):
+    def export_to_vsmart(self, path):
         root = self.tree.invisibleRootItem()
         data = self.tree_item_to_dict(root)
         data = self.convert_children_to_list(data)
@@ -179,10 +188,10 @@ class MainWindow(QMainWindow):
 
     def export_to_file(self):
         options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save JSON File", "", "JSON Files (*.json);;All Files (*)",
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save VSmart File", "", "VSmart Files (*.vsmart);;All Files (*)",
                                                    options=options)
         if file_path:
-            self.export_to_json(file_path)
+            self.export_to_vsmart(file_path)
             QMessageBox.information(self, "Export", "Data exported successfully!")
 
 
@@ -190,7 +199,7 @@ class MainWindow(QMainWindow):
 
 
     def quick_export_to_file(self):
-        self.export_to_json('exported_data.vsmart')
+        self.export_to_vsmart('exported_data.vsmart')
         QMessageBox.information(self, "Export", "Data exported to 'exported_data.json' successfully!")
 
     def tree_item_to_dict(self, item):
