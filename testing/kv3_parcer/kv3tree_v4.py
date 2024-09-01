@@ -12,13 +12,13 @@ import keyvalues3 as kv3
 bt_config = kv3.read('sample.vsmart')
 
 data = bt_config.value
-# data = {
-#     'generic_data_type': 'CSmartPropRoot',
-#     'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61}],
-#     'm_Children': [{'_class': 'CSmartPropElement_Model',
-#                     'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
-#                     'm_nElementID': 2}]
-# }
+data = {
+    'generic_data_type': 'CSmartPropRoot',
+    'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61}],
+    'm_Children': [{'_class': 'CSmartPropElement_Model',
+                    'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
+                    'm_nElementID': 2}]
+}
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -65,15 +65,29 @@ class MainWindow(QMainWindow):
     def populate_tree(self, data, parent=None):
         if parent is None:
             parent = self.tree.invisibleRootItem()
-
         if isinstance(data, dict):
             for key, value in data.items():
                 if isinstance(value, list):
-                    item = QTreeWidgetItem([key])
-                    item.setFlags(item.flags() | Qt.ItemIsEditable)
-                    parent.addChild(item)
-                    for child_data in value:
-                        self.populate_tree(child_data, item)
+                    if '_class' in data:
+                        print(data)
+                        print(data['_class'])
+                        item = QTreeWidgetItem([key])
+                        item_class = QTreeWidgetItem(data['_class'])
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)
+                        parent.addChild(item_class)
+                        parent.addChild(item)
+                        for child_data in value:
+                            self.populate_tree(child_data, item)
+                    else:
+                        print(key, (value[0])['_class'])
+                        print(key, value)
+                        item = QTreeWidgetItem([key])
+                        item_class = QTreeWidgetItem((value[0])['_class'])
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)
+                        parent.addChild(item_class)
+                        parent.addChild(item)
+                        for child_data in value:
+                            self.populate_tree(child_data, item)
                 else:
                     item = QTreeWidgetItem([key])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
@@ -83,6 +97,7 @@ class MainWindow(QMainWindow):
             for value in data:
                 self.populate_tree(value, parent)
         else:
+
             parent.setText(1, str(data))
             parent.setFlags(parent.flags() | Qt.ItemIsEditable)
 
