@@ -79,27 +79,26 @@ class MainWindow(QMainWindow):
     def populate_tree(self, data, parent=None):
         if parent is None:
             parent = self.tree.invisibleRootItem()
-        for key, value in data.items():
-            print(value, type(value))
-            if isinstance(value, dict):
+        if isinstance(data, dict):
+            for key, value in data.items():
                 item = QTreeWidgetItem([key])
                 item.setFlags(item.flags() | Qt.ItemIsEditable)
                 parent.addChild(item)
-                self.populate_tree(value, item)
-            elif isinstance(value, list):
-                print('list', key, value)
-                for key_value in value:
-                    item = QTreeWidgetItem([key_value])
+                for child_data in value:
+                    self.populate_tree(child_data, item)
+                else:
+                    item = QTreeWidgetItem([key])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
                     parent.addChild(item)
-                    # self.populate_tree(key_value, parent)
-                if 'm_Children' == key:
-                    self.populate_tree(data[key], parent)
-                    print('sm_Children')
-            else:
-                pass
-                parent.setText(1, str(key))
-                parent.setFlags(parent.flags() | Qt.ItemIsEditable)
+                    self.populate_tree(value, item)
+        elif isinstance(data, list):
+            for value in data:
+                self.populate_tree(value, parent)
+        else:
+            parent.setText(1, str(data))
+            parent.setFlags(parent.flags() | Qt.ItemIsEditable)
+
+
 
     def on_item_changed(self, item, column):
         # Handle item changes if necessary
