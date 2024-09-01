@@ -65,41 +65,34 @@ class MainWindow(QMainWindow):
     def populate_tree(self, data, parent=None):
         if parent is None:
             parent = self.tree.invisibleRootItem()
+        print(0, type(data))
         if isinstance(data, dict):
             for key, value in data.items():
+                print(1, key, value)
+                print(2, type(data[key]),data[key])
+                print(type(key), key)
                 if isinstance(value, list):
-                    if '_class' in data:
-                        print(data)
-                        print(data['_class'])
-                        item = QTreeWidgetItem([key])
-                        item_class = QTreeWidgetItem(data['_class'])
-                        item.setFlags(item.flags() | Qt.ItemIsEditable)
-                        parent.addChild(item_class)
-                        parent.addChild(item)
-                        for child_data in value:
-                            self.populate_tree(child_data, item)
-                    else:
-                        print(key, (value[0])['_class'])
-                        print(key, value)
-                        item = QTreeWidgetItem([key])
-                        item_class = QTreeWidgetItem((value[0])['_class'])
-                        item.setFlags(item.flags() | Qt.ItemIsEditable)
-                        parent.addChild(item_class)
-                        parent.addChild(item)
-                        for child_data in value:
-                            self.populate_tree(child_data, item)
-                else:
+                    data_key = ((data[key])[0])
+                    print(3, data_key['_class'])
+                    item = QTreeWidgetItem([key])
+                    item_class = QTreeWidgetItem(data_key['_class'])
+                    item.setFlags(item.flags() | Qt.ItemIsEditable)
+                    parent.addChild(item_class)
+                    parent.addChild(item)
+                    for child_data in value:
+                        self.populate_tree(child_data, item)
+
+                elif isinstance(key, str):
                     item = QTreeWidgetItem([key])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
                     parent.addChild(item)
                     self.populate_tree(value, item)
-        elif isinstance(data, list):
-            for value in data:
-                self.populate_tree(value, parent)
-        else:
+                else:
 
-            parent.setText(1, str(data))
-            parent.setFlags(parent.flags() | Qt.ItemIsEditable)
+
+                    parent.setText(1, str(data))
+                    parent.setFlags(parent.flags() | Qt.ItemIsEditable)
+
 
 
     # Tree actions
