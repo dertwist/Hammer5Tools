@@ -1,1 +1,14 @@
-KV3File({'generic_data_type': 'CSmartPropRoot', 'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_Va..., format=Format(name='vrfunknown', version=UUID('4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2')))
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	_editor = 
+	{
+		next_element_id = 62
+	}
+	m_Variables = 
+	{
+		_class = "CSmartPropVariable_Int"
+		m_VariableName = "height"
+		m_nElementID = 62
+	}
+	generic_data_type = "CSmartPropRoot"
+}
