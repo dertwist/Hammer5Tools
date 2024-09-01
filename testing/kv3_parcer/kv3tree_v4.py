@@ -20,7 +20,6 @@ data = bt_config.value
 #                     'm_nElementID': 2}]
 # }
 
-square_brackets_group = ['m_Children', 'm_Variables', 'm_Modifiers', 'm_vRandomRotationMin', 'm_vRandomRotationMax', 'm_vPosition']
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -82,7 +81,7 @@ class MainWindow(QMainWindow):
 
         if isinstance(data, dict):
             for key, value in data.items():
-                if key in square_brackets_group and isinstance(value, list):
+                if isinstance(value, list):
                     item = QTreeWidgetItem([key])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
                     parent.addChild(item)
@@ -172,56 +171,18 @@ class MainWindow(QMainWindow):
     # Convert m_Children to list format
 
 
-    def export_to_json(self):
+    def export_to_json(self, path):
         root = self.tree.invisibleRootItem()
         data = self.tree_item_to_dict(root)
         data = self.convert_children_to_list(data)
-        print(data)
-
-        # Ensure keys in square_brackets_group are exported as lists if necessary
-        try:
-            for key in square_brackets_group:
-                if key in data and not isinstance(data[key], list):
-                    data[key] = [data[key]]
-        except:
-            pass
-        # json_data = json.dumps(data, indent=4)
-        kvfg = data
-
-        print(kv3.write(kvfg, sys.stdout))
-
-        orig_stdout = sys.stdout
-        f = open(r'E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_selathom\smartprops\out.vsmart', 'w')
-        sys.stdout = f
-
-        for i in range(1):
-            print(kv3.write(kvfg, sys.stdout))
-        sys.stdout = orig_stdout
-        f.close()
-
-
-        file_path = r'E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_selathom\smartprops\out.vsmart'
-
-        # Read the file
-        with open(file_path, 'r') as file:
-            content = file.read()
-
-        # Replace 'NONE' with an empty string (or any other specified replacement)
-        new_content = content.replace('None', '')
-
-        # Write the modified content back to the file
-        with open(file_path, 'w') as file:
-            file.write(new_content)
-        return str(data)
+        kv3.write(data, path)
 
     def export_to_file(self):
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getSaveFileName(self, "Save JSON File", "", "JSON Files (*.json);;All Files (*)",
                                                    options=options)
         if file_path:
-            json_data = self.export_to_json()
-            with open(file_path, "w") as file:
-                file.write(json_data)
+            self.export_to_json(file_path)
             QMessageBox.information(self, "Export", "Data exported successfully!")
 
 
@@ -229,9 +190,7 @@ class MainWindow(QMainWindow):
 
 
     def quick_export_to_file(self):
-        json_data = self.export_to_json()
-        with open("exported_data.json", "w") as file:
-            file.write(json_data)
+        self.export_to_json('exported_data.vsmart')
         QMessageBox.information(self, "Export", "Data exported to 'exported_data.json' successfully!")
 
     def tree_item_to_dict(self, item):
