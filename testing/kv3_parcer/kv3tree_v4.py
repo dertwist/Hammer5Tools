@@ -8,7 +8,6 @@ import json as vsmart
 
 import keyvalues3 as kv3
 
-
 bt_config = kv3.read('sample.vsmart')
 
 data = {
@@ -21,8 +20,6 @@ data = {
                     'm_nElementID': 2}]
 }
 
-# data = bt_config.value
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -33,19 +30,14 @@ class MainWindow(QMainWindow):
         self.tree.setColumnCount(2)
         self.tree.setHeaderLabels(["Key", "Value"])
 
-        # Adjust the header font size
-        header_font = self.tree.headerItem().font(0)  # Get the font of the header label
-        header_font.setPointSize(12)  # Set the font size to 12 (adjust the size as needed)
-        self.tree.headerItem().setFont(0, header_font)  # Apply the modified font to the header label
+        header_font = self.tree.headerItem().font(0)
+        header_font.setPointSize(12)
+        self.tree.headerItem().setFont(0, header_font)
 
         header = self.tree.header()
-        header.setSectionResizeMode(1,QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.Stretch)
         header.resizeSection(0, 500)
-
-        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tree.customContextMenuRequested.connect(self.open_menu)
-        self.tree.itemChanged.connect(self.on_item_changed)
 
         self.setCentralWidget(self.tree)
 
@@ -70,7 +62,6 @@ class MainWindow(QMainWindow):
             parent = self.tree.invisibleRootItem()
         if isinstance(data, dict):
             for key, value in data.items():
-                print(type(value), key)
                 if isinstance(value, dict):
                     item = QTreeWidgetItem([key])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
@@ -78,133 +69,22 @@ class MainWindow(QMainWindow):
                     for child_data in value:
                         self.populate_tree(child_data, item)
                 elif isinstance(value, list):
-
-                    item_class = value[0].get('_class')  # Extract '_class' from the item dictionary
+                    item_class = value[0].get('_class')
                     child = QTreeWidgetItem([key])
                     child.setFlags(child.flags() | Qt.ItemIsEditable)
                     parent.addChild(child)
 
                     for item in value:
                         item_class = item.get('_class')
-                        print(2,item_class)
                         child_item = QTreeWidgetItem([item_class])
                         child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
                         child.addChild(child_item)
                         self.populate_tree(item, child_item)
                 elif isinstance(value, (str, float, int)):
-                    print(111, key, value)
-
                     item = QTreeWidgetItem([key, str(value)])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
                     parent.addChild(item)
-                    print(value)
                     self.populate_tree(value, item)
-                else:
-                    pass
-                    # parent.setText(1, str(data))
-                    # parent.setFlags(parent.flags() | Qt.ItemIsEditable)
-
-
-
-    # Tree actions
-
-    def dropEvent(self, event):
-        item = self.tree.currentItem()
-        if not item:
-            return
-
-        parent = item.parent() or self.tree.invisibleRootItem()
-        dropped_item = event.source().currentItem()
-        if not dropped_item:
-            return
-
-        new_item = QTreeWidgetItem(dropped_item.text(0))
-        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
-
-        index = self.tree.indexOfTopLevelItem(item)
-        if index >= 0:
-            parent.insertChild(index, new_item)
-        else:
-            parent.addChild(new_item)
-
-        event.accept()
-    def on_item_changed(self, item, column):
-        # Handle item changes if necessary
-        pass
-
-    def open_menu(self, position):
-        menu = QMenu()
-        move_up_action = menu.addAction("Move Up")
-        move_down_action = menu.addAction("Move Down")
-        add_action = menu.addAction("Add")
-        edit_action = menu.addAction("Edit")
-        remove_action = menu.addAction("Remove")
-
-        move_up_action.triggered.connect(lambda: self.move_item(self.tree.itemAt(position), -1))
-        move_down_action.triggered.connect(lambda: self.move_item(self.tree.itemAt(position), 1))
-        add_action.triggered.connect(lambda: self.add_item(self.tree.itemAt(position)))
-        edit_action.triggered.connect(lambda: self.edit_item(self.tree.itemAt(position)))
-        remove_action.triggered.connect(lambda: self.remove_item(self.tree.itemAt(position)))
-
-        menu.exec(self.tree.viewport().mapToGlobal(position))
-
-    def move_item(self, item, direction):
-        if not item:
-            return
-
-        parent = item.parent() or self.tree.invisibleRootItem()
-        index = parent.indexOfChild(item)
-        new_index = index + direction
-
-        if 0 <= new_index < parent.childCount():
-            # Move the item along with its children
-            parent.takeChild(index)
-            parent.insertChild(new_index, item)
-
-            # Delete the old element after moving
-            if parent is not self.tree.invisibleRootItem():
-                old_parent = parent.parent() or self.tree.invisibleRootItem()
-                old_parent.takeChild(old_parent.indexOfChild(parent))
-
-    def add_item(self, item):
-        key, ok = QInputDialog.getText(self, "Add Item", "Enter key:")
-        if ok and key:
-            new_item = QTreeWidgetItem([key])
-            new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
-            if item:
-                item.addChild(new_item)
-            else:
-                self.tree.addTopLevelItem(new_item)
-
-    def edit_item(self, item):
-        if item:
-            self.tree.editItem(item, 0)
-
-    def remove_item(self, item):
-        if item:
-            parent = item.parent() or self.tree.invisibleRootItem()
-            index = parent.indexOfChild(item)
-            parent.takeChild(index)
-
-    def convert_children_to_list(self, data):
-        if isinstance(data, dict):
-            # Check if 'm_Children' key exists and is a dictionary
-            if 'm_Children' in data and isinstance(data['m_Children'], dict):
-                data['m_Children'] = [data['m_Children']]  # Convert to list
-
-            # Recursively convert m_Children in nested dictionaries
-            for key, value in data.items():
-                data[key] = self.convert_children_to_list(value)
-
-        elif isinstance(data, list):
-            # Recursively convert m_Children in nested lists
-            for i in range(len(data)):
-                data[i] = self.convert_children_to_list(data[i])
-
-        return data
-
-    # Convert m_Children to list format
-
 
     def export_to_vsmart(self, path):
         root = self.tree.invisibleRootItem()
@@ -218,15 +98,11 @@ class MainWindow(QMainWindow):
                                                    options=options)
         if file_path:
             self.export_to_vsmart(file_path)
-            QMessageBox.information(self, "Export", "Data exported successfully!")
-
-
-
-
+            # QMessageBox.information(self, "Export", "Data exported successfully!")
 
     def quick_export_to_file(self):
         self.export_to_vsmart('exported_data.vsmart')
-        QMessageBox.information(self, "Export", "Data exported to 'exported_data.json' successfully!")
+        # QMessageBox.information(self, "Export", "Data exported to 'exported_data.json' successfully!")
 
     def tree_item_to_dict(self, item):
         if item.childCount() == 0:
@@ -245,6 +121,22 @@ class MainWindow(QMainWindow):
                 data[key] = value
         return data
 
+    def convert_children_to_list(self, data):
+        if isinstance(data, dict):
+            # Check if 'm_Children' key exists and is a dictionary
+            if 'm_Children' in data and isinstance(data['m_Children'], dict):
+                data['m_Children'] = [data['m_Children']]  # Convert to list
+
+            # Recursively convert m_Children in nested dictionaries
+            for key, value in data.items():
+                data[key] = self.convert_children_to_list(value)
+
+        elif isinstance(data, list):
+            # Recursively convert m_Children in nested lists
+            for i in range(len(data)):
+                data[i] = self.convert_children_to_list(data[i])
+
+        return data
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
