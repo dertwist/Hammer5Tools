@@ -145,14 +145,20 @@ class MainWindow(QMainWindow):
             for index in range(parent_item.childCount()):
                 item = parent_item.child(index)
                 if item.text(0) == 'm_Children':
-                    print('Found item with text "m_Children"')
+                    # move all child from m_children to parent
                     child_item = parent_item.child(index)
                     search_recursively_loop(child_item)
                     for i in range(child_item.childCount()):
                         child = child_item.child(i)
                         parent_item.addChild(child.clone())
-                    parent_item.takeChild(index)  # Remove the child_item after moving its children
-                    self.search_recursively(parent_item)  # Assuming this is the intended method to call
+                    parent_item.takeChild(index)
+                    # check items in parent element
+                    for i in range(parent_item.childCount()):
+                        child = child_item.child(i)
+                        if child:
+                            print(child.text(0))
+
+                    self.search_recursively(parent_item)
                 else:
                     search_recursively_loop(item)
 
