@@ -1,0 +1,210 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 0
+			m_VariableName = "length"
+			m_DisplayName = ""
+			m_bExposeAsParameter = false
+			m_sLabel = ""
+			m_nElementID = 8
+		},
+	]
+	m_Modifiers = 
+	[
+	]
+	m_SelectionCriteria = 
+	[
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_FitOnLine"
+			m_vEnd = 
+			{
+				m_Components = 
+				[
+					0,
+					{
+						m_SourceName = "length"
+					},
+					0,
+				]
+			}
+			m_bOrientAlongLine = false
+			m_nPickMode = "RANDOM"
+			m_Modifiers = 
+			[
+				
+				{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_flInitialMinX = 0
+					m_flInitialMaxX = 0
+					m_flInitialMinY = 0
+					m_flInitialMaxY = 64
+					m_OutputVariableMaxY = "length"
+					m_flInitialMinZ = 0
+					m_flInitialMaxZ = 0
+				},
+			]
+			m_SelectionCriteria = 
+			[
+			]
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_SmartProp"
+					m_sSmartProp = "smartprops/wireset_main.vsmart"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_EndCap"
+							m_bStart = false
+							m_bEnd = true
+							m_sLabel = ""
+						},
+					]
+					m_Children = 
+					[
+					]
+					m_sLabel = ""
+					m_nElementID = 2
+				},
+				
+				{
+					_class = "CSmartPropElement_Model"
+					m_sModelName = "models/de_overpass/industrial/wireset/wireset_horiz_16_a.vmdl"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 16
+							m_bAllowScale = false
+							m_flMinLength = 0
+							m_flMaxLength = 0
+							m_sLabel = ""
+						},
+					]
+					m_Children = 
+					[
+					]
+					m_sLabel = "16"
+					m_nElementID = 3
+				},
+				
+				{
+					_class = "CSmartPropElement_Model"
+					m_sModelName = "models/de_overpass/industrial/wireset/wireset_horiz_32_a.vmdl"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 32
+							m_bAllowScale = false
+							m_flMinLength = 0
+							m_flMaxLength = 0
+							m_sLabel = ""
+						},
+					]
+					m_Children = 
+					[
+					]
+					m_sLabel = "32"
+					m_nElementID = 4
+				},
+				
+				{
+					_class = "CSmartPropElement_PickOne"
+					m_SelectionMode = "RANDOM"
+					m_vHandleOfffset = 
+					{
+						m_Components = 
+						[
+							0,
+							0,
+							0,
+						]
+					}
+					m_HandleShape = "SQUARE"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 64
+							m_bAllowScale = false
+							m_flMinLength = 0
+							m_flMaxLength = 0
+							m_sLabel = ""
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_horiz_64_a.vmdl"
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "a"
+							m_nElementID = 6
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_horiz_64_b.vmdl"
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "b"
+							m_nElementID = 7
+						},
+					]
+					m_sLabel = "64"
+					m_nElementID = 5
+				},
+			]
+			m_sLabel = ""
+			m_nElementID = 1
+		},
+	]
+	m_sLabel = ""
+	_editor = 
+	{
+		next_element_id = 9
+	}
+}

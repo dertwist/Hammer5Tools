@@ -1,0 +1,412 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+	]
+	m_Modifiers = 
+	[
+	]
+	m_SelectionCriteria = 
+	[
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_PickOne"
+			m_SelectionMode = "FIRST"
+			m_vHandleOfffset = 
+			{
+				m_Components = 
+				[
+					0,
+					0,
+					8,
+				]
+			}
+			m_HandleShape = "CIRCLE"
+			m_Modifiers = 
+			[
+			]
+			m_SelectionCriteria = 
+			[
+			]
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_insidecorner.vmdl"
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 7
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/wireset_main.vsmart"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											16,
+											16,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											90,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 8
+						},
+					]
+					m_sLabel = "Inside"
+					m_nElementID = 2
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_insidecorner_b.vmdl"
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 9
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/wireset_main.vsmart"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											8,
+											8,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											90,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 10
+						},
+					]
+					m_sLabel = "Inside B"
+					m_nElementID = 3
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_outsidecorner.vmdl"
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 11
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/wireset_main.vsmart"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											16,
+											-16,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											-90,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 12
+						},
+					]
+					m_sLabel = "Outside"
+					m_nElementID = 4
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_outsidecorner_45deg.vmdl"
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 13
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/wireset_main.vsmart"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											14.508800,
+											-5.470850,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											-45,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 14
+						},
+					]
+					m_sLabel = "Outside 45"
+					m_nElementID = 5
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_outsidecorner_b.vmdl"
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 15
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/wireset_main.vsmart"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											8,
+											-8,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											-90,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 16
+						},
+					]
+					m_sLabel = ""
+					m_nElementID = 6
+				},
+			]
+			m_sLabel = ""
+			m_nElementID = 1
+		},
+	]
+	m_sLabel = ""
+	_editor = 
+	{
+		next_element_id = 17
+	}
+}
