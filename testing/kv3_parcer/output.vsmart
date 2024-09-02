@@ -1,5 +1,6 @@
 <!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
 {
+	generic_data_type = "CSmartPropRoot"
 	_editor = 
 	{
 		next_element_id = 62
@@ -10,5 +11,4 @@
 		m_VariableName = "height"
 		m_nElementID = 62
 	}
-	generic_data_type = "CSmartPropRoot"
 }
