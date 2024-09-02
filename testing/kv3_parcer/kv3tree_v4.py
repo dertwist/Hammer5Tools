@@ -15,23 +15,16 @@ bt_config = kv3.read('sample.vsmart')
 
 data = bt_config.value
 
-data = {
-    'generic_data_type': 'CSmartPropRoot',
-    'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}],
-    'm_Children': [{'_class': 'CSmartPropElement_Mode55555l',
-                    'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
-                    'm_nElementID': 2},{'_class': 'CSmartPropElement_Model',
-                    'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
-                    'm_nElementID': 2}]
-}
-print(data)
 # data = {
 #     'generic_data_type': 'CSmartPropRoot',
-#     'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61}],
-#     'm_Children': [{'_class': 'CSmartPropElement_Model',
+#     'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}],
+#     'm_Children': [{'_class': 'CSmartPropElement_Mode55555l',
+#                     'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
+#                     'm_nElementID': 2},{'_class': 'CSmartPropElement_Model',
 #                     'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
 #                     'm_nElementID': 2}]
 # }
+print(data)
 
 
 square_brackets_group = ['m_Children', 'm_Variables', 'm_Modifiers', 'm_vRandomRotationMin', 'm_vRandomRotationMax', 'm_vPosition']
@@ -44,7 +37,7 @@ class MainWindow(QMainWindow):
 
         self.tree = QTreeWidget(self)
         self.tree.setColumnCount(2)
-        self.tree.setHeaderLabels(["Key", "Value"])
+        self.tree.setHeaderLabels(["Key", "Value", "Class"])
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.open_menu)
         self.tree.itemChanged.connect(self.on_item_changed)
@@ -108,17 +101,26 @@ class MainWindow(QMainWindow):
                     for child_data in value:
                         self.populate_tree(child_data, item)
                 elif isinstance(value, list):
-                    item_class = value[0].get('_class')
-                    child = QTreeWidgetItem([key])
-                    child.setFlags(child.flags() | Qt.ItemIsEditable)
-                    parent.addChild(child)
+                    # trying to parse class elements
+                    try:
+                        item_class = value[0].get('_class')
+                        child = QTreeWidgetItem([key])
+                        child.setFlags(child.flags() | Qt.ItemIsEditable)
+                        parent.addChild(child)
 
-                    for item in value:
-                        item_class = item.get('_class')
-                        child_item = QTreeWidgetItem([item_class])
-                        child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
-                        child.addChild(child_item)
-                        self.populate_tree(item, child_item)
+                        for item in value:
+                            item_class = item.get('_class')
+                            child_item = QTreeWidgetItem([item_class])
+                            child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
+                            child.addChild(child_item)
+                            self.populate_tree(item, child_item)
+                    except Exception as error:
+                        print(error)
+                        # if didn't find any class element just set value to key row
+                        print(key, value)
+                        child = QTreeWidgetItem([key, str(value)])
+                        child.setFlags(child.flags() | Qt.ItemIsEditable)
+                        parent.addChild(child)
                 elif isinstance(value, (str, float, int)):
                     item = QTreeWidgetItem([key, str(value)])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
