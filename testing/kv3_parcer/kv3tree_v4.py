@@ -1,4 +1,6 @@
 import sys
+from time import process_time_ns
+
 from PySide6.QtWidgets import (
     QApplication, QTreeWidget, QTreeWidgetItem, QMainWindow, QMenu,
     QInputDialog, QMessageBox, QToolBar, QPushButton, QFileDialog, QHeaderView
@@ -62,8 +64,12 @@ class MainWindow(QMainWindow):
 
 
         quick_export_button = QPushButton("Quick Export")
-        quick_export_button.clicked.connect(self.quick_export_to_file())
+        quick_export_button.clicked.connect(self.quick_export_to_file)
         toolbar.addWidget(quick_export_button)
+
+        remove_child_button = QPushButton("Remove children")
+        remove_child_button.clicked.connect(self.remove_child)
+        toolbar.addWidget(remove_child_button)
 
 
         self.tree.setDragEnabled(True)
@@ -133,6 +139,41 @@ class MainWindow(QMainWindow):
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
                     parent.addChild(item)
                     self.populate_tree(value, item)
+
+    def search_recursively(self, parent_item):
+        print(1)
+        if parent_item is None:
+            print('Parent item is None. Exiting search_recursively function.')
+            return
+
+        children_to_move = []
+        for index in range(parent_item.childCount()):
+            item = parent_item.child(index)
+            if item.text(0) == 'm_Children':
+                print('Found item with text "m_Children"')
+                # Perform actions on the found item here
+                children_to_move.extend(self.get_children_to_move(item))
+        print(2)
+
+        # Move children to parent element
+        for child_item in children_to_move:
+            parent_item.addChild(child_item.takeChildren())
+        print(3)
+        # Recursively search in children items
+        for child_item in children_to_move:
+            self.search_recursively(child_item)
+
+    def get_children_to_move(self, parent_item):
+        children_to_move = []
+        for index in range(parent_item.childCount()):
+            print(index, parent_item.child())
+            children_to_move.append(parent_item.child(index))
+        return children_to_move
+
+    def remove_child(self):
+        print('fs')
+        root_item = self.tree.invisibleRootItem()
+        self.search_recursively(root_item)
 
     def on_item_changed(self, item, column):
         # Handle item changes if necessary
