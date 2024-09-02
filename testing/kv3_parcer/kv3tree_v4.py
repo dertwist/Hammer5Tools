@@ -29,7 +29,6 @@ data = bt_config.value
 print(data)
 
 
-square_brackets_group = ['m_Children', 'm_Variables', 'm_Modifiers', 'm_vRandomRotationMin', 'm_vRandomRotationMax', 'm_vPosition']
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -58,6 +57,12 @@ class MainWindow(QMainWindow):
         toolbar = QToolBar()
         self.addToolBar(toolbar)
 
+
+        load_file_button = QPushButton("Load file")
+        load_file_button.clicked.connect(self.load_file)
+        toolbar.addWidget(load_file_button)
+
+
         export_button = QPushButton("Export to Path")
         export_button.clicked.connect(self.export_to_file)
         toolbar.addWidget(export_button)
@@ -72,10 +77,19 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(remove_child_button)
 
 
+
         self.tree.setDragEnabled(True)
         self.tree.setAcceptDrops(True)
         self.tree.setDragDropMode(QTreeWidget.InternalMove)
 
+    def load_file(self):
+        options = QFileDialog.Options()
+        file_url, _ = QFileDialog.getOpenFileUrl(self, "Save VSmart File", "", "VSmart Files (*.vsmart);;All Files (*)", options=options)
+        if file_url:
+            file_path = file_url.toLocalFile()
+            self.tree.clear()
+            data = (kv3.read(file_path)).value
+            self.populate_tree(data)
 
     def dropEvent(self, event):
         item = self.tree.currentItem()
@@ -111,8 +125,9 @@ class MainWindow(QMainWindow):
                     item = QTreeWidgetItem([key])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
                     parent.addChild(item)
-                    for child_data in value:
-                        self.populate_tree(child_data, item)
+                    # for child_data in value:
+                    #     self.populate_tree(child_data, item)
+                    self.populate_tree(value, item)
                 elif isinstance(value, list):
                     # trying to parse class elements
                     try:
@@ -122,11 +137,22 @@ class MainWindow(QMainWindow):
                         parent.addChild(child)
 
                         for item in value:
-                            item_class = item.get('_class')
-                            child_item = QTreeWidgetItem([item_class])
-                            child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
-                            child.addChild(child_item)
-                            self.populate_tree(item, child_item)
+                            print(key)
+                            if key == 'm_Children' or 'm_Modifiers':
+                                print(type(item),item)
+                                if isinstance(item, list):
+                                    for item_list in item:
+                                        item_class = item_list.get('_class')
+                                        child_item = QTreeWidgetItem([item_class])
+                                        child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
+                                        child.addChild(child_item)
+                                        self.populate_tree(item, child_item)
+                                else:
+                                    item_class = item.get('_class')
+                                    child_item = QTreeWidgetItem([item_class])
+                                    child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
+                                    child.addChild(child_item)
+                                    self.populate_tree(item, child_item)
                     except Exception as error:
                         print(error)
                         # if didn't find any class element just set value to key row
@@ -135,10 +161,11 @@ class MainWindow(QMainWindow):
                         child.setFlags(child.flags() | Qt.ItemIsEditable)
                         parent.addChild(child)
                 elif isinstance(value, (str, float, int)):
-                    item = QTreeWidgetItem([key, str(value)])
-                    item.setFlags(item.flags() | Qt.ItemIsEditable)
-                    parent.addChild(item)
-                    self.populate_tree(value, item)
+                    # item = QTreeWidgetItem([key, str(value)])
+                    # item.setFlags(item.flags() | Qt.ItemIsEditable)
+                    # parent.addChild(item)
+                    # self.populate_tree(value, item)
+                    pass
 
     def search_recursively(self, parent_item):
         def search_recursively_loop(parent_item):
