@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication, QTreeWidget, QTreeWidgetItem, QMainWindow, QMenu,
-    QInputDialog, QMessageBox, QToolBar, QPushButton, QFileDialog
+    QInputDialog, QMessageBox, QToolBar, QPushButton, QFileDialog, QHeaderView
 )
 from PySide6.QtCore import Qt
 import json
@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SmartProp Editor v1")
-        self.setGeometry(300, 300, 600, 400)
+        self.setGeometry(500, 500, 900, 500)
 
         self.tree = QTreeWidget(self)
         self.tree.setColumnCount(2)
@@ -42,6 +42,11 @@ class MainWindow(QMainWindow):
 
         self.populate_tree(data)
 
+
+        header = self.tree.header()
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.resizeSection(0, 500)
         toolbar = QToolBar()
         self.addToolBar(toolbar)
 
