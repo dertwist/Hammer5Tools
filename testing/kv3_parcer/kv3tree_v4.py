@@ -11,14 +11,17 @@ import keyvalues3 as kv3
 
 bt_config = kv3.read('sample.vsmart')
 
-data = bt_config.value
 data = {
     'generic_data_type': 'CSmartPropRoot',
-    'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61}],
-    'm_Children': [{'_class': 'CSmartPropElement_Model',
+    'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}],
+    'm_Children': [{'_class': 'CSmartPropElement_Mode55555l',
+                    'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
+                    'm_nElementID': 2},{'_class': 'CSmartPropElement_Model',
                     'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
                     'm_nElementID': 2}]
 }
+
+# data = bt_config.value
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -69,32 +72,37 @@ class MainWindow(QMainWindow):
             for key, value in data.items():
                 print(type(value), key)
                 if isinstance(value, dict):
-                    val = ((data[key])[0])
-                    print(3, val['_class'], type(val))
                     item = QTreeWidgetItem([key])
-                    item_class = QTreeWidgetItem(['_class'])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
-                    parent.addChild(item_class)
                     parent.addChild(item)
                     for child_data in value:
                         self.populate_tree(child_data, item)
-
                 elif isinstance(value, list):
-                    print(4,value)
+
+                    item_class = value[0].get('_class')  # Extract '_class' from the item dictionary
+                    child = QTreeWidgetItem([key])
+                    child.setFlags(child.flags() | Qt.ItemIsEditable)
+                    parent.addChild(child)
+
                     for item in value:
-                        print(item)
-                        try:
-                            item = QTreeWidgetItem(value['_class'])
-                            item.setFlags(item.flags() | Qt.ItemIsEditable)
-                            parent.addChild(item)
-                            self.populate_tree(value, item)
-                        except:
-                            pass
+                        item_class = item.get('_class')
+                        print(2,item_class)
+                        child_item = QTreeWidgetItem([item_class])
+                        child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
+                        child.addChild(child_item)
+                        self.populate_tree(item, child_item)
+                elif isinstance(value, (str, float, int)):
+                    print(111, key, value)
+
+                    item = QTreeWidgetItem([key, str(value)])
+                    item.setFlags(item.flags() | Qt.ItemIsEditable)
+                    parent.addChild(item)
+                    print(value)
+                    self.populate_tree(value, item)
                 else:
-
-
-                    parent.setText(1, str(data))
-                    parent.setFlags(parent.flags() | Qt.ItemIsEditable)
+                    pass
+                    # parent.setText(1, str(data))
+                    # parent.setFlags(parent.flags() | Qt.ItemIsEditable)
 
 
 
@@ -143,13 +151,20 @@ class MainWindow(QMainWindow):
     def move_item(self, item, direction):
         if not item:
             return
+
         parent = item.parent() or self.tree.invisibleRootItem()
         index = parent.indexOfChild(item)
         new_index = index + direction
 
         if 0 <= new_index < parent.childCount():
+            # Move the item along with its children
             parent.takeChild(index)
             parent.insertChild(new_index, item)
+
+            # Delete the old element after moving
+            if parent is not self.tree.invisibleRootItem():
+                old_parent = parent.parent() or self.tree.invisibleRootItem()
+                old_parent.takeChild(old_parent.indexOfChild(parent))
 
     def add_item(self, item):
         key, ok = QInputDialog.getText(self, "Add Item", "Enter key:")
