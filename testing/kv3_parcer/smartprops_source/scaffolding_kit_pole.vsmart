@@ -1,0 +1,225 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "height"
+			m_nElementID = 12
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "useBottomStantion"
+			m_nElementID = 13
+		},
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_Model"
+			m_sModelName = "models/de_inferno/scaffoldings_01/sc_baseplate.vmdl"
+			m_Modifiers = 
+			[
+				
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "useBottomStantion"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				},
+			]
+			m_nElementID = 1
+		},
+		
+		{
+			_class = "CSmartPropElement_FitOnLine"
+			m_vStart = 
+			[
+				0.000000,
+				0.000000,
+				25.000000,
+			]
+			m_vEnd = 
+			{
+				m_Components = 
+				[
+					0.000000,
+					0.000000,
+					{
+						m_SourceName = "height"
+					},
+				]
+			}
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_Model"
+					m_sModelName = "models/de_inferno/scaffoldings_01/sc_cuplock.vmdl"
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 25.000000
+						},
+						
+						{
+							_class = "CSmartPropSelectionCriteria_EndCap"
+							m_bStart = false
+							m_bEnd = false
+						},
+					]
+					m_nElementID = 4
+				},
+			]
+			m_nElementID = 2
+		},
+		
+		{
+			_class = "CSmartPropElement_FitOnLine"
+			m_vEnd = 
+			{
+				m_Components = 
+				[
+					0.000000,
+					0.000000,
+					{
+						m_SourceName = "height"
+					},
+				]
+			}
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 107.800000
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_inferno/scaffoldings_01/sc_standard_single_bare.vmdl"
+							m_nElementID = 8
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_inferno/scaffoldings_01/sc_vertical_connector.vmdl"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									[
+										0.000000,
+										0.000000,
+										104.000000,
+									]
+								},
+							]
+							m_nElementID = 9
+						},
+					]
+					m_nElementID = 5
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 57.800000
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_inferno/scaffoldings_01/sc_standard_single_short.vmdl"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									[
+										0.000000,
+										0.000000,
+										25.000000,
+									]
+								},
+							]
+							m_nElementID = 10
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_inferno/scaffoldings_01/sc_vertical_connector.vmdl"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									[
+										0.000000,
+										0.000000,
+										54.000000,
+									]
+								},
+							]
+							m_nElementID = 11
+						},
+					]
+					m_nElementID = 6
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+						
+						{
+							_class = "CSmartPropOperation_CreateLocator"
+						},
+					]
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_EndCap"
+							m_bStart = false
+							m_bEnd = true
+						},
+					]
+					m_nElementID = 7
+				},
+			]
+			m_nElementID = 3
+		},
+	]
+	_editor = 
+	{
+		next_element_id = 14
+	}
+}

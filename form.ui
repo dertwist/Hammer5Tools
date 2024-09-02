@@ -95,7 +95,7 @@
       <string notr="true">background-color: #1d1d1f;</string>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <property name="tabsClosable">
       <bool>false</bool>
