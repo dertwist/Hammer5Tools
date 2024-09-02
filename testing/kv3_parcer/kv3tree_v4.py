@@ -42,7 +42,10 @@ class MainWindow(QMainWindow):
         self.tree.customContextMenuRequested.connect(self.open_menu)
         self.tree.itemChanged.connect(self.on_item_changed)
         self.setCentralWidget(self.tree)
-
+        #
+        # root_element = self.tree.invisibleRootItem()
+        # root_element.addChild(QTreeWidgetItem(['Root']))
+        # root_element = QTreeWidgetItem(['Root'])
         self.populate_tree(data)
 
 
@@ -91,7 +94,11 @@ class MainWindow(QMainWindow):
 
     def populate_tree(self, data, parent=None):
         if parent is None:
+            print('None')
             parent = self.tree.invisibleRootItem()
+            parent_element = QTreeWidgetItem(['Root'])
+            parent.addChild(parent_element)
+            parent = parent_element
         if isinstance(data, dict):
             for key, value in data.items():
                 if isinstance(value, dict):
