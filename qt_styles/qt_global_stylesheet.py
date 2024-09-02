@@ -18,6 +18,16 @@ QLabel {
     color: #E3E3E3;
 }
 
+
+
+
+
+
+
+
+
+
+
 /* ========================================================== */
 QPushButton {
 
@@ -142,6 +152,62 @@ QTabBar::tab:selected {
     height:20px;
     color: #E3E3E3;
     background-color: #1d1d1f;
+}
+
+/* ========================================================== */
+QDockWidget {
+    font: 700 9pt "Segoe UI";
+    color: #E3E3E3;
+    background-color: #2C2C2C;
+    border: 2px solid #1C1C1C;
+}
+
+QDockWidget::title {
+    background-color: #1C1C1C;
+    padding: 4px;
+    font: 700 10pt "Segoe UI";
+    color: #E3E3E3;
+}
+
+QDockWidget::close-button, QDockWidget::float-button {
+    border: 1px solid #1C1C1C;
+    background: #1C1C1C;
+    /* padding: 5px; */
+}
+
+QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+    background: #414956;
+}
+
+QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
+    background: #1C1C1C;
+}
+
+QDockWidget DockTitleWidget {
+  border-top: 1px solid #BABABA;
+  border-bottom: 1px solid #BABABA;
+  background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+    stop: 0.0 #D0D0D0, stop: 0.3 #CCCCCC,
+    stop: 0.7 #CBCBCB, stop: 1.0 #C3C3C3);
+}
+QDockWidget DockTitleWidget QPushButton,
+QDockWidget DockTitleWidget QToolButton {
+  background: transparent;
+  border: 1px solid transparent;
+  right: 6px;
+  top: 3px;
+}
+QDockWidget DockTitleWidget QPushButton:hover,
+QDockWidget DockTitleWidget QToolButton:hover {
+  border-color: #8A8A8A;
+  border-radius: 2px;
+  background: qlineargradient(x1:0, y1 : 0, x2 : 0, y2 : 1,
+    stop : 0.0 #A0A0A0, stop : 0.3 #ACACAC,
+    stop : 0.7 #ABABAB, stop : 1.0 #A3A3A3);
+}
+QDockWidget DockTitleWidget QPushButton::menu-indicator,
+QDockWidget DockTitleWidget QToolButton::menu-indicator {
+  image: none;
 }
 
 

@@ -1,0 +1,1001 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 0
+			m_VariableName = "ZizerMax"
+			m_DisplayName = ""
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 20
+		},
+		
+		{
+			_class = "CSmartPropVariable_MaterialGroup"
+			m_DefaultValue = "default"
+			m_sModelName = "models/modular/roof_f/roof_01f.vmdl"
+			m_VariableName = "MaterialGroup"
+			m_DisplayName = "MaterialGroup"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 21
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 1
+			m_flParamaterMinValue = 0.500000
+			m_flParamaterMaxValue = 2
+			m_VariableName = "Height_Multiplier"
+			m_DisplayName = "Height_Multiplier"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 22
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/roof_01c.vmdl"
+			m_VariableName = "roof_01"
+			m_DisplayName = "roof_01"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 23
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/roof_02c.vmdl"
+			m_VariableName = "roof_02"
+			m_DisplayName = "roof_02"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 24
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/roof_03c.vmdl"
+			m_VariableName = "roof_03"
+			m_DisplayName = "roof_03"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 25
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/roof_04c.vmdl"
+			m_VariableName = "roof_04"
+			m_DisplayName = "roof_04"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 26
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/roof_05c.vmdl"
+			m_VariableName = "roof_05"
+			m_DisplayName = "roof_05"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 27
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/roof_06c.vmdl"
+			m_VariableName = "roof_06"
+			m_DisplayName = "roof_06"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 28
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/roof_07c.vmdl"
+			m_VariableName = "roof_07"
+			m_DisplayName = "roof_07"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 29
+		},
+	]
+	m_Modifiers = 
+	[
+	]
+	m_SelectionCriteria = 
+	[
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_Group"
+			m_Modifiers = 
+			[
+				
+				{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_flInitialMinX = 0
+					m_flInitialMaxX = 16
+					m_flInitialMinY = 0
+					m_flInitialMaxY = 128
+					m_OutputVariableMaxY = "ZizerMax"
+					m_flInitialMinZ = 0
+					m_flInitialMaxZ = 16
+				},
+			]
+			m_SelectionCriteria = 
+			[
+			]
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_FitOnLine"
+					m_vEnd = 
+					{
+						m_Components = 
+						[
+							0,
+							{
+								m_SourceName = "ZizerMax"
+							},
+							0,
+						]
+					}
+					m_bOrientAlongLine = false
+					m_nScaleMode = "SCALE_MAXIMIZE"
+					m_nPickMode = "RANDOM"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_PickOne"
+							m_SelectionMode = "FIRST"
+							m_vHandleOfffset = 
+							{
+								m_Components = 
+								[
+									0,
+									0,
+									0,
+								]
+							}
+							m_HandleShape = "CIRCLE"
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 72
+									m_bAllowScale = false
+									m_flMinLength = 60
+									m_flMaxLength = 90
+									m_sLabel = ""
+								},
+								
+								{
+									_class = "CSmartPropSelectionCriteria_EndCap"
+									m_bStart = false
+									m_bEnd = true
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = 
+									{
+										m_SourceName = "roof_04"
+									}
+									m_vModelScale = 
+									{
+										m_Components = 
+										[
+											1,
+											1,
+											{
+												m_SourceName = "Height_Multiplier"
+											},
+										]
+									}
+									m_MaterialGroupName = 
+									{
+										m_SourceName = "MaterialGroup"
+									}
+									m_Modifiers = 
+									[
+									]
+									m_SelectionCriteria = 
+									[
+										
+										{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 72
+											m_bAllowScale = false
+											m_flMinLength = 60
+											m_flMaxLength = 90
+											m_sLabel = ""
+										},
+									]
+									m_Children = 
+									[
+									]
+									m_sLabel = "72 unit piece"
+									m_nElementID = 7
+								},
+								
+								{
+									_class = "CSmartPropElement_Group"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+													0,
+													180,
+													0,
+												]
+											}
+										},
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											{
+												m_Components = 
+												[
+													0,
+													-72,
+													0,
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+									]
+									m_Children = 
+									[
+										
+										{
+											_class = "CSmartPropElement_Model"
+											m_sModelName = 
+											{
+												m_SourceName = "roof_02"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+													1,
+													1,
+													{
+														m_SourceName = "Height_Multiplier"
+													},
+												]
+											}
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															-90,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															0,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+												
+												{
+													_class = "CSmartPropSelectionCriteria_LinearLength"
+													m_flLength = 72
+													m_bAllowScale = false
+													m_flMinLength = 72
+													m_flMaxLength = 72
+													m_sLabel = ""
+												},
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 12
+										},
+										
+										{
+											_class = "CSmartPropElement_SmartProp"
+											m_sSmartProp = "smartprops/roof_generic.vsmart"
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															-90,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															71,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 13
+										},
+									]
+									m_sLabel = "rond out"
+									m_nElementID = 8
+								},
+								
+								{
+									_class = "CSmartPropElement_Group"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+													0,
+													0,
+													0,
+												]
+											}
+										},
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											{
+												m_Components = 
+												[
+													0,
+													46,
+													0,
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+									]
+									m_Children = 
+									[
+										
+										{
+											_class = "CSmartPropElement_Model"
+											m_sModelName = 
+											{
+												m_SourceName = "roof_05"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+													1,
+													1,
+													{
+														m_SourceName = "Height_Multiplier"
+													},
+												]
+											}
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															-90,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															0,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+												
+												{
+													_class = "CSmartPropSelectionCriteria_LinearLength"
+													m_flLength = 72
+													m_bAllowScale = false
+													m_flMinLength = 72
+													m_flMaxLength = 72
+													m_sLabel = ""
+												},
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 14
+										},
+										
+										{
+											_class = "CSmartPropElement_SmartProp"
+											m_sSmartProp = "smartprops/roof_generic.vsmart"
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															-90,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															46,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 15
+										},
+									]
+									m_sLabel = "round inner"
+									m_nElementID = 9
+								},
+								
+								{
+									_class = "CSmartPropElement_Group"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+													0,
+													180,
+													0,
+												]
+											}
+										},
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											{
+												m_Components = 
+												[
+													53,
+													-126,
+													0,
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+									]
+									m_Children = 
+									[
+										
+										{
+											_class = "CSmartPropElement_Model"
+											m_sModelName = 
+											{
+												m_SourceName = "roof_03"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+													1,
+													1,
+													{
+														m_SourceName = "Height_Multiplier"
+													},
+												]
+											}
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															-135,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															0,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+												
+												{
+													_class = "CSmartPropSelectionCriteria_LinearLength"
+													m_flLength = 72
+													m_bAllowScale = false
+													m_flMinLength = 72
+													m_flMaxLength = 72
+													m_sLabel = ""
+												},
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 16
+										},
+										
+										{
+											_class = "CSmartPropElement_SmartProp"
+											m_sSmartProp = "smartprops/roof_generic.vsmart"
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															-135,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															0,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 17
+										},
+									]
+									m_sLabel = "30 rond out"
+									m_nElementID = 10
+								},
+								
+								{
+									_class = "CSmartPropElement_Group"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+													0,
+													180,
+													0,
+												]
+											}
+										},
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											{
+												m_Components = 
+												[
+													-40,
+													-96,
+													0,
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+									]
+									m_Children = 
+									[
+										
+										{
+											_class = "CSmartPropElement_Model"
+											m_sModelName = 
+											{
+												m_SourceName = "roof_06"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+													1,
+													1,
+													{
+														m_SourceName = "Height_Multiplier"
+													},
+												]
+											}
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															135,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															0,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+												
+												{
+													_class = "CSmartPropSelectionCriteria_LinearLength"
+													m_flLength = 72
+													m_bAllowScale = false
+													m_flMinLength = 72
+													m_flMaxLength = 72
+													m_sLabel = ""
+												},
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 18
+										},
+										
+										{
+											_class = "CSmartPropElement_SmartProp"
+											m_sSmartProp = "smartprops/roof_generic.vsmart"
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															135,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															0,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 19
+										},
+									]
+									m_sLabel = "30 rond inner"
+									m_nElementID = 11
+								},
+							]
+							m_sLabel = "AAAAAAAAAAAA"
+							m_nElementID = 3
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "roof_01"
+							}
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									1,
+									1,
+									{
+										m_SourceName = "Height_Multiplier"
+									},
+								]
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "MaterialGroup"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 128
+									m_bAllowScale = false
+									m_flMinLength = 110
+									m_flMaxLength = 150
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "128 unit piece"
+							m_nElementID = 4
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "roof_04"
+							}
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									1,
+									1,
+									{
+										m_SourceName = "Height_Multiplier"
+									},
+								]
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "MaterialGroup"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 72
+									m_bAllowScale = false
+									m_flMinLength = 60
+									m_flMaxLength = 90
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "72 unit piece"
+							m_nElementID = 5
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "roof_07"
+							}
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									1,
+									1,
+									{
+										m_SourceName = "Height_Multiplier"
+									},
+								]
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "MaterialGroup"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 36
+									m_bAllowScale = true
+									m_flMinLength = 36
+									m_flMaxLength = 36
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "36 unit piece"
+							m_nElementID = 6
+						},
+					]
+					m_sLabel = ""
+					m_nElementID = 2
+				},
+			]
+			m_sLabel = ""
+			m_nElementID = 1
+		},
+	]
+	m_sLabel = ""
+	_editor = 
+	{
+		next_element_id = 30
+	}
+}

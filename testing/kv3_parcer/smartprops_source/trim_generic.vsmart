@@ -1,0 +1,875 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 0
+			m_VariableName = "ZizerMax"
+			m_DisplayName = ""
+			m_bExposeAsParameter = false
+			m_sLabel = ""
+			m_nElementID = 20
+		},
+		
+		{
+			_class = "CSmartPropVariable_MaterialGroup"
+			m_DefaultValue = "wood_trim_b"
+			m_sModelName = "models/modular/trim_master/trim_01_16_a.vmdl"
+			m_VariableName = "MaterialGroup"
+			m_DisplayName = "MaterialGroup"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 21
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 1
+			m_flParamaterMinValue = 0.500000
+			m_flParamaterMaxValue = 2
+			m_VariableName = "Height_Multiplier"
+			m_DisplayName = "Height_Multiplier"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 22
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/trim_master/trim_01_16_a.vmdl"
+			m_VariableName = "16"
+			m_DisplayName = "16"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 23
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/trim_master/trim_01_64_a.vmdl"
+			m_VariableName = "64"
+			m_DisplayName = "64"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 24
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/trim_master/trim_01_128_a.vmdl"
+			m_VariableName = "128"
+			m_DisplayName = "128"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 25
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/trim_master/trim_01_crn_a.vmdl"
+			m_VariableName = "Corner_A"
+			m_DisplayName = "Corner_A"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 26
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/trim_master/trim_01_crn_b.vmdl"
+			m_VariableName = "Corner_B"
+			m_DisplayName = "Corner_B"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 27
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/trim_master/trim_01_crn_c.vmdl"
+			m_VariableName = "Corner_C"
+			m_DisplayName = "Corner_C"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 28
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/modular/trim_master/trim_01_crn_d.vmdl"
+			m_VariableName = "Corner_D"
+			m_DisplayName = "Corner_D"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 29
+		},
+	]
+	m_Modifiers = 
+	[
+	]
+	m_SelectionCriteria = 
+	[
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_Group"
+			m_Modifiers = 
+			[
+				
+				{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_flInitialMinX = 0
+					m_flInitialMaxX = 0
+					m_flInitialMinY = 0
+					m_flInitialMaxY = 4
+					m_OutputVariableMaxY = "ZizerMax"
+					m_flInitialMinZ = 0
+					m_flInitialMaxZ = 8
+				},
+			]
+			m_SelectionCriteria = 
+			[
+			]
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_FitOnLine"
+					m_vEnd = 
+					{
+						m_Components = 
+						[
+							0,
+							{
+								m_SourceName = "ZizerMax"
+							},
+							0,
+						]
+					}
+					m_bOrientAlongLine = false
+					m_nScaleMode = "SCALE_MAXIMIZE"
+					m_nPickMode = "RANDOM"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_PickOne"
+							m_SelectionMode = "FIRST"
+							m_vHandleOfffset = 
+							{
+								m_Components = 
+								[
+									0,
+									0,
+									0,
+								]
+							}
+							m_HandleShape = "CIRCLE"
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 8
+									m_bAllowScale = false
+									m_flMinLength = 8
+									m_flMaxLength = 8
+									m_sLabel = ""
+								},
+								
+								{
+									_class = "CSmartPropSelectionCriteria_EndCap"
+									m_bStart = false
+									m_bEnd = true
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+								
+								{
+									_class = "CSmartPropElement_Group"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+													0,
+													0,
+													0,
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+									]
+									m_Children = 
+									[
+										
+										{
+											_class = "CSmartPropElement_Model"
+											m_sModelName = 
+											{
+												m_SourceName = "Corner_A"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+													1,
+													1,
+													{
+														m_SourceName = "Height_Multiplier"
+													},
+												]
+											}
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_Modifiers = 
+											[
+											]
+											m_SelectionCriteria = 
+											[
+												
+												{
+													_class = "CSmartPropSelectionCriteria_LinearLength"
+													m_flLength = 8
+													m_bAllowScale = false
+													m_flMinLength = 8
+													m_flMaxLength = 8
+													m_sLabel = ""
+												},
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 12
+										},
+										
+										{
+											_class = "CSmartPropElement_SmartProp"
+											m_sSmartProp = "smartprops/trim_generic.vsmart"
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															-8,
+															8,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															90,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 13
+										},
+									]
+									m_sLabel = "rond out A"
+									m_nElementID = 7
+								},
+								
+								{
+									_class = "CSmartPropElement_Group"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+													0,
+													0,
+													0,
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+									]
+									m_Children = 
+									[
+										
+										{
+											_class = "CSmartPropElement_Model"
+											m_sModelName = 
+											{
+												m_SourceName = "Corner_B"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+													1,
+													1,
+													{
+														m_SourceName = "Height_Multiplier"
+													},
+												]
+											}
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_Modifiers = 
+											[
+											]
+											m_SelectionCriteria = 
+											[
+												
+												{
+													_class = "CSmartPropSelectionCriteria_LinearLength"
+													m_flLength = 8
+													m_bAllowScale = false
+													m_flMinLength = 8
+													m_flMaxLength = 8
+													m_sLabel = ""
+												},
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 14
+										},
+										
+										{
+											_class = "CSmartPropElement_SmartProp"
+											m_sSmartProp = "smartprops/trim_generic.vsmart"
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															8,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															45,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															8,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 15
+										},
+									]
+									m_sLabel = "rond out B"
+									m_nElementID = 8
+								},
+								
+								{
+									_class = "CSmartPropElement_Group"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+													0,
+													0,
+													0,
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+									]
+									m_Children = 
+									[
+										
+										{
+											_class = "CSmartPropElement_Model"
+											m_sModelName = 
+											{
+												m_SourceName = "Corner_C"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+													1,
+													1,
+													{
+														m_SourceName = "Height_Multiplier"
+													},
+												]
+											}
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_Modifiers = 
+											[
+											]
+											m_SelectionCriteria = 
+											[
+												
+												{
+													_class = "CSmartPropSelectionCriteria_LinearLength"
+													m_flLength = 8
+													m_bAllowScale = false
+													m_flMinLength = 8
+													m_flMaxLength = 8
+													m_sLabel = ""
+												},
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 16
+										},
+										
+										{
+											_class = "CSmartPropElement_SmartProp"
+											m_sSmartProp = "smartprops/trim_generic.vsmart"
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															8,
+															8,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															-90,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 17
+										},
+									]
+									m_sLabel = "rond out C"
+									m_nElementID = 9
+								},
+								
+								{
+									_class = "CSmartPropElement_Group"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+													0,
+													0,
+													0,
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+									]
+									m_Children = 
+									[
+										
+										{
+											_class = "CSmartPropElement_Model"
+											m_sModelName = 
+											{
+												m_SourceName = "Corner_D"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+													1,
+													1,
+													{
+														m_SourceName = "Height_Multiplier"
+													},
+												]
+											}
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_Modifiers = 
+											[
+											]
+											m_SelectionCriteria = 
+											[
+												
+												{
+													_class = "CSmartPropSelectionCriteria_LinearLength"
+													m_flLength = 8
+													m_bAllowScale = false
+													m_flMinLength = 8
+													m_flMaxLength = 8
+													m_sLabel = ""
+												},
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 18
+										},
+										
+										{
+											_class = "CSmartPropElement_SmartProp"
+											m_sSmartProp = "smartprops/trim_generic.vsmart"
+											m_vModelScale = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_Modifiers = 
+											[
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															8,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+															0,
+															-45,
+															0,
+														]
+													}
+												},
+												
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+															0,
+															8,
+															0,
+														]
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+											]
+											m_Children = 
+											[
+											]
+											m_sLabel = ""
+											m_nElementID = 19
+										},
+									]
+									m_sLabel = "rond inner D"
+									m_nElementID = 10
+								},
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = 
+									{
+										m_SourceName = "16"
+									}
+									m_vModelScale = 
+									{
+										m_Components = 
+										[
+											1,
+											1,
+											{
+												m_SourceName = "Height_Multiplier"
+											},
+										]
+									}
+									m_MaterialGroupName = 
+									{
+										m_SourceName = "MaterialGroup"
+									}
+									m_Modifiers = 
+									[
+									]
+									m_SelectionCriteria = 
+									[
+										
+										{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 16
+											m_bAllowScale = false
+											m_flMinLength = 8
+											m_flMaxLength = 32
+											m_sLabel = ""
+										},
+									]
+									m_Children = 
+									[
+									]
+									m_sLabel = "16 unit piece"
+									m_nElementID = 11
+								},
+							]
+							m_sLabel = "AAAAAAAAAAAA"
+							m_nElementID = 3
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "128"
+							}
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									1,
+									1,
+									{
+										m_SourceName = "Height_Multiplier"
+									},
+								]
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "MaterialGroup"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 128
+									m_bAllowScale = false
+									m_flMinLength = 96
+									m_flMaxLength = 136
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "128 unit piece"
+							m_nElementID = 4
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "64"
+							}
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									1,
+									1,
+									{
+										m_SourceName = "Height_Multiplier"
+									},
+								]
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "MaterialGroup"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 64
+									m_bAllowScale = false
+									m_flMinLength = 32
+									m_flMaxLength = 96
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "64 unit piece"
+							m_nElementID = 5
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "16"
+							}
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									1,
+									1,
+									{
+										m_SourceName = "Height_Multiplier"
+									},
+								]
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "MaterialGroup"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 16
+									m_bAllowScale = false
+									m_flMinLength = 8
+									m_flMaxLength = 32
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "16 unit piece"
+							m_nElementID = 6
+						},
+					]
+					m_sLabel = ""
+					m_nElementID = 2
+				},
+			]
+			m_sLabel = ""
+			m_nElementID = 1
+		},
+	]
+	m_sLabel = ""
+	_editor = 
+	{
+		next_element_id = 30
+	}
+}
