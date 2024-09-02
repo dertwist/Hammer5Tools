@@ -141,37 +141,25 @@ class MainWindow(QMainWindow):
                     self.populate_tree(value, item)
 
     def search_recursively(self, parent_item):
-        print(1)
-        if parent_item is None:
-            print('Parent item is None. Exiting search_recursively function.')
-            return
+        def search_recursively_loop(parent_item):
+            for index in range(parent_item.childCount()):
+                item = parent_item.child(index)
+                if item.text(0) == 'm_Children':
+                    print('Found item with text "m_Children"')
+                    child_item = parent_item.child(index)
+                    search_recursively_loop(child_item)
+                    for i in range(child_item.childCount()):
+                        child = child_item.child(i)
+                        parent_item.addChild(child.clone())
+                    parent_item.takeChild(index)  # Remove the child_item after moving its children
+                    self.search_recursively(parent_item)  # Assuming this is the intended method to call
+                else:
+                    search_recursively_loop(item)
 
-        children_to_move = []
-        for index in range(parent_item.childCount()):
-            item = parent_item.child(index)
-            if item.text(0) == 'm_Children':
-                print('Found item with text "m_Children"')
-                # Perform actions on the found item here
-                children_to_move.extend(self.get_children_to_move(item))
-        print(2)
+        search_recursively_loop(parent_item)
 
-        # Move children to parent element
-        for child_item in children_to_move:
-            parent_item.addChild(child_item.takeChildren())
-        print(3)
-        # Recursively search in children items
-        for child_item in children_to_move:
-            self.search_recursively(child_item)
-
-    def get_children_to_move(self, parent_item):
-        children_to_move = []
-        for index in range(parent_item.childCount()):
-            print(index, parent_item.child())
-            children_to_move.append(parent_item.child(index))
-        return children_to_move
 
     def remove_child(self):
-        print('fs')
         root_item = self.tree.invisibleRootItem()
         self.search_recursively(root_item)
 
