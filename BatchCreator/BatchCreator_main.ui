@@ -18,13 +18,28 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_7">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="QFrame" name="frame">
       <property name="frameShape">
-       <enum>QFrame::Shape::StyledPanel</enum>
+       <enum>QFrame::StyledPanel</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Shadow::Raised</enum>
+       <enum>QFrame::Raised</enum>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="leftMargin">
@@ -49,10 +64,10 @@
        <item>
         <widget class="QFrame" name="frame_4">
          <property name="frameShape">
-          <enum>QFrame::Shape::StyledPanel</enum>
+          <enum>QFrame::StyledPanel</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <property name="leftMargin">
@@ -96,7 +111,7 @@
              <string>Folder path</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -129,7 +144,7 @@
              <string>Asset name</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -159,10 +174,10 @@
        <item>
         <widget class="QFrame" name="frame_5">
          <property name="frameShape">
-          <enum>QFrame::Shape::StyledPanel</enum>
+          <enum>QFrame::StyledPanel</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <property name="leftMargin">
@@ -221,7 +236,7 @@
              <string>Open</string>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../resources.qrc">
               <normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
             </property>
             <property name="iconSize">
@@ -276,7 +291,7 @@
              <string>Save</string>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../resources.qrc">
               <normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
             </property>
             <property name="iconSize">
@@ -290,10 +305,10 @@
           <item>
            <spacer name="horizontalSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Horizontal</enum>
+             <enum>Qt::Horizontal</enum>
             </property>
             <property name="sizeType">
-             <enum>QSizePolicy::Policy::Fixed</enum>
+             <enum>QSizePolicy::Fixed</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -347,7 +362,7 @@
              <string>Options</string>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../resources.qrc">
               <normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
             </property>
             <property name="iconSize">
@@ -402,7 +417,7 @@
              <string>Process</string>
             </property>
             <property name="icon">
-             <iconset>
+             <iconset resource="../resources.qrc">
               <normaloff>:/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
             </property>
             <property name="iconSize">
@@ -421,27 +436,18 @@
     </item>
    </layout>
   </widget>
-  <widget class="QDockWidget" name="dockWidget_3">
-   <property name="styleSheet">
-    <string notr="true">color: #1c1c1c1;</string>
-   </property>
-   <property name="inputMethodHints">
-    <set>Qt::InputMethodHint::ImhHiddenText</set>
-   </property>
-   <property name="floating">
-    <bool>true</bool>
-   </property>
+  <widget class="QDockWidget" name="dockWidget">
    <property name="features">
-    <set>QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
    </property>
-   <property name="allowedAreas">
-    <set>Qt::DockWidgetArea::RightDockWidgetArea</set>
+   <property name="windowTitle">
+    <string>Explorer</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_9">
-    <layout class="QHBoxLayout" name="horizontalLayout">
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
      <property name="spacing">
       <number>0</number>
      </property>
@@ -472,10 +478,10 @@
         </size>
        </property>
        <property name="frameShape">
-        <enum>QFrame::Shape::StyledPanel</enum>
+        <enum>QFrame::StyledPanel</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Shadow::Raised</enum>
+        <enum>QFrame::Raised</enum>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <property name="leftMargin">
@@ -509,10 +515,10 @@
            </size>
           </property>
           <property name="frameShape">
-           <enum>QFrame::Shape::StyledPanel</enum>
+           <enum>QFrame::StyledPanel</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Shadow::Raised</enum>
+           <enum>QFrame::Raised</enum>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <property name="leftMargin">
@@ -536,7 +542,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../resources.qrc">
                <normaloff>:/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
              </property>
              <property name="iconSize">
@@ -553,7 +559,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../resources.qrc">
                <normaloff>:/icons/add_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
              </property>
              <property name="iconSize">
@@ -574,6 +580,8 @@
    </widget>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

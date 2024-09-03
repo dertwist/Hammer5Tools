@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QHBoxLayout,
     QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
     QTextEdit, QToolButton, QTreeView, QVBoxLayout,
     QWidget)
+import rc_resources
 
 class Ui_BatchCreator_MainWindow(object):
     def setupUi(self, BatchCreator_MainWindow):
@@ -30,11 +31,13 @@ class Ui_BatchCreator_MainWindow(object):
         self.centralwidget = QWidget(BatchCreator_MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_7 = QHBoxLayout(self.centralwidget)
+        self.horizontalLayout_7.setSpacing(0)
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
         self.frame = QFrame(self.centralwidget)
         self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
         self.verticalLayout = QVBoxLayout(self.frame)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -45,8 +48,8 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.frame_4 = QFrame(self.frame)
         self.frame_4.setObjectName(u"frame_4")
-        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_4.setFrameShape(QFrame.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_4)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -73,7 +76,7 @@ class Ui_BatchCreator_MainWindow(object):
 "        background-color: #414956;\n"
 "        color: white;\n"
 "    }")
-        self.folder_path_template.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.folder_path_template.setAlignment(Qt.AlignCenter)
 
         self.horizontalLayout_3.addWidget(self.folder_path_template)
 
@@ -100,7 +103,7 @@ class Ui_BatchCreator_MainWindow(object):
 "        background-color: #414956;\n"
 "        color: white;\n"
 "    }")
-        self.assets_name_template.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.assets_name_template.setAlignment(Qt.AlignCenter)
 
         self.horizontalLayout_3.addWidget(self.assets_name_template)
 
@@ -120,8 +123,8 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.frame_5 = QFrame(self.frame)
         self.frame_5.setObjectName(u"frame_5")
-        self.frame_5.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_5.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_5.setFrameShape(QFrame.StyledPanel)
+        self.frame_5.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_4 = QHBoxLayout(self.frame_5)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
@@ -296,23 +299,21 @@ class Ui_BatchCreator_MainWindow(object):
         self.horizontalLayout_7.addWidget(self.frame)
 
         BatchCreator_MainWindow.setCentralWidget(self.centralwidget)
-        self.dockWidget_3 = QDockWidget(BatchCreator_MainWindow)
-        self.dockWidget_3.setObjectName(u"dockWidget_3")
-        self.dockWidget_3.setInputMethodHints(Qt.InputMethodHint.ImhHiddenText)
-        self.dockWidget_3.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget_3.setAllowedAreas(Qt.DockWidgetArea.RightDockWidgetArea)
-        self.dockWidgetContents_9 = QWidget()
-        self.dockWidgetContents_9.setObjectName(u"dockWidgetContents_9")
-        self.horizontalLayout = QHBoxLayout(self.dockWidgetContents_9)
-        self.horizontalLayout.setSpacing(0)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.left_vertical_frame = QFrame(self.dockWidgetContents_9)
+        self.dockWidget = QDockWidget(BatchCreator_MainWindow)
+        self.dockWidget.setObjectName(u"dockWidget")
+        self.dockWidget.setFeatures(QDockWidget.DockWidgetFloatable|QDockWidget.DockWidgetMovable)
+        self.dockWidgetContents = QWidget()
+        self.dockWidgetContents.setObjectName(u"dockWidgetContents")
+        self.verticalLayout_3 = QVBoxLayout(self.dockWidgetContents)
+        self.verticalLayout_3.setSpacing(0)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.left_vertical_frame = QFrame(self.dockWidgetContents)
         self.left_vertical_frame.setObjectName(u"left_vertical_frame")
         self.left_vertical_frame.setMaximumSize(QSize(16777215, 16777215))
         self.left_vertical_frame.setBaseSize(QSize(330, 0))
-        self.left_vertical_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.left_vertical_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.left_vertical_frame.setFrameShape(QFrame.StyledPanel)
+        self.left_vertical_frame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.left_vertical_frame)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -325,8 +326,8 @@ class Ui_BatchCreator_MainWindow(object):
         self.horizontal_frame = QFrame(self.left_vertical_frame)
         self.horizontal_frame.setObjectName(u"horizontal_frame")
         self.horizontal_frame.setMaximumSize(QSize(16777215, 32))
-        self.horizontal_frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.horizontal_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontal_frame.setFrameShape(QFrame.StyledPanel)
+        self.horizontal_frame.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.horizontal_frame)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -357,10 +358,10 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout_2.addWidget(self.horizontal_frame)
 
 
-        self.horizontalLayout.addWidget(self.left_vertical_frame)
+        self.verticalLayout_3.addWidget(self.left_vertical_frame)
 
-        self.dockWidget_3.setWidget(self.dockWidgetContents_9)
-        BatchCreator_MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget_3)
+        self.dockWidget.setWidget(self.dockWidgetContents)
+        BatchCreator_MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget)
 
         self.retranslateUi(BatchCreator_MainWindow)
 
@@ -379,6 +380,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.save_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Save", None))
         self.process_options_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Options", None))
         self.process_all_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Process", None))
+        self.dockWidget.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Explorer", None))
         self.Copy_from_status_line_toolButton.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"...", None))
         self.file_initialize_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"...", None))
     # retranslateUi
