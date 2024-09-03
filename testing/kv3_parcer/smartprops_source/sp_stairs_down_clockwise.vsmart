@@ -1,0 +1,445 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/dev/grabox_stairs/grabox_stair_96_a.vmdl"
+			m_VariableName = "mdl_96"
+			m_DisplayName = "Model 96"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 7
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/dev/grabox_stairs/grabox_stair_16_a.vmdl"
+			m_VariableName = "mdl_16"
+			m_DisplayName = "Model 16"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 8
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/dev/grabox_stairs/grabox_stair_end_a.vmdl"
+			m_VariableName = "mdl_end"
+			m_DisplayName = "Model end"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 9
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 64
+			m_VariableName = "Sizer_Y"
+			m_DisplayName = ""
+			m_bExposeAsParameter = false
+			m_sLabel = ""
+			m_nElementID = 10
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 128
+			m_flParamaterMaxValue = 256
+			m_VariableName = "Lenght"
+			m_DisplayName = "Lenght"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 11
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 4
+			m_flParamaterMinValue = 0
+			m_flParamaterMaxValue = 16
+			m_VariableName = "depth"
+			m_DisplayName = "depth"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 12
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 0
+			m_flParamaterMinValue = 0
+			m_flParamaterMaxValue = 0
+			m_VariableName = "StepAngle"
+			m_DisplayName = "StepAngle"
+			m_bExposeAsParameter = false
+			m_sLabel = ""
+			m_nElementID = 13
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 0
+			m_VariableName = "StepAngleDepth"
+			m_DisplayName = "StepAngleDepth"
+			m_bExposeAsParameter = false
+			m_sLabel = ""
+			m_nElementID = 14
+		},
+		
+		{
+			_class = "CSmartPropVariable_MaterialGroup"
+			m_DefaultValue = ""
+			m_sModelName = "models/dev/grabox_stairs/grabox_stair_96_a.vmdl"
+			m_VariableName = "Mat"
+			m_DisplayName = "Mat"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 15
+		},
+	]
+	m_Modifiers = 
+	[
+	]
+	m_SelectionCriteria = 
+	[
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_Group"
+			m_Modifiers = 
+			[
+				
+				{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_flInitialMinX = 0
+					m_flInitialMaxX = 0
+					m_flInitialMinY = 12
+					m_flInitialMaxY = 64
+					m_OutputVariableMaxY = "Sizer_Y"
+					m_flInitialMinZ = 0
+					m_flInitialMaxZ = -8
+				},
+				
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = 
+						[
+							{
+								m_Expression = " lenght "
+							},
+							0,
+							0,
+						]
+					}
+				},
+			]
+			m_SelectionCriteria = 
+			[
+			]
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_FitOnLine"
+					m_vEnd = 
+					{
+						m_Components = 
+						[
+							0,
+							{
+								m_SourceName = "Sizer_Y"
+							},
+							0,
+						]
+					}
+					m_bOrientAlongLine = false
+					m_nScaleMode = "SCALE_END_TO_FIT"
+					m_Modifiers = 
+					[
+						
+						{
+							_class = "CSmartPropOperation_CreateRotator"
+							m_flDisplayRadius = 32
+							m_bApplyToCurrentTrasnform = false
+							m_OutputVariable = "StepAngle"
+						},
+					]
+					m_SelectionCriteria = 
+					[
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/sp_stairs_line_clockwise.vsmart"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											{
+												m_Expression = " InstanceIndex() * depth * -1 "
+											},
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											{
+												m_Expression = " Tan( Deg2rad( stepAngle ) ) * Instanceindex() "
+											},
+											0,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											{
+												m_Expression = " 0 "
+											},
+											0,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											0,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 
+									{
+										m_Expression = " 12 "
+									}
+									m_bAllowScale = false
+									m_flMinLength = 12
+									m_flMaxLength = 12
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 3
+						},
+						
+						{
+							_class = "CSmartPropElement_PickOne"
+							m_SelectionMode = "RANDOM"
+							m_vHandleOfffset = 
+							{
+								m_Components = 
+								[
+									0,
+									0,
+									0,
+								]
+							}
+							m_HandleSize = 16
+							m_HandleShape = "SQUARE"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											{
+												m_Expression = " Tan( Deg2rad( stepAngle ) ) * Instanceindex() "
+											},
+											0,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											0,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											{
+												m_Expression = " -lenght "
+											},
+											0,
+											0,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_EndCap"
+									m_bStart = false
+									m_bEnd = true
+									m_sLabel = ""
+								},
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 12
+									m_bAllowScale = false
+									m_flMinLength = 12
+									m_flMaxLength = 12
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+								
+								{
+									_class = "CSmartPropElement_SmartProp"
+									m_sSmartProp = "smartprops/sp_stairs_line.vsmart"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											{
+												m_Components = 
+												[
+													0,
+													0,
+													{
+														m_Expression = " InstanceIndex() * depth * -1 "
+													},
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+										
+										{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 12
+											m_bAllowScale = false
+											m_flMinLength = 12
+											m_flMaxLength = 12
+											m_sLabel = ""
+										},
+									]
+									m_Children = 
+									[
+									]
+									m_sLabel = ""
+									m_nElementID = 5
+								},
+								
+								{
+									_class = "CSmartPropElement_SmartProp"
+									m_sSmartProp = "smartprops/sp_stairs_main.vsmart"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											{
+												m_Components = 
+												[
+													0,
+													0,
+													{
+														m_Expression = " InstanceIndex() * depth * -1 "
+													},
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+										
+										{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 12
+											m_bAllowScale = false
+											m_flMinLength = 12
+											m_flMaxLength = 12
+											m_sLabel = ""
+										},
+									]
+									m_Children = 
+									[
+									]
+									m_sLabel = ""
+									m_nElementID = 6
+								},
+							]
+							m_sLabel = ""
+							m_nElementID = 4
+						},
+					]
+					m_sLabel = ""
+					m_nElementID = 2
+				},
+			]
+			m_sLabel = "Main"
+			m_nElementID = 1
+		},
+	]
+	m_sLabel = ""
+	_editor = 
+	{
+		next_element_id = 16
+	}
+}

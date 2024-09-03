@@ -1,0 +1,378 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "length"
+			m_nElementID = 26
+		},
+		
+		{
+			_class = "CSmartPropVariable_PickMode"
+			m_VariableName = "pickMode"
+			m_DisplayName = "Run Pick Mode"
+			m_bExposeAsParameter = true
+			m_nElementID = 27
+		},
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_FitOnLine"
+			m_vEnd = 
+			{
+				m_Components = 
+				[
+					0.000000,
+					{
+						m_SourceName = "length"
+					},
+					0.000000,
+				]
+			}
+			m_nPickMode = 
+			{
+				m_SourceName = "pickMode"
+			}
+			m_Modifiers = 
+			[
+				
+				{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_OutputVariableMaxY = "length"
+					m_flInitialMaxY = 32.000000
+				},
+			]
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 128.000000
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/generic/pipe01/pipe01_str_128a.vmdl"
+							m_nElementID = 8
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/pipe_kit_addon.vsmart"
+							m_nElementID = 9
+						},
+					]
+					m_nElementID = 2
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 64.000000
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/generic/pipe01/pipe01_str_64a.vmdl"
+							m_nElementID = 10
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/pipe_kit_addon.vsmart"
+							m_nElementID = 11
+						},
+					]
+					m_nElementID = 3
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 32.000000
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/generic/pipe01/pipe01_str_32a.vmdl"
+							m_nElementID = 12
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/pipe_kit_addon.vsmart"
+							m_nElementID = 13
+						},
+					]
+					m_nElementID = 4
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 16.000000
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_PickOne"
+							m_Children = 
+							[
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/generic/pipe01/pipe01_str_16a.vmdl"
+									m_nElementID = 18
+								},
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_SelectionCriteria = 
+									[
+										
+										{
+											_class = "CSmartPropSelectionCriteria_ChoiceWeight"
+											m_flWeight = 0.200000
+										},
+									]
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											[
+												0.000000,
+												8.000000,
+												0.000000,
+											]
+										},
+									]
+									m_sModelName = "models/generic/pipe01/pipe01_addon06a.vmdl"
+									m_nElementID = 19
+								},
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_SelectionCriteria = 
+									[
+										
+										{
+											_class = "CSmartPropSelectionCriteria_ChoiceWeight"
+											m_flWeight = 0.200000
+										},
+									]
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											[
+												0.000000,
+												8.000000,
+												0.000000,
+											]
+										},
+									]
+									m_sModelName = "models/generic/pipe01/pipe01_addon06b.vmdl"
+									m_nElementID = 20
+								},
+							]
+							m_nElementID = 14
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/pipe_kit_addon.vsmart"
+							m_nElementID = 15
+						},
+					]
+					m_nElementID = 5
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 8.000000
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_PickOne"
+							m_Children = 
+							[
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/generic/pipe01/pipe01_str_8a.vmdl"
+									m_nElementID = 21
+								},
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											[
+												0.000000,
+												4.000000,
+												0.000000,
+											]
+										},
+									]
+									m_sModelName = "models/generic/pipe01/pipe01_addon04a.vmdl"
+									m_nElementID = 22
+								},
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											[
+												0.000000,
+												4.000000,
+												0.000000,
+											]
+										},
+									]
+									m_sModelName = "models/generic/pipe01/pipe01_addon04b.vmdl"
+									m_nElementID = 23
+								},
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											[
+												0.000000,
+												4.000000,
+												0.000000,
+											]
+										},
+										
+										{
+											_class = "CSmartPropOperation_Scale"
+											m_flScale = 2.000000
+										},
+									]
+									m_sModelName = "models/generic/pipe01/pipe01_addon10a.vmdl"
+									m_nElementID = 24
+								},
+								
+								{
+									_class = "CSmartPropElement_Model"
+									m_Modifiers = 
+									[
+										
+										{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											[
+												0.000000,
+												4.000000,
+												0.000000,
+											]
+										},
+										
+										{
+											_class = "CSmartPropOperation_Scale"
+											m_flScale = 2.000000
+										},
+									]
+									m_sModelName = "models/generic/pipe01/pipe01_addon07a.vmdl"
+									m_nElementID = 25
+								},
+							]
+							m_nElementID = 16
+						},
+						
+						{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/pipe_kit_addon.vsmart"
+							m_nElementID = 17
+						},
+					]
+					m_nElementID = 6
+				},
+				
+				{
+					_class = "CSmartPropElement_SmartProp"
+					m_sSmartProp = "smartprops/pipe_kit_main.vsmart"
+					m_Modifiers = 
+					[
+						
+						{
+							_class = "CSmartPropOperation_CreateLocator"
+						},
+					]
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_EndCap"
+							m_bStart = false
+							m_bEnd = true
+						},
+					]
+					m_nElementID = 7
+				},
+			]
+			m_nElementID = 1
+		},
+	]
+	_editor = 
+	{
+		next_element_id = 28
+	}
+}

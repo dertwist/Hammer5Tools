@@ -1,0 +1,2252 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{5ab656f0-06de-478a-804e-489e82994fb5} -->
+{
+    generic_data_type = "CSmartPropRoot"
+    m_Variables = 
+    [
+        {
+            _class = "CSmartPropVariable_Bool"
+            m_nElementID = 736
+            m_VariableName = "tutorial"
+            m_bExposeAsParameter = true
+            m_DefaultValue = true
+			m_ParameterName = "Show tutorial"
+        },
+		{
+            _class = "CSmartPropVariable_Float"
+            m_VariableName = "length"
+            m_DefaultValue = 0.000000
+            m_nElementID = 381
+        },
+        {
+            _class = "CSmartPropVariable_Float"
+            m_VariableName = "length_vertical"
+            m_DefaultValue = 55.000000
+            m_nElementID = 378
+        },
+		{
+            _class = "CSmartPropVariable_MaterialGroup"
+			m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_a.vmdl"
+            m_DefaultValue = "metal001_tint_inner"
+            m_bExposeAsParameter = true
+            m_DisplayName = "Skin"
+            m_VariableName = "Skin_Var"
+            m_nElementID = 4242
+        },
+        {
+            _class = "CSmartPropVariable_Float"
+            m_VariableName = "lettersize"
+            m_DefaultValue = 0.000000
+            m_nElementID = 379
+        },
+        {
+            _class = "CSmartPropVariable_Bool"
+            m_nElementID = 811
+            m_VariableName = "vertical"
+            m_bExposeAsParameter = true
+            m_DefaultValue = false
+			m_ParameterName = "Vertical"
+        },
+		{
+            _class = "CSmartPropVariable_Float"
+            m_VariableName = "spacing"
+            m_DefaultValue = 8.000000
+            m_nElementID = 380
+			m_ParameterName = "Spacing"
+			m_flParamaterMinValue = 0.000000
+            m_flParamaterMaxValue = 32.000000
+			m_bExposeAsParameter = true
+        },
+        {
+            _class = "CSmartPropVariable_Float"
+            m_VariableName = "depth"
+            m_bExposeAsParameter = true
+            m_DefaultValue = 1.000000
+            m_flParamaterMinValue = 0.100000
+            m_flParamaterMaxValue = 2.000000
+            m_nElementID = 382
+			m_ParameterName = "Depth"
+        },
+        {
+            _class = "CSmartPropVariable_Float"
+            m_VariableName = "height"
+            m_bExposeAsParameter = true
+            m_DefaultValue = 1.000000
+            m_flParamaterMinValue = 0.750000
+            m_flParamaterMaxValue = 1.250000
+            m_nElementID = 383
+			m_ParameterName = "Extra Height"
+        },
+        {
+            _class = "CSmartPropVariable_Float"
+            m_VariableName = "width"
+            m_bExposeAsParameter = true
+            m_DefaultValue = 1.000000
+            m_flParamaterMinValue = 0.750000
+            m_flParamaterMaxValue = 1.250000
+            m_nElementID = 384
+			m_ParameterName = "Extra Width"
+        },
+        {
+            _class = "CSmartPropVariable_Bool"
+            m_nElementID = 573
+            m_VariableName = "locators"
+            m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_ParameterName = "Locators"
+        },
+        {
+            _class = "CSmartPropVariable_Float"
+            m_VariableName = "locators_scale"
+            m_bExposeAsParameter = true
+            m_DefaultValue = 2.500000
+            m_flParamaterMinValue = 0.000000
+            m_flParamaterMaxValue = 5.000000
+            m_nElementID = 582
+			m_ParameterName = "Locators axis scale"
+        },
+        {
+            _class = "CSmartPropVariable_Bool"
+            m_nElementID = 735
+            m_VariableName = "Startpiece"
+            m_bExposeAsParameter = false
+            m_DefaultValue = true
+        }
+    ]
+    m_Children = 
+    [
+        {
+            _class = "CSmartPropElement_Group"
+            m_nElementID = 879
+            m_sLabel = "Startpiece"
+            m_Modifiers = 
+            [
+                {
+                    _class = "CSmartPropFilter_VariableValue"
+                    m_VariableComparison = 
+                    {
+                        m_Name = "Startpiece"
+                        m_Value = true
+                        m_Comparison = "EQUAL"
+                    }
+                }
+            ]
+            m_Children = 
+            [
+				{
+					_class = "CSmartPropElement_Model"
+					m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+					m_sModelName = resource_name:"models/letters/tutorial.vmdl"
+					m_Modifiers = 
+					[
+						{
+							_class = "CSmartPropFilter_VariableValue"
+							m_VariableComparison = 
+							{
+								m_Name = "tutorial"
+								m_Value = true
+								m_Comparison = "EQUAL"
+							}
+						}
+					]
+				},
+				{
+					_class = "CSmartPropElement_Model"
+					m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+					m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_question.vmdl"
+					m_Modifiers = 
+					[
+						{
+							_class = "CSmartPropFilter_VariableValue"
+							m_VariableComparison = 
+							{
+								m_Name = "tutorial"
+								m_Value = true
+								m_Comparison = "EQUAL"
+							}
+						},
+						{
+							_class = "CSmartPropOperation_Translate"
+							m_vPosition = [120,-12,0]
+						}
+					]
+				},
+				{
+                    _class = "CSmartPropElement_ModifyState"
+                    m_nElementID = 1022
+                    m_bEnabled = true
+                    m_sLabel = "Attach_A"
+                    m_Modifiers = 
+                    [
+                        {
+                            _class = "CSmartPropOperation_SaveState"
+                            m_StateName = "Attach_A"
+                            m_bEnabled = true
+                        },
+                    ]
+                }
+            ]
+        },
+        {
+            _class = "CSmartPropElement_PickOne"
+            m_nElementID = 19
+            m_SelectionMode = "FIRST"
+            m_HandleSize = 24
+            m_HandleShape = "CIRCLE"
+            m_vHandleOffset = 
+			{
+				m_Components = 
+				[
+					{m_Expression = "vertical ? 48 : -16"},
+					{m_Expression = "!vertical ? 16 : 0"},
+					{m_Expression = "0"}
+				]
+			}
+            m_bEnabled = true
+            m_Modifiers = 
+            [
+                {
+                    _class = "CSmartPropFilter_VariableValue"
+                    m_VariableComparison = 
+                    {
+                        m_Name = "Startpiece"
+                        m_Value = false
+                        m_Comparison = "EQUAL"
+                    }
+                },
+            ]
+            m_Children = 
+            [
+				{
+                    _class = "CSmartPropElement_Group"
+                    m_nElementID = 29
+                    m_sLabel = "Endpiece"
+                    m_bEnabled = true
+                    m_SelectionCriteria = 
+                    [
+                        {
+                            _class = "CSmartPropSelectionCriteria_ChoiceWeight"
+                            m_flWeight = 1.000000
+                        },
+                    ]
+                    m_Modifiers = 
+                    [
+                        {
+                            _class = "CSmartPropFilter_VariableValue"
+                            m_VariableComparison = 
+                            {
+                                m_Name = "Singlepiece"
+                                m_Value = true
+                                m_Comparison = "NOT_EQUAL"
+                            }
+                        },
+                        
+                        {
+                            _class = "CSmartPropFilter_VariableValue"
+                            m_VariableComparison = 
+                            {
+                                m_Name = "Endpiece"
+                                m_Value = false
+                                m_Comparison = "NOT_EQUAL"
+                            }
+                        },
+                    ]
+                    m_Children = 
+                    [
+                        {
+                            _class = "CSmartPropElement_Group"
+                            m_nElementID = 571
+                            m_sLabel = "Emptypiece"
+                        }
+                    ]
+                },
+                
+                {
+                    _class = "CSmartPropElement_Group"
+                    m_nElementID = 6
+                    m_Modifiers = 
+                    [
+                        
+                    ]
+                    m_Children = 
+                    [
+                        {
+							_class = "CSmartPropElement_ModifyState"
+							m_nElementID = 670
+							m_bEnabled = true
+							m_sLabel = "Locator"
+							m_Modifiers = 
+							[
+								{
+									_class = "CSmartPropFilter_VariableValue"
+									m_VariableComparison = 
+									{
+										m_Name = "locators"
+										m_Value = true
+										m_Comparison = "EQUAL"
+									}
+								},
+								{
+									_class = "CSmartPropOperation_CreateLocator"
+									m_bEnabled = true
+									m_flDisplayScale = {m_Expression = "locators_scale"}
+									m_bAllowScale = true
+								},
+							]
+						},
+                        {
+                            _class = "CSmartPropElement_Group"
+                            m_Children = 
+                            [
+								{
+									_class = "CSmartPropElement_PickOne"
+									m_nElementID = 37
+									m_HandleSize = 24
+									m_HandleShape = "DIAMOND"
+									m_SelectionMode = "RANDOM"
+									m_bEnabled = true
+									m_vHandleOffset = 
+									{
+										m_Components = 
+										[
+											{m_Expression = "!vertical ? -length_vertical * height : length_vertical"},
+											{m_Expression = "vertical ? 24 * width : 0"},
+											{m_Expression = "0"}
+										]
+									}
+									m_Children = 
+									[
+										//models start here
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_0.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "37.5"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_1.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "18"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_2.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "34"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_3.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "30"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_4.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "36"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_5.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "29"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_6.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "34"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_7.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "30"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_8.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "34"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_9.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "35"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_a.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_SelectionCriteria = 
+											[
+												{
+													_class = "CSmartPropSelectionCriteria_ChoiceWeight"
+													m_flWeight = 100000000000.000000
+												},
+											]
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "44"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_b.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "33"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_c.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "54"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_d.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "50"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_e.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "33"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_f.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "31"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_g.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "52"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_h.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "53"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_i.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "18"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_j.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "18"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_k.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "41"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_l.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "34"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_m.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "61.5"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_n.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "55"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_o.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "54"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_p.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "36"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_q.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "56"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_r.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "43.5"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_s.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "30"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_t.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "39"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_u.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "51"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_v.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "48"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_w.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "66"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_x.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "43"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_y.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "42"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_z.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "42"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_a.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "44"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_b.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "33"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_c.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "47"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_d.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "50"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_e.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "33"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_f.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "31"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_g.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "52"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_h.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "53"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_i.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "18"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_j.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "18"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_k.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "41"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_l.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "34"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_m.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "61.5"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_n.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "57"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_o.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "54"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_p.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "36"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_q.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "56"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_r.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "43.5"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_s.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "30"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_t.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "39"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_u.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "51"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_v.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "48"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_w.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "66"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_x.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "43"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_y.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "42"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_z.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "42"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_german_a.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "44"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_german_o.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "54"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_german_u.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "51"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_german_a.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "44"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_german_o.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "54"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_german_u.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height * 0.85"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "51"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_stick.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "12"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_slash.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "23"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_plus.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "30"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_minus.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "22"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_question.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "24"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										},
+										{
+											_class = "CSmartPropElement_Model"
+											m_MaterialGroupName = {m_SourceName = "Skin_Var"}
+											m_sModelName = resource_name:"models/letters/cinzel/letter_cinzel_exclam.vmdl"
+											m_vModelScale = {m_Components = [{m_Expression = "height"},{m_Expression = "width"},{m_Expression = "depth"},]}
+											m_Modifiers = 
+											[
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "lettersize"
+													m_VariableValue = {
+														m_Expression = "11"
+													}
+												},
+												{
+													_class = "CSmartPropOperation_SetVariableFloat"
+													m_VariableName = "length"
+													m_VariableValue = {m_Expression = "(lettersize * width) + spacing"}
+												},
+												{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = {m_Components = [{m_Expression = "vertical ? length_vertical : 0"},{m_Expression = "vertical ? -lettersize*0.5*width : 0"},{m_Expression = "0"}]}
+												}
+											]
+										}
+									]
+								},
+                            ]
+							m_Modifiers = 
+                            [
+										
+                            ]
+                        },
+                        {
+                            _class = "CSmartPropElement_ModifyState"
+                            m_nElementID = 668
+                            _editor = 
+                            {
+                                folder_name = ""
+                            }
+                            m_bEnabled = true
+                            m_sLabel = "Attach_A"
+                            m_Modifiers = 
+                            [
+                                
+                                {
+                                    _class = "CSmartPropOperation_Translate"
+                                    m_vPosition = 
+                                    {
+                                        m_Components = 
+										[
+											{m_Expression = "vertical ? (length_vertical + spacing) * height : 0"},
+											{m_Expression = "!vertical ? length : 0"},
+											{m_Expression = "0"},
+										]
+                                    }
+                                    m_bEnabled = true
+                                },
+                                {
+                                    _class = "CSmartPropOperation_SaveState"
+                                    m_StateName = "Attach_A"
+                                    m_bEnabled = true
+                                },
+                            ]
+                        },
+                    ]
+                },
+            ]
+        },
+        {
+            _class = "CSmartPropElement_SmartProp"
+            m_nElementID = 24
+            m_sSmartProp = resource_name:"smartprops/letters_cinzel.vsmart"
+            m_Modifiers = 
+            [
+                {
+                    _class = "CSmartPropFilter_VariableValue"
+                    m_VariableComparison = 
+                    {
+                        m_Name = "Singlepiece"
+                        m_Value = true
+                        m_Comparison = "NOT_EQUAL"
+                    }
+                },
+                {
+                    _class = "CSmartPropOperation_RestoreState"
+                    m_StateName = "Attach_A"
+                    m_bDiscardIfUknown = true
+                },
+                {
+                    _class = "CSmartPropOperation_SetVariable"
+                    m_VariableValue = 
+                    {
+                        m_TargetName = "Startpiece"
+                        m_DataType = "BOOL"
+                        m_Value = false
+                    }
+                },
+            ]
+        },
+    ]
+}

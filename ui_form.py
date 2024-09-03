@@ -32,7 +32,7 @@ class Ui_Widget(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(Widget.sizePolicy().hasHeightForWidth())
         Widget.setSizePolicy(sizePolicy)
-        Widget.setMinimumSize(QSize(1300, 900))
+        Widget.setMinimumSize(QSize(1280, 720))
         Widget.setBaseSize(QSize(499, 699))
         font = QFont()
         font.setPointSize(7)
@@ -278,7 +278,7 @@ class Ui_Widget(object):
 
         self.retranslateUi(Widget)
 
-        self.MainWindowTools_tabs.setCurrentIndex(1)
+        self.MainWindowTools_tabs.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(Widget)
