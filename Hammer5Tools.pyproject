@@ -24,6 +24,7 @@
         "popup_menu/popup_menu.ui",
         "smartprop_editor/main.ui",
         "soudevent_editor/import_audio_dialog.ui",
-        "soudevent_editor/create_new_soundevent_dialog.ui"
+        "soudevent_editor/create_new_soundevent_dialog.ui",
+        "BatchCreator/form.ui"
     ]
 }

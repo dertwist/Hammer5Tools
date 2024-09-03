@@ -169,6 +169,9 @@ QDockWidget::title {
     color: #E3E3E3;
 }
 
+QDockWidget::slider {
+    color: #1c1c1c;
+}
 QDockWidget::close-button, QDockWidget::float-button {
     border: 1px solid #1C1C1C;
     background: #1C1C1C;
