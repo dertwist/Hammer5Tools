@@ -2,6 +2,7 @@ import os.path
 import sys
 import time
 
+from qt_material import apply_stylesheet
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea
 )
@@ -57,6 +58,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         # Call functions to restore positions and sizes
         dock_widgets = [self.ui.dockWidget_2, self.ui.dockWidget_3]  # Add all dock widgets here
+        self.ui.dockWidget_2.titleBarWidget()
         # restore_dock_widget_positions_sizes(dock_widgets)
 
     def closeEvent(self, event):
@@ -69,5 +71,6 @@ class SmartPropEditorMainWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SmartPropEditorMainWindow()
+    apply_stylesheet('darak')
     window.show()
     sys.exit(app.exec())
