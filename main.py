@@ -245,6 +245,9 @@ class Widget(QWidget):
         self.tray_icon.hide()
         self.tray_icon.deleteLater()
 
+        # Close smarprops editor
+        self.SmartPropEditorMainWindow.closeEvent(self.event)
+
         self.current_tab(True)
         QApplication.quit()
         QApplication.instance().quit()
