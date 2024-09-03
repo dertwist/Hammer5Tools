@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, Q
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 from PySide6.QtWidgets import QProgressBar
 from popup_menu.popup_menu_main import PopupMenu
-
+import json
 
 import keyvalues3 as kv3
 
@@ -28,25 +28,42 @@ def save_dock_widget_positions_sizes(dock_widgets):
     positions_sizes = {}
     for dock_widget in dock_widgets:
         widget_name = dock_widget.objectName()
+        position = [(dock_widget.pos()).x(), (dock_widget.pos()).y()]
+        print('position', position)
+        size = [dock_widget.size().width(), dock_widget.size().height()]
+        print('size', size)
         positions_sizes[widget_name] = {
-            'position': str(dock_widget.pos()),  # Convert position to string
-            'size': str(dock_widget.size())  # Convert size to string
+            'position': str(position),
+            'size': str(size)
         }
     # Save positions and sizes to configuration
-    set_config_value('DOCK_WIDGETS', 'positions_sizes', str(positions_sizes))  # Convert positions_sizes to string
+    set_config_value('SMARTPROPS_DOCK_WIDGETS', 'positions_sizes', str(positions_sizes))  # Convert positions_sizes to string
 
 # Restore positions and sizes of dock widgets
 # Restore positions and sizes of dock widgets
 def restore_dock_widget_positions_sizes(dock_widgets):
-    positions_sizes = get_config_value('DOCK_WIDGETS', 'positions_sizes')
+    positions_sizes = get_config_value('SMARTPROPS_DOCK_WIDGETS', 'positions_sizes')
+    print(type(positions_sizes), positions_sizes)
+    import ast
+
     if positions_sizes:
+        positions_sizes = ast.literal_eval(positions_sizes)
+        print(type(positions_sizes), positions_sizes)
+        print((positions_sizes.items()))
+        for item in positions_sizes.items():
+            print(item)
         for dock_widget in dock_widgets:
+
             widget_name = dock_widget.objectName()
-            if widget_name in positions_sizes:
-                position = eval(positions_sizes[widget_name]['position'])  # Convert string to tuple
-                size = eval(positions_sizes[widget_name]['size'])  # Convert string to tuple
-                dock_widget.move(*position)  # Unpack tuple for move
-                dock_widget.resize(*size)  # Unpack tuple for resize
+            position = positions_sizes[widget_name]['position']
+            position = ast.literal_eval(position)
+            size = positions_sizes[widget_name]['size']
+            size = ast.literal_eval(size)
+            print(type(position), position)
+            print(widget_name, position, size)
+            dock_widget.move(position[0],position[1])
+            dock_widget.resize(size[0],size[1])
+
 
 # In your SmartPropEditorMainWindow class
 class SmartPropEditorMainWindow(QMainWindow):
@@ -58,11 +75,10 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         # Call functions to restore positions and sizes
         dock_widgets = [self.ui.dockWidget_2, self.ui.dockWidget_3]  # Add all dock widgets here
-        self.ui.dockWidget_2.titleBarWidget()
-        # restore_dock_widget_positions_sizes(dock_widgets)
+        # self.ui.dockWidget_2.titleBarWidget()
+        restore_dock_widget_positions_sizes(dock_widgets)
 
     def closeEvent(self, event):
-        print('Close event')
         dock_widgets = [self.ui.dockWidget_2, self.ui.dockWidget_3]  # Add all dock widgets here
         save_dock_widget_positions_sizes(dock_widgets)
         # event.accept()
@@ -71,6 +87,6 @@ class SmartPropEditorMainWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SmartPropEditorMainWindow()
-    apply_stylesheet('darak')
+    apply_stylesheet(app, theme='dark_yellow.xml')
     window.show()
     sys.exit(app.exec())
