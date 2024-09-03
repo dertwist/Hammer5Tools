@@ -16,7 +16,7 @@ import keyvalues3 as kv3
 bt_config = kv3.read('sample.vsmart')
 
 data = bt_config.value
-
+data_raw = data
 # data = {
 #     'generic_data_type': 'CSmartPropRoot',
 #     'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}],
@@ -119,11 +119,35 @@ class MainWindow(QMainWindow):
         remove_child_button.clicked.connect(self.remove_child)
         toolbar.addWidget(remove_child_button)
 
+        save_tree_button = QPushButton("Save tree structure as h5t format")
+        save_tree_button.clicked.connect(self.save_tree)
+        toolbar.addWidget(save_tree_button)
+
+        load_tree_button = QPushButton("Load h5t format")
+        load_tree_button.clicked.connect(self.load_tree)
+        toolbar.addWidget(load_tree_button)
 
 
         self.tree.setDragEnabled(True)
         self.tree.setAcceptDrops(True)
         self.tree.setDragDropMode(QTreeWidget.InternalMove)
+
+    def load_tree(self):
+        with open('treestructure.json', 'r') as file:
+            data = json.load(file)
+            vsmart_data = self.extract_vsmart_data(data)
+            self.tree.clear()
+            self.populate_tree(vsmart_data)
+
+    def save_tree(self):
+        data = self.tree_item_to_dict(self.tree.invisibleRootItem())
+        data = self.convert_children_to_list(data)
+        kv3.write(data_raw, 'treestructure.json')
+        with open('treestructure.json', 'a') as file:
+            file.write('//Hammer5Tools_vsmartdata_variables:' + '\n')
+            file.write('//Hammer5Tools_vsmartdata_options:' + '\n')
+            file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data))
+
 
     def load_file(self):
         options = QFileDialog.Options()
@@ -132,6 +156,18 @@ class MainWindow(QMainWindow):
             file_path = file_url.toLocalFile()
             self.tree.clear()
             data = (kv3.read(file_path)).value
+            def search(data):
+                if isinstance(data, dict):
+                    for item in data.items():
+                        print(item)
+                        if item.items():
+                            search(item)
+                elif isinstance(data, list):
+                    for item in data:
+
+                        print(item)
+                        if item.items():
+                            search(item)
             self.populate_tree(data)
 
     def dropEvent(self, event):
@@ -159,9 +195,9 @@ class MainWindow(QMainWindow):
         if parent is None:
             print('None')
             parent = self.tree.invisibleRootItem()
-            parent_element = QTreeWidgetItem(['Root'])
-            parent.addChild(parent_element)
-            parent = parent_element
+            # parent_element = QTreeWidgetItem(['Root'])
+            # parent.addChild(parent_element)
+            # parent = parent_element
         if isinstance(data, dict):
             for key, value in data.items():
                 if isinstance(value, dict):
@@ -180,9 +216,9 @@ class MainWindow(QMainWindow):
                         parent.addChild(child)
 
                         for item in value:
-                            print(key)
+                            # print(key)
                             if key == 'm_Children' or 'm_Modifiers':
-                                print(type(item),item)
+                                # print(type(item),item)
                                 if isinstance(item, list):
                                     for item_list in item:
                                         item_class = item_list.get('_class')
