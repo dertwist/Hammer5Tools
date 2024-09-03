@@ -28,6 +28,49 @@ data = bt_config.value
 # }
 print(data)
 
+elements_list = ['CSmartPropElement_ModifyState',
+                  'CSmartPropElement_Group',
+                  'CSmartPropElement_SmartProp',
+                  'CSmartPropElement_PlaceInSphere',
+                  'CSmartPropElement_PlaceMultiple',
+                  'CSmartPropElement_PlaceOnPath',
+                  'CSmartPropElement_FitOnLine',
+                  'CSmartPropElement_PickOne']
+operators_list = [ 'CSmartPropOperation_TraceToPoint',
+                   'CSmartPropOperation_TraceToLine',
+                   'CSmartPropOperation_SetTintColor',
+                   'CSmartPropOperation_SetVariable',
+                   'CSmartPropOperation_SaveState',
+                   'CSmartPropOperation_RestoreState',
+                   'CSmartPropOperation_SavePosition',
+                   'CSmartPropOperation_SaveDirection',
+                   'CSmartPropOperation_SaveScale',
+                   'CSmartPropOperation_SaveSurfaceNormal',
+                   'CSmartPropOperation_SaveDirection',
+                   'CSmartPropOperation_ComputeDotProduct3D',
+                   'CSmartPropOperation_ComputeCrossProduct3D',
+                   'CSmartPropOperation_ComputeDistance3D',
+                   'CSmartPropOperation_ComputeVectorBetweenPoints3D',
+                   'CSmartPropOperation_ComputeNormalizedVector3D',
+                   'CSmartPropOperation_ComputeProjectVector3D',
+                   'CSmartPropOperation_CreateLocator',
+                   'CSmartPropOperation_CreateSizer',
+                   'CSmartPropOperation_CreateRotator',
+                   'CSmartPropOperation_ResetRotation',
+                   'CSmartPropOperation_SetOrientation',
+                   'CSmartPropOperation_SetPosition',
+                   'CSmartPropOperation_ResetScale',
+                   'CSmartPropOperation_Rotate',
+                   'CSmartPropOperation_Translate',
+                   'CSmartPropOperation_RotateTowards',
+                   'CSmartPropOperation_Scale',
+                   'CSmartPropOperation_RandomOffset',
+                   'CSmartPropOperation_RandomRotation',
+                   'CSmartPropOperation_RandomScale',
+                   'CSmartPropOperation_Trace',
+                   'CSmartPropOperation_TraceInDirection'
+
+]
 
 
 class MainWindow(QMainWindow):
