@@ -1,0 +1,453 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/dev/grabox_stairs/grabox_stair_96_a.vmdl"
+			m_VariableName = "mdl_96"
+			m_DisplayName = "Model 96"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 10
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/dev/grabox_stairs/grabox_stair_16_a.vmdl"
+			m_VariableName = "mdl_16"
+			m_DisplayName = "Model 16"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 11
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_DefaultValue = "models/dev/grabox_stairs/grabox_stair_end_a.vmdl"
+			m_VariableName = "mdl_end"
+			m_DisplayName = "Model end"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 12
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 0
+			m_VariableName = "Lenght"
+			m_DisplayName = "Lenght"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 13
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 0
+			m_VariableName = "depth"
+			m_DisplayName = "depth"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 14
+		},
+		
+		{
+			_class = "CSmartPropVariable_MaterialGroup"
+			m_DefaultValue = ""
+			m_sModelName = "models/dev/grabox_stairs/grabox_stair_96_a.vmdl"
+			m_VariableName = "Mat"
+			m_DisplayName = "Mat"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 15
+		},
+		
+		{
+			_class = "CSmartPropVariable_ScaleMode"
+			m_DefaultValue = "NONE"
+			m_VariableName = "ScaleMode"
+			m_DisplayName = "ScaleMode"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 16
+		},
+	]
+	m_Modifiers = 
+	[
+	]
+	m_SelectionCriteria = 
+	[
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_Group"
+			m_Modifiers = 
+			[
+				
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = 
+						[
+							{
+								m_Expression = " -lenght "
+							},
+							0,
+							0,
+						]
+					}
+				},
+			]
+			m_SelectionCriteria = 
+			[
+			]
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_FitOnLine"
+					m_vStart = 
+					{
+						m_Components = 
+						[
+							{
+								m_Expression = " 0 "
+							},
+							0,
+							0,
+						]
+					}
+					m_vEnd = 
+					{
+						m_Components = 
+						[
+							{
+								m_Expression = " lenght "
+							},
+							0,
+							0,
+						]
+					}
+					m_bOrientAlongLine = false
+					m_nScaleMode = 
+					{
+						m_SourceName = "ScaleMode"
+					}
+					m_Modifiers = 
+					[
+						
+						{
+							_class = "CSmartPropOperation_Translate"
+							m_vPosition = 
+							{
+								m_Components = 
+								[
+									0,
+									0,
+									0,
+								]
+							}
+						},
+					]
+					m_SelectionCriteria = 
+					[
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "mdl_96"
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "Mat"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 96
+									m_bAllowScale = false
+									m_flMinLength = 32
+									m_flMaxLength = 128
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "96 unit"
+							m_nElementID = 4
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "mdl_end"
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "Mat"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_EndCap"
+									m_bStart = false
+									m_bEnd = true
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "End"
+							m_nElementID = 5
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "mdl_end"
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "Mat"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_EndCap"
+									m_bStart = true
+									m_bEnd = false
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "Start"
+							m_nElementID = 6
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = 
+							{
+								m_SourceName = "mdl_16"
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "Mat"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 16
+									m_bAllowScale = true
+									m_flMinLength = 2
+									m_flMaxLength = 32
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "16 unit"
+							m_nElementID = 7
+						},
+					]
+					m_sLabel = "Straight"
+					m_nElementID = 2
+				},
+				
+				{
+					_class = "CSmartPropElement_FitOnLine"
+					m_vEnd = 
+					{
+						m_Components = 
+						[
+							{
+								m_SourceName = "Lenght"
+							},
+							0,
+							0,
+						]
+					}
+					m_bOrientAlongLine = false
+					m_nScaleMode = 
+					{
+						m_SourceName = "ScaleMode"
+					}
+					m_Modifiers = 
+					[
+						
+						{
+							_class = "CSmartPropOperation_Translate"
+							m_vPosition = 
+							{
+								m_Components = 
+								[
+									0,
+									0,
+									8,
+								]
+							}
+						},
+					]
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_PathPosition"
+							m_PlaceAtPositions = "ALL"
+							m_nPlaceEveryNthPosition = 0
+							m_nNthPositionIndexOffset = 0
+							m_bAllowAtStart = false
+							m_bAllowAtEnd = false
+							m_sLabel = ""
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/dev/grabox_stairs/grabox_stair_16_clip.vmdl"
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									1,
+									1,
+									{
+										m_Expression = " depth /6 "
+									},
+								]
+							}
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											0,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 16
+									m_bAllowScale = true
+									m_flMinLength = 8
+									m_flMaxLength = 32
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "clip 16"
+							m_nElementID = 8
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/dev/grabox_stairs/grabox_stair_96_clip.vmdl"
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									1,
+									1,
+									{
+										m_Expression = " depth /6 "
+									},
+								]
+							}
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											0,
+											0,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+								
+								{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 96
+									m_bAllowScale = false
+									m_flMinLength = 32
+									m_flMaxLength = 128
+									m_sLabel = ""
+								},
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "clip 96"
+							m_nElementID = 9
+						},
+					]
+					m_sLabel = "Straight"
+					m_nElementID = 3
+				},
+			]
+			m_sLabel = "Main"
+			m_nElementID = 1
+		},
+	]
+	m_sLabel = ""
+	_editor = 
+	{
+		next_element_id = 17
+	}
+}
