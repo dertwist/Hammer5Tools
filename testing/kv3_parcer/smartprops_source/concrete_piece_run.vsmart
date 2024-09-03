@@ -1,0 +1,330 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:vrfunknown:version{4dddb66e-c6ed-4bd0-a4ef-afb45a02acc2} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 0
+			m_VariableName = "length"
+			m_DisplayName = ""
+			m_bExposeAsParameter = false
+			m_sLabel = ""
+			m_nElementID = 8
+		},
+		
+		{
+			_class = "CSmartPropVariable_MaterialGroup"
+			m_DefaultValue = ""
+			m_sModelName = "models/de_mirage/debris/croncrete/concrete_broken_str32x16b.vmdl"
+			m_VariableName = "MaterialGroup"
+			m_DisplayName = "Material Group"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 9
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_DefaultValue = 1
+			m_flParamaterMinValue = 0
+			m_flParamaterMaxValue = 4
+			m_VariableName = "depthScale"
+			m_DisplayName = "Depth Scale"
+			m_bExposeAsParameter = true
+			m_sLabel = ""
+			m_nElementID = 10
+		},
+	]
+	m_Modifiers = 
+	[
+	]
+	m_SelectionCriteria = 
+	[
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_FitOnLine"
+			m_vEnd = 
+			{
+				m_Components = 
+				[
+					{
+						m_SourceName = "length"
+					},
+					0,
+					0,
+				]
+			}
+			m_bOrientAlongLine = false
+			m_nScaleMode = "SCALE_MAXIMIZE"
+			m_nPickMode = "RANDOM"
+			m_Modifiers = 
+			[
+				
+				{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_flInitialMinX = 0
+					m_flInitialMaxX = 64
+					m_OutputVariableMaxX = "length"
+					m_flInitialMinY = 0
+					m_flInitialMaxY = 0
+					m_flInitialMinZ = 0
+					m_flInitialMaxZ = 0
+				},
+			]
+			m_SelectionCriteria = 
+			[
+			]
+			m_Children = 
+			[
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 64
+							m_bAllowScale = true
+							m_flMinLength = 40
+							m_flMaxLength = 80
+							m_sLabel = ""
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_ModifyState"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropFilter_Probability"
+									m_flProbability = 0.500000
+								},
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											{
+												m_Expression = " 64 * LinearScale() "
+											},
+											0,
+											0,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											180,
+											0,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											-8,
+											0,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "Random Flip"
+							m_nElementID = 4
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_mirage/debris/croncrete/concrete_broken_str64x16b.vmdl"
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									{
+										m_Expression = " LinearScale() "
+									},
+									1,
+									{
+										m_SourceName = "depthScale"
+									},
+								]
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "MaterialGroup"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 5
+						},
+					]
+					m_sLabel = "64"
+					m_nElementID = 2
+				},
+				
+				{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+					]
+					m_SelectionCriteria = 
+					[
+						
+						{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 32
+							m_bAllowScale = true
+							m_flMinLength = 16
+							m_flMaxLength = 64
+							m_sLabel = ""
+						},
+					]
+					m_Children = 
+					[
+						
+						{
+							_class = "CSmartPropElement_ModifyState"
+							m_Modifiers = 
+							[
+								
+								{
+									_class = "CSmartPropFilter_Probability"
+									m_flProbability = 0.500000
+								},
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											{
+												m_Expression = " 32 * LinearScale() "
+											},
+											0,
+											0,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+											0,
+											180,
+											0,
+										]
+									}
+								},
+								
+								{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+											0,
+											-8,
+											0,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = "Random Flip"
+							m_nElementID = 6
+						},
+						
+						{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_mirage/debris/croncrete/concrete_broken_str32x16b.vmdl"
+							m_vModelScale = 
+							{
+								m_Components = 
+								[
+									{
+										m_Expression = " LinearScale() "
+									},
+									1,
+									{
+										m_SourceName = "depthScale"
+									},
+								]
+							}
+							m_MaterialGroupName = 
+							{
+								m_SourceName = "MaterialGroup"
+							}
+							m_Modifiers = 
+							[
+							]
+							m_SelectionCriteria = 
+							[
+							]
+							m_Children = 
+							[
+							]
+							m_sLabel = ""
+							m_nElementID = 7
+						},
+					]
+					m_sLabel = "32"
+					m_nElementID = 3
+				},
+			]
+			m_sLabel = ""
+			m_nElementID = 1
+		},
+	]
+	m_sLabel = ""
+	_editor = 
+	{
+		next_element_id = 11
+	}
+}
