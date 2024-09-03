@@ -15,79 +15,26 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QHeaderView,
-    QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
-    QPushButton, QSizePolicy, QSpacerItem, QTextEdit,
-    QToolButton, QTreeView, QVBoxLayout, QWidget)
-import rc_resources
+from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QHBoxLayout,
+    QHeaderView, QLabel, QLineEdit, QMainWindow,
+    QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
+    QTextEdit, QToolButton, QTreeView, QVBoxLayout,
+    QWidget)
 
 class Ui_BatchCreator_MainWindow(object):
     def setupUi(self, BatchCreator_MainWindow):
         if not BatchCreator_MainWindow.objectName():
             BatchCreator_MainWindow.setObjectName(u"BatchCreator_MainWindow")
-        BatchCreator_MainWindow.resize(1053, 788)
+        BatchCreator_MainWindow.resize(1088, 612)
         BatchCreator_MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
         self.centralwidget = QWidget(BatchCreator_MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.horizontalLayout = QHBoxLayout(self.centralwidget)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.left_vertical_frame = QFrame(self.centralwidget)
-        self.left_vertical_frame.setObjectName(u"left_vertical_frame")
-        self.left_vertical_frame.setMaximumSize(QSize(340, 16777215))
-        self.left_vertical_frame.setBaseSize(QSize(330, 0))
-        self.left_vertical_frame.setFrameShape(QFrame.StyledPanel)
-        self.left_vertical_frame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_2 = QVBoxLayout(self.left_vertical_frame)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.MiniWindows_explorer = QTreeView(self.left_vertical_frame)
-        self.MiniWindows_explorer.setObjectName(u"MiniWindows_explorer")
-        self.MiniWindows_explorer.setMaximumSize(QSize(16777215, 16777215))
-
-        self.verticalLayout_2.addWidget(self.MiniWindows_explorer)
-
-        self.horizontal_frame = QFrame(self.left_vertical_frame)
-        self.horizontal_frame.setObjectName(u"horizontal_frame")
-        self.horizontal_frame.setMaximumSize(QSize(16777215, 32))
-        self.horizontal_frame.setFrameShape(QFrame.StyledPanel)
-        self.horizontal_frame.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_2 = QHBoxLayout(self.horizontal_frame)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.Status_Line_Qedit = QTextEdit(self.horizontal_frame)
-        self.Status_Line_Qedit.setObjectName(u"Status_Line_Qedit")
-
-        self.horizontalLayout_2.addWidget(self.Status_Line_Qedit)
-
-        self.Copy_from_status_line_toolButton = QToolButton(self.horizontal_frame)
-        self.Copy_from_status_line_toolButton.setObjectName(u"Copy_from_status_line_toolButton")
-        icon = QIcon()
-        icon.addFile(u":/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Copy_from_status_line_toolButton.setIcon(icon)
-        self.Copy_from_status_line_toolButton.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.Copy_from_status_line_toolButton)
-
-        self.file_initialize_button = QToolButton(self.horizontal_frame)
-        self.file_initialize_button.setObjectName(u"file_initialize_button")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/add_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.file_initialize_button.setIcon(icon1)
-        self.file_initialize_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.file_initialize_button)
-
-
-        self.verticalLayout_2.addWidget(self.horizontal_frame)
-
-
-        self.horizontalLayout.addWidget(self.left_vertical_frame)
-
+        self.horizontalLayout_7 = QHBoxLayout(self.centralwidget)
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
         self.frame = QFrame(self.centralwidget)
         self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout = QVBoxLayout(self.frame)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -98,8 +45,8 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.frame_4 = QFrame(self.frame)
         self.frame_4.setObjectName(u"frame_4")
-        self.frame_4.setFrameShape(QFrame.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Raised)
+        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_4)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -126,7 +73,7 @@ class Ui_BatchCreator_MainWindow(object):
 "        background-color: #414956;\n"
 "        color: white;\n"
 "    }")
-        self.folder_path_template.setAlignment(Qt.AlignCenter)
+        self.folder_path_template.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.horizontalLayout_3.addWidget(self.folder_path_template)
 
@@ -153,7 +100,7 @@ class Ui_BatchCreator_MainWindow(object):
 "        background-color: #414956;\n"
 "        color: white;\n"
 "    }")
-        self.assets_name_template.setAlignment(Qt.AlignCenter)
+        self.assets_name_template.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.horizontalLayout_3.addWidget(self.assets_name_template)
 
@@ -173,8 +120,8 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.frame_5 = QFrame(self.frame)
         self.frame_5.setObjectName(u"frame_5")
-        self.frame_5.setFrameShape(QFrame.StyledPanel)
-        self.frame_5.setFrameShadow(QFrame.Raised)
+        self.frame_5.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_5.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_4 = QHBoxLayout(self.frame_5)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
@@ -211,9 +158,9 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_button.setIcon(icon2)
+        icon = QIcon()
+        icon.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_button.setIcon(icon)
         self.open_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.open_button)
@@ -251,9 +198,9 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_button.setIcon(icon3)
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_button.setIcon(icon1)
         self.save_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.save_button)
@@ -295,9 +242,9 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.process_options_button.setIcon(icon4)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.process_options_button.setIcon(icon2)
         self.process_options_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.process_options_button)
@@ -335,9 +282,9 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.process_all_button.setIcon(icon5)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.process_all_button.setIcon(icon3)
         self.process_all_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.process_all_button)
@@ -346,9 +293,74 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout.addWidget(self.frame_5)
 
 
-        self.horizontalLayout.addWidget(self.frame)
+        self.horizontalLayout_7.addWidget(self.frame)
 
         BatchCreator_MainWindow.setCentralWidget(self.centralwidget)
+        self.dockWidget_3 = QDockWidget(BatchCreator_MainWindow)
+        self.dockWidget_3.setObjectName(u"dockWidget_3")
+        self.dockWidget_3.setInputMethodHints(Qt.InputMethodHint.ImhHiddenText)
+        self.dockWidget_3.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.dockWidget_3.setAllowedAreas(Qt.DockWidgetArea.RightDockWidgetArea)
+        self.dockWidgetContents_9 = QWidget()
+        self.dockWidgetContents_9.setObjectName(u"dockWidgetContents_9")
+        self.horizontalLayout = QHBoxLayout(self.dockWidgetContents_9)
+        self.horizontalLayout.setSpacing(0)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.left_vertical_frame = QFrame(self.dockWidgetContents_9)
+        self.left_vertical_frame.setObjectName(u"left_vertical_frame")
+        self.left_vertical_frame.setMaximumSize(QSize(16777215, 16777215))
+        self.left_vertical_frame.setBaseSize(QSize(330, 0))
+        self.left_vertical_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.left_vertical_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_2 = QVBoxLayout(self.left_vertical_frame)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.MiniWindows_explorer = QTreeView(self.left_vertical_frame)
+        self.MiniWindows_explorer.setObjectName(u"MiniWindows_explorer")
+        self.MiniWindows_explorer.setMaximumSize(QSize(16777215, 16777215))
+
+        self.verticalLayout_2.addWidget(self.MiniWindows_explorer)
+
+        self.horizontal_frame = QFrame(self.left_vertical_frame)
+        self.horizontal_frame.setObjectName(u"horizontal_frame")
+        self.horizontal_frame.setMaximumSize(QSize(16777215, 32))
+        self.horizontal_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.horizontal_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_2 = QHBoxLayout(self.horizontal_frame)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.Status_Line_Qedit = QTextEdit(self.horizontal_frame)
+        self.Status_Line_Qedit.setObjectName(u"Status_Line_Qedit")
+
+        self.horizontalLayout_2.addWidget(self.Status_Line_Qedit)
+
+        self.Copy_from_status_line_toolButton = QToolButton(self.horizontal_frame)
+        self.Copy_from_status_line_toolButton.setObjectName(u"Copy_from_status_line_toolButton")
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Copy_from_status_line_toolButton.setIcon(icon4)
+        self.Copy_from_status_line_toolButton.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.Copy_from_status_line_toolButton)
+
+        self.file_initialize_button = QToolButton(self.horizontal_frame)
+        self.file_initialize_button.setObjectName(u"file_initialize_button")
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/add_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.file_initialize_button.setIcon(icon5)
+        self.file_initialize_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.file_initialize_button)
+
+
+        self.verticalLayout_2.addWidget(self.horizontal_frame)
+
+
+        self.horizontalLayout.addWidget(self.left_vertical_frame)
+
+        self.dockWidget_3.setWidget(self.dockWidgetContents_9)
+        BatchCreator_MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget_3)
 
         self.retranslateUi(BatchCreator_MainWindow)
 
@@ -357,8 +369,6 @@ class Ui_BatchCreator_MainWindow(object):
 
     def retranslateUi(self, BatchCreator_MainWindow):
         BatchCreator_MainWindow.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"MainWindow", None))
-        self.Copy_from_status_line_toolButton.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"...", None))
-        self.file_initialize_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"...", None))
         self.status_label.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Oppened File: BatchCreator version:", None))
         self.folder_path_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Folder path", None))
         self.assets_name_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Asset name", None))
@@ -369,5 +379,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.save_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Save", None))
         self.process_options_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Options", None))
         self.process_all_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Process", None))
+        self.Copy_from_status_line_toolButton.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"...", None))
+        self.file_initialize_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"...", None))
     # retranslateUi
 
