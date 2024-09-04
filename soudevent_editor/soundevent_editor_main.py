@@ -202,7 +202,6 @@ class SoundEventEditorMainWidget(QMainWindow):
 
 
     def add_property(self, name, value):
-
         # value
         if name == 'volume':
             property_class = VolumeProperty(name=name, display_name="Volume", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
