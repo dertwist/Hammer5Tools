@@ -20,17 +20,6 @@ import json
 import keyvalues3 as kv3
 
 
-# Import necessary modules
-from PySide6.QtCore import QPoint, QSize
-
-# Save positions and sizes of dock widgets
-
-from PySide6.QtCore import QByteArray
-
-
-# In your SmartPropEditorMainWindow class
-from PySide6.QtCore import QByteArray
-
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, version="1", parent=None):
         super().__init__(parent)

@@ -79,370 +79,6 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QFrame" name="frame">
-            <property name="maximumSize">
-             <size>
-              <width>400</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout">
-             <property name="spacing">
-              <number>5</number>
-             </property>
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QFrame" name="frame_8">
-               <property name="frameShape">
-                <enum>QFrame::StyledPanel</enum>
-               </property>
-               <property name="frameShadow">
-                <enum>QFrame::Raised</enum>
-               </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_6">
-                <property name="leftMargin">
-                 <number>0</number>
-                </property>
-                <property name="topMargin">
-                 <number>0</number>
-                </property>
-                <property name="rightMargin">
-                 <number>0</number>
-                </property>
-                <property name="bottomMargin">
-                 <number>0</number>
-                </property>
-               </layout>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="soundevents_list_search_bar">
-               <property name="placeholderText">
-                <string>Search...</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QListWidget" name="soundevents_list"/>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_8">
-               <item>
-                <widget class="QToolButton" name="create_new_soundevent_options_button">
-                 <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quick setup options (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                 <property name="text">
-                  <string>...</string>
-                 </property>
-                 <property name="icon">
-                  <iconset resource="../resources.qrc">
-                   <normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
-                 </property>
-                 <property name="iconSize">
-                  <size>
-                   <width>20</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="create_new_soundevent">
-                 <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create new soundevent&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
-
-        font: 600 10pt &quot;Segoe UI&quot;;
-	
-
-        border: 2px solid black;
-        border-radius: 4px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QPushButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }</string>
-                 </property>
-                 <property name="text">
-                  <string>Creane new (music preset)</string>
-                 </property>
-                 <property name="icon">
-                  <iconset resource="../resources.qrc">
-                   <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
-                 </property>
-                 <property name="iconSize">
-                  <size>
-                   <width>20</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <spacer name="verticalSpacer_2">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>340</width>
-                 <height>10</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QTreeView" name="audio_files_explorer">
-               <property name="styleSheet">
-                <string notr="true">/* styles/treeview.qss */
-
-/* General application background */
-/* TreeView specific styles */
-QTreeView {
-    color: #E3E3E3;
-    border: 1px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    font: 580 10pt &quot;Segoe UI&quot;;
-}
-
-QTreeView::item {
-    height: 20px;
-}
-
-QTreeView::item:selected {
-    background-color: #272729;
-    color: #E3E3E3;
-}
-
-QTreeView::item:hover {
-    background-color: #272729;
-    color: #E3E3E3;
-}
-
-/* Branch icons */
-QTreeView::branch:closed:has-children {
-    /* Ensure this path is correct and the image exists */
-    image: url(:/icons/arrow_drop_down_16dp.svg);
-}
-
-QTreeView::branch:open:has-children {
-    /* Ensure this path is correct and the image exists */
-    image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
-}
-
-/* Header styles */
-QHeaderView::section {
-    background-color: #1d1d1f;
-    color: #E3E3E3;
-    font: 600 10pt &quot;Segoe UI&quot;;
-    height: 16px;
-    border: 0px;
-    border-bottom: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-}
-
-/* QHeaderView::section:hover {
-    background-color: #565656;
-}
-
-QHeaderView::section:pressed {
-    background-color: #444444;
-} */
-
-
-
-
-QLineEdit {
-    border: 1px solid #CCCCCC;
-    border-radius: 2px;
-    color: #E3E3E3;
-	font: 700 10pt &quot;Segoe UI&quot;;
-margin: 0px;
-padding: 0px;
-}
-QLineEdit:focus {
-    border: 1px solid #008CBA;
-    background-color: #1C1C1C;
-margin: 0px;
-padding: 0px;
-}
-QLineEdit::selection {
-    color: white;
-}</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QFrame" name="frame_5">
-               <property name="frameShape">
-                <enum>QFrame::StyledPanel</enum>
-               </property>
-               <property name="frameShadow">
-                <enum>QFrame::Raised</enum>
-               </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_3">
-                <property name="leftMargin">
-                 <number>0</number>
-                </property>
-                <property name="topMargin">
-                 <number>0</number>
-                </property>
-                <property name="rightMargin">
-                 <number>0</number>
-                </property>
-                <property name="bottomMargin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <widget class="QToolButton" name="open_sounds_folder_button">
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open sounds folder&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>...</string>
-                  </property>
-                  <property name="icon">
-                   <iconset resource="../resources.qrc">
-                    <normaloff>:/icons/folder_open.svg</normaloff>:/icons/folder_open.svg</iconset>
-                  </property>
-                  <property name="iconSize">
-                   <size>
-                    <width>20</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QToolButton" name="Import_audio_options_button">
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Improt audio options (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>...</string>
-                  </property>
-                  <property name="icon">
-                   <iconset resource="../resources.qrc">
-                    <normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
-                  </property>
-                  <property name="iconSize">
-                   <size>
-                    <width>20</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="Import_audio_button">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>32</height>
-                   </size>
-                  </property>
-                  <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Improt audio (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
-
-        font: 600 10pt &quot;Segoe UI&quot;;
-	
-
-        border: 2px solid black;
-        border-radius: 4px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QPushButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }</string>
-                  </property>
-                  <property name="text">
-                   <string>Import audio</string>
-                  </property>
-                  <property name="icon">
-                   <iconset resource="../resources.qrc">
-                    <normaloff>:/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
-                  </property>
-                  <property name="iconSize">
-                   <size>
-                    <width>20</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
            <widget class="QFrame" name="frame_3">
             <property name="frameShape">
              <enum>QFrame::StyledPanel</enum>
@@ -523,7 +159,7 @@ QLineEdit::selection {
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>621</width>
+                  <width>639</width>
                   <height>588</height>
                  </rect>
                 </property>
@@ -758,6 +394,367 @@ QLineEdit::selection {
      </widget>
     </item>
    </layout>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget">
+   <property name="minimumSize">
+    <size>
+     <width>340</width>
+     <height>157</height>
+    </size>
+   </property>
+   <property name="windowIcon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+   </property>
+   <property name="features">
+    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+   </property>
+   <property name="windowTitle">
+    <string>Soundevents</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout_6">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLineEdit" name="soundevents_list_search_bar">
+       <property name="placeholderText">
+        <string>Search...</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QListWidget" name="soundevents_list"/>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_8">
+       <item>
+        <widget class="QToolButton" name="create_new_soundevent_options_button">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quick setup options (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../resources.qrc">
+           <normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="create_new_soundevent">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create new soundevent&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 600 10pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 4px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+         </property>
+         <property name="text">
+          <string>Creane new (music preset)</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../resources.qrc">
+           <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_2">
+   <property name="features">
+    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+   </property>
+   <property name="windowTitle">
+    <string>Audio explorer</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTreeView" name="audio_files_explorer">
+       <property name="styleSheet">
+        <string notr="true">/* styles/treeview.qss */
+
+/* General application background */
+/* TreeView specific styles */
+QTreeView {
+    color: #E3E3E3;
+    border: 1px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    font: 580 10pt &quot;Segoe UI&quot;;
+}
+
+QTreeView::item {
+    height: 20px;
+}
+
+QTreeView::item:selected {
+    background-color: #272729;
+    color: #E3E3E3;
+}
+
+QTreeView::item:hover {
+    background-color: #272729;
+    color: #E3E3E3;
+}
+
+/* Branch icons */
+QTreeView::branch:closed:has-children {
+    /* Ensure this path is correct and the image exists */
+    image: url(:/icons/arrow_drop_down_16dp.svg);
+}
+
+QTreeView::branch:open:has-children {
+    /* Ensure this path is correct and the image exists */
+    image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}
+
+/* Header styles */
+QHeaderView::section {
+    background-color: #1d1d1f;
+    color: #E3E3E3;
+    font: 600 10pt &quot;Segoe UI&quot;;
+    height: 16px;
+    border: 0px;
+    border-bottom: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+}
+
+/* QHeaderView::section:hover {
+    background-color: #565656;
+}
+
+QHeaderView::section:pressed {
+    background-color: #444444;
+} */
+
+
+
+
+QLineEdit {
+    border: 1px solid #CCCCCC;
+    border-radius: 2px;
+    color: #E3E3E3;
+	font: 700 10pt &quot;Segoe UI&quot;;
+margin: 0px;
+padding: 0px;
+}
+QLineEdit:focus {
+    border: 1px solid #008CBA;
+    background-color: #1C1C1C;
+margin: 0px;
+padding: 0px;
+}
+QLineEdit::selection {
+    color: white;
+}</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frame_5">
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QToolButton" name="open_sounds_folder_button">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open sounds folder&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../resources.qrc">
+            <normaloff>:/icons/folder_open.svg</normaloff>:/icons/folder_open.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="Import_audio_options_button">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Improt audio options (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../resources.qrc">
+            <normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="Import_audio_button">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Improt audio (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 600 10pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 4px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+          </property>
+          <property name="text">
+           <string>Import audio</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../resources.qrc">
+            <normaloff>:/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
  </widget>
  <resources>
