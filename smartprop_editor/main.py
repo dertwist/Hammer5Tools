@@ -14,16 +14,16 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.version_label.setText(version)
 
         settings_path = get_config_value('PATHS', 'settings')
-        self.settings = QSettings(os.path.join(settings_path, "smartprop_editor.ini"), QSettings.IniFormat)
+        self.settings = QSettings(os.path.join(settings_path, "smartprop_editor.cfg"), QSettings.IniFormat)
 
         self._restore_user_prefs()
 
     def _restore_user_prefs(self):
-        geo = self.settings.value("MainWindow/geometry")
+        geo = self.settings.value("SmartPropEditorMainWindow/geometry")
         if geo:
             self.restoreGeometry(geo)
 
-        state = self.settings.value("MainWindow/windowState")
+        state = self.settings.value("SmartPropEditorMainWindow/windowState")
         if state:
             self.restoreState(state)
 
@@ -31,8 +31,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self._save_user_prefs()
 
     def _save_user_prefs(self):
-        self.settings.setValue("MainWindow/geometry", self.saveGeometry())
-        self.settings.setValue("MainWindow/windowState", self.saveState())
+        self.settings.setValue("SmartPropEditorMainWindow/geometry", self.saveGeometry())
+        self.settings.setValue("SmartPropEditorMainWindow/windowState", self.saveState())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
