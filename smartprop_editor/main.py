@@ -5,7 +5,6 @@ from PySide6.QtCore import QTimer, QSettings
 from PySide6.QtGui import QCloseEvent
 from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_config_value
-from qt_material import apply_stylesheet
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
 
@@ -60,46 +59,10 @@ class SmartPropEditorMainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
+    app.setStyleSheet(QT_Stylesheet_global)
     window = SmartPropEditorMainWindow()
     window.show()
-    extra = {
 
-        # Density Scale
-        'density_scale': '-3',
-    }
-
-    apply_stylesheet(app, 'light_blue.xml', extra=extra)
-
-    from qt_material import export_theme
-
-    extra = {
-
-        # Button colors
-        'danger': '#dc3545',
-        'warning': '#ffc107',
-        'success': '#17a2b8',
-
-        # Font
-        'font_family': 'monoespace',
-        'font_size': '13px',
-        'line_height': '13px',
-
-        # Density Scale
-        'density_scale': '0',
-
-        # environ
-        'pyside6': True,
-        'linux': True,
-
-    }
-
-    export_theme(theme='dark_teal.xml',
-                 qss='dark_teal.qss',
-                 rcc='resources.rcc',
-                 output='theme',
-                 prefix='icon:/',
-                 invert_secondary=False,
-                 extra=extra,
-                 )
 
     sys.exit(app.exec())
