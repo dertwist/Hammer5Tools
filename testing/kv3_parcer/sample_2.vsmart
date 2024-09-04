@@ -6,6 +6,7 @@
 		
 		{
 			_class = "CSmartPropVariable_Float"
+			m_test = resource_name:"models/props/de_nuke/hr_nuke/chainlink_fence_001/chainlink_fence_gate_001_64_door.vmdl"
 			m_VariableName = "length"
 			m_nElementID = 61
 		},
