@@ -243,9 +243,6 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.dockWidget = QDockWidget(SoundEvent_Editor_MainWindow)
         self.dockWidget.setObjectName(u"dockWidget")
         self.dockWidget.setMinimumSize(QSize(340, 157))
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.dockWidget.setWindowIcon(icon3)
         self.dockWidget.setFeatures(QDockWidget.DockWidgetFloatable|QDockWidget.DockWidgetMovable)
         self.dockWidgetContents = QWidget()
         self.dockWidgetContents.setObjectName(u"dockWidgetContents")
@@ -267,9 +264,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.create_new_soundevent_options_button = QToolButton(self.dockWidgetContents)
         self.create_new_soundevent_options_button.setObjectName(u"create_new_soundevent_options_button")
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.create_new_soundevent_options_button.setIcon(icon4)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.create_new_soundevent_options_button.setIcon(icon3)
         self.create_new_soundevent_options_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_8.addWidget(self.create_new_soundevent_options_button)
@@ -306,9 +303,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.create_new_soundevent.setIcon(icon5)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.create_new_soundevent.setIcon(icon4)
         self.create_new_soundevent.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_8.addWidget(self.create_new_soundevent)
@@ -419,16 +416,16 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.open_sounds_folder_button = QToolButton(self.frame_5)
         self.open_sounds_folder_button.setObjectName(u"open_sounds_folder_button")
-        icon6 = QIcon()
-        icon6.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_sounds_folder_button.setIcon(icon6)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_sounds_folder_button.setIcon(icon5)
         self.open_sounds_folder_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.open_sounds_folder_button)
 
         self.Import_audio_options_button = QToolButton(self.frame_5)
         self.Import_audio_options_button.setObjectName(u"Import_audio_options_button")
-        self.Import_audio_options_button.setIcon(icon4)
+        self.Import_audio_options_button.setIcon(icon3)
         self.Import_audio_options_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.Import_audio_options_button)
@@ -466,9 +463,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Import_audio_button.setIcon(icon7)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Import_audio_button.setIcon(icon6)
         self.Import_audio_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.Import_audio_button)
