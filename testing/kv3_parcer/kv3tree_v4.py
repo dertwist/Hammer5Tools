@@ -153,33 +153,27 @@ class MainWindow(QMainWindow):
             # parent = parent_element
         if isinstance(data, dict):
             for key, value in data.items():
-                if isinstance(value, dict):
-                    item = QTreeWidgetItem([key])
-                    item.setFlags(item.flags() | Qt.ItemIsEditable)
-                    parent.addChild(item)
-                    # for child_data in value:
-                    #     self.populate_tree(child_data, item)
-                    self.populate_tree(value, item)
-                elif isinstance(value, list):
-                    # trying to parse class elements
-                    try:
-                        item_class = value[0].get('_class')
-                        child = QTreeWidgetItem([key])
-                        child.setFlags(child.flags() | Qt.ItemIsEditable)
-                        parent.addChild(child)
+                if key == 'm_Children':
+                    # print(type(key), key)
+                    if isinstance(value, dict):
+                        item = QTreeWidgetItem([key])
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)
+                        parent.addChild(item)
+                        # for child_data in value:
+                        #     self.populate_tree(child_data, item)
+                        self.populate_tree(value, item)
+                    elif isinstance(value, list):
+                        # trying to parse class elements
+                        # if key == 'm_SelectionCriteria':
+                        #     print(type(key), key)
+                        try:
+                            item_class = value[0].get('_class')
+                            child = QTreeWidgetItem([key])
+                            child.setFlags(child.flags() | Qt.ItemIsEditable)
+                            parent.addChild(child)
+                            for item in value:
 
-                        for item in value:
-
-                            if key == 'm_Children' or 'm_Modifiers':
-                                if isinstance(item, list):
-                                    print(1, key, item)
-                                    for item_list in item:
-                                        item_class = item_list.get('_class')
-                                        child_item = QTreeWidgetItem([str(item_class + 'fdss')])
-                                        child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
-                                        child.addChild(child_item)
-                                        self.populate_tree(item, child_item)
-                                else:
+                                if key == 'm_Children':
                                     item_class = item.get('_class')
                                     value_dict = item.copy()
                                     try:
@@ -191,19 +185,22 @@ class MainWindow(QMainWindow):
                                     child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
                                     child.addChild(child_item)
                                     self.populate_tree(item, child_item)
-                    except Exception as error:
-                        print(error)
-                        # if didn't find any class element just set value to key row
-                        print(key, value)
-                        child = QTreeWidgetItem([key, str(value)])
-                        child.setFlags(child.flags() | Qt.ItemIsEditable)
-                        parent.addChild(child)
-                elif isinstance(value, (str, float, int)):
-                    # item = QTreeWidgetItem([key, str(value)])
-                    # item.setFlags(item.flags() | Qt.ItemIsEditable)
-                    # parent.addChild(item)
-                    # self.populate_tree(value, item)
-                    pass
+                                # elif key == 'm_vEnd':
+                                #     print('m_vEnd')
+                        except Exception as error:
+                            print(error)
+                            pass
+                            # if didn't find any class element just set value to key row
+                            print(key, value)
+                            # child = QTreeWidgetItem([key, str(value)])
+                            # child.setFlags(child.flags() | Qt.ItemIsEditable)
+                            # parent.addChild(child)
+                    elif isinstance(value, (str, float, int)):
+                        # item = QTreeWidgetItem([key, str(value)])
+                        # item.setFlags(item.flags() | Qt.ItemIsEditable)
+                        # parent.addChild(item)
+                        # self.populate_tree(value, item)
+                        pass
 
     def search_recursively(self, parent_item):
         def search_recursively_loop(parent_item):
