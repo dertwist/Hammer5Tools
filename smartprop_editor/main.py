@@ -9,7 +9,7 @@ from preferences import get_config_value
 from soudevent_editor.properties.legacy_property import LegacyProperty
 
 class SmartPropEditorMainWindow(QMainWindow):
-    def __init__(self, version="1", parent=None):
+    def __init__(self, version="v0.0.2", parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)

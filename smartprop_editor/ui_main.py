@@ -16,11 +16,11 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QGroupBox,
-    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QMainWindow, QPushButton,
-    QScrollArea, QSizePolicy, QToolButton, QTreeWidget,
-    QTreeWidgetItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFrame,
+    QGroupBox, QHBoxLayout, QHeaderView, QLabel,
+    QLineEdit, QMainWindow, QPlainTextEdit, QPushButton,
+    QScrollArea, QSizePolicy, QSpacerItem, QToolButton,
+    QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_MainWindow(object):
@@ -65,68 +65,18 @@ class Ui_MainWindow(object):
         self.frame_9.setFrameShadow(QFrame.Raised)
         self.frame_9.setLineWidth(0)
         self.verticalLayout_5 = QVBoxLayout(self.frame_9)
+        self.verticalLayout_5.setSpacing(0)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.frame_8 = QFrame(self.frame_9)
-        self.frame_8.setObjectName(u"frame_8")
-        self.frame_8.setFrameShape(QFrame.StyledPanel)
-        self.frame_8.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_5 = QHBoxLayout(self.frame_8)
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.status_bar = QLineEdit(self.frame_8)
-        self.status_bar.setObjectName(u"status_bar")
-        self.status_bar.setReadOnly(True)
-
-        self.horizontalLayout_5.addWidget(self.status_bar)
-
-        self.version_label = QLabel(self.frame_8)
-        self.version_label.setObjectName(u"version_label")
-        self.version_label.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.horizontalLayout_5.addWidget(self.version_label)
-
-
-        self.verticalLayout_5.addWidget(self.frame_8)
-
-        self.frame_10 = QFrame(self.frame_9)
-        self.frame_10.setObjectName(u"frame_10")
-        self.frame_10.setFrameShape(QFrame.StyledPanel)
-        self.frame_10.setFrameShadow(QFrame.Raised)
-        self.frame_10.setLineWidth(0)
-        self.horizontalLayout_6 = QHBoxLayout(self.frame_10)
-        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
-        self.horizontalLayout_6.setContentsMargins(0, 0, 0, 0)
-        self.frame_7 = QFrame(self.frame_10)
-        self.frame_7.setObjectName(u"frame_7")
-        self.frame_7.setFrameShape(QFrame.StyledPanel)
-        self.frame_7.setFrameShadow(QFrame.Raised)
-        self.frame_7.setLineWidth(0)
-        self.horizontalLayout_4 = QHBoxLayout(self.frame_7)
-        self.horizontalLayout_4.setSpacing(0)
-        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.frame = QFrame(self.frame_7)
-        self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
-        self.frame.setLineWidth(0)
-        self.verticalLayout_2 = QVBoxLayout(self.frame)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.label_4 = QLabel(self.frame)
-        self.label_4.setObjectName(u"label_4")
-
-        self.verticalLayout_2.addWidget(self.label_4)
-
-        self.scrollArea = QScrollArea(self.frame)
+        self.scrollArea = QScrollArea(self.frame_9)
         self.scrollArea.setObjectName(u"scrollArea")
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 532, 656))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 538, 690))
         self.verticalLayout_17 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_17.setObjectName(u"verticalLayout_17")
+        self.verticalLayout_17.setContentsMargins(0, 0, 0, 0)
         self.group_class_properties = QGroupBox(self.scrollAreaWidgetContents)
         self.group_class_properties.setObjectName(u"group_class_properties")
         self.group_class_properties.setStyleSheet(u"/* QGroupBox Style */\n"
@@ -166,10 +116,16 @@ class Ui_MainWindow(object):
         self.verticalLayout_13.setContentsMargins(0, 0, 0, 0)
         self.scrollArea__class_properties = QScrollArea(self.group_class_properties)
         self.scrollArea__class_properties.setObjectName(u"scrollArea__class_properties")
+        self.scrollArea__class_properties.setStyleSheet(u"QScrollArea {\n"
+"    border: 0px solid #CCCCCC;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 2px;\n"
+"    color: #E3E3E3;\n"
+"}")
         self.scrollArea__class_properties.setWidgetResizable(True)
         self._class_properties_widget = QWidget()
         self._class_properties_widget.setObjectName(u"_class_properties_widget")
-        self._class_properties_widget.setGeometry(QRect(0, 0, 512, 190))
+        self._class_properties_widget.setGeometry(QRect(0, 0, 538, 123))
         self.verticalLayout_14 = QVBoxLayout(self._class_properties_widget)
         self.verticalLayout_14.setObjectName(u"verticalLayout_14")
         self.scrollArea__class_properties.setWidget(self._class_properties_widget)
@@ -218,10 +174,16 @@ class Ui_MainWindow(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.scrollArea_modifiers = QScrollArea(self.group_modifiers)
         self.scrollArea_modifiers.setObjectName(u"scrollArea_modifiers")
+        self.scrollArea_modifiers.setStyleSheet(u"QScrollArea {\n"
+"    border: 0px solid #CCCCCC;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 2px;\n"
+"    color: #E3E3E3;\n"
+"}")
         self.scrollArea_modifiers.setWidgetResizable(True)
         self.modifiers_widget = QWidget()
         self.modifiers_widget.setObjectName(u"modifiers_widget")
-        self.modifiers_widget.setGeometry(QRect(0, 0, 512, 189))
+        self.modifiers_widget.setGeometry(QRect(0, 0, 538, 123))
         self.verticalLayout_4 = QVBoxLayout(self.modifiers_widget)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.scrollArea_modifiers.setWidget(self.modifiers_widget)
@@ -270,10 +232,16 @@ class Ui_MainWindow(object):
         self.verticalLayout_15.setContentsMargins(0, 0, 0, 0)
         self.scrollArea_selection_criteria = QScrollArea(self.group_selection_criteria)
         self.scrollArea_selection_criteria.setObjectName(u"scrollArea_selection_criteria")
+        self.scrollArea_selection_criteria.setStyleSheet(u"QScrollArea {\n"
+"    border: 0px solid #CCCCCC;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 2px;\n"
+"    color: #E3E3E3;\n"
+"}")
         self.scrollArea_selection_criteria.setWidgetResizable(True)
         self.selection_criteria_widget = QWidget()
         self.selection_criteria_widget.setObjectName(u"selection_criteria_widget")
-        self.selection_criteria_widget.setGeometry(QRect(0, 0, 512, 190))
+        self.selection_criteria_widget.setGeometry(QRect(0, 0, 538, 123))
         self.verticalLayout_16 = QVBoxLayout(self.selection_criteria_widget)
         self.verticalLayout_16.setObjectName(u"verticalLayout_16")
         self.scrollArea_selection_criteria.setWidget(self.selection_criteria_widget)
@@ -283,18 +251,54 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_17.addWidget(self.group_selection_criteria)
 
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.verticalLayout_17.addItem(self.verticalSpacer)
+
+        self.label = QLabel(self.scrollAreaWidgetContents)
+        self.label.setObjectName(u"label")
+        self.label.setStyleSheet(u"QLabel {\n"
+"    font: 580 9pt \"Segoe UI\";\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:2px;\n"
+"    padding-left: 4px;\n"
+"    padding-right: 4px;\n"
+"    color: #E3E3E3;\n"
+"}")
+
+        self.verticalLayout_17.addWidget(self.label)
+
+        self.plainTextEdit = QPlainTextEdit(self.scrollAreaWidgetContents)
+        self.plainTextEdit.setObjectName(u"plainTextEdit")
+        self.plainTextEdit.setMaximumSize(QSize(16777215, 80))
+
+        self.verticalLayout_17.addWidget(self.plainTextEdit)
+
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
-        self.verticalLayout_2.addWidget(self.scrollArea)
+        self.verticalLayout_5.addWidget(self.scrollArea)
+
+        self.frame_8 = QFrame(self.frame_9)
+        self.frame_8.setObjectName(u"frame_8")
+        self.frame_8.setFrameShape(QFrame.StyledPanel)
+        self.frame_8.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_5 = QHBoxLayout(self.frame_8)
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.status_bar = QLineEdit(self.frame_8)
+        self.status_bar.setObjectName(u"status_bar")
+        self.status_bar.setReadOnly(True)
+
+        self.horizontalLayout_5.addWidget(self.status_bar)
+
+        self.version_label = QLabel(self.frame_8)
+        self.version_label.setObjectName(u"version_label")
+        self.version_label.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.horizontalLayout_5.addWidget(self.version_label)
 
 
-        self.horizontalLayout_4.addWidget(self.frame)
-
-
-        self.horizontalLayout_6.addWidget(self.frame_7)
-
-
-        self.verticalLayout_5.addWidget(self.frame_10)
+        self.verticalLayout_5.addWidget(self.frame_8)
 
 
         self.verticalLayout_9.addWidget(self.frame_9)
@@ -350,31 +354,207 @@ class Ui_MainWindow(object):
         self.verticalLayout_7.setSpacing(6)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
         self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
-        self.treeWidget_2 = QTreeWidget(self.dockWidgetContents)
-        __qtreewidgetitem3 = QTreeWidgetItem(self.treeWidget_2)
-        QTreeWidgetItem(__qtreewidgetitem3)
-        QTreeWidgetItem(__qtreewidgetitem3)
-        QTreeWidgetItem(__qtreewidgetitem3)
-        QTreeWidgetItem(self.treeWidget_2)
-        QTreeWidgetItem(self.treeWidget_2)
-        self.treeWidget_2.setObjectName(u"treeWidget_2")
-        self.treeWidget_2.header().setVisible(True)
-        self.treeWidget_2.header().setCascadingSectionResizes(False)
-        self.treeWidget_2.header().setDefaultSectionSize(200)
-        self.treeWidget_2.header().setHighlightSections(False)
-        self.treeWidget_2.header().setProperty("showSortIndicator", False)
+        self.scrollArea_2 = QScrollArea(self.dockWidgetContents)
+        self.scrollArea_2.setObjectName(u"scrollArea_2")
+        self.scrollArea_2.setWidgetResizable(True)
+        self.scrollAreaWidgetContents_2 = QWidget()
+        self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 348, 290))
+        self.verticalLayout_2 = QVBoxLayout(self.scrollAreaWidgetContents_2)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.scrollArea_2.setWidget(self.scrollAreaWidgetContents_2)
 
-        self.verticalLayout_7.addWidget(self.treeWidget_2)
+        self.verticalLayout_7.addWidget(self.scrollArea_2)
 
-        self.listWidget = QListWidget(self.dockWidgetContents)
-        self.listWidget.setObjectName(u"listWidget")
+        self.frame = QFrame(self.dockWidgetContents)
+        self.frame.setObjectName(u"frame")
+        self.frame.setMinimumSize(QSize(0, 0))
+        self.frame.setMaximumSize(QSize(16777215, 28))
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout = QHBoxLayout(self.frame)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.add_new_variable_button = QToolButton(self.frame)
+        self.add_new_variable_button.setObjectName(u"add_new_variable_button")
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.add_new_variable_button.setIcon(icon4)
+        self.add_new_variable_button.setIconSize(QSize(16, 16))
 
-        self.verticalLayout_7.addWidget(self.listWidget)
+        self.horizontalLayout.addWidget(self.add_new_variable_button)
 
-        self.pushButton = QPushButton(self.dockWidgetContents)
-        self.pushButton.setObjectName(u"pushButton")
+        self.add_new_variable_combobox = QComboBox(self.frame)
+        self.add_new_variable_combobox.addItem("")
+        self.add_new_variable_combobox.addItem("")
+        self.add_new_variable_combobox.addItem("")
+        self.add_new_variable_combobox.setObjectName(u"add_new_variable_combobox")
+        self.add_new_variable_combobox.setStyleSheet(u"QMenu {\n"
+"background-color: red;\n"
+" }\n"
+"\n"
+"QMenu::item {\n"
+"    padding: 5px 10px;\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    color: #E3E3E3;\n"
+"}\n"
+"QMenu::item:selected {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"QWidget {\n"
+"    background-color: #151515;\n"
+"    outline: none;\n"
+"}\n"
+"\n"
+"QWidget:item:checked {\n"
+"    background-color: #151515;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QWidget:item:selected {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"    border: 0px;\n"
+"}\n"
+"\n"
+"\n"
+"\n"
+"QMenu {\n"
+"    background-color: #1d1d1f;\n"
+"    color: #FFFFFF;\n"
+"    border: 1px solid #555555;\n"
+"    /* padding-top: 5px; */\n"
+"    /* padding-bottom: 5px; */\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QMenu::item {\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border-top: "
+                        "2px solid black;\n"
+"    border: 0px;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    padding-left: 12px;\n"
+"    padding-right: 12px;\n"
+"    color: #E3E3E3;\n"
+"}\n"
+"\n"
+"QMenu::item:selected {\n"
+"    background-color: #666666;\n"
+"    color: #FFFFFF;\n"
+"}\n"
+"\n"
+"QMenu::separator {\n"
+"    height: 1px;\n"
+"    background: #AAAAAA;\n"
+"    margin: 5px 0;\n"
+"}\n"
+"\n"
+"QMenu::indicator {\n"
+"    width: 13px;\n"
+"    height: 13px;\n"
+"}\n"
+"\n"
+"QMenu::indicator:checked {\n"
+"    image: url(:/images/checkmark.png);\n"
+"}\n"
+"\n"
+"QMenu::indicator:unchecked {\n"
+"    image: url(:/images/empty.png);\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox {\n"
+"    font: 600 9pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height: 12px;\n"
+"    padding-top: 5px;\n"
+"    padding-bottom: 5px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"    padding-left: 5px;\n"
+"}\n"
+"\n"
+"QComboBox:hover {\n"
+"    back"
+                        "ground-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QComboBox:pressed {\n"
+"    background-color: #2E2F30;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QComboBox:item {\n"
+"    font: 600 12pt \"Segoe UI\";\n"
+"    color: #E3E3E3;\n"
+"    padding-left: 5px;\n"
+"    background-color: #1C1C1C;\n"
+"    border-style: none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down {\n"
+"    color: #E3E3E3;\n"
+"    padding: 2px;\n"
+"    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;\n"
+"    border-bottom: 0px solid black;\n"
+"    border-top: 0px solid black;\n"
+"    border-right: 0px;\n"
+"    border-left: 2px solid;\n"
+"    margin-left: 5px;\n"
+"    padding: 5px;\n"
+"    width: 7px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView {\n"
+"    border: 2px solid gray;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    selection-background-color: #414956;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item"
+                        " {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    color: #ff8a8a8a;\n"
+"    border-style: none;\n"
+"    border-bottom: 0.5px solid black;\n"
+"    border-color: rgba(255, 255, 255, 10);\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item:selected {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"    border: none; /* Remove border */\n"
+"    outline: none; /* Remove outline */\n"
+"}")
 
-        self.verticalLayout_7.addWidget(self.pushButton)
+        self.horizontalLayout.addWidget(self.add_new_variable_combobox)
+
+
+        self.verticalLayout_7.addWidget(self.frame)
 
         self.dockWidget.setWidget(self.dockWidgetContents)
         MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget)
@@ -388,9 +568,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_10.setObjectName(u"verticalLayout_10")
         self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
         self.tree_smartprops_explorer_widget = QTreeWidget(self.dockWidgetContents_10)
-        __qtreewidgetitem4 = QTreeWidgetItem()
-        __qtreewidgetitem4.setText(0, u"1");
-        self.tree_smartprops_explorer_widget.setHeaderItem(__qtreewidgetitem4)
+        __qtreewidgetitem3 = QTreeWidgetItem()
+        __qtreewidgetitem3.setText(0, u"1");
+        self.tree_smartprops_explorer_widget.setHeaderItem(__qtreewidgetitem3)
         self.tree_smartprops_explorer_widget.setObjectName(u"tree_smartprops_explorer_widget")
 
         self.verticalLayout_10.addWidget(self.tree_smartprops_explorer_widget)
@@ -406,9 +586,9 @@ class Ui_MainWindow(object):
         self.toolButton = QToolButton(self.frame_4)
         self.toolButton.setObjectName(u"toolButton")
         self.toolButton.setMaximumSize(QSize(16777215, 16777215))
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.toolButton.setIcon(icon4)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.toolButton.setIcon(icon5)
         self.toolButton.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.toolButton)
@@ -445,9 +625,7 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.cerate_file_button.setIcon(icon5)
+        self.cerate_file_button.setIcon(icon4)
         self.cerate_file_button.setIconSize(QSize(24, 24))
 
         self.horizontalLayout_2.addWidget(self.cerate_file_button)
@@ -506,12 +684,12 @@ class Ui_MainWindow(object):
         self.actionCreateNewsmartprop.setText(QCoreApplication.translate("MainWindow", u"CreateNewsmartprop", None))
         self.actionSaveSmarptop.setText(QCoreApplication.translate("MainWindow", u"SaveSmarptop", None))
         self.actionSaveSmartpropAs.setText(QCoreApplication.translate("MainWindow", u"SaveSmartpropAs", None))
-        self.status_bar.setText(QCoreApplication.translate("MainWindow", u"Console output", None))
-        self.version_label.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
-        self.label_4.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
         self.group_class_properties.setTitle(QCoreApplication.translate("MainWindow", u"Class Properties", None))
         self.group_modifiers.setTitle(QCoreApplication.translate("MainWindow", u"Modifiers", None))
         self.group_selection_criteria.setTitle(QCoreApplication.translate("MainWindow", u"Selection Criteria", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"Comment", None))
+        self.status_bar.setText(QCoreApplication.translate("MainWindow", u"Console output", None))
+        self.version_label.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
 
@@ -528,29 +706,11 @@ class Ui_MainWindow(object):
         self.tree_hierarchy_widget.setSortingEnabled(__sortingEnabled)
 
         self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
-        ___qtreewidgetitem4 = self.treeWidget_2.headerItem()
-        ___qtreewidgetitem4.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
-        ___qtreewidgetitem4.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
+        self.add_new_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
+        self.add_new_variable_combobox.setItemText(0, QCoreApplication.translate("MainWindow", u"VariableCoordinateSpace", None))
+        self.add_new_variable_combobox.setItemText(1, QCoreApplication.translate("MainWindow", u"VariableDirection", None))
+        self.add_new_variable_combobox.setItemText(2, QCoreApplication.translate("MainWindow", u"VariableDistributionMode", None))
 
-        __sortingEnabled1 = self.treeWidget_2.isSortingEnabled()
-        self.treeWidget_2.setSortingEnabled(False)
-        ___qtreewidgetitem5 = self.treeWidget_2.topLevelItem(0)
-        ___qtreewidgetitem5.setText(1, QCoreApplication.translate("MainWindow", u"VariableCoordinateSpace", None));
-        ___qtreewidgetitem5.setText(0, QCoreApplication.translate("MainWindow", u"Cords", None));
-        ___qtreewidgetitem6 = ___qtreewidgetitem5.child(0)
-        ___qtreewidgetitem6.setText(1, QCoreApplication.translate("MainWindow", u"Element", None));
-        ___qtreewidgetitem6.setText(0, QCoreApplication.translate("MainWindow", u"Default Value", None));
-        ___qtreewidgetitem7 = ___qtreewidgetitem5.child(1)
-        ___qtreewidgetitem7.setText(0, QCoreApplication.translate("MainWindow", u"Display Name", None));
-        ___qtreewidgetitem8 = ___qtreewidgetitem5.child(2)
-        ___qtreewidgetitem8.setText(0, QCoreApplication.translate("MainWindow", u"Visible in editor", None));
-        ___qtreewidgetitem9 = self.treeWidget_2.topLevelItem(1)
-        ___qtreewidgetitem9.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropVariable_Float", None));
-        ___qtreewidgetitem10 = self.treeWidget_2.topLevelItem(2)
-        ___qtreewidgetitem10.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropVariable_Bool", None));
-        self.treeWidget_2.setSortingEnabled(__sortingEnabled1)
-
-        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Add new", None))
         self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
         self.toolButton.setText(QCoreApplication.translate("MainWindow", u"...", None))
         self.cerate_file_button.setText(QCoreApplication.translate("MainWindow", u"Create", None))
