@@ -23,10 +23,24 @@ QLabel {
 
 
 
+/* ========================================================== */
 
+/* QSplitter {
+  background-color: transparent;
+  border: none
+}
 
+QMainWindow::separator:vertical,
+QSplitter::handle:horizontal {
+  image: url(://icons/more_.png);
+  width:4px;
+  height:4px;
+}
 
-
+QMainWindow::separator:horizontal,
+QSplitter::handle:vertical {
+  image: url(://icons/more_horiz.png);\
+} */
 
 /* ========================================================== */
 QPushButton {

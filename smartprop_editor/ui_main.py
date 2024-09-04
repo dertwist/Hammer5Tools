@@ -16,11 +16,11 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QHBoxLayout,
-    QHeaderView, QLabel, QLineEdit, QListWidget,
-    QListWidgetItem, QMainWindow, QPushButton, QSizePolicy,
-    QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QGroupBox,
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+    QListWidget, QListWidgetItem, QMainWindow, QPushButton,
+    QScrollArea, QSizePolicy, QToolButton, QTreeWidget,
+    QTreeWidgetItem, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_MainWindow(object):
@@ -103,6 +103,7 @@ class Ui_MainWindow(object):
         self.frame_7.setFrameShadow(QFrame.Raised)
         self.frame_7.setLineWidth(0)
         self.horizontalLayout_4 = QHBoxLayout(self.frame_7)
+        self.horizontalLayout_4.setSpacing(0)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.frame = QFrame(self.frame_7)
@@ -118,40 +119,173 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.label_4)
 
-        self.treeWidget_3 = QTreeWidget(self.frame)
-        QTreeWidgetItem(self.treeWidget_3)
-        QTreeWidgetItem(self.treeWidget_3)
-        QTreeWidgetItem(self.treeWidget_3)
-        __qtreewidgetitem = QTreeWidgetItem(self.treeWidget_3)
-        QTreeWidgetItem(__qtreewidgetitem)
-        QTreeWidgetItem(__qtreewidgetitem)
-        QTreeWidgetItem(__qtreewidgetitem)
-        __qtreewidgetitem1 = QTreeWidgetItem(self.treeWidget_3)
-        QTreeWidgetItem(__qtreewidgetitem1)
-        self.treeWidget_3.setObjectName(u"treeWidget_3")
-        self.treeWidget_3.header().setVisible(True)
-        self.treeWidget_3.header().setCascadingSectionResizes(False)
-        self.treeWidget_3.header().setDefaultSectionSize(280)
-        self.treeWidget_3.header().setHighlightSections(False)
-        self.treeWidget_3.header().setProperty("showSortIndicator", False)
+        self.scrollArea = QScrollArea(self.frame)
+        self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollAreaWidgetContents = QWidget()
+        self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 532, 656))
+        self.verticalLayout_17 = QVBoxLayout(self.scrollAreaWidgetContents)
+        self.verticalLayout_17.setObjectName(u"verticalLayout_17")
+        self.group_class_properties = QGroupBox(self.scrollAreaWidgetContents)
+        self.group_class_properties.setObjectName(u"group_class_properties")
+        self.group_class_properties.setStyleSheet(u"/* QGroupBox Style */\n"
+"QGroupBox {\n"
+"    border: 1px solid gray; /* Set the border color and width */\n"
+"    border-bottom: none; /* Remove the bottom border */\n"
+"    border-left: none; /* Remove the left border */\n"
+"    border-right: none; /* Remove the right border */\n"
+"    margin-top: 8px; /* Space for the title */\n"
+"	padding-top: 8px;\n"
+"}\n"
+"\n"
+"/* Title Style */\n"
+"QGroupBox::title {\n"
+"    subcontrol-origin: margin;\n"
+"    subcontrol-position: top left;\n"
+"    padding: 0 6;\n"
+"    color: white; \n"
+"}\n"
+"\n"
+"QGroupBox::indicator {\n"
+"    width: 13px;\n"
+"    height: 13px;\n"
+"}\n"
+"\n"
+"QGroupBox::indicator:checked {\n"
+"    image: url(://icons/arrow_drop_right.png);\n"
+"}\n"
+"\n"
+"QGroupBox::indicator:unchecked {\n"
+"    image: url(://icons/arrow_drop_down.png); \n"
+"}")
+        self.group_class_properties.setFlat(False)
+        self.group_class_properties.setCheckable(True)
+        self.verticalLayout_13 = QVBoxLayout(self.group_class_properties)
+        self.verticalLayout_13.setObjectName(u"verticalLayout_13")
+        self.verticalLayout_13.setContentsMargins(0, 0, 0, 0)
+        self.scrollArea__class_properties = QScrollArea(self.group_class_properties)
+        self.scrollArea__class_properties.setObjectName(u"scrollArea__class_properties")
+        self.scrollArea__class_properties.setWidgetResizable(True)
+        self._class_properties_widget = QWidget()
+        self._class_properties_widget.setObjectName(u"_class_properties_widget")
+        self._class_properties_widget.setGeometry(QRect(0, 0, 512, 190))
+        self.verticalLayout_14 = QVBoxLayout(self._class_properties_widget)
+        self.verticalLayout_14.setObjectName(u"verticalLayout_14")
+        self.scrollArea__class_properties.setWidget(self._class_properties_widget)
 
-        self.verticalLayout_2.addWidget(self.treeWidget_3)
+        self.verticalLayout_13.addWidget(self.scrollArea__class_properties)
 
-        self.properties_widget_list = QListWidget(self.frame)
-        QListWidgetItem(self.properties_widget_list)
-        self.properties_widget_list.setObjectName(u"properties_widget_list")
 
-        self.verticalLayout_2.addWidget(self.properties_widget_list)
+        self.verticalLayout_17.addWidget(self.group_class_properties)
 
-        self.frame_5 = QFrame(self.frame)
-        self.frame_5.setObjectName(u"frame_5")
-        self.frame_5.setFrameShape(QFrame.StyledPanel)
-        self.frame_5.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_3 = QHBoxLayout(self.frame_5)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.group_modifiers = QGroupBox(self.scrollAreaWidgetContents)
+        self.group_modifiers.setObjectName(u"group_modifiers")
+        self.group_modifiers.setStyleSheet(u"/* QGroupBox Style */\n"
+"QGroupBox {\n"
+"    border: 1px solid gray; /* Set the border color and width */\n"
+"    border-bottom: none; /* Remove the bottom border */\n"
+"    border-left: none; /* Remove the left border */\n"
+"    border-right: none; /* Remove the right border */\n"
+"    margin-top: 8px; /* Space for the title */\n"
+"	padding-top: 8px;\n"
+"}\n"
+"\n"
+"/* Title Style */\n"
+"QGroupBox::title {\n"
+"    subcontrol-origin: margin;\n"
+"    subcontrol-position: top left;\n"
+"    padding: 0 6;\n"
+"    color: white; \n"
+"}\n"
+"\n"
+"QGroupBox::indicator {\n"
+"    width: 13px;\n"
+"    height: 13px;\n"
+"}\n"
+"\n"
+"QGroupBox::indicator:checked {\n"
+"    image: url(://icons/arrow_drop_right.png);\n"
+"}\n"
+"\n"
+"QGroupBox::indicator:unchecked {\n"
+"    image: url(://icons/arrow_drop_down.png); \n"
+"}")
+        self.group_modifiers.setFlat(False)
+        self.group_modifiers.setCheckable(True)
+        self.verticalLayout = QVBoxLayout(self.group_modifiers)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.scrollArea_modifiers = QScrollArea(self.group_modifiers)
+        self.scrollArea_modifiers.setObjectName(u"scrollArea_modifiers")
+        self.scrollArea_modifiers.setWidgetResizable(True)
+        self.modifiers_widget = QWidget()
+        self.modifiers_widget.setObjectName(u"modifiers_widget")
+        self.modifiers_widget.setGeometry(QRect(0, 0, 512, 189))
+        self.verticalLayout_4 = QVBoxLayout(self.modifiers_widget)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.scrollArea_modifiers.setWidget(self.modifiers_widget)
 
-        self.verticalLayout_2.addWidget(self.frame_5)
+        self.verticalLayout.addWidget(self.scrollArea_modifiers)
+
+
+        self.verticalLayout_17.addWidget(self.group_modifiers)
+
+        self.group_selection_criteria = QGroupBox(self.scrollAreaWidgetContents)
+        self.group_selection_criteria.setObjectName(u"group_selection_criteria")
+        self.group_selection_criteria.setStyleSheet(u"/* QGroupBox Style */\n"
+"QGroupBox {\n"
+"    border: 1px solid gray; /* Set the border color and width */\n"
+"    border-bottom: none; /* Remove the bottom border */\n"
+"    border-left: none; /* Remove the left border */\n"
+"    border-right: none; /* Remove the right border */\n"
+"    margin-top: 8px; /* Space for the title */\n"
+"	padding-top: 8px;\n"
+"}\n"
+"\n"
+"/* Title Style */\n"
+"QGroupBox::title {\n"
+"    subcontrol-origin: margin;\n"
+"    subcontrol-position: top left;\n"
+"    padding: 0 6;\n"
+"    color: white; \n"
+"}\n"
+"\n"
+"QGroupBox::indicator {\n"
+"    width: 13px;\n"
+"    height: 13px;\n"
+"}\n"
+"\n"
+"QGroupBox::indicator:checked {\n"
+"    image: url(://icons/arrow_drop_right.png);\n"
+"}\n"
+"\n"
+"QGroupBox::indicator:unchecked {\n"
+"    image: url(://icons/arrow_drop_down.png); \n"
+"}")
+        self.group_selection_criteria.setFlat(False)
+        self.group_selection_criteria.setCheckable(True)
+        self.verticalLayout_15 = QVBoxLayout(self.group_selection_criteria)
+        self.verticalLayout_15.setObjectName(u"verticalLayout_15")
+        self.verticalLayout_15.setContentsMargins(0, 0, 0, 0)
+        self.scrollArea_selection_criteria = QScrollArea(self.group_selection_criteria)
+        self.scrollArea_selection_criteria.setObjectName(u"scrollArea_selection_criteria")
+        self.scrollArea_selection_criteria.setWidgetResizable(True)
+        self.selection_criteria_widget = QWidget()
+        self.selection_criteria_widget.setObjectName(u"selection_criteria_widget")
+        self.selection_criteria_widget.setGeometry(QRect(0, 0, 512, 190))
+        self.verticalLayout_16 = QVBoxLayout(self.selection_criteria_widget)
+        self.verticalLayout_16.setObjectName(u"verticalLayout_16")
+        self.scrollArea_selection_criteria.setWidget(self.selection_criteria_widget)
+
+        self.verticalLayout_15.addWidget(self.scrollArea_selection_criteria)
+
+
+        self.verticalLayout_17.addWidget(self.group_selection_criteria)
+
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+
+        self.verticalLayout_2.addWidget(self.scrollArea)
 
 
         self.horizontalLayout_4.addWidget(self.frame)
@@ -183,23 +317,23 @@ class Ui_MainWindow(object):
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.search_bar_elements = QLineEdit(self.frame_2)
-        self.search_bar_elements.setObjectName(u"search_bar_elements")
+        self.tree_hierarchy_search_bar_widget = QLineEdit(self.frame_2)
+        self.tree_hierarchy_search_bar_widget.setObjectName(u"tree_hierarchy_search_bar_widget")
 
-        self.verticalLayout_3.addWidget(self.search_bar_elements)
+        self.verticalLayout_3.addWidget(self.tree_hierarchy_search_bar_widget)
 
-        self.elements_widget_tree = QTreeWidget(self.frame_2)
-        __qtreewidgetitem2 = QTreeWidgetItem()
-        __qtreewidgetitem2.setText(0, u"Name");
-        self.elements_widget_tree.setHeaderItem(__qtreewidgetitem2)
-        __qtreewidgetitem3 = QTreeWidgetItem(self.elements_widget_tree)
-        QTreeWidgetItem(__qtreewidgetitem3)
-        __qtreewidgetitem4 = QTreeWidgetItem(self.elements_widget_tree)
-        QTreeWidgetItem(__qtreewidgetitem4)
-        self.elements_widget_tree.setObjectName(u"elements_widget_tree")
-        self.elements_widget_tree.header().setVisible(False)
+        self.tree_hierarchy_widget = QTreeWidget(self.frame_2)
+        __qtreewidgetitem = QTreeWidgetItem()
+        __qtreewidgetitem.setText(0, u"Name");
+        self.tree_hierarchy_widget.setHeaderItem(__qtreewidgetitem)
+        __qtreewidgetitem1 = QTreeWidgetItem(self.tree_hierarchy_widget)
+        QTreeWidgetItem(__qtreewidgetitem1)
+        __qtreewidgetitem2 = QTreeWidgetItem(self.tree_hierarchy_widget)
+        QTreeWidgetItem(__qtreewidgetitem2)
+        self.tree_hierarchy_widget.setObjectName(u"tree_hierarchy_widget")
+        self.tree_hierarchy_widget.header().setVisible(False)
 
-        self.verticalLayout_3.addWidget(self.elements_widget_tree)
+        self.verticalLayout_3.addWidget(self.tree_hierarchy_widget)
 
 
         self.verticalLayout_8.addWidget(self.frame_2)
@@ -217,10 +351,10 @@ class Ui_MainWindow(object):
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
         self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
         self.treeWidget_2 = QTreeWidget(self.dockWidgetContents)
-        __qtreewidgetitem5 = QTreeWidgetItem(self.treeWidget_2)
-        QTreeWidgetItem(__qtreewidgetitem5)
-        QTreeWidgetItem(__qtreewidgetitem5)
-        QTreeWidgetItem(__qtreewidgetitem5)
+        __qtreewidgetitem3 = QTreeWidgetItem(self.treeWidget_2)
+        QTreeWidgetItem(__qtreewidgetitem3)
+        QTreeWidgetItem(__qtreewidgetitem3)
+        QTreeWidgetItem(__qtreewidgetitem3)
         QTreeWidgetItem(self.treeWidget_2)
         QTreeWidgetItem(self.treeWidget_2)
         self.treeWidget_2.setObjectName(u"treeWidget_2")
@@ -253,13 +387,13 @@ class Ui_MainWindow(object):
         self.verticalLayout_10 = QVBoxLayout(self.dockWidgetContents_10)
         self.verticalLayout_10.setObjectName(u"verticalLayout_10")
         self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
-        self.treeWidget = QTreeWidget(self.dockWidgetContents_10)
-        __qtreewidgetitem6 = QTreeWidgetItem()
-        __qtreewidgetitem6.setText(0, u"1");
-        self.treeWidget.setHeaderItem(__qtreewidgetitem6)
-        self.treeWidget.setObjectName(u"treeWidget")
+        self.tree_smartprops_explorer_widget = QTreeWidget(self.dockWidgetContents_10)
+        __qtreewidgetitem4 = QTreeWidgetItem()
+        __qtreewidgetitem4.setText(0, u"1");
+        self.tree_smartprops_explorer_widget.setHeaderItem(__qtreewidgetitem4)
+        self.tree_smartprops_explorer_widget.setObjectName(u"tree_smartprops_explorer_widget")
 
-        self.verticalLayout_10.addWidget(self.treeWidget)
+        self.verticalLayout_10.addWidget(self.tree_smartprops_explorer_widget)
 
         self.frame_4 = QFrame(self.dockWidgetContents_10)
         self.frame_4.setObjectName(u"frame_4")
@@ -375,75 +509,46 @@ class Ui_MainWindow(object):
         self.status_bar.setText(QCoreApplication.translate("MainWindow", u"Console output", None))
         self.version_label.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
-        ___qtreewidgetitem = self.treeWidget_3.headerItem()
-        ___qtreewidgetitem.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
-
-        __sortingEnabled = self.treeWidget_3.isSortingEnabled()
-        self.treeWidget_3.setSortingEnabled(False)
-        ___qtreewidgetitem1 = self.treeWidget_3.topLevelItem(0)
-        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"m_vHandleOffset", None));
-        ___qtreewidgetitem2 = self.treeWidget_3.topLevelItem(1)
-        ___qtreewidgetitem2.setText(0, QCoreApplication.translate("MainWindow", u"Modifiers", None));
-        ___qtreewidgetitem3 = self.treeWidget_3.topLevelItem(2)
-        ___qtreewidgetitem3.setText(0, QCoreApplication.translate("MainWindow", u"Selection Criteria", None));
-        ___qtreewidgetitem4 = self.treeWidget_3.topLevelItem(3)
-        ___qtreewidgetitem4.setText(0, QCoreApplication.translate("MainWindow", u"m_Modifiers", None));
-        ___qtreewidgetitem5 = ___qtreewidgetitem4.child(0)
-        ___qtreewidgetitem5.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropFilter_VariableValue", None));
-        ___qtreewidgetitem6 = ___qtreewidgetitem4.child(1)
-        ___qtreewidgetitem6.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropOperation_RestoreState", None));
-        ___qtreewidgetitem7 = ___qtreewidgetitem4.child(2)
-        ___qtreewidgetitem7.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropOperation_SetVariable", None));
-        ___qtreewidgetitem8 = self.treeWidget_3.topLevelItem(4)
-        ___qtreewidgetitem8.setText(0, QCoreApplication.translate("MainWindow", u"m_vHandleOffset", None));
-        ___qtreewidgetitem9 = ___qtreewidgetitem8.child(0)
-        ___qtreewidgetitem9.setText(0, QCoreApplication.translate("MainWindow", u"m_Components", None));
-        self.treeWidget_3.setSortingEnabled(__sortingEnabled)
-
-
-        __sortingEnabled1 = self.properties_widget_list.isSortingEnabled()
-        self.properties_widget_list.setSortingEnabled(False)
-        ___qlistwidgetitem = self.properties_widget_list.item(0)
-        ___qlistwidgetitem.setText(QCoreApplication.translate("MainWindow", u"CSmartPropFilter_VariableValue", None));
-        self.properties_widget_list.setSortingEnabled(__sortingEnabled1)
-
+        self.group_class_properties.setTitle(QCoreApplication.translate("MainWindow", u"Class Properties", None))
+        self.group_modifiers.setTitle(QCoreApplication.translate("MainWindow", u"Modifiers", None))
+        self.group_selection_criteria.setTitle(QCoreApplication.translate("MainWindow", u"Selection Criteria", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
-        self.search_bar_elements.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
+        self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
 
-        __sortingEnabled2 = self.elements_widget_tree.isSortingEnabled()
-        self.elements_widget_tree.setSortingEnabled(False)
-        ___qtreewidgetitem10 = self.elements_widget_tree.topLevelItem(0)
-        ___qtreewidgetitem10.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_PickOne", None));
-        ___qtreewidgetitem11 = ___qtreewidgetitem10.child(0)
-        ___qtreewidgetitem11.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
-        ___qtreewidgetitem12 = self.elements_widget_tree.topLevelItem(1)
-        ___qtreewidgetitem12.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
-        ___qtreewidgetitem13 = ___qtreewidgetitem12.child(0)
-        ___qtreewidgetitem13.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_SmartProp", None));
-        self.elements_widget_tree.setSortingEnabled(__sortingEnabled2)
+        __sortingEnabled = self.tree_hierarchy_widget.isSortingEnabled()
+        self.tree_hierarchy_widget.setSortingEnabled(False)
+        ___qtreewidgetitem = self.tree_hierarchy_widget.topLevelItem(0)
+        ___qtreewidgetitem.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_PickOne", None));
+        ___qtreewidgetitem1 = ___qtreewidgetitem.child(0)
+        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
+        ___qtreewidgetitem2 = self.tree_hierarchy_widget.topLevelItem(1)
+        ___qtreewidgetitem2.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
+        ___qtreewidgetitem3 = ___qtreewidgetitem2.child(0)
+        ___qtreewidgetitem3.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_SmartProp", None));
+        self.tree_hierarchy_widget.setSortingEnabled(__sortingEnabled)
 
         self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
-        ___qtreewidgetitem14 = self.treeWidget_2.headerItem()
-        ___qtreewidgetitem14.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
-        ___qtreewidgetitem14.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
+        ___qtreewidgetitem4 = self.treeWidget_2.headerItem()
+        ___qtreewidgetitem4.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
+        ___qtreewidgetitem4.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
 
-        __sortingEnabled3 = self.treeWidget_2.isSortingEnabled()
+        __sortingEnabled1 = self.treeWidget_2.isSortingEnabled()
         self.treeWidget_2.setSortingEnabled(False)
-        ___qtreewidgetitem15 = self.treeWidget_2.topLevelItem(0)
-        ___qtreewidgetitem15.setText(1, QCoreApplication.translate("MainWindow", u"VariableCoordinateSpace", None));
-        ___qtreewidgetitem15.setText(0, QCoreApplication.translate("MainWindow", u"Cords", None));
-        ___qtreewidgetitem16 = ___qtreewidgetitem15.child(0)
-        ___qtreewidgetitem16.setText(1, QCoreApplication.translate("MainWindow", u"Element", None));
-        ___qtreewidgetitem16.setText(0, QCoreApplication.translate("MainWindow", u"Default Value", None));
-        ___qtreewidgetitem17 = ___qtreewidgetitem15.child(1)
-        ___qtreewidgetitem17.setText(0, QCoreApplication.translate("MainWindow", u"Display Name", None));
-        ___qtreewidgetitem18 = ___qtreewidgetitem15.child(2)
-        ___qtreewidgetitem18.setText(0, QCoreApplication.translate("MainWindow", u"Visible in editor", None));
-        ___qtreewidgetitem19 = self.treeWidget_2.topLevelItem(1)
-        ___qtreewidgetitem19.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropVariable_Float", None));
-        ___qtreewidgetitem20 = self.treeWidget_2.topLevelItem(2)
-        ___qtreewidgetitem20.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropVariable_Bool", None));
-        self.treeWidget_2.setSortingEnabled(__sortingEnabled3)
+        ___qtreewidgetitem5 = self.treeWidget_2.topLevelItem(0)
+        ___qtreewidgetitem5.setText(1, QCoreApplication.translate("MainWindow", u"VariableCoordinateSpace", None));
+        ___qtreewidgetitem5.setText(0, QCoreApplication.translate("MainWindow", u"Cords", None));
+        ___qtreewidgetitem6 = ___qtreewidgetitem5.child(0)
+        ___qtreewidgetitem6.setText(1, QCoreApplication.translate("MainWindow", u"Element", None));
+        ___qtreewidgetitem6.setText(0, QCoreApplication.translate("MainWindow", u"Default Value", None));
+        ___qtreewidgetitem7 = ___qtreewidgetitem5.child(1)
+        ___qtreewidgetitem7.setText(0, QCoreApplication.translate("MainWindow", u"Display Name", None));
+        ___qtreewidgetitem8 = ___qtreewidgetitem5.child(2)
+        ___qtreewidgetitem8.setText(0, QCoreApplication.translate("MainWindow", u"Visible in editor", None));
+        ___qtreewidgetitem9 = self.treeWidget_2.topLevelItem(1)
+        ___qtreewidgetitem9.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropVariable_Float", None));
+        ___qtreewidgetitem10 = self.treeWidget_2.topLevelItem(2)
+        ___qtreewidgetitem10.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropVariable_Bool", None));
+        self.treeWidget_2.setSortingEnabled(__sortingEnabled1)
 
         self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Add new", None))
         self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
