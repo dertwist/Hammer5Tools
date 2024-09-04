@@ -19,6 +19,36 @@ QLabel {
 }
 
 
+/* ========================================================== */
+
+QGroupBox {
+    border: 1px solid gray;
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+    margin-top: 8px;
+	padding-top: 8px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: white; 
+}
+
+QGroupBox::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+QGroupBox::indicator:checked {
+    image: url(://icons/arrow_drop_down.png); 
+}
+
+QGroupBox::indicator:unchecked {
+    image: url(://icons/arrow_drop_right.png);
+}
 
 
 
