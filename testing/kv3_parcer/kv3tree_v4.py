@@ -19,6 +19,7 @@ bt_config = kv3.read('sample_2.vsmart')
 data = bt_config.value
 data_raw = data
 print(data['m_Variables'][0]['m_test'])
+# <keyvalues3.keyvalues3.flagged_value object at 0x000001AF133810C0>
 
 # data = {
 #     'generic_data_type': 'CSmartPropRoot',
