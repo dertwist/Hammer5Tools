@@ -26,83 +26,6 @@ data_raw = data
 #                     'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
 #                     'm_nElementID': 2}]
 # }
-print(data)
-variable_prefix = 'CSmartPropVariable_'
-variables_lsit = [
-    'CoordinateSpace',
-    'Direction',
-    'DistributionMode',
-    'RadiusPlacementMode',
-    'ChoiceSelectionMode',
-    'String',
-    'Bool',
-    'Int',
-    'Float',
-    'Vector2D',
-    'Vector3D',
-    'Vector4D',
-    'Color',
-    'Angles',
-    'MaterialGroup',
-    'Model',
-    'ApplyColorMode',
-    'TraceNoHit',
-    'ScaleMode',
-    'PickMode',
-    'GridPlacementMode',
-    'GridOriginMode',
-    'PathPositions'
-]
-
-element_prefix = 'CSmartPropElement_'
-elements_list = [
-    'ModifyState',
-    'Group',
-    'SmartProp',
-    'PlaceInSphere',
-    'PlaceMultiple',
-    'PlaceOnPath',
-    'FitOnLine',
-    'PickOne'
-]
-
-operator_prefix = 'CSmartPropOperation_'
-operators_list = [
-    'TraceToPoint',
-    'TraceToLine',
-    'SetTintColor',
-    'SetVariable',
-    'SaveState',
-    'RestoreState',
-    'SavePosition',
-    'SaveDirection',
-    'SaveScale',
-    'SaveSurfaceNormal',
-    'SaveDirection',
-    'ComputeDotProduct3D',
-    'ComputeCrossProduct3D',
-    'ComputeDistance3D',
-    'ComputeVectorBetweenPoints3D',
-    'ComputeNormalizedVector3D',
-    'ComputeProjectVector3D',
-    'CreateLocator',
-    'CreateSizer',
-    'CreateRotator',
-    'ResetRotation',
-    'SetOrientation',
-    'SetPosition',
-    'ResetScale',
-    'Rotate',
-    'Translate',
-    'RotateTowards',
-    'Scale',
-    'RandomOffset',
-    'RandomRotation',
-    'RandomScale',
-    'Trace',
-    'TraceInDirection'
-]
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -270,10 +193,10 @@ class MainWindow(QMainWindow):
                         child.setFlags(child.flags() | Qt.ItemIsEditable)
                         parent.addChild(child)
                 elif isinstance(value, (str, float, int)):
-                    # item = QTreeWidgetItem([key, str(value)])
-                    # item.setFlags(item.flags() | Qt.ItemIsEditable)
-                    # parent.addChild(item)
-                    # self.populate_tree(value, item)
+                    item = QTreeWidgetItem([key, str(value)])
+                    item.setFlags(item.flags() | Qt.ItemIsEditable)
+                    parent.addChild(item)
+                    self.populate_tree(value, item)
                     pass
 
     def search_recursively(self, parent_item):
