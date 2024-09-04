@@ -137,6 +137,9 @@
              <number>0</number>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <property name="spacing">
+              <number>0</number>
+             </property>
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -181,105 +184,253 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QTreeWidget" name="treeWidget_3">
-                  <attribute name="headerVisible">
+                 <widget class="QScrollArea" name="scrollArea">
+                  <property name="widgetResizable">
                    <bool>true</bool>
-                  </attribute>
-                  <attribute name="headerCascadingSectionResizes">
-                   <bool>false</bool>
-                  </attribute>
-                  <attribute name="headerDefaultSectionSize">
-                   <number>280</number>
-                  </attribute>
-                  <attribute name="headerHighlightSections">
-                   <bool>false</bool>
-                  </attribute>
-                  <attribute name="headerShowSortIndicator" stdset="0">
-                   <bool>false</bool>
-                  </attribute>
-                  <column>
-                   <property name="text">
-                    <string>Name</string>
-                   </property>
-                  </column>
-                  <item>
-                   <property name="text">
-                    <string>m_vHandleOffset</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Modifiers</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Selection Criteria</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>m_Modifiers</string>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string>CSmartPropFilter_VariableValue</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>CSmartPropOperation_RestoreState</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>CSmartPropOperation_SetVariable</string>
-                    </property>
-                   </item>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>m_vHandleOffset</string>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string>m_Components</string>
-                    </property>
-                   </item>
-                  </item>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QListWidget" name="properties_widget_list">
-                  <item>
-                   <property name="text">
-                    <string>CSmartPropFilter_VariableValue</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QFrame" name="frame_5">
-                  <property name="frameShape">
-                   <enum>QFrame::StyledPanel</enum>
                   </property>
-                  <property name="frameShadow">
-                   <enum>QFrame::Raised</enum>
-                  </property>
-                  <layout class="QHBoxLayout" name="horizontalLayout_3">
-                   <property name="leftMargin">
-                    <number>0</number>
+                  <widget class="QWidget" name="scrollAreaWidgetContents">
+                   <property name="geometry">
+                    <rect>
+                     <x>0</x>
+                     <y>0</y>
+                     <width>532</width>
+                     <height>656</height>
+                    </rect>
                    </property>
-                   <property name="topMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="rightMargin">
-                    <number>0</number>
-                   </property>
-                   <property name="bottomMargin">
-                    <number>0</number>
-                   </property>
-                  </layout>
+                   <layout class="QVBoxLayout" name="verticalLayout_17">
+                    <item>
+                     <widget class="QGroupBox" name="group_class_properties">
+                      <property name="styleSheet">
+                       <string notr="true">/* QGroupBox Style */
+QGroupBox {
+    border: 1px solid gray; /* Set the border color and width */
+    border-bottom: none; /* Remove the bottom border */
+    border-left: none; /* Remove the left border */
+    border-right: none; /* Remove the right border */
+    margin-top: 8px; /* Space for the title */
+	padding-top: 8px;
+}
+
+/* Title Style */
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: white; 
+}
+
+QGroupBox::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+QGroupBox::indicator:checked {
+    image: url(://icons/arrow_drop_right.png);
+}
+
+QGroupBox::indicator:unchecked {
+    image: url(://icons/arrow_drop_down.png); 
+}</string>
+                      </property>
+                      <property name="title">
+                       <string>Class Properties</string>
+                      </property>
+                      <property name="flat">
+                       <bool>false</bool>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_13">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <item>
+                        <widget class="QScrollArea" name="scrollArea__class_properties">
+                         <property name="widgetResizable">
+                          <bool>true</bool>
+                         </property>
+                         <widget class="QWidget" name="_class_properties_widget">
+                          <property name="geometry">
+                           <rect>
+                            <x>0</x>
+                            <y>0</y>
+                            <width>512</width>
+                            <height>190</height>
+                           </rect>
+                          </property>
+                          <layout class="QVBoxLayout" name="verticalLayout_14"/>
+                         </widget>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QGroupBox" name="group_modifiers">
+                      <property name="styleSheet">
+                       <string notr="true">/* QGroupBox Style */
+QGroupBox {
+    border: 1px solid gray; /* Set the border color and width */
+    border-bottom: none; /* Remove the bottom border */
+    border-left: none; /* Remove the left border */
+    border-right: none; /* Remove the right border */
+    margin-top: 8px; /* Space for the title */
+	padding-top: 8px;
+}
+
+/* Title Style */
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: white; 
+}
+
+QGroupBox::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+QGroupBox::indicator:checked {
+    image: url(://icons/arrow_drop_right.png);
+}
+
+QGroupBox::indicator:unchecked {
+    image: url(://icons/arrow_drop_down.png); 
+}</string>
+                      </property>
+                      <property name="title">
+                       <string>Modifiers</string>
+                      </property>
+                      <property name="flat">
+                       <bool>false</bool>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <item>
+                        <widget class="QScrollArea" name="scrollArea_modifiers">
+                         <property name="widgetResizable">
+                          <bool>true</bool>
+                         </property>
+                         <widget class="QWidget" name="modifiers_widget">
+                          <property name="geometry">
+                           <rect>
+                            <x>0</x>
+                            <y>0</y>
+                            <width>512</width>
+                            <height>189</height>
+                           </rect>
+                          </property>
+                          <layout class="QVBoxLayout" name="verticalLayout_4"/>
+                         </widget>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QGroupBox" name="group_selection_criteria">
+                      <property name="styleSheet">
+                       <string notr="true">/* QGroupBox Style */
+QGroupBox {
+    border: 1px solid gray; /* Set the border color and width */
+    border-bottom: none; /* Remove the bottom border */
+    border-left: none; /* Remove the left border */
+    border-right: none; /* Remove the right border */
+    margin-top: 8px; /* Space for the title */
+	padding-top: 8px;
+}
+
+/* Title Style */
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: white; 
+}
+
+QGroupBox::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+QGroupBox::indicator:checked {
+    image: url(://icons/arrow_drop_right.png);
+}
+
+QGroupBox::indicator:unchecked {
+    image: url(://icons/arrow_drop_down.png); 
+}</string>
+                      </property>
+                      <property name="title">
+                       <string>Selection Criteria</string>
+                      </property>
+                      <property name="flat">
+                       <bool>false</bool>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_15">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <item>
+                        <widget class="QScrollArea" name="scrollArea_selection_criteria">
+                         <property name="widgetResizable">
+                          <bool>true</bool>
+                         </property>
+                         <widget class="QWidget" name="selection_criteria_widget">
+                          <property name="geometry">
+                           <rect>
+                            <x>0</x>
+                            <y>0</y>
+                            <width>512</width>
+                            <height>190</height>
+                           </rect>
+                          </property>
+                          <layout class="QVBoxLayout" name="verticalLayout_16"/>
+                         </widget>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
                  </widget>
                 </item>
                </layout>
@@ -348,14 +499,14 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QLineEdit" name="search_bar_elements">
+         <widget class="QLineEdit" name="tree_hierarchy_search_bar_widget">
           <property name="placeholderText">
            <string>Search...</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QTreeWidget" name="elements_widget_tree">
+         <widget class="QTreeWidget" name="tree_hierarchy_widget">
           <attribute name="headerVisible">
            <bool>false</bool>
           </attribute>
@@ -531,7 +682,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QTreeWidget" name="treeWidget">
+      <widget class="QTreeWidget" name="tree_smartprops_explorer_widget">
        <column>
         <property name="text">
          <string notr="true">1</string>
