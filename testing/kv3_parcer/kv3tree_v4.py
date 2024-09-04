@@ -86,17 +86,25 @@ class MainWindow(QMainWindow):
         self.tree.setDragDropMode(QTreeWidget.InternalMove)
 
     def load_tree(self):
-        with open('treestructure.json', 'r') as file:
-            data = json.load(file)
-            vsmart_data = self.extract_vsmart_data(data)
-            self.tree.clear()
-            self.populate_tree(vsmart_data)
+        with open('treestructure.vsmart', 'r') as file:
+            lines = file.readlines()
+            lines_count = len(lines)
+            try:
+                line_vsmartdata_tree_structure = lines[lines_count-1].strip().split('//Hammer5Tools_vsmartdata_tree_structure:')
+                line_vsmartdata_options = lines[lines_count-2].strip().split('//Hammer5Tools_vsmartdata_options:')
+                line_vsmartdata_variables = lines[lines_count-3].strip().split('//Hammer5Tools_vsmartdata_variables:')
+                print(line_vsmartdata_tree_structure[1])
+                print(line_vsmartdata_options[1])
+                print(line_vsmartdata_variables[1])
+            except:
+                pass
+        pass
 
     def save_tree(self):
         data = self.tree_item_to_dict(self.tree.invisibleRootItem())
         data = self.convert_children_to_list(data)
-        kv3.write(data_raw, 'treestructure.json')
-        with open('treestructure.json', 'a') as file:
+        kv3.write(data_raw, 'treestructure.vsmart')
+        with open('treestructure.vsmart', 'a') as file:
             file.write('//Hammer5Tools_vsmartdata_variables:' + '\n')
             file.write('//Hammer5Tools_vsmartdata_options:' + '\n')
             file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data))
@@ -339,7 +347,6 @@ class MainWindow(QMainWindow):
 
     def quick_export_to_file(self):
         self.export_to_vsmart('exported_data.vsmart')
-        # QMessageBox.information(self, "Export", "Data exported to 'exported_data.json' successfully!")
 
     def tree_item_to_dict(self, item):
         if item.childCount() == 0:
