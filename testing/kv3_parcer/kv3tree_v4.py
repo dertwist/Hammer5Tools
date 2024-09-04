@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
 
         self.tree = QTreeWidget(self)
         self.tree.setColumnCount(2)
-        self.tree.setHeaderLabels(["Key", "Value", "Class"])
+        self.tree.setHeaderLabels(["Key", "Value"])
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.open_menu)
         self.tree.itemChanged.connect(self.on_item_changed)
@@ -164,7 +164,19 @@ class MainWindow(QMainWindow):
                     # trying to parse class elements
                     try:
                         item_class = value[0].get('_class')
-                        child = QTreeWidgetItem([key])
+                        if not key == 'm_Variables':
+                            value_dict = value[0]
+                        else:
+                            value_dict = value
+                        # print(1,key,type(value_dict), value_dict)
+                        try:
+                            # print(2,key,'m_Children', value_dict['m_Children'])
+                            del value_dict['m_Children']
+                        except:
+                            pass
+                        print('extracted value', value_dict)
+                        child = QTreeWidgetItem([key, str(value_dict)])
+                        # child = QTreeWidgetItem([key])
                         child.setFlags(child.flags() | Qt.ItemIsEditable)
                         parent.addChild(child)
 
@@ -193,10 +205,10 @@ class MainWindow(QMainWindow):
                         child.setFlags(child.flags() | Qt.ItemIsEditable)
                         parent.addChild(child)
                 elif isinstance(value, (str, float, int)):
-                    item = QTreeWidgetItem([key, str(value)])
-                    item.setFlags(item.flags() | Qt.ItemIsEditable)
-                    parent.addChild(item)
-                    self.populate_tree(value, item)
+                    # item = QTreeWidgetItem([key, str(value)])
+                    # item.setFlags(item.flags() | Qt.ItemIsEditable)
+                    # parent.addChild(item)
+                    # self.populate_tree(value, item)
                     pass
 
     def search_recursively(self, parent_item):
