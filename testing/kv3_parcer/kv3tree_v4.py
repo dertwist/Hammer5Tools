@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt
 import json
 
 import keyvalues3 as kv3
-
+import ast
 # Sample JSON data
 
 # bt_config = kv3.read(r'E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_ankhor\smartprops\hvac_kit.vsmart')
@@ -85,20 +85,58 @@ class MainWindow(QMainWindow):
         self.tree.setAcceptDrops(True)
         self.tree.setDragDropMode(QTreeWidget.InternalMove)
 
+
     def load_tree(self):
         with open('treestructure.vsmart', 'r') as file:
             lines = file.readlines()
             lines_count = len(lines)
-            try:
-                line_vsmartdata_tree_structure = lines[lines_count-1].strip().split('//Hammer5Tools_vsmartdata_tree_structure:')
-                line_vsmartdata_options = lines[lines_count-2].strip().split('//Hammer5Tools_vsmartdata_options:')
-                line_vsmartdata_variables = lines[lines_count-3].strip().split('//Hammer5Tools_vsmartdata_variables:')
-                print(line_vsmartdata_tree_structure[1])
-                print(line_vsmartdata_options[1])
-                print(line_vsmartdata_variables[1])
-            except:
-                pass
-        pass
+
+            line_vsmartdata_tree_structure = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_tree_structure:'))[1]
+            line_vsmartdata_options = (lines[lines_count - 2].strip().split('//Hammer5Tools_vsmartdata_options:'))[1]
+            line_vsmartdata_variables = (lines[lines_count - 3].strip().split('//Hammer5Tools_vsmartdata_variables:'))[1]
+            print(line_vsmartdata_tree_structure)
+            print(line_vsmartdata_options)
+            print(line_vsmartdata_variables)
+
+            self.tree.clear()
+            vsmartdata_tree_structure = ast.literal_eval(line_vsmartdata_tree_structure)
+            self.load_json_tree(vsmartdata_tree_structure)
+
+    def load_json_tree(self, data, parent=None):
+        if parent is None:
+            parent = self.tree.invisibleRootItem()
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if key == 'm_Children':
+                    if isinstance(value, list):
+                        for child_data in value:
+                            item = QTreeWidgetItem([key])
+                            item.setFlags(item.flags() | Qt.ItemIsEditable)
+                            parent.addChild(item)
+                            self.load_json_tree(child_data, item)
+                else:
+                    item = QTreeWidgetItem([key])
+                    item.setFlags(item.flags() | Qt.ItemIsEditable)
+                    parent.addChild(item)
+                    self.load_json_tree(value, item)
+
+        elif isinstance(data, list):
+            for item in data:
+                if isinstance(item, dict):
+                    for key, value in item.items():
+                        if key == 'm_Children':
+                            if isinstance(value, list):
+                                for child_data in value:
+                                    child_item = QTreeWidgetItem([key])
+                                    child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
+                                    parent.addChild(child_item)
+                                    self.load_json_tree(child_data, child_item)
+                        else:
+                            child_item = QTreeWidgetItem([key])
+                            child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
+                            parent.addChild(child_item)
+                            self.load_json_tree(value, child_item)
+
 
     def save_tree(self):
         data = self.tree_item_to_dict(self.tree.invisibleRootItem())
