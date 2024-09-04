@@ -13,10 +13,13 @@ import ast
 # Sample JSON data
 
 # bt_config = kv3.read(r'E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_ankhor\smartprops\hvac_kit.vsmart')
-bt_config = kv3.read('sample.vsmart')
+bt_config = kv3.read('sample_2.vsmart')
+
 
 data = bt_config.value
 data_raw = data
+print(data['m_Variables'][0]['m_test'])
+
 # data = {
 #     'generic_data_type': 'CSmartPropRoot',
 #     'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}],
