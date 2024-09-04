@@ -21,7 +21,7 @@
 		
 		{
 			_class = "CSmartPropElement_PickOne"
-			m_SelectionMode = "FIRST"
+			m_SelectionMode = "RANDOM"
 			m_HandleShape = "CIRCLE"
 			m_Children = 
 			[
