@@ -164,36 +164,30 @@ class MainWindow(QMainWindow):
                     # trying to parse class elements
                     try:
                         item_class = value[0].get('_class')
-                        if not key == 'm_Variables':
-                            value_dict = value[0]
-                        else:
-                            value_dict = value
-                        # print(1,key,type(value_dict), value_dict)
-                        try:
-                            # print(2,key,'m_Children', value_dict['m_Children'])
-                            del value_dict['m_Children']
-                        except:
-                            pass
-                        print('extracted value', value_dict)
-                        child = QTreeWidgetItem([key, str(value_dict)])
-                        # child = QTreeWidgetItem([key])
+                        child = QTreeWidgetItem([key])
                         child.setFlags(child.flags() | Qt.ItemIsEditable)
                         parent.addChild(child)
 
                         for item in value:
-                            # print(key)
+
                             if key == 'm_Children' or 'm_Modifiers':
-                                # print(type(item),item)
                                 if isinstance(item, list):
+                                    print(1, key, item)
                                     for item_list in item:
                                         item_class = item_list.get('_class')
-                                        child_item = QTreeWidgetItem([item_class])
+                                        child_item = QTreeWidgetItem([str(item_class + 'fdss')])
                                         child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
                                         child.addChild(child_item)
                                         self.populate_tree(item, child_item)
                                 else:
                                     item_class = item.get('_class')
-                                    child_item = QTreeWidgetItem([item_class])
+                                    value_dict = item.copy()
+                                    try:
+                                        del value_dict['m_Children']
+                                        pass
+                                    except:
+                                        pass
+                                    child_item = QTreeWidgetItem([item_class,str(value_dict)])
                                     child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
                                     child.addChild(child_item)
                                     self.populate_tree(item, child_item)
