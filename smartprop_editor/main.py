@@ -1,24 +1,10 @@
 import os.path
 import sys
-import time
-
-from qt_material import apply_stylesheet
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea
-)
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QAction,QCursor
+from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtCore import QTimer, QSettings
+from PySide6.QtGui import QCloseEvent
 from smartprop_editor.ui_main import Ui_MainWindow
-from preferences import get_config_value, get_cs2_path, get_addon_name, set_config_value
-from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_Editor_MiniWindowsExplorer
-from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea, QInputDialog
-from PySide6.QtWidgets import QSpacerItem, QSizePolicy
-from PySide6.QtWidgets import QProgressBar
-from popup_menu.popup_menu_main import PopupMenu
-import json
-
-import keyvalues3 as kv3
-
+from preferences import get_config_value
 
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, version="1", parent=None):
@@ -27,13 +13,29 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.ui.version_label.setText(version)
 
-    def closeEvent(self, event):
-        pass
+        settings_path = get_config_value('PATHS', 'settings')
+        self.settings = QSettings(os.path.join(settings_path, "smartprop_editor.ini"), QSettings.IniFormat)
 
-# Main block remains the same
+        self._restore_user_prefs()
+
+    def _restore_user_prefs(self):
+        geo = self.settings.value("MainWindow/geometry")
+        if geo:
+            self.restoreGeometry(geo)
+
+        state = self.settings.value("MainWindow/windowState")
+        if state:
+            self.restoreState(state)
+
+    def closeEvent(self, event: QCloseEvent):
+        self._save_user_prefs()
+
+    def _save_user_prefs(self):
+        self.settings.setValue("MainWindow/geometry", self.saveGeometry())
+        self.settings.setValue("MainWindow/windowState", self.saveState())
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SmartPropEditorMainWindow()
-    apply_stylesheet(app, theme='dark_yellow.xml')
     window.show()
     sys.exit(app.exec())
