@@ -249,7 +249,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.verticalLayout_6 = QVBoxLayout(self.dockWidgetContents)
         self.verticalLayout_6.setSpacing(6)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_6.setContentsMargins(2, 0, 2, 0)
         self.soundevents_list_search_bar = QLineEdit(self.dockWidgetContents)
         self.soundevents_list_search_bar.setObjectName(u"soundevents_list_search_bar")
 
@@ -323,7 +323,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.verticalLayout_5 = QVBoxLayout(self.dockWidgetContents_2)
         self.verticalLayout_5.setSpacing(6)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_5.setContentsMargins(4, 0, 4, 0)
         self.audio_files_explorer = QTreeView(self.dockWidgetContents_2)
         self.audio_files_explorer.setObjectName(u"audio_files_explorer")
         self.audio_files_explorer.setStyleSheet(u"/* styles/treeview.qss */\n"
