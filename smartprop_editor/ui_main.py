@@ -39,20 +39,20 @@ class Ui_MainWindow(object):
         icon1 = QIcon()
         icon1.addFile(u":/icons/add_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.actionCreateNewsmartprop.setIcon(icon1)
-        self.actionCreateNewsmartprop.setMenuRole(QAction.MenuRole.NoRole)
+        self.actionCreateNewsmartprop.setMenuRole(QAction.NoRole)
         self.actionSaveSmarptop = QAction(MainWindow)
         self.actionSaveSmarptop.setObjectName(u"actionSaveSmarptop")
         icon2 = QIcon()
         icon2.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.actionSaveSmarptop.setIcon(icon2)
-        self.actionSaveSmarptop.setMenuRole(QAction.MenuRole.NoRole)
+        self.actionSaveSmarptop.setMenuRole(QAction.NoRole)
         self.actionSaveSmartpropAs = QAction(MainWindow)
         self.actionSaveSmartpropAs.setObjectName(u"actionSaveSmartpropAs")
         self.actionSaveSmartpropAs.setCheckable(True)
         icon3 = QIcon()
         icon3.addFile(u":/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.actionSaveSmartpropAs.setIcon(icon3)
-        self.actionSaveSmartpropAs.setMenuRole(QAction.MenuRole.NoRole)
+        self.actionSaveSmartpropAs.setMenuRole(QAction.NoRole)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_9 = QVBoxLayout(self.centralwidget)
@@ -61,8 +61,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.frame_9 = QFrame(self.centralwidget)
         self.frame_9.setObjectName(u"frame_9")
-        self.frame_9.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_9.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_9.setFrameShape(QFrame.StyledPanel)
+        self.frame_9.setFrameShadow(QFrame.Raised)
         self.frame_9.setLineWidth(0)
         self.verticalLayout_5 = QVBoxLayout(self.frame_9)
         self.verticalLayout_5.setSpacing(0)
@@ -81,7 +81,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 603, 674))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 760, 674))
         self.verticalLayout_17 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_17.setObjectName(u"verticalLayout_17")
         self.verticalLayout_17.setContentsMargins(0, 9, 0, 0)
@@ -133,7 +133,7 @@ class Ui_MainWindow(object):
         self.scrollArea__class_properties.setWidgetResizable(True)
         self._class_properties_widget = QWidget()
         self._class_properties_widget.setObjectName(u"_class_properties_widget")
-        self._class_properties_widget.setGeometry(QRect(0, 0, 603, 145))
+        self._class_properties_widget.setGeometry(QRect(0, 0, 760, 145))
         self.verticalLayout_14 = QVBoxLayout(self._class_properties_widget)
         self.verticalLayout_14.setObjectName(u"verticalLayout_14")
         self.scrollArea__class_properties.setWidget(self._class_properties_widget)
@@ -191,7 +191,7 @@ class Ui_MainWindow(object):
         self.scrollArea_modifiers.setWidgetResizable(True)
         self.modifiers_widget = QWidget()
         self.modifiers_widget.setObjectName(u"modifiers_widget")
-        self.modifiers_widget.setGeometry(QRect(0, 0, 603, 145))
+        self.modifiers_widget.setGeometry(QRect(0, 0, 760, 145))
         self.verticalLayout_4 = QVBoxLayout(self.modifiers_widget)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.scrollArea_modifiers.setWidget(self.modifiers_widget)
@@ -249,7 +249,7 @@ class Ui_MainWindow(object):
         self.scrollArea_selection_criteria.setWidgetResizable(True)
         self.selection_criteria_widget = QWidget()
         self.selection_criteria_widget.setObjectName(u"selection_criteria_widget")
-        self.selection_criteria_widget.setGeometry(QRect(0, 0, 603, 144))
+        self.selection_criteria_widget.setGeometry(QRect(0, 0, 760, 144))
         self.verticalLayout_16 = QVBoxLayout(self.selection_criteria_widget)
         self.verticalLayout_16.setObjectName(u"verticalLayout_16")
         self.scrollArea_selection_criteria.setWidget(self.selection_criteria_widget)
@@ -269,8 +269,8 @@ class Ui_MainWindow(object):
 
         self.frame_8 = QFrame(self.frame_9)
         self.frame_8.setObjectName(u"frame_8")
-        self.frame_8.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_8.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_8.setFrameShape(QFrame.StyledPanel)
+        self.frame_8.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_5 = QHBoxLayout(self.frame_8)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
@@ -282,7 +282,7 @@ class Ui_MainWindow(object):
 
         self.version_label = QLabel(self.frame_8)
         self.version_label.setObjectName(u"version_label")
-        self.version_label.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
+        self.version_label.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
         self.horizontalLayout_5.addWidget(self.version_label)
 
@@ -295,8 +295,8 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.dockWidget_4 = QDockWidget(MainWindow)
         self.dockWidget_4.setObjectName(u"dockWidget_4")
-        self.dockWidget_4.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget_4.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.dockWidget_4.setFeatures(QDockWidget.DockWidgetMovable)
+        self.dockWidget_4.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
         self.dockWidgetContents_2 = QWidget()
         self.dockWidgetContents_2.setObjectName(u"dockWidgetContents_2")
         self.verticalLayout_8 = QVBoxLayout(self.dockWidgetContents_2)
@@ -304,8 +304,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_8.setContentsMargins(0, 0, 0, 0)
         self.frame_2 = QFrame(self.dockWidgetContents_2)
         self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_2.setFrameShape(QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Raised)
         self.frame_2.setLineWidth(0)
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
@@ -335,12 +335,12 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_4)
         self.dockWidget = QDockWidget(MainWindow)
         self.dockWidget.setObjectName(u"dockWidget")
-        self.dockWidget.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.dockWidget.setFeatures(QDockWidget.DockWidgetMovable)
+        self.dockWidget.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
         self.dockWidgetContents = QWidget()
         self.dockWidgetContents.setObjectName(u"dockWidgetContents")
         self.verticalLayout_7 = QVBoxLayout(self.dockWidgetContents)
-        self.verticalLayout_7.setSpacing(6)
+        self.verticalLayout_7.setSpacing(2)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
         self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
         self.variables_scroll_area_searchbar = QLineEdit(self.dockWidgetContents)
@@ -353,11 +353,13 @@ class Ui_MainWindow(object):
         self.scrollArea_2.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 367, 259))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 254, 197))
+        self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.variables_scrollArea = QVBoxLayout()
+        self.variables_scrollArea.setSpacing(0)
         self.variables_scrollArea.setObjectName(u"variables_scrollArea")
 
         self.verticalLayout_2.addLayout(self.variables_scrollArea)
@@ -370,13 +372,14 @@ class Ui_MainWindow(object):
         self.frame.setObjectName(u"frame")
         self.frame.setMinimumSize(QSize(0, 0))
         self.frame.setMaximumSize(QSize(16777215, 28))
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.add_new_variable_button = QToolButton(self.frame)
         self.add_new_variable_button.setObjectName(u"add_new_variable_button")
+        self.add_new_variable_button.setMaximumSize(QSize(28, 28))
         icon4 = QIcon()
         icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_new_variable_button.setIcon(icon4)
@@ -395,7 +398,7 @@ class Ui_MainWindow(object):
 "\n"
 "QMenu::item {\n"
 "    padding: 5px 10px;\n"
-"    font: 700 10pt \"Segoe UI\";\n"
+"    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 4px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
@@ -435,9 +438,9 @@ class Ui_MainWindow(object):
 "}\n"
 "\n"
 "QMenu::item {\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border-top: "
-                        "2px solid black;\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border-top: 2p"
+                        "x solid black;\n"
 "    border: 0px;\n"
 "    border-radius: 4px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
@@ -472,7 +475,7 @@ class Ui_MainWindow(object):
 "\n"
 "\n"
 "QComboBox {\n"
-"    font: 600 9pt \"Segoe UI\";\n"
+"    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 4px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
@@ -485,8 +488,8 @@ class Ui_MainWindow(object):
 "}\n"
 "\n"
 "QComboBox:hover {\n"
-"    back"
-                        "ground-color: #414956;\n"
+"    backgr"
+                        "ound-color: #414956;\n"
 "    color: white;\n"
 "}\n"
 "\n"
@@ -496,7 +499,7 @@ class Ui_MainWindow(object):
 "}\n"
 "\n"
 "QComboBox:item {\n"
-"    font: 600 12pt \"Segoe UI\";\n"
+"    font: 580 8pt \"Segoe UI\";\n"
 "    color: #E3E3E3;\n"
 "    padding-left: 5px;\n"
 "    background-color: #1C1C1C;\n"
@@ -527,9 +530,9 @@ class Ui_MainWindow(object):
 "}\n"
 "\n"
 "\n"
-"QComboBox QAbstractItemView::item"
-                        " {\n"
-"    height: 16px; /* Set the height of each item */\n"
+"QComboBox QAbstractItemView::item {\n"
+""
+                        "    height: 16px; /* Set the height of each item */\n"
 "    padding: 4px; /* Add padding to each item */\n"
 "    padding-left: 5px;\n"
 "    padding-right: 5px;\n"
@@ -560,8 +563,8 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget)
         self.dockWidget_10 = QDockWidget(MainWindow)
         self.dockWidget_10.setObjectName(u"dockWidget_10")
-        self.dockWidget_10.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget_10.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.dockWidget_10.setFeatures(QDockWidget.DockWidgetMovable)
+        self.dockWidget_10.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
         self.dockWidgetContents_10 = QWidget()
         self.dockWidgetContents_10.setObjectName(u"dockWidgetContents_10")
         self.verticalLayout_10 = QVBoxLayout(self.dockWidgetContents_10)
@@ -578,8 +581,8 @@ class Ui_MainWindow(object):
         self.frame_4 = QFrame(self.dockWidgetContents_10)
         self.frame_4.setObjectName(u"frame_4")
         self.frame_4.setMaximumSize(QSize(16777215, 32))
-        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_4.setFrameShape(QFrame.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.frame_4)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)

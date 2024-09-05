@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>LegacyPropertyWidet</class>
- <widget class="QWidget" name="LegacyPropertyWidet">
+ <class>Widget</class>
+ <widget class="QWidget" name="Widget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>683</width>
-    <height>146</height>
+    <width>790</width>
+    <height>97</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>146</height>
+    <height>0</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>146</height>
+    <height>97</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -61,10 +61,16 @@
     <number>0</number>
    </property>
    <property name="bottomMargin">
-    <number>9</number>
+    <number>0</number>
    </property>
    <item>
     <widget class="QFrame" name="frame">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>32</height>
+      </size>
+     </property>
      <property name="styleSheet">
       <string notr="true">.QFrame {
     font: 580 10pt &quot;Segoe UI&quot;;
@@ -74,9 +80,6 @@
     border-right: 0px;
 	border-top: 0px;
     border-color: rgba(50, 50, 50, 255);
-    padding: 8px;
-    padding-left: 6px;
-    padding-right: 6px;
     color: #E3E3E3;
     background-color: #1C1C1C;
 }
@@ -98,7 +101,7 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <property name="spacing">
-       <number>16</number>
+       <number>0</number>
       </property>
       <property name="leftMargin">
        <number>0</number>
@@ -116,7 +119,10 @@
        <widget class="QLabel" name="label">
         <property name="styleSheet">
          <string notr="true">border:0px;
-background-color: rgba(255, 255, 255, 0);</string>
+background-color: rgba(255, 255, 255, 0);
+font: 8pt &quot;Segoe UI&quot;;
+
+</string>
         </property>
         <property name="text">
          <string>Value</string>
@@ -125,16 +131,21 @@ background-color: rgba(255, 255, 255, 0);</string>
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="doubleSpinBox">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="styleSheet">
          <string notr="true">QDoubleSpinBox {
-    font: 580 10pt &quot;Segoe UI&quot;;
+    font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-    padding-left: 2px;
-    padding-right: 2px;
     color: #E3E3E3;
     background-color: #1C1C1C;
+border:0px;
 }
 
 QDoubleSpinBox:focus {
@@ -157,6 +168,7 @@ QDoubleSpinBox::up-button {
     border-color: rgba(80, 80, 80, 255);
 	width:16px;
     margin:0px;
+border:0px;
 }
 
 QDoubleSpinBox::up-arrow {
@@ -175,6 +187,7 @@ border-bottom-right-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
 	width:16px;
     margin:0px;
+border:0px;
 }
 
 QDoubleSpinBox::down-arrow {
@@ -187,10 +200,10 @@ QDoubleSpinBox::down-arrow {
          <number>1</number>
         </property>
         <property name="minimum">
-         <double>-9.900000000000000</double>
+         <double>-99999999999.000000000000000</double>
         </property>
         <property name="maximum">
-         <double>9.900000000000000</double>
+         <double>99999999999.000000000000000</double>
         </property>
         <property name="singleStep">
          <double>0.100000000000000</double>
@@ -202,6 +215,12 @@ QDoubleSpinBox::down-arrow {
    </item>
    <item>
     <widget class="QFrame" name="frame_2">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>32</height>
+      </size>
+     </property>
      <property name="styleSheet">
       <string notr="true">.QFrame {
     font: 580 10pt &quot;Segoe UI&quot;;
@@ -211,9 +230,6 @@ QDoubleSpinBox::down-arrow {
     border-right: 0px;
 	border-top: 0px;
     border-color: rgba(50, 50, 50, 255);
-    padding: 8px;
-    padding-left: 6px;
-    padding-right: 6px;
     color: #E3E3E3;
     background-color: #1C1C1C;
 }
@@ -235,7 +251,7 @@ QDoubleSpinBox::down-arrow {
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_7">
       <property name="spacing">
-       <number>16</number>
+       <number>0</number>
       </property>
       <property name="leftMargin">
        <number>0</number>
@@ -251,6 +267,25 @@ QDoubleSpinBox::down-arrow {
       </property>
       <item>
        <widget class="QCheckBox" name="checkBox">
+        <property name="styleSheet">
+         <string notr="true">QCheckBox {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    height:4px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+	border:0px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}
+
+QCheckBox::indicator:checked {
+    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}</string>
+        </property>
         <property name="text">
          <string>Min Value</string>
         </property>
@@ -260,14 +295,13 @@ QDoubleSpinBox::down-arrow {
        <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
         <property name="styleSheet">
          <string notr="true">QDoubleSpinBox {
-    font: 580 10pt &quot;Segoe UI&quot;;
+    font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-    padding-left: 2px;
-    padding-right: 2px;
     color: #E3E3E3;
     background-color: #1C1C1C;
+border:0px;
 }
 
 QDoubleSpinBox:focus {
@@ -290,6 +324,7 @@ QDoubleSpinBox::up-button {
     border-color: rgba(80, 80, 80, 255);
 	width:16px;
     margin:0px;
+border:0px;
 }
 
 QDoubleSpinBox::up-arrow {
@@ -308,6 +343,7 @@ border-bottom-right-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
 	width:16px;
     margin:0px;
+border:0px;
 }
 
 QDoubleSpinBox::down-arrow {
@@ -335,6 +371,12 @@ QDoubleSpinBox::down-arrow {
    </item>
    <item>
     <widget class="QFrame" name="frame_3">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>32</height>
+      </size>
+     </property>
      <property name="styleSheet">
       <string notr="true">.QFrame {
     font: 580 10pt &quot;Segoe UI&quot;;
@@ -344,9 +386,6 @@ QDoubleSpinBox::down-arrow {
     border-right: 0px;
 	border-top: 0px;
     border-color: rgba(50, 50, 50, 255);
-    padding: 8px;
-    padding-left: 6px;
-    padding-right: 6px;
     color: #E3E3E3;
     background-color: #1C1C1C;
 }
@@ -368,7 +407,7 @@ QDoubleSpinBox::down-arrow {
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_8">
       <property name="spacing">
-       <number>16</number>
+       <number>0</number>
       </property>
       <property name="leftMargin">
        <number>0</number>
@@ -384,6 +423,25 @@ QDoubleSpinBox::down-arrow {
       </property>
       <item>
        <widget class="QCheckBox" name="checkBox_4">
+        <property name="styleSheet">
+         <string notr="true">QCheckBox {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    height:4px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+	border:0px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}
+
+QCheckBox::indicator:checked {
+    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}</string>
+        </property>
         <property name="text">
          <string>Max Value</string>
         </property>
@@ -393,14 +451,13 @@ QDoubleSpinBox::down-arrow {
        <widget class="QDoubleSpinBox" name="doubleSpinBox_9">
         <property name="styleSheet">
          <string notr="true">QDoubleSpinBox {
-    font: 580 10pt &quot;Segoe UI&quot;;
+    font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-    padding-left: 2px;
-    padding-right: 2px;
     color: #E3E3E3;
     background-color: #1C1C1C;
+border:0px;
 }
 
 QDoubleSpinBox:focus {
@@ -423,6 +480,7 @@ QDoubleSpinBox::up-button {
     border-color: rgba(80, 80, 80, 255);
 	width:16px;
     margin:0px;
+border:0px;
 }
 
 QDoubleSpinBox::up-arrow {
@@ -441,6 +499,7 @@ border-bottom-right-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
 	width:16px;
     margin:0px;
+border:0px;
 }
 
 QDoubleSpinBox::down-arrow {
@@ -453,10 +512,10 @@ QDoubleSpinBox::down-arrow {
          <number>1</number>
         </property>
         <property name="minimum">
-         <double>-9.900000000000000</double>
+         <double>-99999999999.000000000000000</double>
         </property>
         <property name="maximum">
-         <double>9.900000000000000</double>
+         <double>99999999999.000000000000000</double>
         </property>
         <property name="singleStep">
          <double>0.100000000000000</double>
