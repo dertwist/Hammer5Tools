@@ -22,12 +22,14 @@ class VariableFrame(QWidget):
         self.widget_list = widget_list
         if var_class == 'Float':
             self.ui.layout.insertWidget(0, Var_class_Int(var_value='1', var_class='int'))
+        self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 
         self.init_ui()
 
     def show_child(self):
-        if self.ui.show_child.isChecked():
+        print(self.ui.show_child.isChecked())
+        if not self.ui.show_child.isChecked():
             # self.ui.layout.setEnabled(False)
             self.ui.frame_layout.setMaximumSize(16666,0)
         else:

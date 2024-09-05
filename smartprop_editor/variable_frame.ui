@@ -83,6 +83,9 @@ background-color: #242424;</string>
       </item>
       <item>
        <widget class="QCheckBox" name="show_child">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Show child&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="styleSheet">
          <string notr="true">QCheckBox::indicator:checked {
     
@@ -132,6 +135,9 @@ border-top: 0px solid black;
       </item>
       <item>
        <widget class="QCheckBox" name="visible_in_editor">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Show in editor&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="styleSheet">
          <string notr="true">QCheckBox::indicator:checked {
     image: url(://icons/visibility_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png);
@@ -188,6 +194,9 @@ border-top: 0px solid black;
       </item>
       <item>
        <widget class="QLineEdit" name="variable_name">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="styleSheet">
          <string notr="true">QLineEdit {
 	font: 8pt &quot;Segoe UI&quot;;
@@ -232,6 +241,9 @@ QLineEdit::selection {
           <width>136</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;class&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
          <string notr="true">QLineEdit {
