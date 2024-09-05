@@ -24,8 +24,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.group_modifiers.clicked.connect(lambda: self.groupBox_check(self.ui.group_modifiers))
         self.ui.group_class_properties.clicked.connect(lambda: self.groupBox_check(self.ui.group_class_properties))
         self.ui.group_selection_criteria.clicked.connect(lambda: self.groupBox_check(self.ui.group_selection_criteria))
-        variable = VariableFrame(name='test', widget_list=self.ui.variables_scrollArea)
-        self.ui.variables_scrollArea.insertWidget(0,variable)
+        variables = ['sizer','var_test','model_src_test']
+        for item in variables:
+            variable = VariableFrame(name=item, widget_list=self.ui.variables_scrollArea, var_value='1', var_class='Float', var_visible_in_editor=False)
+            self.ui.variables_scrollArea.insertWidget(0,variable)
+            self.ui.variables_scrollArea.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         self.soundevent_properties_widget = QWidget()
         self.soundevent_properties_layout = QVBoxLayout(self.ui.modifiers_widget)

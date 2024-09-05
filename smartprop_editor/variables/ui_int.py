@@ -19,14 +19,14 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFrame,
     QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout,
     QWidget)
 
-class Ui_LegacyPropertyWidet(object):
-    def setupUi(self, LegacyPropertyWidet):
-        if not LegacyPropertyWidet.objectName():
-            LegacyPropertyWidet.setObjectName(u"LegacyPropertyWidet")
-        LegacyPropertyWidet.resize(683, 146)
-        LegacyPropertyWidet.setMinimumSize(QSize(0, 146))
-        LegacyPropertyWidet.setMaximumSize(QSize(16777215, 146))
-        LegacyPropertyWidet.setStyleSheet(u".QWidget {\n"
+class Ui_Widget(object):
+    def setupUi(self, Widget):
+        if not Widget.objectName():
+            Widget.setObjectName(u"Widget")
+        Widget.resize(790, 97)
+        Widget.setMinimumSize(QSize(0, 0))
+        Widget.setMaximumSize(QSize(16777215, 97))
+        Widget.setStyleSheet(u".QWidget {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
@@ -46,12 +46,13 @@ class Ui_LegacyPropertyWidet(object):
 ".QWidget::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.verticalLayout = QVBoxLayout(LegacyPropertyWidet)
+        self.verticalLayout = QVBoxLayout(Widget)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 9)
-        self.frame = QFrame(LegacyPropertyWidet)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.frame = QFrame(Widget)
         self.frame.setObjectName(u"frame")
+        self.frame.setMaximumSize(QSize(16777215, 32))
         self.frame.setStyleSheet(u".QFrame {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -60,9 +61,6 @@ class Ui_LegacyPropertyWidet(object):
 "    border-right: 0px;\n"
 "	border-top: 0px;\n"
 "    border-color: rgba(50, 50, 50, 255);\n"
-"    padding: 8px;\n"
-"    padding-left: 6px;\n"
-"    padding-right: 6px;\n"
 "    color: #E3E3E3;\n"
 "    background-color: #1C1C1C;\n"
 "}\n"
@@ -76,27 +74,30 @@ class Ui_LegacyPropertyWidet(object):
         self.frame.setFrameShadow(QFrame.Raised)
         self.frame.setLineWidth(0)
         self.horizontalLayout_2 = QHBoxLayout(self.frame)
-        self.horizontalLayout_2.setSpacing(16)
+        self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.label = QLabel(self.frame)
         self.label.setObjectName(u"label")
         self.label.setStyleSheet(u"border:0px;\n"
-"background-color: rgba(255, 255, 255, 0);")
+"background-color: rgba(255, 255, 255, 0);\n"
+"font: 8pt \"Segoe UI\";\n"
+"\n"
+"")
 
         self.horizontalLayout_2.addWidget(self.label)
 
         self.doubleSpinBox = QDoubleSpinBox(self.frame)
         self.doubleSpinBox.setObjectName(u"doubleSpinBox")
+        self.doubleSpinBox.setMinimumSize(QSize(0, 0))
         self.doubleSpinBox.setStyleSheet(u"QDoubleSpinBox {\n"
-"    font: 580 10pt \"Segoe UI\";\n"
+"    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 2px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
-"    padding-left: 2px;\n"
-"    padding-right: 2px;\n"
 "    color: #E3E3E3;\n"
 "    background-color: #1C1C1C;\n"
+"border:0px;\n"
 "}\n"
 "\n"
 "QDoubleSpinBox:focus {\n"
@@ -119,6 +120,7 @@ class Ui_LegacyPropertyWidet(object):
 "    border-color: rgba(80, 80, 80, 255);\n"
 "	width:16px;\n"
 "    margin:0px;\n"
+"border:0px;\n"
 "}\n"
 "\n"
 "QDoubleSpinBox::up-arrow {\n"
@@ -129,8 +131,8 @@ class Ui_LegacyPropertyWidet(object):
 "\n"
 "QDoubleSpinBox::down-button {\n"
 "    subcontrol-origin: border;\n"
-""
-                        "    subcontrol-position: bottom right;\n"
+"    subcontrol-positio"
+                        "n: bottom right;\n"
 "	border: 0px solid black;\n"
 "    border-left: 2px solid black;\n"
 "    border-top: 2px solid black;\n"
@@ -138,6 +140,7 @@ class Ui_LegacyPropertyWidet(object):
 "    border-color: rgba(80, 80, 80, 255);\n"
 "	width:16px;\n"
 "    margin:0px;\n"
+"border:0px;\n"
 "}\n"
 "\n"
 "QDoubleSpinBox::down-arrow {\n"
@@ -146,8 +149,8 @@ class Ui_LegacyPropertyWidet(object):
 "    height: 20px;\n"
 "}")
         self.doubleSpinBox.setDecimals(1)
-        self.doubleSpinBox.setMinimum(-9.900000000000000)
-        self.doubleSpinBox.setMaximum(9.900000000000000)
+        self.doubleSpinBox.setMinimum(-99999999999.000000000000000)
+        self.doubleSpinBox.setMaximum(99999999999.000000000000000)
         self.doubleSpinBox.setSingleStep(0.100000000000000)
 
         self.horizontalLayout_2.addWidget(self.doubleSpinBox)
@@ -155,8 +158,9 @@ class Ui_LegacyPropertyWidet(object):
 
         self.verticalLayout.addWidget(self.frame)
 
-        self.frame_2 = QFrame(LegacyPropertyWidet)
+        self.frame_2 = QFrame(Widget)
         self.frame_2.setObjectName(u"frame_2")
+        self.frame_2.setMaximumSize(QSize(16777215, 32))
         self.frame_2.setStyleSheet(u".QFrame {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -165,9 +169,6 @@ class Ui_LegacyPropertyWidet(object):
 "    border-right: 0px;\n"
 "	border-top: 0px;\n"
 "    border-color: rgba(50, 50, 50, 255);\n"
-"    padding: 8px;\n"
-"    padding-left: 6px;\n"
-"    padding-right: 6px;\n"
 "    color: #E3E3E3;\n"
 "    background-color: #1C1C1C;\n"
 "}\n"
@@ -181,25 +182,41 @@ class Ui_LegacyPropertyWidet(object):
         self.frame_2.setFrameShadow(QFrame.Raised)
         self.frame_2.setLineWidth(0)
         self.horizontalLayout_7 = QHBoxLayout(self.frame_2)
-        self.horizontalLayout_7.setSpacing(16)
+        self.horizontalLayout_7.setSpacing(0)
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
         self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
         self.checkBox = QCheckBox(self.frame_2)
         self.checkBox.setObjectName(u"checkBox")
+        self.checkBox.setStyleSheet(u"QCheckBox {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:4px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"	border:0px;\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:unchecked {\n"
+"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}")
 
         self.horizontalLayout_7.addWidget(self.checkBox)
 
         self.doubleSpinBox_6 = QDoubleSpinBox(self.frame_2)
         self.doubleSpinBox_6.setObjectName(u"doubleSpinBox_6")
         self.doubleSpinBox_6.setStyleSheet(u"QDoubleSpinBox {\n"
-"    font: 580 10pt \"Segoe UI\";\n"
+"    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 2px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
-"    padding-left: 2px;\n"
-"    padding-right: 2px;\n"
 "    color: #E3E3E3;\n"
 "    background-color: #1C1C1C;\n"
+"border:0px;\n"
 "}\n"
 "\n"
 "QDoubleSpinBox:focus {\n"
@@ -222,6 +239,7 @@ class Ui_LegacyPropertyWidet(object):
 "    border-color: rgba(80, 80, 80, 255);\n"
 "	width:16px;\n"
 "    margin:0px;\n"
+"border:0px;\n"
 "}\n"
 "\n"
 "QDoubleSpinBox::up-arrow {\n"
@@ -232,8 +250,8 @@ class Ui_LegacyPropertyWidet(object):
 "\n"
 "QDoubleSpinBox::down-button {\n"
 "    subcontrol-origin: border;\n"
-""
-                        "    subcontrol-position: bottom right;\n"
+"    subcontrol-positio"
+                        "n: bottom right;\n"
 "	border: 0px solid black;\n"
 "    border-left: 2px solid black;\n"
 "    border-top: 2px solid black;\n"
@@ -241,6 +259,7 @@ class Ui_LegacyPropertyWidet(object):
 "    border-color: rgba(80, 80, 80, 255);\n"
 "	width:16px;\n"
 "    margin:0px;\n"
+"border:0px;\n"
 "}\n"
 "\n"
 "QDoubleSpinBox::down-arrow {\n"
@@ -258,8 +277,9 @@ class Ui_LegacyPropertyWidet(object):
 
         self.verticalLayout.addWidget(self.frame_2)
 
-        self.frame_3 = QFrame(LegacyPropertyWidet)
+        self.frame_3 = QFrame(Widget)
         self.frame_3.setObjectName(u"frame_3")
+        self.frame_3.setMaximumSize(QSize(16777215, 32))
         self.frame_3.setStyleSheet(u".QFrame {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -268,9 +288,6 @@ class Ui_LegacyPropertyWidet(object):
 "    border-right: 0px;\n"
 "	border-top: 0px;\n"
 "    border-color: rgba(50, 50, 50, 255);\n"
-"    padding: 8px;\n"
-"    padding-left: 6px;\n"
-"    padding-right: 6px;\n"
 "    color: #E3E3E3;\n"
 "    background-color: #1C1C1C;\n"
 "}\n"
@@ -284,25 +301,41 @@ class Ui_LegacyPropertyWidet(object):
         self.frame_3.setFrameShadow(QFrame.Raised)
         self.frame_3.setLineWidth(0)
         self.horizontalLayout_8 = QHBoxLayout(self.frame_3)
-        self.horizontalLayout_8.setSpacing(16)
+        self.horizontalLayout_8.setSpacing(0)
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
         self.checkBox_4 = QCheckBox(self.frame_3)
         self.checkBox_4.setObjectName(u"checkBox_4")
+        self.checkBox_4.setStyleSheet(u"QCheckBox {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:4px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"	border:0px;\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:unchecked {\n"
+"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}")
 
         self.horizontalLayout_8.addWidget(self.checkBox_4)
 
         self.doubleSpinBox_9 = QDoubleSpinBox(self.frame_3)
         self.doubleSpinBox_9.setObjectName(u"doubleSpinBox_9")
         self.doubleSpinBox_9.setStyleSheet(u"QDoubleSpinBox {\n"
-"    font: 580 10pt \"Segoe UI\";\n"
+"    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 2px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
-"    padding-left: 2px;\n"
-"    padding-right: 2px;\n"
 "    color: #E3E3E3;\n"
 "    background-color: #1C1C1C;\n"
+"border:0px;\n"
 "}\n"
 "\n"
 "QDoubleSpinBox:focus {\n"
@@ -325,6 +358,7 @@ class Ui_LegacyPropertyWidet(object):
 "    border-color: rgba(80, 80, 80, 255);\n"
 "	width:16px;\n"
 "    margin:0px;\n"
+"border:0px;\n"
 "}\n"
 "\n"
 "QDoubleSpinBox::up-arrow {\n"
@@ -335,8 +369,8 @@ class Ui_LegacyPropertyWidet(object):
 "\n"
 "QDoubleSpinBox::down-button {\n"
 "    subcontrol-origin: border;\n"
-""
-                        "    subcontrol-position: bottom right;\n"
+"    subcontrol-positio"
+                        "n: bottom right;\n"
 "	border: 0px solid black;\n"
 "    border-left: 2px solid black;\n"
 "    border-top: 2px solid black;\n"
@@ -344,6 +378,7 @@ class Ui_LegacyPropertyWidet(object):
 "    border-color: rgba(80, 80, 80, 255);\n"
 "	width:16px;\n"
 "    margin:0px;\n"
+"border:0px;\n"
 "}\n"
 "\n"
 "QDoubleSpinBox::down-arrow {\n"
@@ -352,8 +387,8 @@ class Ui_LegacyPropertyWidet(object):
 "    height: 20px;\n"
 "}")
         self.doubleSpinBox_9.setDecimals(1)
-        self.doubleSpinBox_9.setMinimum(-9.900000000000000)
-        self.doubleSpinBox_9.setMaximum(9.900000000000000)
+        self.doubleSpinBox_9.setMinimum(-99999999999.000000000000000)
+        self.doubleSpinBox_9.setMaximum(99999999999.000000000000000)
         self.doubleSpinBox_9.setSingleStep(0.100000000000000)
 
         self.horizontalLayout_8.addWidget(self.doubleSpinBox_9)
@@ -362,15 +397,15 @@ class Ui_LegacyPropertyWidet(object):
         self.verticalLayout.addWidget(self.frame_3)
 
 
-        self.retranslateUi(LegacyPropertyWidet)
+        self.retranslateUi(Widget)
 
-        QMetaObject.connectSlotsByName(LegacyPropertyWidet)
+        QMetaObject.connectSlotsByName(Widget)
     # setupUi
 
-    def retranslateUi(self, LegacyPropertyWidet):
-        LegacyPropertyWidet.setWindowTitle(QCoreApplication.translate("LegacyPropertyWidet", u"Form", None))
-        self.label.setText(QCoreApplication.translate("LegacyPropertyWidet", u"Value", None))
-        self.checkBox.setText(QCoreApplication.translate("LegacyPropertyWidet", u"Min Value", None))
-        self.checkBox_4.setText(QCoreApplication.translate("LegacyPropertyWidet", u"Max Value", None))
+    def retranslateUi(self, Widget):
+        Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
+        self.label.setText(QCoreApplication.translate("Widget", u"Value", None))
+        self.checkBox.setText(QCoreApplication.translate("Widget", u"Min Value", None))
+        self.checkBox_4.setText(QCoreApplication.translate("Widget", u"Max Value", None))
     # retranslateUi
 
