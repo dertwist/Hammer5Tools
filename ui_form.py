@@ -59,7 +59,57 @@ class Ui_Widget(object):
         self.MainWindowTools_tabs.setObjectName(u"MainWindowTools_tabs")
         self.MainWindowTools_tabs.setEnabled(True)
         self.MainWindowTools_tabs.setMinimumSize(QSize(0, 0))
-        self.MainWindowTools_tabs.setStyleSheet(u"background-color: #1d1d1f;")
+        self.MainWindowTools_tabs.setStyleSheet(u"background-color: #1d1d1f;\n"
+"QTabWidget::pane {\n"
+"    background-color: solid red;\n"
+"    border-radius: 0px;\n"
+"    border: 2px solid gray;\n"
+"    border-color: #363639;\n"
+"    background-color: #1d1d1f;\n"
+"}\n"
+"/* ========================================================== */\n"
+"QTabBar::tab {\n"
+"    background-color: #323232;\n"
+"    color: #9A9F91;\n"
+"    border-radius: 0px;\n"
+"    border-top-right-radius: 0px;\n"
+"    border-top-left-radius: 0px;\n"
+"    padding: 4px;\n"
+"    padding-left:48px;\n"
+"    padding-right: 48px;\n"
+"\n"
+"    border-top: 2px solid gray;\n"
+"    border-bottom: 0px solid black;\n"
+"\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border-left: 2px solid darkgray;\n"
+"    border-top: 0px solid darkgray;\n"
+"    border-color: #151515;\n"
+"    border-right: 2px solid rgba(80, 80, 80, 80);\n"
+"\n"
+"\n"
+"\n"
+"    color: #E3E3E3;\n"
+"    background-color: #151515;\n"
+"\n"
+"}\n"
+"QTabBar::tab:selected {\n"
+"    border-radius: 0px;\n"
+"    border-top-right-radius: 7px;\n"
+"    bo"
+                        "rder-top-left-radius: 7px;\n"
+"\n"
+"    border-top: 2px solid gray;\n"
+"    border-left: 2px solid gray;\n"
+"    border-right: 2px solid gray;\n"
+"    border-bottom: 0px solid black;\n"
+"\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border-color: rgba(80, 80, 80, 180);\n"
+"    height:20px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1d1d1f;\n"
+"}")
         self.MainWindowTools_tabs.setTabsClosable(False)
         self.Loading_Editor_Tab = QWidget()
         self.Loading_Editor_Tab.setObjectName(u"Loading_Editor_Tab")
@@ -278,7 +328,7 @@ class Ui_Widget(object):
 
         self.retranslateUi(Widget)
 
-        self.MainWindowTools_tabs.setCurrentIndex(0)
+        self.MainWindowTools_tabs.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(Widget)
