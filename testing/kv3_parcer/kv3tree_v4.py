@@ -11,14 +11,18 @@ import json
 import keyvalues3 as kv3
 import ast
 # Sample JSON data
-
+vsmart_path = 'bicycle_rack.vsmart'
 # bt_config = kv3.read(r'E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_ankhor\smartprops\hvac_kit.vsmart')
-bt_config = kv3.read('sample_2.vsmart')
+with open(vsmart_path, 'r') as file:
+    lines = [line.replace('resource:', '') for line in file.readlines()]
+    stripped_lines = [line.strip() for line in lines]
+bt_config = kv3.read(vsmart_path)
+print(stripped_lines)
 
 
 data = bt_config.value
 data_raw = data
-print(data['m_Variables'][0]['m_test'])
+# print(data['m_Variables'][0]['m_test'])
 # <keyvalues3.keyvalues3.flagged_value object at 0x000001AF133810C0>
 
 # data = {

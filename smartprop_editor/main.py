@@ -7,6 +7,7 @@ from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_config_value
 
 from soudevent_editor.properties.legacy_property import LegacyProperty
+from smartprop_editor.variable_frame import VariableFrame
 
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, version="v0.0.2", parent=None):
@@ -23,7 +24,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.group_modifiers.clicked.connect(lambda: self.groupBox_check(self.ui.group_modifiers))
         self.ui.group_class_properties.clicked.connect(lambda: self.groupBox_check(self.ui.group_class_properties))
         self.ui.group_selection_criteria.clicked.connect(lambda: self.groupBox_check(self.ui.group_selection_criteria))
-
+        variable = VariableFrame(name='test', widget_list=self.ui.variables_scrollArea)
+        self.ui.variables_scrollArea.insertWidget(0,variable)
 
         self.soundevent_properties_widget = QWidget()
         self.soundevent_properties_layout = QVBoxLayout(self.ui.modifiers_widget)
@@ -63,6 +65,4 @@ if __name__ == "__main__":
     app.setStyleSheet(QT_Stylesheet_global)
     window = SmartPropEditorMainWindow()
     window.show()
-
-
     sys.exit(app.exec())
