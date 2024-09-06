@@ -208,7 +208,7 @@ QDockWidget {
 
 QDockWidget::title {
     background-color: #1C1C1C;
-    padding: 4px;
+    /* padding: 4px; */
     font: 700 10pt "Segoe UI";
     color: #E3E3E3;
 }
@@ -565,7 +565,7 @@ QLineEdit:focus {
 QLineEdit::selection {
     background-color: #414956;
     color: white;
-}
+} 
 
 
 
