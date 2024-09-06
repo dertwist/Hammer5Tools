@@ -114,42 +114,31 @@ class MainWindow(QMainWindow):
     def load_json_tree(self, data, parent=None):
         if parent is None:
             parent = self.tree.invisibleRootItem()
-        if isinstance(data, dict):
-            for key, value in data.items():
-                if isinstance(value, list):
-                    for child_data in value:
-                        item = QTreeWidgetItem([key, value])
-                        item.setFlags(item.flags() | Qt.ItemIsEditable)
-                        parent.addChild(item)
-                        self.load_json_tree(child_data, item)
-                else:
-                    item = QTreeWidgetItem([key, value])
-                    item.setFlags(item.flags() | Qt.ItemIsEditable)
-                    parent.addChild(item)
-                    self.load_json_tree(value, item)
 
-        elif isinstance(data, list):
-            for item in data:
-                if isinstance(item, dict):
-                    for key, value in item.items():
-                        if isinstance(value, list):
-                            for child_data in value:
-                                child_item = QTreeWidgetItem([key, value])
-                                child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
-                                parent.addChild(child_item)
-                                self.load_json_tree(child_data, child_item)
-                        else:
-                            child_item = QTreeWidgetItem([key, value])
-                            child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
-                            parent.addChild(child_item)
-                            self.load_json_tree(value, child_item)
+        for key, value in data.items():
+            key_split = key.split('%?=!=')
+            key_name = key_split[0]
+
+            # Check if key_split has at least two elements before accessing the second element
+            if len(key_split) > 1:
+                value_row = key_split[1]
+            else:
+                value_row = ''  # Handle the case when key_split does not have a second element
+
+            item = QTreeWidgetItem([key_name, value_row])
+            item.setFlags(item.flags() | Qt.ItemIsEditable)
+            parent.addChild(item)
+
+            if isinstance(value, dict):
+                self.load_json_tree(value, item)
 
 
     def save_tree(self):
         data = self.tree_item_to_dict(self.tree.invisibleRootItem())
         # data = self.convert_children_to_list(data)
-        converted_data = self.convert_to_kv3(data)
-        kv3.write(converted_data, 'treestructure.vsmart')
+        # converted_data = self.convert_to_kv3(data)
+        kv3.write(data, 'treestructure.vsmart')
+        # kv3.write(converted_data, 'treestructure.vsmart')
         # print(data_raw)
 
         # kv3.write(data_raw, 'treestructure.vsmart')
@@ -177,22 +166,23 @@ class MainWindow(QMainWindow):
         return new_data
 
     def tree_item_to_dict(self, item):
-        if item.childCount() == 0:
-            return {item.text(0): item.text(1)}  # Save key-value pair for leaf nodes
         data = {}
-        for i in range(item.childCount()):
-            child = item.child(i)
+        for index in range(item.childCount()):
+            child = item.child(index)
+            child_data = self.tree_item_to_dict(child)  # Recursively get child data
             key = child.text(0)
-            value = self.tree_item_to_dict(child)
+            value = child.text(1) if child.childCount() == 0 else self.tree_item_to_dict(child)
             if key in data:
-                if isinstance(data[key], list):
-                    data[key].append(value)
-                else:
-                    data[key] = [data[key], value]
+                if not isinstance(data[key], list):
+                    data[key] = [data[key]]  # Convert to list if key already exists
+                data[key].append(value)
             else:
                 data[key] = value
-        # Save key-value pair for parent item
+
         return data
+
+    # data[str(key) + '%?=!=' + str(value_row)] = value
+
 
     def load_file(self):
         options = QFileDialog.Options()
