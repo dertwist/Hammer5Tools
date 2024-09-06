@@ -1,5 +1,5 @@
 variable_prefix = 'CSmartPropVariable_'
-variables_lsit = [
+variables_list = [
     'CoordinateSpace',
     'Direction',
     'DistributionMode',

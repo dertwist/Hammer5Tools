@@ -4,19 +4,28 @@ from smartprop_editor.ui_variable_frame import Ui_Form
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt
 from soudevent_editor.properties.property_actions import PropertyActions
+
+from PySide6.QtWidgets import QMenu, QApplication
+from PySide6.QtCore import Qt, QMimeData
+from PySide6.QtGui import QCursor, QDrag,QAction
+
 from smartprop_editor.variables.int import Var_class_Int
+
 import ast
 
 class VariableFrame(QWidget):
-    def __init__(self, name, var_value, var_class, var_visible_in_editor, widget_list):
+    def __init__(self, name, var_class, var_value, var_visible_in_editor, widget_list):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
         self.name = name
+        self.var_class = var_class
+        self.var_value = var_value
+        self.var_visible_in_editor = var_visible_in_editor
+
         self.ui.variable_name.setText(name)
         self.ui.variable_class.setText(var_class)
-        self.var_visible_in_editor = var_visible_in_editor
         self.ui.visible_in_editor.setChecked(self.var_visible_in_editor)
         self.ui.visible_in_editor.clicked.connect(self.visible_in_editor)
         self.widget_list = widget_list
@@ -48,4 +57,16 @@ class VariableFrame(QWidget):
     dragEnterEvent = PropertyActions.dragEnterEvent
     dropEvent = PropertyActions.dropEvent
     def show_context_menu(self):
-        PropertyActions.show_context_menu(self, event=self.event, property_class=self)
+        context_menu = QMenu()
+        delete_action = QAction("Delete", context_menu)
+        copy_action = QAction("Copy", context_menu)  # Change 'Duplicate' to 'Copy'
+        context_menu.addActions([delete_action, copy_action])  # Replace 'duplicate_action' with 'copy_action'
+
+        action = context_menu.exec(QCursor.pos())
+
+        if action == delete_action:
+            self.deleteLater()
+
+        elif action == copy_action:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.var_class};;{self.var_value};;{self.var_visible_in_editor}")
