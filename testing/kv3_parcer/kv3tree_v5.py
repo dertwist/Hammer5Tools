@@ -109,9 +109,9 @@ class MainWindow(QMainWindow):
 
             self.tree.clear()
             vsmartdata_tree_structure = ast.literal_eval(line_vsmartdata_tree_structure)
-            self.load_json_tree(vsmartdata_tree_structure)
+            self.load_tree_from_file(vsmartdata_tree_structure)
 
-    def load_json_tree(self, data, parent=None):
+    def load_tree_from_file(self, data, parent=None):
         if parent is None:
             parent = self.tree.invisibleRootItem()
 
@@ -130,15 +130,15 @@ class MainWindow(QMainWindow):
             parent.addChild(item)
 
             if isinstance(value, dict):
-                self.load_json_tree(value, item)
+                self.load_tree_from_file(value, item)
 
 
     def save_tree(self):
-        data = self.tree_item_to_dict(self.tree.invisibleRootItem())
+        data = self.tree_to_file(self.tree.invisibleRootItem())
         # data = self.convert_children_to_list(data)
-        # converted_data = self.convert_to_kv3(data)
+        converted_data = self.tree_to_kv3(self.tree.invisibleRootItem())
+        # kv3.write(data, 'treestructure.vsmart')
         kv3.write(data, 'treestructure.vsmart')
-        # kv3.write(converted_data, 'treestructure.vsmart')
         # print(data_raw)
 
         # kv3.write(data_raw, 'treestructure.vsmart')
@@ -147,37 +147,35 @@ class MainWindow(QMainWindow):
             file.write('//Hammer5Tools_vsmartdata_options:' + '\n')
             file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data))
 
-    def convert_to_kv3(self, data):
-        new_data = {}
-        for item, value in data.items():
-            if isinstance(value, dict):
-                new_data[item] = self.convert_to_kv3(value)  # Update new_data with converted dict
-            elif isinstance(value, str):
-                print('str', value)
-                new_data[item] = ast.literal_eval(value)  # Convert string values to dictionary
-                print(type(ast.literal_eval(value)))
-            elif isinstance(value, list):
-                new_list = []
-                for val in value:
-                    new_list.append(self.convert_to_kv3(val))  # Recursively convert list elements
-                new_data[item] = new_list  # Update new_data with converted list
-            else:
-                new_data[item] = value  # For other types, keep the value as is
-        return new_data
-
-    def tree_item_to_dict(self, item):
+    def tree_to_kv3(self, item):
         data = {}
         for index in range(item.childCount()):
             child = item.child(index)
-            child_data = self.tree_item_to_dict(child)  # Recursively get child data
+            child_data = self.tree_to_file(child)  # Recursively get child data
             key = child.text(0)
-            value = child.text(1) if child.childCount() == 0 else self.tree_item_to_dict(child)
+            value = child.text(1) if child.childCount() == 0 else self.tree_to_file(child)
             value_row = child.text(1)
             if key in data:
                 if not isinstance(data[key], list):
-                    data[str(key) + '%?=!=' + str(value_row)] = value = [data[key]]
-                data[str(key) + '%?=!=' + str(value_row)] = value.append(value)
+                    data[key] = value = [data[key]]
+                data[key] = value.append(value)
             else:
+                data[key] = value
+        return data
+
+    def tree_to_file(self, item):
+        data = {}
+        for index in range(item.childCount()):
+            child = item.child(index)
+            child_data = self.tree_to_file(child)
+            key = child.text(0)
+            value = child.text(1)if child.childCount() == 0 else self.tree_to_file(child)
+            value_row = child.text(1)
+            data[str(key) + '%?=!=' + str(value_row)] = None
+            if child.childCount() == 0:
+                data[str(key) + '%?=!=' + str(value_row)] = None
+            else:
+                print(key, child.childCount())
                 data[str(key) + '%?=!=' + str(value_row)] = value
 
         return data
@@ -407,7 +405,7 @@ class MainWindow(QMainWindow):
 
     def export_to_vsmart(self, path):
         root = self.tree.invisibleRootItem()
-        data = self.tree_item_to_dict(root)
+        data = self.tree_to_file(root)
         data = self.convert_children_to_list(data)
         kv3.write(data, path)
 
