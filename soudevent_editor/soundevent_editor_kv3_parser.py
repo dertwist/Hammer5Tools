@@ -7,7 +7,7 @@ def child_key(data, key_child):
         for key in data[key_child]:
             data_out[key_child] = data_out.get(key_child, {})
             data_out[key_child].update({key: data[key_child][key]})
-            print({key_child: {key: data[key_child][key]}})
+            # print({key_child: {key: data[key_child][key]}})
             child_key(data[key_child], key)
     return data_out
 
