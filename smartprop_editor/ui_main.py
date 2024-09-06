@@ -17,10 +17,10 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDockWidget,
-    QFrame, QGroupBox, QHBoxLayout, QHeaderView,
-    QLabel, QLineEdit, QMainWindow, QPushButton,
-    QScrollArea, QSizePolicy, QSpacerItem, QToolButton,
-    QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
+    QFrame, QHBoxLayout, QHeaderView, QLabel,
+    QLineEdit, QMainWindow, QPushButton, QScrollArea,
+    QSizePolicy, QSpacerItem, QToolButton, QTreeWidget,
+    QTreeWidgetItem, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_MainWindow(object):
@@ -78,24 +78,25 @@ class Ui_MainWindow(object):
 
         self.scrollArea = QScrollArea(self.frame_9)
         self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 760, 674))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 746, 674))
         self.verticalLayout_17 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_17.setSpacing(0)
         self.verticalLayout_17.setObjectName(u"verticalLayout_17")
         self.verticalLayout_17.setContentsMargins(0, 0, 0, 0)
-        self.frame_3 = QFrame(self.scrollAreaWidgetContents)
-        self.frame_3.setObjectName(u"frame_3")
-        self.frame_3.setMaximumSize(QSize(16777215, 24))
-        self.frame_3.setFrameShape(QFrame.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_3 = QHBoxLayout(self.frame_3)
+        self.ClassProperties_layout_header = QFrame(self.scrollAreaWidgetContents)
+        self.ClassProperties_layout_header.setObjectName(u"ClassProperties_layout_header")
+        self.ClassProperties_layout_header.setMaximumSize(QSize(16777215, 24))
+        self.ClassProperties_layout_header.setFrameShape(QFrame.StyledPanel)
+        self.ClassProperties_layout_header.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_3 = QHBoxLayout(self.ClassProperties_layout_header)
         self.horizontalLayout_3.setSpacing(0)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.show_child_ClassProperties = QCheckBox(self.frame_3)
+        self.show_child_ClassProperties = QCheckBox(self.ClassProperties_layout_header)
         self.show_child_ClassProperties.setObjectName(u"show_child_ClassProperties")
         self.show_child_ClassProperties.setStyleSheet(u"QCheckBox::indicator:checked {\n"
 "    \n"
@@ -136,7 +137,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.show_child_ClassProperties)
 
-        self.lineedit = QLineEdit(self.frame_3)
+        self.lineedit = QLineEdit(self.ClassProperties_layout_header)
         self.lineedit.setObjectName(u"lineedit")
         self.lineedit.setStyleSheet(u"QLineEdit {\n"
 "	font: 8pt \"Segoe UI\";\n"
@@ -166,7 +167,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.addWidget(self.lineedit)
 
 
-        self.verticalLayout_17.addWidget(self.frame_3)
+        self.verticalLayout_17.addWidget(self.ClassProperties_layout_header)
 
         self.ClassProperties_layout_frame = QFrame(self.scrollAreaWidgetContents)
         self.ClassProperties_layout_frame.setObjectName(u"ClassProperties_layout_frame")
@@ -190,125 +191,215 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_17.addWidget(self.ClassProperties_layout_frame)
 
-        self.group_modifiers = QGroupBox(self.scrollAreaWidgetContents)
-        self.group_modifiers.setObjectName(u"group_modifiers")
-        self.group_modifiers.setStyleSheet(u"/* QGroupBox Style */\n"
-"QGroupBox {\n"
-"    border: 1px solid gray; /* Set the border color and width */\n"
-"    border-bottom: none; /* Remove the bottom border */\n"
-"    border-left: none; /* Remove the left border */\n"
-"    border-right: none; /* Remove the right border */\n"
-"    margin-top: 8px; /* Space for the title */\n"
-"	padding-top: 8px;\n"
+        self.Modifers_layout_header = QFrame(self.scrollAreaWidgetContents)
+        self.Modifers_layout_header.setObjectName(u"Modifers_layout_header")
+        self.Modifers_layout_header.setMaximumSize(QSize(16777215, 24))
+        self.Modifers_layout_header.setFrameShape(QFrame.StyledPanel)
+        self.Modifers_layout_header.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_4 = QHBoxLayout(self.Modifers_layout_header)
+        self.horizontalLayout_4.setSpacing(0)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.show_child_Modifers = QCheckBox(self.Modifers_layout_header)
+        self.show_child_Modifers.setObjectName(u"show_child_Modifers")
+        self.show_child_Modifers.setStyleSheet(u"QCheckBox::indicator:checked {\n"
+"    \n"
+"image: url(://icons/arrow_drop_down.png);\n"
+"	height:14px;\n"
+"	width:14px;\n"
 "}\n"
 "\n"
-"/* Title Style */\n"
-"QGroupBox::title {\n"
-"    subcontrol-origin: margin;\n"
-"    subcontrol-position: top left;\n"
-"    padding: 0 6;\n"
-"    color: white; \n"
-"}\n"
-"\n"
-"QGroupBox::indicator {\n"
-"    width: 13px;\n"
-"    height: 13px;\n"
-"}\n"
-"\n"
-"QGroupBox::indicator:checked {\n"
+"QCheckBox::indicator:unchecked {\n"
 "    image: url(://icons/arrow_drop_right.png);\n"
+"	height:14px;\n"
+"	width:14px;\n"
 "}\n"
-"\n"
-"QGroupBox::indicator:unchecked {\n"
-"    image: url(://icons/arrow_drop_down.png); \n"
-"}")
-        self.group_modifiers.setFlat(False)
-        self.group_modifiers.setCheckable(True)
-        self.verticalLayout = QVBoxLayout(self.group_modifiers)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.scrollArea_modifiers = QScrollArea(self.group_modifiers)
-        self.scrollArea_modifiers.setObjectName(u"scrollArea_modifiers")
-        self.scrollArea_modifiers.setStyleSheet(u"QScrollArea {\n"
-"    border: 0px solid #CCCCCC;\n"
+"QCheckBox {\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 2px;\n"
+"    height:14px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:4px;\n"
 "    color: #E3E3E3;\n"
+"background-color: #242424;\n"
+"    padding-left: 4px;\n"
+"}\n"
+"QCheckBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"QCheckBox{\n"
+"	padding-left:5px;\n"
+"	border-left: 0px solid black;\n"
+"border-right: 0px solid black;\n"
+"border-top: 0px solid black;\n"
 "}")
-        self.scrollArea_modifiers.setWidgetResizable(True)
-        self.modifiers_widget = QWidget()
-        self.modifiers_widget.setObjectName(u"modifiers_widget")
-        self.modifiers_widget.setGeometry(QRect(0, 0, 760, 145))
-        self.verticalLayout_4 = QVBoxLayout(self.modifiers_widget)
-        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.scrollArea_modifiers.setWidget(self.modifiers_widget)
+        self.show_child_Modifers.setChecked(True)
+        self.show_child_Modifers.setTristate(False)
 
-        self.verticalLayout.addWidget(self.scrollArea_modifiers)
+        self.horizontalLayout_4.addWidget(self.show_child_Modifers)
 
-
-        self.verticalLayout_17.addWidget(self.group_modifiers)
-
-        self.group_selection_criteria = QGroupBox(self.scrollAreaWidgetContents)
-        self.group_selection_criteria.setObjectName(u"group_selection_criteria")
-        self.group_selection_criteria.setStyleSheet(u"/* QGroupBox Style */\n"
-"QGroupBox {\n"
-"    border: 1px solid gray; /* Set the border color and width */\n"
-"    border-bottom: none; /* Remove the bottom border */\n"
-"    border-left: none; /* Remove the left border */\n"
-"    border-right: none; /* Remove the right border */\n"
-"    margin-top: 8px; /* Space for the title */\n"
-"	padding-top: 8px;\n"
+        self.lineedit_2 = QLineEdit(self.Modifers_layout_header)
+        self.lineedit_2.setObjectName(u"lineedit_2")
+        self.lineedit_2.setStyleSheet(u"QLineEdit {\n"
+"	font: 8pt \"Segoe UI\";\n"
+"    border: 2px solid #CCCCCC;\n"
+"	border-top: 0px;\n"
+"	border-left: 0px;\n"
+"	border-right: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"color: #E3E3E3;\n"
+"background-color: #242424;\n"
+"}\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
 "}\n"
 "\n"
-"/* Title Style */\n"
-"QGroupBox::title {\n"
-"    subcontrol-origin: margin;\n"
-"    subcontrol-position: top left;\n"
-"    padding: 0 6;\n"
-"    color: white; \n"
+"")
+        self.lineedit_2.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
+        self.lineedit_2.setMaxLength(32)
+        self.lineedit_2.setReadOnly(True)
+
+        self.horizontalLayout_4.addWidget(self.lineedit_2)
+
+
+        self.verticalLayout_17.addWidget(self.Modifers_layout_header)
+
+        self.Modifers_layout_frame = QFrame(self.scrollAreaWidgetContents)
+        self.Modifers_layout_frame.setObjectName(u"Modifers_layout_frame")
+        self.Modifers_layout_frame.setMinimumSize(QSize(0, 64))
+        self.Modifers_layout_frame.setFrameShape(QFrame.StyledPanel)
+        self.Modifers_layout_frame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_11 = QVBoxLayout(self.Modifers_layout_frame)
+        self.verticalLayout_11.setSpacing(0)
+        self.verticalLayout_11.setObjectName(u"verticalLayout_11")
+        self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
+        self.Modifers_layout = QVBoxLayout()
+        self.Modifers_layout.setSpacing(0)
+        self.Modifers_layout.setObjectName(u"Modifers_layout")
+        self.Modifers_layout.setContentsMargins(12, 0, 0, -1)
+        self.verticalSpacer_4 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.Modifers_layout.addItem(self.verticalSpacer_4)
+
+
+        self.verticalLayout_11.addLayout(self.Modifers_layout)
+
+
+        self.verticalLayout_17.addWidget(self.Modifers_layout_frame)
+
+        self.SelectionCriteria_layout_header = QFrame(self.scrollAreaWidgetContents)
+        self.SelectionCriteria_layout_header.setObjectName(u"SelectionCriteria_layout_header")
+        self.SelectionCriteria_layout_header.setMaximumSize(QSize(16777215, 24))
+        self.SelectionCriteria_layout_header.setFrameShape(QFrame.StyledPanel)
+        self.SelectionCriteria_layout_header.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_8 = QHBoxLayout(self.SelectionCriteria_layout_header)
+        self.horizontalLayout_8.setSpacing(0)
+        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
+        self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
+        self.show_child_SelectionCriteria = QCheckBox(self.SelectionCriteria_layout_header)
+        self.show_child_SelectionCriteria.setObjectName(u"show_child_SelectionCriteria")
+        self.show_child_SelectionCriteria.setStyleSheet(u"QCheckBox::indicator:checked {\n"
+"    \n"
+"image: url(://icons/arrow_drop_down.png);\n"
+"	height:14px;\n"
+"	width:14px;\n"
 "}\n"
 "\n"
-"QGroupBox::indicator {\n"
-"    width: 13px;\n"
-"    height: 13px;\n"
-"}\n"
-"\n"
-"QGroupBox::indicator:checked {\n"
+"QCheckBox::indicator:unchecked {\n"
 "    image: url(://icons/arrow_drop_right.png);\n"
+"	height:14px;\n"
+"	width:14px;\n"
+"}\n"
+"QCheckBox {\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:14px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:4px;\n"
+"    color: #E3E3E3;\n"
+"background-color: #242424;\n"
+"    padding-left: 4px;\n"
+"}\n"
+"QCheckBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"QCheckBox{\n"
+"	padding-left:5px;\n"
+"	border-left: 0px solid black;\n"
+"border-right: 0px solid black;\n"
+"border-top: 0px solid black;\n"
+"}")
+        self.show_child_SelectionCriteria.setChecked(True)
+        self.show_child_SelectionCriteria.setTristate(False)
+
+        self.horizontalLayout_8.addWidget(self.show_child_SelectionCriteria)
+
+        self.lineedit_5 = QLineEdit(self.SelectionCriteria_layout_header)
+        self.lineedit_5.setObjectName(u"lineedit_5")
+        self.lineedit_5.setStyleSheet(u"QLineEdit {\n"
+"	font: 8pt \"Segoe UI\";\n"
+"    border: 2px solid #CCCCCC;\n"
+"	border-top: 0px;\n"
+"	border-left: 0px;\n"
+"	border-right: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"color: #E3E3E3;\n"
+"background-color: #242424;\n"
+"}\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
 "}\n"
 "\n"
-"QGroupBox::indicator:unchecked {\n"
-"    image: url(://icons/arrow_drop_down.png); \n"
-"}")
-        self.group_selection_criteria.setFlat(False)
-        self.group_selection_criteria.setCheckable(True)
-        self.verticalLayout_15 = QVBoxLayout(self.group_selection_criteria)
-        self.verticalLayout_15.setObjectName(u"verticalLayout_15")
-        self.verticalLayout_15.setContentsMargins(0, 0, 0, 0)
-        self.scrollArea_selection_criteria = QScrollArea(self.group_selection_criteria)
-        self.scrollArea_selection_criteria.setObjectName(u"scrollArea_selection_criteria")
-        self.scrollArea_selection_criteria.setStyleSheet(u"QScrollArea {\n"
-"    border: 0px solid #CCCCCC;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 2px;\n"
-"    color: #E3E3E3;\n"
-"}")
-        self.scrollArea_selection_criteria.setWidgetResizable(True)
-        self.selection_criteria_widget = QWidget()
-        self.selection_criteria_widget.setObjectName(u"selection_criteria_widget")
-        self.selection_criteria_widget.setGeometry(QRect(0, 0, 760, 146))
-        self.verticalLayout_16 = QVBoxLayout(self.selection_criteria_widget)
-        self.verticalLayout_16.setObjectName(u"verticalLayout_16")
-        self.scrollArea_selection_criteria.setWidget(self.selection_criteria_widget)
+"")
+        self.lineedit_5.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
+        self.lineedit_5.setMaxLength(32)
+        self.lineedit_5.setReadOnly(True)
 
-        self.verticalLayout_15.addWidget(self.scrollArea_selection_criteria)
+        self.horizontalLayout_8.addWidget(self.lineedit_5)
 
 
-        self.verticalLayout_17.addWidget(self.group_selection_criteria)
+        self.verticalLayout_17.addWidget(self.SelectionCriteria_layout_header)
 
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.SelectionCriteria_layout_frame = QFrame(self.scrollAreaWidgetContents)
+        self.SelectionCriteria_layout_frame.setObjectName(u"SelectionCriteria_layout_frame")
+        self.SelectionCriteria_layout_frame.setMinimumSize(QSize(0, 64))
+        self.SelectionCriteria_layout_frame.setFrameShape(QFrame.StyledPanel)
+        self.SelectionCriteria_layout_frame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_13 = QVBoxLayout(self.SelectionCriteria_layout_frame)
+        self.verticalLayout_13.setSpacing(0)
+        self.verticalLayout_13.setObjectName(u"verticalLayout_13")
+        self.verticalLayout_13.setContentsMargins(0, 0, 0, 0)
+        self.SelectionCriteria_layout = QVBoxLayout()
+        self.SelectionCriteria_layout.setSpacing(0)
+        self.SelectionCriteria_layout.setObjectName(u"SelectionCriteria_layout")
+        self.SelectionCriteria_layout.setContentsMargins(12, 0, 0, -1)
+        self.verticalSpacer_6 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.verticalLayout_17.addItem(self.verticalSpacer)
+        self.SelectionCriteria_layout.addItem(self.verticalSpacer_6)
+
+
+        self.verticalLayout_13.addLayout(self.SelectionCriteria_layout)
+
+
+        self.verticalLayout_17.addWidget(self.SelectionCriteria_layout_frame)
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
@@ -744,8 +835,22 @@ class Ui_MainWindow(object):
         self.lineedit.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.lineedit.setText(QCoreApplication.translate("MainWindow", u"ClassProperties", None))
-        self.group_modifiers.setTitle(QCoreApplication.translate("MainWindow", u"Modifiers", None))
-        self.group_selection_criteria.setTitle(QCoreApplication.translate("MainWindow", u"Selection Criteria", None))
+#if QT_CONFIG(tooltip)
+        self.show_child_Modifers.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show child</span></p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.show_child_Modifers.setText("")
+#if QT_CONFIG(tooltip)
+        self.lineedit_2.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.lineedit_2.setText(QCoreApplication.translate("MainWindow", u"Modifers", None))
+#if QT_CONFIG(tooltip)
+        self.show_child_SelectionCriteria.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show child</span></p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.show_child_SelectionCriteria.setText("")
+#if QT_CONFIG(tooltip)
+        self.lineedit_5.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.lineedit_5.setText(QCoreApplication.translate("MainWindow", u"SelectionCriteria", None))
         self.status_bar.setText(QCoreApplication.translate("MainWindow", u"Console output", None))
         self.version_label.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
