@@ -74,6 +74,9 @@
        </item>
        <item>
         <widget class="QScrollArea" name="scrollArea">
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
          <property name="widgetResizable">
           <bool>true</bool>
          </property>
@@ -82,7 +85,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>760</width>
+            <width>746</width>
             <height>674</height>
            </rect>
           </property>
@@ -103,7 +106,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QFrame" name="frame_3">
+            <widget class="QFrame" name="ClassProperties_layout_header">
              <property name="maximumSize">
               <size>
                <width>16777215</width>
@@ -286,187 +289,382 @@ QLineEdit::selection {
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="group_modifiers">
-             <property name="styleSheet">
-              <string notr="true">/* QGroupBox Style */
-QGroupBox {
-    border: 1px solid gray; /* Set the border color and width */
-    border-bottom: none; /* Remove the bottom border */
-    border-left: none; /* Remove the left border */
-    border-right: none; /* Remove the right border */
-    margin-top: 8px; /* Space for the title */
-	padding-top: 8px;
-}
-
-/* Title Style */
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 6;
-    color: white; 
-}
-
-QGroupBox::indicator {
-    width: 13px;
-    height: 13px;
-}
-
-QGroupBox::indicator:checked {
-    image: url(://icons/arrow_drop_right.png);
-}
-
-QGroupBox::indicator:unchecked {
-    image: url(://icons/arrow_drop_down.png); 
-}</string>
-             </property>
-             <property name="title">
-              <string>Modifiers</string>
-             </property>
-             <property name="flat">
-              <bool>false</bool>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QScrollArea" name="scrollArea_modifiers">
-                <property name="styleSheet">
-                 <string notr="true">QScrollArea {
-    border: 0px solid #CCCCCC;
-    border-color: rgba(80, 80, 80, 255);
-    border-radius: 2px;
-    color: #E3E3E3;
-}</string>
-                </property>
-                <property name="widgetResizable">
-                 <bool>true</bool>
-                </property>
-                <widget class="QWidget" name="modifiers_widget">
-                 <property name="geometry">
-                  <rect>
-                   <x>0</x>
-                   <y>0</y>
-                   <width>760</width>
-                   <height>145</height>
-                  </rect>
-                 </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_4"/>
-                </widget>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="group_selection_criteria">
-             <property name="styleSheet">
-              <string notr="true">/* QGroupBox Style */
-QGroupBox {
-    border: 1px solid gray; /* Set the border color and width */
-    border-bottom: none; /* Remove the bottom border */
-    border-left: none; /* Remove the left border */
-    border-right: none; /* Remove the right border */
-    margin-top: 8px; /* Space for the title */
-	padding-top: 8px;
-}
-
-/* Title Style */
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 6;
-    color: white; 
-}
-
-QGroupBox::indicator {
-    width: 13px;
-    height: 13px;
-}
-
-QGroupBox::indicator:checked {
-    image: url(://icons/arrow_drop_right.png);
-}
-
-QGroupBox::indicator:unchecked {
-    image: url(://icons/arrow_drop_down.png); 
-}</string>
-             </property>
-             <property name="title">
-              <string>Selection Criteria</string>
-             </property>
-             <property name="flat">
-              <bool>false</bool>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_15">
-              <property name="leftMargin">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
-              <property name="rightMargin">
-               <number>0</number>
-              </property>
-              <property name="bottomMargin">
-               <number>0</number>
-              </property>
-              <item>
-               <widget class="QScrollArea" name="scrollArea_selection_criteria">
-                <property name="styleSheet">
-                 <string notr="true">QScrollArea {
-    border: 0px solid #CCCCCC;
-    border-color: rgba(80, 80, 80, 255);
-    border-radius: 2px;
-    color: #E3E3E3;
-}</string>
-                </property>
-                <property name="widgetResizable">
-                 <bool>true</bool>
-                </property>
-                <widget class="QWidget" name="selection_criteria_widget">
-                 <property name="geometry">
-                  <rect>
-                   <x>0</x>
-                   <y>0</y>
-                   <width>760</width>
-                   <height>146</height>
-                  </rect>
-                 </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_16"/>
-                </widget>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
+            <widget class="QFrame" name="Modifers_layout_header">
+             <property name="maximumSize">
               <size>
-               <width>20</width>
-               <height>40</height>
+               <width>16777215</width>
+               <height>24</height>
               </size>
              </property>
-            </spacer>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="show_child_Modifers">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Show child&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QCheckBox::indicator:checked {
+    
+image: url(://icons/arrow_drop_down.png);
+	height:14px;
+	width:14px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(://icons/arrow_drop_right.png);
+	height:14px;
+	width:14px;
+}
+QCheckBox {
+    font: 700 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    height:14px;
+    padding-top: 2px;
+    padding-bottom:4px;
+    color: #E3E3E3;
+background-color: #242424;
+    padding-left: 4px;
+}
+QCheckBox:hover {
+    background-color: #414956;
+    color: white;
+}
+QCheckBox{
+	padding-left:5px;
+	border-left: 0px solid black;
+border-right: 0px solid black;
+border-top: 0px solid black;
+}</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+                <property name="tristate">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineedit_2">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QLineEdit {
+	font: 8pt &quot;Segoe UI&quot;;
+    border: 2px solid #CCCCCC;
+	border-top: 0px;
+	border-left: 0px;
+	border-right: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    border-radius: 0px;
+    padding: 2px;
+color: #E3E3E3;
+background-color: #242424;
+}
+QLineEdit:focus {
+    border-color: rgba(80, 80, 80, 255);
+}
+QLineEdit::selection {
+    background-color: #414956;
+    color: white;
+}
+
+</string>
+                </property>
+                <property name="inputMethodHints">
+                 <set>Qt::ImhLatinOnly|Qt::ImhLowercaseOnly</set>
+                </property>
+                <property name="text">
+                 <string>Modifers</string>
+                </property>
+                <property name="maxLength">
+                 <number>32</number>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="Modifers_layout_frame">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_11">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="Modifers_layout">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <property name="leftMargin">
+                 <number>12</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <spacer name="verticalSpacer_4">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="SelectionCriteria_layout_header">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="show_child_SelectionCriteria">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Show child&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QCheckBox::indicator:checked {
+    
+image: url(://icons/arrow_drop_down.png);
+	height:14px;
+	width:14px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(://icons/arrow_drop_right.png);
+	height:14px;
+	width:14px;
+}
+QCheckBox {
+    font: 700 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    height:14px;
+    padding-top: 2px;
+    padding-bottom:4px;
+    color: #E3E3E3;
+background-color: #242424;
+    padding-left: 4px;
+}
+QCheckBox:hover {
+    background-color: #414956;
+    color: white;
+}
+QCheckBox{
+	padding-left:5px;
+	border-left: 0px solid black;
+border-right: 0px solid black;
+border-top: 0px solid black;
+}</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+                <property name="tristate">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineedit_5">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QLineEdit {
+	font: 8pt &quot;Segoe UI&quot;;
+    border: 2px solid #CCCCCC;
+	border-top: 0px;
+	border-left: 0px;
+	border-right: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    border-radius: 0px;
+    padding: 2px;
+color: #E3E3E3;
+background-color: #242424;
+}
+QLineEdit:focus {
+    border-color: rgba(80, 80, 80, 255);
+}
+QLineEdit::selection {
+    background-color: #414956;
+    color: white;
+}
+
+</string>
+                </property>
+                <property name="inputMethodHints">
+                 <set>Qt::ImhLatinOnly|Qt::ImhLowercaseOnly</set>
+                </property>
+                <property name="text">
+                 <string>SelectionCriteria</string>
+                </property>
+                <property name="maxLength">
+                 <number>32</number>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="SelectionCriteria_layout_frame">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>64</height>
+              </size>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_13">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="SelectionCriteria_layout">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <property name="leftMargin">
+                 <number>12</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <spacer name="verticalSpacer_6">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
            </item>
           </layout>
          </widget>
