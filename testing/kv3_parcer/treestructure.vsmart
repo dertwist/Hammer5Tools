@@ -1,15 +1,29 @@
 <!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
 {
-	"m_Variables%?=!=" = 
-	{
-		"CSmartPropVariable_Float%?=!={'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}" = null
-	}
-	"m_Children%?=!=" = 
-	{
-		"CSmartPropElement_Mode55555l%?=!={'_class': 'CSmartPropElement_Mode55555l', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl', 'm_nElementID': 2}" = null
-		"CSmartPropElement_Model%?=!={'_class': 'CSmartPropElement_Model', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl', 'm_nElementID': 2}" = null
-	}
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "length"
+			m_nElementID = 61
+			m_nElementID1 = 61.2
+		},
+	]
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_Mode55555l"
+			m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl"
+			m_nElementID = 2
+		},
+				{
+			_class = "CSmartPropElement_Model"
+			m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl"
+			m_nElementID = 2
+		},
+	]
 }
 //Hammer5Tools_vsmartdata_variables:
 //Hammer5Tools_vsmartdata_options:
-//Hammer5Tools_vsmartdata_tree_structure:{'m_Variables%?=!=': {"CSmartPropVariable_Float%?=!={'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}": None}, 'm_Children%?=!=': {"CSmartPropElement_Mode55555l%?=!={'_class': 'CSmartPropElement_Mode55555l', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl', 'm_nElementID': 2}": None, "CSmartPropElement_Model%?=!={'_class': 'CSmartPropElement_Model', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl', 'm_nElementID': 2}": None}}
+//Hammer5Tools_vsmartdata_tree_structure:{"CSmartPropElement_Mode55555l%?=!={'_class': 'CSmartPropElement_Mode55555l', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl', 'm_nElementID': 2}": {"CSmartPropElement_Model%?=!={'_class': '23', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl', 'm_nElementID': 2}": None}, "CSmartPropElement_Model%?=!={'_class': 'CSmartPropElement_Model', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl', 'm_nElementID': 2}": {"CSmartPropElement_Model%?=!={'_class': 'FFFFFFFFFF', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/F.vmdl', 'm_nElementID': 2}": {"CSmartPropElement_Model%?=!={'_class': 'FDASASD', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/F.vmdl', 'm_nElementID': 2}": None}}}

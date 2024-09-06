@@ -103,9 +103,9 @@ class MainWindow(QMainWindow):
             line_vsmartdata_tree_structure = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_tree_structure:'))[1]
             line_vsmartdata_options = (lines[lines_count - 2].strip().split('//Hammer5Tools_vsmartdata_options:'))[1]
             line_vsmartdata_variables = (lines[lines_count - 3].strip().split('//Hammer5Tools_vsmartdata_variables:'))[1]
-            print(line_vsmartdata_tree_structure)
-            print(line_vsmartdata_options)
-            print(line_vsmartdata_variables)
+            print('line_vsmartdata_tree_structure ',line_vsmartdata_tree_structure)
+            print('line_vsmartdata_options ',line_vsmartdata_options)
+            print('line_vsmartdata_variables ',line_vsmartdata_variables)
 
             self.tree.clear()
             vsmartdata_tree_structure = ast.literal_eval(line_vsmartdata_tree_structure)
@@ -136,48 +136,48 @@ class MainWindow(QMainWindow):
     def save_tree(self):
         data = self.tree_to_file(self.tree.invisibleRootItem())
         # data = self.convert_children_to_list(data)
-        converted_data = self.tree_to_kv3(self.tree.invisibleRootItem())
+        converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()))
         # kv3.write(data, 'treestructure.vsmart')
-        kv3.write(data, 'treestructure.vsmart')
+        kv3.write(converted_data, 'treestructure_vsmart.vsmart')
         # print(data_raw)
 
-        # kv3.write(data_raw, 'treestructure.vsmart')
+        kv3.write(data_raw, 'treestructure.vsmart')
         with open('treestructure.vsmart', 'a') as file:
             file.write('//Hammer5Tools_vsmartdata_variables:' + '\n')
             file.write('//Hammer5Tools_vsmartdata_options:' + '\n')
             file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data))
 
-    def tree_to_kv3(self, item):
+    def tree_to_vsmart(self, item):
         data = {}
+        data['m_Children'] = []
         for index in range(item.childCount()):
             child = item.child(index)
-            child_data = self.tree_to_file(child)  # Recursively get child data
             key = child.text(0)
-            value = child.text(1) if child.childCount() == 0 else self.tree_to_file(child)
+            value = child.text(1)if child.childCount() == 0 else self.tree_to_vsmart(child)
             value_row = child.text(1)
-            if key in data:
-                if not isinstance(data[key], list):
-                    data[key] = value = [data[key]]
-                data[key] = value.append(value)
+            print(key, index, (ast.literal_eval(value_row))['_class'])
+            if child.childCount() == 0:
+                try:
+                    data['m_Children'].append((ast.literal_eval(value_row)))
+                except:
+                    data['m_Children'][index]['m_Children'].append((ast.literal_eval(value_row)))
             else:
-                data[key] = value
+
+                data['m_Children'].append((ast.literal_eval(value_row)))
+                data['m_Children'][index]['m_Children'] = []
         return data
 
     def tree_to_file(self, item):
         data = {}
         for index in range(item.childCount()):
             child = item.child(index)
-            child_data = self.tree_to_file(child)
             key = child.text(0)
             value = child.text(1)if child.childCount() == 0 else self.tree_to_file(child)
             value_row = child.text(1)
-            data[str(key) + '%?=!=' + str(value_row)] = None
             if child.childCount() == 0:
                 data[str(key) + '%?=!=' + str(value_row)] = None
             else:
-                print(key, child.childCount())
                 data[str(key) + '%?=!=' + str(value_row)] = value
-
         return data
 
 
@@ -226,7 +226,6 @@ class MainWindow(QMainWindow):
 
     def populate_tree(self, data, parent=None):
         if parent is None:
-            print('None')
             parent = self.tree.invisibleRootItem()
             # parent_element = QTreeWidgetItem(['Root'])
             # parent.addChild(parent_element)
