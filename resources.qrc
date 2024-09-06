@@ -222,5 +222,43 @@
         <file>icons/view_object_track_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</file>
         <file>icons/visibility_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</file>
         <file>icons/visibility_off_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</file>
+        <file>icons/assettypes/abc_sm.png</file>
+        <file>icons/assettypes/animation_group_sm.png</file>
+        <file>icons/assettypes/animation_sm.png</file>
+        <file>icons/assettypes/blender_sm.png</file>
+        <file>icons/assettypes/css_sm.png</file>
+        <file>icons/assettypes/dmx_sm.png</file>
+        <file>icons/assettypes/fbx_sm.png</file>
+        <file>icons/assettypes/generic_image_sm.png</file>
+        <file>icons/assettypes/generic_sm.png</file>
+        <file>icons/assettypes/image_psd_sm.png</file>
+        <file>icons/assettypes/javascript_sm.png</file>
+        <file>icons/assettypes/map_sm.png</file>
+        <file>icons/assettypes/material_prefab_sm.png</file>
+        <file>icons/assettypes/material_sm.png</file>
+        <file>icons/assettypes/maya_ma_sm.png</file>
+        <file>icons/assettypes/maya_mb_sm.png</file>
+        <file>icons/assettypes/mesh_sm.png</file>
+        <file>icons/assettypes/model_prefab_sm.png</file>
+        <file>icons/assettypes/model_sm.png</file>
+        <file>icons/assettypes/morph_sm.png</file>
+        <file>icons/assettypes/particles_sm.png</file>
+        <file>icons/assettypes/physics_sm.png</file>
+        <file>icons/assettypes/response_template_sm.png</file>
+        <file>icons/assettypes/speech_graphics_sm.png</file>
+        <file>icons/assettypes/surface_sm.png</file>
+        <file>icons/assettypes/text_sm.png</file>
+        <file>icons/assettypes/texture_sm.png</file>
+        <file>icons/assettypes/typescript_sm.png</file>
+        <file>icons/assettypes/vcd_choreo_sm.png</file>
+        <file>icons/assettypes/vcdlist_sm.png</file>
+        <file>icons/assettypes/vclip_sm.png</file>
+        <file>icons/assettypes/vcompmat_sm.png</file>
+        <file>icons/assettypes/vdata_sm.png</file>
+        <file>icons/assettypes/vmix_sm.png</file>
+        <file>icons/assettypes/vnmgrph_sm.png</file>
+        <file>icons/assettypes/vodb_sm.png</file>
+        <file>icons/assettypes/vskel_sm.png</file>
+        <file>icons/assettypes/xml_sm.png</file>
     </qresource>
 </RCC>

@@ -1,5 +1,42 @@
 <!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
-{
+{	
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "height"
+			m_DisplayName = "Height"
+			m_nElementID = 17
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "supportSpacing"
+			m_DisplayName = "Support Spacing"
+			m_DefaultValue = 64.000000
+			m_bExposeAsParameter = true
+			m_nElementID = 18
+		},
+		
+		{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "supportType"
+			m_DisplayName = "Supports: 0 = None, 1 = Large, 2 = Small"
+			m_nParamaterMaxValue = 2
+			m_bExposeAsParameter = true
+			m_nElementID = 19
+		},
+		
+		{
+			_class = "CSmartPropVariable_MaterialGroup"
+			m_VariableName = "materialGroup"
+			m_DisplayName = "Material Group"
+			m_bExposeAsParameter = true
+			m_sModelName = "models/props/de_nuke/hr_nuke/metal_ladder_001/metal_ladder_001_256.vmdl"
+			m_nElementID = 20
+		},
+	]
 	m_Children = 
 	[
 				{

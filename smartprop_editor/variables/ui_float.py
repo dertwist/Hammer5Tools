@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'int.ui'
+## Form generated from reading UI file 'float.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -15,8 +15,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout,
-    QLabel, QSizePolicy, QSpinBox, QVBoxLayout,
+from PySide6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFrame,
+    QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout,
     QWidget)
 
 class Ui_Widget(object):
@@ -87,10 +87,10 @@ class Ui_Widget(object):
 
         self.horizontalLayout_2.addWidget(self.label)
 
-        self.value_spinBox = QSpinBox(self.frame)
-        self.value_spinBox.setObjectName(u"value_spinBox")
-        self.value_spinBox.setMinimumSize(QSize(0, 0))
-        self.value_spinBox.setStyleSheet(u"QSpinBox {\n"
+        self.value_doubleSpinBox = QDoubleSpinBox(self.frame)
+        self.value_doubleSpinBox.setObjectName(u"value_doubleSpinBox")
+        self.value_doubleSpinBox.setMinimumSize(QSize(0, 0))
+        self.value_doubleSpinBox.setStyleSheet(u"QDoubleSpinBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 2px;\n"
@@ -100,17 +100,17 @@ class Ui_Widget(object):
 "border:0px;\n"
 "}\n"
 "\n"
-"QSpinBox:focus {\n"
+"QDoubleSpinBox:focus {\n"
 "}\n"
 "\n"
-"QSpinBox:hover {\n"
+"QDoubleSpinBox:hover {\n"
 "}\n"
 "\n"
-"QSpinBox:pressed {\n"
+"QDoubleSpinBox:pressed {\n"
 "	background-color: #121212;\n"
 "}\n"
 "\n"
-"QSpinBox::up-button {\n"
+"QDoubleSpinBox::up-button {\n"
 "    border: 0px solid black;\n"
 "    subcontrol-origin: border;\n"
 "    subcontrol-position: top right;\n"
@@ -123,17 +123,17 @@ class Ui_Widget(object):
 "border:0px;\n"
 "}\n"
 "\n"
-"QSpinBox::up-arrow {\n"
+"QDoubleSpinBox::up-arrow {\n"
 "    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);\n"
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}\n"
 "\n"
-"QSpinBox::down-button {\n"
+"QDoubleSpinBox::down-button {\n"
 "    subcontrol-origin: border;\n"
-"    subcontrol-position: bottom right;\n"
-"	border: 0px solid bl"
-                        "ack;\n"
+"    subcontrol-positio"
+                        "n: bottom right;\n"
+"	border: 0px solid black;\n"
 "    border-left: 2px solid black;\n"
 "    border-top: 2px solid black;\n"
 "border-bottom-right-radius: 2px;\n"
@@ -143,15 +143,17 @@ class Ui_Widget(object):
 "border:0px;\n"
 "}\n"
 "\n"
-"QSpinBox::down-arrow {\n"
+"QDoubleSpinBox::down-arrow {\n"
 "    image: url(://icons/arrow_drop_down_16dp.svg);\n"
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}")
-        self.value_spinBox.setMinimum(-99999999)
-        self.value_spinBox.setMaximum(99999999)
+        self.value_doubleSpinBox.setDecimals(1)
+        self.value_doubleSpinBox.setMinimum(-99999999999.000000000000000)
+        self.value_doubleSpinBox.setMaximum(99999999999.000000000000000)
+        self.value_doubleSpinBox.setSingleStep(0.100000000000000)
 
-        self.horizontalLayout_2.addWidget(self.value_spinBox)
+        self.horizontalLayout_2.addWidget(self.value_doubleSpinBox)
 
 
         self.verticalLayout.addWidget(self.frame)
@@ -205,9 +207,9 @@ class Ui_Widget(object):
 
         self.horizontalLayout_7.addWidget(self.min_checkBox)
 
-        self.min_spinBox = QSpinBox(self.frame_2)
-        self.min_spinBox.setObjectName(u"min_spinBox")
-        self.min_spinBox.setStyleSheet(u"QSpinBox {\n"
+        self.min_doubleSpinBox = QDoubleSpinBox(self.frame_2)
+        self.min_doubleSpinBox.setObjectName(u"min_doubleSpinBox")
+        self.min_doubleSpinBox.setStyleSheet(u"QDoubleSpinBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 2px;\n"
@@ -217,17 +219,17 @@ class Ui_Widget(object):
 "border:0px;\n"
 "}\n"
 "\n"
-"QSpinBox:focus {\n"
+"QDoubleSpinBox:focus {\n"
 "}\n"
 "\n"
-"QSpinBox:hover {\n"
+"QDoubleSpinBox:hover {\n"
 "}\n"
 "\n"
-"QSpinBox:pressed {\n"
+"QDoubleSpinBox:pressed {\n"
 "	background-color: #121212;\n"
 "}\n"
 "\n"
-"QSpinBox::up-button {\n"
+"QDoubleSpinBox::up-button {\n"
 "    border: 0px solid black;\n"
 "    subcontrol-origin: border;\n"
 "    subcontrol-position: top right;\n"
@@ -240,17 +242,17 @@ class Ui_Widget(object):
 "border:0px;\n"
 "}\n"
 "\n"
-"QSpinBox::up-arrow {\n"
+"QDoubleSpinBox::up-arrow {\n"
 "    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);\n"
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}\n"
 "\n"
-"QSpinBox::down-button {\n"
+"QDoubleSpinBox::down-button {\n"
 "    subcontrol-origin: border;\n"
-"    subcontrol-position: bottom right;\n"
-"	border: 0px solid bl"
-                        "ack;\n"
+"    subcontrol-positio"
+                        "n: bottom right;\n"
+"	border: 0px solid black;\n"
 "    border-left: 2px solid black;\n"
 "    border-top: 2px solid black;\n"
 "border-bottom-right-radius: 2px;\n"
@@ -260,15 +262,17 @@ class Ui_Widget(object):
 "border:0px;\n"
 "}\n"
 "\n"
-"QSpinBox::down-arrow {\n"
+"QDoubleSpinBox::down-arrow {\n"
 "    image: url(://icons/arrow_drop_down_16dp.svg);\n"
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}")
-        self.min_spinBox.setMinimum(-99999999)
-        self.min_spinBox.setMaximum(99999999)
+        self.min_doubleSpinBox.setDecimals(1)
+        self.min_doubleSpinBox.setMinimum(-9.900000000000000)
+        self.min_doubleSpinBox.setMaximum(9.900000000000000)
+        self.min_doubleSpinBox.setSingleStep(0.100000000000000)
 
-        self.horizontalLayout_7.addWidget(self.min_spinBox)
+        self.horizontalLayout_7.addWidget(self.min_doubleSpinBox)
 
 
         self.verticalLayout.addWidget(self.frame_2)
@@ -322,9 +326,9 @@ class Ui_Widget(object):
 
         self.horizontalLayout_8.addWidget(self.max_checkBox)
 
-        self.max_spinBox = QSpinBox(self.frame_3)
-        self.max_spinBox.setObjectName(u"max_spinBox")
-        self.max_spinBox.setStyleSheet(u"QSpinBox {\n"
+        self.max_doubleSpinBox = QDoubleSpinBox(self.frame_3)
+        self.max_doubleSpinBox.setObjectName(u"max_doubleSpinBox")
+        self.max_doubleSpinBox.setStyleSheet(u"QDoubleSpinBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 2px;\n"
@@ -334,17 +338,17 @@ class Ui_Widget(object):
 "border:0px;\n"
 "}\n"
 "\n"
-"QSpinBox:focus {\n"
+"QDoubleSpinBox:focus {\n"
 "}\n"
 "\n"
-"QSpinBox:hover {\n"
+"QDoubleSpinBox:hover {\n"
 "}\n"
 "\n"
-"QSpinBox:pressed {\n"
+"QDoubleSpinBox:pressed {\n"
 "	background-color: #121212;\n"
 "}\n"
 "\n"
-"QSpinBox::up-button {\n"
+"QDoubleSpinBox::up-button {\n"
 "    border: 0px solid black;\n"
 "    subcontrol-origin: border;\n"
 "    subcontrol-position: top right;\n"
@@ -357,17 +361,17 @@ class Ui_Widget(object):
 "border:0px;\n"
 "}\n"
 "\n"
-"QSpinBox::up-arrow {\n"
+"QDoubleSpinBox::up-arrow {\n"
 "    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);\n"
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}\n"
 "\n"
-"QSpinBox::down-button {\n"
+"QDoubleSpinBox::down-button {\n"
 "    subcontrol-origin: border;\n"
-"    subcontrol-position: bottom right;\n"
-"	border: 0px solid bl"
-                        "ack;\n"
+"    subcontrol-positio"
+                        "n: bottom right;\n"
+"	border: 0px solid black;\n"
 "    border-left: 2px solid black;\n"
 "    border-top: 2px solid black;\n"
 "border-bottom-right-radius: 2px;\n"
@@ -377,15 +381,17 @@ class Ui_Widget(object):
 "border:0px;\n"
 "}\n"
 "\n"
-"QSpinBox::down-arrow {\n"
+"QDoubleSpinBox::down-arrow {\n"
 "    image: url(://icons/arrow_drop_down_16dp.svg);\n"
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}")
-        self.max_spinBox.setMinimum(-99999999)
-        self.max_spinBox.setMaximum(99999999)
+        self.max_doubleSpinBox.setDecimals(1)
+        self.max_doubleSpinBox.setMinimum(-99999999999.000000000000000)
+        self.max_doubleSpinBox.setMaximum(99999999999.000000000000000)
+        self.max_doubleSpinBox.setSingleStep(0.100000000000000)
 
-        self.horizontalLayout_8.addWidget(self.max_spinBox)
+        self.horizontalLayout_8.addWidget(self.max_doubleSpinBox)
 
 
         self.verticalLayout.addWidget(self.frame_3)
