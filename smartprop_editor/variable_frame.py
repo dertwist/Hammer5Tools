@@ -10,6 +10,7 @@ from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
 
 from smartprop_editor.variables.int import Var_class_Int
+from smartprop_editor.variables.legacy import Var_class_legacy
 
 import ast
 
@@ -35,6 +36,8 @@ class VariableFrame(QWidget):
             self.ui.layout.insertWidget(0, Var_class_Int(var_value='1'))
         elif var_class == 'Float':
             self.ui.layout.insertWidget(0, Var_class_Int(var_value='1'))
+        else:
+            self.ui.layout.insertWidget(0, Var_class_legacy(var_value=self.var_value))
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 

@@ -85,7 +85,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>746</width>
+            <width>691</width>
             <height>674</height>
            </rect>
           </property>
@@ -776,7 +776,7 @@ QLineEdit::selection {
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>254</width>
+          <width>309</width>
           <height>197</height>
          </rect>
         </property>
@@ -1074,13 +1074,7 @@ QComboBox QAbstractItemView::item:selected {
       <number>0</number>
      </property>
      <item>
-      <widget class="QTreeWidget" name="tree_smartprops_explorer_widget">
-       <column>
-        <property name="text">
-         <string notr="true">1</string>
-        </property>
-       </column>
-      </widget>
+      <layout class="QVBoxLayout" name="explorer_layout"/>
      </item>
      <item>
       <widget class="QFrame" name="frame_4">
