@@ -4,72 +4,47 @@
 #     pass
 
 from PySide6.QtWidgets import QDialog
+from PySide6.QtCore import QSettings
 from ui_preferences import Ui_preferences_dialog
-import os, configparser, subprocess
-from distutils.util import strtobool
+import os,subprocess
 from minor_features.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
 from minor_features.NCM_mode_setup_main import NCM_mode_setup
 import winreg as reg
 from minor_features.update_check import check_updates
 
-# config -------------------------------------------------------------------------------
-# Get the path to the user's AppData directory
-appdata_path = os.getenv('APPDATA')
 
-# Define the path to the configuration directory
-config_dir = os.path.join(appdata_path, 'DerTwist', 'Hammer5Tools')
-# config_dir = os.path.join(appdata_path, 'DerTwist', 'Hammer5Tools')
+settings = QSettings(QSettings.IniFormat, QSettings.UserScope, "DerTwist\\Hammer5Tools", "settings")
+
 app_dir = os.getcwd()
-
-# Create the directory if it does not exist
-os.makedirs(config_dir, exist_ok=True)
-
-# Define the path to the configuration file
-config_file_path = os.path.join(config_dir, 'settings.cfg')
-# config_file_path = "settings.cfg"
-
-# Initialize the ConfigParser
-config = configparser.ConfigParser()
-
-
-
 def set_config_value(section, key, value):
-    if not config.has_section(section):
-        config.add_section(section)
-    config.set(section, key, value)
-    with open(config_file_path, 'w') as configfile:
-        config.write(configfile)
+    settings.setValue(f"{section}/{key}", value)
 
-def set_config_bool(section,key, bool):
-    return set_config_value(section, key, str(bool))
+def set_config_bool(section, key, bool):
+    set_config_value(section, key, bool)
 
 def get_config_value(section, key):
-    if config.has_section(section) and config.has_option(section, key):
-        return config.get(section, key)
-    return None
-def get_config_bool(section,key):
-    return bool(strtobool(get_config_value(section, key)))
+    return settings.value(f"{section}/{key}")
+def get_config_bool(section, key):
+    return settings.value(f"{section}/{key}", type=bool)
 
-
+print()
 def default_settings():
-    if os.path.exists(config_file_path):
-        config.read(config_file_path)
+    if os.path.exists(os.path.normpath(settings.fileName())):
+        pass
     else:
         desktop_user_path = os.path.join(os.path.expanduser("~"), "Desktop")
         set_config_value('PATHS', 'archive', desktop_user_path)
-        set_config_value('PATHS', 'settings', config_dir)
+        set_config_value('PATHS', 'settings', os.path.normpath(settings.fileName()))
         set_config_value('PATHS', 'user_presets', (app_dir + '\\presets'))
         set_config_value('DISCORD_STATUS', 'custom_status', 'Doing stuff')
-        set_config_value('DISCORD_STATUS', 'show_status', 'True')
-        set_config_value('DISCORD_STATUS', 'show_project_name', 'False')
-        set_config_value('LAUNCH', 'ncm_mode', 'False')
-        set_config_bool('LAUNCH', 'ncm_mode_setup', 'False')
-        set_config_bool('APP', 'minimize_message_shown', 'True')
-        set_config_bool('APP', 'start_with_system', 'False')
-        set_config_bool('APP', 'first_launch', 'True')
-        set_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix', 'False')
-        os.makedirs(os.path.join(config_dir, 'presets'), exist_ok=True)
-    print(f"Configuration file path: {config_file_path}")
+        set_config_value('DISCORD_STATUS', 'show_status', True)
+        set_config_value('DISCORD_STATUS', 'show_project_name', False)
+        set_config_value('LAUNCH', 'ncm_mode', False)
+        set_config_bool('LAUNCH', 'ncm_mode_setup', False)
+        set_config_bool('APP', 'minimize_message_shown', True)
+        set_config_bool('APP', 'start_with_system', False)
+        set_config_bool('APP', 'first_launch', True)
+        set_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix', False)
 
 default_settings()
 
@@ -181,7 +156,7 @@ class PreferencesDialog(QDialog):
 
     def setup_ncm_mode(self):
         NCM_mode_setup(cs2_path=get_cs2_path())
-        set_config_bool('LAUNCH', 'ncm_mode_setup', 'True')
+        set_config_bool('LAUNCH', 'ncm_mode_setup', True)
 
     def start_with_system(self):
         path_to_exe = get_config_value('PATHS', 'settings') + '\\' + 'hammer5tools.exe'

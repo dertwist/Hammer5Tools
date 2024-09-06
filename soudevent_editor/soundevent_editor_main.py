@@ -13,6 +13,7 @@ from PySide6.QtGui import QAction,QCursor
 from soudevent_editor.ui_soundevenet_editor_mainwindow import Ui_SoundEvent_Editor_MainWindow
 from preferences import get_config_value, get_cs2_path, get_addon_name
 from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_Editor_MiniWindowsExplorer
+from explorer.main import Explorer
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea, QInputDialog
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 from PySide6.QtWidgets import QProgressBar
@@ -48,7 +49,7 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.tree_directory = rf"{counter_strike_2_path}\content\csgo_addons\{addon_name}\sounds"
 
         # Initialize the mini windows explorer
-        self.mini_explorer = SoundEvent_Editor_MiniWindowsExplorer(self.ui.audio_files_explorer, self.tree_directory)
+        self.mini_explorer = Explorer(parent=self.ui.audio_files_explorer, tree_directory=self.tree_directory, editor_name='SoundEventEditor', addon=get_addon_name())
 
         # Set up the layout for the audio_files_explorer widget
         self.audio_files_explorer_layout = QVBoxLayout(self.ui.audio_files_explorer)
@@ -163,7 +164,7 @@ class SoundEventEditorMainWidget(QMainWindow):
     def merge_global_data(self):
         data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
         global soundevents_data
-        print(type(soundevents_data),'soundevents_data')
+        # print(type(soundevents_data),'soundevents_data')
         item_text = self.ui.soundevents_list.currentItem().text()
         try:
             del soundevents_data[item_text]

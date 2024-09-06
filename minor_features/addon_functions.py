@@ -39,6 +39,6 @@ def launch_addon():
         else:
             NCM_mode_setup(cs2_path)
             psutil.Popen((cs2_launch_commands + " -nocustomermachine"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            set_config_bool('LAUNCH', 'ncm_mode_setup', 'True')
+            set_config_bool('LAUNCH', 'ncm_mode_setup', True)
     else:
         psutil.Popen(cs2_launch_commands, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
