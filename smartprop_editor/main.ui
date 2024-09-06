@@ -136,58 +136,6 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="QCheckBox" name="show_child_ClassProperties">
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Show child&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QCheckBox::indicator:checked {
-    
-image: url(://icons/arrow_drop_down.png);
-	height:14px;
-	width:14px;
-}
-
-QCheckBox::indicator:unchecked {
-    image: url(://icons/arrow_drop_right.png);
-	height:14px;
-	width:14px;
-}
-QCheckBox {
-    font: 700 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
-    height:14px;
-    padding-top: 2px;
-    padding-bottom:4px;
-    color: #E3E3E3;
-background-color: #242424;
-    padding-left: 4px;
-}
-QCheckBox:hover {
-    background-color: #414956;
-    color: white;
-}
-QCheckBox{
-	padding-left:5px;
-	border-left: 0px solid black;
-border-right: 0px solid black;
-border-top: 0px solid black;
-}</string>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-                <property name="tristate">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QLineEdit" name="lineedit">
                 <property name="toolTip">
                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -319,24 +267,9 @@ QLineEdit::selection {
                <number>0</number>
               </property>
               <item>
-               <widget class="QCheckBox" name="show_child_Modifers">
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Show child&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
+               <widget class="QToolButton" name="Modifer_add_button">
                 <property name="styleSheet">
-                 <string notr="true">QCheckBox::indicator:checked {
-    
-image: url(://icons/arrow_drop_down.png);
-	height:14px;
-	width:14px;
-}
-
-QCheckBox::indicator:unchecked {
-    image: url(://icons/arrow_drop_right.png);
-	height:14px;
-	width:14px;
-}
-QCheckBox {
+                 <string notr="true">QToolButton {
     font: 700 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
@@ -348,11 +281,11 @@ QCheckBox {
 background-color: #242424;
     padding-left: 4px;
 }
-QCheckBox:hover {
+QToolButton:hover {
     background-color: #414956;
     color: white;
 }
-QCheckBox{
+QToolButton{
 	padding-left:5px;
 	border-left: 0px solid black;
 border-right: 0px solid black;
@@ -360,13 +293,11 @@ border-top: 0px solid black;
 }</string>
                 </property>
                 <property name="text">
-                 <string/>
+                 <string>...</string>
                 </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-                <property name="tristate">
-                 <bool>false</bool>
+                <property name="icon">
+                 <iconset resource="../resources.qrc">
+                  <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
                 </property>
                </widget>
               </item>
@@ -420,7 +351,7 @@ QLineEdit::selection {
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>64</height>
+               <height>128</height>
               </size>
              </property>
              <property name="frameShape">
@@ -508,24 +439,9 @@ QLineEdit::selection {
                <number>0</number>
               </property>
               <item>
-               <widget class="QCheckBox" name="show_child_SelectionCriteria">
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Show child&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
+               <widget class="QToolButton" name="SelectionCriteria_add_button">
                 <property name="styleSheet">
-                 <string notr="true">QCheckBox::indicator:checked {
-    
-image: url(://icons/arrow_drop_down.png);
-	height:14px;
-	width:14px;
-}
-
-QCheckBox::indicator:unchecked {
-    image: url(://icons/arrow_drop_right.png);
-	height:14px;
-	width:14px;
-}
-QCheckBox {
+                 <string notr="true">QToolButton {
     font: 700 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 0px;
@@ -537,11 +453,11 @@ QCheckBox {
 background-color: #242424;
     padding-left: 4px;
 }
-QCheckBox:hover {
+QToolButton:hover {
     background-color: #414956;
     color: white;
 }
-QCheckBox{
+QToolButton{
 	padding-left:5px;
 	border-left: 0px solid black;
 border-right: 0px solid black;
@@ -549,13 +465,11 @@ border-top: 0px solid black;
 }</string>
                 </property>
                 <property name="text">
-                 <string/>
+                 <string>...</string>
                 </property>
-                <property name="checked">
-                 <bool>true</bool>
-                </property>
-                <property name="tristate">
-                 <bool>false</bool>
+                <property name="icon">
+                 <iconset resource="../resources.qrc">
+                  <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
                 </property>
                </widget>
               </item>
@@ -609,7 +523,7 @@ QLineEdit::selection {
              <property name="minimumSize">
               <size>
                <width>0</width>
-               <height>64</height>
+               <height>128</height>
               </size>
              </property>
              <property name="frameShape">

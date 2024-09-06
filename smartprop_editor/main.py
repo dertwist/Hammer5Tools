@@ -21,16 +21,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.ui.version_label.setText(version)
 
-
-
-
-        self.ui.show_child_ClassProperties.clicked.connect(lambda: self.group_child_check(self.ui.show_child_ClassProperties, self.ui.ClassProperties_layout_frame))
-        self.ui.show_child_SelectionCriteria.clicked.connect(lambda: self.group_child_check(self.ui.show_child_SelectionCriteria,self.ui.SelectionCriteria_layout_frame))
-        self.ui.show_child_Modifers.clicked.connect(lambda: self.group_child_check(self.ui.show_child_Modifers, self.ui.Modifers_layout_frame))
-
-        self.calculate_layout_size(self.ui.ClassProperties_layout_frame, self.ui.ClassProperties_layout)
-
-
         # adding var classes to combobox
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
@@ -42,25 +32,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         settings_path = get_config_value('PATHS', 'settings')
         self.settings = QSettings(os.path.join(settings_path, "smartprop_editor.cfg"), QSettings.IniFormat)
         self._restore_user_prefs()
-
-
-
-    def group_child_check(self, checkbox, frame):
-        if checkbox.isChecked():
-            frame.setMaximumSize(15000, 15000)
-        else:
-            frame.setMaximumSize(15000, 16)
-
-    def calculate_layout_size(self, frame, layout):
-        height = 0
-        for i in range(layout.count()):
-            widget = layout.itemAt(i).widget()
-            if widget:
-                height = height + widget.frame_layout.maximumHeight()
-        print(height)
-        frame.setMaximumSize(16666, height)
-
-
 
     # variables
 
@@ -83,7 +54,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class,var_visible_in_editor=var_visible_in_editor)
         index = (self.ui.variables_scrollArea.count()) - 1
         self.ui.variables_scrollArea.insertWidget(index, variable)
-        self.ui.ClassProperties_layout.insertWidget(index, variable)
 
     def get_variables(self, layout):
         data_out = {}

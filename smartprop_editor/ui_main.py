@@ -16,11 +16,11 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDockWidget,
-    QFrame, QHBoxLayout, QHeaderView, QLabel,
-    QLineEdit, QMainWindow, QPushButton, QScrollArea,
-    QSizePolicy, QSpacerItem, QToolButton, QTreeWidget,
-    QTreeWidgetItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFrame,
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+    QMainWindow, QPushButton, QScrollArea, QSizePolicy,
+    QSpacerItem, QToolButton, QTreeWidget, QTreeWidgetItem,
+    QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_MainWindow(object):
@@ -96,47 +96,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.setSpacing(0)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.show_child_ClassProperties = QCheckBox(self.ClassProperties_layout_header)
-        self.show_child_ClassProperties.setObjectName(u"show_child_ClassProperties")
-        self.show_child_ClassProperties.setStyleSheet(u"QCheckBox::indicator:checked {\n"
-"    \n"
-"image: url(://icons/arrow_drop_down.png);\n"
-"	height:14px;\n"
-"	width:14px;\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:unchecked {\n"
-"    image: url(://icons/arrow_drop_right.png);\n"
-"	height:14px;\n"
-"	width:14px;\n"
-"}\n"
-"QCheckBox {\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:14px;\n"
-"    padding-top: 2px;\n"
-"    padding-bottom:4px;\n"
-"    color: #E3E3E3;\n"
-"background-color: #242424;\n"
-"    padding-left: 4px;\n"
-"}\n"
-"QCheckBox:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QCheckBox{\n"
-"	padding-left:5px;\n"
-"	border-left: 0px solid black;\n"
-"border-right: 0px solid black;\n"
-"border-top: 0px solid black;\n"
-"}")
-        self.show_child_ClassProperties.setChecked(True)
-        self.show_child_ClassProperties.setTristate(False)
-
-        self.horizontalLayout_3.addWidget(self.show_child_ClassProperties)
-
         self.lineedit = QLineEdit(self.ClassProperties_layout_header)
         self.lineedit.setObjectName(u"lineedit")
         self.lineedit.setStyleSheet(u"QLineEdit {\n"
@@ -200,21 +159,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.setSpacing(0)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.show_child_Modifers = QCheckBox(self.Modifers_layout_header)
-        self.show_child_Modifers.setObjectName(u"show_child_Modifers")
-        self.show_child_Modifers.setStyleSheet(u"QCheckBox::indicator:checked {\n"
-"    \n"
-"image: url(://icons/arrow_drop_down.png);\n"
-"	height:14px;\n"
-"	width:14px;\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:unchecked {\n"
-"    image: url(://icons/arrow_drop_right.png);\n"
-"	height:14px;\n"
-"	width:14px;\n"
-"}\n"
-"QCheckBox {\n"
+        self.Modifer_add_button = QToolButton(self.Modifers_layout_header)
+        self.Modifer_add_button.setObjectName(u"Modifer_add_button")
+        self.Modifer_add_button.setStyleSheet(u"QToolButton {\n"
 "    font: 700 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
@@ -226,20 +173,21 @@ class Ui_MainWindow(object):
 "background-color: #242424;\n"
 "    padding-left: 4px;\n"
 "}\n"
-"QCheckBox:hover {\n"
+"QToolButton:hover {\n"
 "    background-color: #414956;\n"
 "    color: white;\n"
 "}\n"
-"QCheckBox{\n"
+"QToolButton{\n"
 "	padding-left:5px;\n"
 "	border-left: 0px solid black;\n"
 "border-right: 0px solid black;\n"
 "border-top: 0px solid black;\n"
 "}")
-        self.show_child_Modifers.setChecked(True)
-        self.show_child_Modifers.setTristate(False)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Modifer_add_button.setIcon(icon4)
 
-        self.horizontalLayout_4.addWidget(self.show_child_Modifers)
+        self.horizontalLayout_4.addWidget(self.Modifer_add_button)
 
         self.lineedit_2 = QLineEdit(self.Modifers_layout_header)
         self.lineedit_2.setObjectName(u"lineedit_2")
@@ -275,7 +223,7 @@ class Ui_MainWindow(object):
 
         self.Modifers_layout_frame = QFrame(self.scrollAreaWidgetContents)
         self.Modifers_layout_frame.setObjectName(u"Modifers_layout_frame")
-        self.Modifers_layout_frame.setMinimumSize(QSize(0, 64))
+        self.Modifers_layout_frame.setMinimumSize(QSize(0, 128))
         self.Modifers_layout_frame.setFrameShape(QFrame.StyledPanel)
         self.Modifers_layout_frame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_11 = QVBoxLayout(self.Modifers_layout_frame)
@@ -305,21 +253,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_8.setSpacing(0)
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
-        self.show_child_SelectionCriteria = QCheckBox(self.SelectionCriteria_layout_header)
-        self.show_child_SelectionCriteria.setObjectName(u"show_child_SelectionCriteria")
-        self.show_child_SelectionCriteria.setStyleSheet(u"QCheckBox::indicator:checked {\n"
-"    \n"
-"image: url(://icons/arrow_drop_down.png);\n"
-"	height:14px;\n"
-"	width:14px;\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:unchecked {\n"
-"    image: url(://icons/arrow_drop_right.png);\n"
-"	height:14px;\n"
-"	width:14px;\n"
-"}\n"
-"QCheckBox {\n"
+        self.SelectionCriteria_add_button = QToolButton(self.SelectionCriteria_layout_header)
+        self.SelectionCriteria_add_button.setObjectName(u"SelectionCriteria_add_button")
+        self.SelectionCriteria_add_button.setStyleSheet(u"QToolButton {\n"
 "    font: 700 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
@@ -331,20 +267,19 @@ class Ui_MainWindow(object):
 "background-color: #242424;\n"
 "    padding-left: 4px;\n"
 "}\n"
-"QCheckBox:hover {\n"
+"QToolButton:hover {\n"
 "    background-color: #414956;\n"
 "    color: white;\n"
 "}\n"
-"QCheckBox{\n"
+"QToolButton{\n"
 "	padding-left:5px;\n"
 "	border-left: 0px solid black;\n"
 "border-right: 0px solid black;\n"
 "border-top: 0px solid black;\n"
 "}")
-        self.show_child_SelectionCriteria.setChecked(True)
-        self.show_child_SelectionCriteria.setTristate(False)
+        self.SelectionCriteria_add_button.setIcon(icon4)
 
-        self.horizontalLayout_8.addWidget(self.show_child_SelectionCriteria)
+        self.horizontalLayout_8.addWidget(self.SelectionCriteria_add_button)
 
         self.lineedit_5 = QLineEdit(self.SelectionCriteria_layout_header)
         self.lineedit_5.setObjectName(u"lineedit_5")
@@ -380,7 +315,7 @@ class Ui_MainWindow(object):
 
         self.SelectionCriteria_layout_frame = QFrame(self.scrollAreaWidgetContents)
         self.SelectionCriteria_layout_frame.setObjectName(u"SelectionCriteria_layout_frame")
-        self.SelectionCriteria_layout_frame.setMinimumSize(QSize(0, 64))
+        self.SelectionCriteria_layout_frame.setMinimumSize(QSize(0, 128))
         self.SelectionCriteria_layout_frame.setFrameShape(QFrame.StyledPanel)
         self.SelectionCriteria_layout_frame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_13 = QVBoxLayout(self.SelectionCriteria_layout_frame)
@@ -522,8 +457,6 @@ class Ui_MainWindow(object):
         self.add_new_variable_button = QToolButton(self.frame)
         self.add_new_variable_button.setObjectName(u"add_new_variable_button")
         self.add_new_variable_button.setMaximumSize(QSize(28, 28))
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_new_variable_button.setIcon(icon4)
         self.add_new_variable_button.setIconSize(QSize(16, 16))
 
@@ -828,25 +761,15 @@ class Ui_MainWindow(object):
         self.actionSaveSmartpropAs.setText(QCoreApplication.translate("MainWindow", u"SaveSmartpropAs", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Main window", None))
 #if QT_CONFIG(tooltip)
-        self.show_child_ClassProperties.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show child</span></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.show_child_ClassProperties.setText("")
-#if QT_CONFIG(tooltip)
         self.lineedit.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.lineedit.setText(QCoreApplication.translate("MainWindow", u"ClassProperties", None))
-#if QT_CONFIG(tooltip)
-        self.show_child_Modifers.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show child</span></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.show_child_Modifers.setText("")
+        self.Modifer_add_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.lineedit_2.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.lineedit_2.setText(QCoreApplication.translate("MainWindow", u"Modifers", None))
-#if QT_CONFIG(tooltip)
-        self.show_child_SelectionCriteria.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show child</span></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.show_child_SelectionCriteria.setText("")
+        self.SelectionCriteria_add_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.lineedit_5.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
