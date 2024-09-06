@@ -1,209 +1,43 @@
 <!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
 {
-	generic_data_type = "CSmartPropRoot"
 	m_Variables = 
-	[
-				{
-			_class = "CSmartPropVariable_Float"
-			m_VariableName = "length"
-			m_nElementID = 61
-		},
-				{
-			_class = "CSmartPropVariable_Int"
-			m_VariableName = "height"
-			m_nElementID = 62
-		},
-	]
-	m_Children = 
-	[
-				{
-			_class = "CSmartPropElement_PickOne"
-			m_SelectionMode = "RANDOM"
-			m_HandleShape = "CIRCLE"
-			m_Children = 
-			[
-								{
-					_class = "CSmartPropElement_Model"
-					m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl"
-					m_nElementID = 2
-				},
-								{
-					_class = "CSmartPropElement_Group"
-					m_Children = 
-					[
-												{
-							_class = "CSmartPropElement_ModifyState"
-							m_Modifiers = 
-							[
-																{
-									_class = "CSmartPropOperation_CreateSizer"
-									m_OutputVariableMaxY = "length"
-									m_flInitialMaxY = 64.0
-								},
-							]
-							m_nElementID = 18
-						},
-												{
-							_class = "CSmartPropElement_FitOnLine"
-							m_vEnd = 
-							{
-								m_Components = 
-								[
-									0.0,
-																		{
-										m_SourceName = "length"
-									},
-									0.0,
-								]
-							}
-							m_Children = 
-							[
-																{
-									_class = "CSmartPropElement_Model"
-									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_512.vmdl"
-									m_SelectionCriteria = 
-									[
-																				{
-											_class = "CSmartPropSelectionCriteria_LinearLength"
-											m_flLength = 512.0
-										},
-									]
-									m_nElementID = 52
-								},
-							]
-							m_nElementID = 19
-						},
-					]
-					m_nElementID = 3
-				},
-								{
-					_class = "CSmartPropElement_Group"
-					m_Children = 
-					[
-												{
-							_class = "CSmartPropElement_Model"
-							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_d.vmdl"
-							m_nElementID = 20
-						},
-												{
-							_class = "CSmartPropElement_SmartProp"
-							m_Modifiers = 
-							[
-																{
-									_class = "CSmartPropOperation_Translate"
-									m_vPosition = [0.0, 25.0, -26.0]
-								},
-																{
-									_class = "CSmartPropOperation_Rotate"
-									m_vRotation = [0.0, 0.0, -90.0]
-								},
-							]
-							m_sSmartProp = "smartprops/hvac_kit.vsmart"
-							m_nElementID = 21
-						},
-					]
-					m_nElementID = 4
-				},
-			]
-			m_nElementID = 1
-		},
-				{
-			_class = "CSmartPropElement_PickOne"
-			m_SelectionMode = "FIRST"
-			m_HandleShape = "CIRCLE"
-			m_Children = 
-			[
-								{
-					_class = "CSmartPropElement_Model"
-					m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl"
-					m_nElementID = 2
-				},
-								{
-					_class = "CSmartPropElement_Group"
-					m_Children = 
-					[
-												{
-							_class = "CSmartPropElement_ModifyState"
-							m_Modifiers = 
-							[
-																{
-									_class = "CSmartPropOperation_CreateSizer"
-									m_OutputVariableMaxY = "length"
-									m_flInitialMaxY = 64.0
-								},
-							]
-							m_nElementID = 18
-						},
-												{
-							_class = "CSmartPropElement_FitOnLine"
-							m_vEnd = 
-							{
-								m_Components = 
-								[
-									0.0,
-																		{
-										m_SourceName = "length"
-									},
-									0.0,
-								]
-							}
-							m_Children = 
-							[
-																{
-									_class = "CSmartPropElement_Model"
-									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_512.vmdl"
-									m_SelectionCriteria = 
-									[
-																				{
-											_class = "CSmartPropSelectionCriteria_LinearLength"
-											m_flLength = 512.0
-										},
-									]
-									m_nElementID = 52
-								},
-							]
-							m_nElementID = 19
-						},
-					]
-					m_nElementID = 3
-				},
-								{
-					_class = "CSmartPropElement_Group"
-					m_Children = 
-					[
-												{
-							_class = "CSmartPropElement_Model"
-							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_d.vmdl"
-							m_nElementID = 20
-						},
-												{
-							_class = "CSmartPropElement_SmartProp"
-							m_Modifiers = 
-							[
-																{
-									_class = "CSmartPropOperation_Translate"
-									m_vPosition = [0.0, 25.0, -26.0]
-								},
-																{
-									_class = "CSmartPropOperation_Rotate"
-									m_vRotation = [0.0, 0.0, -90.0]
-								},
-							]
-							m_sSmartProp = "smartprops/hvac_kit.vsmart"
-							m_nElementID = 21
-						},
-					]
-					m_nElementID = 4
-				},
-			]
-			m_nElementID = 1
-		},
-	]
-	_editor = 
 	{
-		next_element_id = 62
+		CSmartPropVariable_Float = 
+		{
+			CSmartPropVariable_Float = 
+			{
+				_class = "CSmartPropVariable_Float"
+				m_VariableName = "length"
+				m_nElementID = 61
+				m_nElementID1 = 61.2
+			}
+		}
+	}
+	m_Children = 
+	{
+		CSmartPropElement_Mode55555l = 
+		{
+			CSmartPropElement_Mode55555l = 
+			{
+				_class = "CSmartPropElement_Mode55555l"
+				m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl"
+				m_nElementID = 2
+			}
+		}
+		CSmartPropElement_Model = 
+		{
+			asdasdasd = 
+			{
+				asdasdasd = 
+				{
+					_class = "CSmartPropElement_Model"
+					m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl"
+					m_nElementID = 2
+				}
+			}
+		}
 	}
 }
 //Hammer5Tools_vsmartdata_variables:
 //Hammer5Tools_vsmartdata_options:
-//Hammer5Tools_vsmartdata_tree_structure:{'m_Variables': {'CSmartPropVariable_Float': "{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 14}", 'CSmartPropVariable_ScaleMode': "{'_class': 'CSmartPropVariable_ScaleMode', 'm_VariableName': 'ScaleMode', 'm_DisplayName': 'Scaling Mode', 'm_bExposeAsParameter': True, 'm_nElementID': 15}", 'CSmartPropVariable_PickMode': "{'_class': 'CSmartPropVariable_PickMode', 'm_VariableName': 'PickMode', 'm_DisplayName': 'Pick Mode', 'm_bExposeAsParameter': True, 'm_nElementID': 16}", 'CSmartPropVariable_String': "{'_class': 'CSmartPropVariable_String', 'm_VariableName': 'MaterialGroup', 'm_DisplayName': 'Material Group', 'm_bExposeAsParameter': True, 'm_Options': ['default', 'Painted'], 'm_nElementID': 17}"}, 'm_Children': [{'CSmartPropElement_ModifyState': "{'_class': 'CSmartPropElement_ModifyState', 'm_Modifiers': [{'_class': 'CSmartPropOperation_CreateSizer', 'm_flInitialMaxX': 64.0, 'm_flInitialMaxZ': 128.0, 'm_OutputVariableMaxX': 'length'}], 'm_nElementID': 6}", 'CSmartPropElement_FitOnLine': {'m_Children': [{'CSmartPropElement_Model': ["{'_class': 'CSmartPropElement_Model', 'm_nElementID': 1, 'm_bEnabled': True, 'm_SelectionCriteria': [{'_class': 'CSmartPropSelectionCriteria_LinearLength', 'm_flMinLength': 248.0, 'm_flLength': 256.0, 'm_flMaxLength': 264.0, 'm_bAllowScale': True}], 'm_Modifiers': [{'_class': 'CSmartPropOperation_Rotate', 'm_bEnabled': True, 'm_vRotation': [0.0, -90, 0.0]}], 'm_sModelName': <keyvalues3.keyvalues3.flagged_value object at 0x000001AA6A7078E0>, 'm_MaterialGroupName': {'m_SourceName': 'MaterialGroup'}, 'm_vModelScale': [1.0, 1.0, 1.0]}", "{'_class': 'CSmartPropElement_Model', 'm_nElementID': 2, 'm_bEnabled': True, 'm_SelectionCriteria': [{'_class': 'CSmartPropSelectionCriteria_LinearLength', 'm_flMinLength': 120.0, 'm_flLength': 128.0, 'm_flMaxLength': 136.0, 'm_bAllowScale': True}], 'm_Modifiers': [{'_class': 'CSmartPropOperation_Rotate', 'm_bEnabled': True, 'm_vRotation': [0.0, -89.999985, 0.0]}], 'm_sModelName': <keyvalues3.keyvalues3.flagged_value object at 0x000001AA6A707640>, 'm_MaterialGroupName': {'m_SourceName': 'MaterialGroup'}, 'm_vModelScale': [1.0, 1.0, 1.0]}", "{'_class': 'CSmartPropElement_Model', 'm_nElementID': 4, 'm_bEnabled': True, 'm_SelectionCriteria': [{'_class': 'CSmartPropSelectionCriteria_LinearLength', 'm_flMinLength': 24.0, 'm_flLength': 32.0, 'm_flMaxLength': 40.0}], 'm_Modifiers': [{'_class': 'CSmartPropOperation_Rotate', 'm_bEnabled': True, 'm_vRotation': [0.0, -89.999985, 0.0]}], 'm_sModelName': <keyvalues3.keyvalues3.flagged_value object at 0x000001AA6A7076D0>, 'm_MaterialGroupName': {'m_SourceName': 'MaterialGroup'}, 'm_vModelScale': [1.0, 1.0, 1.0]}"], 'CSmartPropElement_PickOne': [{'m_Children': [{'CSmartPropElement_Model': "{'_class': 'CSmartPropElement_Model', 'm_sModelName': <keyvalues3.keyvalues3.flagged_value object at 0x000001AA6A706440>, 'm_MaterialGroupName': {'m_SourceName': 'MaterialGroup'}, 'm_nElementID': 9}", 'CSmartPropElement_Group': {'m_Children': [{'CSmartPropElement_Model': ["{'_class': 'CSmartPropElement_Model', 'm_sModelName': <keyvalues3.keyvalues3.flagged_value object at 0x000001AA6A706680>, 'm_MaterialGroupName': {'m_SourceName': 'MaterialGroup'}, 'm_vModelScale': [1.0, 1.0, 1.0], 'm_nElementID': 13}", "{'_class': 'CSmartPropElement_Model', 'm_nElementID': 3, 'm_bEnabled': True, 'm_Modifiers': [{'_class': 'CSmartPropOperation_Translate', 'm_vPosition': [0.0, 61.0, 0.0]}, {'_class': 'CSmartPropOperation_CreateRotator'}], 'm_sModelName': <keyvalues3.keyvalues3.flagged_value object at 0x000001AA6A7078B0>, 'm_MaterialGroupName': {'m_SourceName': 'MaterialGroup'}, 'm_vModelScale': [1.0, 1.0, 1.0]}"]}]}}]}, {'m_Children': [{'CSmartPropElement_Model': "{'_class': 'CSmartPropElement_Model', 'm_sModelName': <keyvalues3.keyvalues3.flagged_value object at 0x000001AA6A706920>, 'm_MaterialGroupName': {'m_SourceName': 'MaterialGroup'}, 'm_vModelScale': [1.0, 1.0, 1.0], 'm_nElementID': 11}", 'CSmartPropElement_SmartProp': "{'_class': 'CSmartPropElement_SmartProp', 'm_sSmartProp': 'smartprops/smart_fence.vsmart', 'm_Modifiers': [{'_class': 'CSmartPropOperation_CreateRotator'}], 'm_nElementID': 12}"}]}]}]}}]}
+//Hammer5Tools_vsmartdata_tree_structure:{'m_Variables': {'CSmartPropVariable_Float': {'CSmartPropVariable_Float': "{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}"}}, 'm_Children': {'CSmartPropElement_Mode55555l': {'CSmartPropElement_Mode55555l': "{'_class': 'CSmartPropElement_Mode55555l', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl', 'm_nElementID': 2}"}, 'CSmartPropElement_Model': {'asdasdasd': {'asdasdasd': "{'_class': 'CSmartPropElement_Model', 'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl', 'm_nElementID': 2}"}}}}
