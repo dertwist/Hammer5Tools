@@ -136,7 +136,7 @@ class MainWindow(QMainWindow):
     def save_tree(self):
         data = self.tree_to_file(self.tree.invisibleRootItem())
         # data = self.convert_children_to_list(data)
-        converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()))
+        converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
         # kv3.write(data, 'treestructure.vsmart')
         kv3.write(converted_data, 'treestructure_vsmart.vsmart')
         # print(data_raw)
@@ -147,24 +147,22 @@ class MainWindow(QMainWindow):
             file.write('//Hammer5Tools_vsmartdata_options:' + '\n')
             file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data))
 
-    def tree_to_vsmart(self, item):
-        data = {}
-        data['m_Children'] = []
+    def tree_to_vsmart(self, item, data):
+        if 'm_Children' not in data:
+            data['m_Children'] = []
+
         for index in range(item.childCount()):
             child = item.child(index)
             key = child.text(0)
-            value = child.text(1)if child.childCount() == 0 else self.tree_to_vsmart(child)
             value_row = child.text(1)
-            print(key, index, (ast.literal_eval(value_row))['_class'])
-            if child.childCount() == 0:
-                try:
-                    data['m_Children'].append((ast.literal_eval(value_row)))
-                except:
-                    data['m_Children'][index]['m_Children'].append((ast.literal_eval(value_row)))
-            else:
 
-                data['m_Children'].append((ast.literal_eval(value_row)))
-                data['m_Children'][index]['m_Children'] = []
+            child_data = ast.literal_eval(value_row)
+            if child.childCount() > 0:
+                child_data['m_Children'] = []
+                self.tree_to_vsmart(child, child_data)
+
+            data['m_Children'].append(child_data)
+
         return data
 
     def tree_to_file(self, item):
