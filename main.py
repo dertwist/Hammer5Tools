@@ -164,6 +164,7 @@ class Widget(QWidget):
         # Smartprop editior
         try:
             if hasattr(self, 'SoundEventEditorMainWidget') and self.SmartPropEditorMainWindow:
+                self.SmartPropEditorMainWindow.closeEvent(self.event)
                 self.SmartPropEditorMainWindow.deleteLater()
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
