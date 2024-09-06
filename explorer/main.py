@@ -1,10 +1,12 @@
 import os.path
 
 from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox
-from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent
+from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
-from BatchCreator.BatchCreator_file_parser import bc_get_config_value, bc_set_config_value
+from preferences import get_config_value, set_config_value
 
+audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
+model_3d_extensions = ['obj', 'fbx']
 class CustomFileSystemModel(QFileSystemModel):
     NAME_COLUMN = 0
     SIZE_COLUMN = 1
@@ -20,7 +22,11 @@ class CustomFileSystemModel(QFileSystemModel):
         elif role == Qt.DecorationRole and not self.isDir(index) and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
             if file_path.endswith('.vsmart'):
-                return QIcon('://icons/assettypes/vdata_sm.png')  # Provide the path to the custom icon
+                return QIcon('://icons/assettypes/vdata_sm.png')
+            if file_path.endswith(tuple(audio_extensions)):
+                return QIcon('://icons/assettypes/vmix_sm.png')
+            if file_path.endswith(tuple(model_3d_extensions)):
+                return QIcon('://icons/assettypes/model_sm.png')
         elif role == Qt.DisplayRole and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
             if file_path in self._cache:
@@ -84,7 +90,7 @@ class CustomFileSystemModel(QFileSystemModel):
 
 
 class Explorer(QMainWindow):
-    def __init__(self, parent=None, tree_directory=None, addon=None, editor=None):
+    def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None):
         super().__init__(parent)
 
         self.model = CustomFileSystemModel()
@@ -118,12 +124,14 @@ class Explorer(QMainWindow):
         self.tree.installEventFilter(self)
 
         self.addon = addon
+        self.editor_name = editor_name
+        self.tree_directory = tree_directory
         self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
         self.select_last_opened_path()
 
     def select_last_opened_path(self):
         try:
-            last_opened_path = bc_get_config_value('MINI_EXPLORER_LAST_PATH', self.addon)
+            last_opened_path = get_config_value(self.editor_name + '_explorer_lath_path', self.addon)
             if last_opened_path:
                 last_opened_index = self.model.index(last_opened_path)
                 self.tree.selectionModel().select(last_opened_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
@@ -132,11 +140,11 @@ class Explorer(QMainWindow):
             pass
 
     def save_current_path(self, path):
-        bc_set_config_value('MINI_EXPLORER_LAST_PATH', self.addon, path)
+        set_config_value(self.editor_name + '_explorer_lath_path', self.addon, path)
 
     def on_directory_changed(self, current, previous):
         current_path = self.model.filePath(current)
-        # self.save_current_path(current_path)
+        self.save_current_path(current_path)
 
     def eventFilter(self, source, event):
         if event.type() == QMouseEvent.MouseButtonPress:
@@ -195,6 +203,14 @@ class Explorer(QMainWindow):
         delete_action.triggered.connect(lambda: self.delete_item(index))
         menu.addAction(delete_action)
 
+        file_path = self.model.filePath(index)
+        file_extension = file_path.split('.')[-1]  # Get the file extension from the file path
+        if file_extension in audio_extensions:
+            copy_audio_path_action = QAction("Copy Audio Path", self)  # Updated action text for clarity
+            copy_audio_path_action.triggered.connect(lambda: self.copy_audio_path(index, True))
+            menu.addAction(copy_audio_path_action)
+
+
     def open_folder_in_explorer(self, index):
         folder_path = self.model.filePath(index)
         QDesktopServices.openUrl(QUrl.fromLocalFile(folder_path))
@@ -217,6 +233,25 @@ class Explorer(QMainWindow):
                 QDir(path).removeRecursively()
             else:
                 QFile(path).remove()
+
+    def copy_audio_path(self, index, to_clipboard):
+        if to_clipboard:
+            file_path = self.model.filePath(index)
+            file_path = os.path.relpath(file_path, self.tree_directory)
+            file_path = file_path.replace('\\', '/')
+            file_path = file_path.lower()
+            root, ext = os.path.splitext(file_path)
+            file_path = root + '.vsnd'
+            clipboard = QGuiApplication.clipboard()
+            clipboard.setText(file_path)
+        else:
+            file_path = self.model.filePath(index)
+            file_path = os.path.relpath(file_path, self.tree_directory)
+            file_path = file_path.replace('\\', '/')
+            file_path = file_path.lower()
+            root, ext = os.path.splitext(file_path)
+            file_path = root + '.vsnd'
+            return file_path
 
     def delete_selected_items(self):
         indexes = self.tree.selectionModel().selectedIndexes()

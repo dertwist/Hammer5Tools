@@ -50,13 +50,10 @@ class Widget(QWidget):
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except:
             pass
-
-        try:
-            if get_config_bool('APP', 'first_launch'):
-                self.open_documentation()
-                set_config_bool('APP', 'first_launch', 'False')
-        except:
-            pass
+        print(get_config_bool('APP', 'first_launch'))
+        if get_config_bool('APP', 'first_launch'):
+            self.open_documentation()
+            set_config_bool('APP', 'first_launch', False)
     def current_tab(self, set):
         if set:
             try:
@@ -229,7 +226,7 @@ class Widget(QWidget):
         if get_config_bool('APP', 'minimize_message_shown'):
             self.tray_icon.showMessage("Hammer5Tools", "Application minimized to tray.", QSystemTrayIcon.Information,
                                        2000)
-            set_config_bool('APP', 'minimize_message_shown', 'False')
+            set_config_bool('APP', 'minimize_message_shown', False)
 
     def exit_application(self):
         try:
