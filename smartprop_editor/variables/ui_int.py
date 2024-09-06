@@ -87,10 +87,10 @@ class Ui_Widget(object):
 
         self.horizontalLayout_2.addWidget(self.label)
 
-        self.doubleSpinBox = QDoubleSpinBox(self.frame)
-        self.doubleSpinBox.setObjectName(u"doubleSpinBox")
-        self.doubleSpinBox.setMinimumSize(QSize(0, 0))
-        self.doubleSpinBox.setStyleSheet(u"QDoubleSpinBox {\n"
+        self.value_doubleSpinBox = QDoubleSpinBox(self.frame)
+        self.value_doubleSpinBox.setObjectName(u"value_doubleSpinBox")
+        self.value_doubleSpinBox.setMinimumSize(QSize(0, 0))
+        self.value_doubleSpinBox.setStyleSheet(u"QDoubleSpinBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 2px;\n"
@@ -148,12 +148,12 @@ class Ui_Widget(object):
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}")
-        self.doubleSpinBox.setDecimals(1)
-        self.doubleSpinBox.setMinimum(-99999999999.000000000000000)
-        self.doubleSpinBox.setMaximum(99999999999.000000000000000)
-        self.doubleSpinBox.setSingleStep(0.100000000000000)
+        self.value_doubleSpinBox.setDecimals(1)
+        self.value_doubleSpinBox.setMinimum(-99999999999.000000000000000)
+        self.value_doubleSpinBox.setMaximum(99999999999.000000000000000)
+        self.value_doubleSpinBox.setSingleStep(0.100000000000000)
 
-        self.horizontalLayout_2.addWidget(self.doubleSpinBox)
+        self.horizontalLayout_2.addWidget(self.value_doubleSpinBox)
 
 
         self.verticalLayout.addWidget(self.frame)
@@ -185,9 +185,9 @@ class Ui_Widget(object):
         self.horizontalLayout_7.setSpacing(0)
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
         self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
-        self.checkBox = QCheckBox(self.frame_2)
-        self.checkBox.setObjectName(u"checkBox")
-        self.checkBox.setStyleSheet(u"QCheckBox {\n"
+        self.min_checkBox = QCheckBox(self.frame_2)
+        self.min_checkBox.setObjectName(u"min_checkBox")
+        self.min_checkBox.setStyleSheet(u"QCheckBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border-radius: 0px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
@@ -205,11 +205,11 @@ class Ui_Widget(object):
 "    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
 "}")
 
-        self.horizontalLayout_7.addWidget(self.checkBox)
+        self.horizontalLayout_7.addWidget(self.min_checkBox)
 
-        self.doubleSpinBox_6 = QDoubleSpinBox(self.frame_2)
-        self.doubleSpinBox_6.setObjectName(u"doubleSpinBox_6")
-        self.doubleSpinBox_6.setStyleSheet(u"QDoubleSpinBox {\n"
+        self.min_doubleSpinBox = QDoubleSpinBox(self.frame_2)
+        self.min_doubleSpinBox.setObjectName(u"min_doubleSpinBox")
+        self.min_doubleSpinBox.setStyleSheet(u"QDoubleSpinBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 2px;\n"
@@ -267,12 +267,12 @@ class Ui_Widget(object):
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}")
-        self.doubleSpinBox_6.setDecimals(1)
-        self.doubleSpinBox_6.setMinimum(-9.900000000000000)
-        self.doubleSpinBox_6.setMaximum(9.900000000000000)
-        self.doubleSpinBox_6.setSingleStep(0.100000000000000)
+        self.min_doubleSpinBox.setDecimals(1)
+        self.min_doubleSpinBox.setMinimum(-9.900000000000000)
+        self.min_doubleSpinBox.setMaximum(9.900000000000000)
+        self.min_doubleSpinBox.setSingleStep(0.100000000000000)
 
-        self.horizontalLayout_7.addWidget(self.doubleSpinBox_6)
+        self.horizontalLayout_7.addWidget(self.min_doubleSpinBox)
 
 
         self.verticalLayout.addWidget(self.frame_2)
@@ -304,9 +304,9 @@ class Ui_Widget(object):
         self.horizontalLayout_8.setSpacing(0)
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
-        self.checkBox_4 = QCheckBox(self.frame_3)
-        self.checkBox_4.setObjectName(u"checkBox_4")
-        self.checkBox_4.setStyleSheet(u"QCheckBox {\n"
+        self.max_checkBox = QCheckBox(self.frame_3)
+        self.max_checkBox.setObjectName(u"max_checkBox")
+        self.max_checkBox.setStyleSheet(u"QCheckBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border-radius: 0px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
@@ -324,11 +324,11 @@ class Ui_Widget(object):
 "    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
 "}")
 
-        self.horizontalLayout_8.addWidget(self.checkBox_4)
+        self.horizontalLayout_8.addWidget(self.max_checkBox)
 
-        self.doubleSpinBox_9 = QDoubleSpinBox(self.frame_3)
-        self.doubleSpinBox_9.setObjectName(u"doubleSpinBox_9")
-        self.doubleSpinBox_9.setStyleSheet(u"QDoubleSpinBox {\n"
+        self.max_doubleSpinBox = QDoubleSpinBox(self.frame_3)
+        self.max_doubleSpinBox.setObjectName(u"max_doubleSpinBox")
+        self.max_doubleSpinBox.setStyleSheet(u"QDoubleSpinBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 2px;\n"
@@ -386,12 +386,12 @@ class Ui_Widget(object):
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}")
-        self.doubleSpinBox_9.setDecimals(1)
-        self.doubleSpinBox_9.setMinimum(-99999999999.000000000000000)
-        self.doubleSpinBox_9.setMaximum(99999999999.000000000000000)
-        self.doubleSpinBox_9.setSingleStep(0.100000000000000)
+        self.max_doubleSpinBox.setDecimals(1)
+        self.max_doubleSpinBox.setMinimum(-99999999999.000000000000000)
+        self.max_doubleSpinBox.setMaximum(99999999999.000000000000000)
+        self.max_doubleSpinBox.setSingleStep(0.100000000000000)
 
-        self.horizontalLayout_8.addWidget(self.doubleSpinBox_9)
+        self.horizontalLayout_8.addWidget(self.max_doubleSpinBox)
 
 
         self.verticalLayout.addWidget(self.frame_3)
@@ -405,7 +405,7 @@ class Ui_Widget(object):
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
         self.label.setText(QCoreApplication.translate("Widget", u"Value", None))
-        self.checkBox.setText(QCoreApplication.translate("Widget", u"Min Value", None))
-        self.checkBox_4.setText(QCoreApplication.translate("Widget", u"Max Value", None))
+        self.min_checkBox.setText(QCoreApplication.translate("Widget", u"Min Value", None))
+        self.max_checkBox.setText(QCoreApplication.translate("Widget", u"Max Value", None))
     # retranslateUi
 

@@ -19,18 +19,22 @@ class VariableFrame(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
+        self.ui.variable_name.setAcceptDrops(False)
         self.name = name
         self.var_class = var_class
         self.var_value = var_value
         self.var_visible_in_editor = var_visible_in_editor
+
 
         self.ui.variable_name.setText(name)
         self.ui.variable_class.setText(var_class)
         self.ui.visible_in_editor.setChecked(self.var_visible_in_editor)
         self.ui.visible_in_editor.clicked.connect(self.visible_in_editor)
         self.widget_list = widget_list
-        if var_class == 'Float':
-            self.ui.layout.insertWidget(0, Var_class_Int(var_value='1', var_class='int'))
+        if var_class == 'Int':
+            self.ui.layout.insertWidget(0, Var_class_Int(var_value='1'))
+        elif var_class == 'Float':
+            self.ui.layout.insertWidget(0, Var_class_Int(var_value='1'))
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 
@@ -39,7 +43,6 @@ class VariableFrame(QWidget):
     def show_child(self):
         print(self.ui.show_child.isChecked())
         if not self.ui.show_child.isChecked():
-            # self.ui.layout.setEnabled(False)
             self.ui.frame_layout.setMaximumSize(16666,0)
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
@@ -48,7 +51,6 @@ class VariableFrame(QWidget):
         self.var_visible_in_editor = self.ui.visible_in_editor.isChecked()
         print(self.var_visible_in_editor)
     def init_ui(self):
-
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
 
