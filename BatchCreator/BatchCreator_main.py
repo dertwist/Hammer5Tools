@@ -1,5 +1,5 @@
 from BatchCreator.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
-from BatchCreator.BatchCreator_mini_windows_explorer import MiniWindowsExplorer
+# from BatchCreator.BatchCreator_mini_windows_explorer import MiniWindowsExplorer
 from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QApplication, QMessageBox
 from PySide6.QtCore import Qt, QMimeData
 from preferences import get_addon_name, get_cs2_path
@@ -8,6 +8,8 @@ from BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
 from BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse, batch_creator_file_parser_initialize, batch_creator_file_parser_output
 from BatchCreator.BatchCreator_process import batchcreator_process_all
 from BatchCreator.BatchCreator_process_dialog import BatchCreator_process_Dialog
+
+from explorer.main import Explorer
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence
 from PySide6.QtWidgets import QMessageBox
 from packaging import version
@@ -24,7 +26,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
         tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
-        self.mini_explorer = MiniWindowsExplorer(self.ui.MiniWindows_explorer, tree_directory, get_addon_name())
+        self.mini_explorer = Explorer(self.ui.MiniWindows_explorer, tree_directory, get_addon_name(), editor_name='BatchCreator')
 
         layout = QVBoxLayout(self.ui.MiniWindows_explorer)
         layout.addWidget(self.mini_explorer.tree)

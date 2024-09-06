@@ -30,7 +30,7 @@ class FilesProperty(QWidget):
 
     # Inside the CurveProperty class
     def create_file_from_selction(self):
-        file = self.tree_list.copy_file_path(self.tree_list.tree.currentIndex(), False)
+        file = self.tree_list.copy_audio_path(self.tree_list.tree.currentIndex(), False)
         self.add_item_to_list(file)
         print(file)
     def init_ui(self):
