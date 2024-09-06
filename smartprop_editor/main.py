@@ -25,14 +25,11 @@ class SmartPropEditorMainWindow(QMainWindow):
 
 
         self.ui.show_child_ClassProperties.clicked.connect(lambda: self.group_child_check(self.ui.show_child_ClassProperties, self.ui.ClassProperties_layout_frame))
-        self.ui.group_modifiers.clicked.connect(lambda: self.groupBox_check(self.ui.group_modifiers))
-        # self.ui.group_class_properties.clicked.connect(lambda: self.groupBox_check(self.ui.group_class_properties))
-        self.ui.group_selection_criteria.clicked.connect(lambda: self.groupBox_check(self.ui.group_selection_criteria))
+        self.ui.show_child_SelectionCriteria.clicked.connect(lambda: self.group_child_check(self.ui.show_child_SelectionCriteria,self.ui.SelectionCriteria_layout_frame))
+        self.ui.show_child_Modifers.clicked.connect(lambda: self.group_child_check(self.ui.show_child_Modifers, self.ui.Modifers_layout_frame))
 
-        self.soundevent_properties_widget = QWidget()
-        self.soundevent_properties_layout = QVBoxLayout(self.ui.modifiers_widget)
-        self.soundevent_properties_widget.setLayout(self.soundevent_properties_layout)
-        self.ui.scrollArea_modifiers.setWidget(self.soundevent_properties_widget)
+        self.calculate_layout_size(self.ui.ClassProperties_layout_frame, self.ui.ClassProperties_layout)
+
 
         # adding var classes to combobox
         for item in variables_list:
@@ -53,11 +50,16 @@ class SmartPropEditorMainWindow(QMainWindow):
             frame.setMaximumSize(15000, 15000)
         else:
             frame.setMaximumSize(15000, 16)
-    def groupBox_check(self, groupBox):
-        if groupBox.isChecked():
-            groupBox.setMaximumSize(15000, 15000)
-        else:
-            groupBox.setMaximumSize(15000, 16)
+
+    def calculate_layout_size(self, frame, layout):
+        height = 0
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if widget:
+                height = height + widget.frame_layout.maximumHeight()
+        print(height)
+        frame.setMaximumSize(16666, height)
+
 
 
     # variables
@@ -81,6 +83,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class,var_visible_in_editor=var_visible_in_editor)
         index = (self.ui.variables_scrollArea.count()) - 1
         self.ui.variables_scrollArea.insertWidget(index, variable)
+        self.ui.ClassProperties_layout.insertWidget(index, variable)
 
     def get_variables(self, layout):
         data_out = {}
