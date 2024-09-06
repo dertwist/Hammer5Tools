@@ -130,7 +130,7 @@ font: 8pt &quot;Segoe UI&quot;;
        </widget>
       </item>
       <item>
-       <widget class="QDoubleSpinBox" name="doubleSpinBox">
+       <widget class="QSpinBox" name="value_spinBox">
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -138,7 +138,7 @@ font: 8pt &quot;Segoe UI&quot;;
          </size>
         </property>
         <property name="styleSheet">
-         <string notr="true">QDoubleSpinBox {
+         <string notr="true">QSpinBox {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
@@ -148,17 +148,17 @@ font: 8pt &quot;Segoe UI&quot;;
 border:0px;
 }
 
-QDoubleSpinBox:focus {
+QSpinBox:focus {
 }
 
-QDoubleSpinBox:hover {
+QSpinBox:hover {
 }
 
-QDoubleSpinBox:pressed {
+QSpinBox:pressed {
 	background-color: #121212;
 }
 
-QDoubleSpinBox::up-button {
+QSpinBox::up-button {
     border: 0px solid black;
     subcontrol-origin: border;
     subcontrol-position: top right;
@@ -171,13 +171,13 @@ QDoubleSpinBox::up-button {
 border:0px;
 }
 
-QDoubleSpinBox::up-arrow {
+QSpinBox::up-arrow {
     image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
     width: 20px;
     height: 20px;
 }
 
-QDoubleSpinBox::down-button {
+QSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
 	border: 0px solid black;
@@ -190,23 +190,17 @@ border-bottom-right-radius: 2px;
 border:0px;
 }
 
-QDoubleSpinBox::down-arrow {
+QSpinBox::down-arrow {
     image: url(://icons/arrow_drop_down_16dp.svg);
     width: 20px;
     height: 20px;
 }</string>
         </property>
-        <property name="decimals">
-         <number>1</number>
-        </property>
         <property name="minimum">
-         <double>-99999999999.000000000000000</double>
+         <number>-99999999</number>
         </property>
         <property name="maximum">
-         <double>99999999999.000000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
+         <number>99999999</number>
         </property>
        </widget>
       </item>
@@ -266,7 +260,7 @@ QDoubleSpinBox::down-arrow {
        <number>0</number>
       </property>
       <item>
-       <widget class="QCheckBox" name="checkBox">
+       <widget class="QCheckBox" name="min_checkBox">
         <property name="styleSheet">
          <string notr="true">QCheckBox {
     font: 580 8pt &quot;Segoe UI&quot;;
@@ -292,9 +286,9 @@ QCheckBox::indicator:checked {
        </widget>
       </item>
       <item>
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
+       <widget class="QSpinBox" name="min_spinBox">
         <property name="styleSheet">
-         <string notr="true">QDoubleSpinBox {
+         <string notr="true">QSpinBox {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
@@ -304,17 +298,17 @@ QCheckBox::indicator:checked {
 border:0px;
 }
 
-QDoubleSpinBox:focus {
+QSpinBox:focus {
 }
 
-QDoubleSpinBox:hover {
+QSpinBox:hover {
 }
 
-QDoubleSpinBox:pressed {
+QSpinBox:pressed {
 	background-color: #121212;
 }
 
-QDoubleSpinBox::up-button {
+QSpinBox::up-button {
     border: 0px solid black;
     subcontrol-origin: border;
     subcontrol-position: top right;
@@ -327,13 +321,13 @@ QDoubleSpinBox::up-button {
 border:0px;
 }
 
-QDoubleSpinBox::up-arrow {
+QSpinBox::up-arrow {
     image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
     width: 20px;
     height: 20px;
 }
 
-QDoubleSpinBox::down-button {
+QSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
 	border: 0px solid black;
@@ -346,23 +340,17 @@ border-bottom-right-radius: 2px;
 border:0px;
 }
 
-QDoubleSpinBox::down-arrow {
+QSpinBox::down-arrow {
     image: url(://icons/arrow_drop_down_16dp.svg);
     width: 20px;
     height: 20px;
 }</string>
         </property>
-        <property name="decimals">
-         <number>1</number>
-        </property>
         <property name="minimum">
-         <double>-9.900000000000000</double>
+         <number>-99999999</number>
         </property>
         <property name="maximum">
-         <double>9.900000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
+         <number>99999999</number>
         </property>
        </widget>
       </item>
@@ -422,7 +410,7 @@ QDoubleSpinBox::down-arrow {
        <number>0</number>
       </property>
       <item>
-       <widget class="QCheckBox" name="checkBox_4">
+       <widget class="QCheckBox" name="max_checkBox">
         <property name="styleSheet">
          <string notr="true">QCheckBox {
     font: 580 8pt &quot;Segoe UI&quot;;
@@ -448,9 +436,9 @@ QCheckBox::indicator:checked {
        </widget>
       </item>
       <item>
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_9">
+       <widget class="QSpinBox" name="max_spinBox">
         <property name="styleSheet">
-         <string notr="true">QDoubleSpinBox {
+         <string notr="true">QSpinBox {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 2px;
@@ -460,17 +448,17 @@ QCheckBox::indicator:checked {
 border:0px;
 }
 
-QDoubleSpinBox:focus {
+QSpinBox:focus {
 }
 
-QDoubleSpinBox:hover {
+QSpinBox:hover {
 }
 
-QDoubleSpinBox:pressed {
+QSpinBox:pressed {
 	background-color: #121212;
 }
 
-QDoubleSpinBox::up-button {
+QSpinBox::up-button {
     border: 0px solid black;
     subcontrol-origin: border;
     subcontrol-position: top right;
@@ -483,13 +471,13 @@ QDoubleSpinBox::up-button {
 border:0px;
 }
 
-QDoubleSpinBox::up-arrow {
+QSpinBox::up-arrow {
     image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
     width: 20px;
     height: 20px;
 }
 
-QDoubleSpinBox::down-button {
+QSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
 	border: 0px solid black;
@@ -502,23 +490,17 @@ border-bottom-right-radius: 2px;
 border:0px;
 }
 
-QDoubleSpinBox::down-arrow {
+QSpinBox::down-arrow {
     image: url(://icons/arrow_drop_down_16dp.svg);
     width: 20px;
     height: 20px;
 }</string>
         </property>
-        <property name="decimals">
-         <number>1</number>
-        </property>
         <property name="minimum">
-         <double>-99999999999.000000000000000</double>
+         <number>-99999999</number>
         </property>
         <property name="maximum">
-         <double>99999999999.000000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
+         <number>99999999</number>
         </property>
        </widget>
       </item>
