@@ -172,16 +172,16 @@ class MainWindow(QMainWindow):
             child_data = self.tree_item_to_dict(child)  # Recursively get child data
             key = child.text(0)
             value = child.text(1) if child.childCount() == 0 else self.tree_item_to_dict(child)
+            value_row = child.text(1)
             if key in data:
                 if not isinstance(data[key], list):
-                    data[key] = [data[key]]  # Convert to list if key already exists
-                data[key].append(value)
+                    data[str(key) + '%?=!=' + str(value_row)] = value = [data[key]]
+                data[str(key) + '%?=!=' + str(value_row)] = value.append(value)
             else:
-                data[key] = value
+                data[str(key) + '%?=!=' + str(value_row)] = value
 
         return data
 
-    # data[str(key) + '%?=!=' + str(value_row)] = value
 
 
     def load_file(self):
