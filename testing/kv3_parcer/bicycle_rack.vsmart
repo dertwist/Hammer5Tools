@@ -6,14 +6,14 @@
 		
 		{
 			_class = "CSmartPropElement_Model"
-			m_sModelName = resource_name:"models/de_overpass/overpass_bike_rack/bike_rack.vmdl"
+			m_sModelName = "models/de_overpass/overpass_bike_rack/bike_rack.vmdl"
 			m_nElementID = 1
 		},
 		
 		{
 			_class = "CSmartPropElement_SmartProp"
 			m_nElementID = 2
-			m_sSmartProp = resource_name:"smartprops/bicycle/bicycle_single.vsmart"
+			m_sSmartProp = "smartprops/bicycle/bicycle_single.vsmart"
 			m_Modifiers = 
 			[
 				
@@ -63,7 +63,7 @@
 		{
 			_class = "CSmartPropElement_SmartProp"
 			m_nElementID = 4
-			m_sSmartProp = resource_name:"smartprops/bicycle/bicycle_single.vsmart"
+			m_sSmartProp = "smartprops/bicycle/bicycle_single.vsmart"
 			m_Modifiers = 
 			[
 				
@@ -119,7 +119,7 @@
 		{
 			_class = "CSmartPropElement_SmartProp"
 			m_nElementID = 3
-			m_sSmartProp = resource_name:"smartprops/bicycle/bicycle_single.vsmart"
+			m_sSmartProp = "smartprops/bicycle/bicycle_single.vsmart"
 			m_Modifiers = 
 			[
 				
@@ -169,7 +169,7 @@
 		{
 			_class = "CSmartPropElement_SmartProp"
 			m_nElementID = 5
-			m_sSmartProp = resource_name:"smartprops/bicycle/bicycle_single.vsmart"
+			m_sSmartProp = "smartprops/bicycle/bicycle_single.vsmart"
 			m_Modifiers = 
 			[
 				
