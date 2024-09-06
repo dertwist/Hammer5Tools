@@ -24,22 +24,21 @@ with open(vsmart_path, 'w') as file:
 
 
 bt_config = kv3.read(vsmart_path)
-
-
 data = bt_config.value
-data_raw = data
-# print(data['m_Variables'][0]['m_test'])
-# <keyvalues3.keyvalues3.flagged_value object at 0x000001AF133810C0>
 
-# data = {
-#     'generic_data_type': 'CSmartPropRoot',
-#     'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}],
-#     'm_Children': [{'_class': 'CSmartPropElement_Mode55555l',
-#                     'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
-#                     'm_nElementID': 2},{'_class': 'CSmartPropElement_Model',
-#                     'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
-#                     'm_nElementID': 2}]
-# }
+
+
+data = {
+    'generic_data_type': 'CSmartPropRoot',
+    'm_Variables': [{'_class': 'CSmartPropVariable_Float', 'm_VariableName': 'length', 'm_nElementID': 61, 'm_nElementID1': 61.2}],
+    'm_Children': [{'_class': 'CSmartPropElement_Mode55555l',
+                    'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
+                    'm_nElementID': 2},{'_class': 'CSmartPropElement_Model',
+                    'm_sModelName': 'models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl',
+                    'm_nElementID': 2}]
+}
+
+data_raw = data
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -53,10 +52,6 @@ class MainWindow(QMainWindow):
         self.tree.customContextMenuRequested.connect(self.open_menu)
         self.tree.itemChanged.connect(self.on_item_changed)
         self.setCentralWidget(self.tree)
-        #
-        # root_element = self.tree.invisibleRootItem()
-        # root_element.addChild(QTreeWidgetItem(['Root']))
-        # root_element = QTreeWidgetItem(['Root'])
         self.populate_tree(data)
 
 
@@ -121,15 +116,14 @@ class MainWindow(QMainWindow):
             parent = self.tree.invisibleRootItem()
         if isinstance(data, dict):
             for key, value in data.items():
-                if key == 'm_Children':
-                    if isinstance(value, list):
-                        for child_data in value:
-                            item = QTreeWidgetItem([key])
-                            item.setFlags(item.flags() | Qt.ItemIsEditable)
-                            parent.addChild(item)
-                            self.load_json_tree(child_data, item)
+                if isinstance(value, list):
+                    for child_data in value:
+                        item = QTreeWidgetItem([key, value])
+                        item.setFlags(item.flags() | Qt.ItemIsEditable)
+                        parent.addChild(item)
+                        self.load_json_tree(child_data, item)
                 else:
-                    item = QTreeWidgetItem([key])
+                    item = QTreeWidgetItem([key, value])
                     item.setFlags(item.flags() | Qt.ItemIsEditable)
                     parent.addChild(item)
                     self.load_json_tree(value, item)
@@ -138,15 +132,14 @@ class MainWindow(QMainWindow):
             for item in data:
                 if isinstance(item, dict):
                     for key, value in item.items():
-                        if key == 'm_Children':
-                            if isinstance(value, list):
-                                for child_data in value:
-                                    child_item = QTreeWidgetItem([key])
-                                    child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
-                                    parent.addChild(child_item)
-                                    self.load_json_tree(child_data, child_item)
+                        if isinstance(value, list):
+                            for child_data in value:
+                                child_item = QTreeWidgetItem([key, value])
+                                child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
+                                parent.addChild(child_item)
+                                self.load_json_tree(child_data, child_item)
                         else:
-                            child_item = QTreeWidgetItem([key])
+                            child_item = QTreeWidgetItem([key, value])
                             child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
                             parent.addChild(child_item)
                             self.load_json_tree(value, child_item)
@@ -154,13 +147,52 @@ class MainWindow(QMainWindow):
 
     def save_tree(self):
         data = self.tree_item_to_dict(self.tree.invisibleRootItem())
-        data = self.convert_children_to_list(data)
-        kv3.write(data_raw, 'treestructure.vsmart')
+        # data = self.convert_children_to_list(data)
+        converted_data = self.convert_to_kv3(data)
+        kv3.write(converted_data, 'treestructure.vsmart')
+        # print(data_raw)
+
+        # kv3.write(data_raw, 'treestructure.vsmart')
         with open('treestructure.vsmart', 'a') as file:
             file.write('//Hammer5Tools_vsmartdata_variables:' + '\n')
             file.write('//Hammer5Tools_vsmartdata_options:' + '\n')
             file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data))
 
+    def convert_to_kv3(self, data):
+        new_data = {}
+        for item, value in data.items():
+            if isinstance(value, dict):
+                new_data[item] = self.convert_to_kv3(value)  # Update new_data with converted dict
+            elif isinstance(value, str):
+                print('str', value)
+                new_data[item] = ast.literal_eval(value)  # Convert string values to dictionary
+                print(type(ast.literal_eval(value)))
+            elif isinstance(value, list):
+                new_list = []
+                for val in value:
+                    new_list.append(self.convert_to_kv3(val))  # Recursively convert list elements
+                new_data[item] = new_list  # Update new_data with converted list
+            else:
+                new_data[item] = value  # For other types, keep the value as is
+        return new_data
+
+    def tree_item_to_dict(self, item):
+        if item.childCount() == 0:
+            return {item.text(0): item.text(1)}  # Save key-value pair for leaf nodes
+        data = {}
+        for i in range(item.childCount()):
+            child = item.child(i)
+            key = child.text(0)
+            value = self.tree_item_to_dict(child)
+            if key in data:
+                if isinstance(data[key], list):
+                    data[key].append(value)
+                else:
+                    data[key] = [data[key], value]
+            else:
+                data[key] = value
+        # Save key-value pair for parent item
+        return data
 
     def load_file(self):
         options = QFileDialog.Options()
@@ -399,23 +431,6 @@ class MainWindow(QMainWindow):
 
     def quick_export_to_file(self):
         self.export_to_vsmart('exported_data.vsmart')
-
-    def tree_item_to_dict(self, item):
-        if item.childCount() == 0:
-            return item.text(1)
-        data = {}
-        for i in range(item.childCount()):
-            child = item.child(i)
-            key = child.text(0)
-            value = self.tree_item_to_dict(child)
-            if key in data:
-                if isinstance(data[key], list):
-                    data[key].append(value)
-                else:
-                    data[key] = [data[key], value]
-            else:
-                data[key] = value
-        return data
 
 
 if __name__ == "__main__":
