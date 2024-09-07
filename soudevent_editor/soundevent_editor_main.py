@@ -1,8 +1,5 @@
 import os.path
 import sys
-import time
-
-import psutil
 import subprocess
 
 from PySide6.QtWidgets import (
@@ -81,6 +78,7 @@ class SoundEventEditorMainWidget(QMainWindow):
 
         self.ui.soundevents_list_search_bar.textChanged.connect(self.filter_soundevents_list)
         self.ui.open_sounds_folder_button.clicked.connect(self.open_sounds_folder)
+        self.ui.add_a_property_button.clicked.connect(self.add_a_property)
 
     def open_output_file(self):
         file_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
@@ -294,6 +292,29 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.soundevent_properties_layout.insertWidget(0, property_class)
         self.soundevent_properties_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
+    def add_a_property(self):
+        def get_names_from_layout(layout):
+            names = []
+            for i in range(layout.count()):
+                widget = layout.itemAt(i).widget()
+                if widget:
+                    names.append(widget.name)
+            return names
+
+        names_to_remove = get_names_from_layout(self.soundevent_properties_layout)
+        elements_in_popupmenu = {}
+        for index, item in enumerate(soundevent_editor_properties):
+            for key, value in item.items():
+                if key in names_to_remove:
+                    pass
+                else:
+                    elements_in_popupmenu.update({key: value})
+
+        elements_in_popupmenu = [elements_in_popupmenu]
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.add_property(name, value))
+        self.popup_menu.show()
+
     def keyPressEvent(self, event):
         focus_widget = QApplication.focusWidget()
 
@@ -413,6 +434,8 @@ class SoundEventEditorMainWidget(QMainWindow):
 
         # Hide or reset the progress bar after the loop completes
         progress_bar.hide()
+    def closeEvent(self, event):
+        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
