@@ -10,7 +10,7 @@ QT_Stylesheet_global = """
 
 
 QLabel {
-    font: 700 10pt "Segoe UI";
+    font: 600 10pt "Segoe UI";
     padding-top: 2px;
     padding-bottom:2px;
     padding-left: 4px;
@@ -102,7 +102,7 @@ QPushButton:pressed {
 
 
 QToolTip {
-    font: 700 10pt "Segoe UI";
+    font: 600 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -494,7 +494,7 @@ QListView {
     background-color: #1d1d1f;
     border: 0px;
     border-radius: 4px;
-    font: 600 12pt "Segoe UI";
+    font: 600 11pt "Segoe UI";
     color: #9A9F91;
     padding: 2px;
 }
@@ -719,23 +719,6 @@ QTableWidget::item:selected {
 }
 
 
-
-QMenu {
-background-color: red;
- }
-
-QMenu::item {
-    padding: 5px 10px;
-    font: 700 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    color: #E3E3E3;
-}
-QMenu::item:selected {
-    background-color: #414956;
-    color: white;
-}
 QWidget {
     background-color: #151515;
     outline: none;
@@ -752,39 +735,42 @@ QWidget:item:selected {
     border: 0px;
 }
 
-
+/* ========================================================== */
 
 QMenu {
     background-color: #1d1d1f;
-    color: #FFFFFF;
+    color: #cccccc;
     border: 1px solid #555555;
-    /* padding-top: 5px; */
-    /* padding-bottom: 5px; */
     border: 2px solid black;
-    border-radius: 4px;
+    border-radius: 1px;
     border-color: rgba(80, 80, 80, 255);
 }
 
 QMenu::item {
-    font: 700 10pt "Segoe UI";
-    border-top: 2px solid black;
-    border: 0px;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    padding-left: 12px;
-    padding-right: 12px;
-    color: #E3E3E3;
+    font: 600 10pt "Segoe UI";
+    border: 1px solid transparent; 
+    border-radius: 1px;
+    border-top: 0px;
+    bottom-bottom: 2px solid transparent;
+    border-color: rgba(80, 80, 80, 105);
+    padding: 4px 12px 4px 12px;
+    color: #cccccc;
 }
 
 QMenu::item:selected {
-    background-color: #666666;
+    background-color: #414956;
     color: #FFFFFF;
+    border: 1px solid transparent; 
+    border-radius: 1px;
+    border-top: 0px;
+    bottom-bottom: 2px solid transparent;
+    border-color: rgba(80, 80, 80, 105);
 }
 
 QMenu::separator {
     height: 1px;
-    background: #AAAAAA;
-    margin: 5px 0;
+    background: #61666e;
+    /* margin: 5px 0; */
 }
 
 QMenu::indicator {
@@ -800,6 +786,31 @@ QMenu::indicator:unchecked {
     image: url(:/images/empty.png);
 }
 
+
+/* ========================================================== */
+
+
+QMenuBar {
+    background-color: #333;
+    color: white;
+}
+
+QMenuBar::item {
+    background-color: #333;
+    color: white;
+    padding-left: 12px;
+    padding-right: 12px; 
+    padding-bottom: 12px;
+    padding-top: 6px;
+}
+
+QMenuBar::item:selected {
+    background-color: #555;
+}
+
+QMenuBar::item:pressed {
+    background-color: #777;
+}
 
 
 
@@ -997,34 +1008,6 @@ QHeaderView::section:pressed {
 
 
 
-/* ========================================================== */
-
-
-QMenuBar {
-    background-color: #333;
-    color: white;
-}
-
-QMenuBar::item {
-    background-color: #333;
-    color: white;
-    padding-left: 12px;
-    padding-right: 12px; 
-    padding-bottom: 12px;
-    padding-top: 6px;
-}
-
-QMenuBar::item:selected {
-    background-color: #555;
-}
-
-QMenuBar::item:pressed {
-    background-color: #777;
-}
-
-QMenu::item:selected {
-    background-color: #555;
-}
 /* ========================================================== */
 
 
