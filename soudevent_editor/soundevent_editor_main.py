@@ -12,7 +12,6 @@ from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QAction,QCursor
 from soudevent_editor.ui_soundevenet_editor_mainwindow import Ui_SoundEvent_Editor_MainWindow
 from preferences import get_config_value, get_cs2_path, get_addon_name
-from soudevent_editor.soundevent_editor_mini_windows_explorer import SoundEvent_Editor_MiniWindowsExplorer
 from explorer.main import Explorer
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea, QInputDialog
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
