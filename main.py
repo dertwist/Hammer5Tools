@@ -28,10 +28,10 @@ stop_discord_thread = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
-app_version = '1.7.1'
+app_version = '2.0.0'
 batchcreator_version = '1.2.2'
-soundevent_editor_version = '0.4.0'
-smartprop_editor_version = '0.0.1'
+soundevent_editor_version = '0.5.0'
+smartprop_editor_version = '0.1.0'
 class Widget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -141,9 +141,11 @@ class Widget(QMainWindow):
                 self.SoundEventEditorMainWidget.deleteLater()
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
-
-        self.SoundEventEditorMainWidget = SoundEventEditorMainWidget(soundevent_editor_version)
-        self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
+        try:
+            self.SoundEventEditorMainWidget = SoundEventEditorMainWidget(soundevent_editor_version)
+            self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
+        except Exception as e:
+            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
         try:
             if hasattr(self, 'BatchCreator_MainWindow') and self.BatchCreator_MainWindow:
@@ -169,9 +171,11 @@ class Widget(QMainWindow):
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
-        self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(smartprop_editor_version)
-        self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
-
+        try:
+            self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(smartprop_editor_version)
+            self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
+        except Exception as e:
+            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
 
     def open_addons_folder(self):
