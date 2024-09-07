@@ -111,6 +111,10 @@ class Explorer(QMainWindow):
 
         self.model = CustomFileSystemModel()
         self.model.setRootPath(tree_directory)
+        if os.path.exists(tree_directory):
+            pass
+        else:
+            os.makedirs(tree_directory)
 
 
         self.tree = QTreeView(self)
