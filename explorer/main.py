@@ -185,6 +185,11 @@ class Explorer(QMainWindow):
             create_folder_action.triggered.connect(lambda: self.create_folder(self.tree.rootIndex()))
             menu.addAction(create_folder_action)
 
+            # Add Paste File action
+            paste_action = QAction("Paste File", self)
+            paste_action.triggered.connect(lambda: self.paste_file(index))
+            menu.addAction(paste_action)
+
         menu.exec_(self.tree.viewport().mapToGlobal(position))
 
     def add_folder_actions(self, menu, index):
@@ -204,6 +209,12 @@ class Explorer(QMainWindow):
         new_folder_action.triggered.connect(lambda: self.create_folder(index))
         menu.addAction(new_folder_action)
 
+        # Add Paste File action
+        paste_action = QAction("Paste File", self)
+        paste_action.triggered.connect(lambda: self.paste_file(index))
+        menu.addAction(paste_action)
+
+
     def add_file_actions(self, menu, index):
         open_action = QAction("Open File", self)
         open_action.triggered.connect(lambda: self.open_file(index))
@@ -221,6 +232,16 @@ class Explorer(QMainWindow):
         delete_action.triggered.connect(lambda: self.delete_item(index))
         menu.addAction(delete_action)
 
+        duplicate_action = QAction("Duplicate File", self)
+        duplicate_action.triggered.connect(lambda: self.duplicate_file(index))
+        menu.addAction(duplicate_action)
+
+        # Add Copy File action
+        copy_action = QAction("Copy File", self)
+        copy_action.triggered.connect(lambda: self.copy_file(index))
+        menu.addAction(copy_action)
+
+
         file_path = self.model.filePath(index)
         file_extension = file_path.split('.')[-1]  # Get the file extension from the file path
         if file_extension in audio_extensions:
@@ -228,6 +249,44 @@ class Explorer(QMainWindow):
             copy_audio_path_action.triggered.connect(lambda: self.copy_audio_path(index, True))
             menu.addAction(copy_audio_path_action)
 
+    def duplicate_file(self, index):
+        file_path = self.model.filePath(index)
+
+        base_name, extension = os.path.splitext(os.path.basename(file_path))
+        counter = 1
+        new_file_name = f"{base_name}_{counter:02d}{extension}"  # Initialize new_file_name before the loop
+
+        while QFile.exists(new_file_name):
+            counter += 1
+            new_file_name = f"{base_name}_{counter:02d}{extension}"  # Update new_file_name inside the loop
+
+        new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
+
+        if QFile.copy(file_path, new_file_path):
+            return True
+        return False
+
+    def copy_file(self, index):
+        file_path = self.model.filePath(index)
+        self._copied_file_path = file_path
+
+    def paste_file(self, destination_index):
+        if self._copied_file_path:
+            destination_path = self.model.filePath(destination_index)
+            new_file_name = QDir(destination_path).absoluteFilePath(QFileInfo(self._copied_file_path).fileName())
+
+            # Check if the file already exists at the destination
+            if QFile.exists(new_file_name):
+                base_name, extension = os.path.splitext(new_file_name)
+                counter = 1
+                while QFile.exists(new_file_name):
+                    new_file_name = f"{base_name}_{counter:02d}{extension}"  # Adding numeric suffix with leading zeros
+                    counter += 1
+
+            if QFile.copy(self._copied_file_path, new_file_name):
+                self._copied_file_path = ""  # Reset the copied file path after pasting
+                return True
+        return False
 
     def open_folder_in_explorer(self, index):
         folder_path = self.model.filePath(index)
