@@ -30,8 +30,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
 
-
-
         # restore_prefs
         self._restore_user_prefs()
 
