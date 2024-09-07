@@ -990,11 +990,12 @@ QTreeView::item:hover {
 }
 
 QTreeView::branch:closed:has-children {
-    image: url(:/icons/arrow_drop_down_16dp.svg); /* Icon for closed branch */
+     image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
 }
 
 QTreeView::branch:open:has-children {
-    image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg); /* Icon for open branch */
+     /* Icon for open branch */
+    image: url(:/icons/arrow_drop_down_16dp.svg);
 }
 
 /* Remove border for edit line in tree */

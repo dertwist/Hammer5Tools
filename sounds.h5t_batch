@@ -1,0 +1,17 @@
+[APP]
+name = BatchCreator
+version = 1.2.1
+
+[FILE]
+content = "#$FOLDER_PATH$#/#$ASSET_NAME$#"
+extension = vmdl
+
+[PROCESS]
+ignore_list = name.extension,name.extension,relative_path,bird_01.wav,bird_02.wav,bird_03.wav,bird_04.wav,bird_05.wav,bird_06.wav,interior_01.wav
+custom_files = name.extension,name.extension
+custom_output = relative_path
+load_from_the_folder = True
+algorithm = 0
+output_to_the_folder = True
+ignore_extensions = blend,vmdl,vmat
+
