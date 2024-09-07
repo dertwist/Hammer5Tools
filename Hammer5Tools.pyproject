@@ -1,6 +1,5 @@
 {
     "files": [
-        "form.ui",
         "main.py",
         "resources.qrc",
         "preferences.py",
