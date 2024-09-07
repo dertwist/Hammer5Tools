@@ -254,13 +254,21 @@ class Explorer(QMainWindow):
 
         base_name, extension = os.path.splitext(os.path.basename(file_path))
         counter = 1
-        new_file_name = f"{base_name}_{counter:02d}{extension}"  # Initialize new_file_name before the loop
 
-        while QFile.exists(new_file_name):
-            counter += 1
-            new_file_name = f"{base_name}_{counter:02d}{extension}"  # Update new_file_name inside the loop
+        # Extract the numeric part from the base name
+        numeric_part = base_name.split('_')[-1]
+        if numeric_part.isdigit():
+            new_base_name = base_name.rsplit('_', 1)[0] + '_'  # Extract the base name without the numeric part
+            new_file_name = f"{new_base_name}{counter:02d}{extension}"
+        else:
+            new_file_name = f"{base_name}_{counter:02d}{extension}"  # Initialize new_file_name before the loop
 
         new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
+
+        while QFile.exists(new_file_path):
+            counter += 1
+            new_file_name = f"{new_base_name}{counter:02d}{extension}"
+            new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
 
         if QFile.copy(file_path, new_file_path):
             return True
@@ -273,19 +281,29 @@ class Explorer(QMainWindow):
     def paste_file(self, destination_index):
         if self._copied_file_path:
             destination_path = self.model.filePath(destination_index)
-            new_file_name = QDir(destination_path).absoluteFilePath(QFileInfo(self._copied_file_path).fileName())
+            new_file_name = os.path.join(destination_path, QFileInfo(self._copied_file_path).fileName())
 
             # Check if the file already exists at the destination
             if QFile.exists(new_file_name):
-                base_name, extension = os.path.splitext(new_file_name)
-                counter = 1
-                while QFile.exists(new_file_name):
-                    new_file_name = f"{base_name}_{counter:02d}{extension}"  # Adding numeric suffix with leading zeros
-                    counter += 1
-
-            if QFile.copy(self._copied_file_path, new_file_name):
-                self._copied_file_path = ""  # Reset the copied file path after pasting
-                return True
+                reply = QMessageBox.question(self, 'File Exists',
+                                             f"The file '{new_file_name}' already exists. Do you want to replace it?",
+                                             QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+                if reply == QMessageBox.Yes:
+                    if QFile.copy(self._copied_file_path, new_file_name):
+                        self._copied_file_path = ""  # Reset the copied file path after pasting
+                        return True
+                elif reply == QMessageBox.No:
+                    # Handle the case where the user chooses not to replace the file
+                    # You can add your custom logic here
+                    return False
+                else:
+                    # Handle the case where the user cancels the operation
+                    # You can add your custom logic here
+                    return False
+            else:
+                if QFile.copy(self._copied_file_path, new_file_name):
+                    self._copied_file_path = ""  # Reset the copied file path after pasting
+                    return True
         return False
 
     def open_folder_in_explorer(self, index):
