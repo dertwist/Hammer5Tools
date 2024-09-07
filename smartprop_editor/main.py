@@ -27,6 +27,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.version_label.setText(version)
         self.settings = settings
 
+        self.ui.tree_hierarchy_widget.hideColumn(1)
+
         # adding var classes to combobox
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
