@@ -15,11 +15,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QHBoxLayout,
-    QHeaderView, QLabel, QLayout, QLineEdit,
-    QListWidget, QListWidgetItem, QMainWindow, QPushButton,
-    QScrollArea, QSizePolicy, QToolButton, QTreeView,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFrame,
+    QHBoxLayout, QHeaderView, QLabel, QLayout,
+    QLineEdit, QListWidget, QListWidgetItem, QMainWindow,
+    QPushButton, QScrollArea, QSizePolicy, QToolButton,
+    QTreeView, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_SoundEvent_Editor_MainWindow(object):
@@ -85,13 +85,48 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.scrollArea.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
         self.soundevent_properties = QWidget()
         self.soundevent_properties.setObjectName(u"soundevent_properties")
-        self.soundevent_properties.setGeometry(QRect(0, 0, 639, 588))
+        self.soundevent_properties.setGeometry(QRect(0, 0, 639, 552))
         self.verticalLayout_2 = QVBoxLayout(self.soundevent_properties)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setSizeConstraint(QLayout.SetFixedSize)
         self.scrollArea.setWidget(self.soundevent_properties)
 
         self.verticalLayout_3.addWidget(self.scrollArea)
+
+        self.add_a_property_button = QPushButton(self.frame_3)
+        self.add_a_property_button.setObjectName(u"add_a_property_button")
+        self.add_a_property_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+
+        self.verticalLayout_3.addWidget(self.add_a_property_button)
 
         self.frame_2 = QFrame(self.frame_3)
         self.frame_2.setObjectName(u"frame_2")
@@ -242,7 +277,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         SoundEvent_Editor_MainWindow.setCentralWidget(self.centralwidget)
         self.dockWidget = QDockWidget(SoundEvent_Editor_MainWindow)
         self.dockWidget.setObjectName(u"dockWidget")
-        self.dockWidget.setMinimumSize(QSize(340, 157))
+        self.dockWidget.setMinimumSize(QSize(340, 173))
         self.dockWidget.setFeatures(QDockWidget.DockWidgetFloatable|QDockWidget.DockWidgetMovable)
         self.dockWidgetContents = QWidget()
         self.dockWidgetContents.setObjectName(u"dockWidgetContents")
@@ -260,9 +295,13 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
         self.verticalLayout_6.addWidget(self.soundevents_list)
 
-        self.horizontalLayout_8 = QHBoxLayout()
+        self.frame = QFrame(self.dockWidgetContents)
+        self.frame.setObjectName(u"frame")
+        self.frame.setMaximumSize(QSize(16777215, 28))
+        self.horizontalLayout_8 = QHBoxLayout(self.frame)
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
-        self.create_new_soundevent_options_button = QToolButton(self.dockWidgetContents)
+        self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
+        self.create_new_soundevent_options_button = QToolButton(self.frame)
         self.create_new_soundevent_options_button.setObjectName(u"create_new_soundevent_options_button")
         icon3 = QIcon()
         icon3.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
@@ -271,8 +310,14 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
         self.horizontalLayout_8.addWidget(self.create_new_soundevent_options_button)
 
-        self.create_new_soundevent = QPushButton(self.dockWidgetContents)
+        self.create_new_soundevent = QPushButton(self.frame)
         self.create_new_soundevent.setObjectName(u"create_new_soundevent")
+        font = QFont()
+        font.setFamilies([u"Segoe UI"])
+        font.setPointSize(10)
+        font.setWeight(QFont.DemiBold)
+        font.setItalic(False)
+        self.create_new_soundevent.setFont(font)
         self.create_new_soundevent.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
@@ -310,8 +355,175 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
         self.horizontalLayout_8.addWidget(self.create_new_soundevent)
 
+        self.comboBox = QComboBox(self.frame)
+        self.comboBox.addItem("")
+        self.comboBox.setObjectName(u"comboBox")
+        self.comboBox.setStyleSheet(u"QMenu {\n"
+"background-color: red;\n"
+" }\n"
+"\n"
+"QMenu::item {\n"
+"    padding: 5px 10px;\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    color: #E3E3E3;\n"
+"}\n"
+"QMenu::item:selected {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"QWidget {\n"
+"    background-color: #151515;\n"
+"    outline: none;\n"
+"}\n"
+"\n"
+"QWidget:item:checked {\n"
+"    background-color: #151515;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QWidget:item:selected {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"    border: 0px;\n"
+"}\n"
+"\n"
+"\n"
+"\n"
+"QMenu {\n"
+"    background-color: #1d1d1f;\n"
+"    color: #FFFFFF;\n"
+"    border: 1px solid #555555;\n"
+"    /* padding-top: 5px; */\n"
+"    /* padding-bottom: 5px; */\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QMenu::item {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border-top: 2p"
+                        "x solid black;\n"
+"    border: 0px;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    padding-left: 12px;\n"
+"    padding-right: 12px;\n"
+"    color: #E3E3E3;\n"
+"}\n"
+"\n"
+"QMenu::item:selected {\n"
+"    background-color: #666666;\n"
+"    color: #FFFFFF;\n"
+"}\n"
+"\n"
+"QMenu::separator {\n"
+"    height: 1px;\n"
+"    background: #AAAAAA;\n"
+"    margin: 5px 0;\n"
+"}\n"
+"\n"
+"QMenu::indicator {\n"
+"    width: 13px;\n"
+"    height: 13px;\n"
+"}\n"
+"\n"
+"QMenu::indicator:checked {\n"
+"    image: url(:/images/checkmark.png);\n"
+"}\n"
+"\n"
+"QMenu::indicator:unchecked {\n"
+"    image: url(:/images/empty.png);\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height: 12px;\n"
+"    padding-top: 5px;\n"
+"    padding-bottom: 5px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"    padding-left: 5px;\n"
+"}\n"
+"\n"
+"QComboBox:hover {\n"
+"    backgr"
+                        "ound-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QComboBox:pressed {\n"
+"    background-color: #2E2F30;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QComboBox:item {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    color: #E3E3E3;\n"
+"    padding-left: 5px;\n"
+"    background-color: #1C1C1C;\n"
+"    border-style: none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down {\n"
+"    color: #E3E3E3;\n"
+"    padding: 2px;\n"
+"    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;\n"
+"    border-bottom: 0px solid black;\n"
+"    border-top: 0px solid black;\n"
+"    border-right: 0px;\n"
+"    border-left: 2px solid;\n"
+"    margin-left: 5px;\n"
+"    padding: 5px;\n"
+"    width: 7px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView {\n"
+"    border: 2px solid gray;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    selection-background-color: #414956;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item {\n"
+""
+                        "    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    color: #ff8a8a8a;\n"
+"    border-style: none;\n"
+"    border-bottom: 0.5px solid black;\n"
+"    border-color: rgba(255, 255, 255, 10);\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item:selected {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"    border: none; /* Remove border */\n"
+"    outline: none; /* Remove outline */\n"
+"}")
 
-        self.verticalLayout_6.addLayout(self.horizontalLayout_8)
+        self.horizontalLayout_8.addWidget(self.comboBox)
+
+
+        self.verticalLayout_6.addWidget(self.frame)
 
         self.dockWidget.setWidget(self.dockWidgetContents)
         SoundEvent_Editor_MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget)
@@ -485,6 +697,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         SoundEvent_Editor_MainWindow.setWindowTitle(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"MainWindow", None))
         self.status_bar.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Press Ctrl + F to add a property", None))
         self.version.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Version", None))
+        self.add_a_property_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Add a property", None))
 #if QT_CONFIG(tooltip)
         self.save_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Save file (Ctrl + S)</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
@@ -506,7 +719,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.create_new_soundevent.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Create new soundevent</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.create_new_soundevent.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Creane new (music preset)", None))
+        self.create_new_soundevent.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Creane new ", None))
+        self.comboBox.setItemText(0, QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Todo Preset", None))
+
         self.dockWidget_2.setWindowTitle(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Audio explorer", None))
 #if QT_CONFIG(tooltip)
         self.open_sounds_folder_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Open sounds folder</p></body></html>", None))

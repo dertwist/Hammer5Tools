@@ -637,9 +637,9 @@ class Ui_MainWindow(object):
         self.dockWidget_10.setObjectName(u"dockWidget_10")
         self.dockWidget_10.setFeatures(QDockWidget.DockWidgetMovable)
         self.dockWidget_10.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
-        self.dockWidgetContents_10 = QWidget()
-        self.dockWidgetContents_10.setObjectName(u"dockWidgetContents_10")
-        self.verticalLayout_10 = QVBoxLayout(self.dockWidgetContents_10)
+        self.explorer_layout_widget = QWidget()
+        self.explorer_layout_widget.setObjectName(u"explorer_layout_widget")
+        self.verticalLayout_10 = QVBoxLayout(self.explorer_layout_widget)
         self.verticalLayout_10.setObjectName(u"verticalLayout_10")
         self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
         self.explorer_layout = QVBoxLayout()
@@ -647,7 +647,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_10.addLayout(self.explorer_layout)
 
-        self.frame_4 = QFrame(self.dockWidgetContents_10)
+        self.frame_4 = QFrame(self.explorer_layout_widget)
         self.frame_4.setObjectName(u"frame_4")
         self.frame_4.setMaximumSize(QSize(16777215, 32))
         self.frame_4.setFrameShape(QFrame.StyledPanel)
@@ -742,7 +742,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_10.addWidget(self.frame_4)
 
-        self.dockWidget_10.setWidget(self.dockWidgetContents_10)
+        self.dockWidget_10.setWidget(self.explorer_layout_widget)
         MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget_10)
 
         self.retranslateUi(MainWindow)

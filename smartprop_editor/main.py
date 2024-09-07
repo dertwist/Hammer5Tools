@@ -15,6 +15,7 @@ from soudevent_editor.properties.legacy_property import LegacyProperty
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix
 from explorer.main import Explorer
+from preferences import settings
 
 
 cs2_path = get_cs2_path()
@@ -24,6 +25,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.version_label.setText(version)
+        self.settings = settings
 
         # adding var classes to combobox
         for item in variables_list:
@@ -33,12 +35,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
 
         # restore_prefs
-        settings_path = get_config_value('PATHS', 'settings')
-        self.settings = QSettings(os.path.join(settings_path, "smartprop_editor.cfg"), QSettings.IniFormat)
         self._restore_user_prefs()
 
         tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), 'smartprops')
-        self.mini_explorer = Explorer(tree_directory=tree_directory, addon=get_addon_name())
+        self.mini_explorer = Explorer(tree_directory=tree_directory, addon=get_addon_name(), editor_name='SmartProp_editor', parent=self.ui.explorer_layout_widget)
         self.ui.explorer_layout.addWidget(self.mini_explorer.tree)
 
     # variables
