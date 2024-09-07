@@ -8,7 +8,6 @@ from PySide6.QtGui import QCursor, QDrag, QAction
 # Internal organization-specific imports
 from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_config_value, get_addon_name, get_cs2_path
-from soudevent_editor.properties.legacy_property import LegacyProperty
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix
 from explorer.main import Explorer
@@ -31,8 +30,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
 
-        # connections
-        self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
+
 
         # restore_prefs
         self._restore_user_prefs()
@@ -41,8 +39,13 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.mini_explorer = Explorer(tree_directory=tree_directory, addon=get_addon_name(), editor_name='SmartProp_editor', parent=self.ui.explorer_layout_widget)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
-    # variables
+        self.buttons()
 
+
+    def buttons(self):
+        self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
+
+    # variables
     def add_new_variable(self):
         name = 'new_var'
         existing_variables = []
@@ -77,14 +80,14 @@ class SmartPropEditorMainWindow(QMainWindow):
         context_menu = QMenu(self)
         if self.ui.variables_QscrollArea is QApplication.focusWidget():
             paste_action = QAction("Paste Variable", self)
-            paste_action.triggered.connect(self.paste_action)
+            paste_action.triggered.connect(self.paste_variable)
             context_menu.addAction(paste_action)
         else:
             pass
 
         context_menu.exec_(event.globalPos())
 
-    def paste_action(self):
+    def paste_variable(self):
         clipboard = QApplication.clipboard()
         clipboard_text = clipboard.text()
         clipboard_data = clipboard_text.split(';;')
@@ -111,6 +114,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def _save_user_prefs(self):
         current_index = self.ui.add_new_variable_combobox.currentIndex()
-        self.settings.setValue
+        self.settings.setValue("SmartPropEditorMainWindow/currentComboBoxIndex", current_index)
+        self.settings.setValue("SmartPropEditorMainWindow/geometry", self.saveGeometry())
+        self.settings.setValue("SmartPropEditorMainWindow/windowState", self.saveState())
     def closeEvent(self, event):
         self._save_user_prefs()
