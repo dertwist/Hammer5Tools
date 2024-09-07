@@ -961,31 +961,98 @@ QTreeView {
     border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
     font: 580 10pt "Segoe UI";
+    background-color: #1C1C1C; /* Background color for the tree view */
+    alternate-background-color: #2c2c2c;
 }
 
 QTreeView::item {
-    height: 20px;
+    height: 14px;
+    padding: 4px; /* Add padding to each item */
+    padding-left: 5px;
+    padding-right: 5px;
+    color: #E3E3E3;
+    border-style: none;
+    border-bottom: 0.5px solid black;
+    border-color: rgba(255, 255, 255, 10);
 }
 
 QTreeView::item:selected {
-    background-color: #272729;
-    color: #E3E3E3;
+    background-color: #414956; /* Background color for selected item */
+    color: white; /* Text color for selected item */
+    border: none; /* Remove border */
+    outline: none; /* Remove outline */
 }
 
 QTreeView::item:hover {
-    background-color: #272729;
-    color: #E3E3E3;
+    background-color: #272729; /* Background color for hovered item */
+    color: #E3E3E3; /* Text color for hovered item */
 }
 
 QTreeView::branch:closed:has-children {
-    image: url(:/icons/arrow_drop_down_16dp.svg);
+    image: url(:/icons/arrow_drop_down_16dp.svg); /* Icon for closed branch */
 }
 
 QTreeView::branch:open:has-children {
-    image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+    image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg); /* Icon for open branch */
 }
 
-/* ========================================================== */
+/* Alternative color scheme */
+QTreeView.alternative {
+    color: #D3D3D3;
+    border: 1px solid #333;
+    border-radius: 2px;
+    border-color: rgba(100, 100, 100, 255);
+    font: 580 10pt "Segoe UI";
+    background-color: #2C2C2C; /* Alternative background color */
+}
+
+QTreeView.alternative::item {
+    height: 20px;
+    padding: 4px; /* Add padding to each item */
+    padding-left: 5px;
+    padding-right: 5px;
+    color: #D3D3D3;
+    border-style: none;
+    border-bottom: 0.5px solid #444;
+    border-color: rgba(255, 255, 255, 20);
+}
+
+QTreeView.alternative::item:selected {
+    background-color: #515966; /* Alternative background color for selected item */
+    /* color: #F0F0F0; */
+    border: none; /* Remove border */
+    outline: none; /* Remove outline */
+}
+
+QTreeView.alternative::item:hover {
+    background-color: #373739; /* Alternative background color for hovered item */
+    color: #D3D3D3; /* Alternative text color for hovered item */
+}
+
+QTreeView.alternative::branch:closed:has-children {
+    image: url(:/icons/arrow_drop_down_alt_16dp.svg); /* Alternative icon for closed branch */
+}
+
+QTreeView.alternative::branch:open:has-children {
+    image: url(:/icons/arrow_right_alt_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg); /* Alternative icon for open branch */
+}
+
+/* Remove border for edit line in tree */
+QTreeView::item QLineEdit {
+    border: none;
+    margin: 0px;
+    padding: 0px;
+    background-color: #1C1C1C; /* Match the background color of the tree view */
+    color: #E3E3E3; /* Match the text color of the tree view */
+}
+
+QTreeView.alternative::item QLineEdit {
+    border: none;
+    background-color: #2C2C2C; /* Match the alternative background color of the tree view */
+    color: #D3D3D3; /* Match the alternative text color of the tree view */
+}
+
+/* Header view styling */
 QHeaderView::section {
     background-color: #1d1d1f;
     color: #E3E3E3;
@@ -996,14 +1063,6 @@ QHeaderView::section {
     border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
 }
-
-/* QHeaderView::section:hover {
-    background-color: #565656;
-}
-
-QHeaderView::section:pressed {
-    background-color: #444444;
-} */
 
 
 

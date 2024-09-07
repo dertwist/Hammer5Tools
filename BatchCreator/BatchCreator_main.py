@@ -29,7 +29,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.mini_explorer = Explorer(self.ui.MiniWindows_explorer, tree_directory, get_addon_name(), editor_name='BatchCreator')
 
         layout = QVBoxLayout(self.ui.MiniWindows_explorer)
-        layout.addWidget(self.mini_explorer.tree)
+        layout.addWidget(self.mini_explorer.frame)
         layout.setContentsMargins(0, 0, 0, 0)
         self.ui.Status_Line_Qedit.setReadOnly(True)
         self.setAcceptDrops(True)
