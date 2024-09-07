@@ -39,7 +39,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), 'smartprops')
         self.mini_explorer = Explorer(tree_directory=tree_directory, addon=get_addon_name(), editor_name='SmartProp_editor', parent=self.ui.explorer_layout_widget)
-        self.ui.explorer_layout.addWidget(self.mini_explorer.tree)
+        self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
     # variables
 

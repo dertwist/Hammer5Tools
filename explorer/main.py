@@ -1,9 +1,10 @@
 import os.path
-
-from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox
+import re
+from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox, QLineEdit, QTreeWidgetItem
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
 from preferences import get_config_value, set_config_value
+from PySide6.QtCore import QModelIndex
 
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 generic_extensions = ['vpost', 'vsndevts', 'rect']
@@ -24,12 +25,10 @@ class CustomFileSystemModel(QFileSystemModel):
         super().__init__(parent)
         self._cache = {}
 
-    def data(self, index, role, is_expanded=False):
+    def data(self, index, role):
         if role == Qt.DecorationRole and self.isDir(index) and index.column() != self.SIZE_COLUMN:
-            if is_expanded:  # Check if the folder is open
-                return QIcon('://icons/folder_open.svg')  # Icon for the opened folder
-            else:
-                return QIcon('://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg')  # Default folder icon
+            # return QIcon('://icons/folder_open.svg')  # Icon for the opened folder
+            return QIcon('://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg')  # Default folder icon
         # Rest of the method remains the same
         elif role == Qt.DecorationRole and not self.isDir(index) and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
@@ -103,12 +102,19 @@ class CustomFileSystemModel(QFileSystemModel):
         return default_flags
 
 
+# Add necessary imports
+from PySide6.QtWidgets import QFrame
+
 class Explorer(QMainWindow):
     def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None):
         super().__init__(parent)
 
         self.model = CustomFileSystemModel()
         self.model.setRootPath(tree_directory)
+
+        self.search_bar = QLineEdit(self)
+        self.search_bar.setPlaceholderText("Search...")
+        self.search_bar.textChanged.connect(self.search_files)
 
         self.tree = QTreeView(self)
         self.tree.setModel(self.model)
@@ -119,6 +125,7 @@ class Explorer(QMainWindow):
                 self.tree.setColumnHidden(column, True)
 
         self.layout = QVBoxLayout(self)
+        self.layout.addWidget(self.search_bar)  # Add the search bar to the layout
         self.layout.addWidget(self.tree)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
@@ -126,6 +133,7 @@ class Explorer(QMainWindow):
         self.tree.header().setStretchLastSection(False)
         self.tree.header().setSectionResizeMode(CustomFileSystemModel.NAME_COLUMN, QHeaderView.Stretch)
         self.tree.header().setSectionResizeMode(CustomFileSystemModel.SIZE_COLUMN, QHeaderView.Interactive)
+        self.tree.header().setSortIndicator(CustomFileSystemModel.NAME_COLUMN, Qt.AscendingOrder)
 
         self.tree.setDragEnabled(True)
         self.tree.setAcceptDrops(True)
@@ -142,6 +150,19 @@ class Explorer(QMainWindow):
         self.tree_directory = tree_directory
         self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
         self.select_last_opened_path()
+
+        # Add all widgets to a frame
+        self.frame = QFrame(self)
+        self.frame.setLayout(self.layout)
+
+    import os
+
+    def search_files(self, text):
+        for path in os.listdir(self.tree_directory):
+            path = os.path.join(self.tree_directory, path)
+            index = self.model.index(path)
+            row_number = index.row()
+            print(row_number)
 
     def select_last_opened_path(self):
         try:

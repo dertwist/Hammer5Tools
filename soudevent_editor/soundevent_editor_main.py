@@ -45,12 +45,9 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.tree_directory = rf"{counter_strike_2_path}\content\csgo_addons\{addon_name}\sounds"
 
         # Initialize the mini windows explorer
-        self.mini_explorer = Explorer(parent=self.ui.audio_files_explorer, tree_directory=self.tree_directory, editor_name='SoundEventEditor', addon=get_addon_name())
+        self.mini_explorer = Explorer(parent=self.ui.audio_files_explorer_frame, tree_directory=self.tree_directory, editor_name='SoundEventEditor', addon=get_addon_name())
 
-        # Set up the layout for the audio_files_explorer widget
-        self.audio_files_explorer_layout = QVBoxLayout(self.ui.audio_files_explorer)
-        self.audio_files_explorer_layout.addWidget(self.mini_explorer.tree)
-        self.audio_files_explorer_layout.setContentsMargins(0, 0, 0, 0)
+        self.ui.audio_files_explorer_layout.addWidget(self.mini_explorer.frame)
 
         container = QWidget()
         container.setLayout(self.ui.horizontalLayout)
