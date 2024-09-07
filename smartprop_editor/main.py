@@ -1,9 +1,10 @@
 import os.path
 from distutils.util import strtobool
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction
+from PySide6.QtCore import Qt
 
 from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_config_value, get_addon_name, get_cs2_path
@@ -29,7 +30,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.version_label.setText(version)
         self.settings = settings
 
+        # Hierarchy setup
         self.ui.tree_hierarchy_widget.hideColumn(1)
+        self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
 
         # adding var classes to combobox
         for item in variables_list:
@@ -49,7 +53,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
         self.ui.open_file_button.clicked.connect(self.open_file)
         self.ui.save_file_button.clicked.connect(self.save_file)
-
 
     def open_file(self):
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
@@ -114,6 +117,54 @@ class SmartPropEditorMainWindow(QMainWindow):
             self.add_variable(clipboard_data[1], clipboard_data[2], clipboard_data[3], visible_in_editor)
         else:
             print("Clipboard data format is not valid.")
+
+
+    def open_hierarchy_menu(self, position):
+        menu = QMenu()
+        move_up_action = menu.addAction("Move Up")
+        move_down_action = menu.addAction("Move Down")
+        add_action = menu.addAction("Add")
+        edit_action = menu.addAction("Edit")
+        remove_action = menu.addAction("Remove")
+
+        move_up_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), -1))
+        move_down_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), 1))
+        add_action.triggered.connect(lambda: self.add_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+        edit_action.triggered.connect(lambda: self.edit_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+        remove_action.triggered.connect(lambda: self.remove_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+
+        menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
+
+    def move_item(self, item, direction):
+        if not item:
+            return
+        parent = item.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
+        index = parent.indexOfChild(item)
+        new_index = index + direction
+
+        if 0 <= new_index < parent.childCount():
+            parent.takeChild(index)
+            parent.insertChild(new_index, item)
+
+    def add_item(self, item):
+        key, ok = QInputDialog.getText(self, "Add Item", "Enter key:")
+        if ok and key:
+            new_item = QTreeWidgetItem([key])
+            new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
+            if item:
+                item.addChild(new_item)
+            else:
+                self.ui.tree_hierarchy_widget.addTopLevelItem(new_item)
+
+    def edit_item(self, item):
+        if item:
+            self.ui.tree_hierarchy_widget.editItem(item, 0)
+
+    def remove_item(self, item):
+        if item:
+            parent = item.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
+            index = parent.indexOfChild(item)
+            parent.takeChild(index)
 
     # Prefs
     def _restore_user_prefs(self):
