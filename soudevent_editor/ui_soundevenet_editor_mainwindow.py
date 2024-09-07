@@ -16,10 +16,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFrame,
-    QHBoxLayout, QHeaderView, QLabel, QLayout,
-    QLineEdit, QListWidget, QListWidgetItem, QMainWindow,
-    QPushButton, QScrollArea, QSizePolicy, QToolButton,
-    QTreeView, QVBoxLayout, QWidget)
+    QHBoxLayout, QLabel, QLayout, QLineEdit,
+    QListWidget, QListWidgetItem, QMainWindow, QPushButton,
+    QScrollArea, QSizePolicy, QToolButton, QVBoxLayout,
+    QWidget)
 import rc_resources
 
 class Ui_SoundEvent_Editor_MainWindow(object):
@@ -85,7 +85,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.scrollArea.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
         self.soundevent_properties = QWidget()
         self.soundevent_properties.setObjectName(u"soundevent_properties")
-        self.soundevent_properties.setGeometry(QRect(0, 0, 639, 552))
+        self.soundevent_properties.setGeometry(QRect(0, 0, 686, 552))
         self.verticalLayout_2 = QVBoxLayout(self.soundevent_properties)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setSizeConstraint(QLayout.SetFixedSize)
@@ -536,91 +536,24 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.verticalLayout_5.setSpacing(6)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.verticalLayout_5.setContentsMargins(4, 0, 4, 0)
-        self.audio_files_explorer = QTreeView(self.dockWidgetContents_2)
-        self.audio_files_explorer.setObjectName(u"audio_files_explorer")
-        self.audio_files_explorer.setStyleSheet(u"/* styles/treeview.qss */\n"
-"\n"
-"/* General application background */\n"
-"/* TreeView specific styles */\n"
-"QTreeView {\n"
-"    color: #E3E3E3;\n"
-"    border: 1px solid black;\n"
-"    border-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    font: 580 10pt \"Segoe UI\";\n"
-"}\n"
-"\n"
-"QTreeView::item {\n"
-"    height: 20px;\n"
-"}\n"
-"\n"
-"QTreeView::item:selected {\n"
-"    background-color: #272729;\n"
-"    color: #E3E3E3;\n"
-"}\n"
-"\n"
-"QTreeView::item:hover {\n"
-"    background-color: #272729;\n"
-"    color: #E3E3E3;\n"
-"}\n"
-"\n"
-"/* Branch icons */\n"
-"QTreeView::branch:closed:has-children {\n"
-"    /* Ensure this path is correct and the image exists */\n"
-"    image: url(:/icons/arrow_drop_down_16dp.svg);\n"
-"}\n"
-"\n"
-"QTreeView::branch:open:has-children {\n"
-"    /* Ensure this path is correct and the image exists */\n"
-"    image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
-"}\n"
-"\n"
-"/* Header styles */\n"
-"QHeaderView::section {\n"
-"    background-color"
-                        ": #1d1d1f;\n"
-"    color: #E3E3E3;\n"
-"    font: 600 10pt \"Segoe UI\";\n"
-"    height: 16px;\n"
-"    border: 0px;\n"
-"    border-bottom: 2px solid black;\n"
-"    border-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"\n"
-"/* QHeaderView::section:hover {\n"
-"    background-color: #565656;\n"
-"}\n"
-"\n"
-"QHeaderView::section:pressed {\n"
-"    background-color: #444444;\n"
-"} */\n"
-"\n"
-"\n"
-"\n"
-"\n"
-"QLineEdit {\n"
-"    border: 1px solid #CCCCCC;\n"
-"    border-radius: 2px;\n"
-"    color: #E3E3E3;\n"
-"	font: 700 10pt \"Segoe UI\";\n"
-"margin: 0px;\n"
-"padding: 0px;\n"
-"}\n"
-"QLineEdit:focus {\n"
-"    border: 1px solid #008CBA;\n"
-"    background-color: #1C1C1C;\n"
-"margin: 0px;\n"
-"padding: 0px;\n"
-"}\n"
-"QLineEdit::selection {\n"
-"    color: white;\n"
-"}")
+        self.audio_files_explorer_frame = QFrame(self.dockWidgetContents_2)
+        self.audio_files_explorer_frame.setObjectName(u"audio_files_explorer_frame")
+        self.audio_files_explorer_frame.setFrameShape(QFrame.StyledPanel)
+        self.audio_files_explorer_frame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout = QVBoxLayout(self.audio_files_explorer_frame)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.audio_files_explorer_layout = QVBoxLayout()
+        self.audio_files_explorer_layout.setObjectName(u"audio_files_explorer_layout")
 
-        self.verticalLayout_5.addWidget(self.audio_files_explorer)
+        self.verticalLayout.addLayout(self.audio_files_explorer_layout)
+
+
+        self.verticalLayout_5.addWidget(self.audio_files_explorer_frame)
 
         self.frame_5 = QFrame(self.dockWidgetContents_2)
         self.frame_5.setObjectName(u"frame_5")
+        self.frame_5.setMaximumSize(QSize(16777215, 36))
         self.frame_5.setFrameShape(QFrame.StyledPanel)
         self.frame_5.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_5)
@@ -655,7 +588,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 "        border: 2px solid black;\n"
 "        border-radius: 4px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
+"        height:20px;\n"
 "        padding-top: 2px;\n"
 "        padding-bottom:2px;\n"
 "        padding-left: 4px;\n"
