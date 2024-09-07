@@ -112,9 +112,6 @@ class Explorer(QMainWindow):
         self.model = CustomFileSystemModel()
         self.model.setRootPath(tree_directory)
 
-        self.search_bar = QLineEdit(self)
-        self.search_bar.setPlaceholderText("Search...")
-        self.search_bar.textChanged.connect(self.search_files)
 
         self.tree = QTreeView(self)
         self.tree.setModel(self.model)
@@ -125,7 +122,6 @@ class Explorer(QMainWindow):
                 self.tree.setColumnHidden(column, True)
 
         self.layout = QVBoxLayout(self)
-        self.layout.addWidget(self.search_bar)  # Add the search bar to the layout
         self.layout.addWidget(self.tree)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
@@ -155,14 +151,9 @@ class Explorer(QMainWindow):
         self.frame = QFrame(self)
         self.frame.setLayout(self.layout)
 
-    import os
 
-    def search_files(self, text):
-        for path in os.listdir(self.tree_directory):
-            path = os.path.join(self.tree_directory, path)
-            index = self.model.index(path)
-            row_number = index.row()
-            print(row_number)
+
+
 
     def select_last_opened_path(self):
         try:
