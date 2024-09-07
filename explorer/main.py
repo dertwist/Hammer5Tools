@@ -6,7 +6,15 @@ from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSel
 from preferences import get_config_value, set_config_value
 
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
-model_3d_extensions = ['obj', 'fbx']
+generic_extensions = ['vpost', 'vsndevts', 'rect']
+file_icons = {
+    '.vsmart': '://icons/assettypes/vdata_sm.png',
+    '.vmat': '://icons/assettypes/material_sm.png',
+    '.vmap': '://icons/assettypes/map_sm.png',
+    '.h5t_batch': '://icons/assettypes/vcompmat_sm.png',
+    '.vtex': '://icons/assettypes/texture_sm.png',
+    '.vmdl': '://icons/assettypes/model_sm.png'
+}
 class CustomFileSystemModel(QFileSystemModel):
     NAME_COLUMN = 0
     SIZE_COLUMN = 1
@@ -16,17 +24,23 @@ class CustomFileSystemModel(QFileSystemModel):
         super().__init__(parent)
         self._cache = {}
 
-    def data(self, index, role):
+    def data(self, index, role, is_expanded=False):
         if role == Qt.DecorationRole and self.isDir(index) and index.column() != self.SIZE_COLUMN:
-            return QIcon('://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg')
+            if is_expanded:  # Check if the folder is open
+                return QIcon('://icons/folder_open.svg')  # Icon for the opened folder
+            else:
+                return QIcon('://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg')  # Default folder icon
+        # Rest of the method remains the same
         elif role == Qt.DecorationRole and not self.isDir(index) and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
-            if file_path.endswith('.vsmart'):
-                return QIcon('://icons/assettypes/vdata_sm.png')
+            for ext, icon_path in file_icons.items():
+                if file_path.endswith(ext):
+                    return QIcon(icon_path)
             if file_path.endswith(tuple(audio_extensions)):
                 return QIcon('://icons/assettypes/vmix_sm.png')
-            if file_path.endswith(tuple(model_3d_extensions)):
-                return QIcon('://icons/assettypes/model_sm.png')
+            if file_path.endswith(tuple(generic_extensions)):
+                return QIcon('://icons/assettypes/generic_sm.png')
+
         elif role == Qt.DisplayRole and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
             if file_path in self._cache:
@@ -195,6 +209,10 @@ class Explorer(QMainWindow):
         open_action.triggered.connect(lambda: self.open_file(index))
         menu.addAction(open_action)
 
+        open_path_action = QAction("Open File Folder", self)
+        open_path_action.triggered.connect(lambda: self.open_path_file(index))
+        menu.addAction(open_path_action)
+
         rename_action = QAction("Rename File", self)
         rename_action.triggered.connect(lambda: self.rename_item(index))
         menu.addAction(rename_action)
@@ -218,6 +236,9 @@ class Explorer(QMainWindow):
     def open_file(self, index):
         file_path = self.model.filePath(index)
         QDesktopServices.openUrl(QUrl.fromLocalFile(file_path))
+    def open_path_file(self, index):
+        file_path = self.model.filePath(index)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(file_path)))
 
     def rename_item(self, index):
         old_name = self.model.fileName(index)
