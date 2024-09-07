@@ -1,24 +1,22 @@
 import os.path
-import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy
-from PySide6.QtCore import QTimer, QSettings
-from PySide6.QtGui import QCloseEvent
-from smartprop_editor.ui_main import Ui_MainWindow
-from preferences import get_config_value
 from distutils.util import strtobool
-from PySide6.QtWidgets import QMenu, QApplication
-from PySide6.QtCore import Qt, QMimeData
-from PySide6.QtGui import QCursor, QDrag,QAction
-from preferences import get_addon_name, get_cs2_path
 
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QMenu, QApplication
+from PySide6.QtGui import QCursor, QDrag, QAction
+
+# Internal organization-specific imports
+from smartprop_editor.ui_main import Ui_MainWindow
+from preferences import get_config_value, get_addon_name, get_cs2_path
 from soudevent_editor.properties.legacy_property import LegacyProperty
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix
 from explorer.main import Explorer
 from preferences import settings
 
-
+# Get cs2_path
 cs2_path = get_cs2_path()
+
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, version="v0.0.2", parent=None):
         super().__init__(parent)
@@ -58,10 +56,10 @@ class SmartPropEditorMainWindow(QMainWindow):
             while f"{name}_{suffix}" in existing_variables:
                 suffix += 1
             name = f"{name}_{suffix}"
-        self.add_variable(name=name, var_value='', var_visible_in_editor=False,var_class=self.ui.add_new_variable_combobox.currentText())
+        self.add_variable(name=name, var_value='', var_visible_in_editor=False, var_class=self.ui.add_new_variable_combobox.currentText())
 
     def add_variable(self, name, var_class, var_value, var_visible_in_editor):
-        variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class,var_visible_in_editor=var_visible_in_editor)
+        variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class, var_visible_in_editor=var_visible_in_editor)
         index = (self.ui.variables_scrollArea.count()) - 1
         self.ui.variables_scrollArea.insertWidget(index, variable)
 
@@ -73,7 +71,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                 item = {i: [widget.name, widget.var_class, widget.var_value, widget.var_visible_in_editor]}
                 data_out.update(item)
         return data_out
-
 
     # ContextMenu
     def contextMenuEvent(self, event):
@@ -94,7 +91,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         if clipboard_data[0] == "hammer5tools:smartprop_editor_var":
             visible_in_editor = bool(strtobool(clipboard_data[4]))
-            self.add_variable(clipboard_data[1], clipboard_data[2], clipboard_data[3],visible_in_editor)
+            self.add_variable(clipboard_data[1], clipboard_data[2], clipboard_data[3], visible_in_editor)
         else:
             print("Clipboard data format is not valid.")
 
@@ -114,17 +111,6 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def _save_user_prefs(self):
         current_index = self.ui.add_new_variable_combobox.currentIndex()
-        self.settings.setValue("SmartPropEditorMainWindow/currentComboBoxIndex", current_index)
-        self.settings.setValue("SmartPropEditorMainWindow/geometry", self.saveGeometry())
-        self.settings.setValue("SmartPropEditorMainWindow/windowState", self.saveState())
-
-    def closeEvent(self, event: QCloseEvent):
+        self.settings.setValue
+    def closeEvent(self, event):
         self._save_user_prefs()
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
-    app.setStyleSheet(QT_Stylesheet_global)
-    window = SmartPropEditorMainWindow()
-    window.show()
-    sys.exit(app.exec())
