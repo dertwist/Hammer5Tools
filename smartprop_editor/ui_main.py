@@ -345,6 +345,7 @@ class Ui_MainWindow(object):
         self.frame_8.setFrameShape(QFrame.StyledPanel)
         self.frame_8.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_5 = QHBoxLayout(self.frame_8)
+        self.horizontalLayout_5.setSpacing(8)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
         self.status_bar = QLineEdit(self.frame_8)
