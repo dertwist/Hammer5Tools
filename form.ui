@@ -78,9 +78,6 @@
     <enum>QLayout::SetDefaultConstraint</enum>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout"/>
-   </item>
-   <item>
     <widget class="QTabWidget" name="MainWindowTools_tabs">
      <property name="enabled">
       <bool>true</bool>

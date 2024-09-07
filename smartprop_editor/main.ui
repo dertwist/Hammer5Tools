@@ -1059,7 +1059,7 @@ QComboBox QAbstractItemView::item:selected {
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_10">
+   <widget class="QWidget" name="explorer_layout_widget">
     <layout class="QVBoxLayout" name="verticalLayout_10">
      <property name="leftMargin">
       <number>0</number>
