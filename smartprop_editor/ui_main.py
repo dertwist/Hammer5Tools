@@ -16,11 +16,11 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFrame,
-    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
-    QMainWindow, QPushButton, QScrollArea, QSizePolicy,
-    QSpacerItem, QToolButton, QTreeWidget, QTreeWidgetItem,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDockWidget,
+    QFrame, QHBoxLayout, QHeaderView, QLabel,
+    QLineEdit, QMainWindow, QPushButton, QScrollArea,
+    QSizePolicy, QSpacerItem, QToolButton, QTreeWidget,
+    QTreeWidgetItem, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_MainWindow(object):
@@ -82,259 +82,38 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 691, 674))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 636, 676))
         self.verticalLayout_17 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_17.setSpacing(0)
         self.verticalLayout_17.setObjectName(u"verticalLayout_17")
         self.verticalLayout_17.setContentsMargins(0, 0, 0, 0)
-        self.ClassProperties_layout_header = QFrame(self.scrollAreaWidgetContents)
-        self.ClassProperties_layout_header.setObjectName(u"ClassProperties_layout_header")
-        self.ClassProperties_layout_header.setMaximumSize(QSize(16777215, 24))
-        self.ClassProperties_layout_header.setFrameShape(QFrame.StyledPanel)
-        self.ClassProperties_layout_header.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_3 = QHBoxLayout(self.ClassProperties_layout_header)
-        self.horizontalLayout_3.setSpacing(0)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.lineedit = QLineEdit(self.ClassProperties_layout_header)
-        self.lineedit.setObjectName(u"lineedit")
-        self.lineedit.setStyleSheet(u"QLineEdit {\n"
-"	font: 8pt \"Segoe UI\";\n"
-"    border: 2px solid #CCCCCC;\n"
-"	border-top: 0px;\n"
-"	border-left: 0px;\n"
-"	border-right: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"color: #E3E3E3;\n"
-"background-color: #242424;\n"
-"}\n"
-"QLineEdit:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"QLineEdit::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"\n"
-"")
-        self.lineedit.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
-        self.lineedit.setMaxLength(32)
-        self.lineedit.setReadOnly(True)
+        self.treeWidget = QTreeWidget(self.scrollAreaWidgetContents)
+        QTreeWidgetItem(self.treeWidget)
+        __qtreewidgetitem = QTreeWidgetItem(self.treeWidget)
+        QTreeWidgetItem(__qtreewidgetitem)
+        QTreeWidgetItem(__qtreewidgetitem)
+        QTreeWidgetItem(__qtreewidgetitem)
+        __qtreewidgetitem1 = QTreeWidgetItem(self.treeWidget)
+        __qtreewidgetitem1.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEditable|Qt.ItemIsDragEnabled|Qt.ItemIsDropEnabled|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled);
+        self.treeWidget.setObjectName(u"treeWidget")
+        self.treeWidget.setTabKeyNavigation(False)
+        self.treeWidget.setProperty("showDropIndicator", True)
+        self.treeWidget.setDragEnabled(True)
+        self.treeWidget.setDragDropOverwriteMode(True)
+        self.treeWidget.setDragDropMode(QAbstractItemView.InternalMove)
+        self.treeWidget.setAlternatingRowColors(True)
+        self.treeWidget.setUniformRowHeights(False)
+        self.treeWidget.setSortingEnabled(True)
+        self.treeWidget.setAnimated(False)
+        self.treeWidget.header().setVisible(True)
+        self.treeWidget.header().setCascadingSectionResizes(False)
+        self.treeWidget.header().setMinimumSectionSize(160)
+        self.treeWidget.header().setDefaultSectionSize(160)
+        self.treeWidget.header().setHighlightSections(False)
+        self.treeWidget.header().setProperty("showSortIndicator", True)
+        self.treeWidget.header().setStretchLastSection(True)
 
-        self.horizontalLayout_3.addWidget(self.lineedit)
-
-
-        self.verticalLayout_17.addWidget(self.ClassProperties_layout_header)
-
-        self.ClassProperties_layout_frame = QFrame(self.scrollAreaWidgetContents)
-        self.ClassProperties_layout_frame.setObjectName(u"ClassProperties_layout_frame")
-        self.ClassProperties_layout_frame.setFrameShape(QFrame.StyledPanel)
-        self.ClassProperties_layout_frame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_6 = QVBoxLayout(self.ClassProperties_layout_frame)
-        self.verticalLayout_6.setSpacing(0)
-        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
-        self.ClassProperties_layout = QVBoxLayout()
-        self.ClassProperties_layout.setSpacing(0)
-        self.ClassProperties_layout.setObjectName(u"ClassProperties_layout")
-        self.ClassProperties_layout.setContentsMargins(12, 0, 0, -1)
-        self.verticalSpacer_3 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.ClassProperties_layout.addItem(self.verticalSpacer_3)
-
-
-        self.verticalLayout_6.addLayout(self.ClassProperties_layout)
-
-
-        self.verticalLayout_17.addWidget(self.ClassProperties_layout_frame)
-
-        self.Modifers_layout_header = QFrame(self.scrollAreaWidgetContents)
-        self.Modifers_layout_header.setObjectName(u"Modifers_layout_header")
-        self.Modifers_layout_header.setMaximumSize(QSize(16777215, 24))
-        self.Modifers_layout_header.setFrameShape(QFrame.StyledPanel)
-        self.Modifers_layout_header.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_4 = QHBoxLayout(self.Modifers_layout_header)
-        self.horizontalLayout_4.setSpacing(0)
-        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.Modifer_add_button = QToolButton(self.Modifers_layout_header)
-        self.Modifer_add_button.setObjectName(u"Modifer_add_button")
-        self.Modifer_add_button.setStyleSheet(u"QToolButton {\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:14px;\n"
-"    padding-top: 2px;\n"
-"    padding-bottom:4px;\n"
-"    color: #E3E3E3;\n"
-"background-color: #242424;\n"
-"    padding-left: 4px;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QToolButton{\n"
-"	padding-left:5px;\n"
-"	border-left: 0px solid black;\n"
-"border-right: 0px solid black;\n"
-"border-top: 0px solid black;\n"
-"}")
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Modifer_add_button.setIcon(icon4)
-
-        self.horizontalLayout_4.addWidget(self.Modifer_add_button)
-
-        self.lineedit_2 = QLineEdit(self.Modifers_layout_header)
-        self.lineedit_2.setObjectName(u"lineedit_2")
-        self.lineedit_2.setStyleSheet(u"QLineEdit {\n"
-"	font: 8pt \"Segoe UI\";\n"
-"    border: 2px solid #CCCCCC;\n"
-"	border-top: 0px;\n"
-"	border-left: 0px;\n"
-"	border-right: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"color: #E3E3E3;\n"
-"background-color: #242424;\n"
-"}\n"
-"QLineEdit:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"QLineEdit::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"\n"
-"")
-        self.lineedit_2.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
-        self.lineedit_2.setMaxLength(32)
-        self.lineedit_2.setReadOnly(True)
-
-        self.horizontalLayout_4.addWidget(self.lineedit_2)
-
-
-        self.verticalLayout_17.addWidget(self.Modifers_layout_header)
-
-        self.Modifers_layout_frame = QFrame(self.scrollAreaWidgetContents)
-        self.Modifers_layout_frame.setObjectName(u"Modifers_layout_frame")
-        self.Modifers_layout_frame.setMinimumSize(QSize(0, 128))
-        self.Modifers_layout_frame.setFrameShape(QFrame.StyledPanel)
-        self.Modifers_layout_frame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_11 = QVBoxLayout(self.Modifers_layout_frame)
-        self.verticalLayout_11.setSpacing(0)
-        self.verticalLayout_11.setObjectName(u"verticalLayout_11")
-        self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
-        self.Modifers_layout = QVBoxLayout()
-        self.Modifers_layout.setSpacing(0)
-        self.Modifers_layout.setObjectName(u"Modifers_layout")
-        self.Modifers_layout.setContentsMargins(12, 0, 0, -1)
-        self.verticalSpacer_4 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.Modifers_layout.addItem(self.verticalSpacer_4)
-
-
-        self.verticalLayout_11.addLayout(self.Modifers_layout)
-
-
-        self.verticalLayout_17.addWidget(self.Modifers_layout_frame)
-
-        self.SelectionCriteria_layout_header = QFrame(self.scrollAreaWidgetContents)
-        self.SelectionCriteria_layout_header.setObjectName(u"SelectionCriteria_layout_header")
-        self.SelectionCriteria_layout_header.setMaximumSize(QSize(16777215, 24))
-        self.SelectionCriteria_layout_header.setFrameShape(QFrame.StyledPanel)
-        self.SelectionCriteria_layout_header.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_8 = QHBoxLayout(self.SelectionCriteria_layout_header)
-        self.horizontalLayout_8.setSpacing(0)
-        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
-        self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
-        self.SelectionCriteria_add_button = QToolButton(self.SelectionCriteria_layout_header)
-        self.SelectionCriteria_add_button.setObjectName(u"SelectionCriteria_add_button")
-        self.SelectionCriteria_add_button.setStyleSheet(u"QToolButton {\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:14px;\n"
-"    padding-top: 2px;\n"
-"    padding-bottom:4px;\n"
-"    color: #E3E3E3;\n"
-"background-color: #242424;\n"
-"    padding-left: 4px;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QToolButton{\n"
-"	padding-left:5px;\n"
-"	border-left: 0px solid black;\n"
-"border-right: 0px solid black;\n"
-"border-top: 0px solid black;\n"
-"}")
-        self.SelectionCriteria_add_button.setIcon(icon4)
-
-        self.horizontalLayout_8.addWidget(self.SelectionCriteria_add_button)
-
-        self.lineedit_5 = QLineEdit(self.SelectionCriteria_layout_header)
-        self.lineedit_5.setObjectName(u"lineedit_5")
-        self.lineedit_5.setStyleSheet(u"QLineEdit {\n"
-"	font: 8pt \"Segoe UI\";\n"
-"    border: 2px solid #CCCCCC;\n"
-"	border-top: 0px;\n"
-"	border-left: 0px;\n"
-"	border-right: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"color: #E3E3E3;\n"
-"background-color: #242424;\n"
-"}\n"
-"QLineEdit:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"QLineEdit::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"\n"
-"")
-        self.lineedit_5.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
-        self.lineedit_5.setMaxLength(32)
-        self.lineedit_5.setReadOnly(True)
-
-        self.horizontalLayout_8.addWidget(self.lineedit_5)
-
-
-        self.verticalLayout_17.addWidget(self.SelectionCriteria_layout_header)
-
-        self.SelectionCriteria_layout_frame = QFrame(self.scrollAreaWidgetContents)
-        self.SelectionCriteria_layout_frame.setObjectName(u"SelectionCriteria_layout_frame")
-        self.SelectionCriteria_layout_frame.setMinimumSize(QSize(0, 128))
-        self.SelectionCriteria_layout_frame.setFrameShape(QFrame.StyledPanel)
-        self.SelectionCriteria_layout_frame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_13 = QVBoxLayout(self.SelectionCriteria_layout_frame)
-        self.verticalLayout_13.setSpacing(0)
-        self.verticalLayout_13.setObjectName(u"verticalLayout_13")
-        self.verticalLayout_13.setContentsMargins(0, 0, 0, 0)
-        self.SelectionCriteria_layout = QVBoxLayout()
-        self.SelectionCriteria_layout.setSpacing(0)
-        self.SelectionCriteria_layout.setObjectName(u"SelectionCriteria_layout")
-        self.SelectionCriteria_layout.setContentsMargins(12, 0, 0, -1)
-        self.verticalSpacer_6 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.SelectionCriteria_layout.addItem(self.verticalSpacer_6)
-
-
-        self.verticalLayout_13.addLayout(self.SelectionCriteria_layout)
-
-
-        self.verticalLayout_17.addWidget(self.SelectionCriteria_layout_frame)
+        self.verticalLayout_17.addWidget(self.treeWidget)
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
@@ -350,6 +129,16 @@ class Ui_MainWindow(object):
         self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
         self.status_bar = QLineEdit(self.frame_8)
         self.status_bar.setObjectName(u"status_bar")
+        self.status_bar.setStyleSheet(u"QLineEdit {\n"
+"    border: 0px solid #CCCCCC;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 2px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"background-color: #1C1C1C;\n"
+"\n"
+"}\n"
+"")
         self.status_bar.setReadOnly(True)
 
         self.horizontalLayout_5.addWidget(self.status_bar)
@@ -390,13 +179,13 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addWidget(self.tree_hierarchy_search_bar_widget)
 
         self.tree_hierarchy_widget = QTreeWidget(self.frame_2)
-        __qtreewidgetitem = QTreeWidgetItem()
-        __qtreewidgetitem.setText(0, u"Name");
-        self.tree_hierarchy_widget.setHeaderItem(__qtreewidgetitem)
-        __qtreewidgetitem1 = QTreeWidgetItem(self.tree_hierarchy_widget)
-        QTreeWidgetItem(__qtreewidgetitem1)
-        __qtreewidgetitem2 = QTreeWidgetItem(self.tree_hierarchy_widget)
-        QTreeWidgetItem(__qtreewidgetitem2)
+        __qtreewidgetitem2 = QTreeWidgetItem()
+        __qtreewidgetitem2.setText(0, u"Name");
+        self.tree_hierarchy_widget.setHeaderItem(__qtreewidgetitem2)
+        __qtreewidgetitem3 = QTreeWidgetItem(self.tree_hierarchy_widget)
+        QTreeWidgetItem(__qtreewidgetitem3)
+        __qtreewidgetitem4 = QTreeWidgetItem(self.tree_hierarchy_widget)
+        QTreeWidgetItem(__qtreewidgetitem4)
         self.tree_hierarchy_widget.setObjectName(u"tree_hierarchy_widget")
         self.tree_hierarchy_widget.header().setVisible(False)
 
@@ -427,7 +216,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 309, 197))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 364, 434))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -458,6 +247,8 @@ class Ui_MainWindow(object):
         self.add_new_variable_button = QToolButton(self.frame)
         self.add_new_variable_button.setObjectName(u"add_new_variable_button")
         self.add_new_variable_button.setMaximumSize(QSize(28, 28))
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_new_variable_button.setIcon(icon4)
         self.add_new_variable_button.setIconSize(QSize(16, 16))
 
@@ -758,36 +549,42 @@ class Ui_MainWindow(object):
         self.actionSaveSmarptop.setText(QCoreApplication.translate("MainWindow", u"SaveSmarptop", None))
         self.actionSaveSmartpropAs.setText(QCoreApplication.translate("MainWindow", u"SaveSmartpropAs", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Main window", None))
-#if QT_CONFIG(tooltip)
-        self.lineedit.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.lineedit.setText(QCoreApplication.translate("MainWindow", u"ClassProperties", None))
-        self.Modifer_add_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-#if QT_CONFIG(tooltip)
-        self.lineedit_2.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.lineedit_2.setText(QCoreApplication.translate("MainWindow", u"Modifers", None))
-        self.SelectionCriteria_add_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-#if QT_CONFIG(tooltip)
-        self.lineedit_5.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.lineedit_5.setText(QCoreApplication.translate("MainWindow", u"SelectionCriteria", None))
+        ___qtreewidgetitem = self.treeWidget.headerItem()
+        ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Properties", None));
+        ___qtreewidgetitem.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
+
+        __sortingEnabled = self.treeWidget.isSortingEnabled()
+        self.treeWidget.setSortingEnabled(False)
+        ___qtreewidgetitem1 = self.treeWidget.topLevelItem(0)
+        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"SelectionCritirea", None));
+        ___qtreewidgetitem2 = self.treeWidget.topLevelItem(1)
+        ___qtreewidgetitem2.setText(0, QCoreApplication.translate("MainWindow", u"Modifiers", None));
+        ___qtreewidgetitem3 = ___qtreewidgetitem2.child(0)
+        ___qtreewidgetitem3.setText(0, QCoreApplication.translate("MainWindow", u"New Subitem", None));
+        ___qtreewidgetitem4 = ___qtreewidgetitem2.child(1)
+        ___qtreewidgetitem4.setText(0, QCoreApplication.translate("MainWindow", u"New Subitem", None));
+        ___qtreewidgetitem5 = ___qtreewidgetitem2.child(2)
+        ___qtreewidgetitem5.setText(0, QCoreApplication.translate("MainWindow", u"New Subitem", None));
+        ___qtreewidgetitem6 = self.treeWidget.topLevelItem(2)
+        ___qtreewidgetitem6.setText(0, QCoreApplication.translate("MainWindow", u"ClassPropertis", None));
+        self.treeWidget.setSortingEnabled(__sortingEnabled)
+
         self.status_bar.setText(QCoreApplication.translate("MainWindow", u"Console output", None))
         self.version_label.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
 
-        __sortingEnabled = self.tree_hierarchy_widget.isSortingEnabled()
+        __sortingEnabled1 = self.tree_hierarchy_widget.isSortingEnabled()
         self.tree_hierarchy_widget.setSortingEnabled(False)
-        ___qtreewidgetitem = self.tree_hierarchy_widget.topLevelItem(0)
-        ___qtreewidgetitem.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_PickOne", None));
-        ___qtreewidgetitem1 = ___qtreewidgetitem.child(0)
-        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
-        ___qtreewidgetitem2 = self.tree_hierarchy_widget.topLevelItem(1)
-        ___qtreewidgetitem2.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
-        ___qtreewidgetitem3 = ___qtreewidgetitem2.child(0)
-        ___qtreewidgetitem3.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_SmartProp", None));
-        self.tree_hierarchy_widget.setSortingEnabled(__sortingEnabled)
+        ___qtreewidgetitem7 = self.tree_hierarchy_widget.topLevelItem(0)
+        ___qtreewidgetitem7.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_PickOne", None));
+        ___qtreewidgetitem8 = ___qtreewidgetitem7.child(0)
+        ___qtreewidgetitem8.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
+        ___qtreewidgetitem9 = self.tree_hierarchy_widget.topLevelItem(1)
+        ___qtreewidgetitem9.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
+        ___qtreewidgetitem10 = ___qtreewidgetitem9.child(0)
+        ___qtreewidgetitem10.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_SmartProp", None));
+        self.tree_hierarchy_widget.setSortingEnabled(__sortingEnabled1)
 
         self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
         self.variables_scroll_area_searchbar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
