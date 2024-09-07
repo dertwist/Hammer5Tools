@@ -5,13 +5,18 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetIte
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction
 
-# Internal organization-specific imports
 from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_config_value, get_addon_name, get_cs2_path
+
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix
+from smartprop_editor.vsmart import VsmartOpen, VsmartSave
+
 from explorer.main import Explorer
 from preferences import settings
+
+global opened_file
+
 
 # Get cs2_path
 cs2_path = get_cs2_path()
@@ -42,7 +47,21 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def buttons(self):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
+        self.ui.open_file_button.clicked.connect(self.open_file)
+        self.ui.save_file_button.clicked.connect(self.save_file)
 
+
+    def open_file(self):
+        index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
+        filename = self.mini_explorer.model.filePath(index)
+        global opened_file
+        opened_file = filename
+        VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
+    def save_file(self):
+        index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
+        filename = opened_file
+        print(filename)
+        VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget)
     # variables
     def add_new_variable(self):
         name = 'new_var'
