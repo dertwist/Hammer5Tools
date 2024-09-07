@@ -1,10 +1,10 @@
 import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logging
-from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu
+from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow
 from PySide6.QtGui import QIcon, QAction
-from ui_form import Ui_Widget
+from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
-from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value
+from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings
 from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
 from loading_editor.loading_editor_main import Loading_editorMainWindow
 
@@ -32,10 +32,10 @@ app_version = '1.7.1'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '0.4.0'
 smartprop_editor_version = '0.0.1'
-class Widget(QWidget):
+class Widget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.ui = Ui_Widget()
+        self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setup_tray_icon()
         self.setup_tabs()
@@ -45,6 +45,7 @@ class Widget(QWidget):
         self.Create_addon_Dialog = None
         self.Delete_addon_Dialog = None
         self.current_tab(False)
+        self.settings = settings
 
         try:
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
@@ -54,6 +55,8 @@ class Widget(QWidget):
         if get_config_bool('APP', 'first_launch'):
             self.open_documentation()
             set_config_bool('APP', 'first_launch', False)
+
+        self._restore_user_prefs()
     def current_tab(self, set):
         if set:
             try:
@@ -242,15 +245,30 @@ class Widget(QWidget):
         # Explicitly delete the tray icon
         self.tray_icon.hide()
         self.tray_icon.deleteLater()
+        self._save_user_prefs()
 
-        # Close smarprops editor
+        # Close editors
         self.SmartPropEditorMainWindow.closeEvent(self.event)
+        self.SoundEventEditorMainWidget.closeEvent(self.event)
 
         self.current_tab(True)
         QApplication.quit()
         QApplication.instance().quit()
         QApplication.exit(1)
         sys.exit(0)
+
+    def _restore_user_prefs(self):
+        geo = self.settings.value("MainWindow/geometry")
+        if geo:
+            self.restoreGeometry(geo)
+
+        state = self.settings.value("MainWindow/windowState")
+        if state:
+            self.restoreState(state)
+
+    def _save_user_prefs(self):
+        self.settings.setValue("MainWindow/geometry", self.saveGeometry())
+        self.settings.setValue("MainWindow/windowState", self.saveState())
 
 
 def DiscordStatusMain_do():

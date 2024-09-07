@@ -130,44 +130,6 @@ class Ui_Dialog(object):
 
         self.verticalLayout_2.addWidget(self.pushButton)
 
-        self.pushButton_2 = QPushButton(self.frame)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 600 10pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.pushButton_2.setIcon(icon2)
-
-        self.verticalLayout_2.addWidget(self.pushButton_2)
-
 
         self.horizontalLayout_3.addLayout(self.verticalLayout_2)
 
@@ -204,7 +166,6 @@ class Ui_Dialog(object):
         self.label_2.setText(QCoreApplication.translate("Dialog", u"Presets", None))
         self.pushButton_3.setText(QCoreApplication.translate("Dialog", u"Open presets folder", None))
         self.pushButton.setText(QCoreApplication.translate("Dialog", u"Add new", None))
-        self.pushButton_2.setText(QCoreApplication.translate("Dialog", u"Select preset", None))
         self.label.setText(QCoreApplication.translate("Dialog", u"Edit preset", None))
     # retranslateUi
 

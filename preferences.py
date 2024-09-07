@@ -34,7 +34,7 @@ def default_settings():
     else:
         desktop_user_path = os.path.join(os.path.expanduser("~"), "Desktop")
         set_config_value('PATHS', 'archive', desktop_user_path)
-        set_config_value('PATHS', 'settings', os.path.normpath(settings.fileName()))
+        set_config_value('PATHS', 'settings', os.path.dirname(os.path.normpath(settings.fileName())))
         set_config_value('PATHS', 'user_presets', (app_dir + '\\presets'))
         set_config_value('DISCORD_STATUS', 'custom_status', 'Doing stuff')
         set_config_value('DISCORD_STATUS', 'show_status', True)
