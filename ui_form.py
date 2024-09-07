@@ -50,11 +50,6 @@ class Ui_Widget(object):
         self.verticalLayout = QVBoxLayout(Widget)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setSizeConstraint(QLayout.SetDefaultConstraint)
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-
-        self.verticalLayout.addLayout(self.horizontalLayout)
-
         self.MainWindowTools_tabs = QTabWidget(Widget)
         self.MainWindowTools_tabs.setObjectName(u"MainWindowTools_tabs")
         self.MainWindowTools_tabs.setEnabled(True)
