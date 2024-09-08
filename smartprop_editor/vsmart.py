@@ -10,6 +10,7 @@ import json
 import re
 import keyvalues3 as kv3
 import ast
+from smartprop_editor.objects import element_prefix
 
 
 class VsmartOpen:
@@ -30,6 +31,7 @@ class VsmartOpen:
             self.tree.clear()
             self.populate_tree(data)
             self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
+            self.fix_names(parent=self.tree.invisibleRootItem())
     def fix_format(self):
         pattern = re.compile(r'= resource_name:')
         with open(self.filename, 'r') as file:
@@ -185,6 +187,31 @@ class VsmartOpen:
                     search_recursively_loop(item)
 
         search_recursively_loop(parent_item)
+
+    def fix_names(self, parent):
+        counter = 1
+
+        # Iterate through each child item under the parent
+        for index in range(parent.childCount()):
+            child_item = parent.child(index)
+
+            # Check if the current name has 'element_prefix'
+            if element_prefix in child_item.text(0):
+                # Remove 'element_prefix' from the item's name
+                current_name = child_item.text(0)
+                new_name = current_name.replace(element_prefix, '')
+
+                # Set unique naming using 2 digits
+                new_name = f"{new_name}_{counter:02d}"
+                counter += 1
+
+                child_item.setText(0, new_name)
+
+                # Recursively fix names for child elements
+                self.fix_names(child_item)
+            else:
+                # If the current name does not have 'element_prefix', pass
+                pass
 
 class VsmartSave:
     def __init__(self, filename, tree=None):
