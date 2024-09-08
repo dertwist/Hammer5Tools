@@ -74,6 +74,11 @@
        </item>
        <item>
         <widget class="QScrollArea" name="scrollArea">
+         <property name="styleSheet">
+          <string notr="true">QScrollArea {
+    border: 0px solid black;
+}</string>
+         </property>
          <property name="lineWidth">
           <number>0</number>
          </property>
@@ -88,9 +93,14 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>782</width>
-            <height>676</height>
+            <width>784</width>
+            <height>682</height>
            </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QWidget: {
+	border: 0px;
+}</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_17">
            <property name="spacing">
@@ -256,12 +266,15 @@
            <widget class="QLineEdit" name="status_bar">
             <property name="styleSheet">
              <string notr="true">QLineEdit {
-    border: 0px solid #CCCCCC;
+    border: 0px solid black;
+	border-bottom: 2px solid black;
+	border-left: 2px solid black;
+	border-right: 2px solid black;
     border-color: rgba(80, 80, 80, 255);
-    border-radius: 2px;
-    padding: 2px;
+    border-radius: 1px;
+	margin-top: -2px;
     color: #E3E3E3;
-background-color: #1C1C1C;
+	background-color: #1C1C1C;
 
 }
 </string>
@@ -271,16 +284,6 @@ background-color: #1C1C1C;
             </property>
             <property name="readOnly">
              <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="version_label">
-            <property name="text">
-             <string>TextLabel</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
             </property>
            </widget>
           </item>

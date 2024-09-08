@@ -957,8 +957,8 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
 
 QTreeView {
     color: #E3E3E3;
-    border: 1px solid black;
-    border-radius: 2px;
+    border: 2px solid black;
+    border-radius: 1px;
     border-color: rgba(80, 80, 80, 255);
     font: 580 10pt "Segoe UI";
     background-color: #292929; /* Background color for the tree view */
