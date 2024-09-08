@@ -589,7 +589,7 @@ class Ui_MainWindow(object):
         self.actionCreateNewsmartprop.setText(QCoreApplication.translate("MainWindow", u"CreateNewsmartprop", None))
         self.actionSaveSmarptop.setText(QCoreApplication.translate("MainWindow", u"SaveSmarptop", None))
         self.actionSaveSmartpropAs.setText(QCoreApplication.translate("MainWindow", u"SaveSmartpropAs", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Main window", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
         ___qtreewidgetitem = self.treeWidget.headerItem()
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Properties", None));
         ___qtreewidgetitem.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));

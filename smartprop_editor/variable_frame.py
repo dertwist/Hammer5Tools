@@ -30,6 +30,12 @@ class VariableFrame(QWidget):
         self.var_visible_in_editor = var_visible_in_editor
         self.var_display_name = var_display_name
 
+        self.var_value = {
+            'default': {None},
+            'min': {None},
+            'max': {None},
+            'model': {None}
+        }
 
         self.ui.variable_name.setText(name)
         self.ui.varialbe_display_name.setText(var_display_name)
@@ -38,9 +44,15 @@ class VariableFrame(QWidget):
         self.ui.visible_in_editor.clicked.connect(self.visible_in_editor)
         self.widget_list = widget_list
         if var_class == 'Int':
-            self.ui.layout.insertWidget(1, Var_class_Int(default=self.var_default, min=self.var_min,max=self.var_max))
+            self.var_int_instance = Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
+            # self.var_int_instance.signal.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max, var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
+            self.var_int_instance.signal.connect(lambda default=1, min_val='f', max_val='f', model='d': self.on_changed(default, min_val, max_val, model))
+            self.ui.layout.insertWidget(1, Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None))
         elif var_class == 'Float':
-            self.ui.layout.insertWidget(1, Var_class_Int(default=self.var_default, min=self.var_min,max=self.var_max))
+            self.var_int_instance = Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
+            self.var_int_instance.signal.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max,var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
+            self.ui.layout.insertWidget(1, Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,
+                                                         model=None))
         else:
             self.ui.layout.insertWidget(1, Var_class_legacy(var_value=self.var_default))
         self.show_child()
@@ -53,6 +65,17 @@ class VariableFrame(QWidget):
             self.ui.frame_layout.setMaximumSize(16666,0)
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
+
+    def on_changed(self, var_default, var_min, var_max, var_model):
+        print('1')
+        print(self.var_value)
+        self.var_value = {
+            'default': var_default if var_default else None,
+            'min': var_min if var_min else None,
+            'max': var_max if var_max else None,
+            'model': var_model if var_model else None
+        }
+        print(self.var_value)
 
     def visible_in_editor(self):
         self.var_visible_in_editor = self.ui.visible_in_editor.isChecked()
