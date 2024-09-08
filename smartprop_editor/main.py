@@ -127,6 +127,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         edit_action = menu.addAction("Edit")
         remove_action = menu.addAction("Remove")
 
+        duplicate_action = menu.addAction("Duplicate")
+        duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+
         move_up_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), -1))
         move_down_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), 1))
         add_action.triggered.connect(lambda: self.add_item(self.ui.tree_hierarchy_widget.itemAt(position)))
@@ -155,6 +158,22 @@ class SmartPropEditorMainWindow(QMainWindow):
                 item.addChild(new_item)
             else:
                 self.ui.tree_hierarchy_widget.addTopLevelItem(new_item)
+
+    def duplicate_item(self, item: QTreeWidgetItem):
+        parent = item.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
+        existing_names = [parent.child(i).text(0) for i in range(parent.childCount())]
+        print(existing_names)
+
+        base_text = item.text(0)
+        counter = 1
+        new_text = base_text
+        while new_text in existing_names:
+            counter += 1
+            new_text = f"{base_text}_{counter:02}"  # Change the format to include leading zeros
+
+        new_item = QTreeWidgetItem([new_text])
+        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
+        parent.addChild(new_item)
 
     def edit_item(self, item):
         if item:
