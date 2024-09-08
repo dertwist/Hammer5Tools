@@ -77,7 +77,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                 var_name = item.get('m_VariableName', None)
                 var_display_name = item.get('m_DisplayName', None)
                 var_visible_in_editor = bool(item.get('m_bExposeAsParameter', None))
-                # var_value = {'default':{item['m_bExposeAsParameter']}, 'min': {item['m_flParamaterMinValue']}, 'max': {item['m_flParamaterMaxValue']}, 'model': {item['m_sModelName']}}
                 var_value = {
                     'default': item.get('m_DefaultValue', None),
                     'min': item.get('m_flParamaterMinValue', None),
@@ -105,7 +104,18 @@ class SmartPropEditorMainWindow(QMainWindow):
             while f"{name}_{suffix}" in existing_variables:
                 suffix += 1
             name = f"{name}_{suffix}"
-        self.add_variable(name=name, var_value='', var_visible_in_editor=False, var_class=self.ui.add_new_variable_combobox.currentText(), var_display_name='')
+
+        var_class = self.ui.add_new_variable_combobox.currentText()
+        var_name = name
+        var_display_name = None
+        var_visible_in_editor = False
+        var_value = {
+            'default':(None),
+            'min': (None),
+            'max': (None),
+            'model': (None)
+        }
+        self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor,var_class=var_class, var_display_name=var_display_name)
 
     def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name):
         variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class, var_visible_in_editor=var_visible_in_editor, var_display_name=var_display_name)
