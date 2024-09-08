@@ -59,7 +59,13 @@ class SmartPropEditorMainWindow(QMainWindow):
         filename = self.mini_explorer.model.filePath(index)
         global opened_file
         opened_file = filename
-        VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
+        # VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
+        # variables = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget).variables
+
+        vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
+        variables = vsmart_instance.variables
+        for item in variables:
+            print(item)
     def save_file(self):
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
         filename = opened_file
@@ -165,11 +171,18 @@ class SmartPropEditorMainWindow(QMainWindow):
         print(existing_names)
 
         base_text = item.text(0)
-        counter = 1
+        counter = 0
         new_text = base_text
-        while new_text in existing_names:
-            counter += 1
-            new_text = f"{base_text}_{counter:02}"  # Change the format to include leading zeros
+
+        # Check if the element name has digits at the end
+        if base_text[-1].isdigit():
+            counter = int(base_text.split('_')[-1]) + 1
+            new_text = f"{base_text.rsplit('_', 1)[0]}_{counter:02}"
+        else:
+            while new_text in existing_names:
+                counter += 1
+                print(counter)
+                new_text = f"{base_text}_{counter:02}"  # Change the format to include leading zeros
 
         new_item = QTreeWidgetItem([new_text])
         new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)

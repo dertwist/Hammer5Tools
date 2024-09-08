@@ -28,10 +28,12 @@ class VsmartOpen:
             print("Raw vsmart")
             self.fix_format()
             data = (kv3.read(self.filename)).value
+            self.variables = data['m_Variables']
             self.tree.clear()
             self.populate_tree(data)
             self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
             self.fix_names(parent=self.tree.invisibleRootItem())
+
     def fix_format(self):
         pattern = re.compile(r'= resource_name:')
         with open(self.filename, 'r') as file:
@@ -143,23 +145,23 @@ class VsmartOpen:
                         # parent.addChild(item)
                         # self.populate_tree(value, item)
                         pass
-                if key == 'm_Variables':
-                    item_class = value[0].get('_class')
-                    child = QTreeWidgetItem([key])
-                    child.setFlags(child.flags() | Qt.ItemIsEditable)
-                    parent.addChild(child)
-                    for item in value:
-                        item_class = item.get('_class')
-                        value_dict = item.copy()
-                        try:
-                            del value_dict['m_Children']
-                            pass
-                        except:
-                            pass
-                        child_item = QTreeWidgetItem([item_class, str(value_dict)])
-                        child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
-                        child.addChild(child_item)
-                        self.populate_tree(item, child_item)
+                # if key == 'm_Variables':
+                #     item_class = value[0].get('_class')
+                #     child = QTreeWidgetItem([key])
+                #     child.setFlags(child.flags() | Qt.ItemIsEditable)
+                #     parent.addChild(child)
+                #     for item in value:
+                #         item_class = item.get('_class')
+                #         value_dict = item.copy()
+                #         try:
+                #             del value_dict['m_Children']
+                #             pass
+                #         except:
+                #             pass
+                #         child_item = QTreeWidgetItem([item_class, str(value_dict)])
+                #         child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
+                #         child.addChild(child_item)
+                #         self.populate_tree(item, child_item)
                         # elif key == 'm_vEnd':
                         #     print('m_vEnd')
 
@@ -180,7 +182,8 @@ class VsmartOpen:
                     for i in range(parent_item.childCount()):
                         child = child_item.child(i)
                         if child:
-                            print(child.text(0))
+                            # print(child.text(0))
+                            pass
 
                     self.cleanup_tree(parent_item)
                 else:
