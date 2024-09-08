@@ -15,4 +15,4 @@ class Var_class_legacy(QWidget):
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
         self.var_value = var_value
-        self.ui.value.setText(var_value)
+        self.ui.value.setText(str(var_value))
