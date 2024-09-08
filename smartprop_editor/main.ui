@@ -88,7 +88,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>542</width>
+            <width>782</width>
             <height>676</height>
            </rect>
           </property>
@@ -361,11 +361,14 @@ background-color: #1C1C1C;
           <property name="dragDropMode">
            <enum>QAbstractItemView::InternalMove</enum>
           </property>
+          <property name="defaultDropAction">
+           <enum>Qt::CopyAction</enum>
+          </property>
           <property name="alternatingRowColors">
            <bool>true</bool>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::ContiguousSelection</enum>
+           <enum>QAbstractItemView::ExtendedSelection</enum>
           </property>
           <property name="uniformRowHeights">
            <bool>true</bool>
@@ -482,7 +485,7 @@ background-color: #1C1C1C;
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>472</width>
+          <width>232</width>
           <height>434</height>
          </rect>
         </property>
