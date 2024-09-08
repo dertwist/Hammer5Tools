@@ -25,7 +25,6 @@ def check_updates(repo_url, current_version, silent):
         release_notes = release_info['body']
 
         print(f"Latest version: {latest_version}")
-        print(f"Release notes: {release_notes}")
 
         # Compare the current version with the latest version using packaging.version
         if version.parse(current_version) < version.parse(latest_version):

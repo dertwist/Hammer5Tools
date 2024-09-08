@@ -37,7 +37,7 @@ class SoundEventEditorMainWidget(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_SoundEvent_Editor_MainWindow()
         self.ui.setupUi(self)
-        self.ui.version.setText(f"Soundevent Editor version: v{version}")
+        print(f"Soundevent Editor version: v{version}")
 
         # Set up the custom file system model
         counter_strike_2_path = get_cs2_path()
