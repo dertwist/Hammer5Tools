@@ -41,11 +41,6 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout = QVBoxLayout(self.frame)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.status_label = QLabel(self.frame)
-        self.status_label.setObjectName(u"status_label")
-
-        self.verticalLayout.addWidget(self.status_label)
-
         self.frame_4 = QFrame(self.frame)
         self.frame_4.setObjectName(u"frame_4")
         self.frame_4.setFrameShape(QFrame.StyledPanel)
@@ -370,7 +365,6 @@ class Ui_BatchCreator_MainWindow(object):
 
     def retranslateUi(self, BatchCreator_MainWindow):
         BatchCreator_MainWindow.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"MainWindow", None))
-        self.status_label.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Oppened File: BatchCreator version:", None))
         self.folder_path_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Folder path", None))
         self.assets_name_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Asset name", None))
         self.kv3_QplainTextEdit.setPlainText("")

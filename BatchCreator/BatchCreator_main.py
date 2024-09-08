@@ -98,13 +98,11 @@ class BatchCreatorMainWindow(QMainWindow):
             index = indexes[0]
             file_path = self.mini_explorer.model.filePath(index)
             base_name = os.path.basename(os.path.normpath(file_path))
-            self.ui.status_label.setText(
-                f"Opened File: <span style='color: #b0c27c;'>{base_name}</span> BatchCreator version: <span style='color: #7cc29b;'>{self.version}</span>")
+            print(f"Opened File: {base_name} version: {self.version}")
             self.current_file_path = file_path if not self.mini_explorer.model.isDir(index) else None
         else:
             self.ui.Status_Line_Qedit.clear()
-            self.ui.status_label.setText(
-                f"Opened File: None BatchCreator version: <span style='color: #7cc29b;'>{self.version}</span>")
+            print(f"Opened File: None BatchCreator version: {self.version}")
             self.current_file_path = None
 
     def dragEnterEvent(self, event: QDragEnterEvent):
@@ -199,12 +197,6 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.extension_lineEdit.setText(extension)
             self.current_file_path = file_path
 
-            # if hasattr(self, 'process_dialog') and self.process_dialog.isVisible():
-            #     self.process_dialog.close()
-            #     self.process_dialog = BatchCreator_process_Dialog(process=process, current_file_path=self.current_file_path)
-            #     self.process_dialog.show()
-            # else:
-            #     pass
             print(f"File opened from: {file_path}")
 
         except Exception as e:

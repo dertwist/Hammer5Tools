@@ -16,10 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFrame,
-    QHBoxLayout, QLabel, QLayout, QLineEdit,
-    QListWidget, QListWidgetItem, QMainWindow, QPushButton,
-    QScrollArea, QSizePolicy, QToolButton, QVBoxLayout,
-    QWidget)
+    QHBoxLayout, QLayout, QLineEdit, QListWidget,
+    QListWidgetItem, QMainWindow, QPushButton, QScrollArea,
+    QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_SoundEvent_Editor_MainWindow(object):
@@ -57,42 +56,6 @@ class Ui_SoundEvent_Editor_MainWindow(object):
         self.verticalLayout_3.setSpacing(6)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.frame_9 = QFrame(self.frame_3)
-        self.frame_9.setObjectName(u"frame_9")
-        self.frame_9.setFrameShape(QFrame.StyledPanel)
-        self.frame_9.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_7 = QHBoxLayout(self.frame_9)
-        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
-        self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
-        self.status_bar = QLabel(self.frame_9)
-        self.status_bar.setObjectName(u"status_bar")
-
-        self.horizontalLayout_7.addWidget(self.status_bar)
-
-        self.version = QLabel(self.frame_9)
-        self.version.setObjectName(u"version")
-        self.version.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.horizontalLayout_7.addWidget(self.version)
-
-
-        self.verticalLayout_3.addWidget(self.frame_9)
-
-        self.scrollArea = QScrollArea(self.frame_3)
-        self.scrollArea.setObjectName(u"scrollArea")
-        self.scrollArea.setLineWidth(0)
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
-        self.soundevent_properties = QWidget()
-        self.soundevent_properties.setObjectName(u"soundevent_properties")
-        self.soundevent_properties.setGeometry(QRect(0, 0, 686, 552))
-        self.verticalLayout_2 = QVBoxLayout(self.soundevent_properties)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setSizeConstraint(QLayout.SetFixedSize)
-        self.scrollArea.setWidget(self.soundevent_properties)
-
-        self.verticalLayout_3.addWidget(self.scrollArea)
-
         self.add_a_property_button = QPushButton(self.frame_3)
         self.add_a_property_button.setObjectName(u"add_a_property_button")
         self.add_a_property_button.setStyleSheet(u"\n"
@@ -127,6 +90,21 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 "    }")
 
         self.verticalLayout_3.addWidget(self.add_a_property_button)
+
+        self.scrollArea = QScrollArea(self.frame_3)
+        self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setLineWidth(0)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.soundevent_properties = QWidget()
+        self.soundevent_properties.setObjectName(u"soundevent_properties")
+        self.soundevent_properties.setGeometry(QRect(0, 0, 686, 576))
+        self.verticalLayout_2 = QVBoxLayout(self.soundevent_properties)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setSizeConstraint(QLayout.SetFixedSize)
+        self.scrollArea.setWidget(self.soundevent_properties)
+
+        self.verticalLayout_3.addWidget(self.scrollArea)
 
         self.frame_2 = QFrame(self.frame_3)
         self.frame_2.setObjectName(u"frame_2")
@@ -628,9 +606,7 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
     def retranslateUi(self, SoundEvent_Editor_MainWindow):
         SoundEvent_Editor_MainWindow.setWindowTitle(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"MainWindow", None))
-        self.status_bar.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Press Ctrl + F to add a property", None))
-        self.version.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Version", None))
-        self.add_a_property_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Add a property", None))
+        self.add_a_property_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Add", None))
 #if QT_CONFIG(tooltip)
         self.save_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Save file (Ctrl + S)</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)

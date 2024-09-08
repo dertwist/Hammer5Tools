@@ -68,7 +68,7 @@
           </font>
          </property>
          <property name="text">
-          <string>Main window</string>
+          <string>Properties</string>
          </property>
         </widget>
        </item>
