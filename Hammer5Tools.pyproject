@@ -24,7 +24,6 @@
         "smartprop_editor/main.ui",
         "soudevent_editor/import_audio_dialog.ui",
         "soudevent_editor/create_new_soundevent_dialog.ui",
-        "BatchCreator/form.ui",
         "smartprop_editor/variable_frame.ui",
         "smartprop_editor/variables/int.ui",
         "smartprop_editor/variables/legacy.ui",
