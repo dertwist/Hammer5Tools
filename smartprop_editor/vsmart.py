@@ -23,12 +23,12 @@ class VsmartOpen:
         if self.check_for_tree():
             print('Hammer5tools vsmart')
             self.tree.clear()
-            self.load_structure()
+            self.load_state()
         else:
             print("Raw vsmart")
             self.fix_format()
             data = (kv3.read(self.filename)).value
-            self.variables = data['m_Variables']
+            self.variables = data.get('m_Variables', None)
             self.tree.clear()
             self.populate_tree(data)
             self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
@@ -54,7 +54,7 @@ class VsmartOpen:
             return False
 
 
-    def load_structure(self):
+    def load_state(self):
         with open(self.filename, 'r') as file:
             lines = file.readlines()
             lines_count = len(lines)
@@ -65,6 +65,7 @@ class VsmartOpen:
             print('line_vsmartdata_options ',line_vsmartdata_options)
             print('line_vsmartdata_variables ',line_vsmartdata_variables)
             vsmartdata_tree_structure = ast.literal_eval(line_vsmartdata_tree_structure)
+            self.variables = line_vsmartdata_variables
             self.load_tree_from_file(vsmartdata_tree_structure)
     def load_tree_from_file(self, data, parent=None):
         if parent is None:

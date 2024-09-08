@@ -64,8 +64,21 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
         variables = vsmart_instance.variables
-        for item in variables:
-            print(item)
+        if isinstance(variables, list):
+            for item in variables:
+                var_class = (item['_class']).replace(variable_prefix, '')
+                var_name = item.get('m_VariableName', None)
+                var_display_name = item.get('m_DisplayName', None)
+                var_visible_in_editor = bool(item.get('m_bExposeAsParameter', None))
+                # var_value = {'default':{item['m_bExposeAsParameter']}, 'min': {item['m_flParamaterMinValue']}, 'max': {item['m_flParamaterMaxValue']}, 'model': {item['m_sModelName']}}
+                var_value = {
+                    'default': item.get('m_DefaultValue', None),
+                    'min': item.get('m_flParamaterMinValue', None),
+                    'max': item.get('m_flParamaterMaxValue', None),
+                    'model': item.get('m_sModelName', None)
+                }
+                self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
+                print(type(var_class), var_class)
     def save_file(self):
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
         filename = opened_file
