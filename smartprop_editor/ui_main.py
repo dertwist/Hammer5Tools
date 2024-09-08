@@ -78,12 +78,18 @@ class Ui_MainWindow(object):
 
         self.scrollArea = QScrollArea(self.frame_9)
         self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setStyleSheet(u"QScrollArea {\n"
+"    border: 0px solid black;\n"
+"}")
         self.scrollArea.setLineWidth(0)
         self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 782, 676))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 784, 682))
+        self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
+"	border: 0px;\n"
+"}")
         self.verticalLayout_17 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_17.setSpacing(0)
         self.verticalLayout_17.setObjectName(u"verticalLayout_17")
@@ -143,24 +149,21 @@ class Ui_MainWindow(object):
         self.status_bar = QLineEdit(self.frame_8)
         self.status_bar.setObjectName(u"status_bar")
         self.status_bar.setStyleSheet(u"QLineEdit {\n"
-"    border: 0px solid #CCCCCC;\n"
+"    border: 0px solid black;\n"
+"	border-bottom: 2px solid black;\n"
+"	border-left: 2px solid black;\n"
+"	border-right: 2px solid black;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 2px;\n"
-"    padding: 2px;\n"
+"    border-radius: 1px;\n"
+"	margin-top: -2px;\n"
 "    color: #E3E3E3;\n"
-"background-color: #1C1C1C;\n"
+"	background-color: #1C1C1C;\n"
 "\n"
 "}\n"
 "")
         self.status_bar.setReadOnly(True)
 
         self.horizontalLayout_5.addWidget(self.status_bar)
-
-        self.version_label = QLabel(self.frame_8)
-        self.version_label.setObjectName(u"version_label")
-        self.version_label.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.horizontalLayout_5.addWidget(self.version_label)
 
 
         self.verticalLayout_5.addWidget(self.frame_8)
@@ -627,7 +630,6 @@ class Ui_MainWindow(object):
         self.treeWidget.setSortingEnabled(__sortingEnabled)
 
         self.status_bar.setText(QCoreApplication.translate("MainWindow", u"Console output", None))
-        self.version_label.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem7 = self.tree_hierarchy_widget.headerItem()

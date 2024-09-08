@@ -23,11 +23,10 @@ global opened_file
 cs2_path = get_cs2_path()
 
 class SmartPropEditorMainWindow(QMainWindow):
-    def __init__(self, version="v0.0.2", parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.version_label.setText(version)
         self.settings = settings
 
         # Hierarchy setup
@@ -64,6 +63,14 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
         variables = vsmart_instance.variables
+        index = 0
+        while index < self.ui.variables_scrollArea.count() - 1:
+            item = self.ui.variables_scrollArea.takeAt(index)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+            else:
+                index += 1
         if isinstance(variables, list):
             for item in variables:
                 var_class = (item['_class']).replace(variable_prefix, '')
@@ -78,7 +85,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                     'model': item.get('m_sModelName', None)
                 }
                 self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
-                print(type(var_class), var_class)
     def save_file(self):
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
         filename = opened_file

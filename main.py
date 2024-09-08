@@ -51,7 +51,6 @@ class Widget(QMainWindow):
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except:
             pass
-        print(get_config_bool('APP', 'first_launch'))
         if get_config_bool('APP', 'first_launch'):
             self.open_documentation()
             set_config_bool('APP', 'first_launch', False)
@@ -172,7 +171,7 @@ class Widget(QMainWindow):
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
         try:
-            self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(smartprop_editor_version)
+            self.SmartPropEditorMainWindow = SmartPropEditorMainWindow()
             self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
