@@ -64,8 +64,8 @@ class Widget(QMainWindow):
 
         try:
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
-        except:
-            pass
+        except Exception as e:
+            print(f"Error checking updates: {e}")
         if get_config_bool('APP', 'first_launch'):
             self.open_documentation()
             set_config_bool('APP', 'first_launch', False)
