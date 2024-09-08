@@ -94,7 +94,7 @@
             <x>0</x>
             <y>0</y>
             <width>784</width>
-            <height>682</height>
+            <height>700</height>
            </rect>
           </property>
           <property name="styleSheet">
@@ -262,31 +262,6 @@
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          <item>
-           <widget class="QLineEdit" name="status_bar">
-            <property name="styleSheet">
-             <string notr="true">QLineEdit {
-    border: 0px solid black;
-	border-bottom: 2px solid black;
-	border-left: 2px solid black;
-	border-right: 2px solid black;
-    border-color: rgba(80, 80, 80, 255);
-    border-radius: 1px;
-	margin-top: -2px;
-    color: #E3E3E3;
-	background-color: #1C1C1C;
-
-}
-</string>
-            </property>
-            <property name="text">
-             <string>Console output</string>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
          </layout>
         </widget>
        </item>

@@ -85,8 +85,11 @@ QTabBar::tab:selected {
     background-color: #1d1d1f;
 }</string>
       </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::West</enum>
+      </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>3</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -581,6 +584,108 @@ QTabBar::tab:selected {
      </layout>
     </item>
    </layout>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget">
+   <property name="minimumSize">
+    <size>
+     <width>88</width>
+     <height>107</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>524287</width>
+     <height>5433</height>
+    </size>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="features">
+    <set>QDockWidget::DockWidgetMovable</set>
+   </property>
+   <property name="windowTitle">
+    <string>Console</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>4</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <property name="maximumSize">
+     <size>
+      <width>16777215</width>
+      <height>16666</height>
+     </size>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_7">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QPlainTextEdit" name="console">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16666</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QPlainTextEdit {
+
+    font: 600 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    /* height:18px; */
+    padding: 0px;
+    color: #E3E3E3;
+    background-color: #151515;
+	margin-bottom: 8px;
+}
+
+
+
+QPlainTextEdit:focus {
+
+    background-color: #1C1C1C;
+}
+QPlainTextEdit:hover {
+    background-color: #414956;
+    color: white;
+}
+</string>
+       </property>
+       <property name="tabChangesFocus">
+        <bool>false</bool>
+       </property>
+       <property name="plainText">
+        <string/>
+       </property>
+       <property name="tabStopDistance">
+        <double>80.000000000000000</double>
+       </property>
+       <property name="cursorWidth">
+        <number>1</number>
+       </property>
+       <property name="centerOnScroll">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
  </widget>
  <resources>

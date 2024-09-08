@@ -85,6 +85,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                     'model': item.get('m_sModelName', None)
                 }
                 self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
+        print(f'Opened file: {filename}')
     def save_file(self):
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
         filename = opened_file

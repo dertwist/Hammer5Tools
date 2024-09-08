@@ -1,6 +1,8 @@
 import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logging
 from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow
-from PySide6.QtGui import QIcon, QAction
+from PySide6.QtGui import QIcon, QAction, QTextCursor
+from PySide6.QtCore import QObject, Signal
+# from PySide6 import QtCore
 from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
@@ -32,11 +34,22 @@ app_version = '2.0.0'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '0.5.0'
 smartprop_editor_version = '0.1.0'
+
+
+import sys
+
+class Stream(QObject):
+    newText = Signal(str)
+
+    def write(self, text):
+        self.newText.emit(str(text))
 class Widget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        sys.stdout = Stream(newText=self.on_update)
+
         self.setup_tray_icon()
         self.setup_tabs()
         self.populate_addon_combobox()
@@ -47,6 +60,8 @@ class Widget(QMainWindow):
         self.current_tab(False)
         self.settings = settings
 
+
+
         try:
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except:
@@ -56,6 +71,17 @@ class Widget(QMainWindow):
             set_config_bool('APP', 'first_launch', False)
 
         self._restore_user_prefs()
+    def __del__(self):
+        sys.stdout = sys.__stdout__
+    def on_update(self, text):
+        cursor = self.ui.console.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertText(text)
+        self.ui.console.setTextCursor(cursor)
+        self.ui.console.ensureCursorVisible()
+        # cursor = self.ui.console.textCursor()
+        cursor.removeSelectedText()
+
     def current_tab(self, set):
         if set:
             try:
