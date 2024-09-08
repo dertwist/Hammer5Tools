@@ -22,6 +22,18 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="leftMargin">
+     <number>9</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>9</number>
+    </property>
+    <property name="bottomMargin">
+     <number>9</number>
+    </property>
     <item>
      <widget class="QTabWidget" name="MainWindowTools_tabs">
       <property name="enabled">
@@ -85,16 +97,17 @@ QTabBar::tab:selected {
     background-color: #1d1d1f;
 }</string>
       </property>
-      <property name="tabPosition">
-       <enum>QTabWidget::West</enum>
-      </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>5</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
       </property>
       <widget class="QWidget" name="Loading_Editor_Tab">
+       <attribute name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/icons/imagesmode_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/imagesmode_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+       </attribute>
        <attribute name="title">
         <string>Loading Editor</string>
        </attribute>
@@ -104,6 +117,10 @@ QTabBar::tab:selected {
        <property name="enabled">
         <bool>true</bool>
        </property>
+       <attribute name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/icons/volume_up.png</normaloff>:/icons/volume_up.png</iconset>
+       </attribute>
        <attribute name="title">
         <string>SoundEvent Editor</string>
        </attribute>
@@ -113,6 +130,10 @@ QTabBar::tab:selected {
        <property name="enabled">
         <bool>true</bool>
        </property>
+       <attribute name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/icons/keyboard.png</normaloff>:/icons/keyboard.png</iconset>
+       </attribute>
        <attribute name="title">
         <string>Hotkey Editor</string>
        </attribute>
@@ -145,12 +166,20 @@ QTabBar::tab:selected {
        </layout>
       </widget>
       <widget class="QWidget" name="BatchCreator_tab">
+       <attribute name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/icons/dashboard_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/dashboard_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
+       </attribute>
        <attribute name="title">
         <string>BatchCreator</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2"/>
       </widget>
       <widget class="QWidget" name="smartpropeditor_tab">
+       <attribute name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/icons/functions_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/functions_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
+       </attribute>
        <attribute name="title">
         <string>SmartProp Editor</string>
        </attribute>
@@ -160,6 +189,10 @@ QTabBar::tab:selected {
        <property name="enabled">
         <bool>true</bool>
        </property>
+       <attribute name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+       </attribute>
        <attribute name="title">
         <string>Sync Editor</string>
        </attribute>
