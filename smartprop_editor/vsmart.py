@@ -61,7 +61,7 @@ class VsmartOpen:
             line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
             line_vsmartdata_tree_structure = (lines[lines_count - 2].strip().split('//Hammer5Tools_vsmartdata_tree_structure:'))[1]
             line_vsmartdata_variables = (lines[lines_count - 3].strip().split('//Hammer5Tools_vsmartdata_variables:'))[1]
-            print('line_vsmartdata_tree_structure ',line_vsmartdata_tree_structure)
+            print('Hammer5Tools_vsmartdata_metadata ',line_vsmartdata_tree_structure)
             print('line_vsmartdata_options ',line_vsmartdata_options)
             print('line_vsmartdata_variables ',line_vsmartdata_variables)
             vsmartdata_tree_structure = ast.literal_eval(line_vsmartdata_tree_structure)
