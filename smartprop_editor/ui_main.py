@@ -86,7 +86,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 784, 682))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 784, 700))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -146,25 +146,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_5.setSpacing(8)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.status_bar = QLineEdit(self.frame_8)
-        self.status_bar.setObjectName(u"status_bar")
-        self.status_bar.setStyleSheet(u"QLineEdit {\n"
-"    border: 0px solid black;\n"
-"	border-bottom: 2px solid black;\n"
-"	border-left: 2px solid black;\n"
-"	border-right: 2px solid black;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 1px;\n"
-"	margin-top: -2px;\n"
-"    color: #E3E3E3;\n"
-"	background-color: #1C1C1C;\n"
-"\n"
-"}\n"
-"")
-        self.status_bar.setReadOnly(True)
-
-        self.horizontalLayout_5.addWidget(self.status_bar)
-
 
         self.verticalLayout_5.addWidget(self.frame_8)
 
@@ -629,7 +610,6 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem6.setText(0, QCoreApplication.translate("MainWindow", u"SelectionCritirea", None));
         self.treeWidget.setSortingEnabled(__sortingEnabled)
 
-        self.status_bar.setText(QCoreApplication.translate("MainWindow", u"Console output", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem7 = self.tree_hierarchy_widget.headerItem()
