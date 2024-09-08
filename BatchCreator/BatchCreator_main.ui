@@ -55,13 +55,6 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QLabel" name="status_label">
-         <property name="text">
-          <string>Oppened File: BatchCreator version:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QFrame" name="frame_4">
          <property name="frameShape">
           <enum>QFrame::StyledPanel</enum>
