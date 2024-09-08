@@ -131,6 +131,9 @@ font: 8pt &quot;Segoe UI&quot;;
       </item>
       <item>
        <widget class="QSpinBox" name="value_spinBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -145,7 +148,7 @@ font: 8pt &quot;Segoe UI&quot;;
     border-color: rgba(80, 80, 80, 255);
     color: #E3E3E3;
     background-color: #1C1C1C;
-border:0px;
+    border: 0px;
 }
 
 QSpinBox:focus {
@@ -155,8 +158,13 @@ QSpinBox:hover {
 }
 
 QSpinBox:pressed {
-	background-color: #121212;
+    background-color: #121212;
 }
+
+QSpinBox:disabled {
+	color: rgba(125, 125, 125, 100);
+}
+
 
 QSpinBox::up-button {
     border: 0px solid black;
@@ -166,9 +174,9 @@ QSpinBox::up-button {
     border-bottom: 0px solid black;
     border-top-right-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-border:0px;
+    width: 16px;
+    margin: 0px;
+    border: 0px;
 }
 
 QSpinBox::up-arrow {
@@ -180,14 +188,14 @@ QSpinBox::up-arrow {
 QSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
-	border: 0px solid black;
+    border: 0px solid black;
     border-left: 2px solid black;
     border-top: 2px solid black;
-border-bottom-right-radius: 2px;
+    border-bottom-right-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-border:0px;
+    width: 16px;
+    margin: 0px;
+    border: 0px;
 }
 
 QSpinBox::down-arrow {
@@ -295,7 +303,7 @@ QCheckBox::indicator:checked {
     border-color: rgba(80, 80, 80, 255);
     color: #E3E3E3;
     background-color: #1C1C1C;
-border:0px;
+    border: 0px;
 }
 
 QSpinBox:focus {
@@ -305,8 +313,13 @@ QSpinBox:hover {
 }
 
 QSpinBox:pressed {
-	background-color: #121212;
+    background-color: #121212;
 }
+
+QSpinBox:disabled {
+	color: rgba(125, 125, 125, 100);
+}
+
 
 QSpinBox::up-button {
     border: 0px solid black;
@@ -316,9 +329,9 @@ QSpinBox::up-button {
     border-bottom: 0px solid black;
     border-top-right-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-border:0px;
+    width: 16px;
+    margin: 0px;
+    border: 0px;
 }
 
 QSpinBox::up-arrow {
@@ -330,14 +343,14 @@ QSpinBox::up-arrow {
 QSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
-	border: 0px solid black;
+    border: 0px solid black;
     border-left: 2px solid black;
     border-top: 2px solid black;
-border-bottom-right-radius: 2px;
+    border-bottom-right-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-border:0px;
+    width: 16px;
+    margin: 0px;
+    border: 0px;
 }
 
 QSpinBox::down-arrow {
@@ -437,6 +450,9 @@ QCheckBox::indicator:checked {
       </item>
       <item>
        <widget class="QSpinBox" name="max_spinBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="styleSheet">
          <string notr="true">QSpinBox {
     font: 580 8pt &quot;Segoe UI&quot;;
@@ -445,7 +461,7 @@ QCheckBox::indicator:checked {
     border-color: rgba(80, 80, 80, 255);
     color: #E3E3E3;
     background-color: #1C1C1C;
-border:0px;
+    border: 0px;
 }
 
 QSpinBox:focus {
@@ -455,8 +471,13 @@ QSpinBox:hover {
 }
 
 QSpinBox:pressed {
-	background-color: #121212;
+    background-color: #121212;
 }
+
+QSpinBox:disabled {
+	color: rgba(125, 125, 125, 100);
+}
+
 
 QSpinBox::up-button {
     border: 0px solid black;
@@ -466,9 +487,9 @@ QSpinBox::up-button {
     border-bottom: 0px solid black;
     border-top-right-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-border:0px;
+    width: 16px;
+    margin: 0px;
+    border: 0px;
 }
 
 QSpinBox::up-arrow {
@@ -480,14 +501,14 @@ QSpinBox::up-arrow {
 QSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
-	border: 0px solid black;
+    border: 0px solid black;
     border-left: 2px solid black;
     border-top: 2px solid black;
-border-bottom-right-radius: 2px;
+    border-bottom-right-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-	width:16px;
-    margin:0px;
-border:0px;
+    width: 16px;
+    margin: 0px;
+    border: 0px;
 }
 
 QSpinBox::down-arrow {

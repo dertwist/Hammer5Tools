@@ -23,7 +23,10 @@ class VariableFrame(QWidget):
         self.ui.variable_name.setAcceptDrops(False)
         self.name = name
         self.var_class = var_class
-        self.var_value = var_value
+        self.var_default = (var_value)['default']
+        self.var_min = (var_value)['min']
+        self.var_max = (var_value)['max']
+        self.var_model = (var_value)['model']
         self.var_visible_in_editor = var_visible_in_editor
         self.var_display_name = var_display_name
 
@@ -35,11 +38,11 @@ class VariableFrame(QWidget):
         self.ui.visible_in_editor.clicked.connect(self.visible_in_editor)
         self.widget_list = widget_list
         if var_class == 'Int':
-            self.ui.layout.insertWidget(1, Var_class_Int(var_value='1'))
+            self.ui.layout.insertWidget(1, Var_class_Int(default=self.var_default, min=self.var_min,max=self.var_max))
         elif var_class == 'Float':
-            self.ui.layout.insertWidget(1, Var_class_Int(var_value='1'))
+            self.ui.layout.insertWidget(1, Var_class_Int(default=self.var_default, min=self.var_min,max=self.var_max))
         else:
-            self.ui.layout.insertWidget(1, Var_class_legacy(var_value=self.var_value))
+            self.ui.layout.insertWidget(1, Var_class_legacy(var_value=self.var_default))
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 

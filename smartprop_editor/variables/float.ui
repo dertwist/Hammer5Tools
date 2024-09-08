@@ -350,6 +350,10 @@ QDoubleSpinBox::down-arrow {
     image: url(://icons/arrow_drop_down_16dp.svg);
     width: 20px;
     height: 20px;
+}
+
+QDoubleSpinBox:disabled {
+	color: rgba(125, 125, 125, 100);
 }</string>
         </property>
         <property name="decimals">
@@ -449,6 +453,9 @@ QCheckBox::indicator:checked {
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="max_doubleSpinBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="styleSheet">
          <string notr="true">QDoubleSpinBox {
     font: 580 8pt &quot;Segoe UI&quot;;
@@ -506,6 +513,10 @@ QDoubleSpinBox::down-arrow {
     image: url(://icons/arrow_drop_down_16dp.svg);
     width: 20px;
     height: 20px;
+}
+
+QDoubleSpinBox:disabled {
+	color: rgba(125, 125, 125, 100);
 }</string>
         </property>
         <property name="decimals">
