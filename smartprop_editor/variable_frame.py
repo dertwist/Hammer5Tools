@@ -15,7 +15,7 @@ from smartprop_editor.variables.legacy import Var_class_legacy
 import ast
 
 class VariableFrame(QWidget):
-    def __init__(self, name, var_class, var_value, var_visible_in_editor, widget_list):
+    def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -25,19 +25,21 @@ class VariableFrame(QWidget):
         self.var_class = var_class
         self.var_value = var_value
         self.var_visible_in_editor = var_visible_in_editor
+        self.var_display_name = var_display_name
 
 
         self.ui.variable_name.setText(name)
+        self.ui.varialbe_display_name.setText(var_display_name)
         self.ui.variable_class.setText(var_class)
         self.ui.visible_in_editor.setChecked(self.var_visible_in_editor)
         self.ui.visible_in_editor.clicked.connect(self.visible_in_editor)
         self.widget_list = widget_list
         if var_class == 'Int':
-            self.ui.layout.insertWidget(0, Var_class_Int(var_value='1'))
+            self.ui.layout.insertWidget(1, Var_class_Int(var_value='1'))
         elif var_class == 'Float':
-            self.ui.layout.insertWidget(0, Var_class_Int(var_value='1'))
+            self.ui.layout.insertWidget(1, Var_class_Int(var_value='1'))
         else:
-            self.ui.layout.insertWidget(0, Var_class_legacy(var_value=self.var_value))
+            self.ui.layout.insertWidget(1, Var_class_legacy(var_value=self.var_value))
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 
@@ -74,4 +76,4 @@ class VariableFrame(QWidget):
 
         elif action == copy_action:
             clipboard = QApplication.clipboard()
-            clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.var_class};;{self.var_value};;{self.var_visible_in_editor}")
+            clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.var_class};;{self.var_value};;{self.var_visible_in_editor};;{self.var_display_name}")
