@@ -211,6 +211,61 @@ class Ui_Form(object):
         self.layout.setSpacing(0)
         self.layout.setObjectName(u"layout")
         self.layout.setSizeConstraint(QLayout.SetDefaultConstraint)
+        self.frame_3 = QFrame(self.frame_layout)
+        self.frame_3.setObjectName(u"frame_3")
+        self.frame_3.setMaximumSize(QSize(16777215, 32))
+        self.frame_3.setStyleSheet(u".QFrame {\n"
+"    font: 580 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"	border-top: 0px;\n"
+"    border-color: rgba(50, 50, 50, 255);\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+".QFrame::hover {\n"
+"}\n"
+".QFrame::selected {\n"
+"    background-color: #414956;\n"
+"}")
+        self.frame_3.setFrameShape(QFrame.StyledPanel)
+        self.frame_3.setFrameShadow(QFrame.Raised)
+        self.frame_3.setLineWidth(0)
+        self.horizontalLayout_2 = QHBoxLayout(self.frame_3)
+        self.horizontalLayout_2.setSpacing(16)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.label_2 = QLabel(self.frame_3)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setStyleSheet(u"border:0px;\n"
+"background-color: rgba(255, 255, 255, 0);\n"
+"font: 8pt \"Segoe UI\";\n"
+"\n"
+"")
+
+        self.horizontalLayout_2.addWidget(self.label_2)
+
+        self.varialbe_display_name = QLineEdit(self.frame_3)
+        self.varialbe_display_name.setObjectName(u"varialbe_display_name")
+        self.varialbe_display_name.setStyleSheet(u"QLineEdit {\n"
+"    border: 0px solid #CCCCCC;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 2px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"background-color: #1C1C1C;\n"
+"\n"
+"}\n"
+"")
+
+        self.horizontalLayout_2.addWidget(self.varialbe_display_name)
+
+
+        self.layout.addWidget(self.frame_3)
+
 
         self.verticalLayout_2.addLayout(self.layout)
 
@@ -242,5 +297,7 @@ class Ui_Form(object):
         self.variable_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>class</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.variable_class.setText(QCoreApplication.translate("Form", u"RadiusPlacementMode", None))
+        self.label_2.setText(QCoreApplication.translate("Form", u"Display name", None))
+        self.varialbe_display_name.setPlaceholderText(QCoreApplication.translate("Form", u"Not nessesary", None))
     # retranslateUi
 

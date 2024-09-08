@@ -85,10 +85,10 @@ class SmartPropEditorMainWindow(QMainWindow):
             while f"{name}_{suffix}" in existing_variables:
                 suffix += 1
             name = f"{name}_{suffix}"
-        self.add_variable(name=name, var_value='', var_visible_in_editor=False, var_class=self.ui.add_new_variable_combobox.currentText())
+        self.add_variable(name=name, var_value='', var_visible_in_editor=False, var_class=self.ui.add_new_variable_combobox.currentText(), var_display_name='')
 
-    def add_variable(self, name, var_class, var_value, var_visible_in_editor):
-        variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class, var_visible_in_editor=var_visible_in_editor)
+    def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name):
+        variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class, var_visible_in_editor=var_visible_in_editor, var_display_name=var_display_name)
         index = (self.ui.variables_scrollArea.count()) - 1
         self.ui.variables_scrollArea.insertWidget(index, variable)
 
@@ -120,7 +120,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         if clipboard_data[0] == "hammer5tools:smartprop_editor_var":
             visible_in_editor = bool(strtobool(clipboard_data[4]))
-            self.add_variable(clipboard_data[1], clipboard_data[2], clipboard_data[3], visible_in_editor)
+            self.add_variable(clipboard_data[1], clipboard_data[2], clipboard_data[3], visible_in_editor, clipboard_data[4])
         else:
             print("Clipboard data format is not valid.")
 
