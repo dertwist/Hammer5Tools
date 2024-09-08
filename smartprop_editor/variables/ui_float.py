@@ -266,6 +266,10 @@ class Ui_Widget(object):
 "    image: url(://icons/arrow_drop_down_16dp.svg);\n"
 "    width: 20px;\n"
 "    height: 20px;\n"
+"}\n"
+"\n"
+"QDoubleSpinBox:disabled {\n"
+"	color: rgba(125, 125, 125, 100);\n"
 "}")
         self.min_doubleSpinBox.setDecimals(1)
         self.min_doubleSpinBox.setMinimum(-9.900000000000000)
@@ -328,6 +332,7 @@ class Ui_Widget(object):
 
         self.max_doubleSpinBox = QDoubleSpinBox(self.frame_3)
         self.max_doubleSpinBox.setObjectName(u"max_doubleSpinBox")
+        self.max_doubleSpinBox.setEnabled(True)
         self.max_doubleSpinBox.setStyleSheet(u"QDoubleSpinBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -385,6 +390,10 @@ class Ui_Widget(object):
 "    image: url(://icons/arrow_drop_down_16dp.svg);\n"
 "    width: 20px;\n"
 "    height: 20px;\n"
+"}\n"
+"\n"
+"QDoubleSpinBox:disabled {\n"
+"	color: rgba(125, 125, 125, 100);\n"
 "}")
         self.max_doubleSpinBox.setDecimals(1)
         self.max_doubleSpinBox.setMinimum(-99999999999.000000000000000)
