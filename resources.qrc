@@ -260,5 +260,7 @@
         <file>icons/assettypes/vodb_sm.png</file>
         <file>icons/assettypes/vskel_sm.png</file>
         <file>icons/assettypes/xml_sm.png</file>
+        <file>icons/keyboard.png</file>
+        <file>icons/volume_up.png</file>
     </qresource>
 </RCC>
