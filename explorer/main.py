@@ -120,6 +120,7 @@ class Explorer(QMainWindow):
         self.tree = QTreeView(self)
         self.tree.setModel(self.model)
         self.tree.setRootIndex(self.model.index(tree_directory))
+        self.tree.setSortingEnabled(True)
 
         for column in range(self.model.columnCount()):
             if column not in (CustomFileSystemModel.NAME_COLUMN, CustomFileSystemModel.SIZE_COLUMN):
