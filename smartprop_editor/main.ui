@@ -142,7 +142,7 @@
               <enum>QAbstractItemView::ContiguousSelection</enum>
              </property>
              <property name="uniformRowHeights">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="sortingEnabled">
               <bool>false</bool>
