@@ -280,7 +280,6 @@ class SmartPropEditorMainWindow(QMainWindow):
     def duplicate_item(self, item: QTreeWidgetItem):
         parent = item.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
         existing_names = [parent.child(i).text(0) for i in range(parent.childCount())]
-        print(existing_names)
 
         base_text = item.text(0)
         counter = 0
@@ -293,12 +292,22 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             while new_text in existing_names:
                 counter += 1
-                print(counter)
                 new_text = f"{base_text}_{counter:02}"  # Change the format to include leading zeros
 
-        new_item = QTreeWidgetItem([new_text])
+        new_item = QTreeWidgetItem([new_text, item.text(1)])  # Duplicate the second column as well
         new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
         parent.addChild(new_item)
+
+        # Recursively duplicate children
+        self.duplicate_children(item, new_item)
+
+    def duplicate_children(self, source_item, target_item):
+        for i in range(source_item.childCount()):
+            child = source_item.child(i)
+            new_child = QTreeWidgetItem([child.text(0), child.text(1)])  # Duplicate the second column as well
+            new_child.setFlags(new_child.flags() | Qt.ItemIsEditable)
+            target_item.addChild(new_child)
+            self.duplicate_children(child, new_child)
 
     def edit_item(self, item):
         if item:

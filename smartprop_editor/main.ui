@@ -388,26 +388,6 @@
             <string>Data</string>
            </property>
           </column>
-          <item>
-           <property name="text">
-            <string>CSmartPropElement_PickOne</string>
-           </property>
-           <item>
-            <property name="text">
-             <string>CSmartPropElement_Group</string>
-            </property>
-           </item>
-          </item>
-          <item>
-           <property name="text">
-            <string>CSmartPropElement_Group</string>
-           </property>
-           <item>
-            <property name="text">
-             <string>CSmartPropElement_SmartProp</string>
-            </property>
-           </item>
-          </item>
          </widget>
         </item>
        </layout>
