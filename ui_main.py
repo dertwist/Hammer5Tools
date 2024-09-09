@@ -352,12 +352,7 @@ class Ui_MainWindow(object):
 "QPlainTextEdit:focus {\n"
 "\n"
 "    background-color: #1C1C1C;\n"
-"}\n"
-"QPlainTextEdit:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"")
+"}")
         self.console.setTabChangesFocus(False)
         self.console.setTabStopDistance(80.000000000000000)
         self.console.setCursorWidth(1)
