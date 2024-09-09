@@ -49,9 +49,6 @@ class CurveProperty(QWidget):
         self.name = name
 
         self.value = ast.literal_eval(value)
-        print(self.value)
-        for item in self.value:
-            print(item)
 
         self.init_ui()
 
@@ -76,7 +73,6 @@ class CurveProperty(QWidget):
         for i in range(len(self.widget_list)):
             listout.append(self.widget_list[i].outputlist)
         self.value = listout
-        print('outlist', self.value)
 
 
     mousePressEvent = PropertyActions.mousePressEvent
