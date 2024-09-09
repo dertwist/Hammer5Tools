@@ -491,6 +491,15 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2 = QHBoxLayout(self.frame_4)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.toolButton = QToolButton(self.frame_4)
+        self.toolButton.setObjectName(u"toolButton")
+        icon9 = QIcon()
+        icon9.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.toolButton.setIcon(icon9)
+        self.toolButton.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.toolButton)
+
         self.cerate_file_button = QPushButton(self.frame_4)
         self.cerate_file_button.setObjectName(u"cerate_file_button")
         self.cerate_file_button.setStyleSheet(u"\n"
@@ -560,9 +569,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_button.setIcon(icon9)
+        icon10 = QIcon()
+        icon10.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_file_button.setIcon(icon10)
         self.open_file_button.setIconSize(QSize(24, 24))
 
         self.horizontalLayout_2.addWidget(self.open_file_button)
@@ -651,6 +660,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(shortcut)
         self.compile_all_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+R", None))
 #endif // QT_CONFIG(shortcut)
+        self.toolButton.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.cerate_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
