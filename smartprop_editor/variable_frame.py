@@ -31,17 +31,19 @@ class VariableFrame(QWidget):
         self.var_display_name = var_display_name
 
         self.var_value = {
-            'default': {None},
-            'min': {None},
-            'max': {None},
-            'model': {None}
+            'default': None,
+            'min': None,
+            'max': None,
+            'model': None
         }
 
         self.ui.variable_name.setText(name)
         self.ui.varialbe_display_name.setText(var_display_name)
         self.ui.variable_class.setText(var_class)
         self.ui.visible_in_editor.setChecked(self.var_visible_in_editor)
-        self.ui.visible_in_editor.clicked.connect(self.visible_in_editor)
+        self.ui.visible_in_editor.clicked.connect(self.update_self)
+        self.ui.varialbe_display_name.textChanged.connect(self.update_self)
+        self.ui.variable_name.textChanged.connect(self.update_self)
         self.widget_list = widget_list
         if var_class == 'Int':
             self.var_int_instance = Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
@@ -74,8 +76,10 @@ class VariableFrame(QWidget):
         }
         print(self.var_value)
 
-    def visible_in_editor(self):
+    def update_self(self):
         self.var_visible_in_editor = self.ui.visible_in_editor.isChecked()
+        self.var_display_name = self.ui.varialbe_display_name.text()
+        self.name = self.ui.variable_name.text()
     def init_ui(self):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
