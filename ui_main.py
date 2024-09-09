@@ -34,7 +34,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout = QVBoxLayout(self.centralwidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(9, 0, 9, 9)
+        self.verticalLayout.setContentsMargins(9, 4, 9, 9)
         self.MainWindowTools_tabs = QTabWidget(self.centralwidget)
         self.MainWindowTools_tabs.setObjectName(u"MainWindowTools_tabs")
         self.MainWindowTools_tabs.setEnabled(True)
@@ -324,7 +324,7 @@ class Ui_MainWindow(object):
         self.dockWidget.setMaximumSize(QSize(524287, 5433))
         self.dockWidget.setStyleSheet(u"")
         self.dockWidget.setFloating(True)
-        self.dockWidget.setFeatures(QDockWidget.DockWidgetFloatable|QDockWidget.DockWidgetMovable)
+        self.dockWidget.setFeatures(QDockWidget.DockWidgetClosable|QDockWidget.DockWidgetFloatable|QDockWidget.DockWidgetMovable)
         self.dockWidgetContents = QWidget()
         self.dockWidgetContents.setObjectName(u"dockWidgetContents")
         self.dockWidgetContents.setMaximumSize(QSize(16777215, 16666))
@@ -345,7 +345,6 @@ class Ui_MainWindow(object):
 "    padding: 0px;\n"
 "    color: #E3E3E3;\n"
 "    background-color: #151515;\n"
-"	margin-bottom: 8px;\n"
 "}\n"
 "\n"
 "\n"

@@ -26,7 +26,7 @@
      <number>9</number>
     </property>
     <property name="topMargin">
-     <number>0</number>
+     <number>4</number>
     </property>
     <property name="rightMargin">
      <number>9</number>
@@ -638,7 +638,7 @@ QTabBar::tab:selected {
     <bool>true</bool>
    </property>
    <property name="features">
-    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
     <string>Console</string>
@@ -688,7 +688,6 @@ QTabBar::tab:selected {
     padding: 0px;
     color: #E3E3E3;
     background-color: #151515;
-	margin-bottom: 8px;
 }
 
 
