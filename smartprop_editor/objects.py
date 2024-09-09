@@ -36,6 +36,14 @@ elements_list = [
     'FitOnLine',
     'PickOne'
 ]
+filter_prefix = 'CSmartPropFilter_'
+filters_dict = {
+    'Probability': {'m_flProbability': 0},
+    'SurfaceAngle': {'m_flSurfaceSlopeMin': 90, 'm_flSurfaceSlopeMax': 180},
+    'VariableValue': {'m_Expression': 0},
+    'Expression': {'m_Expression': 0},
+    'SurfaceProperties': {'m_AllowedSurfaceProperties': "", "m_DisallowedSurfaceProperties": ""},
+}
 
 operator_prefix = 'CSmartPropOperation_'
 operators_list = [
