@@ -78,12 +78,26 @@ class SmartPropEditorMainWindow(QMainWindow):
                 var_name = item.get('m_VariableName', None)
                 var_display_name = item.get('m_DisplayName', None)
                 var_visible_in_editor = bool(item.get('m_bExposeAsParameter', None))
+
                 var_value = {
                     'default': item.get('m_DefaultValue', None),
-                    'min': item.get('m_flParamaterMinValue', None),
-                    'max': item.get('m_flParamaterMaxValue', None),
                     'model': item.get('m_sModelName', None)
                 }
+                if var_class == 'Float':
+                    var_value.update({
+                        'min': item.get('m_flParamaterMinValue', None),
+                        'max': item.get('m_flParamaterMaxValue', None)
+                    })
+                elif var_class == 'Int':
+                    var_value.update({
+                        'min': item.get('m_nParamaterMinValue', None),
+                        'max': item.get('m_nParamaterMaxValue', None)
+                    })
+                else:
+                    var_value.update({
+                        'min': None,
+                        'max': None
+                    })
                 self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
         print(f'Opened file: {filename}')
     def save_file(self):
