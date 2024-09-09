@@ -56,6 +56,9 @@ class VariableFrame(QWidget):
         elif var_class == 'MaterialGroup':
             from smartprop_editor.variables.material_group import Var_class_material_group
             self.var_int_instance = Var_class_material_group(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
+        elif var_class == 'Bool':
+            from smartprop_editor.variables.bool import Var_class_bool
+            self.var_int_instance = Var_class_bool(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
         else:
             from smartprop_editor.variables.legacy import Var_class_legacy
             self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
@@ -75,14 +78,20 @@ class VariableFrame(QWidget):
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
     def on_changed(self, var_default=None, var_min=None, var_max=None, var_model=None):
-        print(self.var_value)
-        self.var_value = {
-            'default': var_default if var_default else None,
-            'min': var_min if var_min else None,
-            'max': var_max if var_max else None,
-            'model': var_model if var_model else None
-        }
-        print(self.var_value)
+        if self.var_class == 'Bool':
+            self.var_value = {
+                'default': var_default if var_default is not None else False,
+                'min': None,
+                'max': None,
+                'model': None
+            }
+        else:
+            self.var_value = {
+                'default': var_default if var_default else None,
+                'min': var_min if var_min else None,
+                'max': var_max if var_max else None,
+                'model': var_model if var_model else None
+            }
 
     def update_self(self):
         self.var_visible_in_editor = self.ui.visible_in_editor.isChecked()

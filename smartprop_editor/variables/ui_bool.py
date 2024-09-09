@@ -88,6 +88,33 @@ class Ui_Widget(object):
 
         self.checkBox = QCheckBox(self.frame)
         self.checkBox.setObjectName(u"checkBox")
+        self.checkBox.setStyleSheet(u"QCheckBox {\n"
+"    font: 600 8pt \"Segoe UI\";\n"
+"    border: 0px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:14px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:2px;\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:unchecked {\n"
+"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"/* ========================================================== */\n"
+"\n"
+"\n"
+"QCheckBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
 
         self.horizontalLayout_2.addWidget(self.checkBox)
 
