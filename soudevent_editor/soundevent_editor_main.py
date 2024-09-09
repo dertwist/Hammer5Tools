@@ -133,15 +133,7 @@ class SoundEventEditorMainWidget(QMainWindow):
         global soundevents_data
         self.merge_global_data()
         kv3.write(soundevents_data, (os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts')))
-        self.ui.status_bar.setText(f"Saved and exported")
-        self.clean_status_bar_timer = QTimer()
-        self.clean_status_bar_timer.timeout.connect(self.clean_status_bar)
-        self.clean_status_bar_timer.start(2000)
-
-    def clean_status_bar(self):
-        self.ui.status_bar.clear()
-
-        pass
+        print(f"Saved and exported")
     def get_element_layout_kv3(self, layout, data_out):
         for i in range(layout.count()):
             widget = layout.itemAt(i).widget()
@@ -169,7 +161,7 @@ class SoundEventEditorMainWidget(QMainWindow):
     def on_soundevent_clicked(self, item):
         global soundevents_data
         item_text = item.text()
-        self.ui.status_bar.setText(f"Selected: {item_text}")
+        print(f"Selected: {item_text}")
         self.clear_layout(self.soundevent_properties_layout)
         if item_text in soundevents_data:
             details = soundevents_data[item_text]
