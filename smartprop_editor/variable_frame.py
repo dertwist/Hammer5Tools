@@ -10,6 +10,7 @@ from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
 
 from smartprop_editor.variables.int import Var_class_Int
+from smartprop_editor.variables.float import Var_class_float
 from smartprop_editor.variables.legacy import Var_class_legacy
 
 import ast
@@ -48,7 +49,7 @@ class VariableFrame(QWidget):
         if var_class == 'Int':
             self.var_int_instance = Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
         elif var_class == 'Float':
-            self.var_int_instance = Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
+            self.var_int_instance = Var_class_float(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
         else:
             self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
 
