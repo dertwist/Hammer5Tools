@@ -11,8 +11,10 @@ import re
 import keyvalues3 as kv3
 import ast
 from smartprop_editor.objects import element_prefix
-
-
+from preferences import get_cs2_path, get_addon_name
+import subprocess
+import shutil
+import os
 class VsmartOpen:
     def __init__(self, filename, tree=None):
         self.filename = filename
@@ -35,23 +37,34 @@ class VsmartOpen:
             self.fix_names(parent=self.tree.invisibleRootItem())
 
     def fix_format(self):
-        pattern = re.compile(r'= resource_name:')
-        with open(self.filename, 'r') as file:
-            file_content = file.read()
+        try:
+            pattern = re.compile(r'= resource_name:')
+            with open(self.filename, 'r') as file:
+                file_content = file.read()
 
-        modified_content = re.sub(pattern, '= ', file_content)
-        with open(self.filename, 'w') as file:
-            file.write(modified_content)
+            modified_content = re.sub(pattern, '= ', file_content)
+            with open(self.filename, 'w') as file:
+                file.write(modified_content)
+        except Exception as error:
+            print(error)
 
     def check_for_tree(self):
-        try:
-            with open(self.filename, 'r') as file:
-                lines = file.readlines()
-                lines_count = len(lines)
-                line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
-                return True
-        except:
-            return False
+        with open(self.filename, 'r') as file:
+            lines = file.readlines()
+            lines_count = len(lines)
+            print(lines_count)
+            line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
+            print(line_vsmartdata_options)
+            return True
+        # try:
+        #     with open(self.filename, 'r') as file:
+        #         lines = file.readlines()
+        #         lines_count = len(lines)
+        #         line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
+        #         print(line_vsmartdata_options)
+        #         return True
+        # except:
+        #     return False
 
 
     def load_state(self):
@@ -61,7 +74,7 @@ class VsmartOpen:
             line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
             line_vsmartdata_tree_structure = (lines[lines_count - 2].strip().split('//Hammer5Tools_vsmartdata_tree_structure:'))[1]
             line_vsmartdata_variables = (lines[lines_count - 3].strip().split('//Hammer5Tools_vsmartdata_variables:'))[1]
-            print('Loaded h5t structure from vsmart')
+            print(f'Loaded h5t structure from vsmart: {self.filename}')
             vsmartdata_tree_structure = ast.literal_eval(line_vsmartdata_tree_structure)
             self.variables = ast.literal_eval(line_vsmartdata_variables)
             self.load_tree_from_file(vsmartdata_tree_structure)
@@ -226,10 +239,13 @@ class VsmartSave:
     def save_file(self):
         data = self.tree_to_file(self.tree.invisibleRootItem())
         # data = self.convert_children_to_list(data)
-        converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
+        out_data = {'generic_data_type': "CSmartPropRoot"}
+
         if self.var_data is not None:
-            converted_data.update({'m_Variables': self.var_data})
-        kv3.write(converted_data, self.filename)
+            out_data.update({'m_Variables': self.var_data})
+        converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
+        out_data.update(converted_data)
+        kv3.write(out_data, self.filename)
         # print(data_raw)
         with open(self.filename, 'a') as file:
             file.write('//Hammer5Tools_vsmartdata_variables:' + str(self.var_data) + '\n')
@@ -267,3 +283,38 @@ class VsmartSave:
                 data[str(key) + '%?=!=' + str(value_row)] = value
         return data
 
+class VsmartCompile:
+    def __init__(self, filename):
+        self.filename = filename
+        self.compile_vsmart()
+    def compile_vsmart(self):
+        source_file = self.filename
+        rel_source_file = os.path.relpath(self.filename, (os.path.join(get_cs2_path(), 'content')))
+        print(f'Compiling: {rel_source_file}')
+        destination_folder = os.path.dirname(source_file)
+        destination_name = os.path.splitext(source_file)[0] + ".vdata"
+        shutil.copy(source_file, destination_name)
+
+        subprocess_result = subprocess.run(
+            '"' + get_cs2_path() + r"\game\bin\win64\resourcecompiler.exe" + '"' + " -i " + '"' + str(
+                destination_name) + '"', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Print the stdout and stderr to the console
+        if subprocess_result.stdout:
+            print("Subprocess stdout:")
+            print(subprocess_result.stdout.decode('utf-8'))  # Decode the byte output to string and print
+        if subprocess_result.stderr:
+            print("Subprocess stderr:")
+            print(subprocess_result.stderr.decode('utf-8'))
+
+        os.remove(destination_name)
+
+        source_name = os.path.join(get_cs2_path(), 'game', os.path.splitext(rel_source_file)[0] + '.vdata_c')
+        destination_name = source_name.replace('.vdata_c', '.vsmart_c')
+        print(source_name)
+        print(destination_name)
+        try:
+            shutil.move(source_name, destination_name)
+        except:
+            print(f'ERROR WHILE COMPILING: {os.path.basename(self.filename)}')
+        print(f'Compiled: {os.path.basename(self.filename)}')
