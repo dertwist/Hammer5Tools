@@ -68,3 +68,8 @@ class Properties:
                     else:
                         self.new_item(modifier_item, key, value, edit=True)
 
+
+class AddProperty:
+    def __init__(self, tree=QTreeWidget, data=None):
+        pass
+

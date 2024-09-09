@@ -1,7 +1,7 @@
 import os.path
 from distutils.util import strtobool
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction
 from PySide6.QtCore import Qt
@@ -10,9 +10,10 @@ from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_config_value, get_addon_name, get_cs2_path
 
 from smartprop_editor.variable_frame import VariableFrame
-from smartprop_editor.objects import variables_list, variable_prefix
+from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_list, operators_list, operator_prefix
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave
 from smartprop_editor.properties import Properties
+from popup_menu.popup_menu_main import PopupMenu
 
 from explorer.main import Explorer
 from preferences import settings
@@ -61,6 +62,41 @@ class SmartPropEditorMainWindow(QMainWindow):
         properties_instance = Properties(tree=self.ui.properties_tree, data=item.text(1))
         print(properties_instance.data)
 
+
+
+    # Create New elemnt
+    def keyPressEvent(self, event):
+        focus_widget = QApplication.focusWidget()
+        widget = self.ui.tree_hierarchy_widget
+        if focus_widget is widget:
+            if focus_widget.viewport().underMouse():
+                if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                    self.add_an_element()
+
+                    event.accept()
+    def add_an_element(self):
+        elements_in_popupmenu = {}
+        for item in elements_list:
+                elements_in_popupmenu.update({item: ''})
+        elements_in_popupmenu = [elements_in_popupmenu]
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=False)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
+        self.popup_menu.show()
+
+    def new_element(self, element_class, element_value):
+        name = element_class
+        element_value = {'_class': element_prefix + element_class}
+        new_element = QTreeWidgetItem()
+        new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
+        new_element.setText(0, name)
+        new_element.setText(1, str(element_value))
+        if self.ui.tree_hierarchy_widget.currentItem() == None:
+            parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
+        else:
+            parent = self.ui.tree_hierarchy_widget.currentItem()
+        parent.addChild(new_element)
+
+    # Vsmart format
     def open_file(self):
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
         filename = self.mini_explorer.model.filePath(index)
@@ -158,6 +194,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         print(var_data)
         print(filename)
         VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data)
+
     # variables
 
     def search_variables(self, search_term):
