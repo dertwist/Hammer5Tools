@@ -1,5 +1,5 @@
 import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logging
-from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow
+from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow, QMessageBox
 from PySide6.QtGui import QIcon, QAction, QTextCursor
 from PySide6.QtCore import QObject, Signal
 # from PySide6 import QtCore
@@ -313,10 +313,8 @@ if __name__ == "__main__":
             ctypes.windll.user32.SetForegroundWindow(hwnd)
             # Play default system sound
             winsound.MessageBeep(winsound.MB_ICONASTERISK)
-            sys.exit(0)
+        return None
 
-    bring_to_front("Hammer 5 Tools")
-    # Check for updates at launch
 
     # Create a lock file to ensure single instance
     lock_file = open(LOCK_FILE, 'w')
@@ -325,6 +323,7 @@ if __name__ == "__main__":
     except portalocker.LockException:
         # If the lock file is already locked, bring the existing instance to the foreground
         print("Another instance is already running. Bringing it to the foreground.")
+        bring_to_front("Hammer 5 Tools")
         sys.exit(0)
 
     app = QApplication(sys.argv)
