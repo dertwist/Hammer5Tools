@@ -30,6 +30,8 @@ class Var_class_float(QWidget):
             self.ui.max_checkBox.setChecked(True)
             self.ui.max_doubleSpinBox.setValue(self.max)
 
+
+
         self.ui.value_doubleSpinBox.setValue(self.default)
 
         self.ui.min_checkBox.clicked.connect(lambda: self.checkbox_setEnabled(checkbox=self.ui.min_checkBox, doubleSpinBox=self.ui.min_doubleSpinBox))
@@ -42,6 +44,9 @@ class Var_class_float(QWidget):
         self.ui.min_doubleSpinBox.valueChanged.connect(self.on_changed)
         self.ui.max_doubleSpinBox.valueChanged.connect(self.on_changed)
         self.ui.value_doubleSpinBox.valueChanged.connect(self.on_changed)
+
+        self.on_changed()
+
     def checkbox_setEnabled(self, checkbox=None, doubleSpinBox=None):
         if checkbox.isChecked():
             doubleSpinBox.setEnabled(True)
