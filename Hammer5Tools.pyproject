@@ -27,6 +27,7 @@
         "smartprop_editor/variable_frame.ui",
         "smartprop_editor/variables/int.ui",
         "smartprop_editor/variables/legacy.ui",
+        "smartprop_editor/variables/material_group.ui",
         "smartprop_editor/variables/float.ui",
         "main.ui"
     ]

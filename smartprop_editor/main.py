@@ -183,10 +183,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         var_display_name = None
         var_visible_in_editor = False
         var_value = {
-            'default':(None),
-            'min': (None),
-            'max': (None),
-            'model': (None)
+            'default':None,
+            'min': None,
+            'max': None,
+            'model': None
         }
         self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor,var_class=var_class, var_display_name=var_display_name)
 
