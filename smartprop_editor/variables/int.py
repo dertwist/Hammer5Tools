@@ -12,9 +12,10 @@ class Var_class_Int(QWidget):
         self.setAcceptDrops(True)
         self.model = None
         if default == None:
-            self.default = int(0)
+            pass
         else:
             self.default = int(default)
+            self.ui.value_spinBox.setValue(self.default)
         if min == None:
             self.ui.min_checkBox.setChecked(False)
             self.ui.min_spinBox.setEnabled(False)
@@ -30,7 +31,9 @@ class Var_class_Int(QWidget):
             self.ui.max_checkBox.setChecked(True)
             self.ui.max_spinBox.setValue(self.max)
 
-        self.ui.value_spinBox.setValue(self.default)
+
+
+
 
         self.ui.min_checkBox.clicked.connect(lambda: self.checkbox_setEnabled(checkbox=self.ui.min_checkBox, spinbox=self.ui.min_spinBox))
         self.ui.max_checkBox.clicked.connect(lambda: self.checkbox_setEnabled(checkbox=self.ui.max_checkBox, spinbox=self.ui.max_spinBox))
@@ -42,6 +45,7 @@ class Var_class_Int(QWidget):
         self.ui.min_spinBox.valueChanged.connect(self.on_changed)
         self.ui.max_spinBox.valueChanged.connect(self.on_changed)
         self.ui.value_spinBox.valueChanged.connect(self.on_changed)
+        self.on_changed()
     def checkbox_setEnabled(self, checkbox=None, spinbox=None):
         if checkbox.isChecked():
             spinbox.setEnabled(True)
