@@ -52,6 +52,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
         self.ui.open_file_button.clicked.connect(self.open_file)
         self.ui.save_file_button.clicked.connect(self.save_file)
+        self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
 
     def open_file(self):
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
@@ -91,6 +92,18 @@ class SmartPropEditorMainWindow(QMainWindow):
         print(filename)
         VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget)
     # variables
+
+    def search_variables(self, search_term):
+        variables = self.get_variables(self.ui.variables_scrollArea)
+
+        for i in range(self.ui.variables_scrollArea.layout().count()):
+            widget = self.ui.variables_scrollArea.layout().itemAt(i).widget()
+            if widget:
+                if search_term.lower() in widget.name.lower():  # Adjust the search logic as needed
+                    widget.show()
+                else:
+                    widget.hide()
+
     def add_new_variable(self):
         name = 'new_var'
         existing_variables = []
@@ -122,14 +135,23 @@ class SmartPropEditorMainWindow(QMainWindow):
         index = (self.ui.variables_scrollArea.count()) - 1
         self.ui.variables_scrollArea.insertWidget(index, variable)
 
-    def get_variables(self, layout):
-        data_out = {}
-        for i in range(layout.count()):
-            widget = layout.itemAt(i).widget()
-            if widget:
-                item = {i: [widget.name, widget.var_class, widget.var_value, widget.var_visible_in_editor]}
-                data_out.update(item)
-        return data_out
+    def get_variables(self, layout, only_names=False):
+        if only_names:
+            data_out = {}
+            for i in range(layout.count()):
+                widget = layout.itemAt(i).widget()
+                if widget:
+                    item = {i: [widget.name, widget.var_class, widget.var_display_name]}
+                    data_out.update(item)
+            return data_out
+        else:
+            data_out = {}
+            for i in range(layout.count()):
+                widget = layout.itemAt(i).widget()
+                if widget:
+                    item = {i: [widget.name, widget.var_class, widget.var_value, widget.var_visible_in_editor, widget.var_display_name]}
+                    data_out.update(item)
+            return data_out
 
     # ContextMenu
     def contextMenuEvent(self, event):
