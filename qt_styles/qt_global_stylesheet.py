@@ -548,6 +548,65 @@ QTextEdit::selection {
 
 /* ========================================================== */
 
+QSpinBox {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    padding-left: 2px;
+    padding-right: 2px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+QSpinBox:focus {
+}
+
+QSpinBox:hover {
+}
+
+QSpinBox:pressed {
+	background-color: #121212;
+}
+
+QSpinBox::up-button {
+    border: 0px solid black;
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    border-left: 2px solid black;
+    border-bottom: 0px solid black;
+    border-top-right-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+	width:16px;
+    margin:0px;
+}
+
+QSpinBox::up-arrow {
+    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    width: 20px;
+    height: 20px;
+}
+
+QSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+	border: 0px solid black;
+    border-left: 2px solid black;
+    border-top: 2px solid black;
+border-bottom-right-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+	width:16px;
+    margin:0px;
+}
+
+QSpinBox::down-arrow {
+    image: url(://icons/arrow_drop_down_16dp.svg);
+    width: 20px;
+    height: 20px;
+}
+
+/* ========================================================== */
+
 QDoubleSpinBox {
     font: 580 10pt "Segoe UI";
     border: 2px solid black;
