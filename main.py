@@ -62,6 +62,8 @@ class Widget(QMainWindow):
 
 
 
+
+
         try:
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except Exception as e:
@@ -210,6 +212,7 @@ class Widget(QMainWindow):
         os.startfile(f"{cs2_path}{folder_path}\\{addon_name}")
 
     def open_preferences_dialog(self):
+        # self.ui.console.setWindowState()
         if self.preferences_dialog is None:
             self.preferences_dialog = PreferencesDialog(app_version, self)
             self.preferences_dialog.show()
@@ -217,7 +220,6 @@ class Widget(QMainWindow):
 
     def preferences_dialog_closed(self):
         self.preferences_dialog = None
-
     def open_create_addon_dialog(self):
         if self.Create_addon_Dialog is None:
             self.Create_addon_Dialog = Create_addon_Dialog(self)

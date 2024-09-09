@@ -621,7 +621,7 @@ QTabBar::tab:selected {
   <widget class="QDockWidget" name="dockWidget">
    <property name="minimumSize">
     <size>
-     <width>88</width>
+     <width>107</width>
      <height>107</height>
     </size>
    </property>
@@ -634,8 +634,11 @@ QTabBar::tab:selected {
    <property name="styleSheet">
     <string notr="true"/>
    </property>
+   <property name="floating">
+    <bool>true</bool>
+   </property>
    <property name="features">
-    <set>QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
     <string>Console</string>

@@ -97,7 +97,6 @@ class PreferencesDialog(QDialog):
 
 
 
-
         try:
             # paths
             self.ui.preferences_lineedit_cs2_path.setText(get_cs2_path())
@@ -123,7 +122,6 @@ class PreferencesDialog(QDialog):
         self.ui.setup_ncm_mode.clicked.connect(self.setup_ncm_mode)
         self.ui.open_presets_folder_button.clicked.connect(self.open_presets_folder)
         self.ui.check_update_button.clicked.connect(self.check_update)
-
         # version
         self.ui.version_label.setText(f"Version: {app_version}")
 
@@ -147,7 +145,6 @@ class PreferencesDialog(QDialog):
         #start with systenm
         set_config_bool('APP', 'start_with_system', self.ui.checkBox_start_with_system.isChecked())
         self.start_with_system()
-
 
 
     def open_settings_fodler(self):
