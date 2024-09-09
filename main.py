@@ -43,6 +43,9 @@ class Stream(QObject):
 
     def write(self, text):
         self.newText.emit(str(text))
+
+    def flush(self):
+        pass
 class Widget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -59,22 +62,18 @@ class Widget(QMainWindow):
         self.Delete_addon_Dialog = None
         self.current_tab(False)
         self.settings = settings
-
-
-
-
-
         try:
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except Exception as e:
             print(f"Error checking updates: {e}")
-        if get_config_bool('APP', 'first_launch'):
-            self.open_documentation()
-            set_config_bool('APP', 'first_launch', False)
 
         self._restore_user_prefs()
-    def __del__(self):
-        sys.stdout = sys.__stdout__
+        if get_config_bool('APP', 'first_launch'):
+            self.open_documentation()
+            self.settings.setValue("MainWindow/default_windowState", self.saveState())
+            set_config_bool('APP', 'first_launch', False)
+    # def __del__(self):
+    #     sys.stdout = sys.__stdout__
     def on_update(self, text):
         cursor = self.ui.console.textCursor()
         cursor.movePosition(QTextCursor.End)
@@ -211,12 +210,15 @@ class Widget(QMainWindow):
         folder_path = r"\game\csgo_addons" if folder_name == "Game" else r"\content\csgo_addons"
         os.startfile(f"{cs2_path}{folder_path}\\{addon_name}")
 
+    def reset_window(self):
+        state = self.settings.value("MainWindow/default_windowState")
+        self.restoreState(state)
     def open_preferences_dialog(self):
-        # self.ui.console.setWindowState()
         if self.preferences_dialog is None:
             self.preferences_dialog = PreferencesDialog(app_version, self)
             self.preferences_dialog.show()
             self.preferences_dialog.finished.connect(self.preferences_dialog_closed)
+            self.preferences_dialog.reset_window_signal.connect(self.reset_window)
 
     def preferences_dialog_closed(self):
         self.preferences_dialog = None

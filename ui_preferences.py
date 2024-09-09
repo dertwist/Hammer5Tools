@@ -670,6 +670,45 @@ class Ui_preferences_dialog(object):
 
         self.horizontalLayout_18.addWidget(self.launch_addon_after_nosteamlogon_fix)
 
+        self.reset_console_button = QPushButton(self.frame_17)
+        self.reset_console_button.setObjectName(u"reset_console_button")
+        self.reset_console_button.setStyleSheet(u"    QLabel {\n"
+"        font-family: Sergo UI;\n"
+"        color: #9D9D9D;\n"
+"    }\n"
+"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 600 10pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+
+        self.horizontalLayout_18.addWidget(self.reset_console_button)
+
 
         self.verticalLayout_4.addWidget(self.frame_17)
 
@@ -913,6 +952,7 @@ class Ui_preferences_dialog(object):
         self.setup_ncm_mode.setText(QCoreApplication.translate("preferences_dialog", u"Setup NCM mode", None))
         self.checkBox_start_with_system.setText(QCoreApplication.translate("preferences_dialog", u"Start with system", None))
         self.launch_addon_after_nosteamlogon_fix.setText(QCoreApplication.translate("preferences_dialog", u"Launch the addon after NoSteamLogon fix", None))
+        self.reset_console_button.setText(QCoreApplication.translate("preferences_dialog", u"Reset console position", None))
         self.check_update_button.setText(QCoreApplication.translate("preferences_dialog", u"Check Update", None))
         self.version_label.setText(QCoreApplication.translate("preferences_dialog", u"TextLabel", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.onter_preferences_tab), QCoreApplication.translate("preferences_dialog", u"Other", None))
