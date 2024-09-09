@@ -148,7 +148,7 @@ class Ui_Widget(object):
 "    width: 20px;\n"
 "    height: 20px;\n"
 "}")
-        self.value_doubleSpinBox.setDecimals(1)
+        self.value_doubleSpinBox.setDecimals(2)
         self.value_doubleSpinBox.setMinimum(-99999999999.000000000000000)
         self.value_doubleSpinBox.setMaximum(99999999999.000000000000000)
         self.value_doubleSpinBox.setSingleStep(0.100000000000000)
@@ -271,9 +271,9 @@ class Ui_Widget(object):
 "QDoubleSpinBox:disabled {\n"
 "	color: rgba(125, 125, 125, 100);\n"
 "}")
-        self.min_doubleSpinBox.setDecimals(1)
-        self.min_doubleSpinBox.setMinimum(-9.900000000000000)
-        self.min_doubleSpinBox.setMaximum(9.900000000000000)
+        self.min_doubleSpinBox.setDecimals(2)
+        self.min_doubleSpinBox.setMinimum(-99999999999.000000000000000)
+        self.min_doubleSpinBox.setMaximum(99999999999.000000000000000)
         self.min_doubleSpinBox.setSingleStep(0.100000000000000)
 
         self.horizontalLayout_7.addWidget(self.min_doubleSpinBox)
@@ -395,7 +395,7 @@ class Ui_Widget(object):
 "QDoubleSpinBox:disabled {\n"
 "	color: rgba(125, 125, 125, 100);\n"
 "}")
-        self.max_doubleSpinBox.setDecimals(1)
+        self.max_doubleSpinBox.setDecimals(2)
         self.max_doubleSpinBox.setMinimum(-99999999999.000000000000000)
         self.max_doubleSpinBox.setMaximum(99999999999.000000000000000)
         self.max_doubleSpinBox.setSingleStep(0.100000000000000)
