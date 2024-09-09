@@ -61,11 +61,9 @@ class VsmartOpen:
             line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
             line_vsmartdata_tree_structure = (lines[lines_count - 2].strip().split('//Hammer5Tools_vsmartdata_tree_structure:'))[1]
             line_vsmartdata_variables = (lines[lines_count - 3].strip().split('//Hammer5Tools_vsmartdata_variables:'))[1]
-            print('Hammer5Tools_vsmartdata_metadata ',line_vsmartdata_tree_structure)
-            print('line_vsmartdata_options ',line_vsmartdata_options)
-            print('line_vsmartdata_variables ',line_vsmartdata_variables)
+            print('Loaded h5t structure from vsmart')
             vsmartdata_tree_structure = ast.literal_eval(line_vsmartdata_tree_structure)
-            self.variables = line_vsmartdata_variables
+            self.variables = ast.literal_eval(line_vsmartdata_variables)
             self.load_tree_from_file(vsmartdata_tree_structure)
     def load_tree_from_file(self, data, parent=None):
         if parent is None:
@@ -218,20 +216,23 @@ class VsmartOpen:
                 pass
 
 class VsmartSave:
-    def __init__(self, filename, tree=None):
+    def __init__(self, filename, tree=None, var_data=None):
         self.filename = filename
         self.tree = tree
+        self.var_data = var_data
         self.save_file()
 
     def save_file(self):
         data = self.tree_to_file(self.tree.invisibleRootItem())
         # data = self.convert_children_to_list(data)
         converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
+        if self.var_data is not None:
+            converted_data.update({'m_Variables': self.var_data})
         print(converted_data)
         kv3.write(converted_data, self.filename)
         # print(data_raw)
         with open(self.filename, 'a') as file:
-            file.write('//Hammer5Tools_vsmartdata_variables:' + '\n')
+            file.write('//Hammer5Tools_vsmartdata_variables:' + str(self.var_data) + '\n')
             file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data) + '\n')
             file.write('//Hammer5Tools_vsmartdata_metadata:' + '\n')
 
