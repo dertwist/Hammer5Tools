@@ -87,10 +87,56 @@ class SmartPropEditorMainWindow(QMainWindow):
                 self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
         print(f'Opened file: {filename}')
     def save_file(self):
+        def save_variables():
+            variables = []
+            raw_variables = self.get_variables(self.ui.variables_scrollArea)
+            for var_key, var_key_value in raw_variables.items():
+                var_default = (var_key_value[2])['default']
+                if var_default == None:
+                    var_default = ''
+                var_min = (var_key_value[2])['min']
+                var_max = (var_key_value[2])['max']
+                var_model = (var_key_value[2])['model']
+                var_class = var_key_value[1]
+                print('var min', type(var_min), var_min)
+
+                # Basic
+                var_dict = {
+                    '_class': variable_prefix+var_class,
+                    'm_VariableName': var_key_value[0],
+                    'm_bExposeAsParameter':  var_key_value[3],
+                    'm_DefaultValue': var_default
+                }
+                # If display name none set variable name as display
+                if var_key_value[4] == None or var_key_value[4] == '':
+                    var_dict.update({'m_ParameterName': var_key_value[0]})
+                else:
+                    var_dict.update({'m_ParameterName': var_key_value[4]})
+
+                if var_min is not None:
+                    if var_class == 'Float':
+                        var_dict.update({'m_flParamaterMinValue': var_min})
+                    elif var_class == 'Int':
+                        var_dict.update({'m_nParamaterMinValue': var_min})
+
+                if var_max is not None:
+                    if var_class == 'Float':
+                        var_dict.update({'m_flParamaterMaxValue': var_max})
+                    elif var_class == 'Int':
+                        var_dict.update({'m_nParamaterMaxValue': var_max})
+
+                if var_model is not None:
+                    var_dict.update({'m_sModelName': var_model})
+
+                variables.append(var_dict)
+
+            return variables
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
         filename = opened_file
+        var_data = save_variables()
+        print(var_data)
         print(filename)
-        VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget)
+        # VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget)
     # variables
 
     def search_variables(self, search_term):
