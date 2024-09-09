@@ -695,12 +695,7 @@ QTabBar::tab:selected {
 QPlainTextEdit:focus {
 
     background-color: #1C1C1C;
-}
-QPlainTextEdit:hover {
-    background-color: #414956;
-    color: white;
-}
-</string>
+}</string>
        </property>
        <property name="tabChangesFocus">
         <bool>false</bool>
