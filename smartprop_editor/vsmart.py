@@ -221,6 +221,7 @@ class VsmartSave:
         self.tree = tree
         self.var_data = var_data
         self.save_file()
+        print(f'Saved File: {filename}')
 
     def save_file(self):
         data = self.tree_to_file(self.tree.invisibleRootItem())
@@ -228,7 +229,6 @@ class VsmartSave:
         converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
         if self.var_data is not None:
             converted_data.update({'m_Variables': self.var_data})
-        print(converted_data)
         kv3.write(converted_data, self.filename)
         # print(data_raw)
         with open(self.filename, 'a') as file:
