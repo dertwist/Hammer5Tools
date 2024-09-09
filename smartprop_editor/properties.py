@@ -26,11 +26,16 @@ class Properties:
     def populate_class_properties(self):
         item = self.tree.topLevelItem(0)
         self.clear_children(item)
+        item.setText(0, self.data['_class'].replace('CSmartPropElement_',''))
         for key, value in self.data.items():
             print('key', key)
             if key == 'm_Modifiers':
                 pass
             elif key == 'm_SelectionCriteria':
+                pass
+            elif key == '_class':
+                pass
+            elif key == 'm_nElementID':
                 pass
             else:
                 self.new_item(item, key, value, edit=True)
@@ -39,15 +44,27 @@ class Properties:
         self.clear_children(item)
         if 'm_Modifiers' in self.data:
             for modifier in self.data['m_Modifiers']:
-                modifier_item = self.new_item(item, modifier['_class'], '')
+                modifier_item = self.new_item(item, modifier['_class'].replace('CSmartPropOperation_', ''), '')
+                modifier_item.setExpanded(True)
                 for key, value in modifier.items():
-                    self.new_item(modifier_item, key, value, edit=True)
+                    if key == 'm_nElementID':
+                        pass
+                    if key == '_class':
+                        pass
+                    else:
+                        self.new_item(modifier_item, key, value, edit=True)
     def populate_selection_critiria(self):
         item = self.tree.topLevelItem(2)
         self.clear_children(item)
         if 'm_SelectionCriteria' in self.data:
             for modifier in self.data['m_SelectionCriteria']:
-                modifier_item = self.new_item(item, modifier['_class'].replace('CSmartPropSelectionCriteria_', ''),
-                                              '')
+                modifier_item = self.new_item(item, modifier['_class'].replace('CSmartPropSelectionCriteria_', ''),'')
+                modifier_item.setExpanded(True)
                 for key, value in modifier.items():
-                    self.new_item(modifier_item, key, value, edit=True)
+                    if key == 'm_nElementID':
+                        pass
+                    if key == '_class':
+                        pass
+                    else:
+                        self.new_item(modifier_item, key, value, edit=True)
+
