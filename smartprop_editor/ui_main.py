@@ -179,10 +179,6 @@ class Ui_MainWindow(object):
         __qtreewidgetitem3 = QTreeWidgetItem()
         __qtreewidgetitem3.setText(0, u"Operator");
         self.tree_hierarchy_widget.setHeaderItem(__qtreewidgetitem3)
-        __qtreewidgetitem4 = QTreeWidgetItem(self.tree_hierarchy_widget)
-        QTreeWidgetItem(__qtreewidgetitem4)
-        __qtreewidgetitem5 = QTreeWidgetItem(self.tree_hierarchy_widget)
-        QTreeWidgetItem(__qtreewidgetitem5)
         self.tree_hierarchy_widget.setObjectName(u"tree_hierarchy_widget")
         self.tree_hierarchy_widget.setDragEnabled(True)
         self.tree_hierarchy_widget.setDragDropOverwriteMode(True)
@@ -614,19 +610,6 @@ class Ui_MainWindow(object):
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem7 = self.tree_hierarchy_widget.headerItem()
         ___qtreewidgetitem7.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
-
-        __sortingEnabled1 = self.tree_hierarchy_widget.isSortingEnabled()
-        self.tree_hierarchy_widget.setSortingEnabled(False)
-        ___qtreewidgetitem8 = self.tree_hierarchy_widget.topLevelItem(0)
-        ___qtreewidgetitem8.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_PickOne", None));
-        ___qtreewidgetitem9 = ___qtreewidgetitem8.child(0)
-        ___qtreewidgetitem9.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
-        ___qtreewidgetitem10 = self.tree_hierarchy_widget.topLevelItem(1)
-        ___qtreewidgetitem10.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_Group", None));
-        ___qtreewidgetitem11 = ___qtreewidgetitem10.child(0)
-        ___qtreewidgetitem11.setText(0, QCoreApplication.translate("MainWindow", u"CSmartPropElement_SmartProp", None));
-        self.tree_hierarchy_widget.setSortingEnabled(__sortingEnabled1)
-
         self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
         self.variables_scroll_area_searchbar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         self.add_new_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
