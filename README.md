@@ -30,14 +30,3 @@ Allows you to edit multiple files with the same parameters at one time. For exam
 
 ### SmartProp Editor:
 A tool that helps with smartprops creation in the game.
-
-
-
-| Tool | Status |
-| ------ | ------ |
-| Loading Editor | Done |
-| SoundEvent Editor | Done |
-| Hotkey Editor | planned |
-| BatchCreator | Done |
-| SmartProp Editor | In process |
-| Sync Editor | planned |
