@@ -4,13 +4,14 @@
 #     pass
 
 from PySide6.QtWidgets import QDialog
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, Signal
 from ui_preferences import Ui_preferences_dialog
 import os,subprocess
 from minor_features.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
 from minor_features.NCM_mode_setup_main import NCM_mode_setup
 import winreg as reg
 from minor_features.update_check import check_updates
+
 
 
 settings = QSettings(QSettings.IniFormat, QSettings.UserScope, "DerTwist\\Hammer5Tools", "settings")
@@ -88,6 +89,7 @@ def set_addon_name(addon_name_set):
 
 
 class PreferencesDialog(QDialog):
+    reset_window_signal = Signal()
     def __init__(self, app_version, parent=None):
         super().__init__(parent)
         self.ui = Ui_preferences_dialog()
@@ -122,9 +124,12 @@ class PreferencesDialog(QDialog):
         self.ui.setup_ncm_mode.clicked.connect(self.setup_ncm_mode)
         self.ui.open_presets_folder_button.clicked.connect(self.open_presets_folder)
         self.ui.check_update_button.clicked.connect(self.check_update)
+        self.ui.reset_console_button.clicked.connect(self.reset_console)
         # version
         self.ui.version_label.setText(f"Version: {app_version}")
 
+    def reset_console(self):
+        self.reset_window_signal.emit()
     def apply_preferences(self):
         # paths
         set_config_value('PATHS', 'cs2', self.ui.preferences_lineedit_cs2_path.text())

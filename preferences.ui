@@ -1110,6 +1110,49 @@ QCheckBox:hover {
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="reset_console_button">
+            <property name="styleSheet">
+             <string notr="true">    QLabel {
+        font-family: Sergo UI;
+        color: #9D9D9D;
+    }
+
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 600 10pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 4px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+            </property>
+            <property name="text">
+             <string>Reset console position</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
