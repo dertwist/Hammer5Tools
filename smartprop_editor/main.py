@@ -150,7 +150,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         var_data = save_variables()
         print(var_data)
         print(filename)
-        # VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget)
+        VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data)
     # variables
 
     def search_variables(self, search_term):
