@@ -30,6 +30,7 @@
         "smartprop_editor/variables/material_group.ui",
         "smartprop_editor/variables/bool.ui",
         "smartprop_editor/variables/float.ui",
+        "smartprop_editor/variables/color.ui",
         "main.ui"
     ]
 }
