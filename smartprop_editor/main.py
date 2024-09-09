@@ -1,7 +1,7 @@
 import os.path
 from distutils.util import strtobool
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction
 from PySide6.QtCore import Qt
@@ -11,7 +11,7 @@ from preferences import get_config_value, get_addon_name, get_cs2_path
 
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_list, operators_list, operator_prefix
-from smartprop_editor.vsmart import VsmartOpen, VsmartSave
+from smartprop_editor.vsmart import VsmartOpen, VsmartSave, VsmartCompile
 from smartprop_editor.properties import Properties
 from popup_menu.popup_menu_main import PopupMenu
 
@@ -44,8 +44,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         # restore_prefs
         self._restore_user_prefs()
 
-        tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), 'smartprops')
-        self.mini_explorer = Explorer(tree_directory=tree_directory, addon=get_addon_name(), editor_name='SmartProp_editor', parent=self.ui.explorer_layout_widget)
+        self.tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), 'smartprops')
+        self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name='SmartProp_editor', parent=self.ui.explorer_layout_widget)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
         self.buttons()
@@ -53,9 +53,11 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def buttons(self):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
-        self.ui.open_file_button.clicked.connect(self.open_file)
+        self.ui.open_file_button.clicked.connect(lambda: self.open_file(filename=None))
         self.ui.save_file_button.clicked.connect(self.save_file)
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
+        self.ui.cerate_file_button.clicked.connect(self.create_new_file)
+        self.ui.compile_all_button.clicked.connect(self.compile_all)
 
 
     def on_tree_current_item_changed(self, item):
@@ -97,10 +99,64 @@ class SmartPropEditorMainWindow(QMainWindow):
         parent.addChild(new_element)
 
     # Vsmart format
-    def open_file(self):
+
+    def compile_all(self):
+        # Show a confirmation dialog before compiling
+        reply = QMessageBox.question(self, 'Confirmation',
+                                     'Are you sure you want to compile? The current file will be closed. Proceed?',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            total_files = sum(len(files) for _, _, files in os.walk(self.tree_directory))
+            progress_dialog = QProgressDialog(f'Compiling...', 'Cancel', 0, total_files,
+                                              self)
+            progress = 0
+
+            for root, dirs, files in os.walk(self.tree_directory):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    # progress_file_name = os.path.basename(file_path)
+                    self.open_file(filename=file_path)
+
+                    # Simulate progress update
+                    progress += 1
+                    progress_dialog.setValue(progress)
+                    self.save_file()
+
+                    # Check if the user canceled the compilation
+                    if progress_dialog.wasCanceled():
+                        break
+
+            progress_dialog.close()  # Close the progress dialog when compilation is complete
+        else:
+            # Handle the case when the user chooses not to proceed with compilation
+            pass
+
+    def create_new_file(self):
+        from smartprop_editor.blank_vsmart import blank_vsmart
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
         filename = self.mini_explorer.model.filePath(index)
+        if os.path.splitext(filename)[1] == '':
+            current_folder = filename
+        else:
+            current_folder = self.tree_directory
+
+        counter = 0
+        new_file_name = f"new_smartprop_{counter:02}.vsmart"
+        while os.path.exists(os.path.join(current_folder, new_file_name)):
+            counter += 1
+            new_file_name = f"new_smartprop_{counter:02}.vsmart"
+
+
+        with open(os.path.join(current_folder, new_file_name), 'w') as file:
+            file.write(blank_vsmart)
+            pass
+    def open_file(self, filename=None):
         global opened_file
+        if filename == None:
+            index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
+            filename = self.mini_explorer.model.filePath(index)
+            print(filename)
         opened_file = filename
         # VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
         # variables = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget).variables
@@ -194,6 +250,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         print(var_data)
         print(filename)
         VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data)
+        VsmartCompile(filename=filename)
 
     # variables
 
