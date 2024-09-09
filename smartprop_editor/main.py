@@ -12,6 +12,7 @@ from preferences import get_config_value, get_addon_name, get_cs2_path
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave
+from smartprop_editor.properties import Properties
 
 from explorer.main import Explorer
 from preferences import settings
@@ -33,6 +34,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.hideColumn(1)
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
+        self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
 
         # adding var classes to combobox
         for item in variables_list:
@@ -53,6 +55,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.open_file_button.clicked.connect(self.open_file)
         self.ui.save_file_button.clicked.connect(self.save_file)
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
+
+
+    def on_tree_current_item_changed(self, item):
+        properties_instance = Properties(tree=self.ui.properties_tree, data=item.text(1))
+        print(properties_instance.data)
 
     def open_file(self):
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
