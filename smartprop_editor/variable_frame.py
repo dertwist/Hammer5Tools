@@ -9,9 +9,6 @@ from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
 
-from smartprop_editor.variables.int import Var_class_Int
-from smartprop_editor.variables.float import Var_class_float
-from smartprop_editor.variables.legacy import Var_class_legacy
 
 import ast
 
@@ -32,10 +29,10 @@ class VariableFrame(QWidget):
         self.var_display_name = var_display_name
 
         self.var_value = {
-            'default': None,
-            'min': None,
-            'max': None,
-            'model': None
+            'default': self.var_default,
+            'min':  self.var_min,
+            'max':  self.var_max,
+            'model':  self.var_model
         }
 
         self.ui.variable_name.setText(name)
@@ -46,14 +43,24 @@ class VariableFrame(QWidget):
         self.ui.varialbe_display_name.textChanged.connect(self.update_self)
         self.ui.variable_name.textChanged.connect(self.update_self)
         self.widget_list = widget_list
+
+
+
+
         if var_class == 'Int':
+            from smartprop_editor.variables.int import Var_class_Int
             self.var_int_instance = Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
         elif var_class == 'Float':
+            from smartprop_editor.variables.float import Var_class_float
             self.var_int_instance = Var_class_float(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
+        elif var_class == 'MaterialGroup':
+            from smartprop_editor.variables.material_group import Var_class_material_group
+            self.var_int_instance = Var_class_material_group(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
         else:
+            from smartprop_editor.variables.legacy import Var_class_legacy
             self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
 
-        self.var_int_instance.edited.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max,var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
+        self.var_int_instance.edited.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max, var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
         self.ui.layout.insertWidget(1, self.var_int_instance)
 
         self.show_child()
