@@ -493,10 +493,12 @@ QPlainTextEdit{
     color: #E3E3E3;
     background-color: #1C1C1C;
 }
-QPlainTextEdit:hover {
+
+/* QPlainTextEdit:hover {
     background-color: #414956;
     color: white;
-}
+} */
+
 QPlainTextEdit:pressed {
     background-color: red;
     background-color: #1C1C1C;

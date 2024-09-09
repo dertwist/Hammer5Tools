@@ -118,7 +118,7 @@ class Ui_MainWindow(object):
         self.properties_tree.setDragDropMode(QAbstractItemView.NoDragDrop)
         self.properties_tree.setAlternatingRowColors(True)
         self.properties_tree.setSelectionMode(QAbstractItemView.ContiguousSelection)
-        self.properties_tree.setUniformRowHeights(False)
+        self.properties_tree.setUniformRowHeights(True)
         self.properties_tree.setSortingEnabled(False)
         self.properties_tree.setAnimated(False)
         self.properties_tree.header().setVisible(True)
