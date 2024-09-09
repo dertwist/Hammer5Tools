@@ -12,10 +12,13 @@ class Var_class_Int(QWidget):
         self.setAcceptDrops(True)
         self.model = None
         if default == None:
-            pass
+            self.default = int(0)
         else:
-            self.default = int(default)
-            self.ui.value_spinBox.setValue(self.default)
+            try:
+                self.default = int(default)
+                self.ui.value_spinBox.setValue(self.default)
+            except:
+                pass
         if min == None:
             self.ui.min_checkBox.setChecked(False)
             self.ui.min_spinBox.setEnabled(False)
@@ -55,4 +58,4 @@ class Var_class_Int(QWidget):
         self.min = self.ui.min_spinBox.value()
         self.max = self.ui.max_spinBox.value()
         self.default = self.ui.value_spinBox.value()
-        self.edited.emit(self.default, self.min, self.max, str(self.model))
+        self.edited.emit(int(self.default), self.min, self.max, str(self.model))

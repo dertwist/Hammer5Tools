@@ -14,7 +14,11 @@ class Var_class_float(QWidget):
         if default == None:
             self.default = float(0)
         else:
-            self.default = float(default)
+            try:
+                self.default = float(default)
+                self.ui.value_doubleSpinBox.setValue(self.default)
+            except:
+                pass
         if min == None:
             self.ui.min_checkBox.setChecked(False)
             self.ui.min_doubleSpinBox.setEnabled(False)
@@ -32,7 +36,7 @@ class Var_class_float(QWidget):
 
 
 
-        self.ui.value_doubleSpinBox.setValue(self.default)
+
 
         self.ui.min_checkBox.clicked.connect(lambda: self.checkbox_setEnabled(checkbox=self.ui.min_checkBox, doubleSpinBox=self.ui.min_doubleSpinBox))
         self.ui.max_checkBox.clicked.connect(lambda: self.checkbox_setEnabled(checkbox=self.ui.max_checkBox, doubleSpinBox=self.ui.max_doubleSpinBox))
@@ -45,7 +49,7 @@ class Var_class_float(QWidget):
         self.ui.max_doubleSpinBox.valueChanged.connect(self.on_changed)
         self.ui.value_doubleSpinBox.valueChanged.connect(self.on_changed)
 
-        self.on_changed()
+
 
     def checkbox_setEnabled(self, checkbox=None, doubleSpinBox=None):
         if checkbox.isChecked():
@@ -56,4 +60,4 @@ class Var_class_float(QWidget):
         self.min = self.ui.min_doubleSpinBox.value()
         self.max = self.ui.max_doubleSpinBox.value()
         self.default = self.ui.value_doubleSpinBox.value()
-        self.edited.emit(self.default, self.min, self.max, str(self.model))
+        self.edited.emit(float(self.default), self.min, self.max, str(self.model))
