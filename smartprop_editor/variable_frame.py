@@ -45,16 +45,14 @@ class VariableFrame(QWidget):
         self.widget_list = widget_list
         if var_class == 'Int':
             self.var_int_instance = Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
-            # self.var_int_instance.signal.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max, var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
-            self.var_int_instance.signal.connect(lambda default=1, min_val='f', max_val='f', model='d': self.on_changed(default, min_val, max_val, model))
-            self.ui.layout.insertWidget(1, Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None))
         elif var_class == 'Float':
             self.var_int_instance = Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
-            self.var_int_instance.signal.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max,var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
-            self.ui.layout.insertWidget(1, Var_class_Int(default=self.var_default, min=self.var_min, max=self.var_max,
-                                                         model=None))
         else:
-            self.ui.layout.insertWidget(1, Var_class_legacy(var_value=self.var_default))
+            self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
+
+        self.var_int_instance.edited.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max,var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
+        self.ui.layout.insertWidget(1, self.var_int_instance)
+
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 
@@ -66,8 +64,7 @@ class VariableFrame(QWidget):
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
-    def on_changed(self, var_default, var_min, var_max, var_model):
-        print('1')
+    def on_changed(self, var_default=None, var_min=None, var_max=None, var_model=None):
         print(self.var_value)
         self.var_value = {
             'default': var_default if var_default else None,
