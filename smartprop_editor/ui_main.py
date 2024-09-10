@@ -111,6 +111,7 @@ class Ui_MainWindow(object):
         __qtreewidgetitem2.setFlags(Qt.ItemIsSelectable|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled);
         __qtreewidgetitem2.setIcon(0, icon6);
         self.properties_tree.setObjectName(u"properties_tree")
+        self.properties_tree.setEditTriggers(QAbstractItemView.EditKeyPressed)
         self.properties_tree.setTabKeyNavigation(False)
         self.properties_tree.setProperty("showDropIndicator", True)
         self.properties_tree.setDragEnabled(False)
@@ -118,7 +119,7 @@ class Ui_MainWindow(object):
         self.properties_tree.setDragDropMode(QAbstractItemView.NoDragDrop)
         self.properties_tree.setAlternatingRowColors(True)
         self.properties_tree.setSelectionMode(QAbstractItemView.ContiguousSelection)
-        self.properties_tree.setUniformRowHeights(True)
+        self.properties_tree.setUniformRowHeights(False)
         self.properties_tree.setSortingEnabled(False)
         self.properties_tree.setAnimated(False)
         self.properties_tree.header().setVisible(True)
