@@ -134,7 +134,7 @@ class Ui_MainWindow(object):
         self.label.setSizePolicy(sizePolicy)
         self.label.setStyleSheet(u"font: 24pt \"Segoe UI\";")
         self.label.setScaledContents(False)
-        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setMargin(0)
 
         self.verticalLayout_3.addWidget(self.label)
@@ -153,7 +153,7 @@ class Ui_MainWindow(object):
         self.label_4.setSizePolicy(sizePolicy)
         self.label_4.setStyleSheet(u"font: 24pt \"Segoe UI\";")
         self.label_4.setScaledContents(False)
-        self.label_4.setAlignment(Qt.AlignCenter)
+        self.label_4.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label_4.setMargin(0)
 
         self.verticalLayout_6.addWidget(self.label_4)
@@ -323,8 +323,8 @@ class Ui_MainWindow(object):
         self.dockWidget.setMinimumSize(QSize(107, 107))
         self.dockWidget.setMaximumSize(QSize(524287, 5433))
         self.dockWidget.setStyleSheet(u"")
-        self.dockWidget.setFloating(True)
-        self.dockWidget.setFeatures(QDockWidget.DockWidgetClosable|QDockWidget.DockWidgetFloatable|QDockWidget.DockWidgetMovable)
+        self.dockWidget.setFloating(False)
+        self.dockWidget.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable|QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.dockWidgetContents = QWidget()
         self.dockWidgetContents.setObjectName(u"dockWidgetContents")
         self.dockWidgetContents.setMaximumSize(QSize(16777215, 16666))
