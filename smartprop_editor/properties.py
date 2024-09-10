@@ -1,6 +1,8 @@
-from PySide6.QtWidgets import QTreeWidgetItem, QTreeWidget
+from PySide6.QtWidgets import QTreeWidgetItem, QTreeWidget, QLineEdit, QCheckBox, QGroupBox, QHBoxLayout, QVBoxLayout, QFrame
+from PySide6.QtCore import QSize
 import ast
-from PySide6.QtCore import Qt,Signal
+from PySide6.QtCore import Qt, Signal
+from qt_styles.qt_smartprops_tree_stylesheet import QT_Stylesheet_smartprop_tree
 class Properties:
     edited = Signal()
     def __init__(self, tree=QTreeWidget, data=None):
@@ -71,6 +73,42 @@ class Properties:
 
 
 class AddProperty:
-    def __init__(self, tree=QTreeWidget, data=None):
-        pass
+    def __init__(self, parent=QTreeWidget, key=None,value=None):
+        name = key
+        self.parent = parent.currentItem()
+        element_value = ast.literal_eval(value)
+        new_element = QTreeWidgetItem()
+        # new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
+        new_element.setText(0, name)
+        new_element.setText(1, '')
+        self.parent.addChild(new_element)
+        new_element.setExpanded(True)
 
+
+        for key, value in element_value.items():
+            if key == 'm_nElementID':
+                pass
+            if key == '_class':
+                pass
+            else:
+                self.new_item(new_element, key, value, edit=True)
+
+    def new_item(self, item, name, value, edit=False):
+        new_child_item = QTreeWidgetItem(item)
+        new_child_item.setText(0, str(name))
+        new_child_item.setText(1, str(value))
+        item.addChild(new_child_item)
+
+        group_box = QFrame()
+        group_layout = QVBoxLayout()
+        group_box.setLayout(group_layout)
+        group_box.setContentsMargins(0, 0, 0, 0)
+
+        for i in range(3):
+            edit_line = QLineEdit()
+            group_layout.addWidget(edit_line)
+
+        widget = QLineEdit()
+        group_box.setStyleSheet(QT_Stylesheet_smartprop_tree)
+        self.parent.treeWidget().setItemWidget(new_child_item, 1, group_box)
+        return new_child_item
