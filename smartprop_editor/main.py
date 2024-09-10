@@ -1,3 +1,4 @@
+import ast
 import os.path
 from distutils.util import strtobool
 
@@ -10,7 +11,7 @@ from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_config_value, get_addon_name, get_cs2_path
 
 from smartprop_editor.variable_frame import VariableFrame
-from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_list, operators_list, operator_prefix
+from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_dict, operators_dict, operator_prefix, selection_criteria_prefix, selection_criteria_dict
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave, VsmartCompile
 from smartprop_editor.properties import Properties
 from smartprop_editor.new_file_options import NewFileOptions
@@ -37,6 +38,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
+
+        # Properties setup
+        self.ui.properties_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.properties_tree.customContextMenuRequested.connect(self.open_properties_menu)
 
         # adding var classes to combobox
         for item in variables_list:
@@ -74,25 +79,67 @@ class SmartPropEditorMainWindow(QMainWindow):
     # Create New elemnt
     def keyPressEvent(self, event):
         focus_widget = QApplication.focusWidget()
-        widget = self.ui.tree_hierarchy_widget
-        if focus_widget is widget:
+        if focus_widget is self.ui.tree_hierarchy_widget:
             if focus_widget.viewport().underMouse():
                 if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
                     self.add_an_element()
 
                     event.accept()
+        if focus_widget is self.ui.properties_tree:
+            if focus_widget.viewport().underMouse():
+                if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                    if self.ui.properties_tree.currentItem().text(0) == 'Modifiers':
+                        self.add_a_operator()
+                    elif self.ui.properties_tree.currentItem().text(0) == 'SelectionCriteria':
+                        self.add_a_selection_criteria()
+
+                    event.accept()
     def add_an_element(self):
-        elements_in_popupmenu = {}
-        for item in elements_list:
-                elements_in_popupmenu.update({item: ''})
-        elements_in_popupmenu = [elements_in_popupmenu]
+        elements_in_popupmenu = [elements_dict]
         self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
+        self.popup_menu.show()
+    def add_a_operator(self):
+
+        item = self.ui.properties_tree.topLevelItem(1)
+        exists_classes = []
+        elements_in_popupmenu = {}
+        for i in range(item.childCount()):
+            exists_classes.append(item.child(i).text(0))
+
+        for key, value in operators_dict.items():
+            if key in exists_classes:
+                pass
+            else:
+                elements_in_popupmenu.update({key: value})
+
+        elements_in_popupmenu = [elements_in_popupmenu]
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.new_operator(name, value))
+        self.popup_menu.show()
+    def add_a_selection_criteria(self):
+
+        item = self.ui.properties_tree.topLevelItem(2)
+        exists_classes = []
+        elements_in_popupmenu = {}
+        for i in range(item.childCount()):
+            exists_classes.append(item.child(i).text(0))
+
+        for key, value in selection_criteria_dict.items():
+            if key in exists_classes:
+                pass
+            else:
+                elements_in_popupmenu.update({key: value})
+
+        elements_in_popupmenu = [elements_in_popupmenu]
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.new_selection_criteria(name, value))
         self.popup_menu.show()
 
     def new_element(self, element_class, element_value):
         name = element_class
-        element_value = {'_class': element_prefix + element_class}
+        element_value = {}
+        element_value.update({'_class': element_prefix + element_class})
         new_element = QTreeWidgetItem()
         new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
         new_element.setText(0, name)
@@ -102,6 +149,26 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             parent = self.ui.tree_hierarchy_widget.currentItem()
         parent.addChild(new_element)
+    def new_operator(self, element_class, element_value):
+        name = element_class
+        element_value = {}
+        element_value.update({'_class': operator_prefix + element_class})
+        new_element = QTreeWidgetItem()
+        new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
+        new_element.setText(0, name)
+        new_element.setText(1, str(element_value))
+        self.ui.properties_tree.currentItem().addChild(new_element)
+    def new_selection_criteria(self, element_class, element_value):
+        name = element_class
+        print(type(element_value), element_value)
+        element_value = ast.literal_eval(element_value)
+        element_value.update({'_class': selection_criteria_prefix + element_class})
+        new_element = QTreeWidgetItem()
+        new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
+        new_element.setText(0, name)
+        new_element.setText(1, str(element_value))
+        self.ui.properties_tree.currentItem().addChild(new_element)
+
 
     # Vsmart format
 
@@ -354,21 +421,28 @@ class SmartPropEditorMainWindow(QMainWindow):
         menu = QMenu()
         move_up_action = menu.addAction("Move Up")
         move_down_action = menu.addAction("Move Down")
-        add_action = menu.addAction("Add")
-        edit_action = menu.addAction("Edit")
         remove_action = menu.addAction("Remove")
 
         duplicate_action = menu.addAction("Duplicate")
-        duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+        duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position), self.ui.tree_hierarchy_widget))
 
         move_up_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), -1))
         move_down_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), 1))
-        add_action.triggered.connect(lambda: self.add_item(self.ui.tree_hierarchy_widget.itemAt(position)))
-        edit_action.triggered.connect(lambda: self.edit_item(self.ui.tree_hierarchy_widget.itemAt(position)))
         remove_action.triggered.connect(lambda: self.remove_item(self.ui.tree_hierarchy_widget.itemAt(position)))
 
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
 
+    def open_properties_menu(self, position):
+        item = self.ui.properties_tree.itemAt(position)
+        if item and item.parent():  # Check if the item has a parent (not a top-level item)
+            menu = QMenu()
+            remove_action = menu.addAction("Remove")
+            duplicate_action = menu.addAction("Duplicate")
+
+            duplicate_action.triggered.connect(lambda: self.duplicate_item(item, self.ui.properties_tree))
+            remove_action.triggered.connect(lambda: self.remove_item(item))
+
+            menu.exec(self.ui.properties_tree.viewport().mapToGlobal(position))
     def move_item(self, item, direction):
         if not item:
             return
@@ -380,18 +454,9 @@ class SmartPropEditorMainWindow(QMainWindow):
             parent.takeChild(index)
             parent.insertChild(new_index, item)
 
-    def add_item(self, item):
-        key, ok = QInputDialog.getText(self, "Add Item", "Enter key:")
-        if ok and key:
-            new_item = QTreeWidgetItem([key])
-            new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
-            if item:
-                item.addChild(new_item)
-            else:
-                self.ui.tree_hierarchy_widget.addTopLevelItem(new_item)
 
-    def duplicate_item(self, item: QTreeWidgetItem):
-        parent = item.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
+    def duplicate_item(self, item: QTreeWidgetItem, tree):
+        parent = item.parent() or tree.invisibleRootItem()
         existing_names = [parent.child(i).text(0) for i in range(parent.childCount())]
 
         base_text = item.text(0)
@@ -421,10 +486,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             new_child.setFlags(new_child.flags() | Qt.ItemIsEditable)
             target_item.addChild(new_child)
             self.duplicate_children(child, new_child)
-
-    def edit_item(self, item):
-        if item:
-            self.ui.tree_hierarchy_widget.editItem(item, 0)
 
     def remove_item(self, item):
         if item:
