@@ -32,9 +32,9 @@ class PopupMenu(QDialog):
             for key, value in item.items():
                 label = QLabel(key)
                 if add_once:
-                    label.mousePressEvent = lambda event, key=key, value=value: self.remove_element(label, key, value)
+                    label.mousePressEvent = lambda event, key=key, value=value: self.remove_element(label, key, str(value))
                 else:
-                    label.mousePressEvent = lambda event, key=key, value=value: self.add_property_signal.emit(key, value)
+                    label.mousePressEvent = lambda event, key=key, value=value: self.add_property_signal.emit(key, str(value))
 
 
                 element_layout = QHBoxLayout()
