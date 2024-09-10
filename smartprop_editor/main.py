@@ -13,7 +13,7 @@ from preferences import get_config_value, get_addon_name, get_cs2_path
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_dict, operators_dict, operator_prefix, selection_criteria_prefix, selection_criteria_dict
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave, VsmartCompile
-from smartprop_editor.properties import Properties
+from smartprop_editor.properties import Properties, AddProperty
 from smartprop_editor.new_file_options import NewFileOptions
 from popup_menu.popup_menu_main import PopupMenu
 
@@ -139,7 +139,6 @@ class SmartPropEditorMainWindow(QMainWindow):
     def new_element(self, element_class, element_value):
         name = element_class
         element_value = {}
-        element_value.update({'_class': element_prefix + element_class})
         new_element = QTreeWidgetItem()
         new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
         new_element.setText(0, name)
@@ -150,24 +149,16 @@ class SmartPropEditorMainWindow(QMainWindow):
             parent = self.ui.tree_hierarchy_widget.currentItem()
         parent.addChild(new_element)
     def new_operator(self, element_class, element_value):
+
         name = element_class
-        element_value = {}
-        element_value.update({'_class': operator_prefix + element_class})
+        element_value = ast.literal_eval(element_value)
         new_element = QTreeWidgetItem()
         new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
         new_element.setText(0, name)
         new_element.setText(1, str(element_value))
         self.ui.properties_tree.currentItem().addChild(new_element)
     def new_selection_criteria(self, element_class, element_value):
-        name = element_class
-        print(type(element_value), element_value)
-        element_value = ast.literal_eval(element_value)
-        element_value.update({'_class': selection_criteria_prefix + element_class})
-        new_element = QTreeWidgetItem()
-        new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
-        new_element.setText(0, name)
-        new_element.setText(1, str(element_value))
-        self.ui.properties_tree.currentItem().addChild(new_element)
+        AddProperty(parent=self.ui.properties_tree, key=element_class, value=element_value)
 
 
     # Vsmart format
