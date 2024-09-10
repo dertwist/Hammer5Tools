@@ -3,6 +3,7 @@ from smartprop_editor.variables.ui_color import Ui_Widget
 from PySide6.QtWidgets import QWidget, QColorDialog
 from PySide6.QtCore import Signal
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
+import ast
 
 class Var_class_color(QWidget):
 
@@ -21,10 +22,17 @@ class Var_class_color(QWidget):
         if default == None:
             self.default = [255, 255 ,255]
         else:
-            self.default = list(default)
+            print(type(default), default)
+            self.default = default
         self.ui.color.clicked.connect(self.open_dialog)
         # self.ui.value.setText(str(self.default))
         # self.ui.value.textChanged.connect(self.on_changed)
+        self.ui.color.setStyleSheet(f"""background-color: rgb{tuple(default)};
+            padding:4px;
+            border:0px;
+            border: 2px solid translucent;
+            border-color: rgba(80, 80, 80, 100);
+            """)
 
 
     def on_changed(self):
