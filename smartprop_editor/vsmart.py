@@ -11,7 +11,7 @@ import re
 import keyvalues3 as kv3
 import ast
 from smartprop_editor.objects import element_prefix
-from preferences import get_cs2_path, get_addon_name
+from preferences import get_cs2_path, get_addon_name, get_config_value
 import subprocess
 import shutil
 import os
@@ -288,12 +288,16 @@ class VsmartCompile:
         self.filename = filename
         self.compile_vsmart()
     def compile_vsmart(self):
+        extension = get_config_value('SmartpropEditor', 'Extension')
         source_file = self.filename
         rel_source_file = os.path.relpath(self.filename, (os.path.join(get_cs2_path(), 'content')))
         print(f'Compiling: {rel_source_file}')
-        destination_folder = os.path.dirname(source_file)
         destination_name = os.path.splitext(source_file)[0] + ".vdata"
-        shutil.copy(source_file, destination_name)
+        if extension == 'vdata':
+            pass
+        else:
+            shutil.copy(source_file, destination_name)
+
 
         subprocess_result = subprocess.run(
             '"' + get_cs2_path() + r"\game\bin\win64\resourcecompiler.exe" + '"' + " -i " + '"' + str(
@@ -306,8 +310,10 @@ class VsmartCompile:
         if subprocess_result.stderr:
             print("Subprocess stderr:")
             print(subprocess_result.stderr.decode('utf-8'))
-
-        os.remove(destination_name)
+        if extension == 'vdata':
+            pass
+        else:
+            os.remove(destination_name)
 
         source_name = os.path.join(get_cs2_path(), 'game', os.path.splitext(rel_source_file)[0] + '.vdata_c')
         destination_name = source_name.replace('.vdata_c', '.vsmart_c')
