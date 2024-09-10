@@ -13,6 +13,7 @@ from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_list, operators_list, operator_prefix
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave, VsmartCompile
 from smartprop_editor.properties import Properties
+from smartprop_editor.new_file_options import NewFileOptions
 from popup_menu.popup_menu_main import PopupMenu
 
 from explorer.main import Explorer
@@ -58,8 +59,12 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
         self.ui.cerate_file_button.clicked.connect(self.create_new_file)
         self.ui.compile_all_button.clicked.connect(self.compile_all)
+        self.ui.new_file_options_button.clicked.connect(self.new_file_options)
 
 
+    def new_file_options(self):
+        new_file_dialog = NewFileOptions(self)
+        new_file_dialog.show()
     def on_tree_current_item_changed(self, item):
         properties_instance = Properties(tree=self.ui.properties_tree, data=item.text(1))
         print(properties_instance.data)
@@ -133,19 +138,26 @@ class SmartPropEditorMainWindow(QMainWindow):
             pass
 
     def create_new_file(self):
-        from smartprop_editor.blank_vsmart import blank_vsmart
-        index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
-        filename = self.mini_explorer.model.filePath(index)
-        if os.path.splitext(filename)[1] == '':
-            current_folder = filename
+        extension = get_config_value('SmartpropEditor', 'Extension')
+        if extension:
+            pass
         else:
+            extension = 'vdata'
+        from smartprop_editor.blank_vsmart import blank_vsmart
+        try:
+            index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
+            filename = self.mini_explorer.model.filePath(index)
+            if os.path.splitext(filename)[1] == '':
+                current_folder = filename
+            else:
+                current_folder = self.tree_directory
+        except:
             current_folder = self.tree_directory
-
         counter = 0
-        new_file_name = f"new_smartprop_{counter:02}.vsmart"
+        new_file_name = f"new_smartprop_{counter:02}.{extension}"
         while os.path.exists(os.path.join(current_folder, new_file_name)):
             counter += 1
-            new_file_name = f"new_smartprop_{counter:02}.vsmart"
+            new_file_name = f"new_smartprop_{counter:02}.{extension}"
 
 
         with open(os.path.join(current_folder, new_file_name), 'w') as file:
