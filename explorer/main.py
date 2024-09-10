@@ -89,9 +89,16 @@ class CustomFileSystemModel(QFileSystemModel):
 
     def setData(self, index, value, role):
         if role == Qt.EditRole:
+            if not value:  # Check if the new value is empty
+                return False
+
             old_path = self.filePath(index)
-            new_path = QDir(old_path).absoluteFilePath(value)
-            if QFile(old_path).rename(new_path):
+            new_path = QDir(self.rootPath()).absoluteFilePath(value)  # Assuming rootPath() is the base directory
+            if QFile.rename(old_path, new_path):
+                # Update the cache if needed
+                if old_path in self._cache:
+                    del self._cache[old_path]
+                self._cache[new_path] = value
                 self.dataChanged.emit(index, index)
                 return True
         return super().setData(index, value, role)
@@ -242,9 +249,6 @@ class Explorer(QMainWindow):
         open_path_action.triggered.connect(lambda: self.open_path_file(index))
         menu.addAction(open_path_action)
 
-        rename_action = QAction("Rename File", self)
-        rename_action.triggered.connect(lambda: self.rename_item(index))
-        menu.addAction(rename_action)
 
         delete_action = QAction("Remove File", self)
         delete_action.triggered.connect(lambda: self.delete_item(index))
@@ -334,12 +338,6 @@ class Explorer(QMainWindow):
     def open_path_file(self, index):
         file_path = self.model.filePath(index)
         QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(file_path)))
-
-    def rename_item(self, index):
-        old_name = self.model.fileName(index)
-        new_name, ok = QInputDialog.getText(self, "Rename Item", "New name:", text=old_name)
-        if ok and new_name:
-            self.model.setData(index, new_name, Qt.EditRole)
 
     def delete_item(self, index):
         path = self.model.filePath(index)
