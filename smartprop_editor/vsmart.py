@@ -49,21 +49,15 @@ class VsmartOpen:
             print(error)
 
     def check_for_tree(self):
-        with open(self.filename, 'r') as file:
-            lines = file.readlines()
-            lines_count = len(lines)
-            line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
-            print(line_vsmartdata_options)
-            return True
-        # try:
-        #     with open(self.filename, 'r') as file:
-        #         lines = file.readlines()
-        #         lines_count = len(lines)
-        #         line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
-        #         print(line_vsmartdata_options)
-        #         return True
-        # except:
-        #     return False
+        try:
+            with open(self.filename, 'r') as file:
+                lines = file.readlines()
+                lines_count = len(lines)
+                line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
+                print(line_vsmartdata_options)
+                return True
+        except:
+            return False
 
 
     def load_state(self):
@@ -292,7 +286,7 @@ class VsmartCompile:
         rel_source_file = os.path.relpath(self.filename, (os.path.join(get_cs2_path(), 'content')))
         print(f'Compiling: {rel_source_file}')
         destination_name = os.path.splitext(source_file)[0] + ".vdata"
-        if extension == 'vdata':
+        if os.path.splitext(source_file)[1] == '.vdata':
             pass
         else:
             shutil.copy(source_file, destination_name)
@@ -309,7 +303,7 @@ class VsmartCompile:
         if subprocess_result.stderr:
             print("Subprocess stderr:")
             print(subprocess_result.stderr.decode('utf-8'))
-        if extension == 'vdata':
+        if os.path.splitext(source_file)[1] == '.vdata':
             pass
         else:
             os.remove(destination_name)

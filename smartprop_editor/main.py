@@ -1,5 +1,7 @@
 import ast
 import os.path
+import shutil
+
 from distutils.util import strtobool
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog
@@ -65,14 +67,19 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.cerate_file_button.clicked.connect(self.create_new_file)
         self.ui.compile_all_button.clicked.connect(self.compile_all)
         self.ui.new_file_options_button.clicked.connect(self.new_file_options)
+        self.ui.all_to_vdata_button.clicked.connect(self.convert_all_to_vdata)
 
 
     def new_file_options(self):
         new_file_dialog = NewFileOptions(self)
         new_file_dialog.show()
     def on_tree_current_item_changed(self, item):
-        properties_instance = Properties(tree=self.ui.properties_tree, data=item.text(1))
-        print(properties_instance.data)
+        try:
+            properties_instance = Properties(tree=self.ui.properties_tree, data=item.text(1))
+            print(properties_instance.data)
+        except:
+            pass
+
 
 
 
@@ -195,6 +202,18 @@ class SmartPropEditorMainWindow(QMainWindow):
             # Handle the case when the user chooses not to proceed with compilation
             pass
 
+    def convert_all_to_vdata(self):
+        for root, dirs, files, in os.walk(self.tree_directory):
+            for file in files:
+                file = os.path.join(root,file)
+                print(file)
+                filename = os.path.splitext(file)[0]
+                extension= os.path.splitext(file)[1]
+                if extension == '.vsmart':
+                    dist_name = filename + '.vdata'
+                    shutil.move(file, dist_name)
+                    print(f'Converted: {os.path.basename(file)} to vdata')
+
     def create_new_file(self):
         extension = get_config_value('SmartpropEditor', 'Extension')
         if extension:
@@ -314,7 +333,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                 variables.append(var_dict)
 
             return variables
-        index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
+        # index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
         filename = opened_file
         var_data = save_variables()
         print(var_data)
