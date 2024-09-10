@@ -26,16 +26,16 @@ variables_list = [
 ]
 
 element_prefix = 'CSmartPropElement_'
-elements_list = [
-    'ModifyState',
-    'Group',
-    'SmartProp',
-    'PlaceInSphere',
-    'PlaceMultiple',
-    'PlaceOnPath',
-    'FitOnLine',
-    'PickOne'
-]
+elements_dict = {
+    'ModifyState': {},
+    'Group': {},
+    'SmartProp': {},
+    'PlaceInSphere': {},
+    'PlaceMultiple': {},
+    'PlaceOnPath': {},
+    'FitOnLine': {},
+    'PickOne': {}
+}
 filter_prefix = 'CSmartPropFilter_'
 filters_dict = {
     'Probability': {'m_flProbability': 0},
@@ -46,38 +46,49 @@ filters_dict = {
 }
 
 operator_prefix = 'CSmartPropOperation_'
-operators_list = [
-    'TraceToPoint',
-    'TraceToLine',
-    'SetTintColor',
-    'SetVariable',
-    'SaveState',
-    'RestoreState',
-    'SavePosition',
-    'SaveDirection',
-    'SaveScale',
-    'SaveSurfaceNormal',
-    'SaveDirection',
-    'ComputeDotProduct3D',
-    'ComputeCrossProduct3D',
-    'ComputeDistance3D',
-    'ComputeVectorBetweenPoints3D',
-    'ComputeNormalizedVector3D',
-    'ComputeProjectVector3D',
-    'CreateLocator',
-    'CreateSizer',
-    'CreateRotator',
-    'ResetRotation',
-    'SetOrientation',
-    'SetPosition',
-    'ResetScale',
-    'Rotate',
-    'Translate',
-    'RotateTowards',
-    'Scale',
-    'RandomOffset',
-    'RandomRotation',
-    'RandomScale',
-    'Trace',
-    'TraceInDirection'
-]
+operators_dict = {
+    'Rotate': {},
+    'Scale': {},
+    'Translate': {},
+    'SetTintColor': {'m_ColorChoices': []},
+    'CreateLocator': {},
+    'CreateSizer': {},
+    'CreateRotator': {},
+    'RandomRotation': {},
+    'RandomScale': {},
+    'RandomOffset': {},
+}
+
+operators_dict_todo = {
+    'TraceToPoint': {},
+    'TraceToLine': {},
+    'SetVariable': {},
+    'SaveState': {},
+    'RestoreState': {},
+    'SavePosition': {},
+    'SaveDirection': {},
+    'SaveScale': {},
+    'SaveSurfaceNormal': {},
+    'ComputeDotProduct3D': {},
+    'ComputeCrossProduct3D': {},
+    'ComputeDistance3D': {},
+    'ComputeVectorBetweenPoints3D': {},
+    'ComputeNormalizedVector3D': {},
+    'ComputeProjectVector3D': {},
+    'ResetScale': {},
+    'RotateTowards': {},
+    'Trace': {},
+    'TraceInDirection': {},
+    'ResetRotation': {},
+    'SetOrientation': {},
+    'SetPosition': {},
+}
+
+selection_criteria_prefix = "CSmartPropSelectionCriteria_"
+selection_criteria_dict = {
+    "EndCap": {"m_bStart": False, "m_bEnd": False},
+    "IsValid": {},
+    "ChoiceWeight": {"m_flWeight": 0},
+    "LinearLength": {'m_flLength': 0, 'm_bAllowScale': False, 'm_flMinLength': 0, 'm_flMaxLength': 0},
+    "PathPosition": {'m_PlaceAtPositions': "ALL", "m_nPlaceEveryNthPosition": 0, "m_nNthPositionIndexOffset": 0, "m_bAllowAtStart": False, "m_bAllowAtEnd": False},
+}
