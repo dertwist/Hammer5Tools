@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QTreeWidgetItem, QTreeWidget
 import ast
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt,Signal
 class Properties:
+    edited = Signal()
     def __init__(self, tree=QTreeWidget, data=None):
         self.tree = tree
         self.data = ast.literal_eval(data)
