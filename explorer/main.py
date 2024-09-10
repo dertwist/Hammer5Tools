@@ -9,7 +9,7 @@ from PySide6.QtCore import QModelIndex
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 generic_extensions = ['vpost', 'vsndevts', 'rect']
 file_icons = {
-    '.vsmart': '://icons/assettypes/vdata_sm.png',
+    '.vsmart': '://icons/assettypes/surface_sm.png',
     '.vdata': '://icons/assettypes/vdata_sm.png',
     '.vmat': '://icons/assettypes/material_sm.png',
     '.vmap': '://icons/assettypes/map_sm.png',
