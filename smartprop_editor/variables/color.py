@@ -20,14 +20,13 @@ class Var_class_color(QWidget):
         self.max = None
         self.model = None
         if default == None:
-            self.default = [255, 255 ,255]
+            self.default = [255, 255, 255]
         else:
-            print(type(default), default)
             self.default = default
         self.ui.color.clicked.connect(self.open_dialog)
         # self.ui.value.setText(str(self.default))
         # self.ui.value.textChanged.connect(self.on_changed)
-        self.ui.color.setStyleSheet(f"""background-color: rgb{tuple(default)};
+        self.ui.color.setStyleSheet(f"""background-color: rgb{tuple(self.default)};
             padding:4px;
             border:0px;
             border: 2px solid translucent;

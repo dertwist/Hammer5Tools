@@ -52,7 +52,6 @@ class VsmartOpen:
         with open(self.filename, 'r') as file:
             lines = file.readlines()
             lines_count = len(lines)
-            print(lines_count)
             line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
             print(line_vsmartdata_options)
             return True
@@ -250,7 +249,7 @@ class VsmartSave:
         with open(self.filename, 'a') as file:
             file.write('//Hammer5Tools_vsmartdata_variables:' + str(self.var_data) + '\n')
             file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data) + '\n')
-            file.write('//Hammer5Tools_vsmartdata_metadata:' + '\n')
+            file.write('//Hammer5Tools_vsmartdata_metadata:' + str('vsmart') + '\n')
 
     def tree_to_vsmart(self, item, data):
         if 'm_Children' not in data:
