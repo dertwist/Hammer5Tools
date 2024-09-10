@@ -36,10 +36,10 @@
     <item>
      <widget class="QFrame" name="frame_9">
       <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
+       <enum>QFrame::Shape::StyledPanel</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
+       <enum>QFrame::Shadow::Raised</enum>
       </property>
       <property name="lineWidth">
        <number>0</number>
@@ -83,7 +83,7 @@
           <number>0</number>
          </property>
          <property name="verticalScrollBarPolicy">
-          <enum>Qt::ScrollBarAsNeeded</enum>
+          <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
          </property>
          <property name="widgetResizable">
           <bool>true</bool>
@@ -93,7 +93,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>621</width>
+            <width>750</width>
             <height>700</height>
            </rect>
           </property>
@@ -121,7 +121,7 @@
            <item>
             <widget class="QTreeWidget" name="properties_tree">
              <property name="editTriggers">
-              <set>QAbstractItemView::EditKeyPressed</set>
+              <set>QAbstractItemView::EditTrigger::EditKeyPressed</set>
              </property>
              <property name="tabKeyNavigation">
               <bool>false</bool>
@@ -136,13 +136,13 @@
               <bool>false</bool>
              </property>
              <property name="dragDropMode">
-              <enum>QAbstractItemView::NoDragDrop</enum>
+              <enum>QAbstractItemView::DragDropMode::NoDragDrop</enum>
              </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
              <property name="selectionMode">
-              <enum>QAbstractItemView::ContiguousSelection</enum>
+              <enum>QAbstractItemView::SelectionMode::ContiguousSelection</enum>
              </property>
              <property name="uniformRowHeights">
               <bool>false</bool>
@@ -229,10 +229,10 @@
        <item>
         <widget class="QFrame" name="frame_8">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::Shape::StyledPanel</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
+          <enum>QFrame::Shadow::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <property name="spacing">
@@ -260,10 +260,10 @@
   </widget>
   <widget class="QDockWidget" name="dockWidget_4">
    <property name="features">
-    <set>QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
    <property name="allowedAreas">
-    <set>Qt::BottomDockWidgetArea|Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+    <set>Qt::DockWidgetArea::BottomDockWidgetArea|Qt::DockWidgetArea::LeftDockWidgetArea|Qt::DockWidgetArea::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>Hierarchy</string>
@@ -288,10 +288,10 @@
      <item>
       <widget class="QFrame" name="frame_2">
        <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
+        <enum>QFrame::Shape::StyledPanel</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
+        <enum>QFrame::Shadow::Raised</enum>
        </property>
        <property name="lineWidth">
         <number>0</number>
@@ -325,16 +325,16 @@
            <bool>true</bool>
           </property>
           <property name="dragDropMode">
-           <enum>QAbstractItemView::InternalMove</enum>
+           <enum>QAbstractItemView::DragDropMode::InternalMove</enum>
           </property>
           <property name="defaultDropAction">
-           <enum>Qt::CopyAction</enum>
+           <enum>Qt::DropAction::CopyAction</enum>
           </property>
           <property name="alternatingRowColors">
            <bool>true</bool>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::ExtendedSelection</enum>
+           <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
           </property>
           <property name="uniformRowHeights">
            <bool>true</bool>
@@ -386,10 +386,10 @@
   </widget>
   <widget class="QDockWidget" name="dockWidget">
    <property name="features">
-    <set>QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
    <property name="allowedAreas">
-    <set>Qt::BottomDockWidgetArea|Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+    <set>Qt::DockWidgetArea::BottomDockWidgetArea|Qt::DockWidgetArea::LeftDockWidgetArea|Qt::DockWidgetArea::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>Variables</string>
@@ -431,8 +431,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>395</width>
-          <height>434</height>
+          <width>266</width>
+          <height>359</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -459,7 +459,7 @@
            <item>
             <spacer name="verticalSpacer_2">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -490,10 +490,10 @@
         </size>
        </property>
        <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
+        <enum>QFrame::Shape::StyledPanel</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
+        <enum>QFrame::Shadow::Raised</enum>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <property name="leftMargin">
@@ -703,10 +703,10 @@ QComboBox QAbstractItemView::item:selected {
   </widget>
   <widget class="QDockWidget" name="dockWidget_10">
    <property name="features">
-    <set>QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
    <property name="allowedAreas">
-    <set>Qt::BottomDockWidgetArea|Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+    <set>Qt::DockWidgetArea::BottomDockWidgetArea|Qt::DockWidgetArea::LeftDockWidgetArea|Qt::DockWidgetArea::RightDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>Explorer</string>
@@ -732,12 +732,39 @@ QComboBox QAbstractItemView::item:selected {
       <layout class="QVBoxLayout" name="explorer_layout"/>
      </item>
      <item>
-      <widget class="QPushButton" name="compile_all_button">
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <widget class="QFrame" name="frame_3">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>32</height>
+        </size>
        </property>
-       <property name="styleSheet">
-        <string notr="true">
+       <property name="frameShape">
+        <enum>QFrame::Shape::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Raised</enum>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="compile_all_button">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
     /* QPushButton default and hover styles */
     QPushButton {
 
@@ -767,23 +794,81 @@ QComboBox QAbstractItemView::item:selected {
         margin-right: 2px;
 
     }</string>
-       </property>
-       <property name="text">
-        <string>Compile All</string>
-       </property>
-       <property name="icon">
-        <iconset resource="../resources.qrc">
-         <normaloff>:/icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-       <property name="shortcut">
-        <string>Ctrl+R</string>
-       </property>
+          </property>
+          <property name="text">
+           <string>Compile All</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../resources.qrc">
+            <normaloff>:/icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="shortcut">
+           <string>Ctrl+R</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="all_to_vdata_button">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 600 10pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 4px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+          </property>
+          <property name="text">
+           <string>All to Vdata</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../resources.qrc">
+            <normaloff>:/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="shortcut">
+           <string>Ctrl+R</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>
@@ -795,10 +880,10 @@ QComboBox QAbstractItemView::item:selected {
         </size>
        </property>
        <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
+        <enum>QFrame::Shape::StyledPanel</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
+        <enum>QFrame::Shadow::Raised</enum>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <property name="leftMargin">
@@ -1019,7 +1104,7 @@ QComboBox QAbstractItemView::item:selected {
     <string>CreateNewsmartprop</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::NoRole</enum>
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
   <action name="actionSaveSmarptop">
@@ -1031,7 +1116,7 @@ QComboBox QAbstractItemView::item:selected {
     <string>SaveSmarptop</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::NoRole</enum>
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
   <action name="actionSaveSmartpropAs">
@@ -1046,7 +1131,7 @@ QComboBox QAbstractItemView::item:selected {
     <string>SaveSmartpropAs</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::NoRole</enum>
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
  </widget>
