@@ -437,9 +437,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         if item and item.parent():  # Check if the item has a parent (not a top-level item)
             menu = QMenu()
             remove_action = menu.addAction("Remove")
-            duplicate_action = menu.addAction("Duplicate")
+            # duplicate_action = menu.addAction("Duplicate")
 
-            duplicate_action.triggered.connect(lambda: self.duplicate_item(item, self.ui.properties_tree))
+            # duplicate_action.triggered.connect(lambda: self.duplicate_item(item, self.ui.properties_tree))
             remove_action.triggered.connect(lambda: self.remove_item(item))
 
             menu.exec(self.ui.properties_tree.viewport().mapToGlobal(position))
