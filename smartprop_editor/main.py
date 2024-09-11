@@ -1,6 +1,8 @@
 import ast
 import os.path
 import shutil
+import threading
+import time
 
 from distutils.util import strtobool
 
@@ -170,37 +172,69 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # Vsmart format
 
-    def compile_all(self):
+    def compile_all_process(self):
         # Show a confirmation dialog before compiling
         reply = QMessageBox.question(self, 'Confirmation','Are you sure you want to compile? The current file will be closed. Proceed?',QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            total_files = sum(len(files) for _, _, files in os.walk(self.tree_directory))
-            progress_dialog = QProgressDialog(f'Compiling...', 'Cancel', 0, total_files,
-                                              self)
-            progress = 0
-            progress += 1
-            progress_dialog.setValue(progress)
+            # total_files = sum(len(files) for _, _, files in os.walk(self.tree_directory))
+            total_files = []
 
             for root, dirs, files in os.walk(self.tree_directory):
                 for file in files:
                     file_path = os.path.join(root, file)
-                    # progress_file_name = os.path.basename(file_path)
-                    self.open_file(filename=file_path)
+                    total_files.append(file_path)
 
-                    # Simulate progress update
-                    progress += 1
-                    progress_dialog.setValue(progress)
-                    self.save_file()
+            # progress_dialog = QProgressDialog(f'Compiling...', 'Cancel', 0, len(total_files),self)
+            progress = 0
+            # progress_dialog.setValue(progress)
+            progress += 1
+            # progress_dialog.setValue(progress)
+            # progress_dialog.show()
+            while progress < len(total_files):
+                # time.sleep(0.1)
+                progress += 1
+                # progress_dialog.setValue(progress)
+                file_path = total_files[progress-1]
+                # self.open_file(file_path)
+                # self.save_file()
+                VsmartCompile(filename=file_path)
+                print(file_path)
+                print(f'Progress {progress} of {len(total_files)}')
 
-                    # Check if the user canceled the compilation
-                    if progress_dialog.wasCanceled():
-                        break
+            # for item in total_files:
+            #     print(item)
+            #     # time.sleep(1)
+            #     progress += 1
+            #     progress_dialog.setValue(progress)
+            #     time.sleep(0.1)
+            #     if progress_dialog.wasCanceled():
+            #         break
 
-            progress_dialog.close()  # Close the progress dialog when compilation is complete
-        else:
-            # Handle the case when the user chooses not to proceed with compilation
-            pass
+            # for root, dirs, files in os.walk(self.tree_directory):
+            #     for file in files:
+            #         file_path = os.path.join(root, file)
+            #         # progress_file_name = os.path.basename(file_path)
+            #         # self.open_file(filename=file_path)
+            #
+            #         # Simulate progress update
+            #         time.sleep(1)
+            #         progress += 1
+            #         progress_dialog.setValue(progress)
+            #         # self.save_file()
+            #
+            #         # Check if the user canceled the compilation
+            #         if progress_dialog.wasCanceled():
+            #             break
+
+            # progress_dialog.close()  # Close the progress dialog when compilation is complete
+        # else:
+        #     # Handle the case when the user chooses not to proceed with compilation
+        #     pass
+    def compile_all(self):
+        t1 = threading.Thread(target=self.compile_all_process())
+        t1.start()
+
 
     def convert_all_to_vdata(self):
         reply = QMessageBox.question(self, 'Confirmation', 'Are you sure you want to convert all vsmart files in the addon to vdata? Proceed?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
