@@ -172,15 +172,15 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def compile_all(self):
         # Show a confirmation dialog before compiling
-        reply = QMessageBox.question(self, 'Confirmation',
-                                     'Are you sure you want to compile? The current file will be closed. Proceed?',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        reply = QMessageBox.question(self, 'Confirmation','Are you sure you want to compile? The current file will be closed. Proceed?',QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
             total_files = sum(len(files) for _, _, files in os.walk(self.tree_directory))
             progress_dialog = QProgressDialog(f'Compiling...', 'Cancel', 0, total_files,
                                               self)
             progress = 0
+            progress += 1
+            progress_dialog.setValue(progress)
 
             for root, dirs, files in os.walk(self.tree_directory):
                 for file in files:
@@ -203,16 +203,19 @@ class SmartPropEditorMainWindow(QMainWindow):
             pass
 
     def convert_all_to_vdata(self):
-        for root, dirs, files, in os.walk(self.tree_directory):
-            for file in files:
-                file = os.path.join(root,file)
-                print(file)
-                filename = os.path.splitext(file)[0]
-                extension= os.path.splitext(file)[1]
-                if extension == '.vsmart':
-                    dist_name = filename + '.vdata'
-                    shutil.move(file, dist_name)
-                    print(f'Converted: {os.path.basename(file)} to vdata')
+        reply = QMessageBox.question(self, 'Confirmation', 'Are you sure you want to convert all vsmart files in the addon to vdata? Proceed?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            for root, dirs, files, in os.walk(self.tree_directory):
+                for file in files:
+                    file = os.path.join(root,file)
+                    print(file)
+                    filename = os.path.splitext(file)[0]
+                    extension= os.path.splitext(file)[1]
+                    if extension == '.vsmart':
+                        dist_name = filename + '.vdata'
+                        shutil.move(file, dist_name)
+                        print(f'Converted: {os.path.basename(file)} to vdata')
 
     def create_new_file(self):
         extension = get_config_value('SmartpropEditor', 'Extension')
