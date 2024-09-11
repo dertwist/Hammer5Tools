@@ -240,10 +240,13 @@ class VsmartSave:
         out_data.update(converted_data)
         kv3.write(out_data, self.filename)
         # print(data_raw)
-        with open(self.filename, 'a') as file:
-            file.write('//Hammer5Tools_vsmartdata_variables:' + str(self.var_data) + '\n')
-            file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data) + '\n')
-            file.write('//Hammer5Tools_vsmartdata_metadata:' + str('vsmart') + '\n')
+        try:
+            with open(self.filename, 'a') as file:
+                file.write('//Hammer5Tools_vsmartdata_variables:' + str(self.var_data) + '\n')
+                file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data) + '\n')
+                file.write('//Hammer5Tools_vsmartdata_metadata:' + str('vsmart') + '\n')
+        except Exception as error:
+            print(error)
 
     def tree_to_vsmart(self, item, data):
         if 'm_Children' not in data:
