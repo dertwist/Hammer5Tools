@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QApplication, QTreeWidget, QTreeWidgetItem, QMainWindow, QMenu,
     QInputDialog, QMessageBox, QToolBar, QPushButton, QFileDialog, QHeaderView
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal, QObject
 import json
 import re
 import keyvalues3 as kv3
@@ -279,10 +279,13 @@ class VsmartSave:
                 data[str(key) + '%?=!=' + str(value_row)] = value
         return data
 
-class VsmartCompile:
-    def __init__(self, filename):
+class VsmartCompile(QObject):
+    finished = Signal()
+    def __init__(self, filename, parent=None):
+        super().__init__(parent)
         self.filename = filename
         self.compile_vsmart()
+        self.finished.emit()
     def compile_vsmart(self):
         extension = get_config_value('SmartpropEditor', 'Extension')
         source_file = self.filename
@@ -313,8 +316,8 @@ class VsmartCompile:
 
         source_name = os.path.join(get_cs2_path(), 'game', os.path.splitext(rel_source_file)[0] + '.vdata_c')
         destination_name = source_name.replace('.vdata_c', '.vsmart_c')
-        print(source_name)
-        print(destination_name)
+        print(f'Input file: {self.filename}')
+        print(f'Output file: {destination_name}')
         try:
             shutil.move(source_name, destination_name)
         except:
