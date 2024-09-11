@@ -32,7 +32,7 @@ A tool for more comfortable sound editing within the game.
 
   
 
-## Hotkey Editor (Not work yet):
+## Hotkey Editor:
 
 Edit default keyboard shortcuts and add your own!
 
@@ -48,5 +48,3 @@ Allows you to edit multiple files with the same parameters at one time. For exam
 ## SmartProp Editor:
 
 A tool that helps with smartprops creation in the game.
-
-![enter image description here](https://i.imgur.com/wA0xSXq.png)
