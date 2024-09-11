@@ -223,14 +223,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             progress = 0
             progress_dialog = QProgressDialog('Compiling...', 'Cancel', 0, len(total_files), self)
             progress_dialog.setValue(progress)
-            def exi_t():
-                self.worker.finished.emit()
-                self.thread.quit()
-                self.thread.wait()
-                self.thread.deleteLater()
-                self.worker.deleteLater()
-                progress_dialog.close()
-            progress_dialog.wasCanceled.connect(exi_t)
             progress += 1
 
             progress_dialog.show()
