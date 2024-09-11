@@ -16,17 +16,37 @@
 </p>
 
 # A bunch of tools for Counter-Strike 2 Workshop:
-### Loading Editor:
-With this tool, you can add images, descriptions, and icons to the loading screen.
 
-### SoundEvent Editor:
+## Loading Editor:
+
+With this tool, you can add images, descriptions, and icons to the loading screen.
+![enter image description here](https://i.imgur.com/V6UkCvr.png)
+
+  
+
+## SoundEvent Editor:
+
 A tool for more comfortable sound editing within the game.
 
-### Hotkey Editor:
+![enter image description here](https://i.imgur.com/HMmbQgR.png)
+
+  
+
+## Hotkey Editor (Not work yet):
+
 Edit default keyboard shortcuts and add your own!
 
-### BatchCreator:
-Allows you to edit multiple files with the same parameters at one time. For example, if you have a modular set with 15 models, it is tedious to use the default Model/Material Editor, but with BatchCreator, you can do it all with one click.
+  
 
-### SmartProp Editor:
+## BatchCreator:
+
+Allows you to edit multiple files with the same parameters at one time. For example, if you have a modular set with 15 models, it is tedious to use the default Model/Material Editor, but with BatchCreator, you can do it all with one click.
+![enter image description here](https://i.imgur.com/cRFsq49.png)
+
+  
+
+## SmartProp Editor:
+
 A tool that helps with smartprops creation in the game.
+
+![enter image description here](https://i.imgur.com/wA0xSXq.png)
