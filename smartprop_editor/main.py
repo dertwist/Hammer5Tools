@@ -1,13 +1,15 @@
 import ast
 import os.path
 import shutil
+import threading
+import time
 
 from distutils.util import strtobool
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
 
 from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_config_value, get_addon_name, get_cs2_path
@@ -27,6 +29,37 @@ global opened_file
 
 # Get cs2_path
 cs2_path = get_cs2_path()
+
+class CompileAll(QObject):
+    progress = Signal(int, str)
+    finished = Signal()
+
+    def run(self, total_files):
+        progress = 0
+        for i in total_files:
+            loop = QEventLoop()
+
+            timer = QTimer()
+            timer.timeout.connect(loop.quit)
+            timer.start(1)
+
+            loop.exec()
+            VsmartCompile(filename=i)
+            progress += 1
+            self.progress.emit(progress, os.path.basename(i))
+        # while progress < len(total_files):
+        #     # time.sleep(0.1)
+        #     progress += 1
+        #     # progress_dialog.setValue(progress)
+        #     file_path = total_files[progress - 1]
+        #     # self.open_file(file_path)
+        #     # self.save_file()
+        #     # VsmartCompile(filename=file_path)
+        #     # print(file_path)
+        #     # print(f'Progress {progress} of {len(total_files)}')
+        #     time.sleep(0.1)
+        #     self.progress.emit(progress)
+        self.finished.emit()
 
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -169,38 +202,74 @@ class SmartPropEditorMainWindow(QMainWindow):
 
 
     # Vsmart format
+    def reportProgress(self, n, progress_dialog, file):
+        progress_dialog.setValue(n)
+        progress_dialog.setLabelText(f'Compiling: {file}')
 
     def compile_all(self):
         # Show a confirmation dialog before compiling
         reply = QMessageBox.question(self, 'Confirmation','Are you sure you want to compile? The current file will be closed. Proceed?',QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            total_files = sum(len(files) for _, _, files in os.walk(self.tree_directory))
-            progress_dialog = QProgressDialog(f'Compiling...', 'Cancel', 0, total_files,
-                                              self)
-            progress = 0
-            progress += 1
-            progress_dialog.setValue(progress)
+            # total_files = sum(len(files) for _, _, files in os.walk(self.tree_directory))
+            total_files = []
 
             for root, dirs, files in os.walk(self.tree_directory):
                 for file in files:
                     file_path = os.path.join(root, file)
-                    # progress_file_name = os.path.basename(file_path)
-                    self.open_file(filename=file_path)
+                    total_files.append(file_path)
 
-                    # Simulate progress update
-                    progress += 1
-                    progress_dialog.setValue(progress)
-                    self.save_file()
 
-                    # Check if the user canceled the compilation
-                    if progress_dialog.wasCanceled():
-                        break
+            progress = 0
+            progress_dialog = QProgressDialog('Compiling...', 'Cancel', 0, len(total_files), self)
+            progress_dialog.setValue(progress)
+            progress += 1
 
-            progress_dialog.close()  # Close the progress dialog when compilation is complete
-        else:
-            # Handle the case when the user chooses not to proceed with compilation
-            pass
+            progress_dialog.show()
+            self.thread = QThread( )
+            self.worker = CompileAll()
+
+
+            self.worker.moveToThread(self.thread)
+            # Step 5: Connect signals and slots
+            self.thread.started.connect(lambda: self.worker.run(total_files=total_files))
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.worker.progress.connect(lambda n, file: self.reportProgress(n, progress_dialog, file))
+            # Step 6: Start the thread
+            self.thread.start()
+
+            # for item in total_files:
+            #     print(item)
+            #     # time.sleep(1)
+            #     progress += 1
+            #     progress_dialog.setValue(progress)
+            #     time.sleep(0.1)
+            #     if progress_dialog.wasCanceled():
+            #         break
+
+            # for root, dirs, files in os.walk(self.tree_directory):
+            #     for file in files:
+            #         file_path = os.path.join(root, file)
+            #         # progress_file_name = os.path.basename(file_path)
+            #         # self.open_file(filename=file_path)
+            #
+            #         # Simulate progress update
+            #         time.sleep(1)
+            #         progress += 1
+            #         progress_dialog.setValue(progress)
+            #         # self.save_file()
+            #
+            #         # Check if the user canceled the compilation
+            #         if progress_dialog.wasCanceled():
+            #             break
+
+            # progress_dialog.close()  # Close the progress dialog when compilation is complete
+        # else:
+        #     # Handle the case when the user chooses not to proceed with compilation
+        #     pass
+
 
     def convert_all_to_vdata(self):
         reply = QMessageBox.question(self, 'Confirmation', 'Are you sure you want to convert all vsmart files in the addon to vdata? Proceed?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
