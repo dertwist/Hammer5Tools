@@ -44,7 +44,20 @@ for i in range(3):
     edit_line = QLineEdit()
     group_layout.addWidget(edit_line)
 
-tree_widget.setItemWidget(child_item, 1, group_box)
+    # Connect textChanged signal of QLineEdit to update status bar
+    edit_line.textChanged.connect(lambda text, i=i: update_status_bar(text, i))
+
+    def update_status_bar(text, index):
+        inputs = []
+        for i in range(group_layout.count()):
+            widget = group_layout.itemAt(i).widget()
+            if isinstance(widget, QCheckBox):
+                inputs.append(f"Checkbox {i+1}: {'Checked' if widget.isChecked() else 'Unchecked'}")
+            elif isinstance(widget, QLineEdit):
+                inputs.append(f"Edit Line {i+1}: {widget.text()}")
+        status_bar.showMessage(", ".join(inputs))
+
+    tree_widget.setItemWidget(child_item, 1, group_box)
 
 # Add status bar
 status_bar = QStatusBar()
