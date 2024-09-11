@@ -39,20 +39,20 @@ class Ui_MainWindow(object):
         icon1 = QIcon()
         icon1.addFile(u":/icons/add_circle_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.actionCreateNewsmartprop.setIcon(icon1)
-        self.actionCreateNewsmartprop.setMenuRole(QAction.MenuRole.NoRole)
+        self.actionCreateNewsmartprop.setMenuRole(QAction.NoRole)
         self.actionSaveSmarptop = QAction(MainWindow)
         self.actionSaveSmarptop.setObjectName(u"actionSaveSmarptop")
         icon2 = QIcon()
         icon2.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.actionSaveSmarptop.setIcon(icon2)
-        self.actionSaveSmarptop.setMenuRole(QAction.MenuRole.NoRole)
+        self.actionSaveSmarptop.setMenuRole(QAction.NoRole)
         self.actionSaveSmartpropAs = QAction(MainWindow)
         self.actionSaveSmartpropAs.setObjectName(u"actionSaveSmartpropAs")
         self.actionSaveSmartpropAs.setCheckable(True)
         icon3 = QIcon()
         icon3.addFile(u":/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.actionSaveSmartpropAs.setIcon(icon3)
-        self.actionSaveSmartpropAs.setMenuRole(QAction.MenuRole.NoRole)
+        self.actionSaveSmartpropAs.setMenuRole(QAction.NoRole)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_9 = QVBoxLayout(self.centralwidget)
@@ -61,8 +61,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.frame_9 = QFrame(self.centralwidget)
         self.frame_9.setObjectName(u"frame_9")
-        self.frame_9.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_9.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_9.setFrameShape(QFrame.StyledPanel)
+        self.frame_9.setFrameShadow(QFrame.Raised)
         self.frame_9.setLineWidth(0)
         self.verticalLayout_5 = QVBoxLayout(self.frame_9)
         self.verticalLayout_5.setSpacing(0)
@@ -82,11 +82,11 @@ class Ui_MainWindow(object):
 "    border: 0px solid black;\n"
 "}")
         self.scrollArea.setLineWidth(0)
-        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 750, 700))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 775, 700))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -111,14 +111,14 @@ class Ui_MainWindow(object):
         __qtreewidgetitem2.setFlags(Qt.ItemIsSelectable|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled);
         __qtreewidgetitem2.setIcon(0, icon6);
         self.properties_tree.setObjectName(u"properties_tree")
-        self.properties_tree.setEditTriggers(QAbstractItemView.EditTrigger.EditKeyPressed)
+        self.properties_tree.setEditTriggers(QAbstractItemView.EditKeyPressed)
         self.properties_tree.setTabKeyNavigation(False)
         self.properties_tree.setProperty("showDropIndicator", True)
         self.properties_tree.setDragEnabled(False)
         self.properties_tree.setDragDropOverwriteMode(False)
-        self.properties_tree.setDragDropMode(QAbstractItemView.DragDropMode.NoDragDrop)
+        self.properties_tree.setDragDropMode(QAbstractItemView.NoDragDrop)
         self.properties_tree.setAlternatingRowColors(True)
-        self.properties_tree.setSelectionMode(QAbstractItemView.SelectionMode.ContiguousSelection)
+        self.properties_tree.setSelectionMode(QAbstractItemView.ContiguousSelection)
         self.properties_tree.setUniformRowHeights(False)
         self.properties_tree.setSortingEnabled(False)
         self.properties_tree.setAnimated(False)
@@ -138,8 +138,8 @@ class Ui_MainWindow(object):
 
         self.frame_8 = QFrame(self.frame_9)
         self.frame_8.setObjectName(u"frame_8")
-        self.frame_8.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_8.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_8.setFrameShape(QFrame.StyledPanel)
+        self.frame_8.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_5 = QHBoxLayout(self.frame_8)
         self.horizontalLayout_5.setSpacing(8)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
@@ -153,8 +153,8 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.dockWidget_4 = QDockWidget(MainWindow)
         self.dockWidget_4.setObjectName(u"dockWidget_4")
-        self.dockWidget_4.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget_4.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.dockWidget_4.setFeatures(QDockWidget.DockWidgetMovable)
+        self.dockWidget_4.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
         self.dockWidgetContents_2 = QWidget()
         self.dockWidgetContents_2.setObjectName(u"dockWidgetContents_2")
         self.verticalLayout_8 = QVBoxLayout(self.dockWidgetContents_2)
@@ -162,8 +162,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_8.setContentsMargins(0, 0, 0, 0)
         self.frame_2 = QFrame(self.dockWidgetContents_2)
         self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_2.setFrameShape(QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Raised)
         self.frame_2.setLineWidth(0)
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
@@ -180,10 +180,10 @@ class Ui_MainWindow(object):
         self.tree_hierarchy_widget.setObjectName(u"tree_hierarchy_widget")
         self.tree_hierarchy_widget.setDragEnabled(True)
         self.tree_hierarchy_widget.setDragDropOverwriteMode(True)
-        self.tree_hierarchy_widget.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
-        self.tree_hierarchy_widget.setDefaultDropAction(Qt.DropAction.CopyAction)
+        self.tree_hierarchy_widget.setDragDropMode(QAbstractItemView.InternalMove)
+        self.tree_hierarchy_widget.setDefaultDropAction(Qt.CopyAction)
         self.tree_hierarchy_widget.setAlternatingRowColors(True)
-        self.tree_hierarchy_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.tree_hierarchy_widget.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.tree_hierarchy_widget.setUniformRowHeights(True)
         self.tree_hierarchy_widget.setAllColumnsShowFocus(False)
         self.tree_hierarchy_widget.setWordWrap(False)
@@ -204,8 +204,8 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_4)
         self.dockWidget = QDockWidget(MainWindow)
         self.dockWidget.setObjectName(u"dockWidget")
-        self.dockWidget.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.dockWidget.setFeatures(QDockWidget.DockWidgetMovable)
+        self.dockWidget.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
         self.dockWidgetContents = QWidget()
         self.dockWidgetContents.setObjectName(u"dockWidgetContents")
         self.verticalLayout_7 = QVBoxLayout(self.dockWidgetContents)
@@ -222,7 +222,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 266, 359))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 241, 354))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -245,8 +245,8 @@ class Ui_MainWindow(object):
         self.frame.setObjectName(u"frame")
         self.frame.setMinimumSize(QSize(0, 0))
         self.frame.setMaximumSize(QSize(16777215, 28))
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
@@ -433,8 +433,8 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget)
         self.dockWidget_10 = QDockWidget(MainWindow)
         self.dockWidget_10.setObjectName(u"dockWidget_10")
-        self.dockWidget_10.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget_10.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.dockWidget_10.setFeatures(QDockWidget.DockWidgetMovable)
+        self.dockWidget_10.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
         self.explorer_layout_widget = QWidget()
         self.explorer_layout_widget.setObjectName(u"explorer_layout_widget")
         self.verticalLayout_10 = QVBoxLayout(self.explorer_layout_widget)
@@ -448,8 +448,8 @@ class Ui_MainWindow(object):
         self.frame_3 = QFrame(self.explorer_layout_widget)
         self.frame_3.setObjectName(u"frame_3")
         self.frame_3.setMaximumSize(QSize(16777215, 32))
-        self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_3.setFrameShape(QFrame.StyledPanel)
+        self.frame_3.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_4 = QHBoxLayout(self.frame_3)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
@@ -459,11 +459,11 @@ class Ui_MainWindow(object):
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -488,7 +488,7 @@ class Ui_MainWindow(object):
         icon8 = QIcon()
         icon8.addFile(u":/icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.compile_all_button.setIcon(icon8)
-        self.compile_all_button.setIconSize(QSize(24, 24))
+        self.compile_all_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.compile_all_button)
 
@@ -498,11 +498,11 @@ class Ui_MainWindow(object):
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -527,7 +527,7 @@ class Ui_MainWindow(object):
         icon9 = QIcon()
         icon9.addFile(u":/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.all_to_vdata_button.setIcon(icon9)
-        self.all_to_vdata_button.setIconSize(QSize(24, 24))
+        self.all_to_vdata_button.setIconSize(QSize(18, 18))
 
         self.horizontalLayout_4.addWidget(self.all_to_vdata_button)
 
@@ -537,8 +537,8 @@ class Ui_MainWindow(object):
         self.frame_4 = QFrame(self.explorer_layout_widget)
         self.frame_4.setObjectName(u"frame_4")
         self.frame_4.setMaximumSize(QSize(16777215, 32))
-        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_4.setFrameShape(QFrame.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.frame_4)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -557,11 +557,11 @@ class Ui_MainWindow(object):
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -584,7 +584,7 @@ class Ui_MainWindow(object):
 "\n"
 "    }")
         self.cerate_file_button.setIcon(icon7)
-        self.cerate_file_button.setIconSize(QSize(24, 24))
+        self.cerate_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.cerate_file_button)
 
@@ -594,11 +594,11 @@ class Ui_MainWindow(object):
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -623,7 +623,7 @@ class Ui_MainWindow(object):
         icon11 = QIcon()
         icon11.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.open_file_button.setIcon(icon11)
-        self.open_file_button.setIconSize(QSize(24, 24))
+        self.open_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.open_file_button)
 
@@ -633,11 +633,11 @@ class Ui_MainWindow(object):
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -660,7 +660,7 @@ class Ui_MainWindow(object):
 "\n"
 "    }")
         self.save_file_button.setIcon(icon2)
-        self.save_file_button.setIconSize(QSize(24, 24))
+        self.save_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.save_file_button)
 
