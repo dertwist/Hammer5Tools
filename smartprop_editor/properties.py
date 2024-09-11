@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QTreeWidgetItem, QTreeWidget, QLineEdit, QCheckBox, QGroupBox, QHBoxLayout, QVBoxLayout, QFrame
+from PySide6.QtWidgets import QTreeWidgetItem, QTreeWidget, QLineEdit, QCheckBox, QGroupBox, QHBoxLayout, QVBoxLayout, QFrame, QWidget
 from PySide6.QtCore import QSize
 import ast
 from PySide6.QtCore import Qt, Signal
@@ -73,6 +73,7 @@ class Properties:
 
 
 class AddProperty:
+    changed = Signal()
     def __init__(self, parent=QTreeWidget, key=None,value=None):
         name = key
         self.parent = parent.currentItem()
@@ -91,7 +92,15 @@ class AddProperty:
             if key == '_class':
                 pass
             else:
-                self.new_item(new_element, key, value, edit=True)
+                # self.new_item(new_element, key, value, edit=True)
+                new_child_item = QTreeWidgetItem(new_element)
+                new_child_item.setText(0, str(name))
+                new_child_item.setText(1, str(value))
+                new_element.addChild(new_child_item)
+
+                group_box = QLineEdit()
+                group_box.textChanged.connect(self.on_changed)
+                self.parent.treeWidget().setItemWidget(new_child_item, 1, group_box)
 
     def new_item(self, item, name, value, edit=False):
         new_child_item = QTreeWidgetItem(item)
@@ -99,16 +108,52 @@ class AddProperty:
         new_child_item.setText(1, str(value))
         item.addChild(new_child_item)
 
-        group_box = QFrame()
-        group_layout = QVBoxLayout()
-        group_box.setLayout(group_layout)
-        group_box.setContentsMargins(0, 0, 0, 0)
 
-        for i in range(3):
-            edit_line = QLineEdit()
-            group_layout.addWidget(edit_line)
+        # group_box = CustomEditLines()
+        # group_box.changed_event.connect(self.on_changed)
+        #
+        #
+        # self.parent.treeWidget().setItemWidget(new_child_item, 1, group_box)
 
-        widget = QLineEdit()
-        group_box.setStyleSheet(QT_Stylesheet_smartprop_tree)
+        # group_box = CustomEditLines()
+        # group_box.changed_event.connect(self.on_changed)
+        group_box = QLineEdit()
+        group_box.textChanged.connect(self.on_changed)
         self.parent.treeWidget().setItemWidget(new_child_item, 1, group_box)
+
         return new_child_item
+
+    def on_changed(self, text):
+        print('Changed', text)
+        # json_format = {}
+        # for index in range(self.parent.childCount()):
+        #     child_item = self.parent.child(index)
+        #     json_format[child_item.text(0)] = child_item.text(1)
+        #     for i in range(child_item.childCount()):
+        #         sub_child_item = child_item.child(i)
+        #         json_format[child_item.text(0)][sub_child_item.text(0)] = sub_child_item.text(1)
+        # print(json_format)
+
+
+class CustomEditLines(QGroupBox):
+    changed_event = Signal()
+    def __init__(self):
+        super().__init__()
+        self.value = {}
+        self.group_layout = QVBoxLayout()
+        self.setLayout(self.group_layout)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setStyleSheet(QT_Stylesheet_smartprop_tree)
+
+        # Create and connect QLineEdit widgets
+        self.edit_line = QLineEdit()
+        self.edit_line.textChanged.connect(lambda text: self.on_change(text, self.edit_line))
+        self.group_layout.addWidget(self.edit_line)
+
+        self.edit_line_2 = QLineEdit()
+        self.edit_line_2.textChanged.connect(lambda text: self.on_change(text, self.edit_line_2))
+        self.group_layout.addWidget(self.edit_line_2)
+
+    def on_change(self, text, edit_line):
+        self.value = {'1': self.edit_line.text(), '2': self.edit_line_2.text()}
+        self.changed_event.emit()
