@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'property_frame.ui'
+## Form generated from reading UI file 'properties_group_frame.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -25,6 +25,7 @@ class Ui_Form(object):
         if not Form.objectName():
             Form.setObjectName(u"Form")
         Form.resize(668, 285)
+        Form.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         Form.setStyleSheet(u"background-color: #1C1C1C;")
         self.verticalLayout = QVBoxLayout(Form)
         self.verticalLayout.setSpacing(0)
@@ -56,7 +57,6 @@ class Ui_Form(object):
 
         self.show_child = QCheckBox(self.frame)
         self.show_child.setObjectName(u"show_child")
-        self.show_child.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.show_child.setStyleSheet(u"QCheckBox::indicator:checked {\n"
 "    \n"
 "image: url(://icons/arrow_drop_down.png);\n"
@@ -96,56 +96,9 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.show_child)
 
-        self.enable = QCheckBox(self.frame)
-        self.enable.setObjectName(u"enable")
-        self.enable.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.enable.setStyleSheet(u"QCheckBox::indicator:checked {\n"
-"image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
-"   \n"
-"	height:16px;\n"
-"	width:16px;\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:unchecked {\n"
-"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
-"	height:16px;\n"
-"	width:16px;\n"
-"}\n"
-"\n"
-"\n"
-"QCheckBox {\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:14px;\n"
-"    padding-top: 2px;\n"
-"    padding-bottom:2px;\n"
-"    color: #E3E3E3;\n"
-"    padding-left: 4px;\n"
-"background-color: #242424;\n"
-"}\n"
-"QCheckBox:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QCheckBox{\n"
-"	padding-left:5px;\n"
-"	border-left: 0px solid black;\n"
-"border-right: 0px solid black;\n"
-"border-top: 0px solid black;\n"
-"}")
-        self.enable.setChecked(False)
-        self.enable.setAutoRepeat(False)
-        self.enable.setAutoExclusive(False)
-        self.enable.setTristate(False)
-
-        self.horizontalLayout.addWidget(self.enable)
-
         self.property_icon = QToolButton(self.frame)
         self.property_icon.setObjectName(u"property_icon")
         self.property_icon.setEnabled(False)
-        self.property_icon.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.property_icon.setStyleSheet(u"QToolButton {\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
@@ -172,7 +125,6 @@ class Ui_Form(object):
 
         self.property_class = QLineEdit(self.frame)
         self.property_class.setObjectName(u"property_class")
-        self.property_class.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.property_class.setStyleSheet(u"QLineEdit {\n"
 "    font-size: 8pt;\n"
 "    font-family: \"Segoe UI\";\n"
@@ -205,12 +157,13 @@ class Ui_Form(object):
 
         self.frame_layout = QFrame(Form)
         self.frame_layout.setObjectName(u"frame_layout")
+        self.frame_layout.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.frame_layout.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_layout.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.frame_layout)
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setContentsMargins(12, 0, 0, 0)
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setObjectName(u"layout")
@@ -234,14 +187,10 @@ class Ui_Form(object):
         self.show_child.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show child</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.show_child.setText("")
-#if QT_CONFIG(tooltip)
-        self.enable.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show in editor</span></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.enable.setText("")
         self.property_icon.setText("")
 #if QT_CONFIG(tooltip)
         self.property_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.property_class.setText(QCoreApplication.translate("Form", u"Class properties", None))
+        self.property_class.setText(QCoreApplication.translate("Form", u"Modifiers", None))
     # retranslateUi
 

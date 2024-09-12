@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QTreeWidgetItem, QTreeWidget, QLineEdit, QCheckBox, QGroupBox, QHBoxLayout, QVBoxLayout, QFrame
-from PySide6.QtCore import QSize
+from PySide6.QtWidgets import QTreeWidgetItem, QTreeWidget, QLineEdit, QCheckBox, QGroupBox, QHBoxLayout, QVBoxLayout, \
+    QFrame, QWidget
+from PySide6.QtCore import QSize, QObject
 import ast
 from PySide6.QtCore import Qt, Signal
 from qt_styles.qt_smartprops_tree_stylesheet import QT_Stylesheet_smartprop_tree
@@ -72,7 +73,7 @@ class Properties:
                         self.new_item(modifier_item, key, value, edit=True)
 
 
-class AddProperty:
+class AddProperty(QWidget):
     def __init__(self, widget_list=None, key=None,value=None):
         super().__init__()
         from smartprop_editor.property_frame import PropertyFrame
