@@ -47,18 +47,6 @@ class CompileAll(QObject):
             VsmartCompile(filename=i)
             progress += 1
             self.progress.emit(progress, os.path.basename(i))
-        # while progress < len(total_files):
-        #     # time.sleep(0.1)
-        #     progress += 1
-        #     # progress_dialog.setValue(progress)
-        #     file_path = total_files[progress - 1]
-        #     # self.open_file(file_path)
-        #     # self.save_file()
-        #     # VsmartCompile(filename=file_path)
-        #     # print(file_path)
-        #     # print(f'Progress {progress} of {len(total_files)}')
-        #     time.sleep(0.1)
-        #     self.progress.emit(progress)
         self.finished.emit()
 
 class SmartPropEditorMainWindow(QMainWindow):
@@ -80,7 +68,18 @@ class SmartPropEditorMainWindow(QMainWindow):
         # AddProperty(widget_list=self.ui.properties_layout, value=None)
         # AddProperty(widget_list=self.ui.properties_layout, value=None)
         from smartprop_editor.property_frame import PropertyFrame
-        PropertyFrame(widget_list=self.ui.properties_layout)
+        from smartprop_editor.properties_group_frame import PropertiesGroupFrame
+
+
+        # Adding the properties group
+        self.modifiers_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Modifiers'))
+        self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
+
+        self.selection_criteria_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Section criteria'))
+        self.ui.properties_layout.insertWidget(1, self.selection_criteria_group_instance)
+
+
+
         # adding var classes to combobox
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
@@ -121,22 +120,31 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # Create New elemnt
     def keyPressEvent(self, event):
+
+        # Update focus widget at mouse position
+        cursor_pos = QCursor.pos()
+        widget_under_cursor = QApplication.widgetAt(cursor_pos)
+        if widget_under_cursor:
+            widget_under_cursor.setFocus()
+
         focus_widget = QApplication.focusWidget()
+
+
         if focus_widget is self.ui.tree_hierarchy_widget:
             if focus_widget.viewport().underMouse():
                 if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
                     self.add_an_element()
 
                     event.accept()
-        if focus_widget is self.ui.properties_tree:
-            if focus_widget.viewport().underMouse():
-                if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                    if self.ui.properties_tree.currentItem().text(0) == 'Modifiers':
-                        self.add_a_operator()
-                    elif self.ui.properties_tree.currentItem().text(0) == 'SelectionCriteria':
-                        self.add_a_selection_criteria()
+        if focus_widget is self.modifiers_group_instance.ui.frame_2:
+            if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                self.add_a_operator()
+                # if self.ui.properties_tree.currentItem().text(0) == 'Modifiers':
+                #     self.add_a_operator()
+                # elif self.ui.properties_tree.currentItem().text(0) == 'SelectionCriteria':
+                #     self.add_a_selection_criteria()
 
-                    event.accept()
+                event.accept()
     def add_an_element(self):
         elements_in_popupmenu = [elements_dict]
         self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=False)
@@ -144,19 +152,19 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.show()
     def add_a_operator(self):
 
-        item = self.ui.properties_tree.topLevelItem(1)
-        exists_classes = []
-        elements_in_popupmenu = {}
-        for i in range(item.childCount()):
-            exists_classes.append(item.child(i).text(0))
+        # item = self.ui.properties_tree.topLevelItem(1)
+        # exists_classes = []
+        # elements_in_popupmenu = {}
+        # for i in range(item.childCount()):
+        #     exists_classes.append(item.child(i).text(0))
+        #
+        # for key, value in operators_dict.items():
+        #     if key in exists_classes:
+        #         pass
+        #     else:
+        #         elements_in_popupmenu.update({key: value})
 
-        for key, value in operators_dict.items():
-            if key in exists_classes:
-                pass
-            else:
-                elements_in_popupmenu.update({key: value})
-
-        elements_in_popupmenu = [elements_in_popupmenu]
+        elements_in_popupmenu = [operators_dict]
         self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_operator(name, value))
         self.popup_menu.show()
@@ -192,14 +200,10 @@ class SmartPropEditorMainWindow(QMainWindow):
             parent = self.ui.tree_hierarchy_widget.currentItem()
         parent.addChild(new_element)
     def new_operator(self, element_class, element_value):
-
-        name = element_class
-        element_value = ast.literal_eval(element_value)
-        new_element = QTreeWidgetItem()
-        new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
-        new_element.setText(0, name)
-        new_element.setText(1, str(element_value))
-        self.ui.properties_tree.currentItem().addChild(new_element)
+        operator_instance = AddProperty(widget_list=self.modifiers_group_instance.layout)
+        from smartprop_editor.property_frame import PropertyFrame
+        operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout)
+        self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
     def new_selection_criteria(self, element_class, element_value):
         AddProperty(parent=self.ui.properties_tree, key=element_class, value=element_value)
 
@@ -210,11 +214,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         progress_dialog.setLabelText(f'Compiling: {file}')
 
     def compile_all(self):
-        # Show a confirmation dialog before compiling
         reply = QMessageBox.question(self, 'Confirmation','Are you sure you want to compile? The current file will be closed. Proceed?',QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
-            # total_files = sum(len(files) for _, _, files in os.walk(self.tree_directory))
             total_files = []
 
             for root, dirs, files in os.walk(self.tree_directory):
@@ -234,44 +236,14 @@ class SmartPropEditorMainWindow(QMainWindow):
 
 
             self.worker.moveToThread(self.thread)
-            # Step 5: Connect signals and slots
+
             self.thread.started.connect(lambda: self.worker.run(total_files=total_files))
             self.worker.finished.connect(self.thread.quit)
             self.worker.finished.connect(self.worker.deleteLater)
             self.thread.finished.connect(self.thread.deleteLater)
             self.worker.progress.connect(lambda n, file: self.reportProgress(n, progress_dialog, file))
-            # Step 6: Start the thread
+
             self.thread.start()
-
-            # for item in total_files:
-            #     print(item)
-            #     # time.sleep(1)
-            #     progress += 1
-            #     progress_dialog.setValue(progress)
-            #     time.sleep(0.1)
-            #     if progress_dialog.wasCanceled():
-            #         break
-
-            # for root, dirs, files in os.walk(self.tree_directory):
-            #     for file in files:
-            #         file_path = os.path.join(root, file)
-            #         # progress_file_name = os.path.basename(file_path)
-            #         # self.open_file(filename=file_path)
-            #
-            #         # Simulate progress update
-            #         time.sleep(1)
-            #         progress += 1
-            #         progress_dialog.setValue(progress)
-            #         # self.save_file()
-            #
-            #         # Check if the user canceled the compilation
-            #         if progress_dialog.wasCanceled():
-            #             break
-
-            # progress_dialog.close()  # Close the progress dialog when compilation is complete
-        # else:
-        #     # Handle the case when the user chooses not to proceed with compilation
-        #     pass
 
 
     def convert_all_to_vdata(self):
