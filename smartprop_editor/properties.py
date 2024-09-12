@@ -74,6 +74,7 @@ class Properties:
 
 class AddProperty:
     def __init__(self, widget_list=None, key=None,value=None):
+        super().__init__()
         from smartprop_editor.property_frame import PropertyFrame
         PropertyFrame(widget_list=widget_list)
         # name = key

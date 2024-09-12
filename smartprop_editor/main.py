@@ -77,7 +77,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         # Properties setup
         # self.ui.properties_tree.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.ui.properties_tree.customContextMenuRequested.connect(self.open_properties_menu)
-
+        # AddProperty(widget_list=self.ui.properties_layout, value=None)
+        # AddProperty(widget_list=self.ui.properties_layout, value=None)
+        from smartprop_editor.property_frame import PropertyFrame
+        PropertyFrame(widget_list=self.ui.properties_layout)
         # adding var classes to combobox
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
