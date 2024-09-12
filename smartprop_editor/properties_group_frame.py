@@ -1,4 +1,4 @@
-from smartprop_editor.ui_property_frame import Ui_Form
+from smartprop_editor.ui_properties_group_frame import Ui_Form
 
 
 from PySide6.QtWidgets import QWidget
@@ -12,7 +12,7 @@ from PySide6.QtGui import QCursor, QDrag,QAction
 
 import ast
 
-class PropertyFrame(QWidget):
+class PropertiesGroupFrame(QWidget):
     def __init__(self, value=None, widget_list=None, name=None):
         super().__init__()
         self.ui = Ui_Form()
@@ -20,6 +20,7 @@ class PropertyFrame(QWidget):
         self.setAcceptDrops(True)
         self.ui.property_class.setAcceptDrops(False)
         self.name = name
+        self.layout = self.ui.layout
 
         self.var_value = {
             'default': '',
@@ -28,12 +29,9 @@ class PropertyFrame(QWidget):
             'model':  ''
         }
         self.enable = True
-        prop_class = 'Int'
+        var_class = 'Int'
 
-        self.ui.property_class.setText('name')
-
-        self.ui.enable.setChecked(self.enable)
-        self.ui.enable.clicked.connect(self.update_self)
+        self.ui.property_class.setText(self.name)
 
         # self.ui.variable_name.textChanged.connect(self.update_self)
         self.widget_list = widget_list
@@ -41,12 +39,12 @@ class PropertyFrame(QWidget):
 
 
 
-        if prop_class == 'Int':
+        if var_class == 'Int':
             # self.ui.property_icon.setIcon('')
             from smartprop_editor.variables.int import Var_class_Int
             self.var_int_instance = Var_class_Int(default=1, min=1, max=1,model=None)
             pass
-        elif prop_class == 'Float':
+        elif var_class == 'Float':
             # from smartprop_editor.variables.float import Var_class_float
             # self.var_int_instance = Var_class_float(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
             pass
