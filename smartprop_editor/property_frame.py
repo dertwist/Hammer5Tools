@@ -27,7 +27,7 @@ class PropertyFrame(QWidget):
             'model':  ''
         }
         self.enable = True
-        var_class = 'int'
+        var_class = 'Int'
 
         self.ui.property_class.setText('name')
 
@@ -41,7 +41,7 @@ class PropertyFrame(QWidget):
 
 
         if var_class == 'Int':
-            self.ui.property_icon.setIcon('')
+            # self.ui.property_icon.setIcon('')
             from smartprop_editor.variables.int import Var_class_Int
             self.var_int_instance = Var_class_Int(default=1, min=1, max=1,model=None)
             pass
@@ -54,8 +54,8 @@ class PropertyFrame(QWidget):
             # self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
             pass
 
-        self.var_int_instance.edited.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max, var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
-        self.ui.layout.insertWidget(1, self.var_int_instance)
+        # self.var_int_instance.edited.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max, var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
+        # self.ui.layout.insertWidget(1, self.var_int_instance)
 
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
