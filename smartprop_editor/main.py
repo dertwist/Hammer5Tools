@@ -75,8 +75,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
 
         # Properties setup
-        self.ui.properties_tree.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.ui.properties_tree.customContextMenuRequested.connect(self.open_properties_menu)
+        # self.ui.properties_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.ui.properties_tree.customContextMenuRequested.connect(self.open_properties_menu)
 
         # adding var classes to combobox
         for item in variables_list:
