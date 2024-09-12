@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Widget</class>
+ <widget class="QWidget" name="Widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>790</width>
+    <height>32</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>97</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">.QWidget {
+    font: 580 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+	border-top: 0px;
+    border-color: rgba(50, 50, 50, 255);
+    padding: 8px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+.QWidget::hover {
+}
+.QWidget::selected {
+    background-color: #414956;
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="frame">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">.QFrame {
+    font: 580 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+	border-top: 0px;
+    border-color: rgba(50, 50, 50, 255);
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+.QFrame::hover {
+}
+.QFrame::selected {
+    background-color: #414956;
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <property name="spacing">
+       <number>16</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="value_label">
+        <property name="styleSheet">
+         <string notr="true">border:0px;
+background-color: rgba(255, 255, 255, 0);
+font: 8pt &quot;Segoe UI&quot;;
+
+</string>
+        </property>
+        <property name="text">
+         <string>Value</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="value">
+        <property name="styleSheet">
+         <string notr="true">QLineEdit {
+    border: 0px solid #CCCCCC;
+    border-color: rgba(80, 80, 80, 255);
+    border-radius: 2px;
+    padding: 2px;
+    color: #E3E3E3;
+background-color: #1C1C1C;
+
+}
+</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

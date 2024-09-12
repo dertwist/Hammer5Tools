@@ -94,43 +94,10 @@ class Ui_MainWindow(object):
         self.verticalLayout_17.setSpacing(0)
         self.verticalLayout_17.setObjectName(u"verticalLayout_17")
         self.verticalLayout_17.setContentsMargins(0, 0, 0, 0)
-        self.properties_tree = QTreeWidget(self.scrollAreaWidgetContents)
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/storage_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/functions_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        icon6 = QIcon()
-        icon6.addFile(u":/icons/lan_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        __qtreewidgetitem = QTreeWidgetItem(self.properties_tree)
-        __qtreewidgetitem.setFlags(Qt.ItemIsSelectable|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled);
-        __qtreewidgetitem.setIcon(0, icon4);
-        __qtreewidgetitem1 = QTreeWidgetItem(self.properties_tree)
-        __qtreewidgetitem1.setFlags(Qt.ItemIsSelectable|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled);
-        __qtreewidgetitem1.setIcon(0, icon5);
-        __qtreewidgetitem2 = QTreeWidgetItem(self.properties_tree)
-        __qtreewidgetitem2.setFlags(Qt.ItemIsSelectable|Qt.ItemIsUserCheckable|Qt.ItemIsEnabled);
-        __qtreewidgetitem2.setIcon(0, icon6);
-        self.properties_tree.setObjectName(u"properties_tree")
-        self.properties_tree.setEditTriggers(QAbstractItemView.EditKeyPressed)
-        self.properties_tree.setTabKeyNavigation(False)
-        self.properties_tree.setProperty("showDropIndicator", True)
-        self.properties_tree.setDragEnabled(False)
-        self.properties_tree.setDragDropOverwriteMode(False)
-        self.properties_tree.setDragDropMode(QAbstractItemView.NoDragDrop)
-        self.properties_tree.setAlternatingRowColors(True)
-        self.properties_tree.setSelectionMode(QAbstractItemView.ContiguousSelection)
-        self.properties_tree.setUniformRowHeights(False)
-        self.properties_tree.setSortingEnabled(False)
-        self.properties_tree.setAnimated(False)
-        self.properties_tree.header().setVisible(True)
-        self.properties_tree.header().setCascadingSectionResizes(False)
-        self.properties_tree.header().setMinimumSectionSize(160)
-        self.properties_tree.header().setDefaultSectionSize(160)
-        self.properties_tree.header().setHighlightSections(False)
-        self.properties_tree.header().setProperty("showSortIndicator", False)
-        self.properties_tree.header().setStretchLastSection(True)
+        self.properties_layout = QVBoxLayout()
+        self.properties_layout.setObjectName(u"properties_layout")
 
-        self.verticalLayout_17.addWidget(self.properties_tree)
+        self.verticalLayout_17.addLayout(self.properties_layout)
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
@@ -174,9 +141,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addWidget(self.tree_hierarchy_search_bar_widget)
 
         self.tree_hierarchy_widget = QTreeWidget(self.frame_2)
-        __qtreewidgetitem3 = QTreeWidgetItem()
-        __qtreewidgetitem3.setText(0, u"Operator");
-        self.tree_hierarchy_widget.setHeaderItem(__qtreewidgetitem3)
+        __qtreewidgetitem = QTreeWidgetItem()
+        __qtreewidgetitem.setText(0, u"Operator");
+        self.tree_hierarchy_widget.setHeaderItem(__qtreewidgetitem)
         self.tree_hierarchy_widget.setObjectName(u"tree_hierarchy_widget")
         self.tree_hierarchy_widget.setDragEnabled(True)
         self.tree_hierarchy_widget.setDragDropOverwriteMode(True)
@@ -253,9 +220,9 @@ class Ui_MainWindow(object):
         self.add_new_variable_button = QToolButton(self.frame)
         self.add_new_variable_button.setObjectName(u"add_new_variable_button")
         self.add_new_variable_button.setMaximumSize(QSize(28, 28))
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.add_new_variable_button.setIcon(icon7)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.add_new_variable_button.setIcon(icon4)
         self.add_new_variable_button.setIconSize(QSize(16, 16))
 
         self.horizontalLayout.addWidget(self.add_new_variable_button)
@@ -485,9 +452,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon8 = QIcon()
-        icon8.addFile(u":/icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.compile_all_button.setIcon(icon8)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.compile_all_button.setIcon(icon5)
         self.compile_all_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.compile_all_button)
@@ -524,9 +491,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.all_to_vdata_button.setIcon(icon9)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.all_to_vdata_button.setIcon(icon6)
         self.all_to_vdata_button.setIconSize(QSize(18, 18))
 
         self.horizontalLayout_4.addWidget(self.all_to_vdata_button)
@@ -544,9 +511,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.new_file_options_button = QToolButton(self.frame_4)
         self.new_file_options_button.setObjectName(u"new_file_options_button")
-        icon10 = QIcon()
-        icon10.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.new_file_options_button.setIcon(icon10)
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.new_file_options_button.setIcon(icon7)
         self.new_file_options_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.new_file_options_button)
@@ -583,7 +550,7 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.cerate_file_button.setIcon(icon7)
+        self.cerate_file_button.setIcon(icon4)
         self.cerate_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.cerate_file_button)
@@ -620,9 +587,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon11 = QIcon()
-        icon11.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_button.setIcon(icon11)
+        icon8 = QIcon()
+        icon8.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_file_button.setIcon(icon8)
         self.open_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.open_file_button)
@@ -682,24 +649,10 @@ class Ui_MainWindow(object):
         self.actionSaveSmarptop.setText(QCoreApplication.translate("MainWindow", u"SaveSmarptop", None))
         self.actionSaveSmartpropAs.setText(QCoreApplication.translate("MainWindow", u"SaveSmartpropAs", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
-        ___qtreewidgetitem = self.properties_tree.headerItem()
-        ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Properties", None));
-        ___qtreewidgetitem.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
-
-        __sortingEnabled = self.properties_tree.isSortingEnabled()
-        self.properties_tree.setSortingEnabled(False)
-        ___qtreewidgetitem1 = self.properties_tree.topLevelItem(0)
-        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"ClassProperties", None));
-        ___qtreewidgetitem2 = self.properties_tree.topLevelItem(1)
-        ___qtreewidgetitem2.setText(0, QCoreApplication.translate("MainWindow", u"Modifiers", None));
-        ___qtreewidgetitem3 = self.properties_tree.topLevelItem(2)
-        ___qtreewidgetitem3.setText(0, QCoreApplication.translate("MainWindow", u"SelectionCriteria", None));
-        self.properties_tree.setSortingEnabled(__sortingEnabled)
-
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
-        ___qtreewidgetitem4 = self.tree_hierarchy_widget.headerItem()
-        ___qtreewidgetitem4.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
+        ___qtreewidgetitem = self.tree_hierarchy_widget.headerItem()
+        ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
         self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
         self.variables_scroll_area_searchbar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         self.add_new_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
