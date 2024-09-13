@@ -54,7 +54,7 @@ operators_list = [
     {'CreateLocator': {}},
     {'CreateSizer': {}},
     {'CreateRotator': {}},
-    {'RandomRotation': {}},
+    {'RandomRotation': {'_class': 'CSmartPropOperation_RandomRotation', 'm_vRandomRotationMin': {}, 'm_vRandomRotationMax': {}}},
     {'RandomScale': {}},
     {'RandomOffset': {}},
 ]
