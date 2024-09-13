@@ -74,6 +74,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         # Adding the properties group
         self.modifiers_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Modifiers'))
         self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
+        self.modifiers_group_instance.signal.connect(self.add_an_operator)
 
         self.selection_criteria_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Section criteria'))
         self.ui.properties_layout.insertWidget(1, self.selection_criteria_group_instance)
@@ -138,7 +139,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                     event.accept()
         if focus_widget is self.modifiers_group_instance.ui.frame_2:
             if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                self.add_a_operator()
+                self.add_an_operator()
                 # if self.ui.properties_tree.currentItem().text(0) == 'Modifiers':
                 #     self.add_a_operator()
                 # elif self.ui.properties_tree.currentItem().text(0) == 'SelectionCriteria':
@@ -150,7 +151,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
         self.popup_menu.show()
-    def add_a_operator(self):
+    def add_an_operator(self):
 
         # item = self.ui.properties_tree.topLevelItem(1)
         # exists_classes = []
