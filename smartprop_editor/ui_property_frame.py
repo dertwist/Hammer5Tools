@@ -242,6 +242,6 @@ class Ui_Form(object):
 #if QT_CONFIG(tooltip)
         self.property_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.property_class.setText(QCoreApplication.translate("Form", u"Class properties", None))
+        self.property_class.setText(QCoreApplication.translate("Form", u"Class properties_classes", None))
     # retranslateUi
 
