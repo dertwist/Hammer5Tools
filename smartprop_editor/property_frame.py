@@ -1,3 +1,5 @@
+from time import process_time_ns
+
 from smartprop_editor.ui_property_frame import Ui_Form
 
 
@@ -21,7 +23,7 @@ class PropertyFrame(QWidget):
         self.ui.property_class.setAcceptDrops(False)
         self.name = name
         value = ast.literal_eval(value)
-        print(type(value), value)
+        # print(type(value), value)
 
         self.name = value['_class']
         self.name = self.name.replace('CSmartPropSelectionCriteria_', '')
@@ -29,11 +31,12 @@ class PropertyFrame(QWidget):
         self.name = self.name.replace('CSmartPropOperation_', '')
         del value['_class']
         self.value = value
-        print(self.value)
+        # print(self.value)
         self.layout = self.ui.layout
 
         self.enable = True
-        prop_class = 'Int'
+        prop_class = self.name
+
 
         self.ui.property_class.setText(self.name)
 
@@ -56,7 +59,9 @@ class PropertyFrame(QWidget):
             # self.var_int_instance = Var_class_float(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
             pass
         else:
-            # from smartprop_editor.variables.legacy import Var_class_legacy
+            from smartprop_editor.properties_classes.legacy import PropertyLegacy
+            for item, key in self.value.items():
+                print(item, key)
             # self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
             pass
 
