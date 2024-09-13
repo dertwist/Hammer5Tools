@@ -2,7 +2,7 @@ from smartprop_editor.ui_properties_group_frame import Ui_Form
 
 
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from soudevent_editor.properties.property_actions import PropertyActions
 
 from PySide6.QtWidgets import QMenu, QApplication
@@ -13,6 +13,7 @@ from PySide6.QtGui import QCursor, QDrag,QAction
 import ast
 
 class PropertiesGroupFrame(QWidget):
+    signal = Signal()
     def __init__(self, value=None, widget_list=None, name=None):
         super().__init__()
         self.ui = Ui_Form()
@@ -20,7 +21,10 @@ class PropertiesGroupFrame(QWidget):
         self.setAcceptDrops(True)
         self.ui.property_class.setAcceptDrops(False)
         self.name = name
+
+
         self.layout = self.ui.layout
+        self.ui.add_button.clicked.connect(self.add_action)
 
         self.var_value = {
             'default': '',
@@ -28,38 +32,16 @@ class PropertiesGroupFrame(QWidget):
             'max':  '',
             'model':  ''
         }
-        self.enable = True
-        var_class = 'Int'
 
         self.ui.property_class.setText(self.name)
-
-        # self.ui.variable_name.textChanged.connect(self.update_self)
         self.widget_list = widget_list
-
-
-
-
-        if var_class == 'Int':
-            # self.ui.property_icon.setIcon('')
-            from smartprop_editor.variables.int import Var_class_Int
-            self.var_int_instance = Var_class_Int(default=1, min=1, max=1,model=None)
-            pass
-        elif var_class == 'Float':
-            # from smartprop_editor.variables.float import Var_class_float
-            # self.var_int_instance = Var_class_float(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
-            pass
-        else:
-            # from smartprop_editor.variables.legacy import Var_class_legacy
-            # self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
-            pass
-
-        # self.var_int_instance.edited.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max, var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
-        # self.ui.layout.insertWidget(1, self.var_int_instance)
 
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 
         self.init_ui()
+    def add_action(self):
+        self.signal.emit()
 
     def show_child(self):
         if not self.ui.show_child.isChecked():

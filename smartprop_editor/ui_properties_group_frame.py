@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout,
-    QLabel, QLayout, QLineEdit, QSizePolicy,
-    QToolButton, QVBoxLayout, QWidget)
+    QLabel, QLayout, QLineEdit, QPushButton,
+    QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_Form(object):
@@ -123,6 +123,11 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.property_icon)
 
+        self.add_button = QPushButton(self.frame)
+        self.add_button.setObjectName(u"add_button")
+
+        self.horizontalLayout.addWidget(self.add_button)
+
         self.property_class = QLineEdit(self.frame)
         self.property_class.setObjectName(u"property_class")
         self.property_class.setStyleSheet(u"QLineEdit {\n"
@@ -168,6 +173,15 @@ class Ui_Form(object):
         self.layout.setSpacing(0)
         self.layout.setObjectName(u"layout")
         self.layout.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
+        self.frame_2 = QFrame(self.frame_layout)
+        self.frame_2.setObjectName(u"frame_2")
+        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_3 = QVBoxLayout(self.frame_2)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+
+        self.layout.addWidget(self.frame_2)
+
 
         self.verticalLayout_2.addLayout(self.layout)
 
@@ -188,6 +202,7 @@ class Ui_Form(object):
 #endif // QT_CONFIG(tooltip)
         self.show_child.setText("")
         self.property_icon.setText("")
+        self.add_button.setText(QCoreApplication.translate("Form", u"Add new", None))
 #if QT_CONFIG(tooltip)
         self.property_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
