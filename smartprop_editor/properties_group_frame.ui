@@ -229,6 +229,13 @@ QToolButton:hover {
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="add_button">
+        <property name="text">
+         <string>Add new</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLineEdit" name="property_class">
         <property name="toolTip">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>

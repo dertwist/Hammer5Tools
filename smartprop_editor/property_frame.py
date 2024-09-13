@@ -20,17 +20,22 @@ class PropertyFrame(QWidget):
         self.setAcceptDrops(True)
         self.ui.property_class.setAcceptDrops(False)
         self.name = name
+        value = ast.literal_eval(value)
+        print(type(value), value)
 
-        self.var_value = {
-            'default': '',
-            'min':  '',
-            'max':  '',
-            'model':  ''
-        }
+        self.name = value['_class']
+        self.name = self.name.replace('CSmartPropSelectionCriteria_', '')
+        self.name = self.name.replace('CSmartPropFilter_', '')
+        self.name = self.name.replace('CSmartPropOperation_', '')
+        del value['_class']
+        self.value = value
+        print(self.value)
+        self.layout = self.ui.layout
+
         self.enable = True
         prop_class = 'Int'
 
-        self.ui.property_class.setText('name')
+        self.ui.property_class.setText(self.name)
 
         self.ui.enable.setChecked(self.enable)
         self.ui.enable.clicked.connect(self.update_self)
@@ -95,4 +100,4 @@ class PropertyFrame(QWidget):
 
         elif action == copy_action:
             clipboard = QApplication.clipboard()
-            clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.var_class};;{self.var_value};;{self.var_visible_in_editor};;{self.var_display_name}")
+            clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.value}")
