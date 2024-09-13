@@ -46,18 +46,18 @@ filters_dict = {
 }
 
 operator_prefix = 'CSmartPropOperation_'
-operators_dict = {
-    'Rotate': {},
-    'Scale': {},
-    'Translate': {},
-    'SetTintColor': {'m_ColorChoices': []},
-    'CreateLocator': {},
-    'CreateSizer': {},
-    'CreateRotator': {},
-    'RandomRotation': {},
-    'RandomScale': {},
-    'RandomOffset': {},
-}
+operators_list = [
+    {'Rotate': {},},
+    {'Scale': {},},
+    {'Translate': {'_class': "CSmartPropOperation_Translate", 'm_vPosition': [120, -12, 0]}},
+    {'SetTintColor': {'m_ColorChoices': []}},
+    {'CreateLocator': {}},
+    {'CreateSizer': {}},
+    {'CreateRotator': {}},
+    {'RandomRotation': {}},
+    {'RandomScale': {}},
+    {'RandomOffset': {}},
+]
 
 operators_dict_todo = {
     'TraceToPoint': {},
