@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="focusPolicy">
-   <enum>Qt::FocusPolicy::NoFocus</enum>
+   <enum>Qt::NoFocus</enum>
   </property>
   <property name="windowTitle">
    <string>Form</string>
@@ -44,10 +44,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="spacing">
@@ -137,6 +137,59 @@ border-top: 0px solid black;
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton">
+        <property name="styleSheet">
+         <string notr="true">
+QPushButton {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+	border-top:0px;
+border-left:0px;
+border-right:0px;
+    height:14px;
+    padding-top: 2px;
+    padding-bottom:4px;
+	background-color: #242424;
+    padding-left: 8px;
+	padding-right: 8px;
+	color: #E3E3E3;
+}
+
+QPushButton:hover {
+    background-color: #414956;
+    color: white;
+}
+
+
+QPushButton:pressed {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+	border-top:0px;
+border-left:0px;
+border-right:0px;
+    height:14px;
+    padding-top: 2px;
+    padding-bottom:4px;
+	background-color: #242424;
+    padding-left: 8px;
+	padding-right: 8px;
+	color: #E3E3E3;
+}</string>
+        </property>
+        <property name="text">
+         <string>Create new</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources.qrc">
+          <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QToolButton" name="property_icon">
         <property name="enabled">
          <bool>false</bool>
@@ -204,7 +257,7 @@ QLineEdit::selection {
 }</string>
         </property>
         <property name="inputMethodHints">
-         <set>Qt::InputMethodHint::ImhLatinOnly|Qt::InputMethodHint::ImhLowercaseOnly</set>
+         <set>Qt::ImhLatinOnly|Qt::ImhLowercaseOnly</set>
         </property>
         <property name="text">
          <string>Modifiers</string>
@@ -223,13 +276,13 @@ QLineEdit::selection {
    <item>
     <widget class="QFrame" name="frame_layout">
      <property name="focusPolicy">
-      <enum>Qt::FocusPolicy::StrongFocus</enum>
+      <enum>Qt::StrongFocus</enum>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
@@ -253,15 +306,15 @@ QLineEdit::selection {
          <number>0</number>
         </property>
         <property name="sizeConstraint">
-         <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
+         <enum>QLayout::SetDefaultConstraint</enum>
         </property>
         <item>
          <widget class="QFrame" name="frame_2">
           <property name="frameShape">
-           <enum>QFrame::Shape::StyledPanel</enum>
+           <enum>QFrame::StyledPanel</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Shadow::Raised</enum>
+           <enum>QFrame::Raised</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3"/>
          </widget>
