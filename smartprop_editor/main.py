@@ -71,7 +71,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         from smartprop_editor.properties_group_frame import PropertiesGroupFrame
 
 
-        # Adding the properties group
+        # Adding the properties_classes group
         self.modifiers_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Modifiers'))
         self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
         self.modifiers_group_instance.signal.connect(self.add_an_operator)
