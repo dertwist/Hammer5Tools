@@ -32,7 +32,7 @@ class PropertiesGroupFrame(QWidget):
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 
-        self.init_ui()
+        # self.init_ui()
     def add_action(self):
         self.signal.emit()
 
@@ -42,14 +42,9 @@ class PropertiesGroupFrame(QWidget):
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
-    def on_changed(self, var_default=None, var_min=None, var_max=None, var_model=None):
-        pass
-
-    def update_self(self):
-        pass
-    def init_ui(self):
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.show_context_menu)
+    # def init_ui(self):
+    #     self.setContextMenuPolicy(Qt.CustomContextMenu)
+    #     self.customContextMenuRequested.connect(self.show_context_menu)
 
     mousePressEvent = PropertyActions.mousePressEvent
     mouseMoveEvent = PropertyActions.mouseMoveEvent
