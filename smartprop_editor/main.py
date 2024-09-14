@@ -99,12 +99,14 @@ class SmartPropEditorMainWindow(QMainWindow):
     def properties_groups_init(self):
         self.modifiers_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Modifiers'))
         self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
-        self.modifiers_group_instance.signal.connect(self.add_an_operator)
+        self.modifiers_group_instance.add_signal.connect(self.add_an_operator)
+        self.modifiers_group_instance.paste_signal.connect(self.paste_operator)
 
 
         self.selection_criteria_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Section criteria'))
-        self.selection_criteria_group_instance.signal.connect(self.add_a_selection_criteria)
+        self.selection_criteria_group_instance.add_signal.connect(self.add_a_selection_criteria)
         self.ui.properties_layout.insertWidget(1, self.selection_criteria_group_instance)
+        self.selection_criteria_group_instance.paste_signal.connect(self.paste_selection_criteria)
 
     def on_tree_current_item_changed(self, item):
         try:
@@ -179,8 +181,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             widget_under_cursor.setFocus()
 
         focus_widget = QApplication.focusWidget()
-        print(focus_widget)
-
 
         if focus_widget is self.ui.tree_hierarchy_widget:
             if focus_widget.viewport().underMouse():
@@ -219,6 +219,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_operator(name, value))
         self.popup_menu.show()
+
     def add_a_selection_criteria(self):
         elements_in_popupmenu = []
         exists_classes = []
@@ -251,6 +252,29 @@ class SmartPropEditorMainWindow(QMainWindow):
     def new_operator(self, element_class, element_value):
         operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
+
+    def paste_operator(self):
+        clipboard = QApplication.clipboard()
+        clipboard_text = clipboard.text()
+        clipboard_data = clipboard_text.split(';;')
+
+        if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
+            operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=ast.literal_eval(clipboard_data[2]),variables_scrollArea=self.ui.variables_scrollArea)
+            self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
+        else:
+            print("Clipboard data format is not valid.")
+
+    def paste_selection_criteria(self):
+        clipboard = QApplication.clipboard()
+        clipboard_text = clipboard.text()
+        clipboard_data = clipboard_text.split(';;')
+
+        if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
+            operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=ast.literal_eval(clipboard_data[2]),variables_scrollArea=self.ui.variables_scrollArea)
+            self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
+        else:
+            print("Clipboard data format is not valid.")
+
     def new_selection_criteria(self, element_class, element_value):
         operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
         self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)

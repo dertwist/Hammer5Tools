@@ -47,7 +47,7 @@ class PropertyFrame(QWidget):
         # self.ui.variable_name.textChanged.connect(self.update_self)
         self.widget_list = widget_list
 
-
+        self.ui.copy_button.clicked.connect(self.copy_action)
 
 
         if prop_class == 'Int':
@@ -109,5 +109,7 @@ class PropertyFrame(QWidget):
             self.deleteLater()
 
         elif action == copy_action:
-            clipboard = QApplication.clipboard()
-            clipboard.setText(f"hammer5tools:smartprop_editor;;{self.name};;{self.value}")
+            self.copy_action()
+    def copy_action(self):
+        clipboard = QApplication.clipboard()
+        clipboard.setText(f"hammer5tools:smartprop_editor_property;;{self.name};;{self.value}")

@@ -13,7 +13,8 @@ from PySide6.QtGui import QCursor, QDrag,QAction
 import ast
 
 class PropertiesGroupFrame(QWidget):
-    signal = Signal()
+    add_signal = Signal()
+    paste_signal = Signal()
     def __init__(self, widget_list=None, name=None):
         super().__init__()
         self.ui = Ui_Form()
@@ -26,6 +27,8 @@ class PropertiesGroupFrame(QWidget):
         self.layout = self.ui.layout
         self.ui.add_button.clicked.connect(self.add_action)
 
+        self.ui.paste_button.clicked.connect(self.paste_action)
+
         self.ui.property_class.setText(self.name)
         self.widget_list = widget_list
 
@@ -34,8 +37,9 @@ class PropertiesGroupFrame(QWidget):
 
         # self.init_ui()
     def add_action(self):
-        self.signal.emit()
-
+        self.add_signal.emit()
+    def paste_action(self):
+        self.paste_signal.emit()
     def show_child(self):
         if not self.ui.show_child.isChecked():
             self.ui.frame_layout.setMaximumSize(16666,0)
