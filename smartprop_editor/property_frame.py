@@ -110,4 +110,4 @@ class PropertyFrame(QWidget):
 
         elif action == copy_action:
             clipboard = QApplication.clipboard()
-            clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.value}")
+            clipboard.setText(f"hammer5tools:smartprop_editor;;{self.name};;{self.value}")
