@@ -129,13 +129,13 @@ class SmartPropEditorMainWindow(QMainWindow):
             data_sel_criteria = data.get('m_SelectionCriteria', {})
             data.pop('m_Modifiers', None)
             data.pop('m_SelectionCriteria', None)
-            property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=data)
+            property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=data, variables_scrollArea=self.ui.variables_scrollArea)
             property_instance.edited.connect(self.update_tree_item_value)
             self.ui.properties_layout.insertWidget(0, property_instance)
             print('data_modif', type(data_modif),data_modif)
             if data_modif:
                 for item in reversed(data_modif):
-                    property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item)
+                    property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
                     property_instance.edited.connect(self.update_tree_item_value)
                     self.modifiers_group_instance.layout.insertWidget(0, property_instance)
             if data_sel_criteria:

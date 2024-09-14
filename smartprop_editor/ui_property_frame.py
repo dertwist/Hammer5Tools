@@ -24,7 +24,7 @@ class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(668, 285)
+        Form.resize(668, 76)
         Form.setStyleSheet(u"background-color: #1C1C1C;")
         self.verticalLayout = QVBoxLayout(Form)
         self.verticalLayout.setSpacing(0)

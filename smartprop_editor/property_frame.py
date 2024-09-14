@@ -78,10 +78,13 @@ class PropertyFrame(QWidget):
             '_class': f'{self.name_prefix}_{self.name}',
             'm_bEnabled': self.ui.enable.isChecked()
         }
-        for index in range(self.ui.layout.count()):
-            widget = self.ui.layout.itemAt(index).widget()
-            new_value = widget.value
-            self.value.update(new_value)
+        try:
+            for index in range(self.ui.layout.count()):
+                widget = self.ui.layout.itemAt(index).widget()
+                new_value = widget.value
+                self.value.update(new_value)
+        except:
+            pass
         self.edited.emit()
 
     def update_self(self):
