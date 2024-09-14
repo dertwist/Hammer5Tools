@@ -33,8 +33,8 @@ class Ui_Form(object):
         self.frame = QFrame(Form)
         self.frame.setObjectName(u"frame")
         self.frame.setMaximumSize(QSize(16777215, 24))
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
@@ -56,7 +56,7 @@ class Ui_Form(object):
 
         self.show_child = QCheckBox(self.frame)
         self.show_child.setObjectName(u"show_child")
-        self.show_child.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.show_child.setFocusPolicy(Qt.NoFocus)
         self.show_child.setStyleSheet(u"QCheckBox::indicator:checked {\n"
 "    \n"
 "image: url(://icons/arrow_drop_down.png);\n"
@@ -91,14 +91,14 @@ class Ui_Form(object):
 "border-right: 0px solid black;\n"
 "border-top: 0px solid black;\n"
 "}")
-        self.show_child.setChecked(False)
+        self.show_child.setChecked(True)
         self.show_child.setTristate(False)
 
         self.horizontalLayout.addWidget(self.show_child)
 
         self.enable = QCheckBox(self.frame)
         self.enable.setObjectName(u"enable")
-        self.enable.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.enable.setFocusPolicy(Qt.NoFocus)
         self.enable.setStyleSheet(u"QCheckBox::indicator:checked {\n"
 "image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
 "   \n"
@@ -145,7 +145,7 @@ class Ui_Form(object):
         self.property_icon = QToolButton(self.frame)
         self.property_icon.setObjectName(u"property_icon")
         self.property_icon.setEnabled(False)
-        self.property_icon.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.property_icon.setFocusPolicy(Qt.NoFocus)
         self.property_icon.setStyleSheet(u"QToolButton {\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
@@ -172,7 +172,7 @@ class Ui_Form(object):
 
         self.property_class = QLineEdit(self.frame)
         self.property_class.setObjectName(u"property_class")
-        self.property_class.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.property_class.setFocusPolicy(Qt.NoFocus)
         self.property_class.setStyleSheet(u"QLineEdit {\n"
 "    font-size: 8pt;\n"
 "    font-family: \"Segoe UI\";\n"
@@ -194,7 +194,7 @@ class Ui_Form(object):
 "    background-color: #414956;\n"
 "    color: white;\n"
 "}")
-        self.property_class.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
+        self.property_class.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
         self.property_class.setMaxLength(32)
         self.property_class.setReadOnly(True)
 
@@ -205,8 +205,8 @@ class Ui_Form(object):
 
         self.frame_layout = QFrame(Form)
         self.frame_layout.setObjectName(u"frame_layout")
-        self.frame_layout.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_layout.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_layout.setFrameShape(QFrame.StyledPanel)
+        self.frame_layout.setFrameShadow(QFrame.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.frame_layout)
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -214,7 +214,7 @@ class Ui_Form(object):
         self.layout = QVBoxLayout()
         self.layout.setSpacing(0)
         self.layout.setObjectName(u"layout")
-        self.layout.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
+        self.layout.setSizeConstraint(QLayout.SetDefaultConstraint)
 
         self.verticalLayout_2.addLayout(self.layout)
 
@@ -242,6 +242,6 @@ class Ui_Form(object):
 #if QT_CONFIG(tooltip)
         self.property_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.property_class.setText(QCoreApplication.translate("Form", u"Class properties_classes", None))
+        self.property_class.setText(QCoreApplication.translate("Form", u"Class properties", None))
     # retranslateUi
 
