@@ -47,9 +47,9 @@ filters_dict = {
 
 operator_prefix = 'CSmartPropOperation_'
 operators_list = [
-    {'Rotate': {},},
-    {'Scale': {},},
-    {'Translate': {'_class': "CSmartPropOperation_Translate", 'm_vPosition': [120, -12, 0]}},
+    {'Rotate': {'_class': "CSmartPropOperation_Rotate", "m_vRotation": {"m_Components":[0,0,0]}}},
+    {'Scale': {'_class': "CSmartPropOperation_Scale", "m_flScale": 0}},
+    {'Translate': {'_class': "CSmartPropOperation_Translate", "m_vPosition": {"m_Components":[0,0,0]}}},
     {'SetTintColor': {'m_ColorChoices': []}},
     {'CreateLocator': {}},
     {'CreateSizer': {}},
