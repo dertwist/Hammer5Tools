@@ -35,15 +35,14 @@ class PropertyFrame(QWidget):
         self.value = value
         # print(self.value)
         self.layout = self.ui.layout
-
-        self.enable = True
+        self.enable = value.get('m_bEnabled', True)
         prop_class = self.name
 
 
         self.ui.property_class.setText(self.name)
 
         self.ui.enable.setChecked(self.enable)
-        self.ui.enable.clicked.connect(self.update_self)
+        self.ui.enable.clicked.connect(self.on_edited)
 
         # self.ui.variable_name.textChanged.connect(self.update_self)
         self.widget_list = widget_list
@@ -76,7 +75,8 @@ class PropertyFrame(QWidget):
 
     def on_edited(self):
         self.value = {
-            '_class': f'{self.name_prefix}_{self.name}'
+            '_class': f'{self.name_prefix}_{self.name}',
+            'm_bEnabled': self.ui.enable.isChecked()
         }
         for index in range(self.ui.layout.count()):
             widget = self.ui.layout.itemAt(index).widget()
