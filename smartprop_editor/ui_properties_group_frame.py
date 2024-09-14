@@ -17,7 +17,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout,
     QLabel, QLayout, QLineEdit, QPushButton,
-    QSizePolicy, QToolButton, QVBoxLayout, QWidget)
+    QSizePolicy, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_Form(object):
@@ -91,14 +91,14 @@ class Ui_Form(object):
 "border-right: 0px solid black;\n"
 "border-top: 0px solid black;\n"
 "}")
-        self.show_child.setChecked(False)
+        self.show_child.setChecked(True)
         self.show_child.setTristate(False)
 
         self.horizontalLayout.addWidget(self.show_child)
 
-        self.pushButton = QPushButton(self.frame)
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setStyleSheet(u"\n"
+        self.add_button = QPushButton(self.frame)
+        self.add_button.setObjectName(u"add_button")
+        self.add_button.setStyleSheet(u"\n"
 "QPushButton {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -140,36 +140,9 @@ class Ui_Form(object):
 "}")
         icon = QIcon()
         icon.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.pushButton.setIcon(icon)
+        self.add_button.setIcon(icon)
 
-        self.horizontalLayout.addWidget(self.pushButton)
-
-        self.property_icon = QToolButton(self.frame)
-        self.property_icon.setObjectName(u"property_icon")
-        self.property_icon.setEnabled(False)
-        self.property_icon.setStyleSheet(u"QToolButton {\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"border-left: None;\n"
-"border-top: None;\n"
-"border-right: None;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"height:16px;\n"
-"width:16px;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/linear_scale_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.property_icon.setIcon(icon1)
-        self.property_icon.setIconSize(QSize(24, 24))
-
-        self.horizontalLayout.addWidget(self.property_icon)
+        self.horizontalLayout.addWidget(self.add_button)
 
         self.property_class = QLineEdit(self.frame)
         self.property_class.setObjectName(u"property_class")
@@ -196,9 +169,106 @@ class Ui_Form(object):
 "}")
         self.property_class.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
         self.property_class.setMaxLength(32)
+        self.property_class.setAlignment(Qt.AlignCenter)
         self.property_class.setReadOnly(True)
 
         self.horizontalLayout.addWidget(self.property_class)
+
+        self.copy_button = QPushButton(self.frame)
+        self.copy_button.setObjectName(u"copy_button")
+        self.copy_button.setStyleSheet(u"\n"
+"QPushButton {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"	border-top:0px;\n"
+"border-left:0px;\n"
+"border-right:0px;\n"
+"    height:14px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:4px;\n"
+"	background-color: #242424;\n"
+"    padding-left: 8px;\n"
+"	padding-right: 8px;\n"
+"	color: #E3E3E3;\n"
+"}\n"
+"\n"
+"QPushButton:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"\n"
+"QPushButton:pressed {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"	border-top:0px;\n"
+"border-left:0px;\n"
+"border-right:0px;\n"
+"    height:14px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:4px;\n"
+"	background-color: #242424;\n"
+"    padding-left: 8px;\n"
+"	padding-right: 8px;\n"
+"	color: #E3E3E3;\n"
+"}")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.copy_button.setIcon(icon1)
+
+        self.horizontalLayout.addWidget(self.copy_button)
+
+        self.paste_button = QPushButton(self.frame)
+        self.paste_button.setObjectName(u"paste_button")
+        self.paste_button.setStyleSheet(u"\n"
+"QPushButton {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"	border-top:0px;\n"
+"border-left:0px;\n"
+"border-right:0px;\n"
+"    height:14px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:4px;\n"
+"	background-color: #242424;\n"
+"    padding-left: 8px;\n"
+"	padding-right: 8px;\n"
+"	color: #E3E3E3;\n"
+"}\n"
+"\n"
+"QPushButton:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"\n"
+"QPushButton:pressed {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"	border-top:0px;\n"
+"border-left:0px;\n"
+"border-right:0px;\n"
+"    height:14px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:4px;\n"
+"	background-color: #242424;\n"
+"    padding-left: 8px;\n"
+"	padding-right: 8px;\n"
+"	color: #E3E3E3;\n"
+"}")
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.paste_button.setIcon(icon2)
+
+        self.horizontalLayout.addWidget(self.paste_button)
 
 
         self.verticalLayout.addWidget(self.frame)
@@ -221,7 +291,9 @@ class Ui_Form(object):
         self.frame_2.setFrameShape(QFrame.StyledPanel)
         self.frame_2.setFrameShadow(QFrame.Raised)
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
+        self.verticalLayout_3.setSpacing(0)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
 
         self.layout.addWidget(self.frame_2)
 
@@ -244,11 +316,12 @@ class Ui_Form(object):
         self.show_child.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show child</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.show_child.setText("")
-        self.pushButton.setText(QCoreApplication.translate("Form", u"Create new", None))
-        self.property_icon.setText("")
+        self.add_button.setText(QCoreApplication.translate("Form", u"Create new", None))
 #if QT_CONFIG(tooltip)
         self.property_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.property_class.setText(QCoreApplication.translate("Form", u"Modifiers", None))
+        self.copy_button.setText(QCoreApplication.translate("Form", u"Copy", None))
+        self.paste_button.setText(QCoreApplication.translate("Form", u"Paste", None))
     # retranslateUi
 

@@ -4,7 +4,7 @@ from smartprop_editor.ui_property_frame import Ui_Form
 
 
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from soudevent_editor.properties.property_actions import PropertyActions
 
 from PySide6.QtWidgets import QMenu, QApplication
@@ -15,6 +15,7 @@ from PySide6.QtGui import QCursor, QDrag,QAction
 import ast
 
 class PropertyFrame(QWidget):
+    edited = Signal()
     def __init__(self, value=None, widget_list=None, name=None):
         super().__init__()
         self.ui = Ui_Form()
@@ -22,13 +23,14 @@ class PropertyFrame(QWidget):
         self.setAcceptDrops(True)
         self.ui.property_class.setAcceptDrops(False)
         self.name = name
-        value = ast.literal_eval(value)
-        # print(type(value), value)
+        if isinstance(value, dict):
+            pass
+        else:
+            value = ast.literal_eval(value)
 
         self.name = value['_class']
-        self.name = self.name.replace('CSmartPropSelectionCriteria_', '')
-        self.name = self.name.replace('CSmartPropFilter_', '')
-        self.name = self.name.replace('CSmartPropOperation_', '')
+        self.name = (value['_class'].split('_'))[1]
+        self.name_prefix = (value['_class'].split('_'))[0]
         del value['_class']
         self.value = value
         # print(self.value)
@@ -50,23 +52,16 @@ class PropertyFrame(QWidget):
 
 
         if prop_class == 'Int':
-            # self.ui.property_icon.setIcon('')
-            from smartprop_editor.variables.int import Var_class_Int
-            self.var_int_instance = Var_class_Int(default=1, min=1, max=1,model=None)
             pass
         elif prop_class == 'Float':
-            # from smartprop_editor.variables.float import Var_class_float
-            # self.var_int_instance = Var_class_float(default=self.var_default, min=self.var_min, max=self.var_max,model=None)
             pass
         else:
             from smartprop_editor.properties_classes.legacy import PropertyLegacy
-            for item, key in self.value.items():
-                print(item, key)
-            # self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
+            for value_class, value in self.value.items():
+                property_instance = PropertyLegacy(value=value, value_class=value_class)
+                property_instance.edited.connect(self.on_edited)
+                self.ui.layout.insertWidget(0, property_instance)
             pass
-
-        # self.var_int_instance.edited.connect(lambda var_default=self.var_default, var_min=self.var_min, var_max=self.var_max, var_model=self.var_model: self.on_changed(var_default, var_min, var_max, var_model))
-        # self.ui.layout.insertWidget(1, self.var_int_instance)
 
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
@@ -79,8 +74,15 @@ class PropertyFrame(QWidget):
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
-    def on_changed(self, var_default=None, var_min=None, var_max=None, var_model=None):
-        pass
+    def on_edited(self):
+        self.value = {
+            '_class': f'{self.name_prefix}_{self.name}'
+        }
+        for index in range(self.ui.layout.count()):
+            self.value.update(self.ui.layout.itemAt(index).widget().value)
+
+        print(self.value)
+        self.edited.emit()
 
     def update_self(self):
         pass

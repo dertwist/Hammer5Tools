@@ -52,7 +52,6 @@ class Widget(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         sys.stdout = Stream(newText=self.on_update)
-
         self.setup_tray_icon()
         self.setup_tabs()
         self.populate_addon_combobox()
