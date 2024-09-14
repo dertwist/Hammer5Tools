@@ -536,7 +536,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         if clipboard_data[0] == "hammer5tools:smartprop_editor_var":
             visible_in_editor = bool(strtobool(clipboard_data[4]))
-            self.add_variable(clipboard_data[1], clipboard_data[2], clipboard_data[3], visible_in_editor, clipboard_data[4])
+            self.add_variable(clipboard_data[1], clipboard_data[2], ast.literal_eval(clipboard_data[3]), visible_in_editor, clipboard_data[4])
         else:
             print("Clipboard data format is not valid.")
 
