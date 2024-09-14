@@ -165,7 +165,7 @@ class SoundEventEditorMainWidget(QMainWindow):
         self.clear_layout(self.soundevent_properties_layout)
         if item_text in soundevents_data:
             details = soundevents_data[item_text]
-            for key, value in details.items():
+            for key, value in reversed(details.items()):
                 value = str(value)
                 self.add_property(key, value)
 
