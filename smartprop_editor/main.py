@@ -15,7 +15,7 @@ from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_config_value, get_addon_name, get_cs2_path
 
 from smartprop_editor.variable_frame import VariableFrame
-from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_dict, operators_list, operator_prefix, selection_criteria_prefix, selection_criteria_dict
+from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_list, operators_list, operator_prefix, selection_criteria_prefix, selection_criteria_list, filters_list, filter_prefix
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave, VsmartCompile
 from smartprop_editor.properties import Properties, AddProperty
 from smartprop_editor.property_frame import PropertyFrame
@@ -111,8 +111,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
         self.modifiers_group_instance.signal.connect(self.add_an_operator)
 
+
         self.selection_criteria_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Section criteria'))
+        self.selection_criteria_group_instance.signal.connect(self.add_a_selection_criteria)
         self.ui.properties_layout.insertWidget(1, self.selection_criteria_group_instance)
+
     def on_tree_current_item_changed(self, item):
         try:
             for i in range(self.ui.properties_layout.count()):
@@ -198,58 +201,54 @@ class SmartPropEditorMainWindow(QMainWindow):
         if focus_widget is self.modifiers_group_instance.ui.property_class:
             if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
                 self.add_an_operator()
-                # if self.ui.properties_tree.currentItem().text(0) == 'Modifiers':
-                #     self.add_a_operator()
-                # elif self.ui.properties_tree.currentItem().text(0) == 'SelectionCriteria':
-                #     self.add_a_selection_criteria()
-
+                event.accept()
+        if focus_widget is self.selection_criteria_group_instance.ui.property_class:
+            if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                self.add_a_selection_criteria()
                 event.accept()
     def add_an_element(self):
-        elements_in_popupmenu = [elements_dict]
-        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=False)
+        self.popup_menu = PopupMenu(elements_list, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
         self.popup_menu.show()
     def add_an_operator(self):
+        operators_and_filters = operators_list + filters_list
+        elements_in_popupmenu = []
+        exists_classes = []
+        for i in range(self.modifiers_group_instance.layout.count()):
+            widget = self.modifiers_group_instance.layout.itemAt(i).widget()
+            if isinstance(widget, PropertyFrame):
+                exists_classes.append(widget.name)
 
-        # item = self.ui.properties_tree.topLevelItem(1)
-        # exists_classes = []
-        # elements_in_popupmenu = {}
-        # for i in range(item.childCount()):
-        #     exists_classes.append(item.child(i).text(0))
-        #
-        # for key, value in operators_dict.items():
-        #     if key in exists_classes:
-        #         pass
-        #     else:
-        #         elements_in_popupmenu.update({key: value})
+        for item in operators_and_filters:
+            for key, value in item.items():
+                if key in exists_classes:
+                    pass
+                else:
+                    elements_in_popupmenu.append(item)
 
-        elements_in_popupmenu = [operators_list]
-        print(operators_list)
-        self.popup_menu = PopupMenu(operators_list, add_once=True)
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_operator(name, value))
         self.popup_menu.show()
     def add_a_selection_criteria(self):
-
-        item = self.ui.properties_tree.topLevelItem(2)
+        elements_in_popupmenu = []
         exists_classes = []
-        elements_in_popupmenu = {}
-        for i in range(item.childCount()):
-            exists_classes.append(item.child(i).text(0))
+        for i in range(self.selection_criteria_group_instance.layout.count()):
+            widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
+            if isinstance(widget, PropertyFrame):
+                exists_classes.append(widget.name)
 
-        for key, value in selection_criteria_dict.items():
-            if key in exists_classes:
-                pass
-            else:
-                elements_in_popupmenu.update({key: value})
-
-        elements_in_popupmenu = [elements_in_popupmenu]
+        for item in selection_criteria_list:
+            for key, value in item.items():
+                if key in exists_classes:
+                    pass
+                else:
+                    elements_in_popupmenu.append(item)
         self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_selection_criteria(name, value))
         self.popup_menu.show()
 
     def new_element(self, element_class, element_value):
         name = element_class
-        element_value = {}
         new_element = QTreeWidgetItem()
         new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
         new_element.setText(0, name)
@@ -260,11 +259,11 @@ class SmartPropEditorMainWindow(QMainWindow):
             parent = self.ui.tree_hierarchy_widget.currentItem()
         parent.addChild(new_element)
     def new_operator(self, element_class, element_value):
-        # operator_instance = AddProperty(widget_list=self.modifiers_group_instance.layout)
         operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
     def new_selection_criteria(self, element_class, element_value):
-        AddProperty(parent=self.ui.properties_tree, key=element_class, value=element_value)
+        operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=element_value)
+        self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
 
 
     # Vsmart format
