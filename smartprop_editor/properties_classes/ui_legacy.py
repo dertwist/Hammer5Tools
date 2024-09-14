@@ -16,7 +16,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
-    QLineEdit, QSizePolicy, QVBoxLayout, QWidget)
+    QLayout, QSizePolicy, QVBoxLayout, QWidget)
 
 class Ui_Widget(object):
     def setupUi(self, Widget):
@@ -24,7 +24,7 @@ class Ui_Widget(object):
             Widget.setObjectName(u"Widget")
         Widget.resize(790, 32)
         Widget.setMinimumSize(QSize(0, 0))
-        Widget.setMaximumSize(QSize(16777215, 97))
+        Widget.setMaximumSize(QSize(16777215, 32))
         Widget.setStyleSheet(u".QWidget {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -76,30 +76,26 @@ class Ui_Widget(object):
         self.horizontalLayout_2.setSpacing(16)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.layout = QHBoxLayout()
+        self.layout.setObjectName(u"layout")
+        self.layout.setSizeConstraint(QLayout.SetFixedSize)
         self.value_label = QLabel(self.frame)
         self.value_label.setObjectName(u"value_label")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.value_label.sizePolicy().hasHeightForWidth())
+        self.value_label.setSizePolicy(sizePolicy)
         self.value_label.setStyleSheet(u"border:0px;\n"
 "background-color: rgba(255, 255, 255, 0);\n"
 "font: 8pt \"Segoe UI\";\n"
 "\n"
 "")
 
-        self.horizontalLayout_2.addWidget(self.value_label)
+        self.layout.addWidget(self.value_label)
 
-        self.value = QLineEdit(self.frame)
-        self.value.setObjectName(u"value")
-        self.value.setStyleSheet(u"QLineEdit {\n"
-"    border: 0px solid #CCCCCC;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 2px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"background-color: #1C1C1C;\n"
-"\n"
-"}\n"
-"")
 
-        self.horizontalLayout_2.addWidget(self.value)
+        self.horizontalLayout_2.addLayout(self.layout)
 
 
         self.verticalLayout.addWidget(self.frame)
