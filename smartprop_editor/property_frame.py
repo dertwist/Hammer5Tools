@@ -16,13 +16,13 @@ import ast
 
 class PropertyFrame(QWidget):
     edited = Signal()
-    def __init__(self, value=None, widget_list=None, name=None):
+    def __init__(self, value, widget_list, variables_scrollArea):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
         self.ui.property_class.setAcceptDrops(False)
-        self.name = name
+        self.variables_scrollArea = variables_scrollArea
         if isinstance(value, dict):
             pass
         else:
@@ -57,7 +57,7 @@ class PropertyFrame(QWidget):
         else:
             from smartprop_editor.properties_classes.legacy import PropertyLegacy
             for value_class, value in reversed(list(self.value.items())):
-                property_instance = PropertyLegacy(value=value, value_class=value_class)
+                property_instance = PropertyLegacy(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
                 property_instance.edited.connect(self.on_edited)
                 self.ui.layout.insertWidget(0, property_instance)
             pass

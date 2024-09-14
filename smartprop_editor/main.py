@@ -17,7 +17,6 @@ from preferences import get_config_value, get_addon_name, get_cs2_path
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_list, operators_list, operator_prefix, selection_criteria_prefix, selection_criteria_list, filters_list, filter_prefix
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave, VsmartCompile
-from smartprop_editor.properties import Properties, AddProperty
 from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from smartprop_editor.new_file_options import NewFileOptions
@@ -63,15 +62,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
-
-        # Properties setup
-        # self.ui.properties_tree.setContextMenuPolicy(Qt.CustomContextMenu)
-        # self.ui.properties_tree.customContextMenuRequested.connect(self.open_properties_menu)
-        # AddProperty(widget_list=self.ui.properties_layout, value=None)
-        # AddProperty(widget_list=self.ui.properties_layout, value=None)
-        from smartprop_editor.property_frame import PropertyFrame
-
-
 
         # Adding the properties_classes group
         self.properties_groups_init()
@@ -150,7 +140,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                     self.modifiers_group_instance.layout.insertWidget(0, property_instance)
             if data_sel_criteria:
                 for item in reversed(data_sel_criteria):
-                    property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item)
+                    property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
                     property_instance.edited.connect(self.update_tree_item_value)
                     self.selection_criteria_group_instance.layout.insertWidget(0, property_instance)
         except Exception as error:
@@ -259,10 +249,10 @@ class SmartPropEditorMainWindow(QMainWindow):
             parent = self.ui.tree_hierarchy_widget.currentItem()
         parent.addChild(new_element)
     def new_operator(self, element_class, element_value):
-        operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value)
+        operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
     def new_selection_criteria(self, element_class, element_value):
-        operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=element_value)
+        operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
         self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
 
 
@@ -469,9 +459,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # variables
 
-    def search_variables(self, search_term):
-        variables = self.get_variables(self.ui.variables_scrollArea)
-
+    def search_variables(self, search_term=None):
         for i in range(self.ui.variables_scrollArea.layout().count()):
             widget = self.ui.variables_scrollArea.layout().itemAt(i).widget()
             if widget:
