@@ -57,12 +57,12 @@ class PropertyFrame(QWidget):
             pass
         else:
             from smartprop_editor.properties_classes.legacy import PropertyLegacy
-            for value_class, value in self.value.items():
+            for value_class, value in reversed(list(self.value.items())):
                 property_instance = PropertyLegacy(value=value, value_class=value_class)
                 property_instance.edited.connect(self.on_edited)
                 self.ui.layout.insertWidget(0, property_instance)
             pass
-
+        self.on_edited()
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 
@@ -79,9 +79,9 @@ class PropertyFrame(QWidget):
             '_class': f'{self.name_prefix}_{self.name}'
         }
         for index in range(self.ui.layout.count()):
-            self.value.update(self.ui.layout.itemAt(index).widget().value)
-
-        print(self.value)
+            widget = self.ui.layout.itemAt(index).widget()
+            new_value = widget.value
+            self.value.update(new_value)
         self.edited.emit()
 
     def update_self(self):

@@ -18,8 +18,17 @@ class PropertyLegacy(QWidget):
         self.ui.value.setText(str(self.value))
         self.ui.value_label.setText(str(self.value_class))
         self.ui.value.textChanged.connect(self.on_changed)
+        self.change_value()
+
 
 
     def on_changed(self):
-        self.value = {self.value_class: ast.literal_eval(self.ui.value.text())}
+        self.change_value()
         self.edited.emit()
+    def change_value(self):
+        value = self.ui.value.text()
+        try:
+            value = ast.literal_eval(value)
+        except:
+            pass
+        self.value = {self.value_class: value}

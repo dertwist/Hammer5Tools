@@ -6,7 +6,7 @@ import time
 
 from distutils.util import strtobool
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction
 from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
@@ -59,7 +59,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.settings = settings
 
         # Hierarchy setup
-        self.ui.tree_hierarchy_widget.hideColumn(1)
+        # self.ui.tree_hierarchy_widget.hideColumn(1)
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
@@ -137,24 +137,44 @@ class SmartPropEditorMainWindow(QMainWindow):
             data.pop('m_Modifiers', None)
             data.pop('m_SelectionCriteria', None)
             property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=data)
+            property_instance.edited.connect(self.update_tree_item_value)
             self.ui.properties_layout.insertWidget(0, property_instance)
             print('data_modif', type(data_modif),data_modif)
             if data_modif:
-                for item in data_modif:
+                for item in reversed(data_modif):
                     property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item)
+                    property_instance.edited.connect(self.update_tree_item_value)
                     self.modifiers_group_instance.layout.insertWidget(0, property_instance)
             if data_sel_criteria:
-                for item in data_sel_criteria:
+                for item in reversed(data_sel_criteria):
                     property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item)
+                    property_instance.edited.connect(self.update_tree_item_value)
                     self.selection_criteria_group_instance.layout.insertWidget(0, property_instance)
-            # print(type(data), data)
         except Exception as error:
             print(error)
     def update_tree_item_value(self):
+        output_value = {}
+        modifiers = []
+        selection_criteria = []
         for item in range(self.modifiers_group_instance.layout.count()):
-            widget = self.modifiers_group_instance.layout.itemAt(item)
-            value = widget.value
-
+            widget = self.modifiers_group_instance.layout.itemAt(item).widget()
+            if isinstance(widget, PropertyFrame):
+                value = widget.value
+                modifiers.append(value)
+        for item in range(self.selection_criteria_group_instance.layout.count()):
+            widget = self.selection_criteria_group_instance.layout.itemAt(item).widget()
+            if isinstance(widget, PropertyFrame):
+                value = widget.value
+                selection_criteria.append(value)
+        for item in range(self.ui.properties_layout.count()):
+            widget = self.ui.properties_layout.itemAt(item).widget()
+            if isinstance(widget, PropertyFrame):
+                value = widget.value
+                output_value.update(value)
+        output_value.update({'m_Modifiers': modifiers})
+        output_value.update({'m_SelectionCriteria': selection_criteria})
+        self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
+        print(output_value)
 
     # Create New elemnt
     def keyPressEvent(self, event):
@@ -166,6 +186,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             widget_under_cursor.setFocus()
 
         focus_widget = QApplication.focusWidget()
+        print(focus_widget)
 
 
         if focus_widget is self.ui.tree_hierarchy_widget:
@@ -174,7 +195,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                     self.add_an_element()
 
                     event.accept()
-        if focus_widget is self.modifiers_group_instance.ui.Form:
+        if focus_widget is self.modifiers_group_instance.ui.property_class:
             if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
                 self.add_an_operator()
                 # if self.ui.properties_tree.currentItem().text(0) == 'Modifiers':
@@ -332,6 +353,27 @@ class SmartPropEditorMainWindow(QMainWindow):
             filename = self.mini_explorer.model.filePath(index)
             print(filename)
         opened_file = filename
+
+        if filename.endswith('.vsmart'):
+            show = settings.value("SmartPropEditor/ShowCompilationMessage")
+            if show == None:
+                show = True
+            if show:
+                # Create a QMessageBox dialog
+                msg_box = QMessageBox()
+                msg_box.setWindowTitle("Smartprops Format Warning")
+                msg_box.setIcon(QMessageBox.Warning)
+                msg_box.setText(
+                    """Smartprops in the vsmart format cannot be compiled using the default launch options. To compile smartprops in this format, please run the application in NCM mode. If you convert vsmart to vdata, you can compile the smartprops without NCM mode by using the small button in the explorer window. However, if you have already compiled vsmart files in NCM mode, you will need to delete all compiled vsmart files and restart the application before proceeding.""")
+
+                # Add a checkbox for the 'Do not show again' option
+                do_not_show_checkbox = QCheckBox("Do not show this message again")
+                msg_box.setCheckBox(do_not_show_checkbox)
+
+                result = msg_box.exec_()
+                if result == QMessageBox.Ok:
+                    settings.setValue("SmartPropEditor/ShowCompilationMessage", not do_not_show_checkbox.isChecked())
+
         # VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
         # variables = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget).variables
 
