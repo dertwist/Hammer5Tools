@@ -22,7 +22,7 @@ class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.resize(790, 32)
+        Widget.resize(1084, 32)
         Widget.setMinimumSize(QSize(0, 0))
         Widget.setMaximumSize(QSize(16777215, 97))
         Widget.setStyleSheet(u".QWidget {\n"

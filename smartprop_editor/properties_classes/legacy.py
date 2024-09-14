@@ -1,6 +1,7 @@
 import ast
 
 from smartprop_editor.properties_classes.ui_legacy import Ui_Widget
+from completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QCompleter
 from PySide6.QtCore import Signal
 
@@ -14,26 +15,27 @@ class PropertyLegacy(QWidget):
         self.setAcceptDrops(True)
         self.value_class = value_class
         self.value = value
-
-        self.ui.value.setText(str(self.value))
-        self.ui.value_label.setText(str(self.value_class))
-        self.ui.value.textChanged.connect(self.on_changed)
-
         self.variables_scrollArea = variables_scrollArea
-        variables = self.get_variables()
-        print(variables)
-        completer = QCompleter(variables)
-        self.ui.value.setCompleter(completer)
+
+        self.text_line = CompletingPlainTextEdit()
+        self.ui.layout.insertWidget(1, self.text_line)
+
+        self.text_line.setPlainText(str(self.value))
+        self.ui.value_label.setText(str(self.value_class))
+        self.text_line.textChanged.connect(self.on_changed)
+
 
         self.change_value()
 
 
 
     def on_changed(self):
+        variables = self.get_variables()
+        self.text_line.completions.setStringList(variables)
         self.change_value()
         self.edited.emit()
     def change_value(self):
-        value = self.ui.value.text()
+        value = self.text_line.toPlainText()
         try:
             value = ast.literal_eval(value)
         except:
