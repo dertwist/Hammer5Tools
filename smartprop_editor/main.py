@@ -18,6 +18,8 @@ from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_dict, operators_list, operator_prefix, selection_criteria_prefix, selection_criteria_dict
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave, VsmartCompile
 from smartprop_editor.properties import Properties, AddProperty
+from smartprop_editor.property_frame import PropertyFrame
+from smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from smartprop_editor.new_file_options import NewFileOptions
 from popup_menu.popup_menu_main import PopupMenu
 
@@ -68,17 +70,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         # AddProperty(widget_list=self.ui.properties_layout, value=None)
         # AddProperty(widget_list=self.ui.properties_layout, value=None)
         from smartprop_editor.property_frame import PropertyFrame
-        from smartprop_editor.properties_group_frame import PropertiesGroupFrame
+
 
 
         # Adding the properties_classes group
-        self.modifiers_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Modifiers'))
-        self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
-        self.modifiers_group_instance.signal.connect(self.add_an_operator)
-
-        self.selection_criteria_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Section criteria'))
-        self.ui.properties_layout.insertWidget(1, self.selection_criteria_group_instance)
-
+        self.properties_groups_init()
 
 
         # adding var classes to combobox
@@ -109,14 +105,55 @@ class SmartPropEditorMainWindow(QMainWindow):
     def new_file_options(self):
         new_file_dialog = NewFileOptions(self)
         new_file_dialog.show()
+
+    def properties_groups_init(self):
+        self.modifiers_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Modifiers'))
+        self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
+        self.modifiers_group_instance.signal.connect(self.add_an_operator)
+
+        self.selection_criteria_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Section criteria'))
+        self.ui.properties_layout.insertWidget(1, self.selection_criteria_group_instance)
     def on_tree_current_item_changed(self, item):
         try:
-            properties_instance = Properties(tree=self.ui.properties_tree, data=item.text(1))
-            print(properties_instance.data)
-        except:
-            pass
+            for i in range(self.ui.properties_layout.count()):
+                widget = self.ui.properties_layout.itemAt(i).widget()
+                if isinstance(widget, PropertyFrame):
+                    widget.deleteLater()
+            for i in range(self.modifiers_group_instance.layout.count()):
+                widget = self.modifiers_group_instance.layout.itemAt(i).widget()
+                if isinstance(widget, PropertyFrame):
+                    widget.deleteLater()
+            for i in range(self.selection_criteria_group_instance.layout.count()):
+                widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
+                if isinstance(widget, PropertyFrame):
+                    widget.deleteLater()
 
-
+        except Exception as error:
+            print(error)
+        try:
+            data = ast.literal_eval(item.text(1))
+            data_modif = data.get('m_Modifiers', {})
+            data_sel_criteria = data.get('m_SelectionCriteria', {})
+            data.pop('m_Modifiers', None)
+            data.pop('m_SelectionCriteria', None)
+            property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=data)
+            self.ui.properties_layout.insertWidget(0, property_instance)
+            print('data_modif', type(data_modif),data_modif)
+            if data_modif:
+                for item in data_modif:
+                    property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item)
+                    self.modifiers_group_instance.layout.insertWidget(0, property_instance)
+            if data_sel_criteria:
+                for item in data_sel_criteria:
+                    property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item)
+                    self.selection_criteria_group_instance.layout.insertWidget(0, property_instance)
+            # print(type(data), data)
+        except Exception as error:
+            print(error)
+    def update_tree_item_value(self):
+        for item in range(self.modifiers_group_instance.layout.count()):
+            widget = self.modifiers_group_instance.layout.itemAt(item)
+            value = widget.value
 
 
     # Create New elemnt
@@ -137,7 +174,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                     self.add_an_element()
 
                     event.accept()
-        if focus_widget is self.modifiers_group_instance.ui.frame_2:
+        if focus_widget is self.modifiers_group_instance.ui.Form:
             if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
                 self.add_an_operator()
                 # if self.ui.properties_tree.currentItem().text(0) == 'Modifiers':
@@ -203,7 +240,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         parent.addChild(new_element)
     def new_operator(self, element_class, element_value):
         # operator_instance = AddProperty(widget_list=self.modifiers_group_instance.layout)
-        from smartprop_editor.property_frame import PropertyFrame
         operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
     def new_selection_criteria(self, element_class, element_value):

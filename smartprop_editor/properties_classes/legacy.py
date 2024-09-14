@@ -1,26 +1,25 @@
+import ast
+
 from smartprop_editor.properties_classes.ui_legacy import Ui_Widget
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
 
 
 class PropertyLegacy(QWidget):
-    edited = Signal(str, str, str, str)
-    def __init__(self, default, min, max, model):
+    edited = Signal()
+    def __init__(self, value_class, value):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
-        self.min = None
-        self.max = None
-        self.model = None
-        if default == None:
-            self.default = ''
-        else:
-            self.default = str(default)
-        self.ui.value.setText(str(self.default))
+        self.value_class = value_class
+        self.value = value
+
+        self.ui.value.setText(str(self.value))
+        self.ui.value_label.setText(str(self.value_class))
         self.ui.value.textChanged.connect(self.on_changed)
 
 
     def on_changed(self):
-        self.default = self.ui.value.text()
-        self.edited.emit(self.default, self.min, self.max, str(self.model))
+        self.value = {self.value_class: ast.literal_eval(self.ui.value.text())}
+        self.edited.emit()

@@ -14,7 +14,7 @@ import ast
 
 class PropertiesGroupFrame(QWidget):
     signal = Signal()
-    def __init__(self, value=None, widget_list=None, name=None):
+    def __init__(self, widget_list=None, name=None):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -25,13 +25,6 @@ class PropertiesGroupFrame(QWidget):
 
         self.layout = self.ui.layout
         self.ui.add_button.clicked.connect(self.add_action)
-
-        self.var_value = {
-            'default': '',
-            'min':  '',
-            'max':  '',
-            'model':  ''
-        }
 
         self.ui.property_class.setText(self.name)
         self.widget_list = widget_list
@@ -62,17 +55,17 @@ class PropertiesGroupFrame(QWidget):
     mouseMoveEvent = PropertyActions.mouseMoveEvent
     dragEnterEvent = PropertyActions.dragEnterEvent
     dropEvent = PropertyActions.dropEvent
-    def show_context_menu(self):
-        context_menu = QMenu()
-        delete_action = QAction("Delete", context_menu)
-        copy_action = QAction("Copy", context_menu)  # Change 'Duplicate' to 'Copy'
-        context_menu.addActions([delete_action, copy_action])  # Replace 'duplicate_action' with 'copy_action'
-
-        action = context_menu.exec(QCursor.pos())
-
-        if action == delete_action:
-            self.deleteLater()
-
-        elif action == copy_action:
-            clipboard = QApplication.clipboard()
-            clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.var_class};;{self.var_value};;{self.var_visible_in_editor};;{self.var_display_name}")
+    # def show_context_menu(self):
+    #     context_menu = QMenu()
+    #     delete_action = QAction("Delete", context_menu)
+    #     copy_action = QAction("Copy", context_menu)  # Change 'Duplicate' to 'Copy'
+    #     context_menu.addActions([delete_action, copy_action])  # Replace 'duplicate_action' with 'copy_action'
+    #
+    #     action = context_menu.exec(QCursor.pos())
+    #
+    #     if action == delete_action:
+    #         self.deleteLater()
+    #
+    #     elif action == copy_action:
+    #         clipboard = QApplication.clipboard()
+    #         clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.var_class};;{self.var_value};;{self.var_visible_in_editor};;{self.var_display_name}")
