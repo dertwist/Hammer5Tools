@@ -22,6 +22,8 @@ from smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from smartprop_editor.new_file_options import NewFileOptions
 from popup_menu.popup_menu_main import PopupMenu
 
+from PySide6.QtGui import QKeySequence
+
 from explorer.main import Explorer
 from preferences import settings
 
@@ -58,7 +60,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.settings = settings
 
         # Hierarchy setup
-        # self.ui.tree_hierarchy_widget.hideColumn(1)
+        self.ui.tree_hierarchy_widget.hideColumn(1)
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
@@ -134,7 +136,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=data, variables_scrollArea=self.ui.variables_scrollArea)
             property_instance.edited.connect(self.update_tree_item_value)
             self.ui.properties_layout.insertWidget(0, property_instance)
-            print('data_modif', type(data_modif),data_modif)
             if data_modif:
                 for item in reversed(data_modif):
                     property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
@@ -578,8 +579,41 @@ class SmartPropEditorMainWindow(QMainWindow):
         move_down_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), 1))
         remove_action.triggered.connect(lambda: self.remove_item(self.ui.tree_hierarchy_widget.itemAt(position)))
 
+        copy_action = menu.addAction("Copy")
+        copy_action.setShortcut(QKeySequence.Copy)
+        copy_action.triggered.connect(lambda: self.copy_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+
+        paste_action = menu.addAction("Paste")
+        paste_action.setShortcut(QKeySequence.Paste)
+        paste_action.triggered.connect(lambda: self.paste_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
 
+    def copy_item(self, tree_item):
+        text_data = []
+        text_data.append(tree_item.text(0))
+        text_data.append(tree_item.text(1))
+
+        clipboard = QApplication.clipboard()
+        clipboard.setText(','.join(text_data))
+
+    def paste_item(self, position):
+
+        clipboard = QApplication.clipboard()
+        text_data = clipboard.text().split(',')
+        if text_data[1] == '':
+            pass
+        else:
+            tree_item = QTreeWidgetItem()
+
+            if len(text_data) >= 2:
+                tree_item.setText(0, text_data[0] + '_pasted')
+                tree_item.setText(1, text_data[1])
+
+            try:
+                self.ui.tree_hierarchy_widget.currentItem().addChild(tree_item)
+            except:
+                self.ui.tree_hierarchy_widget.invisibleRootItem().addChild(tree_item)
     def open_properties_menu(self, position):
         item = self.ui.properties_tree.itemAt(position)
         if item and item.parent():  # Check if the item has a parent (not a top-level item)
