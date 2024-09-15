@@ -6,7 +6,7 @@ import time
 
 from distutils.util import strtobool
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction
 from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
@@ -178,29 +178,32 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # Create New elemnt
     def keyPressEvent(self, event):
-
-        # Update focus widget at mouse position
-        cursor_pos = QCursor.pos()
-        widget_under_cursor = QApplication.widgetAt(cursor_pos)
-        if widget_under_cursor:
-            widget_under_cursor.setFocus()
-
         focus_widget = QApplication.focusWidget()
+        if isinstance(focus_widget, QLineEdit):
+            pass
+        else:
+            # Update focus widget at mouse position
+            cursor_pos = QCursor.pos()
+            widget_under_cursor = QApplication.widgetAt(cursor_pos)
+            if widget_under_cursor:
+                widget_under_cursor.setFocus()
 
-        if focus_widget is self.ui.tree_hierarchy_widget:
-            if focus_widget.viewport().underMouse():
+            focus_widget = QApplication.focusWidget()
+
+            if focus_widget is self.ui.tree_hierarchy_widget:
+                if focus_widget.viewport().underMouse():
+                    if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                        self.add_an_element()
+
+                        event.accept()
+            if focus_widget is self.modifiers_group_instance.ui.property_class:
                 if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                    self.add_an_element()
-
+                    self.add_an_operator()
                     event.accept()
-        if focus_widget is self.modifiers_group_instance.ui.property_class:
-            if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                self.add_an_operator()
-                event.accept()
-        if focus_widget is self.selection_criteria_group_instance.ui.property_class:
-            if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                self.add_a_selection_criteria()
-                event.accept()
+            if focus_widget is self.selection_criteria_group_instance.ui.property_class:
+                if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                    self.add_a_selection_criteria()
+                    event.accept()
     def add_an_element(self):
         self.popup_menu = PopupMenu(elements_list, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
