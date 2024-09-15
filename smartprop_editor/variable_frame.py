@@ -62,6 +62,9 @@ class VariableFrame(QWidget):
         elif var_class == 'Color':
             from smartprop_editor.variables.color import Var_class_color
             self.var_int_instance = Var_class_color(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
+        elif var_class == 'CoordinateSpace':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['ELEMENT', 'OBJECT', 'WORLD'])
         else:
             from smartprop_editor.variables.legacy import Var_class_legacy
             self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
