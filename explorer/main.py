@@ -94,7 +94,12 @@ class CustomFileSystemModel(QFileSystemModel):
                 return False
 
             old_path = self.filePath(index)
-            new_path = QDir(self.rootPath()).absoluteFilePath(value)  # Assuming rootPath() is the base directory
+            new_path = QDir(os.path.dirname(old_path)).absoluteFilePath(value)  # Assuming rootPath() is the base directory
+
+            if QFile.exists(new_path):
+                # Handle the case where the new name already exists
+                return False
+
             if QFile.rename(old_path, new_path):
                 # Update the cache if needed
                 if old_path in self._cache:
