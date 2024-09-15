@@ -114,6 +114,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         try:
             for i in range(self.ui.properties_layout.count()):
                 widget = self.ui.properties_layout.itemAt(i).widget()
+                widget = self.ui.properties_layout.itemAt(i).widget()
                 if isinstance(widget, PropertyFrame):
                     widget.deleteLater()
             for i in range(self.modifiers_group_instance.layout.count()):
@@ -127,6 +128,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         except Exception as error:
             print(error)
+
         try:
             data = ast.literal_eval(item.text(1))
             data_modif = data.get('m_Modifiers', {})
@@ -135,6 +137,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             data.pop('m_SelectionCriteria', None)
             property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=data, variables_scrollArea=self.ui.variables_scrollArea)
             property_instance.edited.connect(self.update_tree_item_value)
+
             self.ui.properties_layout.insertWidget(0, property_instance)
             if data_modif:
                 for item in reversed(data_modif):
@@ -149,28 +152,29 @@ class SmartPropEditorMainWindow(QMainWindow):
         except Exception as error:
             print(error)
     def update_tree_item_value(self):
-        output_value = {}
-        modifiers = []
-        selection_criteria = []
-        for item in range(self.modifiers_group_instance.layout.count()):
-            widget = self.modifiers_group_instance.layout.itemAt(item).widget()
-            if isinstance(widget, PropertyFrame):
-                value = widget.value
-                modifiers.append(value)
-        for item in range(self.selection_criteria_group_instance.layout.count()):
-            widget = self.selection_criteria_group_instance.layout.itemAt(item).widget()
-            if isinstance(widget, PropertyFrame):
-                value = widget.value
-                selection_criteria.append(value)
-        for item in range(self.ui.properties_layout.count()):
-            widget = self.ui.properties_layout.itemAt(item).widget()
-            if isinstance(widget, PropertyFrame):
-                value = widget.value
-                output_value.update(value)
-        output_value.update({'m_Modifiers': modifiers})
-        output_value.update({'m_SelectionCriteria': selection_criteria})
-        self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
-        print(output_value)
+        if self.ui.tree_hierarchy_widget.currentItem():
+            output_value = {}
+            modifiers = []
+            selection_criteria = []
+            for item in range(self.modifiers_group_instance.layout.count()):
+                widget = self.modifiers_group_instance.layout.itemAt(item).widget()
+                if isinstance(widget, PropertyFrame):
+                    value = widget.value
+                    modifiers.append(value)
+            for item in range(self.selection_criteria_group_instance.layout.count()):
+                widget = self.selection_criteria_group_instance.layout.itemAt(item).widget()
+                if isinstance(widget, PropertyFrame):
+                    value = widget.value
+                    selection_criteria.append(value)
+            for item in range(self.ui.properties_layout.count()):
+                widget = self.ui.properties_layout.itemAt(item).widget()
+                if isinstance(widget, PropertyFrame):
+                    value = widget.value
+                    output_value.update(value)
+            output_value.update({'m_Modifiers': modifiers})
+            output_value.update({'m_SelectionCriteria': selection_criteria})
+            self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
+            print(output_value)
 
     # Create New elemnt
     def keyPressEvent(self, event):
@@ -250,9 +254,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             parent = self.ui.tree_hierarchy_widget.currentItem()
         parent.addChild(new_element)
-        self.update_tree_item_value()
     def new_operator(self, element_class, element_value):
         operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
+        operator_instance.edited.connect(self.update_tree_item_value)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
         self.update_tree_item_value()
 
@@ -263,6 +267,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
             operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=ast.literal_eval(clipboard_data[2]),variables_scrollArea=self.ui.variables_scrollArea)
+            operator_instance.edited.connect(self.update_tree_item_value)
             self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
         else:
             print("Clipboard data format is not valid.")
@@ -275,6 +280,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
             operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=ast.literal_eval(clipboard_data[2]),variables_scrollArea=self.ui.variables_scrollArea)
+            operator_instance.edited.connect(self.update_tree_item_value)
             self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
         else:
             print("Clipboard data format is not valid.")
@@ -282,6 +288,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def new_selection_criteria(self, element_class, element_value):
         operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
+        operator_instance.edited.connect(self.update_tree_item_value)
         self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
         self.update_tree_item_value()
 
