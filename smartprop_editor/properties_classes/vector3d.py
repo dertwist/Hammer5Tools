@@ -27,7 +27,6 @@ class PropertyVector3D(QWidget):
         self.ui.layout.insertWidget(2, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)
 
-        self.ui.variable_combobox.activated.connect(self.on_changed)
         # Vector X
         self.text_line_x = CompletingPlainTextEdit()
         self.ui.layout_x.insertWidget(2, self.text_line_x)
@@ -91,11 +90,6 @@ class PropertyVector3D(QWidget):
 
     def on_changed(self):
         variables = self.get_variables()
-        current_var = self.ui.variable_combobox.currentText()
-        self.ui.variable_combobox.clear()
-        self.ui.variable_combobox.addItems(variables)
-        self.ui.variable_combobox.setCurrentText(current_var)
-
         self.text_line.completions.setStringList(variables)
         self.text_line_x.completions.setStringList(variables)
         self.text_line_y.completions.setStringList(variables)
