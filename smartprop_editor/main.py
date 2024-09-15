@@ -381,9 +381,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         opened_file = filename
 
         if filename.endswith('.vsmart'):
-            show = settings.value("SmartPropEditor/ShowCompilationMessage")
-            if show == None:
-                show = True
+            show = settings.value("SmartPropEditor/ShowCompilationMessage", type=bool)
             if show:
                 # Create a QMessageBox dialog
                 msg_box = QMessageBox()
@@ -399,6 +397,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                 result = msg_box.exec_()
                 if result == QMessageBox.Ok:
                     settings.setValue("SmartPropEditor/ShowCompilationMessage", not do_not_show_checkbox.isChecked())
+            else:
+                pass
 
         # VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
         # variables = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget).variables
