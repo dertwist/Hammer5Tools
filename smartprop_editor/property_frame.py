@@ -57,8 +57,12 @@ class PropertyFrame(QWidget):
             self.ui.delete_button.clicked.connect(self.delete_action)
 
 
-        if prop_class == 'Int':
-            pass
+        if prop_class == 'FitOnLine':
+            from smartprop_editor.properties_classes.vector3d import PropertyVector3D
+            for value_class, value in reversed(list(self.value.items())):
+                property_instance = PropertyVector3D(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
+                property_instance.edited.connect(self.on_edited)
+                self.ui.layout.insertWidget(0, property_instance)
         elif prop_class == 'Float':
             pass
         else:
