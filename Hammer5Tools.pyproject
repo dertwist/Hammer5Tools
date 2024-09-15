@@ -38,6 +38,7 @@
         "main.ui",
         "smartprop_editor/new_file_options.ui",
         "smartprop_editor/properties_classes/legacy.ui",
+        "smartprop_editor/properties_classes/vector3d.ui",
         "smartprop_editor/properties_group_frame.ui",
         "smartprop_editor/property_frame.ui",
         "hotkey_editor/main.ui"
