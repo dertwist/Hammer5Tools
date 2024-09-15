@@ -18,7 +18,7 @@ class PropertyLegacy(QWidget):
         self.variables_scrollArea = variables_scrollArea
 
         self.text_line = CompletingPlainTextEdit()
-        self.ui.layout.insertWidget(2, self.text_line)
+        self.ui.layout.insertWidget(1, self.text_line)
 
         self.text_line.setPlainText(str(self.value))
         self.ui.value_label.setText(str(self.value_class))
