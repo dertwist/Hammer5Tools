@@ -65,6 +65,36 @@ class VariableFrame(QWidget):
         elif var_class == 'CoordinateSpace':
             from smartprop_editor.variables.combobox import Var_class_combobox
             self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['ELEMENT', 'OBJECT', 'WORLD'])
+        elif var_class == 'GridPlacementMode':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['SEGMENT', 'FILL'])
+        elif var_class == 'GridOriginMode':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['CENTER', 'CORNER'])
+        elif var_class == 'PickMode':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'])
+        elif var_class == 'ScaleMode':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'])
+        elif var_class == 'TraceNoHit':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'])
+        elif var_class == 'ApplyColorMode':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'])
+        elif var_class == 'ChoiceSelectionMode':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['RANDOM', 'FIRST'])
+        elif var_class == 'RadiusPlacementMode':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['SPHERE', 'CIRCLE'])
+        elif var_class == 'DistributionMode':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['RANDOM', 'REGULAR'])
+        elif var_class == 'DistributionMode':
+            from smartprop_editor.variables.combobox import Var_class_combobox
+            self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['RANDOM', 'REGULAR'])
         else:
             from smartprop_editor.variables.legacy import Var_class_legacy
             self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
