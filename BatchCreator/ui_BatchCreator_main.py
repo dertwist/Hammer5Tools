@@ -16,10 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QHBoxLayout,
-    QHeaderView, QLabel, QLineEdit, QMainWindow,
-    QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
-    QTextEdit, QToolButton, QTreeView, QVBoxLayout,
-    QWidget)
+    QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
+    QPushButton, QSizePolicy, QSpacerItem, QTextEdit,
+    QToolButton, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_BatchCreator_MainWindow(object):
@@ -307,16 +306,16 @@ class Ui_BatchCreator_MainWindow(object):
         self.left_vertical_frame.setObjectName(u"left_vertical_frame")
         self.left_vertical_frame.setMaximumSize(QSize(16777215, 16777215))
         self.left_vertical_frame.setBaseSize(QSize(330, 0))
+        self.left_vertical_frame.setStyleSheet(u"")
         self.left_vertical_frame.setFrameShape(QFrame.StyledPanel)
         self.left_vertical_frame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.left_vertical_frame)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.MiniWindows_explorer = QTreeView(self.left_vertical_frame)
-        self.MiniWindows_explorer.setObjectName(u"MiniWindows_explorer")
-        self.MiniWindows_explorer.setMaximumSize(QSize(16777215, 16777215))
+        self.layout = QVBoxLayout()
+        self.layout.setObjectName(u"layout")
 
-        self.verticalLayout_2.addWidget(self.MiniWindows_explorer)
+        self.verticalLayout_2.addLayout(self.layout)
 
         self.horizontal_frame = QFrame(self.left_vertical_frame)
         self.horizontal_frame.setObjectName(u"horizontal_frame")

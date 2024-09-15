@@ -26,9 +26,9 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
         tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
-        self.mini_explorer = Explorer(self.ui.MiniWindows_explorer, tree_directory, get_addon_name(), editor_name='BatchCreator')
+        self.mini_explorer = Explorer(self.ui.left_vertical_frame, tree_directory, get_addon_name(), editor_name='BatchCreator')
 
-        layout = QVBoxLayout(self.ui.MiniWindows_explorer)
+        layout = self.ui.layout
         layout.addWidget(self.mini_explorer.frame)
         layout.setContentsMargins(0, 0, 0, 0)
         self.ui.Status_Line_Qedit.setReadOnly(True)
