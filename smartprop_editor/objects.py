@@ -34,7 +34,8 @@ elements_list = [
     {'PlaceMultiple': {'_class': 'CSmartPropElement_PlaceMultiple', 'm_nCount': 0, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PlaceOnPath': {'_class': 'CSmartPropElement_PlaceOnPath', 'm_PathName': 'path', 'm_vPathOffset': {'m_Components': [0, 0, 0]}, 'm_flOffsetAlongPath': 0, 'm_PathSpace': 'ELEMENT', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'FitOnLine': {'_class': 'CSmartPropElement_FitOnLine', 'm_bOrientAlongLine': False, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
-    {'PickOne': {'_class': 'CSmartPropElement_PickOne', 'm_SelectionMode': 'RANDOM', 'm_vHandleOfffset': {'m_Components': [0, 0, 0]}, 'm_HandleShape': 'SQUARE', 'm_Modifiers': [], 'm_SelectionCriteria': []}}
+    {'PickOne': {'_class': 'CSmartPropElement_PickOne', 'm_SelectionMode': 'RANDOM', 'm_vHandleOfffset': {'m_Components': [0, 0, 0]}, 'm_HandleShape': 'SQUARE', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
+    {'Model': {'_class': 'CSmartPropElement_Model', 'm_sModelName': '', 'm_vModelScale': {'m_Components': [0, 0, 0]}, 'm_MaterialGroupName': '', 'm_Modifiers': [], 'm_SelectionCriteria': []}}
 ]
 filter_prefix = 'CSmartPropFilter_'
 filters_list = [
