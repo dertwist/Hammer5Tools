@@ -308,7 +308,7 @@ class Ui_Form(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.layout = QVBoxLayout()
-        self.layout.setSpacing(0)
+        self.layout.setSpacing(8)
         self.layout.setObjectName(u"layout")
         self.layout.setSizeConstraint(QLayout.SetDefaultConstraint)
 
