@@ -57,7 +57,7 @@ class PropertyFrame(QWidget):
             self.ui.delete_button.clicked.connect(self.delete_action)
 
 
-        if prop_class == 'FitOnLine':
+        if prop_class == 'Int':
             from smartprop_editor.properties_classes.vector3d import PropertyVector3D
             for value_class, value in reversed(list(self.value.items())):
                 property_instance = PropertyVector3D(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
@@ -67,8 +67,15 @@ class PropertyFrame(QWidget):
             pass
         else:
             from smartprop_editor.properties_classes.legacy import PropertyLegacy
+            from smartprop_editor.properties_classes.vector3d import PropertyVector3D
             for value_class, value in reversed(list(self.value.items())):
-                property_instance = PropertyLegacy(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
+                if value_class == 'm_vPosition':
+                    property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
+                elif value_class == 'm_bEnabled':
+                    pass
+                else:
+                    property_instance = PropertyLegacy(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
+                print(value_class)
                 property_instance.edited.connect(self.on_edited)
                 self.ui.layout.insertWidget(0, property_instance)
             pass

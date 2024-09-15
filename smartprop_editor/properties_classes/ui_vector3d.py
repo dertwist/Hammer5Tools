@@ -15,16 +15,16 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QDoubleSpinBox, QFrame,
-    QHBoxLayout, QLabel, QLineEdit, QSizePolicy,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
+    QLabel, QLayout, QSizePolicy, QVBoxLayout,
+    QWidget)
 
 class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
         Widget.setWindowModality(Qt.NonModal)
-        Widget.resize(838, 122)
+        Widget.resize(838, 119)
         Widget.setMinimumSize(QSize(0, 0))
         Widget.setMaximumSize(QSize(16777215, 200))
         Widget.setStyleSheet(u".QWidget {\n"
@@ -58,75 +58,72 @@ class Ui_Widget(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.frame_5.sizePolicy().hasHeightForWidth())
         self.frame_5.setSizePolicy(sizePolicy)
-        self.frame_5.setMinimumSize(QSize(0, 23))
-        self.frame_5.setMaximumSize(QSize(16777215, 23))
+        self.frame_5.setMinimumSize(QSize(0, 32))
+        self.frame_5.setMaximumSize(QSize(16777215, 32))
+        self.frame_5.setStyleSheet(u".QFrame {\n"
+"    font: 580 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"	border-top: 0px;\n"
+"    border-color: rgba(50, 50, 50, 255);\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+".QFrame::hover {\n"
+"}\n"
+".QFrame::selected {\n"
+"    background-color: #414956;\n"
+"}")
         self.frame_5.setFrameShape(QFrame.NoFrame)
         self.frame_5.setFrameShadow(QFrame.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame_5)
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.property_class = QLineEdit(self.frame_5)
+        self.layout = QHBoxLayout()
+        self.layout.setObjectName(u"layout")
+        self.layout.setSizeConstraint(QLayout.SetDefaultConstraint)
+        self.property_class = QLabel(self.frame_5)
         self.property_class.setObjectName(u"property_class")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.property_class.sizePolicy().hasHeightForWidth())
-        self.property_class.setSizePolicy(sizePolicy1)
-        self.property_class.setFocusPolicy(Qt.NoFocus)
-        self.property_class.setStyleSheet(u"QLineEdit {\n"
-"font: 580  8pt \"Segoe UI\";\n"
-"    border-top: 0px;\n"
-"    border-left: 0px;\n"
-"    border-right: 0px;\n"
-"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+        self.property_class.setStyleSheet(u"border:0px;\n"
+"background-color: rgba(255, 255, 255, 0);\n"
+"font: 8pt \"Segoe UI\";\n"
+"")
+
+        self.layout.addWidget(self.property_class)
+
+        self.logic_switch = QComboBox(self.frame_5)
+        self.logic_switch.addItem("")
+        self.logic_switch.addItem("")
+        self.logic_switch.setObjectName(u"logic_switch")
+        self.logic_switch.setStyleSheet(u"QComboBox {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"}\n"
-"\n"
-"QLineEdit:focus {\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
+"    height: 18px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom: 2px;\n"
+"	border-top:none;\n"
+"border-bottom:none;\n"
+"border:none;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
 "}\n"
 "\n"
-"QLineEdit::selection {\n"
+"QComboBox:hover {\n"
 "    background-color: #414956;\n"
 "    color: white;\n"
-"}")
-        self.property_class.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
-        self.property_class.setMaxLength(32)
-        self.property_class.setReadOnly(True)
-
-        self.horizontalLayout.addWidget(self.property_class)
-
-        self.comboBox = QComboBox(self.frame_5)
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.setObjectName(u"comboBox")
-        self.comboBox.setStyleSheet(u"QComboBox {\n"
-"font: 580  8pt \"Segoe UI\";\n"
-"    border-top: 0px;\n"
-"    border-left: 0px;\n"
-"    border-right: 0px;\n"
-"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
 "}\n"
 "\n"
-"QComboBox:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"\n"
-"QComboBox::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
+"QComboBox:pressed {\n"
 "}\n"
 "\n"
 "QComboBox:item {\n"
-"    font: 580  10pt \"Segoe UI\";\n"
+"    font: 580  8pt \"Segoe UI\";\n"
 "    color: #E3E3E3;\n"
 "    padding-left: 5px;\n"
 "    background-color: #1C1C1C;\n"
@@ -143,9 +140,9 @@ class Ui_Widget(object):
 "    border-left: 2px solid;\n"
 "    margin-left: 5px;\n"
 "    padding: 5px;\n"
-"    width: 7px;\n"
-"    border-"
-                        "color: rgba(80, 80, 80, 255);\n"
+"    width: 7px;"
+                        "\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
 "    background-color: #1C1C1C;\n"
 "border:none;\n"
 "}\n"
@@ -181,14 +178,18 @@ class Ui_Widget(object):
 "    padding: 4px; /* Add padding to each item */\n"
 "    padding-left: 5px;\n"
 "    padding-right: 5px;\n"
-"    background-color: #414956;\n"
-"    "
-                        "color: white;\n"
+"    background-color: #"
+                        "414956;\n"
+"    color: white;\n"
 "    border: none; /* Remove border */\n"
 "    outline: none; /* Remove outline */\n"
-"}")
+"}\n"
+"")
 
-        self.horizontalLayout.addWidget(self.comboBox)
+        self.layout.addWidget(self.logic_switch)
+
+
+        self.horizontalLayout.addLayout(self.layout)
 
 
         self.verticalLayout.addWidget(self.frame_5)
@@ -223,13 +224,15 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShape(QFrame.NoFrame)
         self.frame.setFrameShadow(QFrame.Raised)
         self.frame.setLineWidth(0)
         self.horizontalLayout_2 = QHBoxLayout(self.frame)
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.layout_x = QHBoxLayout()
+        self.layout_x.setObjectName(u"layout_x")
         self.label = QLabel(self.frame)
         self.label.setObjectName(u"label")
         self.label.setStyleSheet(u"border:0px;\n"
@@ -238,76 +241,10 @@ class Ui_Widget(object):
 "color: #ECA4A0;\n"
 "")
 
-        self.horizontalLayout_2.addWidget(self.label)
+        self.layout_x.addWidget(self.label)
 
-        self.vector_x = QDoubleSpinBox(self.frame)
-        self.vector_x.setObjectName(u"vector_x")
-        self.vector_x.setMinimumSize(QSize(0, 0))
-        self.vector_x.setStyleSheet(u"QDoubleSpinBox {\n"
-"    font: 580 8pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"border:0px;\n"
-"color: #ECA4A0;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:focus {\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:hover {\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:pressed {\n"
-"	background-color: #121212;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::up-button {\n"
-"    border: 0px solid black;\n"
-"    subcontrol-origin: border;\n"
-"    subcontrol-position: top right;\n"
-"    border-left: 2px solid black;\n"
-"    border-bottom: 0px solid black;\n"
-"    border-top-right-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"	width:16px;\n"
-"    margin:0px;\n"
-"border:0px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::up-arrow {\n"
-"    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);\n"
-"    width: 20px;\n"
-"    height: 20px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::down-button {\n"
-"    subcontrol-origin: border;\n"
-"  "
-                        "  subcontrol-position: bottom right;\n"
-"	border: 0px solid black;\n"
-"    border-left: 2px solid black;\n"
-"    border-top: 2px solid black;\n"
-"border-bottom-right-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"	width:16px;\n"
-"    margin:0px;\n"
-"border:0px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::down-arrow {\n"
-"    image: url(://icons/arrow_drop_down_16dp.svg);\n"
-"    width: 20px;\n"
-"    height: 20px;\n"
-"}")
-        self.vector_x.setDecimals(2)
-        self.vector_x.setMinimum(-99999999999.000000000000000)
-        self.vector_x.setMaximum(99999999999.000000000000000)
-        self.vector_x.setSingleStep(0.100000000000000)
 
-        self.horizontalLayout_2.addWidget(self.vector_x)
+        self.horizontalLayout_2.addLayout(self.layout_x)
 
 
         self.verticalLayout_2.addWidget(self.frame)
@@ -333,13 +270,15 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame_2.setFrameShape(QFrame.StyledPanel)
+        self.frame_2.setFrameShape(QFrame.NoFrame)
         self.frame_2.setFrameShadow(QFrame.Raised)
         self.frame_2.setLineWidth(0)
         self.horizontalLayout_7 = QHBoxLayout(self.frame_2)
         self.horizontalLayout_7.setSpacing(0)
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
         self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
+        self.layout_y = QHBoxLayout()
+        self.layout_y.setObjectName(u"layout_y")
         self.label_2 = QLabel(self.frame_2)
         self.label_2.setObjectName(u"label_2")
         self.label_2.setStyleSheet(u"border:0px;\n"
@@ -347,79 +286,10 @@ class Ui_Widget(object):
 "font: 8pt \"Segoe UI\";\n"
 "color: #B6EFA2;")
 
-        self.horizontalLayout_7.addWidget(self.label_2)
+        self.layout_y.addWidget(self.label_2)
 
-        self.vector_y = QDoubleSpinBox(self.frame_2)
-        self.vector_y.setObjectName(u"vector_y")
-        self.vector_y.setStyleSheet(u"QDoubleSpinBox {\n"
-"    font: 580 8pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"border:0px;\n"
-"color: #B6EFA2;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:focus {\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:hover {\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:pressed {\n"
-"	background-color: #121212;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::up-button {\n"
-"    border: 0px solid black;\n"
-"    subcontrol-origin: border;\n"
-"    subcontrol-position: top right;\n"
-"    border-left: 2px solid black;\n"
-"    border-bottom: 0px solid black;\n"
-"    border-top-right-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"	width:16px;\n"
-"    margin:0px;\n"
-"border:0px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::up-arrow {\n"
-"    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);\n"
-"    width: 20px;\n"
-"    height: 20px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::down-button {\n"
-"    subcontrol-origin: border;\n"
-"  "
-                        "  subcontrol-position: bottom right;\n"
-"	border: 0px solid black;\n"
-"    border-left: 2px solid black;\n"
-"    border-top: 2px solid black;\n"
-"border-bottom-right-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"	width:16px;\n"
-"    margin:0px;\n"
-"border:0px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::down-arrow {\n"
-"    image: url(://icons/arrow_drop_down_16dp.svg);\n"
-"    width: 20px;\n"
-"    height: 20px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:disabled {\n"
-"	color: rgba(125, 125, 125, 100);\n"
-"}")
-        self.vector_y.setDecimals(2)
-        self.vector_y.setMinimum(-99999999999.000000000000000)
-        self.vector_y.setMaximum(99999999999.000000000000000)
-        self.vector_y.setSingleStep(0.100000000000000)
 
-        self.horizontalLayout_7.addWidget(self.vector_y)
+        self.horizontalLayout_7.addLayout(self.layout_y)
 
 
         self.verticalLayout_2.addWidget(self.frame_2)
@@ -445,13 +315,15 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame_3.setFrameShape(QFrame.StyledPanel)
+        self.frame_3.setFrameShape(QFrame.NoFrame)
         self.frame_3.setFrameShadow(QFrame.Raised)
         self.frame_3.setLineWidth(0)
         self.horizontalLayout_8 = QHBoxLayout(self.frame_3)
         self.horizontalLayout_8.setSpacing(0)
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
+        self.layout_z = QHBoxLayout()
+        self.layout_z.setObjectName(u"layout_z")
         self.label_3 = QLabel(self.frame_3)
         self.label_3.setObjectName(u"label_3")
         self.label_3.setStyleSheet(u"border:0px;\n"
@@ -460,80 +332,10 @@ class Ui_Widget(object):
 "\n"
 "color: #A4B6EF;")
 
-        self.horizontalLayout_8.addWidget(self.label_3)
+        self.layout_z.addWidget(self.label_3)
 
-        self.vector_z = QDoubleSpinBox(self.frame_3)
-        self.vector_z.setObjectName(u"vector_z")
-        self.vector_z.setEnabled(True)
-        self.vector_z.setStyleSheet(u"QDoubleSpinBox {\n"
-"    font: 580 8pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"border:0px;\n"
-"color: #A4B6EF;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:focus {\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:hover {\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:pressed {\n"
-"	background-color: #121212;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::up-button {\n"
-"    border: 0px solid black;\n"
-"    subcontrol-origin: border;\n"
-"    subcontrol-position: top right;\n"
-"    border-left: 2px solid black;\n"
-"    border-bottom: 0px solid black;\n"
-"    border-top-right-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"	width:16px;\n"
-"    margin:0px;\n"
-"border:0px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::up-arrow {\n"
-"    image: url(://icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);\n"
-"    width: 20px;\n"
-"    height: 20px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::down-button {\n"
-"    subcontrol-origin: border;\n"
-"  "
-                        "  subcontrol-position: bottom right;\n"
-"	border: 0px solid black;\n"
-"    border-left: 2px solid black;\n"
-"    border-top: 2px solid black;\n"
-"border-bottom-right-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"	width:16px;\n"
-"    margin:0px;\n"
-"border:0px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox::down-arrow {\n"
-"    image: url(://icons/arrow_drop_down_16dp.svg);\n"
-"    width: 20px;\n"
-"    height: 20px;\n"
-"}\n"
-"\n"
-"QDoubleSpinBox:disabled {\n"
-"	color: rgba(125, 125, 125, 100);\n"
-"}")
-        self.vector_z.setDecimals(2)
-        self.vector_z.setMinimum(-99999999999.000000000000000)
-        self.vector_z.setMaximum(99999999999.000000000000000)
-        self.vector_z.setSingleStep(0.100000000000000)
 
-        self.horizontalLayout_8.addWidget(self.vector_z)
+        self.horizontalLayout_8.addLayout(self.layout_z)
 
 
         self.verticalLayout_2.addWidget(self.frame_3)
@@ -549,12 +351,9 @@ class Ui_Widget(object):
 
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
-#if QT_CONFIG(tooltip)
-        self.property_class.setToolTip(QCoreApplication.translate("Widget", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.property_class.setText(QCoreApplication.translate("Widget", u"Start point", None))
-        self.comboBox.setItemText(0, QCoreApplication.translate("Widget", u"Variable source", None))
-        self.comboBox.setItemText(1, QCoreApplication.translate("Widget", u"Vector3d", None))
+        self.property_class.setText(QCoreApplication.translate("Widget", u"class", None))
+        self.logic_switch.setItemText(0, QCoreApplication.translate("Widget", u"Variable source", None))
+        self.logic_switch.setItemText(1, QCoreApplication.translate("Widget", u"Vector3d", None))
 
         self.label.setText(QCoreApplication.translate("Widget", u"Vector X", None))
         self.label_2.setText(QCoreApplication.translate("Widget", u"Vector Y", None))
