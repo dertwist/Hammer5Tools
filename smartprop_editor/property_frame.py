@@ -16,13 +16,14 @@ import ast
 
 class PropertyFrame(QWidget):
     edited = Signal()
-    def __init__(self, value, widget_list, variables_scrollArea):
+    def __init__(self, value, widget_list, variables_scrollArea, element=False):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
         self.ui.property_class.setAcceptDrops(False)
         self.variables_scrollArea = variables_scrollArea
+        self.element = element
         if isinstance(value, dict):
             pass
         else:
@@ -48,8 +49,12 @@ class PropertyFrame(QWidget):
         # self.ui.variable_name.textChanged.connect(self.update_self)
         self.widget_list = widget_list
 
-        self.ui.copy_button.clicked.connect(self.copy_action)
-        self.ui.delete_button.clicked.connect(self.delete_action)
+        if self.element:
+            self.ui.copy_button.deleteLater()
+            self.ui.delete_button.deleteLater()
+        else:
+            self.ui.copy_button.clicked.connect(self.copy_action)
+            self.ui.delete_button.clicked.connect(self.delete_action)
 
 
         if prop_class == 'Int':
@@ -92,8 +97,11 @@ class PropertyFrame(QWidget):
     def update_self(self):
         pass
     def init_ui(self):
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.show_context_menu)
+        if self.element:
+            pass
+        else:
+            self.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.customContextMenuRequested.connect(self.show_context_menu)
 
     mousePressEvent = PropertyActions.mousePressEvent
     mouseMoveEvent = PropertyActions.mouseMoveEvent
