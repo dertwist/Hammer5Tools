@@ -104,6 +104,9 @@
              </property>
              <item>
               <widget class="QPushButton" name="add_a_property_button">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Press Ctrl + F for shortcut&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="styleSheet">
                 <string notr="true">
     /* QPushButton default and hover styles */
