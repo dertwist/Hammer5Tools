@@ -262,5 +262,6 @@
         <file>icons/assettypes/xml_sm.png</file>
         <file>icons/keyboard.png</file>
         <file>icons/volume_up.png</file>
+        <file>icons/assettypes/vsmart_sm.png</file>
     </qresource>
 </RCC>
