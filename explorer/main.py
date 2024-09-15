@@ -7,6 +7,7 @@ from preferences import get_config_value, set_config_value
 from PySide6.QtCore import QModelIndex
 
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
+smartprop_extensions = ['vsmart', 'vdata']
 generic_extensions = ['vpost', 'vsndevts', 'rect']
 file_icons = {
     '.vsmart': '://icons/assettypes/surface_sm.png',
@@ -271,6 +272,11 @@ class Explorer(QMainWindow):
             copy_audio_path_action.triggered.connect(lambda: self.copy_audio_path(index, True))
             menu.addAction(copy_audio_path_action)
 
+        elif file_extension in smartprop_extensions:
+            copy_smartprop_path_action = QAction("Copy Smartprop Path", self)  # Updated action text for clarity
+            copy_smartprop_path_action.triggered.connect(lambda: self.copy_smartprop_path(index, True))
+            menu.addAction(copy_smartprop_path_action)
+
     def duplicate_file(self, index):
         file_path = self.model.filePath(index)
 
@@ -365,6 +371,25 @@ class Explorer(QMainWindow):
             file_path = file_path.lower()
             root, ext = os.path.splitext(file_path)
             file_path = root + '.vsnd'
+            return file_path
+
+    def copy_smartprop_path(self, index, to_clipboard):
+        if to_clipboard:
+            file_path = self.model.filePath(index)
+            file_path = os.path.relpath(file_path, self.tree_directory)
+            file_path = file_path.replace('\\', '/')
+            file_path = file_path.lower()
+            root, ext = os.path.splitext(file_path)
+            file_path = root + '.vsmart'
+            clipboard = QGuiApplication.clipboard()
+            clipboard.setText(file_path)
+        else:
+            file_path = self.model.filePath(index)
+            file_path = os.path.relpath(file_path, self.tree_directory)
+            file_path = file_path.replace('\\', '/')
+            file_path = file_path.lower()
+            root, ext = os.path.splitext(file_path)
+            file_path = root + '.vsmart'
             return file_path
 
     def delete_selected_items(self):
