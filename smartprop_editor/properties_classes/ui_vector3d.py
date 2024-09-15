@@ -188,6 +188,97 @@ class Ui_Widget(object):
 
         self.layout.addWidget(self.logic_switch)
 
+        self.variable_combobox = QComboBox(self.frame_5)
+        self.variable_combobox.setObjectName(u"variable_combobox")
+        self.variable_combobox.setStyleSheet(u"QComboBox {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height: 18px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom: 2px;\n"
+"	border-top:none;\n"
+"border-bottom:none;\n"
+"border:none;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"QComboBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QComboBox:pressed {\n"
+"}\n"
+"\n"
+"QComboBox:item {\n"
+"    font: 580  8pt \"Segoe UI\";\n"
+"    color: #E3E3E3;\n"
+"    padding-left: 5px;\n"
+"    background-color: #1C1C1C;\n"
+"    border-style: none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down {\n"
+"    color: #E3E3E3;\n"
+"    padding: 2px;\n"
+"    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;\n"
+"    border-bottom: 0px solid black;\n"
+"    border-top: 0px solid black;\n"
+"    border-right: 0px;\n"
+"    border-left: 2px solid;\n"
+"    margin-left: 5px;\n"
+"    padding: 5px;\n"
+"    width: 7px;"
+                        "\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    background-color: #1C1C1C;\n"
+"border:none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView {\n"
+"    border: 2px solid gray;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    selection-background-color: #414956;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    color: #ff8a8a8a;\n"
+"    border-style: none;\n"
+"    border-bottom: 0.5px solid black;\n"
+"    border-color: rgba(255, 255, 255, 10);\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item:selected {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    background-color: #"
+                        "414956;\n"
+"    color: white;\n"
+"    border: none; /* Remove border */\n"
+"    outline: none; /* Remove outline */\n"
+"}\n"
+"")
+
+        self.layout.addWidget(self.variable_combobox)
+
 
         self.horizontalLayout.addLayout(self.layout)
 
@@ -235,13 +326,112 @@ class Ui_Widget(object):
         self.layout_x.setObjectName(u"layout_x")
         self.label = QLabel(self.frame)
         self.label.setObjectName(u"label")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
+        self.label.setSizePolicy(sizePolicy1)
         self.label.setStyleSheet(u"border:0px;\n"
 "background-color: rgba(255, 255, 255, 0);\n"
 "font: 8pt \"Segoe UI\";\n"
 "color: #ECA4A0;\n"
-"")
+"padding-right: 16px;")
 
         self.layout_x.addWidget(self.label)
+
+        self.comboBox = QComboBox(self.frame)
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.comboBox.setObjectName(u"comboBox")
+        self.comboBox.setStyleSheet(u"QComboBox {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height: 18px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom: 2px;\n"
+"	border-top:none;\n"
+"border-bottom:none;\n"
+"border:none;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"QComboBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QComboBox:pressed {\n"
+"}\n"
+"\n"
+"QComboBox:item {\n"
+"    font: 580  8pt \"Segoe UI\";\n"
+"    color: #E3E3E3;\n"
+"    padding-left: 5px;\n"
+"    background-color: #1C1C1C;\n"
+"    border-style: none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down {\n"
+"    color: #E3E3E3;\n"
+"    padding: 2px;\n"
+"    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;\n"
+"    border-bottom: 0px solid black;\n"
+"    border-top: 0px solid black;\n"
+"    border-right: 0px;\n"
+"    border-left: 2px solid;\n"
+"    margin-left: 5px;\n"
+"    padding: 5px;\n"
+"    width: 7px;"
+                        "\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    background-color: #1C1C1C;\n"
+"border:none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView {\n"
+"    border: 2px solid gray;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    selection-background-color: #414956;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    color: #ff8a8a8a;\n"
+"    border-style: none;\n"
+"    border-bottom: 0.5px solid black;\n"
+"    border-color: rgba(255, 255, 255, 10);\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item:selected {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    background-color: #"
+                        "414956;\n"
+"    color: white;\n"
+"    border: none; /* Remove border */\n"
+"    outline: none; /* Remove outline */\n"
+"}\n"
+"")
+
+        self.layout_x.addWidget(self.comboBox)
 
 
         self.horizontalLayout_2.addLayout(self.layout_x)
@@ -281,12 +471,109 @@ class Ui_Widget(object):
         self.layout_y.setObjectName(u"layout_y")
         self.label_2 = QLabel(self.frame_2)
         self.label_2.setObjectName(u"label_2")
+        sizePolicy1.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
+        self.label_2.setSizePolicy(sizePolicy1)
         self.label_2.setStyleSheet(u"border:0px;\n"
 "background-color: rgba(255, 255, 255, 0);\n"
 "font: 8pt \"Segoe UI\";\n"
-"color: #B6EFA2;")
+"color: #B6EFA2;\n"
+"padding-right: 16px;")
 
         self.layout_y.addWidget(self.label_2)
+
+        self.comboBox_2 = QComboBox(self.frame_2)
+        self.comboBox_2.addItem("")
+        self.comboBox_2.addItem("")
+        self.comboBox_2.addItem("")
+        self.comboBox_2.setObjectName(u"comboBox_2")
+        self.comboBox_2.setStyleSheet(u"QComboBox {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height: 18px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom: 2px;\n"
+"	border-top:none;\n"
+"border-bottom:none;\n"
+"border:none;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"QComboBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QComboBox:pressed {\n"
+"}\n"
+"\n"
+"QComboBox:item {\n"
+"    font: 580  8pt \"Segoe UI\";\n"
+"    color: #E3E3E3;\n"
+"    padding-left: 5px;\n"
+"    background-color: #1C1C1C;\n"
+"    border-style: none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down {\n"
+"    color: #E3E3E3;\n"
+"    padding: 2px;\n"
+"    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;\n"
+"    border-bottom: 0px solid black;\n"
+"    border-top: 0px solid black;\n"
+"    border-right: 0px;\n"
+"    border-left: 2px solid;\n"
+"    margin-left: 5px;\n"
+"    padding: 5px;\n"
+"    width: 7px;"
+                        "\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    background-color: #1C1C1C;\n"
+"border:none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView {\n"
+"    border: 2px solid gray;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    selection-background-color: #414956;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    color: #ff8a8a8a;\n"
+"    border-style: none;\n"
+"    border-bottom: 0.5px solid black;\n"
+"    border-color: rgba(255, 255, 255, 10);\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item:selected {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    background-color: #"
+                        "414956;\n"
+"    color: white;\n"
+"    border: none; /* Remove border */\n"
+"    outline: none; /* Remove outline */\n"
+"}\n"
+"")
+
+        self.layout_y.addWidget(self.comboBox_2)
 
 
         self.horizontalLayout_7.addLayout(self.layout_y)
@@ -326,13 +613,110 @@ class Ui_Widget(object):
         self.layout_z.setObjectName(u"layout_z")
         self.label_3 = QLabel(self.frame_3)
         self.label_3.setObjectName(u"label_3")
+        sizePolicy1.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
+        self.label_3.setSizePolicy(sizePolicy1)
         self.label_3.setStyleSheet(u"border:0px;\n"
 "background-color: rgba(255, 255, 255, 0);\n"
 "font: 8pt \"Segoe UI\";\n"
 "\n"
-"color: #A4B6EF;")
+"color: #A4B6EF;\n"
+"padding-right: 16px;")
 
         self.layout_z.addWidget(self.label_3)
+
+        self.comboBox_3 = QComboBox(self.frame_3)
+        self.comboBox_3.addItem("")
+        self.comboBox_3.addItem("")
+        self.comboBox_3.addItem("")
+        self.comboBox_3.setObjectName(u"comboBox_3")
+        self.comboBox_3.setStyleSheet(u"QComboBox {\n"
+"    font: 580 8pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height: 18px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom: 2px;\n"
+"	border-top:none;\n"
+"border-bottom:none;\n"
+"border:none;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"QComboBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"QComboBox:pressed {\n"
+"}\n"
+"\n"
+"QComboBox:item {\n"
+"    font: 580  8pt \"Segoe UI\";\n"
+"    color: #E3E3E3;\n"
+"    padding-left: 5px;\n"
+"    background-color: #1C1C1C;\n"
+"    border-style: none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down {\n"
+"    color: #E3E3E3;\n"
+"    padding: 2px;\n"
+"    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;\n"
+"    border-bottom: 0px solid black;\n"
+"    border-top: 0px solid black;\n"
+"    border-right: 0px;\n"
+"    border-left: 2px solid;\n"
+"    margin-left: 5px;\n"
+"    padding: 5px;\n"
+"    width: 7px;"
+                        "\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    background-color: #1C1C1C;\n"
+"border:none;\n"
+"}\n"
+"\n"
+"QComboBox::drop-down:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView {\n"
+"    border: 2px solid gray;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    selection-background-color: #414956;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    color: #ff8a8a8a;\n"
+"    border-style: none;\n"
+"    border-bottom: 0.5px solid black;\n"
+"    border-color: rgba(255, 255, 255, 10);\n"
+"}\n"
+"\n"
+"\n"
+"QComboBox QAbstractItemView::item:selected {\n"
+"    height: 16px; /* Set the height of each item */\n"
+"    padding: 4px; /* Add padding to each item */\n"
+"    padding-left: 5px;\n"
+"    padding-right: 5px;\n"
+"    background-color: #"
+                        "414956;\n"
+"    color: white;\n"
+"    border: none; /* Remove border */\n"
+"    outline: none; /* Remove outline */\n"
+"}\n"
+"")
+
+        self.layout_z.addWidget(self.comboBox_3)
 
 
         self.horizontalLayout_8.addLayout(self.layout_z)
@@ -356,7 +740,19 @@ class Ui_Widget(object):
         self.logic_switch.setItemText(1, QCoreApplication.translate("Widget", u"Vector3d", None))
 
         self.label.setText(QCoreApplication.translate("Widget", u"Vector X", None))
+        self.comboBox.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))
+        self.comboBox.setItemText(1, QCoreApplication.translate("Widget", u"Variable", None))
+        self.comboBox.setItemText(2, QCoreApplication.translate("Widget", u"Expression", None))
+
         self.label_2.setText(QCoreApplication.translate("Widget", u"Vector Y", None))
+        self.comboBox_2.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))
+        self.comboBox_2.setItemText(1, QCoreApplication.translate("Widget", u"Variable", None))
+        self.comboBox_2.setItemText(2, QCoreApplication.translate("Widget", u"Expression", None))
+
         self.label_3.setText(QCoreApplication.translate("Widget", u"Vector Z", None))
+        self.comboBox_3.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))
+        self.comboBox_3.setItemText(1, QCoreApplication.translate("Widget", u"Variable", None))
+        self.comboBox_3.setItemText(2, QCoreApplication.translate("Widget", u"Expression", None))
+
     # retranslateUi
 

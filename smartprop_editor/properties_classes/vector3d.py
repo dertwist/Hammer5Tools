@@ -22,23 +22,25 @@ class PropertyVector3D(QWidget):
 
         # Variable
         self.text_line = CompletingPlainTextEdit()
+        self.text_line.completion_tail = ''
         self.text_line.setPlaceholderText('Variable name')
         self.ui.layout.insertWidget(2, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)
 
+        self.ui.variable_combobox.activated.connect(self.on_changed)
         # Vector X
         self.text_line_x = CompletingPlainTextEdit()
-        self.ui.layout_x.insertWidget(1, self.text_line_x)
+        self.ui.layout_x.insertWidget(2, self.text_line_x)
         self.text_line_x.textChanged.connect(self.on_changed)  # Connect on_changed method
 
         # Vector Y
         self.text_line_y = CompletingPlainTextEdit()
-        self.ui.layout_y.insertWidget(1, self.text_line_y)
+        self.ui.layout_y.insertWidget(2, self.text_line_y)
         self.text_line_y.textChanged.connect(self.on_changed)  # Connect on_changed method
 
         # Vector Z
         self.text_line_z = CompletingPlainTextEdit()
-        self.ui.layout_z.insertWidget(1, self.text_line_z)
+        self.ui.layout_z.insertWidget(2, self.text_line_z)
         self.text_line_z.textChanged.connect(self.on_changed)
 
         if value['m_Components']:
@@ -89,6 +91,11 @@ class PropertyVector3D(QWidget):
 
     def on_changed(self):
         variables = self.get_variables()
+        current_var = self.ui.variable_combobox.currentText()
+        self.ui.variable_combobox.clear()
+        self.ui.variable_combobox.addItems(variables)
+        self.ui.variable_combobox.setCurrentText(current_var)
+
         self.text_line.completions.setStringList(variables)
         self.text_line_x.completions.setStringList(variables)
         self.text_line_y.completions.setStringList(variables)
@@ -124,6 +131,7 @@ class PropertyVector3D(QWidget):
             print(self.value)
 
     def get_variables(self, search_term=None):
+        self.variables_scrollArea
         data_out = []
         for i in range(self.variables_scrollArea.count()):
             widget = self.variables_scrollArea.itemAt(i).widget()
