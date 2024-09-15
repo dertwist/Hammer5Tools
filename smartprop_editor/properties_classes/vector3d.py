@@ -44,20 +44,23 @@ class PropertyVector3D(QWidget):
 
         if value['m_Components']:
             self.ui.logic_switch.setCurrentIndex(1)
-            def add_value(layout, value):
+            def add_value(layout, value, combo):
                 if isinstance(value, dict):
                     if 'm_Expression' in value:
                         layout.setPlainText(str(value['m_Expression']))
+                        combo.setCurrentIndex(2)
                     elif 'm_SourceName' in value:
-                        pass
+                        layout.setPlainText(str(value))
+                        combo.setCurrentIndex(1)
                     else:
                         pass
-                elif isinstance(value, int) or  isinstance(value, float):
+                elif isinstance(value, int) or isinstance(value, float):
                     layout.setPlainText(str(value))
+                    combo.setCurrentIndex(0)
 
-            add_value(self.text_line_x, value['m_Components'][0])
-            add_value(self.text_line_y, value['m_Components'][1])
-            add_value(self.text_line_z, value['m_Components'][2])
+            add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x)
+            add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y)
+            add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z)
             # self.text_line_x.setPlainText(str(value['m_Components'][0]))
             # self.text_line_y.setPlainText(str(value['m_Components'][1]))
             # self.text_line_z.setPlainText(str(value['m_Components'][2]))
@@ -121,7 +124,21 @@ class PropertyVector3D(QWidget):
                 value_z = ast.literal_eval(value_z)
             except:
                 pass
-            self.value = {self.value_class: {'m_Components': [{'m_Expression': value_x}, {'m_Expression': value_y}, {'m_Expression': value_z}]}}
+            def handle_value(value, combo_box):
+                index = combo_box.currentIndex()
+                if index == 0:
+                    pass
+                elif index == 1:
+                    value = {'m_SourceName': value}
+                elif index == 2:
+                    value = {'m_Expression': value}
+                return value
+
+            # Update values
+            value_x = handle_value(value_x, self.ui.comboBox_x)
+            value_y = handle_value(value_y, self.ui.comboBox_y)
+            value_z = handle_value(value_z, self.ui.comboBox_z)
+            self.value = {self.value_class: {'m_Components': [value_x, value_y, value_z]}}
             print(self.value)
 
     def get_variables(self, search_term=None):

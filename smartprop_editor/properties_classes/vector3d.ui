@@ -358,7 +358,7 @@ padding-right: 16px;</string>
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox">
+            <widget class="QComboBox" name="comboBox_x">
              <property name="styleSheet">
               <string notr="true">QComboBox {
     font: 580 8pt &quot;Segoe UI&quot;;
@@ -548,7 +548,7 @@ padding-right: 16px;</string>
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox_2">
+            <widget class="QComboBox" name="comboBox_y">
              <property name="styleSheet">
               <string notr="true">QComboBox {
     font: 580 8pt &quot;Segoe UI&quot;;
@@ -739,7 +739,7 @@ padding-right: 16px;</string>
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox_3">
+            <widget class="QComboBox" name="comboBox_z">
              <property name="styleSheet">
               <string notr="true">QComboBox {
     font: 580 8pt &quot;Segoe UI&quot;;

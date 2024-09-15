@@ -188,97 +188,6 @@ class Ui_Widget(object):
 
         self.layout.addWidget(self.logic_switch)
 
-        self.variable_combobox = QComboBox(self.frame_5)
-        self.variable_combobox.setObjectName(u"variable_combobox")
-        self.variable_combobox.setStyleSheet(u"QComboBox {\n"
-"    font: 580 8pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height: 18px;\n"
-"    padding-top: 2px;\n"
-"    padding-bottom: 2px;\n"
-"	border-top:none;\n"
-"border-bottom:none;\n"
-"border:none;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"\n"
-"QComboBox:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"\n"
-"QComboBox:pressed {\n"
-"}\n"
-"\n"
-"QComboBox:item {\n"
-"    font: 580  8pt \"Segoe UI\";\n"
-"    color: #E3E3E3;\n"
-"    padding-left: 5px;\n"
-"    background-color: #1C1C1C;\n"
-"    border-style: none;\n"
-"}\n"
-"\n"
-"QComboBox::drop-down {\n"
-"    color: #E3E3E3;\n"
-"    padding: 2px;\n"
-"    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;\n"
-"    border-bottom: 0px solid black;\n"
-"    border-top: 0px solid black;\n"
-"    border-right: 0px;\n"
-"    border-left: 2px solid;\n"
-"    margin-left: 5px;\n"
-"    padding: 5px;\n"
-"    width: 7px;"
-                        "\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    background-color: #1C1C1C;\n"
-"border:none;\n"
-"}\n"
-"\n"
-"QComboBox::drop-down:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"\n"
-"\n"
-"QComboBox QAbstractItemView {\n"
-"    border: 2px solid gray;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    selection-background-color: #414956;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"\n"
-"\n"
-"QComboBox QAbstractItemView::item {\n"
-"    height: 16px; /* Set the height of each item */\n"
-"    padding: 4px; /* Add padding to each item */\n"
-"    padding-left: 5px;\n"
-"    padding-right: 5px;\n"
-"    color: #ff8a8a8a;\n"
-"    border-style: none;\n"
-"    border-bottom: 0.5px solid black;\n"
-"    border-color: rgba(255, 255, 255, 10);\n"
-"}\n"
-"\n"
-"\n"
-"QComboBox QAbstractItemView::item:selected {\n"
-"    height: 16px; /* Set the height of each item */\n"
-"    padding: 4px; /* Add padding to each item */\n"
-"    padding-left: 5px;\n"
-"    padding-right: 5px;\n"
-"    background-color: #"
-                        "414956;\n"
-"    color: white;\n"
-"    border: none; /* Remove border */\n"
-"    outline: none; /* Remove outline */\n"
-"}\n"
-"")
-
-        self.layout.addWidget(self.variable_combobox)
-
 
         self.horizontalLayout.addLayout(self.layout)
 
@@ -339,12 +248,12 @@ class Ui_Widget(object):
 
         self.layout_x.addWidget(self.label)
 
-        self.comboBox = QComboBox(self.frame)
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.setObjectName(u"comboBox")
-        self.comboBox.setStyleSheet(u"QComboBox {\n"
+        self.comboBox_x = QComboBox(self.frame)
+        self.comboBox_x.addItem("")
+        self.comboBox_x.addItem("")
+        self.comboBox_x.addItem("")
+        self.comboBox_x.setObjectName(u"comboBox_x")
+        self.comboBox_x.setStyleSheet(u"QComboBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
@@ -431,7 +340,7 @@ class Ui_Widget(object):
 "}\n"
 "")
 
-        self.layout_x.addWidget(self.comboBox)
+        self.layout_x.addWidget(self.comboBox_x)
 
 
         self.horizontalLayout_2.addLayout(self.layout_x)
@@ -481,12 +390,12 @@ class Ui_Widget(object):
 
         self.layout_y.addWidget(self.label_2)
 
-        self.comboBox_2 = QComboBox(self.frame_2)
-        self.comboBox_2.addItem("")
-        self.comboBox_2.addItem("")
-        self.comboBox_2.addItem("")
-        self.comboBox_2.setObjectName(u"comboBox_2")
-        self.comboBox_2.setStyleSheet(u"QComboBox {\n"
+        self.comboBox_y = QComboBox(self.frame_2)
+        self.comboBox_y.addItem("")
+        self.comboBox_y.addItem("")
+        self.comboBox_y.addItem("")
+        self.comboBox_y.setObjectName(u"comboBox_y")
+        self.comboBox_y.setStyleSheet(u"QComboBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
@@ -573,7 +482,7 @@ class Ui_Widget(object):
 "}\n"
 "")
 
-        self.layout_y.addWidget(self.comboBox_2)
+        self.layout_y.addWidget(self.comboBox_y)
 
 
         self.horizontalLayout_7.addLayout(self.layout_y)
@@ -624,12 +533,12 @@ class Ui_Widget(object):
 
         self.layout_z.addWidget(self.label_3)
 
-        self.comboBox_3 = QComboBox(self.frame_3)
-        self.comboBox_3.addItem("")
-        self.comboBox_3.addItem("")
-        self.comboBox_3.addItem("")
-        self.comboBox_3.setObjectName(u"comboBox_3")
-        self.comboBox_3.setStyleSheet(u"QComboBox {\n"
+        self.comboBox_z = QComboBox(self.frame_3)
+        self.comboBox_z.addItem("")
+        self.comboBox_z.addItem("")
+        self.comboBox_z.addItem("")
+        self.comboBox_z.setObjectName(u"comboBox_z")
+        self.comboBox_z.setStyleSheet(u"QComboBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
@@ -716,7 +625,7 @@ class Ui_Widget(object):
 "}\n"
 "")
 
-        self.layout_z.addWidget(self.comboBox_3)
+        self.layout_z.addWidget(self.comboBox_z)
 
 
         self.horizontalLayout_8.addLayout(self.layout_z)
@@ -740,19 +649,19 @@ class Ui_Widget(object):
         self.logic_switch.setItemText(1, QCoreApplication.translate("Widget", u"Vector3d", None))
 
         self.label.setText(QCoreApplication.translate("Widget", u"Vector X", None))
-        self.comboBox.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))
-        self.comboBox.setItemText(1, QCoreApplication.translate("Widget", u"Variable", None))
-        self.comboBox.setItemText(2, QCoreApplication.translate("Widget", u"Expression", None))
+        self.comboBox_x.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))
+        self.comboBox_x.setItemText(1, QCoreApplication.translate("Widget", u"Variable", None))
+        self.comboBox_x.setItemText(2, QCoreApplication.translate("Widget", u"Expression", None))
 
         self.label_2.setText(QCoreApplication.translate("Widget", u"Vector Y", None))
-        self.comboBox_2.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))
-        self.comboBox_2.setItemText(1, QCoreApplication.translate("Widget", u"Variable", None))
-        self.comboBox_2.setItemText(2, QCoreApplication.translate("Widget", u"Expression", None))
+        self.comboBox_y.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))
+        self.comboBox_y.setItemText(1, QCoreApplication.translate("Widget", u"Variable", None))
+        self.comboBox_y.setItemText(2, QCoreApplication.translate("Widget", u"Expression", None))
 
         self.label_3.setText(QCoreApplication.translate("Widget", u"Vector Z", None))
-        self.comboBox_3.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))
-        self.comboBox_3.setItemText(1, QCoreApplication.translate("Widget", u"Variable", None))
-        self.comboBox_3.setItemText(2, QCoreApplication.translate("Widget", u"Expression", None))
+        self.comboBox_z.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))
+        self.comboBox_z.setItemText(1, QCoreApplication.translate("Widget", u"Variable", None))
+        self.comboBox_z.setItemText(2, QCoreApplication.translate("Widget", u"Expression", None))
 
     # retranslateUi
 
