@@ -31,6 +31,7 @@
         "smartprop_editor/variables/bool.ui",
         "smartprop_editor/variables/float.ui",
         "smartprop_editor/variables/color.ui",
+        "smartprop_editor/variables/combobox.ui",
         "main.ui",
         "smartprop_editor/new_file_options.ui",
         "smartprop_editor/properties_classes/legacy.ui",
