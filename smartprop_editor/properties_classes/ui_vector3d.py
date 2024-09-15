@@ -202,7 +202,7 @@ class Ui_Widget(object):
         self.verticalLayout_2 = QVBoxLayout(self.frame_4)
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setContentsMargins(16, 0, 0, 0)
         self.frame = QFrame(self.frame_4)
         self.frame.setObjectName(u"frame")
         self.frame.setMinimumSize(QSize(0, 32))
@@ -253,6 +253,11 @@ class Ui_Widget(object):
         self.comboBox_x.addItem("")
         self.comboBox_x.addItem("")
         self.comboBox_x.setObjectName(u"comboBox_x")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.comboBox_x.sizePolicy().hasHeightForWidth())
+        self.comboBox_x.setSizePolicy(sizePolicy2)
         self.comboBox_x.setStyleSheet(u"QComboBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -395,6 +400,8 @@ class Ui_Widget(object):
         self.comboBox_y.addItem("")
         self.comboBox_y.addItem("")
         self.comboBox_y.setObjectName(u"comboBox_y")
+        sizePolicy2.setHeightForWidth(self.comboBox_y.sizePolicy().hasHeightForWidth())
+        self.comboBox_y.setSizePolicy(sizePolicy2)
         self.comboBox_y.setStyleSheet(u"QComboBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -538,6 +545,8 @@ class Ui_Widget(object):
         self.comboBox_z.addItem("")
         self.comboBox_z.addItem("")
         self.comboBox_z.setObjectName(u"comboBox_z")
+        sizePolicy2.setHeightForWidth(self.comboBox_z.sizePolicy().hasHeightForWidth())
+        self.comboBox_z.setSizePolicy(sizePolicy2)
         self.comboBox_z.setStyleSheet(u"QComboBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
