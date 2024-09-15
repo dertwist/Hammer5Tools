@@ -106,7 +106,11 @@ class PropertyFrame(QWidget):
         action = context_menu.exec(QCursor.pos())
 
         if action == delete_action:
+            self.value = None
+            self.edited.emit()
             self.deleteLater()
+            # self.deleted.emit()
+
 
         elif action == copy_action:
             self.copy_action()

@@ -327,8 +327,11 @@ border-right:0px;
         </property>
         <item>
          <widget class="QFrame" name="frame_2">
+          <property name="styleSheet">
+           <string notr="true">padding:0px;</string>
+          </property>
           <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
+           <enum>QFrame::NoFrame</enum>
           </property>
           <property name="frameShadow">
            <enum>QFrame::Raised</enum>
