@@ -3,6 +3,7 @@ import os.path
 import shutil
 import threading
 import time
+import json
 
 from distutils.util import strtobool
 
@@ -605,30 +606,44 @@ class SmartPropEditorMainWindow(QMainWindow):
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
 
     def copy_item(self, tree_item):
-        text_data = []
-        text_data.append(tree_item.text(0))
-        text_data.append(tree_item.text(1))
-
+        item_data = self.serialize_tree_item(tree_item)
         clipboard = QApplication.clipboard()
-        clipboard.setText(','.join(text_data))
+        clipboard.setText(json.dumps(item_data))
 
     def paste_item(self, position):
-
         clipboard = QApplication.clipboard()
-        text_data = clipboard.text().split(',')
-        if text_data[1] == '':
-            pass
-        else:
-            tree_item = QTreeWidgetItem()
+        item_data = json.loads(clipboard.text())
 
-            if len(text_data) >= 2:
-                tree_item.setText(0, text_data[0] + '_pasted')
-                tree_item.setText(1, text_data[1])
+        tree_item = self.deserialize_tree_item(item_data)
 
-            try:
-                self.ui.tree_hierarchy_widget.currentItem().addChild(tree_item)
-            except:
-                self.ui.tree_hierarchy_widget.invisibleRootItem().addChild(tree_item)
+        try:
+            self.ui.tree_hierarchy_widget.currentItem().addChild(tree_item)
+        except:
+            self.ui.tree_hierarchy_widget.invisibleRootItem().addChild(tree_item)
+
+    def serialize_tree_item(self, tree_item):
+        item_data = {
+            'text_0': tree_item.text(0),
+            'text_1': tree_item.text(1),
+            'children': []
+        }
+
+        for i in range(tree_item.childCount()):
+            child = tree_item.child(i)
+            item_data['children'].append(self.serialize_tree_item(child))
+
+        return item_data
+
+    def deserialize_tree_item(self, item_data):
+        tree_item = QTreeWidgetItem()
+        tree_item.setText(0, item_data['text_0'])
+        tree_item.setText(1, item_data['text_1'])
+
+        for child_data in item_data.get('children', []):
+            child_item = self.deserialize_tree_item(child_data)
+            tree_item.addChild(child_item)
+
+        return tree_item
     def open_properties_menu(self, position):
         item = self.ui.properties_tree.itemAt(position)
         if item and item.parent():  # Check if the item has a parent (not a top-level item)
