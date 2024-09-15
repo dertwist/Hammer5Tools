@@ -53,12 +53,13 @@ class Create_addon_Dialog(QDialog):
 
         preset_src = os.path.join(presets_path, preset, 'game')
         preset_dist = os.path.join(cs2_path, 'game', 'csgo_addons', new_addon_name)
-        try:
-            shutil.copytree(preset_src, preset_dist, dirs_exist_ok=True)
-            self.replace_filenames(preset_dist, new_addon_name)
-        except Exception as e:
-            QMessageBox.critical(self, "Copy Error", f"An error occurred while copying content: {str(e)}")
-            return
+        if os.path.exists(preset_src):
+            try:
+                shutil.copytree(preset_src, preset_dist, dirs_exist_ok=True)
+                self.replace_filenames(preset_dist, new_addon_name)
+            except Exception as e:
+                QMessageBox.critical(self, "Copy Error", f"An error occurred while copying content: {str(e)}")
+                return
         QMessageBox.information(self, "Info", f"Addon {str(new_addon_name)} was created")
         set_addon_name(new_addon_name)
         self.close()
