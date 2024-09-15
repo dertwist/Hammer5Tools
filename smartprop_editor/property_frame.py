@@ -56,6 +56,7 @@ class PropertyFrame(QWidget):
             self.ui.copy_button.clicked.connect(self.copy_action)
             self.ui.delete_button.clicked.connect(self.delete_action)
 
+        # For parsed stuff
 
         if prop_class == 'Int':
             from smartprop_editor.properties_classes.vector3d import PropertyVector3D
@@ -66,10 +67,12 @@ class PropertyFrame(QWidget):
         elif prop_class == 'Float':
             pass
         else:
+            # Generic shit
             from smartprop_editor.properties_classes.legacy import PropertyLegacy
             from smartprop_editor.properties_classes.vector3d import PropertyVector3D
+            vector3_operators = ['m_vRandomRotationMin', 'm_vRandomRotationMax', 'm_vPosition', 'm_vRotation', 'm_vStart', 'm_vEnd']
             for value_class, value in reversed(list(self.value.items())):
-                if value_class == 'm_vPosition':
+                if value_class in vector3_operators:
                     property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
                 elif value_class == 'm_bEnabled':
                     pass
