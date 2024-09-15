@@ -62,8 +62,6 @@ class CompletingPlainTextEdit(QPlainTextEdit):
         tc.select(QTextCursor.SelectionType.WordUnderCursor)
         tc.insertText(completion + self.completion_tail)
 
-    def cleanup(self):
-        self.setPlainText(self.toPlainText().replace('\n', ''))
     def keyPressEvent(self, event: QKeyEvent) -> None:
 
         if event.key() == Qt.Key_Return:
