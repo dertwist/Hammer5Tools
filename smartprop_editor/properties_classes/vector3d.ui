@@ -266,7 +266,7 @@ QComboBox QAbstractItemView::item:selected {
        <number>0</number>
       </property>
       <property name="leftMargin">
-       <number>0</number>
+       <number>16</number>
       </property>
       <property name="topMargin">
        <number>0</number>
@@ -359,6 +359,12 @@ padding-right: 16px;</string>
            </item>
            <item>
             <widget class="QComboBox" name="comboBox_x">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="styleSheet">
               <string notr="true">QComboBox {
     font: 580 8pt &quot;Segoe UI&quot;;
@@ -549,6 +555,12 @@ padding-right: 16px;</string>
            </item>
            <item>
             <widget class="QComboBox" name="comboBox_y">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="styleSheet">
               <string notr="true">QComboBox {
     font: 580 8pt &quot;Segoe UI&quot;;
@@ -740,6 +752,12 @@ padding-right: 16px;</string>
            </item>
            <item>
             <widget class="QComboBox" name="comboBox_z">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="styleSheet">
               <string notr="true">QComboBox {
     font: 580 8pt &quot;Segoe UI&quot;;
