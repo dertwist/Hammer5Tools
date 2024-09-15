@@ -44,10 +44,12 @@ class PropertyFrame(QWidget):
         self.ui.enable.setChecked(self.enable)
         self.ui.enable.clicked.connect(self.on_edited)
 
+
         # self.ui.variable_name.textChanged.connect(self.update_self)
         self.widget_list = widget_list
 
         self.ui.copy_button.clicked.connect(self.copy_action)
+        self.ui.delete_button.clicked.connect(self.delete_action)
 
 
         if prop_class == 'Int':
@@ -106,14 +108,14 @@ class PropertyFrame(QWidget):
         action = context_menu.exec(QCursor.pos())
 
         if action == delete_action:
-            self.value = None
-            self.edited.emit()
-            self.deleteLater()
-            # self.deleted.emit()
-
+            self.delete_action()
 
         elif action == copy_action:
             self.copy_action()
     def copy_action(self):
         clipboard = QApplication.clipboard()
         clipboard.setText(f"hammer5tools:smartprop_editor_property;;{self.name};;{self.value}")
+    def delete_action(self):
+        self.value = None
+        self.edited.emit()
+        self.deleteLater()
