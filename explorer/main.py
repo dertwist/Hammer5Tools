@@ -5,7 +5,7 @@ from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEve
 from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
 from preferences import get_config_value, set_config_value
 from PySide6.QtCore import QModelIndex
-
+import shutil
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 smartprop_extensions = ['vsmart', 'vdata']
 generic_extensions = ['vpost', 'vsndevts', 'rect']
@@ -304,36 +304,51 @@ class Explorer(QMainWindow):
 
     def copy_file(self, index):
         file_path = self.model.filePath(index)
-        self._copied_file_path = file_path
+        # self._copied_file_path = file_path
+
+        clipboard = QGuiApplication.clipboard()
+        clipboard.setText(file_path)
 
     def paste_file(self, destination_index):
-        if self._copied_file_path:
-            destination_path = self.model.filePath(destination_index)
-            new_file_name = os.path.join(destination_path, QFileInfo(self._copied_file_path).fileName())
+        clipboard = QGuiApplication.clipboard()
+        file_path_from_clipboard = clipboard.text()
 
-            # Check if the file already exists at the destination
-            if QFile.exists(new_file_name):
-                reply = QMessageBox.question(self, 'File Exists',
-                                             f"The file '{new_file_name}' already exists. Do you want to replace it?",
-                                             QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
-                if reply == QMessageBox.Yes:
-                    if QFile.copy(self._copied_file_path, new_file_name):
-                        self._copied_file_path = ""  # Reset the copied file path after pasting
-                        return True
-                elif reply == QMessageBox.No:
-                    # Handle the case where the user chooses not to replace the file
-                    # You can add your custom logic here
-                    return False
-                else:
-                    # Handle the case where the user cancels the operation
-                    # You can add your custom logic here
-                    return False
-            else:
-                if QFile.copy(self._copied_file_path, new_file_name):
-                    self._copied_file_path = ""  # Reset the copied file path after pasting
+        if not file_path_from_clipboard:
+            return False
+
+        destination_path = self.model.filePath(destination_index)
+        if destination_path:
+            pass
+        else:
+            destination_path = self.tree_directory
+        new_file_name = os.path.join(destination_path, QFileInfo(file_path_from_clipboard).fileName())
+
+        if QFile.exists(new_file_name):
+            reply = QMessageBox.question(self, 'File Exists',
+                                         f"The file '{new_file_name}' already exists. Do you want to replace it?",
+                                         QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
+            if reply == QMessageBox.Yes:
+                try:
+                    shutil.copyfile(file_path_from_clipboard, new_file_name)
                     return True
-        return False
-
+                except shutil.Error as e:
+                    # Handle the case where the file copy fails
+                    return False
+            elif reply == QMessageBox.No:
+                # Handle the case where the user chooses not to replace the file
+                # You can add your custom logic here
+                return False
+            else:
+                # Handle the case where the user cancels the operation
+                # You can add your custom logic here
+                return False
+        else:
+            try:
+                shutil.copyfile(file_path_from_clipboard, new_file_name)
+                return True
+            except shutil.Error as e:
+                # Handle the case where the file copy fails
+                return False
     def open_folder_in_explorer(self, index):
         folder_path = self.model.filePath(index)
         QDesktopServices.openUrl(QUrl.fromLocalFile(folder_path))
