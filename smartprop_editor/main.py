@@ -250,9 +250,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             parent = self.ui.tree_hierarchy_widget.currentItem()
         parent.addChild(new_element)
+        self.update_tree_item_value()
     def new_operator(self, element_class, element_value):
         operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
+        self.update_tree_item_value()
 
     def paste_operator(self):
         clipboard = QApplication.clipboard()
@@ -264,6 +266,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
         else:
             print("Clipboard data format is not valid.")
+        self.update_tree_item_value()
 
     def paste_selection_criteria(self):
         clipboard = QApplication.clipboard()
@@ -275,10 +278,12 @@ class SmartPropEditorMainWindow(QMainWindow):
             self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
         else:
             print("Clipboard data format is not valid.")
+        self.update_tree_item_value()
 
     def new_selection_criteria(self, element_class, element_value):
         operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
         self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
+        self.update_tree_item_value()
 
 
     # Vsmart format
