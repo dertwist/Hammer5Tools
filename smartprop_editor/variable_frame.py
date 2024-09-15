@@ -95,6 +95,15 @@ class VariableFrame(QWidget):
         elif var_class == 'DistributionMode':
             from smartprop_editor.variables.combobox import Var_class_combobox
             self.var_int_instance = Var_class_combobox(default=self.var_default, elements=['RANDOM', 'REGULAR'])
+        elif var_class == 'Vector2D':
+            from smartprop_editor.variables.vector2d import Var_class_vector2d
+            self.var_int_instance = Var_class_vector2d(default=self.var_default)
+        elif var_class == 'Vector3D':
+            from smartprop_editor.variables.vector3d import Var_class_vector3d
+            self.var_int_instance = Var_class_vector3d(default=self.var_default)
+        elif var_class == 'Vector4D':
+            from smartprop_editor.variables.vector4d import Var_class_vector4d
+            self.var_int_instance = Var_class_vector4d(default=self.var_default)
         else:
             from smartprop_editor.variables.legacy import Var_class_legacy
             self.var_int_instance = Var_class_legacy(default=self.var_default, min=self.var_min, max=self.var_max,model=self.var_model)
