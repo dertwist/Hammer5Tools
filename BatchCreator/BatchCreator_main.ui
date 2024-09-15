@@ -470,6 +470,9 @@
          <height>0</height>
         </size>
        </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
        </property>
@@ -490,14 +493,7 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QTreeView" name="MiniWindows_explorer">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-         </widget>
+         <layout class="QVBoxLayout" name="layout"/>
         </item>
         <item>
          <widget class="QFrame" name="horizontal_frame">

@@ -606,6 +606,9 @@ class Ui_SoundEvent_Editor_MainWindow(object):
 
     def retranslateUi(self, SoundEvent_Editor_MainWindow):
         SoundEvent_Editor_MainWindow.setWindowTitle(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"MainWindow", None))
+#if QT_CONFIG(tooltip)
+        self.add_a_property_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Press Ctrl + F for shortcut</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.add_a_property_button.setText(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"Add", None))
 #if QT_CONFIG(tooltip)
         self.save_button.setToolTip(QCoreApplication.translate("SoundEvent_Editor_MainWindow", u"<html><head/><body><p>Save file (Ctrl + S)</p></body></html>", None))
