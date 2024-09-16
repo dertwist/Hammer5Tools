@@ -18,7 +18,7 @@ class PropertyVector3D(QWidget):
         self.variables_scrollArea = variables_scrollArea
 
         self.ui.property_class.setText(self.value_class)
-        self.ui.logic_switch.currentTextChanged.connect(self.logic_switch)
+        self.ui.logic_switch.currentIndexChanged.connect(self.on_changed)
 
         # Variable
         self.text_line = CompletingPlainTextEdit()
@@ -45,40 +45,45 @@ class PropertyVector3D(QWidget):
         self.text_line_z.textChanged.connect(self.on_changed)
         self.ui.comboBox_z.currentIndexChanged.connect(self.on_changed)
 
-        if value['m_Components']:
-            self.ui.logic_switch.setCurrentIndex(1)
-            def add_value(layout, value, combo):
-                if isinstance(value, dict):
-                    if 'm_Expression' in value:
-                        layout.setPlainText(str(value['m_Expression']))
-                        combo.setCurrentIndex(2)
-                    elif 'm_SourceName' in value:
-                        layout.setPlainText(str(value['m_SourceName']))
-                        combo.setCurrentIndex(1)
-                    else:
-                        pass
-                elif isinstance(value, int) or isinstance(value, float):
-                    layout.setPlainText(str(value))
-                    combo.setCurrentIndex(0)
+        if isinstance(value, dict):
+            print(value)
+            if 'm_Components' in value:
+                self.ui.logic_switch.setCurrentIndex(2)
+                def add_value(layout, value, combo):
+                    if isinstance(value, dict):
+                        if 'm_Expression' in value:
+                            layout.setPlainText(str(value['m_Expression']))
+                            combo.setCurrentIndex(2)
+                        elif 'm_SourceName' in value:
+                            layout.setPlainText(str(value['m_SourceName']))
+                            combo.setCurrentIndex(1)
+                        else:
+                            pass
+                    elif isinstance(value, int) or isinstance(value, float):
+                        layout.setPlainText(str(value))
+                        combo.setCurrentIndex(0)
 
-            add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x)
-            add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y)
-            add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z)
-            # self.text_line_x.setPlainText(str(value['m_Components'][0]))
-            # self.text_line_y.setPlainText(str(value['m_Components'][1]))
-            # self.text_line_z.setPlainText(str(value['m_Components'][2]))
-        elif value['m_SourceName']:
-            self.ui.logic_switch.setCurrentIndex(0)
-            self.var_value = value['m_SourceName']
-            self.text_line.setPlainText(self.var_value)
+                add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x)
+                add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y)
+                add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z)
+                # self.text_line_x.setPlainText(str(value['m_Components'][0]))
+                # self.text_line_y.setPlainText(str(value['m_Components'][1]))
+                # self.text_line_z.setPlainText(str(value['m_Components'][2]))
+            elif 'm_SourceName' in value:
+                self.ui.logic_switch.setCurrentIndex(1)
+                self.var_value = value['m_SourceName']
+                self.text_line.setPlainText(self.var_value)
+            else:
+                print('Could not parse given input data')
+                self.value = None
+                self.ui.logic_switch.setCurrentIndex(0)
         else:
-            print('Could not parse given input data')
-            self.value = {'m_Components': [{'m_Expression': '0'}, {'m_Expression': '0'}, {'m_Expression': '0'}]}
+            self.value = None
+            self.ui.logic_switch.setCurrentIndex(0)
 
 
 
-        self.logic_switch()
-        self.change_value()
+        self.on_changed()
 
 
 
@@ -99,13 +104,16 @@ class PropertyVector3D(QWidget):
             self.text_line_z.OnlyFloat = False
     def logic_switch(self):
         widget = self.ui.layout.itemAt(2).widget()
-        if self.ui.logic_switch.currentText() == 'Variable source':
+        if self.ui.logic_switch.currentIndex() == 0:
             self.ui.frame_4.setMaximumHeight(0)
-            widget.setEnabled(True)
+            widget.hide()
+        elif self.ui.logic_switch.currentIndex() == 1:
+            self.ui.frame_4.setMaximumHeight(0)
+            widget.show()
         else:
             self.ui.frame_4.setMaximumHeight(1600)
             if isinstance(widget, CompletingPlainTextEdit):
-                widget.setEnabled(False)
+                widget.hide()
 
     def on_changed(self):
         variables = self.get_variables()
@@ -114,18 +122,21 @@ class PropertyVector3D(QWidget):
         self.text_line_y.completions.setStringList(variables)
         self.text_line_z.completions.setStringList(variables)
         self.logic_switch_line()
+        self.logic_switch()
 
         self.change_value()
         self.edited.emit()
     def change_value(self):
         if self.ui.logic_switch.currentIndex() == 0:
+            self.value = None
+        elif self.ui.logic_switch.currentIndex() == 1:
             value = self.text_line.toPlainText()
             try:
                 value = ast.literal_eval(value)
             except:
                 pass
             self.value = {self.value_class: {'m_SourceName': value}}
-        elif self.ui.logic_switch.currentIndex() == 1:
+        elif self.ui.logic_switch.currentIndex() == 2:
             value_x = self.text_line_x.toPlainText()
             value_y = self.text_line_y.toPlainText()
             value_z = self.text_line_z.toPlainText()
@@ -148,7 +159,7 @@ class PropertyVector3D(QWidget):
                 elif index == 1:
                     value = {'m_SourceName': value}
                 elif index == 2:
-                    value = {'m_Expression': value}
+                    value = {'m_Expression': str(value)}
                 return value
 
             # Update values
