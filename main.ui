@@ -628,7 +628,7 @@ QTabBar::tab:selected {
    <property name="minimumSize">
     <size>
      <width>196</width>
-     <height>20</height>
+     <height>91</height>
     </size>
    </property>
    <property name="maximumSize">
