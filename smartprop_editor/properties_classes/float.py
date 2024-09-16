@@ -56,7 +56,7 @@ class PropertyFloat(QWidget):
 
 
 
-        self.change_value()
+        self.on_changed()
 
 
 
@@ -105,7 +105,7 @@ class PropertyFloat(QWidget):
                 value = ast.literal_eval(value)
             except:
                 pass
-            self.value = {self.value_class: {'m_Expression': value}}
+            self.value = {self.value_class: {'m_Expression': str(value)}}
 
     def get_variables(self, search_term=None):
         self.variables_scrollArea

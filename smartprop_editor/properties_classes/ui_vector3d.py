@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
-    QLabel, QLayout, QSizePolicy, QVBoxLayout,
-    QWidget)
+    QLabel, QLayout, QSizePolicy, QSpacerItem,
+    QVBoxLayout, QWidget)
 
 class Ui_Widget(object):
     def setupUi(self, Widget):
@@ -96,6 +96,7 @@ class Ui_Widget(object):
         self.layout.addWidget(self.property_class)
 
         self.logic_switch = QComboBox(self.frame_5)
+        self.logic_switch.addItem("")
         self.logic_switch.addItem("")
         self.logic_switch.addItem("")
         self.logic_switch.setObjectName(u"logic_switch")
@@ -187,6 +188,10 @@ class Ui_Widget(object):
 "")
 
         self.layout.addWidget(self.logic_switch)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.layout.addItem(self.horizontalSpacer)
 
 
         self.horizontalLayout.addLayout(self.layout)
@@ -654,8 +659,9 @@ class Ui_Widget(object):
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
         self.property_class.setText(QCoreApplication.translate("Widget", u"class", None))
-        self.logic_switch.setItemText(0, QCoreApplication.translate("Widget", u"Variable source", None))
-        self.logic_switch.setItemText(1, QCoreApplication.translate("Widget", u"Vector3d", None))
+        self.logic_switch.setItemText(0, QCoreApplication.translate("Widget", u"Default", None))
+        self.logic_switch.setItemText(1, QCoreApplication.translate("Widget", u"Variable source", None))
+        self.logic_switch.setItemText(2, QCoreApplication.translate("Widget", u"Vector3d", None))
 
         self.label.setText(QCoreApplication.translate("Widget", u"Vector X", None))
         self.comboBox_x.setItemText(0, QCoreApplication.translate("Widget", u"Float", None))

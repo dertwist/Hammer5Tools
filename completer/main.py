@@ -5,7 +5,7 @@ from PySide6.QtGui import QKeyEvent, QTextCursor, QTextOption
 # test = QLineEdit()
 # test.cursorPosition()
 class CompletingPlainTextEdit(QPlainTextEdit):
-    completion_tail: str = " "
+    completion_tail: str = ""
     ignore_return: bool = False
 
     def __init__(self, *args, OnlyFloat=False, **kwargs):
