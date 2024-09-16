@@ -57,7 +57,8 @@ operators_list = [
     {'RandomRotation': {'_class': "CSmartPropOperation_RandomRotation", "m_vRandomRotationMin": {"m_Components":[0,0,0]}, "m_vRandomRotationMax": {"m_Components":[0,0,0]}}},
     {'CreateSizer': {'_class': "CSmartPropOperation_CreateSizer", "m_flInitialMinX": 0, "m_flInitialMaxX": 0, "m_flInitialMinY": 0, "m_flInitialMaxY": 0, "m_flInitialMinZ": 0, "m_flInitialMaxZ": 0}},
     {'CreateRotator': {'_class': "CSmartPropOperation_CreateRotator"}},
-    {'CreateLocator': {'_class': "CSmartPropOperation_CreateLocator"}}
+    {'CreateLocator': {'_class': "CSmartPropOperation_CreateLocator"}},
+    {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': 500, 'm_flTraceLength': 500}}
 ]
 
 operators_dict_todo = {
@@ -79,7 +80,6 @@ operators_dict_todo = {
     'ResetScale': {},
     'RotateTowards': {},
     'Trace': {},
-    'TraceInDirection': {},
     'ResetRotation': {},
     'SetOrientation': {},
     'SetPosition': {},
