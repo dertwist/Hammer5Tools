@@ -322,7 +322,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.dockWidget = QDockWidget(MainWindow)
         self.dockWidget.setObjectName(u"dockWidget")
-        self.dockWidget.setMinimumSize(QSize(196, 20))
+        self.dockWidget.setMinimumSize(QSize(196, 91))
         self.dockWidget.setMaximumSize(QSize(524287, 5433))
         self.dockWidget.setStyleSheet(u"")
         self.dockWidget.setFloating(False)
