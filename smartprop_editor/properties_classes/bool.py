@@ -45,7 +45,7 @@ class PropertyBool(QWidget):
                 self.text_line.setPlainText(self.var_value)
             else:
                 print('Could not parse given input data')
-        if isinstance(value, bool):
+        elif isinstance(value, bool):
             self.ui.logic_switch.setCurrentIndex(1)
             self.ui.value.setChecked(value)
         else:
