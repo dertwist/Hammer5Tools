@@ -34,7 +34,6 @@ class PropertyFrame(QWidget):
         self.name_prefix = (value['_class'].split('_'))[0]
         del value['_class']
         self.value = value
-        # print(self.value)
         self.layout = self.ui.layout
         self.enable = value.get('m_bEnabled', True)
         prop_class = self.name
@@ -63,7 +62,15 @@ class PropertyFrame(QWidget):
         from smartprop_editor.properties_classes.bool import PropertyBool
 
 
+
+        def operator_adding_instances(classes):
+            for item in classes:
+                if item in self.value:
+                    adding_instances(item, self.value[item])
+                else:
+                    adding_instances(item, None)
         def adding_instances(value_class, value):
+            print(value_class)
             def add_instance():
                 property_instance.edited.connect(self.on_edited)
                 property_instance.setAcceptDrops(False)
@@ -82,23 +89,18 @@ class PropertyFrame(QWidget):
                 add_instance()
             elif value_class == 'm_bEnabled':
                 pass
+            elif value_class == 'm_sLabel':
+                pass
             else:
                 property_instance = PropertyLegacy(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
                 add_instance()
 
         if prop_class == 'PathPosition':
             classes = ['m_PlaceAtPositions','m_nPlaceEveryNthPosition','m_nNthPositionIndexOffset','m_bAllowAtStart','m_bAllowAtEnd']
-            for item in classes:
-                if item in self.value:
-                    adding_instances(item, self.value[item])
-                else:
-                    adding_instances(item, None)
-            # for value_class, value in reversed(list(self.value.items())):
-            #     adding_instances(value_class, value)
-            # for value_class, value in reversed(list(self.value.items())):
-            #     property_instance = PropertyVector3D(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
-            #     property_instance.edited.connect(self.on_edited)
-            #     self.ui.layout.insertWidget(0, property_instance)
+            operator_adding_instances(classes)
+        elif prop_class == 'FitOnLine':
+            classes = ['m_vStart','m_vEnd','m_PointSpace','m_bOrientAlongLine','m_vUpDirection', 'm_nScaleMode', 'm_nPickMode']
+            operator_adding_instances(classes)
         elif prop_class == 'Float':
             pass
         else:
