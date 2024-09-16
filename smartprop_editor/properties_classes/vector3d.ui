@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>838</width>
-    <height>119</height>
+    <height>128</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -266,7 +266,7 @@ QComboBox QAbstractItemView::item:selected {
        <number>0</number>
       </property>
       <property name="leftMargin">
-       <number>16</number>
+       <number>32</number>
       </property>
       <property name="topMargin">
        <number>0</number>
