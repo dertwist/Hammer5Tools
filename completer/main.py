@@ -63,7 +63,7 @@ class CompletingPlainTextEdit(QPlainTextEdit):
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         if self.OnlyFloat:
-            if event.text() and event.text() not in ['.', ''] and not event.text().isdigit() and event.key() != Qt.Key_Backspace:
+            if event.text() and event.text() not in ['.', '', '-'] and not event.text().isdigit() and event.key() != Qt.Key_Backspace:
                 event.ignore()
                 return
 
