@@ -149,6 +149,25 @@ class PropertyFrame(QWidget):
             elif 'm_Expression' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=True)
                 add_instance()
+            elif 'm_OutputVariableMaxZ' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                add_instance()
+            elif 'm_OutputVariableMinZ' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                add_instance()
+            elif 'm_OutputVariableMaxY' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                add_instance()
+            elif 'm_OutputVariableMinY' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                add_instance()
+            elif 'm_OutputVariableMaxX' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                add_instance()
+            elif 'm_OutputVariableMinX' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                add_instance()
+
             elif value_class == 'm_bEnabled':
                 pass
             elif value_class == 'm_sLabel':
