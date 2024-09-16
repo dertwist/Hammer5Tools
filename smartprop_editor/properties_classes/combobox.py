@@ -39,11 +39,11 @@ class PropertyCombobox(QWidget):
 
 
         if isinstance(value, dict):
-            if value['m_Expression']:
+            if 'm_Expression' in value:
                 self.ui.logic_switch.setCurrentIndex(3)
                 self.var_value = value['m_Expression']
                 self.text_line.setPlainText(self.var_value)
-            elif value['m_SourceName']:
+            elif 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(self.var_value)
