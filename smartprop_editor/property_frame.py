@@ -60,11 +60,13 @@ class PropertyFrame(QWidget):
         from smartprop_editor.properties_classes.legacy import PropertyLegacy
         from smartprop_editor.properties_classes.vector3d import PropertyVector3D
         from smartprop_editor.properties_classes.float import PropertyFloat
+        from smartprop_editor.properties_classes.bool import PropertyBool
 
 
         def adding_instances(value_class, value):
             def add_instance():
                 property_instance.edited.connect(self.on_edited)
+                property_instance.setAcceptDrops(False)
                 self.ui.layout.insertWidget(0, property_instance)
             if 'm_v' in value_class:
                 property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
@@ -74,6 +76,9 @@ class PropertyFrame(QWidget):
                 add_instance()
             elif 'm_n' in value_class:
                 property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, int_bool=True)
+                add_instance()
+            elif 'm_b' in value_class:
+                property_instance = PropertyBool(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
             elif value_class == 'm_bEnabled':
                 pass
@@ -121,9 +126,10 @@ class PropertyFrame(QWidget):
             for index in range(self.ui.layout.count()):
                 widget = self.ui.layout.itemAt(index).widget()
                 new_value = widget.value
-                self.value.update(new_value)
-        except:
-            pass
+                if new_value:
+                    self.value.update(new_value)
+        except Exception as error:
+            print(error)
         self.edited.emit()
 
     def update_self(self):

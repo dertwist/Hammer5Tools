@@ -24,7 +24,7 @@ class Ui_Widget(object):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
         Widget.setWindowModality(Qt.NonModal)
-        Widget.resize(838, 119)
+        Widget.resize(838, 128)
         Widget.setMinimumSize(QSize(0, 0))
         Widget.setMaximumSize(QSize(16777215, 200))
         Widget.setStyleSheet(u".QWidget {\n"
@@ -202,7 +202,7 @@ class Ui_Widget(object):
         self.verticalLayout_2 = QVBoxLayout(self.frame_4)
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(16, 0, 0, 0)
+        self.verticalLayout_2.setContentsMargins(32, 0, 0, 0)
         self.frame = QFrame(self.frame_4)
         self.frame.setObjectName(u"frame")
         self.frame.setMinimumSize(QSize(0, 32))
