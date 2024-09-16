@@ -1,12 +1,22 @@
 from PySide6.QtWidgets import QMenu, QApplication
-from PySide6.QtCore import Qt, QMimeData
+from PySide6.QtCore import Qt, QMimeData, QTimer
 from PySide6.QtGui import QCursor, QDrag,QAction
 
 class PropertyActions:
     @staticmethod
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.drag_start_position = event.pos()
+            drag_start_position = None
+            drag_timer = QTimer()
+            drag_start_position = event.pos()
+            drag_timer.setSingleShot(True)
+            drag_timer.timeout.connect(lambda: self.startDragEvent())
+            drag_timer.start(1000)
+
+    @staticmethod
+    def startDragEvent():
+        # Perform the drag event registration here
+        pass
 
     @staticmethod
     def mouseMoveEvent(self, event):
