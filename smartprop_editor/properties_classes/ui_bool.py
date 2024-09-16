@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'float.ui'
+## Form generated from reading UI file 'bool.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.7.2
 ##
@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
-    QLabel, QLayout, QSizePolicy, QSpacerItem,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFrame,
+    QHBoxLayout, QLabel, QLayout, QSizePolicy,
+    QSpacerItem, QVBoxLayout, QWidget)
 
 class Ui_Widget(object):
     def setupUi(self, Widget):
@@ -197,9 +197,41 @@ class Ui_Widget(object):
 
         self.layout.addWidget(self.logic_switch)
 
-        self.spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.value = QCheckBox(self.frame)
+        self.value.setObjectName(u"value")
+        self.value.setStyleSheet(u"QCheckBox {\n"
+"    font: 600 8pt \"Segoe UI\";\n"
+"    border: 0px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:14px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:2px;\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:unchecked {\n"
+"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"/* ========================================================== */\n"
+"\n"
+"\n"
+"QCheckBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
 
-        self.layout.addItem(self.spacer)
+        self.layout.addWidget(self.value)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.layout.addItem(self.horizontalSpacer)
 
 
         self.horizontalLayout_2.addLayout(self.layout)
@@ -220,9 +252,10 @@ class Ui_Widget(object):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
         self.property_class.setText(QCoreApplication.translate("Widget", u"Value", None))
         self.logic_switch.setItemText(0, QCoreApplication.translate("Widget", u"Default", None))
-        self.logic_switch.setItemText(1, QCoreApplication.translate("Widget", u"Float", None))
+        self.logic_switch.setItemText(1, QCoreApplication.translate("Widget", u"Bool", None))
         self.logic_switch.setItemText(2, QCoreApplication.translate("Widget", u"Variable", None))
         self.logic_switch.setItemText(3, QCoreApplication.translate("Widget", u"Expression", None))
 
+        self.value.setText(QCoreApplication.translate("Widget", u"CheckBox", None))
     # retranslateUi
 
