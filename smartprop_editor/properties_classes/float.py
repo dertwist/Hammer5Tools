@@ -47,7 +47,7 @@ class PropertyFloat(QWidget):
             else:
                 print('Could not parse given input data')
                 self.value = {'m_Components': {'m_Expression': '0'}}
-        if isinstance(value, float) or isinstance(value, int):
+        elif isinstance(value, float) or isinstance(value, int):
             self.ui.logic_switch.setCurrentIndex(1)
             self.text_line.setPlainText(str(value))
         else:
@@ -89,7 +89,7 @@ class PropertyFloat(QWidget):
             if self.int_bool:
                 self.value = {self.value_class: round(float(value))}
             else:
-                self.value = {self.value_class: value}
+                self.value = {self.value_class: float(value)}
         # Variable
         elif self.ui.logic_switch.currentIndex() == 2:
             value = self.text_line.toPlainText()
@@ -97,7 +97,7 @@ class PropertyFloat(QWidget):
                 value = ast.literal_eval(value)
             except:
                 pass
-            self.value = {self.value_class: {'m_SourceName': value}}
+            self.value = {self.value_class: {'m_SourceName': str(value)}}
         # Expression
         elif self.ui.logic_switch.currentIndex() == 3:
             value = self.text_line.toPlainText()
