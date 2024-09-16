@@ -18,7 +18,7 @@ class PropertyVector3D(QWidget):
         self.value = value
         self.variables_scrollArea = variables_scrollArea
 
-        output = re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class)
+        output = re.sub(r'm_fl|m_n|m_v|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
 
         self.ui.property_class.setText(output)

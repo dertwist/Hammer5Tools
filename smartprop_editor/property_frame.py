@@ -61,6 +61,8 @@ class PropertyFrame(QWidget):
         from smartprop_editor.properties_classes.float import PropertyFloat
         from smartprop_editor.properties_classes.bool import PropertyBool
         from smartprop_editor.properties_classes.combobox import PropertyCombobox
+        from smartprop_editor.properties_classes.string import PropertyString
+        from smartprop_editor.properties_classes.color import PropertyColor
 
 
 
@@ -97,7 +99,7 @@ class PropertyFrame(QWidget):
             elif 'm_ApplyColorMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'])
                 add_instance()
-            elif 'm_ChoiceSelectionMode' in value_class:
+            elif 'm_SelectionMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM', 'FIRST'])
                 add_instance()
             elif 'm_PlacementMode' in value_class:
@@ -106,17 +108,44 @@ class PropertyFrame(QWidget):
             elif 'm_DistributionMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM', 'REGULAR'])
                 add_instance()
+            elif 'm_HandleShape' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SQUARE', 'DIAMOND', 'CIRCLE'])
+                add_instance()
+            elif 'm_PointSpace' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'])
+                add_instance()
             elif 'm_v' in value_class:
                 property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
+            # Float
             elif 'm_fl' in value_class:
                 property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
+            elif 'm_HandleSize' in value_class:
+                property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
+            #     Int
             elif 'm_n' in value_class:
                 property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, int_bool=True)
                 add_instance()
+            # Color
+            elif 'm_HandleColor' in value_class:
+                property_instance = PropertyColor(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
+
+            # Bool
             elif 'm_b' in value_class:
                 property_instance = PropertyBool(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
+            # String
+            elif 'm_s' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                add_instance()
+            elif 'm_MaterialGroupName' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                add_instance()
+            elif 'm_Expression' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=True)
                 add_instance()
             elif value_class == 'm_bEnabled':
                 pass
@@ -132,8 +161,18 @@ class PropertyFrame(QWidget):
         elif prop_class == 'FitOnLine':
             classes = ['m_vStart','m_vEnd','m_PointSpace','m_bOrientAlongLine','m_vUpDirection', 'm_nScaleMode', 'm_nPickMode']
             operator_adding_instances(classes)
-        elif prop_class == 'Float':
-            pass
+        elif prop_class == 'PickOne':
+            classes = ['m_SelectionMode','m_vHandleOffset','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize']
+            operator_adding_instances(classes)
+        elif prop_class == 'PlaceInSphere':
+            classes = ['m_flRandomness','m_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_bAlignOrientation']
+            operator_adding_instances(classes)
+        elif prop_class == 'PlaceOnPath':
+            classes = ['m_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace']
+            operator_adding_instances(classes)
+        elif prop_class == 'Model':
+            classes = ['m_sModelName','m_vModelScale','m_MaterialGroupName']
+            operator_adding_instances(classes)
         else:
             # Generic shit
             for value_class, value in reversed(list(self.value.items())):
