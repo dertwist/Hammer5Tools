@@ -30,17 +30,20 @@ class PropertyVector3D(QWidget):
         # Vector X
         self.text_line_x = CompletingPlainTextEdit()
         self.ui.layout_x.insertWidget(2, self.text_line_x)
-        self.text_line_x.textChanged.connect(self.on_changed)  # Connect on_changed method
+        self.text_line_x.textChanged.connect(self.on_changed)
+        self.ui.comboBox_x.currentIndexChanged.connect(self.on_changed)
 
         # Vector Y
         self.text_line_y = CompletingPlainTextEdit()
         self.ui.layout_y.insertWidget(2, self.text_line_y)
-        self.text_line_y.textChanged.connect(self.on_changed)  # Connect on_changed method
+        self.text_line_y.textChanged.connect(self.on_changed)
+        self.ui.comboBox_y.currentIndexChanged.connect(self.on_changed)
 
         # Vector Z
         self.text_line_z = CompletingPlainTextEdit()
         self.ui.layout_z.insertWidget(2, self.text_line_z)
         self.text_line_z.textChanged.connect(self.on_changed)
+        self.ui.comboBox_z.currentIndexChanged.connect(self.on_changed)
 
         if value['m_Components']:
             self.ui.logic_switch.setCurrentIndex(1)
@@ -75,12 +78,25 @@ class PropertyVector3D(QWidget):
 
 
         self.logic_switch()
-
         self.change_value()
 
 
 
+    def logic_switch_line(self):
+        if self.ui.comboBox_x.currentIndex() == 0:
+            self.text_line_x.OnlyFloat = True
+        else:
+            self.text_line_x.OnlyFloat = False
 
+        if self.ui.comboBox_y.currentIndex() == 0:
+            self.text_line_y.OnlyFloat = True
+        else:
+            self.text_line_y.OnlyFloat = False
+
+        if self.ui.comboBox_z.currentIndex() == 0:
+            self.text_line_z.OnlyFloat = True
+        else:
+            self.text_line_z.OnlyFloat = False
     def logic_switch(self):
         widget = self.ui.layout.itemAt(2).widget()
         if self.ui.logic_switch.currentText() == 'Variable source':
@@ -97,6 +113,7 @@ class PropertyVector3D(QWidget):
         self.text_line_x.completions.setStringList(variables)
         self.text_line_y.completions.setStringList(variables)
         self.text_line_z.completions.setStringList(variables)
+        self.logic_switch_line()
 
         self.change_value()
         self.edited.emit()
@@ -139,7 +156,6 @@ class PropertyVector3D(QWidget):
             value_y = handle_value(value_y, self.ui.comboBox_y)
             value_z = handle_value(value_z, self.ui.comboBox_z)
             self.value = {self.value_class: {'m_Components': [value_x, value_y, value_z]}}
-            print(self.value)
 
     def get_variables(self, search_term=None):
         self.variables_scrollArea

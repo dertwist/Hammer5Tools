@@ -8,10 +8,9 @@ class CompletingPlainTextEdit(QPlainTextEdit):
     completion_tail: str = " "
     ignore_return: bool = False
 
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, OnlyFloat=False, **kwargs):
         super().__init__(*args, **kwargs)
-
+        self.OnlyFloat = OnlyFloat
         self.completions = QStringListModel(self)
         self.completer = QCompleter(self.completions, self)
         self.completer.setWidget(self)
@@ -24,7 +23,7 @@ class CompletingPlainTextEdit(QPlainTextEdit):
 
         self.setStyleSheet("""QPlainTextEdit {
 
-            font: 580 10pt "Segoe UI";
+            font: 580 8pt "Segoe UI";
             border: 2px solid black;
             border-radius: 0px;
             border-color: rgba(80, 80, 80, 255);
@@ -63,6 +62,10 @@ class CompletingPlainTextEdit(QPlainTextEdit):
         tc.insertText(completion + self.completion_tail)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
+        if self.OnlyFloat:
+            if event.text() and event.text() not in ['.', ''] and not event.text().isdigit() and event.key() != Qt.Key_Backspace:
+                event.ignore()
+                return
 
         if event.key() == Qt.Key_Return:
             event.ignore()
