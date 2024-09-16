@@ -49,13 +49,13 @@ filters_list = [
 operator_prefix = 'CSmartPropOperation_'
 operators_list = [
     {'Rotate': {'_class': "CSmartPropOperation_Rotate", "m_vRotation": {"m_Components":[0,0,0]}}},
-    {'Scale': {'_class': "CSmartPropOperation_Scale", "m_flScale": 0}},
+    {'Scale': {'_class': "CSmartPropOperation_Scale", "m_flScale": 1}},
     {'Translate': {'_class': "CSmartPropOperation_Translate", "m_vPosition": {"m_Components":[0,0,0]}}},
     {'SetTintColor': {'_class': "CSmartPropOperation_SetTintColor", "m_Mode": "MULTIPLY_OBJECT", "m_ColorChoices": []}},
     {'RandomOffset': {'_class': "CSmartPropOperation_RandomOffset", "m_vRandomPositionMin": {"m_Components":[0,0,0]}, "m_vRandomPositionMax": {"m_Components":[0,0,0]}}},
     {'RandomScale': {'_class': "CSmartPropOperation_RandomScale", "m_flRandomScaleMin": 0, "m_flRandomScaleMax": 0}},
     {'RandomRotation': {'_class': "CSmartPropOperation_RandomRotation", "m_vRandomRotationMin": {"m_Components":[0,0,0]}, "m_vRandomRotationMax": {"m_Components":[0,0,0]}}},
-    {'CreateSizer': {'_class': "CSmartPropOperation_CreateSizer", "m_flInitialMinX": 0, "m_flInitialMaxX": 0, "m_flInitialMinY": 0, "m_flInitialMaxY": 0, "m_flInitialMinZ": 0, "m_flInitialMaxZ": 0}},
+    {'CreateSizer': {'_class': "CSmartPropOperation_CreateSizer"}},
     {'CreateRotator': {'_class': "CSmartPropOperation_CreateRotator"}},
     {'CreateLocator': {'_class': "CSmartPropOperation_CreateLocator"}},
     {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': 500, 'm_flTraceLength': 500}}

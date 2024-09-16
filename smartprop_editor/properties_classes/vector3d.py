@@ -66,6 +66,9 @@ class PropertyVector3D(QWidget):
                     elif isinstance(value, int) or isinstance(value, float):
                         layout.setPlainText(str(value))
                         combo.setCurrentIndex(0)
+                    else:
+                        layout.setPlainText(str(value))
+                        combo.setCurrentIndex(0)
 
                 add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x)
                 add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y)
