@@ -136,16 +136,6 @@
                </property>
               </spacer>
              </item>
-             <item>
-              <widget class="QLabel" name="label_2">
-               <property name="text">
-                <string>Early access: some elements are not fully supported</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
           </layout>

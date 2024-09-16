@@ -73,7 +73,6 @@ class PropertyFrame(QWidget):
                 else:
                     adding_instances(item, None)
         def adding_instances(value_class, value):
-            print(value_class)
             def add_instance():
                 property_instance.edited.connect(self.on_edited)
                 property_instance.setAcceptDrops(False)
@@ -113,6 +112,9 @@ class PropertyFrame(QWidget):
                 add_instance()
             elif 'm_PointSpace' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'])
+                add_instance()
+            elif 'm_Mode' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'])
                 add_instance()
             elif 'm_v' in value_class:
                 property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
@@ -155,10 +157,8 @@ class PropertyFrame(QWidget):
                 property_instance = PropertyLegacy(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
                 add_instance()
 
-        if prop_class == 'PathPosition':
-            classes = ['m_PlaceAtPositions','m_nPlaceEveryNthPosition','m_nNthPositionIndexOffset','m_bAllowAtStart','m_bAllowAtEnd']
-            operator_adding_instances(classes)
-        elif prop_class == 'FitOnLine':
+        # Elements
+        if prop_class == 'FitOnLine':
             classes = ['m_vStart','m_vEnd','m_PointSpace','m_bOrientAlongLine','m_vUpDirection', 'm_nScaleMode', 'm_nPickMode']
             operator_adding_instances(classes)
         elif prop_class == 'PickOne':
@@ -173,6 +173,54 @@ class PropertyFrame(QWidget):
         elif prop_class == 'Model':
             classes = ['m_sModelName','m_vModelScale','m_MaterialGroupName']
             operator_adding_instances(classes)
+        elif prop_class == 'SmartProp':
+            classes = ['m_sSmartProp','m_vModelScale']
+            operator_adding_instances(classes)
+        elif prop_class == 'PlaceMultiple':
+            classes = ['m_nCount']
+            operator_adding_instances(classes)
+        # Operators
+        elif prop_class == 'CreateSizer':
+            classes = ['m_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX','m_OutputVariableMinX', 'm_OutputVariableMaxX', 'm_flInitialMinY', 'm_flInitialMaxY', 'm_flConstraintMinY', 'm_flConstraintMaxY', 'm_OutputVariableMinY', 'm_OutputVariableMaxY', 'm_flInitialMinZ', 'm_flInitialMaxZ', 'm_flConstraintMinZ', 'm_flConstraintMaxZ', 'm_OutputVariableMinZ', 'm_OutputVariableMaxZ']
+            operator_adding_instances(classes)
+        elif prop_class == 'CreateRotator':
+            classes = ['m_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_bApplyToCurrentTrasnform','m_OutputVariable']
+            operator_adding_instances(classes)
+        elif prop_class == 'RandomRotation':
+            classes = ['m_vRandomRotationMin', 'm_vRandomRotationMax']
+            operator_adding_instances(classes)
+        elif prop_class == 'Scale':
+            classes = ['m_flScale']
+            operator_adding_instances(classes)
+        elif prop_class == 'SetTintColor':
+            classes = ['m_Mode', 'm_ColorChoices']
+            operator_adding_instances(classes)
+        # Filters
+        elif prop_class == 'SurfaceProperties':
+            classes = ['m_AllowedSurfaceProperties', 'm_DisallowedSurfaceProperties']
+            operator_adding_instances(classes)
+        elif prop_class == 'VariableValue':
+            classes = ['m_VariableComparison']
+            operator_adding_instances(classes)
+        elif prop_class == 'SurfaceAngle':
+            classes = ['m_flSurfaceSlopeMin', 'm_flSurfaceSlopeMax']
+            operator_adding_instances(classes)
+        # Selection Criteria
+        elif prop_class == 'PathPosition':
+            classes = ['m_PlaceAtPositions', 'm_nPlaceEveryNthPosition', 'm_nNthPositionIndexOffset', 'm_bAllowAtStart','m_bAllowAtEnd']
+            operator_adding_instances(classes)
+        elif prop_class == 'EndCap':
+            classes = ['m_bStart', 'm_bEnd']
+            operator_adding_instances(classes)
+        elif prop_class == 'LinearLength':
+            classes = ['m_flLength', 'm_bAllowScale', 'm_flMinLength', 'm_flMaxLength']
+            operator_adding_instances(classes)
+        elif prop_class == 'ChoiceWeight':
+            classes = ['m_flWeight']
+            operator_adding_instances(classes)
+
+
+
         else:
             # Generic shit
             for value_class, value in reversed(list(self.value.items())):
