@@ -57,31 +57,49 @@ class PropertyFrame(QWidget):
             self.ui.delete_button.clicked.connect(self.delete_action)
 
         # For parsed stuff
+        from smartprop_editor.properties_classes.legacy import PropertyLegacy
+        from smartprop_editor.properties_classes.vector3d import PropertyVector3D
+        from smartprop_editor.properties_classes.float import PropertyFloat
 
-        if prop_class == 'Int':
-            from smartprop_editor.properties_classes.vector3d import PropertyVector3D
-            for value_class, value in reversed(list(self.value.items())):
-                property_instance = PropertyVector3D(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
+
+        def adding_instances(value_class, value):
+            def add_instance():
                 property_instance.edited.connect(self.on_edited)
                 self.ui.layout.insertWidget(0, property_instance)
+            if 'm_v' in value_class:
+                property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
+            elif 'm_fl' in value_class:
+                property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
+            elif 'm_n' in value_class:
+                property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, int_bool=True)
+                add_instance()
+            elif value_class == 'm_bEnabled':
+                pass
+            else:
+                property_instance = PropertyLegacy(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
+                add_instance()
+
+        if prop_class == 'PathPosition':
+            classes = ['m_PlaceAtPositions','m_nPlaceEveryNthPosition','m_nNthPositionIndexOffset','m_bAllowAtStart','m_bAllowAtEnd']
+            for item in classes:
+                if item in self.value:
+                    adding_instances(item, self.value[item])
+                else:
+                    adding_instances(item, None)
+            # for value_class, value in reversed(list(self.value.items())):
+            #     adding_instances(value_class, value)
+            # for value_class, value in reversed(list(self.value.items())):
+            #     property_instance = PropertyVector3D(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
+            #     property_instance.edited.connect(self.on_edited)
+            #     self.ui.layout.insertWidget(0, property_instance)
         elif prop_class == 'Float':
             pass
         else:
             # Generic shit
-            from smartprop_editor.properties_classes.legacy import PropertyLegacy
-            from smartprop_editor.properties_classes.vector3d import PropertyVector3D
-            vector3_operators = ['m_vRandomRotationMin', 'm_vRandomRotationMax', 'm_vPosition', 'm_vRotation', 'm_vStart', 'm_vEnd']
             for value_class, value in reversed(list(self.value.items())):
-                if value_class in vector3_operators:
-                    property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
-                elif value_class == 'm_bEnabled':
-                    pass
-                else:
-                    property_instance = PropertyLegacy(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
-                print(value_class)
-                property_instance.edited.connect(self.on_edited)
-                self.ui.layout.insertWidget(0, property_instance)
-            pass
+                adding_instances(value_class, value)
         self.on_edited()
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)

@@ -80,34 +80,34 @@ class Ui_Widget(object):
         self.layout = QHBoxLayout()
         self.layout.setObjectName(u"layout")
         self.layout.setSizeConstraint(QLayout.SetFixedSize)
-        self.value_label = QLabel(self.frame)
-        self.value_label.setObjectName(u"value_label")
+        self.property_class = QLabel(self.frame)
+        self.property_class.setObjectName(u"property_class")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.value_label.sizePolicy().hasHeightForWidth())
-        self.value_label.setSizePolicy(sizePolicy)
-        self.value_label.setStyleSheet(u"border:0px;\n"
+        sizePolicy.setHeightForWidth(self.property_class.sizePolicy().hasHeightForWidth())
+        self.property_class.setSizePolicy(sizePolicy)
+        self.property_class.setStyleSheet(u"border:0px;\n"
 "background-color: rgba(255, 255, 255, 0);\n"
 "font: 8pt \"Segoe UI\";\n"
 "padding-right: 16px;\n"
 "\n"
 "")
 
-        self.layout.addWidget(self.value_label)
+        self.layout.addWidget(self.property_class)
 
-        self.comboBox = QComboBox(self.frame)
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.setObjectName(u"comboBox")
+        self.logic_switch = QComboBox(self.frame)
+        self.logic_switch.addItem("")
+        self.logic_switch.addItem("")
+        self.logic_switch.addItem("")
+        self.logic_switch.addItem("")
+        self.logic_switch.setObjectName(u"logic_switch")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.comboBox.sizePolicy().hasHeightForWidth())
-        self.comboBox.setSizePolicy(sizePolicy1)
-        self.comboBox.setStyleSheet(u"QComboBox {\n"
+        sizePolicy1.setHeightForWidth(self.logic_switch.sizePolicy().hasHeightForWidth())
+        self.logic_switch.setSizePolicy(sizePolicy1)
+        self.logic_switch.setStyleSheet(u"QComboBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
@@ -194,7 +194,7 @@ class Ui_Widget(object):
 "}\n"
 "")
 
-        self.layout.addWidget(self.comboBox)
+        self.layout.addWidget(self.logic_switch)
 
 
         self.horizontalLayout_2.addLayout(self.layout)
@@ -205,7 +205,7 @@ class Ui_Widget(object):
 
         self.retranslateUi(Widget)
 
-        self.comboBox.setCurrentIndex(0)
+        self.logic_switch.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(Widget)
@@ -213,11 +213,11 @@ class Ui_Widget(object):
 
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
-        self.value_label.setText(QCoreApplication.translate("Widget", u"Value", None))
-        self.comboBox.setItemText(0, QCoreApplication.translate("Widget", u"Default", None))
-        self.comboBox.setItemText(1, QCoreApplication.translate("Widget", u"Float", None))
-        self.comboBox.setItemText(2, QCoreApplication.translate("Widget", u"Variable", None))
-        self.comboBox.setItemText(3, QCoreApplication.translate("Widget", u"Expression", None))
+        self.property_class.setText(QCoreApplication.translate("Widget", u"Value", None))
+        self.logic_switch.setItemText(0, QCoreApplication.translate("Widget", u"Default", None))
+        self.logic_switch.setItemText(1, QCoreApplication.translate("Widget", u"Float", None))
+        self.logic_switch.setItemText(2, QCoreApplication.translate("Widget", u"Variable", None))
+        self.logic_switch.setItemText(3, QCoreApplication.translate("Widget", u"Expression", None))
 
     # retranslateUi
 
