@@ -310,8 +310,10 @@ class SmartPropEditorMainWindow(QMainWindow):
 
             for root, dirs, files in os.walk(self.tree_directory):
                 for file in files:
-                    file_path = os.path.join(root, file)
-                    total_files.append(file_path)
+                    if file.endswith('.vsmart'):
+                        total_files.append(os.path.join(root, file))
+                    elif file.endswith('.vdata'):
+                        total_files.append(os.path.join(root, file))
 
 
             progress = 0
