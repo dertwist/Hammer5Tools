@@ -16,6 +16,7 @@ class PropertyColor(QWidget):
         self.setAcceptDrops(False)
         self.value_class = value_class
         self.value = value
+        self.color = [255, 255, 255]
         self.variables_scrollArea = variables_scrollArea
 
         self.dialog = QColorDialog()
@@ -40,12 +41,15 @@ class PropertyColor(QWidget):
                 self.ui.logic_switch.setCurrentIndex(3)
                 self.var_value = value['m_Expression']
                 self.text_line.setPlainText(self.var_value)
+                self.color = [255, 255, 255]
             elif value['m_SourceName']:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
+                self.color = [255, 255 ,255]
                 self.text_line.setPlainText(self.var_value)
             else:
                 print('Could not parse given input data')
+                self.color = [255, 255, 255]
         elif isinstance(value, list):
             self.ui.logic_switch.setCurrentIndex(1)
             self.color = value
@@ -81,16 +85,16 @@ class PropertyColor(QWidget):
             self.ui.value.hide()
 
     def on_changed(self):
+        self.logic_switch()
+        variables = self.get_variables()
+        self.text_line.completions.setStringList(variables)
+        self.change_value()
         self.ui.value.setStyleSheet(f"""background-color: rgb{tuple(self.color)};
             padding:4px;
             border:0px;
             border: 2px solid translucent;
             border-color: rgba(80, 80, 80, 100);
             """)
-        self.logic_switch()
-        variables = self.get_variables()
-        self.text_line.completions.setStringList(variables)
-        self.change_value()
         self.edited.emit()
     def change_value(self):
         # Default
