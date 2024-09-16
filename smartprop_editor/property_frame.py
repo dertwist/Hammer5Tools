@@ -60,6 +60,7 @@ class PropertyFrame(QWidget):
         from smartprop_editor.properties_classes.vector3d import PropertyVector3D
         from smartprop_editor.properties_classes.float import PropertyFloat
         from smartprop_editor.properties_classes.bool import PropertyBool
+        from smartprop_editor.properties_classes.combobox import PropertyCombobox
 
 
 
@@ -75,7 +76,37 @@ class PropertyFrame(QWidget):
                 property_instance.edited.connect(self.on_edited)
                 property_instance.setAcceptDrops(False)
                 self.ui.layout.insertWidget(0, property_instance)
-            if 'm_v' in value_class:
+            if 'm_nPickMode' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'])
+                add_instance()
+            elif 'm_ScaleMode' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'])
+                add_instance()
+            elif 'm_CoordinateSpace' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'])
+                add_instance()
+            elif 'm_GridPlacementMode' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SEGMENT', 'FILL'])
+                add_instance()
+            elif 'm_GridOriginMode' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['CENTER', 'CORNER'])
+                add_instance()
+            elif 'm_TraceNoHit' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'])
+                add_instance()
+            elif 'm_ApplyColorMode' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'])
+                add_instance()
+            elif 'm_ChoiceSelectionMode' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM', 'FIRST'])
+                add_instance()
+            elif 'm_PlacementMode' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SPHERE', 'CIRCLE'])
+                add_instance()
+            elif 'm_DistributionMode' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM', 'REGULAR'])
+                add_instance()
+            elif 'm_v' in value_class:
                 property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
             elif 'm_fl' in value_class:

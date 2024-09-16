@@ -1,4 +1,5 @@
 import ast
+import re
 
 from smartprop_editor.properties_classes.ui_vector3d import Ui_Widget
 from completer.main import CompletingPlainTextEdit
@@ -17,7 +18,10 @@ class PropertyVector3D(QWidget):
         self.value = value
         self.variables_scrollArea = variables_scrollArea
 
-        self.ui.property_class.setText(self.value_class)
+        output = re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class)
+        output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
+
+        self.ui.property_class.setText(output)
         self.ui.logic_switch.currentIndexChanged.connect(self.on_changed)
 
         # Variable
