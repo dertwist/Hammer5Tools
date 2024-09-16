@@ -29,18 +29,18 @@ element_prefix = 'CSmartPropElement_'
 elements_list = [
     {'ModifyState': {'_class': 'CSmartPropElement_ModifyState', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'Group': {'_class': 'CSmartPropElement_Group', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
-    {'SmartProp': {'_class': 'CSmartPropElement_SmartProp', 'm_sSmartProp': '', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
+    {'SmartProp': {'_class': 'CSmartPropElement_SmartProp', 'm_sSmartProp': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PlaceInSphere': {'_class': 'CSmartPropElement_PlaceInSphere', 'm_flRandomness': None, 'm_nCountMin': 0, 'm_nCountMax': 0, 'm_flPositionRadiusInner': 0, 'm_flPositionRadiusOuter': 0, 'm_bAlignOrientation': False, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
-    {'PlaceMultiple': {'_class': 'CSmartPropElement_PlaceMultiple', 'm_nCount': 0, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
-    {'PlaceOnPath': {'_class': 'CSmartPropElement_PlaceOnPath', 'm_PathName': 'path', 'm_vPathOffset': None, 'm_flOffsetAlongPath': 0, 'm_PathSpace': 'ELEMENT', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
+    {'PlaceMultiple': {'_class': 'CSmartPropElement_PlaceMultiple', 'm_nCount': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
+    {'PlaceOnPath': {'_class': 'CSmartPropElement_PlaceOnPath', 'm_PathName': 'path', 'm_vPathOffset': None, 'm_flOffsetAlongPath': None, 'm_PathSpace': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'FitOnLine': {'_class': 'CSmartPropElement_FitOnLine', 'm_vStart': None, 'm_vEnd': None, 'm_PointSpace': None, 'm_bOrientAlongLine': None, 'm_vUpDirection': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
-    {'PickOne': {'_class': 'CSmartPropElement_PickOne', 'm_SelectionMode': 'RANDOM', 'm_vHandleOfffset': None, 'm_HandleShape': 'SQUARE', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
+    {'PickOne': {'_class': 'CSmartPropElement_PickOne', 'm_SelectionMode': 'RANDOM', 'm_vHandleOffset': None, 'm_HandleShape': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'Model': {'_class': 'CSmartPropElement_Model', 'm_sModelName': '', 'm_vModelScale': None, 'm_MaterialGroupName': '', 'm_Modifiers': [], 'm_SelectionCriteria': []}}
 ]
 filter_prefix = 'CSmartPropFilter_'
 filters_list = [
     {'Expression': {'_class': 'CSmartPropFilter_Expression', 'm_Expression': ''}},
-    {'Probability': {'_class': 'CSmartPropFilter_Probability', 'm_flProbability': 0}},
+    {'Probability': {'_class': 'CSmartPropFilter_Probability', 'm_flProbability': 1}},
     {'SurfaceAngle': {'_class': 'CSmartPropFilter_SurfaceAngle', 'm_flSurfaceSlopeMin': 0, 'm_flSurfaceSlopeMax': 0}},
     {'SurfaceProperties': {'_class': 'CSmartPropFilter_SurfaceProperties', 'm_AllowedSurfaceProperties': [], "m_DisallowedSurfaceProperties": []}},
     {'VariableValue': {'_class': 'CSmartPropFilter_VariableValue', 'm_VariableComparison': {'m_Name': '', 'm_Value': 0, 'm_Comparison': 'EQUAL'}}}

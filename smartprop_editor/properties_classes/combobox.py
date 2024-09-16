@@ -40,7 +40,7 @@ class PropertyCombobox(QWidget):
 
         if isinstance(value, dict):
             if value['m_Expression']:
-                self.ui.logic_switch.setCurrentIndex(1)
+                self.ui.logic_switch.setCurrentIndex(3)
                 self.var_value = value['m_Expression']
                 self.text_line.setPlainText(self.var_value)
             elif value['m_SourceName']:
@@ -49,7 +49,7 @@ class PropertyCombobox(QWidget):
                 self.text_line.setPlainText(self.var_value)
             else:
                 print('Could not parse given input data')
-        if isinstance(value, str):
+        elif isinstance(value, str):
             self.ui.logic_switch.setCurrentIndex(1)
             self.ui.value.setCurrentText(value)
         else:
