@@ -101,6 +101,12 @@ class Ui_MainWindow(object):
 
         self.properties_layout.addItem(self.verticalSpacer)
 
+        self.label_2 = QLabel(self.scrollAreaWidgetContents)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setAlignment(Qt.AlignCenter)
+
+        self.properties_layout.addWidget(self.label_2)
+
 
         self.verticalLayout_17.addLayout(self.properties_layout)
 
@@ -654,6 +660,7 @@ class Ui_MainWindow(object):
         self.actionSaveSmarptop.setText(QCoreApplication.translate("MainWindow", u"SaveSmarptop", None))
         self.actionSaveSmartpropAs.setText(QCoreApplication.translate("MainWindow", u"SaveSmartpropAs", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u"Early access: some elements are not fully supported", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem = self.tree_hierarchy_widget.headerItem()
