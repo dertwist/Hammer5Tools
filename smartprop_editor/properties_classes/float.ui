@@ -121,7 +121,7 @@
          <enum>QLayout::SetFixedSize</enum>
         </property>
         <item>
-         <widget class="QLabel" name="value_label">
+         <widget class="QLabel" name="property_class">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -142,7 +142,7 @@ padding-right: 16px;
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox">
+         <widget class="QComboBox" name="logic_switch">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
