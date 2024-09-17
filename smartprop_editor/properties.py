@@ -32,7 +32,6 @@ class Properties:
         self.clear_children(item)
         item.setText(0, self.data['_class'].replace('CSmartPropElement_',''))
         for key, value in self.data.items():
-            print('key', key)
             if key == 'm_Modifiers':
                 pass
             elif key == 'm_SelectionCriteria':

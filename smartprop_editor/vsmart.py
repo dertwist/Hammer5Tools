@@ -22,19 +22,13 @@ class VsmartOpen:
         self.open_file()
 
     def open_file(self):
-        if self.check_for_tree():
-            print('Hammer5tools vsmart')
-            self.tree.clear()
-            self.load_state()
-        else:
-            print("Raw vsmart")
-            self.fix_format()
-            data = (kv3.read(self.filename)).value
-            self.variables = data.get('m_Variables', None)
-            self.tree.clear()
-            self.populate_tree(data)
-            self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
-            self.fix_names(parent=self.tree.invisibleRootItem())
+        self.fix_format()
+        data = (kv3.read(self.filename)).value
+        self.variables = data.get('m_Variables', None)
+        self.tree.clear()
+        self.populate_tree(data)
+        self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
+        self.fix_names(parent=self.tree.invisibleRootItem())
 
     def fix_format(self):
         try:
@@ -47,51 +41,6 @@ class VsmartOpen:
                 file.write(modified_content)
         except Exception as error:
             print(error)
-
-    def check_for_tree(self):
-        try:
-            with open(self.filename, 'r') as file:
-                lines = file.readlines()
-                lines_count = len(lines)
-                line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
-                print(line_vsmartdata_options)
-                return True
-        except:
-            return False
-
-
-    def load_state(self):
-        with open(self.filename, 'r') as file:
-            lines = file.readlines()
-            lines_count = len(lines)
-            line_vsmartdata_options = (lines[lines_count - 1].strip().split('//Hammer5Tools_vsmartdata_metadata:'))[1]
-            line_vsmartdata_tree_structure = (lines[lines_count - 2].strip().split('//Hammer5Tools_vsmartdata_tree_structure:'))[1]
-            line_vsmartdata_variables = (lines[lines_count - 3].strip().split('//Hammer5Tools_vsmartdata_variables:'))[1]
-            print(f'Loaded h5t structure from vsmart: {self.filename}')
-            vsmartdata_tree_structure = ast.literal_eval(line_vsmartdata_tree_structure)
-            self.variables = ast.literal_eval(line_vsmartdata_variables)
-            self.load_tree_from_file(vsmartdata_tree_structure)
-    def load_tree_from_file(self, data, parent=None):
-        if parent is None:
-            parent = self.tree.invisibleRootItem()
-
-        for key, value in data.items():
-            key_split = key.split('%?=!=')
-            key_name = key_split[0]
-
-            # Check if key_split has at least two elements before accessing the second element
-            if len(key_split) > 1:
-                value_row = key_split[1]
-            else:
-                value_row = ''  # Handle the case when key_split does not have a second element
-
-            item = QTreeWidgetItem([key_name, value_row])
-            item.setFlags(item.flags() | Qt.ItemIsEditable)
-            parent.addChild(item)
-
-            if isinstance(value, dict):
-                self.load_tree_from_file(value, item)
-
 
 
     def populate_tree(self, data, parent=None):
@@ -141,34 +90,8 @@ class VsmartOpen:
                             pass
                             # if didn't find any class element just set value to key row
                             print(key, value)
-                            # child = QTreeWidgetItem([key, str(value)])
-                            # child.setFlags(child.flags() | Qt.ItemIsEditable)
-                            # parent.addChild(child)
                     elif isinstance(value, (str, float, int)):
-                        # item = QTreeWidgetItem([key, str(value)])
-                        # item.setFlags(item.flags() | Qt.ItemIsEditable)
-                        # parent.addChild(item)
-                        # self.populate_tree(value, item)
                         pass
-                # if key == 'm_Variables':
-                #     item_class = value[0].get('_class')
-                #     child = QTreeWidgetItem([key])
-                #     child.setFlags(child.flags() | Qt.ItemIsEditable)
-                #     parent.addChild(child)
-                #     for item in value:
-                #         item_class = item.get('_class')
-                #         value_dict = item.copy()
-                #         try:
-                #             del value_dict['m_Children']
-                #             pass
-                #         except:
-                #             pass
-                #         child_item = QTreeWidgetItem([item_class, str(value_dict)])
-                #         child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
-                #         child.addChild(child_item)
-                #         self.populate_tree(item, child_item)
-                        # elif key == 'm_vEnd':
-                        #     print('m_vEnd')
 
     # Remove m_children items
     def cleanup_tree(self, parent_item):
@@ -210,7 +133,6 @@ class VsmartOpen:
                 if 'm_sLabel' in element_value:
                     label = element_value['m_sLabel']
                     if label != '':
-                        print(label)
                         child_item.setText(0, label)
                 else:
                     current_name = child_item.text(0)
@@ -237,21 +159,20 @@ class VsmartSave:
         print(f'Saved File: {filename}')
 
     def save_file(self):
-        data = self.tree_to_file(self.tree.invisibleRootItem())
         # data = self.convert_children_to_list(data)
         out_data = {'generic_data_type': "CSmartPropRoot"}
-
         if self.var_data is not None:
             out_data.update({'m_Variables': self.var_data})
         converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
         out_data.update(converted_data)
         kv3.write(out_data, self.filename)
-        # print(data_raw)
         try:
-            with open(self.filename, 'a') as file:
-                file.write('//Hammer5Tools_vsmartdata_variables:' + str(self.var_data) + '\n')
-                file.write('//Hammer5Tools_vsmartdata_tree_structure:' + str(data) + '\n')
-                file.write('//Hammer5Tools_vsmartdata_metadata:' + str('vsmart') + '\n')
+            with open(self.filename, 'r+') as file:
+                lines = file.readlines()
+                lines.insert(2,
+                             '//Hammer5Tools Smartprop Editor by Twist \n//Discord: twist0691 \n//Steam: https://steamcommunity.com/id/der_twist \n//Twitter: https://twitter.com/der_twist\n')
+                file.seek(0)  # Move the cursor to the start of the file
+                file.writelines(lines)
         except Exception as error:
             print(error)
 
@@ -272,19 +193,6 @@ class VsmartSave:
 
             data['m_Children'].append(child_data)
 
-        return data
-
-    def tree_to_file(self, item):
-        data = {}
-        for index in range(item.childCount()):
-            child = item.child(index)
-            key = child.text(0)
-            value = child.text(1)if child.childCount() == 0 else self.tree_to_file(child)
-            value_row = child.text(1)
-            if child.childCount() == 0:
-                data[str(key) + '%?=!=' + str(value_row)] = None
-            else:
-                data[str(key) + '%?=!=' + str(value_row)] = value
         return data
 
 class VsmartCompile(QObject):
@@ -330,4 +238,3 @@ class VsmartCompile(QObject):
             shutil.move(source_name, destination_name)
         except:
             print(f'ERROR WHILE COMPILING: {os.path.basename(self.filename)}')
-        print(f'Compiled: {os.path.basename(self.filename)}')
