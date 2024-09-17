@@ -129,7 +129,6 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         except Exception as error:
             print(error)
-
         try:
             data = ast.literal_eval(item.text(1))
             data_modif = data.get('m_Modifiers', {})
@@ -177,7 +176,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
             print(output_value)
 
-    # Create New elemnt
+    # Create New element
     def keyPressEvent(self, event):
         focus_widget = QApplication.focusWidget()
         if isinstance(focus_widget, QLineEdit):
@@ -383,7 +382,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         if filename == None:
             index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
             filename = self.mini_explorer.model.filePath(index)
-            print(filename)
         opened_file = filename
 
         if filename.endswith('.vsmart'):
@@ -459,7 +457,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                 var_max = (var_key_value[2])['max']
                 var_model = (var_key_value[2])['model']
                 var_class = var_key_value[1]
-                print('var min', type(var_min), var_min)
 
                 # Basic
                 var_dict = {
@@ -495,8 +492,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         # index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
         filename = opened_file
         var_data = save_variables()
-        print(var_data)
-        print(filename)
         VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data)
         VsmartCompile(filename=filename)
 
