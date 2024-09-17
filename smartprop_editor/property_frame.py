@@ -63,6 +63,7 @@ class PropertyFrame(QWidget):
         from smartprop_editor.properties_classes.combobox import PropertyCombobox
         from smartprop_editor.properties_classes.string import PropertyString
         from smartprop_editor.properties_classes.color import PropertyColor
+        from smartprop_editor.properties_classes.comparison import PropertyComparison
 
 
 
@@ -80,7 +81,7 @@ class PropertyFrame(QWidget):
             if 'm_nPickMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'])
                 add_instance()
-            elif 'm_ScaleMode' in value_class:
+            elif 'm_nScaleMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'])
                 add_instance()
             elif 'm_CoordinateSpace' in value_class:
@@ -150,24 +151,28 @@ class PropertyFrame(QWidget):
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=True)
                 add_instance()
             elif 'm_OutputVariableMaxZ' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True)
                 add_instance()
             elif 'm_OutputVariableMinZ' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True)
                 add_instance()
             elif 'm_OutputVariableMaxY' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True)
                 add_instance()
             elif 'm_OutputVariableMinY' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True)
                 add_instance()
             elif 'm_OutputVariableMaxX' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True)
                 add_instance()
             elif 'm_OutputVariableMinX' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False)
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True)
                 add_instance()
 
+            # Comparison
+            elif 'm_VariableComparison' in value_class:
+                property_instance = PropertyComparison(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
             elif value_class == 'm_bEnabled':
                 pass
             elif value_class == 'm_sLabel':
