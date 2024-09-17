@@ -58,7 +58,9 @@ operators_list = [
     {'CreateSizer': {'_class': "CSmartPropOperation_CreateSizer"}},
     {'CreateRotator': {'_class': "CSmartPropOperation_CreateRotator"}},
     {'CreateLocator': {'_class': "CSmartPropOperation_CreateLocator"}},
-    {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': 500, 'm_flTraceLength': 500}}
+    {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': 500, 'm_flTraceLength': 500}},
+    {'SetVariableBool': {'_class': 'CSmartPropOperation_SetVariableBool', 'm_VariableName': None, 'm_VariableValue': None}},
+    {'SetVariableFloat': {'_class': 'CSmartPropOperation_SetVariableFloat', 'm_VariableName': None, 'm_VariableValue': None}},
 ]
 
 operators_dict_todo = {

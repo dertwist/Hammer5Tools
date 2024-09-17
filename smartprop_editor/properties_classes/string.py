@@ -8,7 +8,7 @@ from PySide6.QtCore import Signal
 
 class PropertyString(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, expression_bool=False, only_string=False):
+    def __init__(self, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -31,7 +31,10 @@ class PropertyString(QWidget):
         # EditLine
         self.text_line = CompletingPlainTextEdit()
         self.text_line.completion_tail = ''
-        self.text_line.setPlaceholderText('Variable name, string or expression')
+        if placeholder:
+            self.text_line.setPlaceholderText(placeholder)
+        else:
+            self.text_line.setPlaceholderText('Variable name, string or expression')
         self.ui.layout.insertWidget(2, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)
         if isinstance(value, dict):
