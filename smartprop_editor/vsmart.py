@@ -206,14 +206,21 @@ class VsmartOpen:
             # Check if the current name has 'element_prefix'
             if element_prefix in child_item.text(0):
                 # Remove 'element_prefix' from the item's name
-                current_name = child_item.text(0)
-                new_name = current_name.replace(element_prefix, '')
+                element_value = ast.literal_eval(child_item.text(1))
+                if 'm_sLabel' in element_value:
+                    label = element_value['m_sLabel']
+                    if label != '':
+                        print(label)
+                        child_item.setText(0, label)
+                else:
+                    current_name = child_item.text(0)
+                    new_name = current_name.replace(element_prefix, '')
 
-                # Set unique naming using 2 digits
-                new_name = f"{new_name}_{counter:02d}"
-                counter += 1
+                    # Set unique naming using 2 digits
+                    new_name = f"{new_name}_{counter:02d}"
+                    counter += 1
 
-                child_item.setText(0, new_name)
+                    child_item.setText(0, new_name)
 
                 # Recursively fix names for child elements
                 self.fix_names(child_item)
@@ -258,6 +265,7 @@ class VsmartSave:
             value_row = child.text(1)
 
             child_data = ast.literal_eval(value_row)
+            child_data['m_sLabel'] = key
             if child.childCount() > 0:
                 child_data['m_Children'] = []
                 self.tree_to_vsmart(child, child_data)
