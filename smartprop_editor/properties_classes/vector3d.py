@@ -58,7 +58,7 @@ class PropertyVector3D(QWidget):
                         if 'm_Expression' in value:
                             layout.setPlainText(str(value['m_Expression']))
                             combo.setCurrentIndex(2)
-                        elif 'm_SourceName' in value:
+                        if 'm_SourceName' in value:
                             layout.setPlainText(str(value['m_SourceName']))
                             combo.setCurrentIndex(1)
                         else:
