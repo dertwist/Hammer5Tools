@@ -68,12 +68,6 @@ class PropertyComparison(QWidget):
         except:
             pass
 
-
-        try:
-            var_value = float(var_value)
-        except:
-            pass
-
         self.value = {self.value_class: {'m_Name': self.m_name.toPlainText(), 'm_value': var_value,'m_Comparison': self.ui.comparison.currentText()}}
 
     def get_variables(self, search_term=None):
