@@ -61,8 +61,6 @@ class PropertyVector3D(QWidget):
                         if 'm_SourceName' in value:
                             layout.setPlainText(str(value['m_SourceName']))
                             combo.setCurrentIndex(1)
-                        else:
-                            pass
                     elif isinstance(value, int) or isinstance(value, float):
                         layout.setPlainText(str(value))
                         combo.setCurrentIndex(0)
@@ -76,7 +74,7 @@ class PropertyVector3D(QWidget):
                 # self.text_line_x.setPlainText(str(value['m_Components'][0]))
                 # self.text_line_y.setPlainText(str(value['m_Components'][1]))
                 # self.text_line_z.setPlainText(str(value['m_Components'][2]))
-            elif 'm_SourceName' in value:
+            if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(1)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(self.var_value)
