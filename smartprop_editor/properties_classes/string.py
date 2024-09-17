@@ -8,13 +8,14 @@ from PySide6.QtCore import Signal
 
 class PropertyString(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, expression_bool=False):
+    def __init__(self, value_class, value, variables_scrollArea, expression_bool=False, only_string=False):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(False)
         self.value_class = value_class
         self.value = value
+        self.only_string = only_string
         self.expression_bool = expression_bool
         self.variables_scrollArea = variables_scrollArea
 
@@ -38,7 +39,7 @@ class PropertyString(QWidget):
                 self.ui.logic_switch.setCurrentIndex(3)
                 self.var_value = value['m_Expression']
                 self.text_line.setPlainText(str(self.var_value))
-            elif 'm_SourceName' in value:
+            if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(str(self.var_value))
@@ -53,6 +54,9 @@ class PropertyString(QWidget):
 
 
         if self.expression_bool:
+            self.ui.logic_switch.hide()
+            self.ui.logic_switch.setCurrentIndex(3)
+        elif self.only_string:
             self.ui.logic_switch.hide()
             self.ui.logic_switch.setCurrentIndex(1)
         self.on_changed()
