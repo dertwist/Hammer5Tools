@@ -296,6 +296,6 @@ class Ui_Widget(object):
         self.comparison.setItemText(4, QCoreApplication.translate("Widget", u"GREATER", None))
         self.comparison.setItemText(5, QCoreApplication.translate("Widget", u"GREATER_OR_EQUAL", None))
 
-        self.property_class_3.setText(QCoreApplication.translate("Widget", u"Value", None))
+        self.property_class_3.setText(QCoreApplication.translate("Widget", u"Value:", None))
     # retranslateUi
 
