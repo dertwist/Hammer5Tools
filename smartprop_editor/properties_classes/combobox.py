@@ -43,12 +43,10 @@ class PropertyCombobox(QWidget):
                 self.ui.logic_switch.setCurrentIndex(3)
                 self.var_value = value['m_Expression']
                 self.text_line.setPlainText(self.var_value)
-            elif 'm_SourceName' in value:
+            if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(self.var_value)
-            else:
-                print('Could not parse given input data')
         elif isinstance(value, str):
             self.ui.logic_switch.setCurrentIndex(1)
             self.ui.value.setCurrentText(value)

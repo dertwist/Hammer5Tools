@@ -40,13 +40,14 @@ class PropertyFloat(QWidget):
                 self.ui.logic_switch.setCurrentIndex(3)
                 self.var_value = value['m_Expression']
                 self.text_line.setPlainText(self.var_value)
-            elif 'm_SourceName' in value:
+            else:
+                self.text_line.setPlainText('')
+            if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(self.var_value)
             else:
-                print('Could not parse given input data')
-                self.value = {'m_Components': {'m_Expression': '0'}}
+                self.text_line.setPlainText('')
         elif isinstance(value, float) or isinstance(value, int):
             self.ui.logic_switch.setCurrentIndex(1)
             self.text_line.setPlainText(str(value))
