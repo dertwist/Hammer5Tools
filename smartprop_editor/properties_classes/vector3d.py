@@ -49,9 +49,11 @@ class PropertyVector3D(QWidget):
         self.text_line_z.textChanged.connect(self.on_changed)
         self.ui.comboBox_z.currentIndexChanged.connect(self.on_changed)
 
+        self.value = None
+        self.ui.logic_switch.setCurrentIndex(0)
+
         if isinstance(value, dict):
-            print(value)
-            if 'm_Components' in value:
+            if  'm_Components' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 def add_value(layout, value, combo):
                     if isinstance(value, dict):
@@ -71,20 +73,12 @@ class PropertyVector3D(QWidget):
                 add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x)
                 add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y)
                 add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z)
-                # self.text_line_x.setPlainText(str(value['m_Components'][0]))
-                # self.text_line_y.setPlainText(str(value['m_Components'][1]))
-                # self.text_line_z.setPlainText(str(value['m_Components'][2]))
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(1)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(self.var_value)
             else:
-                print('Could not parse given input data')
-                self.value = None
-                self.ui.logic_switch.setCurrentIndex(0)
-        else:
-            self.value = None
-            self.ui.logic_switch.setCurrentIndex(0)
+                pass
 
 
 
