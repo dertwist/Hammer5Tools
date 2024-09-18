@@ -108,6 +108,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.new_file_options_button.clicked.connect(self.new_file_options)
         self.ui.all_to_vdata_button.clicked.connect(self.convert_all_to_vdata)
         self.ui.new_element_button.clicked.connect(self.add_an_element)
+        self.ui.paste_variable_button.clicked.connect(self.paste_variable)
 
 
     def new_file_options(self):
@@ -644,8 +645,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def serialize_tree_item(self, tree_item):
         item_data = {
-            'text_0': tree_item.text(0),
-            'text_1': tree_item.text(1),
+            'name': tree_item.text(0),
+            'value': tree_item.text(1),
             'children': []
         }
 
@@ -657,8 +658,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def deserialize_tree_item(self, item_data):
         tree_item = QTreeWidgetItem()
-        tree_item.setText(0, item_data['text_0'])
-        tree_item.setText(1, item_data['text_1'])
+        tree_item.setText(0, item_data['name'])
+        tree_item.setText(1, item_data['value'])
 
         for child_data in item_data.get('children', []):
             child_item = self.deserialize_tree_item(child_data)
