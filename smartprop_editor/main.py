@@ -66,9 +66,23 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
 
+        # Apply style
+
+        self.ui.frame_9.setStyleSheet("""
+        QFrame#frame_9 {
+            border: 2px solid black; 
+            border-color: rgba(80, 80, 80, 255);
+        }
+        QFrame#frame_9 QLabel {
+            border: 0px solid black; 
+        }
+        """)
+
         # Adding the properties_classes group
         self.properties_groups_init()
 
+
+        self.ui.tree_hierarchy_search_bar_widget.textChanged.connect(self.search_hierarchy)
 
         # adding var classes to combobox
         for item in variables_list:
@@ -93,6 +107,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.compile_all_button.clicked.connect(self.compile_all)
         self.ui.new_file_options_button.clicked.connect(self.new_file_options)
         self.ui.all_to_vdata_button.clicked.connect(self.convert_all_to_vdata)
+        self.ui.new_element_button.clicked.connect(self.add_an_element)
 
 
     def new_file_options(self):
@@ -506,6 +521,15 @@ class SmartPropEditorMainWindow(QMainWindow):
                 else:
                     widget.hide()
 
+    def search_hierarchy(self, search_term=None):
+        for i in range(self.ui.tree_hierarchy_widget.topLevelItemCount()):
+            item = self.ui.tree_hierarchy_widget.topLevelItem(i)
+            if item:
+                if search_term.lower() in item.text(
+                        0).lower():  # Adjust the search logic as needed based on the item's text
+                    item.setHidden(False)
+                else:
+                    item.setHidden(True)
     def add_new_variable(self):
         name = 'new_var'
         existing_variables = []

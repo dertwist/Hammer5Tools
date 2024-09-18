@@ -71,8 +71,8 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
         self.frame.setLineWidth(0)
         self.horizontalLayout_2 = QHBoxLayout(self.frame)
         self.horizontalLayout_2.setSpacing(16)
@@ -80,7 +80,7 @@ class Ui_Widget(object):
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.layout = QHBoxLayout()
         self.layout.setObjectName(u"layout")
-        self.layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
+        self.layout.setSizeConstraint(QLayout.SetFixedSize)
         self.property_class = QLabel(self.frame)
         self.property_class.setObjectName(u"property_class")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
@@ -93,7 +93,7 @@ class Ui_Widget(object):
 "font: 8pt \"Segoe UI\";\n"
 "padding-right: 16px;\n"
 "\n"
-"")
+"color: rgb(246, 255, 216);")
 
         self.layout.addWidget(self.property_class)
 
@@ -128,8 +128,8 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_2.setFrameShape(QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Raised)
         self.frame_2.setLineWidth(0)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_2)
         self.horizontalLayout_3.setSpacing(16)
@@ -137,7 +137,7 @@ class Ui_Widget(object):
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.layout_2 = QHBoxLayout()
         self.layout_2.setObjectName(u"layout_2")
-        self.layout_2.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
+        self.layout_2.setSizeConstraint(QLayout.SetFixedSize)
         self.property_class_2 = QLabel(self.frame_2)
         self.property_class_2.setObjectName(u"property_class_2")
         sizePolicy.setHeightForWidth(self.property_class_2.sizePolicy().hasHeightForWidth())
@@ -147,7 +147,7 @@ class Ui_Widget(object):
 "font: 8pt \"Segoe UI\";\n"
 "padding-right: 16px;\n"
 "\n"
-"")
+"color: rgb(246, 255, 216);")
 
         self.layout_2.addWidget(self.property_class_2)
 
@@ -262,7 +262,7 @@ class Ui_Widget(object):
 "font: 8pt \"Segoe UI\";\n"
 "padding-right: 16px;\n"
 "\n"
-"")
+"color: rgb(246, 255, 216);")
 
         self.layout_2.addWidget(self.property_class_3)
 
