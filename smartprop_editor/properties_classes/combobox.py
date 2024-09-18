@@ -36,7 +36,8 @@ class PropertyCombobox(QWidget):
         self.ui.layout.insertWidget(3, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)
 
-
+        self.ui.logic_switch.setCurrentIndex(0)
+        self.text_line.setPlainText('')
 
         if isinstance(value, dict):
             if 'm_Expression' in value:
@@ -50,9 +51,6 @@ class PropertyCombobox(QWidget):
         elif isinstance(value, str):
             self.ui.logic_switch.setCurrentIndex(1)
             self.ui.value.setCurrentText(value)
-        else:
-            self.ui.logic_switch.setCurrentIndex(0)
-            self.text_line.setPlainText('')
 
         self.on_changed()
 

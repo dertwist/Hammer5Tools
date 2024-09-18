@@ -39,6 +39,8 @@ class PropertyComparison(QWidget):
         self.ui.layout_2.insertWidget(4, self.m_value)
         self.m_value.textChanged.connect(self.on_changed)
 
+        self.m_value.setPlainText('')
+        self.m_name.setPlainText('')
 
 
         if isinstance(value, dict):
@@ -46,9 +48,6 @@ class PropertyComparison(QWidget):
                 self.m_name.setPlainText(str(value['m_Name']))
             if 'm_Value' in value:
                 self.m_value.setPlainText(str(value['m_Value']))
-        else:
-            self.m_value.setPlainText('')
-            self.m_name.setPlainText('')
 
 
         self.on_changed()
@@ -68,7 +67,7 @@ class PropertyComparison(QWidget):
         except:
             pass
 
-        self.value = {self.value_class: {'m_Name': self.m_name.toPlainText(), 'm_value': var_value,'m_Comparison': self.ui.comparison.currentText()}}
+        self.value = {self.value_class: {'m_Name': self.m_name.toPlainText(), 'm_Value': var_value,'m_Comparison': self.ui.comparison.currentText()}}
 
     def get_variables(self, search_term=None):
         self.variables_scrollArea
