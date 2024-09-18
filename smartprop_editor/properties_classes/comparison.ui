@@ -97,10 +97,10 @@
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <property name="lineWidth">
       <number>0</number>
@@ -124,7 +124,7 @@
       <item>
        <layout class="QHBoxLayout" name="layout">
         <property name="sizeConstraint">
-         <enum>QLayout::SizeConstraint::SetFixedSize</enum>
+         <enum>QLayout::SetFixedSize</enum>
         </property>
         <item>
          <widget class="QLabel" name="property_class">
@@ -140,7 +140,7 @@ background-color: rgba(255, 255, 255, 0);
 font: 8pt &quot;Segoe UI&quot;;
 padding-right: 16px;
 
-</string>
+color: rgb(246, 255, 216);</string>
           </property>
           <property name="text">
            <string>Class</string>
@@ -150,7 +150,7 @@ padding-right: 16px;
         <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
+           <enum>Qt::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -199,10 +199,10 @@ padding-right: 16px;
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <property name="lineWidth">
       <number>0</number>
@@ -226,7 +226,7 @@ padding-right: 16px;
       <item>
        <layout class="QHBoxLayout" name="layout_2">
         <property name="sizeConstraint">
-         <enum>QLayout::SizeConstraint::SetFixedSize</enum>
+         <enum>QLayout::SetFixedSize</enum>
         </property>
         <item>
          <widget class="QLabel" name="property_class_2">
@@ -242,7 +242,7 @@ background-color: rgba(255, 255, 255, 0);
 font: 8pt &quot;Segoe UI&quot;;
 padding-right: 16px;
 
-</string>
+color: rgb(246, 255, 216);</string>
           </property>
           <property name="text">
            <string>Variable name:</string>
@@ -392,7 +392,7 @@ background-color: rgba(255, 255, 255, 0);
 font: 8pt &quot;Segoe UI&quot;;
 padding-right: 16px;
 
-</string>
+color: rgb(246, 255, 216);</string>
           </property>
           <property name="text">
            <string>Value:</string>
@@ -402,7 +402,7 @@ padding-right: 16px;
         <item>
          <spacer name="horizontalSpacer_2">
           <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
+           <enum>Qt::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>

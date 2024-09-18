@@ -92,7 +92,6 @@ class Ui_Widget(object):
 "background-color: rgba(255, 255, 255, 0);\n"
 "font: 8pt \"Segoe UI\";\n"
 "padding-right: 16px;\n"
-"\n"
 "")
 
         self.layout.addWidget(self.property_class)
