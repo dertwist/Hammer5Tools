@@ -138,7 +138,7 @@
            <string notr="true">border:0px;
 background-color: rgba(255, 255, 255, 0);
 font: 8pt &quot;Segoe UI&quot;;
-</string>
+color: rgb(163, 117, 255)</string>
           </property>
           <property name="text">
            <string>class</string>

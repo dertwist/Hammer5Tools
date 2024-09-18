@@ -183,13 +183,13 @@ class PropertyFrame(QWidget):
 
         # Elements
         if prop_class == 'FitOnLine':
-            classes = ['m_vStart','m_vEnd','m_PointSpace','m_bOrientAlongLine','m_vUpDirection', 'm_nScaleMode', 'm_nPickMode']
+            classes = ['m_vStart','m_vEnd', 'm_vUpDirection', 'm_PointSpace', 'm_nScaleMode', 'm_nPickMode', 'm_bOrientAlongLine']
             operator_adding_instances(classes)
         elif prop_class == 'PickOne':
-            classes = ['m_SelectionMode','m_vHandleOffset','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize']
+            classes = ['m_SelectionMode','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize','m_vHandleOffset']
             operator_adding_instances(classes)
         elif prop_class == 'PlaceInSphere':
-            classes = ['m_flRandomness','m_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_bAlignOrientation']
+            classes = ['m_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation']
             operator_adding_instances(classes)
         elif prop_class == 'PlaceOnPath':
             classes = ['m_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace']
