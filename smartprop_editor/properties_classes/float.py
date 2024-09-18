@@ -20,6 +20,24 @@ class PropertyFloat(QWidget):
 
         if self.int_bool:
             self.ui.logic_switch.setItemText(1, 'Int')
+            self.ui.property_class.setStyleSheet("""
+                        border:0px;
+            background-color: rgba(255, 255, 255, 0);
+            font: 8pt "Segoe UI";
+            padding-right: 16px;
+            
+            color: rgb(108, 135, 255);
+                        """)
+        else:
+            self.ui.property_class.setStyleSheet("""
+                        border:0px;
+            background-color: rgba(255, 255, 255, 0);
+            font: 8pt "Segoe UI";
+            padding-right: 16px;
+
+            color: rgb(181, 255, 239);
+                        """)
+
 
         output = re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
