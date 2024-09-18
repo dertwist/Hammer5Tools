@@ -1,7 +1,7 @@
 import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logging
-from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow, QMessageBox
+from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow, QMessageBox, QDialog, QLabel, QMessageBox
 from PySide6.QtGui import QIcon, QAction, QTextCursor
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, Qt
 # from PySide6 import QtCore
 from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
@@ -37,6 +37,26 @@ smartprop_editor_version = '0.6.1'
 
 
 import sys
+
+
+class Notification(QMessageBox):
+    def __init__(self, parent=None):
+        super(Notification, self).__init__(parent)
+        self.setWindowTitle("Hammer 5 Tools")
+        self.setTextFormat(Qt.RichText)
+
+        # Set the message box icon to a warning icon
+        self.setIcon(QMessageBox.Warning)
+
+        self.setText("Another instance of the program is running")
+        self.setStandardButtons(QMessageBox.Ok)
+        self.buttonClicked.connect(self.bring_to_front)
+        self.hwnd = ctypes.windll.user32.FindWindowW(None, "Hammer 5 Tools")
+
+    def bring_to_front(self):
+
+        if self.hwnd:
+            ctypes.windll.user32.SetForegroundWindow(self.hwnd)
 
 class Stream(QObject):
     newText = Signal(str)
@@ -315,14 +335,6 @@ def DiscordStatusMain_do():
 
 if __name__ == "__main__":
 
-    def bring_to_front(window_title):
-        hwnd = ctypes.windll.user32.FindWindowW(None, window_title)
-        if hwnd:
-            ctypes.windll.user32.SetForegroundWindow(hwnd)
-            # Play default system sound
-            winsound.MessageBeep(winsound.MB_ICONASTERISK)
-        return None
-
 
     # Create a lock file to ensure single instance
     lock_file = open(LOCK_FILE, 'w')
@@ -330,9 +342,11 @@ if __name__ == "__main__":
         portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
     except portalocker.LockException:
         # If the lock file is already locked, bring the existing instance to the foreground
-        print("Another instance is already running. Bringing it to the foreground.")
-        bring_to_front("Hammer 5 Tools")
-        sys.exit(0)
+        app = QApplication(sys.argv)
+        widget = Notification()  # Ensure to pass the parent if needed
+        app.setStyleSheet(QT_Stylesheet_global)
+        widget.show()
+        sys.exit(app.exec())
 
     app = QApplication(sys.argv)
     app.setStyleSheet(QT_Stylesheet_global)
