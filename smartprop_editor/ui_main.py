@@ -88,7 +88,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 775, 702))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 770, 702))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -223,7 +223,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 241, 354))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 246, 354))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -251,11 +251,69 @@ class Ui_MainWindow(object):
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.paste_variable_button = QToolButton(self.frame)
+        self.paste_variable_button.setObjectName(u"paste_variable_button")
+        self.paste_variable_button.setMaximumSize(QSize(28, 28))
+        self.paste_variable_button.setStyleSheet(u"QToolButton {\n"
+"\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    padding: 3px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"QToolButton:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"QToolButton:pressed {\n"
+"    background-color: red;\n"
+"    background-color: #1C1C1C;\n"
+"    margin: 1 px;\n"
+"    margin-left: 2px;\n"
+"    margin-right: 2px;\n"
+"    font: 580 9pt \"Segoe UI\";\n"
+"\n"
+"}")
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.paste_variable_button.setIcon(icon5)
+        self.paste_variable_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout.addWidget(self.paste_variable_button)
+
         self.add_new_variable_button = QToolButton(self.frame)
         self.add_new_variable_button.setObjectName(u"add_new_variable_button")
         self.add_new_variable_button.setMaximumSize(QSize(28, 28))
+        self.add_new_variable_button.setStyleSheet(u"QToolButton {\n"
+"\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    padding: 3px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"QToolButton:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"QToolButton:pressed {\n"
+"    background-color: red;\n"
+"    background-color: #1C1C1C;\n"
+"    margin: 1 px;\n"
+"    margin-left: 2px;\n"
+"    margin-right: 2px;\n"
+"    font: 580 9pt \"Segoe UI\";\n"
+"\n"
+"}")
         self.add_new_variable_button.setIcon(icon4)
-        self.add_new_variable_button.setIconSize(QSize(16, 16))
+        self.add_new_variable_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.add_new_variable_button)
 
@@ -484,9 +542,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.compile_all_button.setIcon(icon5)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/logout_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.compile_all_button.setIcon(icon6)
         self.compile_all_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.compile_all_button)
@@ -523,9 +581,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon6 = QIcon()
-        icon6.addFile(u":/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.all_to_vdata_button.setIcon(icon6)
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/file_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.all_to_vdata_button.setIcon(icon7)
         self.all_to_vdata_button.setIconSize(QSize(18, 18))
 
         self.horizontalLayout_4.addWidget(self.all_to_vdata_button)
@@ -543,9 +601,33 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.new_file_options_button = QToolButton(self.frame_4)
         self.new_file_options_button.setObjectName(u"new_file_options_button")
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.new_file_options_button.setIcon(icon7)
+        self.new_file_options_button.setStyleSheet(u"QToolButton {\n"
+"\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    padding: 3px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"QToolButton:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"QToolButton:pressed {\n"
+"    background-color: red;\n"
+"    background-color: #1C1C1C;\n"
+"    margin: 1 px;\n"
+"    margin-left: 2px;\n"
+"    margin-right: 2px;\n"
+"    font: 580 9pt \"Segoe UI\";\n"
+"\n"
+"}")
+        icon8 = QIcon()
+        icon8.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.new_file_options_button.setIcon(icon8)
         self.new_file_options_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.new_file_options_button)
@@ -619,9 +701,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon8 = QIcon()
-        icon8.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_button.setIcon(icon8)
+        icon9 = QIcon()
+        icon9.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_file_button.setIcon(icon9)
         self.open_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.open_file_button)
@@ -688,17 +770,24 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
         self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
         self.variables_scroll_area_searchbar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
+#if QT_CONFIG(tooltip)
+        self.paste_variable_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Paste variable</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.paste_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
+#if QT_CONFIG(tooltip)
+        self.add_new_variable_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Create variable</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.add_new_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
         self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
 #if QT_CONFIG(tooltip)
-        self.compile_all_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + S</p></body></html>", None))
+        self.compile_all_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Compila all vsmart and vdata files</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.compile_all_button.setText(QCoreApplication.translate("MainWindow", u"Compile All", None))
 #if QT_CONFIG(shortcut)
         self.compile_all_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+R", None))
 #endif // QT_CONFIG(shortcut)
 #if QT_CONFIG(tooltip)
-        self.all_to_vdata_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + S</p></body></html>", None))
+        self.all_to_vdata_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Convert all vsmart to vdata (recommendation)</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.all_to_vdata_button.setText(QCoreApplication.translate("MainWindow", u"All to Vdata", None))
 #if QT_CONFIG(shortcut)
@@ -720,7 +809,7 @@ class Ui_MainWindow(object):
         self.open_file_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+O", None))
 #endif // QT_CONFIG(shortcut)
 #if QT_CONFIG(tooltip)
-        self.save_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + S</p></body></html>", None))
+        self.save_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Save and compile Ctrl + S</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.save_file_button.setText(QCoreApplication.translate("MainWindow", u"Save", None))
 #if QT_CONFIG(shortcut)
