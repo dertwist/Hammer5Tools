@@ -30,10 +30,10 @@ stop_discord_thread = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
-app_version = '2.1.0'
+app_version = '2.1.1'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '0.5.0'
-smartprop_editor_version = '0.6.0'
+smartprop_editor_version = '0.6.1'
 
 
 import sys
@@ -65,6 +65,7 @@ class Widget(QMainWindow):
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except Exception as e:
             print(f"Error checking updates: {e}")
+        print(f'SmartProp Editor version: {smartprop_editor_version}')
 
         self._restore_user_prefs()
         if get_config_bool('APP', 'first_launch'):
@@ -166,9 +167,11 @@ class Widget(QMainWindow):
                 self.SoundEventEditorMainWidget.deleteLater()
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
+
         try:
-            self.SoundEventEditorMainWidget = SoundEventEditorMainWidget(soundevent_editor_version)
-            self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
+            if hasattr(self, 'SoundEventEditorMainWidget') and self.SmartPropEditorMainWindow:
+                self.SmartPropEditorMainWindow.closeEvent(self.event)
+                self.SmartPropEditorMainWindow.deleteLater()
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
@@ -189,12 +192,14 @@ class Widget(QMainWindow):
             print('Error while setting up BatchCreator_MainWindow:', e)
 
         # Smartprop editior
+
         try:
-            if hasattr(self, 'SoundEventEditorMainWidget') and self.SmartPropEditorMainWindow:
-                self.SmartPropEditorMainWindow.closeEvent(self.event)
-                self.SmartPropEditorMainWindow.deleteLater()
+            self.SoundEventEditorMainWidget = SoundEventEditorMainWidget(soundevent_editor_version)
+            self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
+
+
 
         try:
             self.SmartPropEditorMainWindow = SmartPropEditorMainWindow()

@@ -24,7 +24,7 @@ def check_updates(repo_url, current_version, silent):
         latest_version = release_info['tag_name'].lstrip('v')  # Remove 'v' from the version
         release_notes = release_info['body']
 
-        print(f"Latest version: {latest_version}")
+        print(f"GitHub version: {latest_version}")
 
         # Compare the current version with the latest version using packaging.version
         if version.parse(current_version) < version.parse(latest_version):
