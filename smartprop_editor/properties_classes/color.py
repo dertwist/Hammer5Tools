@@ -16,7 +16,10 @@ class PropertyColor(QWidget):
         self.setAcceptDrops(False)
         self.value_class = value_class
         self.value = value
+
         self.color = [255, 255, 255]
+        self.ui.logic_switch.setCurrentIndex(0)
+
         self.variables_scrollArea = variables_scrollArea
 
         self.dialog = QColorDialog()
@@ -53,9 +56,6 @@ class PropertyColor(QWidget):
         elif isinstance(value, list):
             self.ui.logic_switch.setCurrentIndex(1)
             self.color = value
-        else:
-            self.ui.logic_switch.setCurrentIndex(0)
-            self.color = [255, 255 ,255]
 
         self.ui.value.clicked.connect(self.open_dialog)
 

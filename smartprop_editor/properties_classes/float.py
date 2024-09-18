@@ -35,6 +35,10 @@ class PropertyFloat(QWidget):
         self.ui.layout.insertWidget(2, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)
 
+        self.ui.logic_switch.setCurrentIndex(0)
+        self.text_line.setPlainText('0')
+
+
         if isinstance(value, dict):
             if 'm_Expression' in value:
                 self.ui.logic_switch.setCurrentIndex(3)
@@ -51,9 +55,6 @@ class PropertyFloat(QWidget):
         elif isinstance(value, float) or isinstance(value, int):
             self.ui.logic_switch.setCurrentIndex(1)
             self.text_line.setPlainText(str(value))
-        else:
-            self.ui.logic_switch.setCurrentIndex(0)
-            self.text_line.setPlainText('0')
 
 
 

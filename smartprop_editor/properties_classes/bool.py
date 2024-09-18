@@ -34,24 +34,23 @@ class PropertyBool(QWidget):
 
         self.ui.value.stateChanged.connect(self.on_changed)
 
+        self.ui.logic_switch.setCurrentIndex(0)
+        self.text_line.setPlainText('')
+
         if isinstance(value, dict):
             if 'm_Expression' in value:
                 self.ui.logic_switch.setCurrentIndex(3)
                 self.var_value = value['m_Expression']
                 self.text_line.setPlainText(self.var_value)
-            elif 'm_SourceName' in value:
+            if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(self.var_value)
-            else:
-                print('Could not parse given input data')
         elif isinstance(value, bool):
             self.ui.logic_switch.setCurrentIndex(1)
             self.ui.value.setChecked(value)
         else:
-            self.ui.logic_switch.setCurrentIndex(0)
-            self.text_line.setPlainText('')
-
+            pass
 
 
         self.on_changed()
