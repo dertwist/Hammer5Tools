@@ -31,7 +31,6 @@ class PropertyCombobox(QWidget):
         # EditLine
         self.text_line = CompletingPlainTextEdit()
         self.text_line.completion_tail = ''
-        self.text_line.OnlyFloat = True
         self.text_line.setPlaceholderText('Variable name, float or expression')
         self.ui.layout.insertWidget(3, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)

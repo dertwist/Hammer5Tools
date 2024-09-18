@@ -22,6 +22,26 @@ class PropertyString(QWidget):
         self.ui.logic_switch.setItemText(1, 'String')
         self.ui.layout.removeItem(self.ui.spacer)
 
+        if expression_bool:
+            self.ui.property_class.setStyleSheet("""
+                        border:0px;
+            background-color: rgba(255, 255, 255, 0);
+            font: 8pt "Segoe UI";
+            padding-right: 16px;
+
+            color: rgb(255, 123, 125);
+                        """)
+        else:
+            self.ui.property_class.setStyleSheet("""
+                        border:0px;
+            background-color: rgba(255, 255, 255, 0);
+            font: 8pt "Segoe UI";
+            padding-right: 16px;
+
+            color: rgb(255, 209, 153);
+                        """)
+
+
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
 

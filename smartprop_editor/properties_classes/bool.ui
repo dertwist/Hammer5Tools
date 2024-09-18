@@ -140,7 +140,7 @@ background-color: rgba(255, 255, 255, 0);
 font: 8pt &quot;Segoe UI&quot;;
 padding-right: 16px;
 
-</string>
+color: rgb(255, 189, 190);</string>
           </property>
           <property name="text">
            <string>Value</string>

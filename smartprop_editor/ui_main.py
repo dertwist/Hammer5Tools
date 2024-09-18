@@ -61,6 +61,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.frame_9 = QFrame(self.centralwidget)
         self.frame_9.setObjectName(u"frame_9")
+        self.frame_9.setStyleSheet(u"")
         self.frame_9.setFrameShape(QFrame.StyledPanel)
         self.frame_9.setFrameShadow(QFrame.Raised)
         self.frame_9.setLineWidth(0)
@@ -87,7 +88,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 775, 700))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 775, 702))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -107,17 +108,6 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 
         self.verticalLayout_5.addWidget(self.scrollArea)
-
-        self.frame_8 = QFrame(self.frame_9)
-        self.frame_8.setObjectName(u"frame_8")
-        self.frame_8.setFrameShape(QFrame.StyledPanel)
-        self.frame_8.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_5 = QHBoxLayout(self.frame_8)
-        self.horizontalLayout_5.setSpacing(8)
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
-
-        self.verticalLayout_5.addWidget(self.frame_8)
 
 
         self.verticalLayout_9.addWidget(self.frame_9)
@@ -140,6 +130,45 @@ class Ui_MainWindow(object):
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.new_element_button = QPushButton(self.frame_2)
+        self.new_element_button.setObjectName(u"new_element_button")
+        self.new_element_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.new_element_button.setIcon(icon4)
+        self.new_element_button.setIconSize(QSize(22, 22))
+
+        self.verticalLayout_3.addWidget(self.new_element_button)
+
         self.tree_hierarchy_search_bar_widget = QLineEdit(self.frame_2)
         self.tree_hierarchy_search_bar_widget.setObjectName(u"tree_hierarchy_search_bar_widget")
 
@@ -225,8 +254,6 @@ class Ui_MainWindow(object):
         self.add_new_variable_button = QToolButton(self.frame)
         self.add_new_variable_button.setObjectName(u"add_new_variable_button")
         self.add_new_variable_button.setMaximumSize(QSize(28, 28))
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_new_variable_button.setIcon(icon4)
         self.add_new_variable_button.setIconSize(QSize(16, 16))
 
@@ -655,6 +682,7 @@ class Ui_MainWindow(object):
         self.actionSaveSmartpropAs.setText(QCoreApplication.translate("MainWindow", u"SaveSmartpropAs", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
+        self.new_element_button.setText(QCoreApplication.translate("MainWindow", u"New element", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem = self.tree_hierarchy_widget.headerItem()
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
