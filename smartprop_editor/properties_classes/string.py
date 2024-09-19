@@ -4,6 +4,7 @@ from smartprop_editor.properties_classes.ui_float import Ui_Widget
 from completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QCompleter
 from PySide6.QtCore import Signal
+from smartprop_editor.objects import expression_completer
 
 
 class PropertyString(QWidget):
@@ -87,7 +88,7 @@ class PropertyString(QWidget):
 
     def on_changed(self):
         variables = self.get_variables()
-        self.text_line.completions.setStringList(variables)
+        self.text_line.completions.setStringList(variables + expression_completer)
         self.change_value()
         self.edited.emit()
     def change_value(self):
