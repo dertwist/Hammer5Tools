@@ -199,10 +199,10 @@ class SmartPropEditorMainWindow(QMainWindow):
             pass
         else:
             # Update focus widget at mouse position
-            cursor_pos = QCursor.pos()
-            widget_under_cursor = QApplication.widgetAt(cursor_pos)
-            if widget_under_cursor:
-                widget_under_cursor.setFocus()
+            # cursor_pos = QCursor.pos()
+            # widget_under_cursor = QApplication.widgetAt(cursor_pos)
+            # if widget_under_cursor:
+            #     widget_under_cursor.setFocus()
 
             focus_widget = QApplication.focusWidget()
 
