@@ -228,11 +228,11 @@ class Explorer(QMainWindow):
         open_folder_action.triggered.connect(lambda: self.open_folder_in_explorer(index))
         menu.addAction(open_folder_action)
 
-        rename_action = QAction("Rename Folder", self)
+        rename_action = QAction("Delete Folder", self)
         rename_action.triggered.connect(lambda: self.rename_item(index))
         menu.addAction(rename_action)
 
-        delete_action = QAction("Remove Folder", self)
+        delete_action = QAction("Delete Folder", self)
         delete_action.triggered.connect(lambda: self.delete_item(index))
         menu.addAction(delete_action)
 
@@ -256,7 +256,7 @@ class Explorer(QMainWindow):
         menu.addAction(open_path_action)
 
 
-        delete_action = QAction("Remove File", self)
+        delete_action = QAction("Delete File", self)
         delete_action.triggered.connect(lambda: self.delete_item(index))
         menu.addAction(delete_action)
 
