@@ -94,13 +94,16 @@ class PropertyFrame(QWidget):
             elif 'm_CoordinateSpace' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'])
                 add_instance()
+            elif 'm_DirectionSpace' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'])
+                add_instance()
             elif 'm_GridPlacementMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SEGMENT', 'FILL'])
                 add_instance()
             elif 'm_GridOriginMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['CENTER', 'CORNER'])
                 add_instance()
-            elif 'm_TraceNoHit' in value_class:
+            elif 'm_nNoHitResult' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'])
                 add_instance()
             elif 'm_ApplyColorMode' in value_class:
@@ -191,7 +194,7 @@ class PropertyFrame(QWidget):
             classes = ['m_SelectionMode','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize','m_vHandleOffset']
             operator_adding_instances(classes)
         elif prop_class == 'PlaceInSphere':
-            classes = ['m_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation']
+            classes = ['m_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode']
             operator_adding_instances(classes)
         elif prop_class == 'PlaceOnPath':
             classes = ['m_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace']
@@ -243,6 +246,9 @@ class PropertyFrame(QWidget):
             operator_adding_instances(classes)
         elif prop_class == 'ChoiceWeight':
             classes = ['m_flWeight']
+            operator_adding_instances(classes)
+        elif prop_class == 'TraceInDirection':
+            classes = ['m_DirectionSpace', 'm_nNoHitResult', 'm_flSurfaceUpInfluence', 'm_flOriginOffset', 'm_flTraceLength']
             operator_adding_instances(classes)
 
 

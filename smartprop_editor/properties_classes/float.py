@@ -4,6 +4,7 @@ from smartprop_editor.properties_classes.ui_float import Ui_Widget
 from completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QCompleter
 from PySide6.QtCore import Signal
+from smartprop_editor.objects import expression_completer
 
 
 class PropertyFloat(QWidget):
@@ -61,15 +62,11 @@ class PropertyFloat(QWidget):
             if 'm_Expression' in value:
                 self.ui.logic_switch.setCurrentIndex(3)
                 self.var_value = value['m_Expression']
-                self.text_line.setPlainText(self.var_value)
-            else:
-                self.text_line.setPlainText('')
+                self.text_line.setPlainText(str(self.var_value))
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
-                self.text_line.setPlainText(self.var_value)
-            else:
-                self.text_line.setPlainText('')
+                self.text_line.setPlainText(str(self.var_value))
         elif isinstance(value, float) or isinstance(value, int):
             self.ui.logic_switch.setCurrentIndex(1)
             self.text_line.setPlainText(str(value))
@@ -95,7 +92,7 @@ class PropertyFloat(QWidget):
     def on_changed(self):
         self.logic_switch()
         variables = self.get_variables()
-        self.text_line.completions.setStringList(variables)
+        self.text_line.completions.setStringList(variables + expression_completer)
         self.change_value()
         self.edited.emit()
     def change_value(self):
