@@ -37,6 +37,8 @@ class VsmartOpen:
                 file_content = file.read()
 
             modified_content = re.sub(pattern, '= ', file_content)
+            modified_content = modified_content.replace('null,', '')
+            # modified_content = re.sub(r'null', '', modified_content)
             with open(self.filename, 'w') as file:
                 file.write(modified_content)
         except Exception as error:
