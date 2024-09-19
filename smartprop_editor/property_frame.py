@@ -81,6 +81,13 @@ class PropertyFrame(QWidget):
             if 'm_nPickMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'])
                 add_instance()
+
+            # pass
+            elif value_class == 'm_bEnabled':
+                pass
+            elif value_class == 'm_sLabel':
+                pass
+
             elif 'm_nScaleMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'])
                 add_instance()
@@ -168,15 +175,10 @@ class PropertyFrame(QWidget):
             elif 'm_OutputVariableMinX' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
                 add_instance()
-
             # Comparison
             elif 'm_VariableComparison' in value_class:
                 property_instance = PropertyComparison(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
-            elif value_class == 'm_bEnabled':
-                pass
-            elif value_class == 'm_sLabel':
-                pass
             else:
                 property_instance = PropertyLegacy(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)
                 add_instance()
