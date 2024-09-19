@@ -5,6 +5,7 @@ from smartprop_editor.properties_classes.ui_vector3d import Ui_Widget
 from completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QCompleter
 from PySide6.QtCore import Signal
+from smartprop_editor.objects import expression_completer
 
 
 class PropertyVector3D(QWidget):
@@ -116,10 +117,10 @@ class PropertyVector3D(QWidget):
 
     def on_changed(self):
         variables = self.get_variables()
-        self.text_line.completions.setStringList(variables)
-        self.text_line_x.completions.setStringList(variables)
-        self.text_line_y.completions.setStringList(variables)
-        self.text_line_z.completions.setStringList(variables)
+        self.text_line.completions.setStringList(variables + expression_completer)
+        self.text_line_x.completions.setStringList(variables + expression_completer)
+        self.text_line_y.completions.setStringList(variables + expression_completer)
+        self.text_line_z.completions.setStringList(variables + expression_completer)
         self.logic_switch_line()
         self.logic_switch()
 
