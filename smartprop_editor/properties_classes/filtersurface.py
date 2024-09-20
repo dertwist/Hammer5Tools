@@ -1,6 +1,7 @@
 import ast
 import re
 
+from qt_styles.qt_smartprops_tree_stylesheet import QT_Stylesheet_smartprop_tree
 from smartprop_editor.objects import surfaces_list
 from smartprop_editor.properties_classes.ui_filtersurface import Ui_Widget
 from completer.main import CompletingPlainTextEdit
@@ -40,19 +41,11 @@ class PropertySurface(QWidget):
         self.ui.property_class.setText(output)
         # self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
 
-        if isinstance(value, dict):
-            if 'm_Expression' in value:
-                # self.ui.logic_switch.setCurrentIndex(3)
-                self.var_value = value['m_Expression']
-                self.color = [255, 255, 255]
-            if 'm_SourceName' in value:
-                # self.ui.logic_switch.setCurrentIndex(2)
-                self.var_value = value['m_SourceName']
-                self.color = [255, 255 ,255]
-                self.text_line.setPlainText(self.var_value)
-        elif isinstance(value, list):
-            # self.ui.logic_switch.setCurrentIndex(1)
-            self.color = value
+        if isinstance(value, list):
+            for key in value:
+                item = QTreeWidgetItem()
+                item.setText(0, key)
+                self.ui.surfaces_tree.invisibleRootItem().addChild(item)
 
         self.ui.add_surface.clicked.connect(self.surface_popup)
 
