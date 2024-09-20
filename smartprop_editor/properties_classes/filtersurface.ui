@@ -196,9 +196,22 @@ padding-right: 16px;
         </property>
         <column>
          <property name="text">
+          <string>switch</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
           <string>surface</string>
          </property>
         </column>
+        <item>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="text">
+          <string>concrete</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item>

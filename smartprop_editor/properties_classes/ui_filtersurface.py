@@ -117,6 +117,7 @@ class Ui_Widget(object):
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.surfaces_tree = QTreeWidget(self.frame_3)
+        QTreeWidgetItem(self.surfaces_tree)
         self.surfaces_tree.setObjectName(u"surfaces_tree")
         self.surfaces_tree.setAlternatingRowColors(True)
         self.surfaces_tree.setHeaderHidden(True)
@@ -144,7 +145,15 @@ class Ui_Widget(object):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
         self.property_class.setText(QCoreApplication.translate("Widget", u"Class", None))
         ___qtreewidgetitem = self.surfaces_tree.headerItem()
-        ___qtreewidgetitem.setText(0, QCoreApplication.translate("Widget", u"surface", None));
+        ___qtreewidgetitem.setText(1, QCoreApplication.translate("Widget", u"surface", None));
+        ___qtreewidgetitem.setText(0, QCoreApplication.translate("Widget", u"switch", None));
+
+        __sortingEnabled = self.surfaces_tree.isSortingEnabled()
+        self.surfaces_tree.setSortingEnabled(False)
+        ___qtreewidgetitem1 = self.surfaces_tree.topLevelItem(0)
+        ___qtreewidgetitem1.setText(1, QCoreApplication.translate("Widget", u"concrete", None));
+        self.surfaces_tree.setSortingEnabled(__sortingEnabled)
+
         self.add_surface.setText(QCoreApplication.translate("Widget", u"Add surface", None))
     # retranslateUi
 
