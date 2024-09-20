@@ -59,7 +59,7 @@ class PropertySurface(QWidget):
 
     def open_hierarchy_menu(self, position):
         menu = QMenu()
-        delete_action = menu.addAction("Delete")
+        delete_action = menu.addAction("Delete item")
         delete_action.triggered.connect(lambda: self.delete_selected_tree_items())
         menu.exec(self.ui.surfaces_tree.viewport().mapToGlobal(position))
 

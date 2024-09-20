@@ -49,7 +49,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
-    <number>0</number>
+    <number>6</number>
    </property>
    <property name="leftMargin">
     <number>0</number>
@@ -97,10 +97,10 @@
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <property name="lineWidth">
       <number>0</number>
@@ -124,7 +124,7 @@
       <item>
        <layout class="QHBoxLayout" name="layout">
         <property name="sizeConstraint">
-         <enum>QLayout::SizeConstraint::SetFixedSize</enum>
+         <enum>QLayout::SetFixedSize</enum>
         </property>
         <item>
          <widget class="QLabel" name="property_class">
@@ -139,8 +139,7 @@
 background-color: rgba(255, 255, 255, 0);
 font: 8pt &quot;Segoe UI&quot;;
 padding-right: 16px;
-
-</string>
+color: rgb(247, 208, 255);</string>
           </property>
           <property name="text">
            <string>Class</string>
@@ -150,7 +149,7 @@ padding-right: 16px;
         <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
+           <enum>Qt::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -168,10 +167,10 @@ padding-right: 16px;
    <item>
     <widget class="QFrame" name="frame_3">
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="leftMargin">
@@ -192,7 +191,7 @@ padding-right: 16px;
          <bool>true</bool>
         </property>
         <property name="selectionMode">
-         <enum>QAbstractItemView::SelectionMode::ContiguousSelection</enum>
+         <enum>QAbstractItemView::ContiguousSelection</enum>
         </property>
         <property name="headerHidden">
          <bool>true</bool>
@@ -206,6 +205,38 @@ padding-right: 16px;
       </item>
       <item>
        <widget class="QPushButton" name="add_surface">
+        <property name="styleSheet">
+         <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+        </property>
         <property name="text">
          <string>Add surface</string>
         </property>
