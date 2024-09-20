@@ -132,19 +132,18 @@ class VsmartOpen:
             if element_prefix in child_item.text(0):
                 # Remove 'element_prefix' from the item's name
                 element_value = ast.literal_eval(child_item.text(1))
+                current_name = child_item.text(0)
+                new_name = current_name.replace(element_prefix, '')
+
+                # Set unique naming using 2 digits
+                new_name = f"{new_name}_{counter:02d}"
+                counter += 1
+
+                child_item.setText(0, new_name)
                 if 'm_sLabel' in element_value:
                     label = element_value['m_sLabel']
                     if label != '':
                         child_item.setText(0, label)
-                else:
-                    current_name = child_item.text(0)
-                    new_name = current_name.replace(element_prefix, '')
-
-                    # Set unique naming using 2 digits
-                    new_name = f"{new_name}_{counter:02d}"
-                    counter += 1
-
-                    child_item.setText(0, new_name)
 
                 # Recursively fix names for child elements
                 self.fix_names(child_item)
