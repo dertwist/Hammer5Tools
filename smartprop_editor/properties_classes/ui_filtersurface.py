@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QHeaderView,
-    QLabel, QLayout, QPushButton, QSizePolicy,
-    QSpacerItem, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QFrame, QHBoxLayout,
+    QHeaderView, QLabel, QLayout, QPushButton,
+    QSizePolicy, QSpacerItem, QTreeWidget, QTreeWidgetItem,
+    QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_Widget(object):
@@ -117,9 +117,9 @@ class Ui_Widget(object):
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.surfaces_tree = QTreeWidget(self.frame_3)
-        QTreeWidgetItem(self.surfaces_tree)
         self.surfaces_tree.setObjectName(u"surfaces_tree")
         self.surfaces_tree.setAlternatingRowColors(True)
+        self.surfaces_tree.setSelectionMode(QAbstractItemView.SelectionMode.ContiguousSelection)
         self.surfaces_tree.setHeaderHidden(True)
 
         self.verticalLayout_3.addWidget(self.surfaces_tree)
@@ -145,15 +145,7 @@ class Ui_Widget(object):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
         self.property_class.setText(QCoreApplication.translate("Widget", u"Class", None))
         ___qtreewidgetitem = self.surfaces_tree.headerItem()
-        ___qtreewidgetitem.setText(1, QCoreApplication.translate("Widget", u"surface", None));
-        ___qtreewidgetitem.setText(0, QCoreApplication.translate("Widget", u"switch", None));
-
-        __sortingEnabled = self.surfaces_tree.isSortingEnabled()
-        self.surfaces_tree.setSortingEnabled(False)
-        ___qtreewidgetitem1 = self.surfaces_tree.topLevelItem(0)
-        ___qtreewidgetitem1.setText(1, QCoreApplication.translate("Widget", u"concrete", None));
-        self.surfaces_tree.setSortingEnabled(__sortingEnabled)
-
+        ___qtreewidgetitem.setText(0, QCoreApplication.translate("Widget", u"surface", None));
         self.add_surface.setText(QCoreApplication.translate("Widget", u"Add surface", None))
     # retranslateUi
 

@@ -5,7 +5,6 @@ import threading
 import time
 import json
 
-from adodbapi.examples.xls_read import filename
 from distutils.util import strtobool
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit
@@ -30,7 +29,7 @@ from explorer.main import Explorer
 from preferences import settings
 
 global opened_file
-
+opened_file = None
 
 # Get cs2_path
 cs2_path = get_cs2_path()
@@ -507,7 +506,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
             return variables
         # index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
-
+        global opened_file
         if opened_file:
             filename = opened_file
         else:

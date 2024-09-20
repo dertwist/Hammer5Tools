@@ -191,27 +191,17 @@ padding-right: 16px;
         <property name="alternatingRowColors">
          <bool>true</bool>
         </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::SelectionMode::ContiguousSelection</enum>
+        </property>
         <property name="headerHidden">
          <bool>true</bool>
         </property>
         <column>
          <property name="text">
-          <string>switch</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
           <string>surface</string>
          </property>
         </column>
-        <item>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="text">
-          <string>concrete</string>
-         </property>
-        </item>
        </widget>
       </item>
       <item>
