@@ -236,7 +236,7 @@ class PropertyFrame(QWidget):
             operator_adding_instances(classes)
         # Filters
         elif prop_class == 'SurfaceProperties':
-            classes = ['m_AllowedSurfaceProperties', 'm_DisallowedSurfaceProperties']
+            classes = ['m_DisallowedSurfaceProperties', 'm_AllowedSurfaceProperties']
             operator_adding_instances(classes)
         elif prop_class == 'VariableValue':
             classes = ['m_VariableComparison']
