@@ -154,7 +154,13 @@ class VsmartOpen:
 
 class VsmartSave:
     def __init__(self, filename, tree=None, var_data=None):
-        self.filename = filename
+
+        if filename:
+            self.filename = filename
+        else:
+            # extension = get_config_value('SmartpropEditor', 'Extension')
+            # self.filename, _ = QFileDialog.getSaveFileName(None, "Save File", "", "VSmart Files (*.vsmart);;VData Files (*.vdata)")
+            self.filename = None
         self.tree = tree
         self.var_data = var_data
         self.save_file()
