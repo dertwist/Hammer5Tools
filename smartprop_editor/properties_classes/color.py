@@ -45,14 +45,11 @@ class PropertyColor(QWidget):
                 self.var_value = value['m_Expression']
                 self.text_line.setPlainText(self.var_value)
                 self.color = [255, 255, 255]
-            elif 'm_SourceName' in value:
+            if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.color = [255, 255 ,255]
                 self.text_line.setPlainText(self.var_value)
-            else:
-                print('Could not parse given input data')
-                self.color = [255, 255, 255]
         elif isinstance(value, list):
             self.ui.logic_switch.setCurrentIndex(1)
             self.color = value
