@@ -64,6 +64,7 @@ class PropertyFrame(QWidget):
         from smartprop_editor.properties_classes.string import PropertyString
         from smartprop_editor.properties_classes.color import PropertyColor
         from smartprop_editor.properties_classes.comparison import PropertyComparison
+        from smartprop_editor.properties_classes.filtersurface import PropertySurface
 
 
 
@@ -181,6 +182,15 @@ class PropertyFrame(QWidget):
             # Comparison
             elif 'm_VariableComparison' in value_class:
                 property_instance = PropertyComparison(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
+            # Surfaces
+
+            elif 'm_AllowedSurfaceProperties' in value_class:
+                property_instance = PropertySurface(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
+            elif 'm_DisallowedSurfaceProperties' in value_class:
+                property_instance = PropertySurface(value=value, value_class=value_class,
+                                                       variables_scrollArea=self.variables_scrollArea)
                 add_instance()
             else:
                 property_instance = PropertyLegacy(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea)

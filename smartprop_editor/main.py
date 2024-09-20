@@ -5,6 +5,7 @@ import threading
 import time
 import json
 
+from adodbapi.examples.xls_read import filename
 from distutils.util import strtobool
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit
@@ -506,7 +507,11 @@ class SmartPropEditorMainWindow(QMainWindow):
 
             return variables
         # index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
-        filename = opened_file
+
+        if opened_file:
+            filename = opened_file
+        else:
+            filename = None
         var_data = save_variables()
         VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data)
         VsmartCompile(filename=filename)
