@@ -67,6 +67,8 @@ class PropertyString(QWidget):
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(str(self.var_value))
+            else:
+                print('Could not parse given input data')
         elif isinstance(value, str):
             self.ui.logic_switch.setCurrentIndex(1)
             self.text_line.setPlainText(value)
