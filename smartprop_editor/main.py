@@ -7,7 +7,7 @@ import json
 
 from distutils.util import strtobool
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit, QFileDialog
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction
 from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
@@ -100,8 +100,10 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def buttons(self):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
-        self.ui.open_file_button.clicked.connect(lambda: self.open_file(filename=None))
+        self.ui.open_file_button.clicked.connect(lambda: self.open_file())
+        self.ui.open_file_as_button.clicked.connect(lambda: self.open_file(external=True))
         self.ui.save_file_button.clicked.connect(self.save_file)
+        self.ui.save_as_file_button.clicked.connect(lambda: self.save_file(external=True))
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
         self.ui.cerate_file_button.clicked.connect(self.create_new_file)
         self.ui.compile_all_button.clicked.connect(self.compile_all)
@@ -393,11 +395,14 @@ class SmartPropEditorMainWindow(QMainWindow):
         with open(os.path.join(current_folder, new_file_name), 'w') as file:
             file.write(blank_vsmart)
             pass
-    def open_file(self, filename=None):
+    def open_file(self, external=False):
         global opened_file
-        if filename == None:
+        if external:
+            filename, _ = QFileDialog.getOpenFileName(None, "Open File", "~/Desktop","VData Files (*.vdata);;VSmart Files (*.vsmart)")
+        else:
             index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
             filename = self.mini_explorer.model.filePath(index)
+
         opened_file = filename
 
         if filename.endswith('.vsmart'):
@@ -461,7 +466,17 @@ class SmartPropEditorMainWindow(QMainWindow):
                     })
                 self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
         print(f'Opened file: {filename}')
-    def save_file(self):
+    def save_file(self, external=False):
+        global opened_file
+        if external:
+            pass
+        else:
+            if opened_file:
+                filename = opened_file
+                external = False
+            else:
+                filename = None
+                external = True
         def save_variables():
             variables = []
             raw_variables = self.get_variables(self.ui.variables_scrollArea)
@@ -505,15 +520,19 @@ class SmartPropEditorMainWindow(QMainWindow):
                 variables.append(var_dict)
 
             return variables
-        # index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
-        global opened_file
-        if opened_file:
-            filename = opened_file
-        else:
-            filename = None
+        if external:
+            filename, _ = QFileDialog.getSaveFileName(None, "Save File", "","VData Files (*.vdata);;VSmart Files (*.vsmart)")
+
         var_data = save_variables()
-        VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data)
-        VsmartCompile(filename=filename)
+        VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data)
+        if external:
+            opened_file = VsmartSaveInstance.filename
+        else:
+            opened_file = VsmartSaveInstance.filename
+            try:
+                VsmartCompile(filename=opened_file)
+            except:
+                print('Failed to compile the smartprop. The source file should be in the addon folder')
 
     # variables
 
