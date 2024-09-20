@@ -49,7 +49,7 @@ class Ui_Widget(object):
 "    background-color: #414956;\n"
 "}")
         self.verticalLayout = QVBoxLayout(Widget)
-        self.verticalLayout.setSpacing(0)
+        self.verticalLayout.setSpacing(6)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.frame = QFrame(Widget)
@@ -73,8 +73,8 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
         self.frame.setLineWidth(0)
         self.horizontalLayout_2 = QHBoxLayout(self.frame)
         self.horizontalLayout_2.setSpacing(16)
@@ -82,7 +82,7 @@ class Ui_Widget(object):
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.layout = QHBoxLayout()
         self.layout.setObjectName(u"layout")
-        self.layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
+        self.layout.setSizeConstraint(QLayout.SetFixedSize)
         self.property_class = QLabel(self.frame)
         self.property_class.setObjectName(u"property_class")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
@@ -94,8 +94,7 @@ class Ui_Widget(object):
 "background-color: rgba(255, 255, 255, 0);\n"
 "font: 8pt \"Segoe UI\";\n"
 "padding-right: 16px;\n"
-"\n"
-"")
+"color: rgb(247, 208, 255);")
 
         self.layout.addWidget(self.property_class)
 
@@ -111,21 +110,51 @@ class Ui_Widget(object):
 
         self.frame_3 = QFrame(Widget)
         self.frame_3.setObjectName(u"frame_3")
-        self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_3.setFrameShape(QFrame.StyledPanel)
+        self.frame_3.setFrameShadow(QFrame.Raised)
         self.verticalLayout_3 = QVBoxLayout(self.frame_3)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.surfaces_tree = QTreeWidget(self.frame_3)
         self.surfaces_tree.setObjectName(u"surfaces_tree")
         self.surfaces_tree.setAlternatingRowColors(True)
-        self.surfaces_tree.setSelectionMode(QAbstractItemView.SelectionMode.ContiguousSelection)
+        self.surfaces_tree.setSelectionMode(QAbstractItemView.ContiguousSelection)
         self.surfaces_tree.setHeaderHidden(True)
 
         self.verticalLayout_3.addWidget(self.surfaces_tree)
 
         self.add_surface = QPushButton(self.frame_3)
         self.add_surface.setObjectName(u"add_surface")
+        self.add_surface.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
         icon = QIcon()
         icon.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_surface.setIcon(icon)
