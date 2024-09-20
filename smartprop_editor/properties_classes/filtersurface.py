@@ -40,18 +40,10 @@ class PropertySurface(QWidget):
         self.ui.property_class.setText(output)
         # self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
 
-        # EditLine
-        self.text_line = CompletingPlainTextEdit()
-        self.text_line.completion_tail = ''
-        self.text_line.setPlaceholderText('Variable name, RGB or expression')
-        self.ui.layout.insertWidget(2, self.text_line)
-        self.text_line.textChanged.connect(self.on_changed)
-
         if isinstance(value, dict):
             if 'm_Expression' in value:
                 # self.ui.logic_switch.setCurrentIndex(3)
                 self.var_value = value['m_Expression']
-                self.text_line.setPlainText(self.var_value)
                 self.color = [255, 255, 255]
             if 'm_SourceName' in value:
                 # self.ui.logic_switch.setCurrentIndex(2)
@@ -69,6 +61,7 @@ class PropertySurface(QWidget):
         item = QTreeWidgetItem()
         item.setText(0, name)
         self.ui.surfaces_tree.invisibleRootItem().addChild(item)
+        self.on_changed()
 
 
     def open_hierarchy_menu(self, position):
@@ -85,6 +78,7 @@ class PropertySurface(QWidget):
                 parent.removeChild(item)
             else:
                 self.ui.surfaces_tree.invisibleRootItem().removeChild(item)
+        self.on_changed()
 
 
     def surface_popup(self):
@@ -117,33 +111,15 @@ class PropertySurface(QWidget):
 
     def on_changed(self):
         # self.logic_switch()
-        variables = self.get_variables()
-        self.text_line.completions.setStringList(variables)
-        # self.change_value()
+        self.change_value()
         self.edited.emit()
     def change_value(self):
-        # Default
-        if self.ui.logic_switch.currentIndex() == 0:
-            self.value = None
-        #Float or int
-        elif self.ui.logic_switch.currentIndex() == 1:
-            self.value = {self.value_class: self.color}
-        # Variable
-        elif self.ui.logic_switch.currentIndex() == 2:
-            value = self.text_line.toPlainText()
-            try:
-                value = ast.literal_eval(value)
-            except:
-                pass
-            self.value = {self.value_class: {'m_SourceName': value}}
-        # Expression
-        elif self.ui.logic_switch.currentIndex() == 3:
-            value = self.text_line.toPlainText()
-            try:
-                value = ast.literal_eval(value)
-            except:
-                pass
-            self.value = {self.value_class: {'m_Expression': value}}
+        value = []
+        for i in range(self.ui.surfaces_tree.topLevelItemCount()):
+            item = self.ui.surfaces_tree.topLevelItem(i)
+            value.append(item.text(0))
+        self.value = {self.value_class: value}
+
 
     def get_variables(self, search_term=None):
         self.variables_scrollArea
