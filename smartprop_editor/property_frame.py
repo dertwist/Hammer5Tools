@@ -183,6 +183,9 @@ class PropertyFrame(QWidget):
             elif 'm_VariableComparison' in value_class:
                 property_instance = PropertyComparison(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
+            elif 'm_OutputVariable' in value_class:
+                property_instance = PropertyComparison(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
             # Surfaces
 
             elif 'm_AllowedSurfaceProperties' in value_class:

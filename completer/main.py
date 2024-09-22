@@ -31,7 +31,7 @@ class CompletingPlainTextEdit(QPlainTextEdit):
             height:18px;
             padding: 0px;
             padding-left: 0px;
-            padding-right: 0px;
+            padding-right: 16px;
             color: #E3E3E3;
             background-color: #1C1C1C;
         }
@@ -48,10 +48,10 @@ class CompletingPlainTextEdit(QPlainTextEdit):
             self.completer.setCompletionPrefix(selected_text)
 
             popup = self.completer.popup()
+            popup.setStyleSheet('padding: 0px;, padding-right: 16px;')
             popup.setCurrentIndex(self.completer.completionModel().index(0, 0))
             cr = self.cursorRect()
-            cr.setWidth(popup.sizeHintForColumn(0) +
-                        popup.verticalScrollBar().sizeHint().width())
+            cr.setWidth(popup.sizeHintForColumn(0) + popup.verticalScrollBar().sizeHint().width() * 2)
             self.completer.complete(cr)
         else:
             self.completer.popup().hide()
