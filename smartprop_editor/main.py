@@ -9,7 +9,7 @@ from distutils.util import strtobool
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit, QFileDialog
 from PySide6.QtWidgets import QMenu, QApplication
-from PySide6.QtGui import QCursor, QDrag, QAction
+from PySide6.QtGui import QCursor, QDrag, QAction, QColor
 from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
 
 from smartprop_editor.ui_main import Ui_MainWindow
@@ -546,14 +546,15 @@ class SmartPropEditorMainWindow(QMainWindow):
                     widget.hide()
 
     def search_hierarchy(self, search_term=None):
-        for i in range(self.ui.tree_hierarchy_widget.topLevelItemCount()):
-            item = self.ui.tree_hierarchy_widget.topLevelItem(i)
-            if item:
-                if search_term.lower() in item.text(
-                        0).lower():  # Adjust the search logic as needed based on the item's text
-                    item.setHidden(False)
-                else:
-                    item.setHidden(True)
+        # Assuming `filterItemsChilds` method recursively searches for the search term
+        # self.ui.tree_hierarchy_widget
+
+        # Highlight the found item in yellow
+        found_items = self.ui.tree_hierarchy_widget.findItems(search_term, flags=(Qt.MatchRecursive | Qt.MatchContains), column=0)
+        print(found_items)
+        # for item in found_items:
+        #     item.setBackground(0, QColor(Qt.yellow))
+
     def add_new_variable(self):
         name = 'new_var'
         existing_variables = []
@@ -683,6 +684,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         tree_item = QTreeWidgetItem()
         tree_item.setText(0, item_data['name'])
         tree_item.setText(1, item_data['value'])
+        tree_item.setFlags(tree_item.flags() | Qt.ItemIsEditable)
 
         for child_data in item_data.get('children', []):
             child_item = self.deserialize_tree_item(child_data)
