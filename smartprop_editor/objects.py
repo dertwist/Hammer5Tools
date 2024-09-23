@@ -29,7 +29,7 @@ element_prefix = 'CSmartPropElement_'
 elements_list = [
     {'ModifyState': {'_class': 'CSmartPropElement_ModifyState', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'Group': {'_class': 'CSmartPropElement_Group', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
-    {'SmartProp': {'_class': 'CSmartPropElement_SmartProp', 'm_sSmartProp': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
+    {'SmartProp': {'_class': 'CSmartPropElement_SmartProp', 'm_sSmartProp': '', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PlaceInSphere': {'_class': 'CSmartPropElement_PlaceInSphere', 'm_flRandomness': None, 'm_nCountMin': 0, 'm_nCountMax': 0, 'm_flPositionRadiusInner': 0, 'm_flPositionRadiusOuter': 0, 'm_bAlignOrientation': False, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PlaceMultiple': {'_class': 'CSmartPropElement_PlaceMultiple', 'm_nCount': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PlaceOnPath': {'_class': 'CSmartPropElement_PlaceOnPath', 'm_PathName': 'path', 'm_vPathOffset': None, 'm_flOffsetAlongPath': None, 'm_PathSpace': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
