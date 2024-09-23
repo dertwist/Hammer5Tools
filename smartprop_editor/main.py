@@ -466,6 +466,13 @@ class SmartPropEditorMainWindow(QMainWindow):
                     })
                 self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
         print(f'Opened file: {filename}')
+        self.explorer_status()
+    def explorer_status(self):
+        global opened_file
+        if opened_file == '':
+            self.ui.dockWidget_10.setWindowTitle('Explorer')
+        else:
+            self.ui.dockWidget_10.setWindowTitle(f'Explorer: ({os.path.basename(opened_file)})')
     def save_file(self, external=False):
         global opened_file
         if external:
