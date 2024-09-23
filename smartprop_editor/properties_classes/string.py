@@ -58,6 +58,7 @@ class PropertyString(QWidget):
             self.text_line.setPlaceholderText('Variable name, string or expression')
         self.ui.layout.insertWidget(2, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)
+        print('Could not parse given input data', type(value), value)
         if isinstance(value, dict):
             if 'm_Expression' in value:
                 self.ui.logic_switch.setCurrentIndex(3)
@@ -67,8 +68,6 @@ class PropertyString(QWidget):
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(str(self.var_value))
-            else:
-                print('Could not parse given input data')
         elif isinstance(value, str):
             self.ui.logic_switch.setCurrentIndex(1)
             self.text_line.setPlainText(value)

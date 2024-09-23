@@ -24,12 +24,12 @@ class CompletingPlainTextEdit(QPlainTextEdit):
         self.setStyleSheet("""QPlainTextEdit {
 
             font: 580 8pt "Segoe UI";
-            border: 2px solid black;
+            border: 0px solid black;
             border-radius: 0px;
             border-color: rgba(80, 80, 80, 255);
         	border:none;
             height:18px;
-            padding: 0px;
+            padding: 2px;
             padding-left: 0px;
             padding-right: 16px;
             color: #E3E3E3;
