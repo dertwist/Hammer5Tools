@@ -179,11 +179,11 @@ class PropertyFrame(QWidget):
             elif 'm_OutputVariableMinX' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
                 add_instance()
+            elif 'm_OutputVariable' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
             # Comparison
             elif 'm_VariableComparison' in value_class:
-                property_instance = PropertyComparison(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
-                add_instance()
-            elif 'm_OutputVariable' in value_class:
                 property_instance = PropertyComparison(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
             # Surfaces
