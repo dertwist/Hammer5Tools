@@ -654,7 +654,7 @@ class SmartPropEditorMainWindow(QMainWindow):
     def copy_item(self, tree_item):
         item_data = self.serialize_tree_item(tree_item)
         clipboard = QApplication.clipboard()
-        clipboard.setText(json.dumps(item_data))
+        clipboard.setText(json.dumps(item_data, indent=4))
 
     def paste_item(self, position):
         clipboard = QApplication.clipboard()
