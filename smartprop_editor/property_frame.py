@@ -35,13 +35,18 @@ class PropertyFrame(QWidget):
         del value['_class']
         self.value = value
         self.layout = self.ui.layout
+
         self.enable = value.get('m_bEnabled', True)
+
         prop_class = self.name
 
 
         self.ui.property_class.setText(self.name)
-
-        self.ui.enable.setChecked(self.enable)
+        try:
+            self.ui.enable.setChecked(self.enable)
+        except:
+            print(f'Error with setting m_bEnabled: {self.enable}; Name: {self.name};Value: {self.value}')
+            print("m_bEnabled SHOULD NOT HAVE EXPRESSION OR VARIABLE, OPEN IN TEXT FILE AND EDIT")
         self.ui.enable.clicked.connect(self.on_edited)
 
 
@@ -204,7 +209,7 @@ class PropertyFrame(QWidget):
             classes = ['m_vStart','m_vEnd', 'm_vUpDirection', 'm_PointSpace', 'm_nScaleMode', 'm_nPickMode', 'm_bOrientAlongLine']
             operator_adding_instances(classes)
         elif prop_class == 'PickOne':
-            classes = ['m_SelectionMode','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize','m_vHandleOffset']
+            classes = ['m_SelectionMode','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize','m_vHandleOffset', 'm_bConfigurable']
             operator_adding_instances(classes)
         elif prop_class == 'PlaceInSphere':
             classes = ['m_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode']

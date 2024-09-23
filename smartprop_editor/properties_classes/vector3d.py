@@ -53,24 +53,24 @@ class PropertyVector3D(QWidget):
         self.value = None
         self.ui.logic_switch.setCurrentIndex(0)
 
+        def add_value(layout, value, combo):
+            if isinstance(value, dict):
+                if 'm_Expression' in value:
+                    layout.setPlainText(str(value['m_Expression']))
+                    combo.setCurrentIndex(2)
+                if 'm_SourceName' in value:
+                    layout.setPlainText(str(value['m_SourceName']))
+                    combo.setCurrentIndex(1)
+            elif isinstance(value, int) or isinstance(value, float):
+                layout.setPlainText(str(value))
+                combo.setCurrentIndex(0)
+            else:
+                layout.setPlainText(str(value))
+                combo.setCurrentIndex(0)
+
         if isinstance(value, dict):
             if  'm_Components' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
-                def add_value(layout, value, combo):
-                    if isinstance(value, dict):
-                        if 'm_Expression' in value:
-                            layout.setPlainText(str(value['m_Expression']))
-                            combo.setCurrentIndex(2)
-                        if 'm_SourceName' in value:
-                            layout.setPlainText(str(value['m_SourceName']))
-                            combo.setCurrentIndex(1)
-                    elif isinstance(value, int) or isinstance(value, float):
-                        layout.setPlainText(str(value))
-                        combo.setCurrentIndex(0)
-                    else:
-                        layout.setPlainText(str(value))
-                        combo.setCurrentIndex(0)
-
                 add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x)
                 add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y)
                 add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z)
@@ -78,9 +78,11 @@ class PropertyVector3D(QWidget):
                 self.ui.logic_switch.setCurrentIndex(1)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(self.var_value)
-            else:
-                pass
-
+        elif isinstance(value, list):
+            self.ui.logic_switch.setCurrentIndex(2)
+            add_value(self.text_line_x, value[0], self.ui.comboBox_x)
+            add_value(self.text_line_y, value[1], self.ui.comboBox_y)
+            add_value(self.text_line_z, value[2], self.ui.comboBox_z)
 
 
         self.on_changed()

@@ -287,6 +287,42 @@ QLineEdit::selection {
        </widget>
       </item>
       <item>
+       <widget class="QComboBox" name="emable_variable">
+        <property name="minimumSize">
+         <size>
+          <width>128</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set Enable status from Variable&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QComboBox {
+    font-size: 8pt;
+    font-family: &quot;Segoe UI&quot;;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid rgba(80, 80, 80, 255);
+    border-radius: 0px;
+    padding: 4px;
+    color: #E3E3E3;
+    background-color: #242424;
+}
+
+QComboBox:focus {
+    border-color: rgba(80, 80, 80, 255);
+}
+
+QComboBox::selection {
+    background-color: #414956;
+    color: white;
+}</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="delete_button">
         <property name="styleSheet">
          <string notr="true">
