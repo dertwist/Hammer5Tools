@@ -82,7 +82,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.properties_groups_init()
 
 
-        self.ui.tree_hierarchy_search_bar_widget.textChanged.connect(self.search_hierarchy)
+        self.ui.tree_hierarchy_search_bar_widget.textChanged.connect(lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem()))
 
         # adding var classes to combobox
         for item in variables_list:
@@ -545,15 +545,43 @@ class SmartPropEditorMainWindow(QMainWindow):
                 else:
                     widget.hide()
 
-    def search_hierarchy(self, search_term=None):
-        # Assuming `filterItemsChilds` method recursively searches for the search term
-        # self.ui.tree_hierarchy_widget
+    def search_hierarchy(self, filter_text, parent_item):
+        # Reset the root visibility and start the filtering process
+        self.filter_item(parent_item, filter_text.lower(), True)
 
-        # Highlight the found item in yellow
-        found_items = self.ui.tree_hierarchy_widget.findItems(search_term, flags=(Qt.MatchRecursive | Qt.MatchContains), column=0)
-        print(found_items)
-        # for item in found_items:
-        #     item.setBackground(0, QColor(Qt.yellow))
+    def filter_item(self, item, filter_text, is_root=False):
+        if not isinstance(item, QTreeWidgetItem):
+            return False
+
+        # Check if the current item's text matches the filter
+        item_text = item.text(0).lower()
+        item_visible = filter_text in item_text
+
+        # Always show the root, regardless of filter
+        if is_root:
+            item.setHidden(False)
+        else:
+            # Hide the item if it doesn't match the filter
+            item.setHidden(not item_visible)
+
+        # Track visibility of any child matching the filter
+        any_child_visible = False
+
+        # Recursively filter all children
+        for i in range(item.childCount()):
+            child_item = item.child(i)
+            child_visible = self.filter_item(child_item, filter_text, False)
+
+            if child_visible:
+                any_child_visible = True
+
+        # If any child is visible, make sure this item is also visible
+        if any_child_visible:
+            item.setHidden(False)
+            item.setExpanded(True)
+
+        # Return True if this item or any of its children is visible
+        return item_visible or any_child_visible
 
     def add_new_variable(self):
         name = 'new_var'
