@@ -197,7 +197,14 @@ class PropertyFrame(QWidget):
             elif 'm_OutputVariableMinX' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
                 add_instance()
+
+            elif 'm_VariableName' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
+                add_instance()
             elif 'm_OutputVariable' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=True, only_string=True, placeholder='Variable Output')
+                add_instance()
+            elif 'm_VariableValue' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
             # Comparison
@@ -237,7 +244,7 @@ class PropertyFrame(QWidget):
             classes = ['m_sSmartProp','m_vModelScale']
             operator_adding_instances(classes)
         elif prop_class == 'PlaceMultiple':
-            classes = ['m_nCount']
+            classes = ['m_nCount', 'm_Expression']
             operator_adding_instances(classes)
         # Operators
         elif prop_class == 'CreateSizer':
