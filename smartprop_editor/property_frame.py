@@ -11,6 +11,8 @@ from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
 
+from popup_menu.popup_menu_main import PopupMenu
+
 
 import ast
 
@@ -45,9 +47,20 @@ class PropertyFrame(QWidget):
         try:
             self.ui.enable.setChecked(self.enable)
         except:
-            print(f'Error with setting m_bEnabled: {self.enable}; Name: {self.name};Value: {self.value}')
-            print("m_bEnabled SHOULD NOT HAVE EXPRESSION OR VARIABLE, OPEN IN TEXT FILE AND EDIT")
+            if isinstance(self.enable, dict):
+                print(self.enable)
+                if 'm_SourceName' in self.enable:
+                    self.ui.variable_display.setText(self.enable['m_SourceName'])
+                if 'm_Expression' in self.enable:
+                    self.ui.variable_display.setText(self.enable['m_Expression'])
+            else:
+                print(f'Error with setting m_bEnabled: {self.enable}; Name: {self.name};Value: {self.value}')
+            self.ui.enable.setChecked(True)
         self.ui.enable.clicked.connect(self.on_edited)
+
+        self.ui.variables_search.clicked.connect(self.search_enable_variable)
+        self.ui.variable_clear.clicked.connect(lambda: self.ui.variable_display.clear())
+        self.ui.variable_display.textChanged.connect(self.on_edited)
 
 
         # self.ui.variable_name.textChanged.connect(self.update_self)
@@ -289,11 +302,33 @@ class PropertyFrame(QWidget):
             self.ui.frame_layout.setMaximumSize(16666,0)
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
+    def search_enable_variable(self):
+        variables = self.get_variables()
+        print(variables)
+        self.popup_menu = PopupMenu(variables, add_once=False)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.add_variable(name, value))
+        self.popup_menu.show()
+    def add_variable(self, name, value):
+        self.ui.variable_display.setText(name)
+
+    def get_variables(self, search_term=None):
+        self.variables_scrollArea
+        data_out = []
+        for i in range(self.variables_scrollArea.count()):
+            widget = self.variables_scrollArea.itemAt(i).widget()
+            if widget:
+                if 'Bool' in widget.var_class:
+                    data_out.append({widget.name: {widget.var_class}})
+        return data_out
 
     def on_edited(self):
+        if self.ui.variable_display.text() != '':
+            enabled = {'m_Expression': str(self.ui.variable_display.text())}
+        else:
+            enabled = self.ui.enable.isChecked()
         self.value = {
             '_class': f'{self.name_prefix}_{self.name}',
-            'm_bEnabled': self.ui.enable.isChecked()
+            'm_bEnabled': enabled
         }
         try:
             for index in range(self.ui.layout.count()):

@@ -15,10 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFrame,
-    QHBoxLayout, QLabel, QLayout, QLineEdit,
-    QPushButton, QSizePolicy, QToolButton, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout,
+    QLabel, QLayout, QLineEdit, QPushButton,
+    QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_Form(object):
@@ -115,7 +114,7 @@ class Ui_Form(object):
 "\n"
 "\n"
 "QCheckBox {\n"
-"    font: 700 10pt \"Segoe UI\";\n"
+"    font: 580  8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
@@ -143,11 +142,41 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.enable)
 
-        self.property_icon = QToolButton(self.frame)
-        self.property_icon.setObjectName(u"property_icon")
-        self.property_icon.setEnabled(False)
-        self.property_icon.setFocusPolicy(Qt.NoFocus)
-        self.property_icon.setStyleSheet(u"QToolButton {\n"
+        self.variable_display = QLineEdit(self.frame)
+        self.variable_display.setObjectName(u"variable_display")
+        self.variable_display.setFocusPolicy(Qt.NoFocus)
+        self.variable_display.setStyleSheet(u"QLineEdit {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border-top: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #242424;\n"
+"}\n"
+"\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.variable_display.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
+        self.variable_display.setMaxLength(32)
+        self.variable_display.setReadOnly(True)
+
+        self.horizontalLayout.addWidget(self.variable_display)
+
+        self.variable_clear = QToolButton(self.frame)
+        self.variable_clear.setObjectName(u"variable_clear")
+        self.variable_clear.setEnabled(True)
+        self.variable_clear.setFocusPolicy(Qt.NoFocus)
+        self.variable_clear.setStyleSheet(u"QToolButton {\n"
 "    border: 2px solid black;\n"
 "    border-radius: 0px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
@@ -165,11 +194,70 @@ class Ui_Form(object):
 "    color: white;\n"
 "}")
         icon = QIcon()
-        icon.addFile(u":/icons/linear_scale_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.property_icon.setIcon(icon)
-        self.property_icon.setIconSize(QSize(24, 24))
+        icon.addFile(u":/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.variable_clear.setIcon(icon)
+        self.variable_clear.setIconSize(QSize(24, 24))
 
-        self.horizontalLayout.addWidget(self.property_icon)
+        self.horizontalLayout.addWidget(self.variable_clear)
+
+        self.variables_search = QToolButton(self.frame)
+        self.variables_search.setObjectName(u"variables_search")
+        self.variables_search.setEnabled(True)
+        self.variables_search.setFocusPolicy(Qt.NoFocus)
+        self.variables_search.setStyleSheet(u"QToolButton {\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"border-left: None;\n"
+"border-top: None;\n"
+"border-right: None;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #242424;\n"
+"height:16px;\n"
+"width:16px;\n"
+"}\n"
+"QToolButton:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.variables_search.setIcon(icon1)
+        self.variables_search.setIconSize(QSize(24, 24))
+
+        self.horizontalLayout.addWidget(self.variables_search)
+
+        self.property_class_2 = QLineEdit(self.frame)
+        self.property_class_2.setObjectName(u"property_class_2")
+        self.property_class_2.setMaximumSize(QSize(64, 16777215))
+        self.property_class_2.setFocusPolicy(Qt.NoFocus)
+        self.property_class_2.setStyleSheet(u"QLineEdit {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border-top: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #242424;\n"
+"}\n"
+"\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.property_class_2.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
+        self.property_class_2.setMaxLength(32)
+        self.property_class_2.setReadOnly(True)
+
+        self.horizontalLayout.addWidget(self.property_class_2)
 
         self.property_class = QLineEdit(self.frame)
         self.property_class.setObjectName(u"property_class")
@@ -201,10 +289,11 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.property_class)
 
-        self.emable_variable = QComboBox(self.frame)
-        self.emable_variable.setObjectName(u"emable_variable")
-        self.emable_variable.setMinimumSize(QSize(128, 0))
-        self.emable_variable.setStyleSheet(u"QComboBox {\n"
+        self.property_class_3 = QLineEdit(self.frame)
+        self.property_class_3.setObjectName(u"property_class_3")
+        self.property_class_3.setMaximumSize(QSize(64, 16777215))
+        self.property_class_3.setFocusPolicy(Qt.NoFocus)
+        self.property_class_3.setStyleSheet(u"QLineEdit {\n"
 "    font-size: 8pt;\n"
 "    font-family: \"Segoe UI\";\n"
 "    border-top: 0px;\n"
@@ -212,21 +301,24 @@ class Ui_Form(object):
 "    border-right: 0px;\n"
 "    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
 "    border-radius: 0px;\n"
-"    padding: 4px;\n"
+"    padding: 2px;\n"
 "    color: #E3E3E3;\n"
 "    background-color: #242424;\n"
 "}\n"
 "\n"
-"QComboBox:focus {\n"
+"QLineEdit:focus {\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
 "}\n"
 "\n"
-"QComboBox::selection {\n"
+"QLineEdit::selection {\n"
 "    background-color: #414956;\n"
 "    color: white;\n"
 "}")
+        self.property_class_3.setInputMethodHints(Qt.ImhLatinOnly|Qt.ImhLowercaseOnly)
+        self.property_class_3.setMaxLength(32)
+        self.property_class_3.setReadOnly(True)
 
-        self.horizontalLayout.addWidget(self.emable_variable)
+        self.horizontalLayout.addWidget(self.property_class_3)
 
         self.delete_button = QPushButton(self.frame)
         self.delete_button.setObjectName(u"delete_button")
@@ -270,9 +362,9 @@ class Ui_Form(object):
 "	padding-right: 8px;\n"
 "	color: #E3E3E3;\n"
 "}")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.delete_button.setIcon(icon1)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.delete_button.setIcon(icon2)
 
         self.horizontalLayout.addWidget(self.delete_button)
 
@@ -318,9 +410,9 @@ class Ui_Form(object):
 "	padding-right: 8px;\n"
 "	color: #E3E3E3;\n"
 "}")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.copy_button.setIcon(icon2)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.copy_button.setIcon(icon3)
 
         self.horizontalLayout.addWidget(self.copy_button)
 
@@ -362,14 +454,25 @@ class Ui_Form(object):
         self.enable.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show in editor</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.enable.setText("")
-        self.property_icon.setText("")
+#if QT_CONFIG(tooltip)
+        self.variable_display.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.variable_display.setText("")
+        self.variable_display.setPlaceholderText(QCoreApplication.translate("Form", u"Set enable from variable", None))
+        self.variable_clear.setText("")
+        self.variables_search.setText("")
+#if QT_CONFIG(tooltip)
+        self.property_class_2.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.property_class_2.setText("")
 #if QT_CONFIG(tooltip)
         self.property_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.property_class.setText(QCoreApplication.translate("Form", u"Class properties", None))
 #if QT_CONFIG(tooltip)
-        self.emable_variable.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Set Enable status from Variable</p></body></html>", None))
+        self.property_class_3.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
+        self.property_class_3.setText("")
         self.delete_button.setText(QCoreApplication.translate("Form", u"Delete", None))
         self.copy_button.setText(QCoreApplication.translate("Form", u"Copy", None))
     # retranslateUi

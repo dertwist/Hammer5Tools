@@ -21,6 +21,7 @@
         "soudevent_editor/properties/curve_property.ui",
         "soudevent_editor/properties/files_property.ui",
         "popup_menu/popup_menu.ui",
+        "popup_menu/popup_menu_tree.ui",
         "smartprop_editor/main.ui",
         "soudevent_editor/import_audio_dialog.ui",
         "soudevent_editor/create_new_soundevent_dialog.ui",
