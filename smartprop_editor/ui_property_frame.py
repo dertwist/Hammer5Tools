@@ -15,9 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout,
-    QLabel, QLayout, QLineEdit, QPushButton,
-    QSizePolicy, QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFrame,
+    QHBoxLayout, QLabel, QLayout, QLineEdit,
+    QPushButton, QSizePolicy, QToolButton, QVBoxLayout,
+    QWidget)
 import rc_resources
 
 class Ui_Form(object):
@@ -200,6 +201,33 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.property_class)
 
+        self.emable_variable = QComboBox(self.frame)
+        self.emable_variable.setObjectName(u"emable_variable")
+        self.emable_variable.setMinimumSize(QSize(128, 0))
+        self.emable_variable.setStyleSheet(u"QComboBox {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border-top: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 4px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #242424;\n"
+"}\n"
+"\n"
+"QComboBox:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QComboBox::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+
+        self.horizontalLayout.addWidget(self.emable_variable)
+
         self.delete_button = QPushButton(self.frame)
         self.delete_button.setObjectName(u"delete_button")
         self.delete_button.setStyleSheet(u"\n"
@@ -339,6 +367,9 @@ class Ui_Form(object):
         self.property_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.property_class.setText(QCoreApplication.translate("Form", u"Class properties", None))
+#if QT_CONFIG(tooltip)
+        self.emable_variable.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Set Enable status from Variable</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.delete_button.setText(QCoreApplication.translate("Form", u"Delete", None))
         self.copy_button.setText(QCoreApplication.translate("Form", u"Copy", None))
     # retranslateUi
