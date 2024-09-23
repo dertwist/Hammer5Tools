@@ -228,6 +228,9 @@ class PropertyFrame(QWidget):
         elif prop_class == 'CreateRotator':
             classes = ['m_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_bApplyToCurrentTrasnform','m_OutputVariable']
             operator_adding_instances(classes)
+        elif prop_class == 'CreateLocator':
+            classes = ['m_flDisplayScale', 'm_bAllowScale']
+            operator_adding_instances(classes)
         elif prop_class == 'RandomRotation':
             classes = ['m_vRandomRotationMin', 'm_vRandomRotationMax']
             operator_adding_instances(classes)
