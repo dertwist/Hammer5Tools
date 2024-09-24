@@ -61,7 +61,7 @@ class TreeViewExample(QMainWindow):
                 combo_box = QComboBox()
                 combo_box.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
                 combo_box.currentIndexChanged.connect(lambda: self.update_status_bar(message='combo'))
-                combo_box.addItems(['Doublespinbox', 'Editline'])
+                combo_box.addItems(['Doublespinbox', 'Editline', 'Color'])
                 combo_box.currentIndexChanged.connect(
                     lambda state, combo_box=combo_box, child_item=child_item: self.handle_combo_box(combo_box,
                                                                                                     child_item))
@@ -84,7 +84,10 @@ class TreeViewExample(QMainWindow):
             double_spin_box.valueChanged.connect(lambda: self.update_status_bar(message='double'))
             self.tree_view.setItemWidget(child_item, 1, double_spin_box)
             self.update_status_bar('Doublespinbox selected')
-
+        elif combo_box.currentText() == 'Color':
+            label = QLabel()
+            label.setStyleSheet("background-color: #CFBCC0")
+            self.tree_view.setItemWidget(child_item, 1, label)
     def update_status_bar(self, message):
         self.status_bar.showMessage(message)
         json_data = self.modelToJson()
