@@ -41,10 +41,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Shape::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Shadow::Raised</enum>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="spacing">
@@ -84,7 +84,7 @@ background-color: #242424;</string>
       <item>
        <widget class="QCheckBox" name="show_child">
         <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
+         <enum>Qt::FocusPolicy::NoFocus</enum>
         </property>
         <property name="toolTip">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Show child&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -137,15 +137,138 @@ border-top: 0px solid black;
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="enable">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
+       <widget class="QFrame" name="frame_2">
+        <property name="minimumSize">
+         <size>
+          <width>400</width>
+          <height>0</height>
+         </size>
         </property>
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt; font-weight:400;&quot;&gt;Show in editor&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <property name="maximumSize">
+         <size>
+          <width>400</width>
+          <height>16777215</height>
+         </size>
         </property>
-        <property name="styleSheet">
-         <string notr="true">QCheckBox::indicator:checked {
+        <property name="frameShape">
+         <enum>QFrame::Shape::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Shadow::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QToolButton" name="gf">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::NoFocus</enum>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QToolButton {
+    border: 2px solid black;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+border-left: None;
+border-top: None;
+border-right: None;
+    padding: 2px;
+    color: #E3E3E3;
+    background-color: #242424;
+height:16px;
+width:16px;
+}
+QToolButton:hover {
+    background-color: #414956;
+    color: white;
+}</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../resources.qrc">
+             <normaloff>:/icons/shapes_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/shapes_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="property_class">
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::NoFocus</enum>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLineEdit {
+    font-size: 8pt;
+    font-family: &quot;Segoe UI&quot;;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid rgba(80, 80, 80, 255);
+    border-radius: 0px;
+    padding: 2px;
+    color: #E3E3E3;
+    background-color: #242424;
+}
+
+QLineEdit:focus {
+    border-color: rgba(80, 80, 80, 255);
+}
+
+QLineEdit::selection {
+    background-color: #414956;
+    color: white;
+}</string>
+           </property>
+           <property name="inputMethodHints">
+            <set>Qt::InputMethodHint::ImhLatinOnly|Qt::InputMethodHint::ImhLowercaseOnly</set>
+           </property>
+           <property name="text">
+            <string>Class properties</string>
+           </property>
+           <property name="maxLength">
+            <number>32</number>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="enable">
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::NoFocus</enum>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:400;&quot;&gt;Enable set&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QCheckBox::indicator:checked {
 image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
    
 	height:16px;
@@ -181,34 +304,34 @@ QCheckBox{
 border-right: 0px solid black;
 border-top: 0px solid black;
 }</string>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-        <property name="autoRepeat">
-         <bool>false</bool>
-        </property>
-        <property name="autoExclusive">
-         <bool>false</bool>
-        </property>
-        <property name="tristate">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="variable_display">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QLineEdit {
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+           <property name="autoRepeat">
+            <bool>false</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>false</bool>
+           </property>
+           <property name="tristate">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="variable_display">
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::NoFocus</enum>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLineEdit {
     font-size: 8pt;
     font-family: &quot;Segoe UI&quot;;
     border-top: 0px;
@@ -229,34 +352,34 @@ QLineEdit::selection {
     background-color: #414956;
     color: white;
 }</string>
-        </property>
-        <property name="inputMethodHints">
-         <set>Qt::ImhLatinOnly|Qt::ImhLowercaseOnly</set>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="maxLength">
-         <number>32</number>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="placeholderText">
-         <string>Set enable from variable</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QToolButton" name="variable_clear">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QToolButton {
+           </property>
+           <property name="inputMethodHints">
+            <set>Qt::InputMethodHint::ImhLatinOnly|Qt::InputMethodHint::ImhLowercaseOnly</set>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="maxLength">
+            <number>32</number>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+           <property name="placeholderText">
+            <string>Set enable from variable</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="variable_clear">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::NoFocus</enum>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QToolButton {
     border: 2px solid black;
     border-radius: 0px;
     border-color: rgba(80, 80, 80, 255);
@@ -273,32 +396,32 @@ QToolButton:hover {
     background-color: #414956;
     color: white;
 }</string>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="../resources.qrc">
-          <normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>24</width>
-          <height>24</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QToolButton" name="variables_search">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QToolButton {
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../resources.qrc">
+             <normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="variables_search">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::NoFocus</enum>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QToolButton {
     border: 2px solid black;
     border-radius: 0px;
     border-color: rgba(80, 80, 80, 255);
@@ -315,128 +438,35 @@ QToolButton:hover {
     background-color: #414956;
     color: white;
 }</string>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="../resources.qrc">
-          <normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>24</width>
-          <height>24</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="property_class_2">
-        <property name="maximumSize">
-         <size>
-          <width>64</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QLineEdit {
-    font-size: 8pt;
-    font-family: &quot;Segoe UI&quot;;
-    border-top: 0px;
-    border-left: 0px;
-    border-right: 0px;
-    border-bottom: 2px solid rgba(80, 80, 80, 255);
-    border-radius: 0px;
-    padding: 2px;
-    color: #E3E3E3;
-    background-color: #242424;
-}
-
-QLineEdit:focus {
-    border-color: rgba(80, 80, 80, 255);
-}
-
-QLineEdit::selection {
-    background-color: #414956;
-    color: white;
-}</string>
-        </property>
-        <property name="inputMethodHints">
-         <set>Qt::ImhLatinOnly|Qt::ImhLowercaseOnly</set>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="maxLength">
-         <number>32</number>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="property_class">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QLineEdit {
-    font-size: 8pt;
-    font-family: &quot;Segoe UI&quot;;
-    border-top: 0px;
-    border-left: 0px;
-    border-right: 0px;
-    border-bottom: 2px solid rgba(80, 80, 80, 255);
-    border-radius: 0px;
-    padding: 2px;
-    color: #E3E3E3;
-    background-color: #242424;
-}
-
-QLineEdit:focus {
-    border-color: rgba(80, 80, 80, 255);
-}
-
-QLineEdit::selection {
-    background-color: #414956;
-    color: white;
-}</string>
-        </property>
-        <property name="inputMethodHints">
-         <set>Qt::ImhLatinOnly|Qt::ImhLowercaseOnly</set>
-        </property>
-        <property name="text">
-         <string>Class properties</string>
-        </property>
-        <property name="maxLength">
-         <number>32</number>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="../resources.qrc">
+             <normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>
        <widget class="QLineEdit" name="property_class_3">
         <property name="maximumSize">
          <size>
-          <width>64</width>
+          <width>16777215</width>
           <height>16777215</height>
          </size>
         </property>
         <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
+         <enum>Qt::FocusPolicy::NoFocus</enum>
         </property>
         <property name="toolTip">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -465,7 +495,7 @@ QLineEdit::selection {
 }</string>
         </property>
         <property name="inputMethodHints">
-         <set>Qt::ImhLatinOnly|Qt::ImhLowercaseOnly</set>
+         <set>Qt::InputMethodHint::ImhLatinOnly|Qt::InputMethodHint::ImhLowercaseOnly</set>
         </property>
         <property name="text">
          <string/>
@@ -590,10 +620,10 @@ border-right:0px;
    <item>
     <widget class="QFrame" name="frame_layout">
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Shape::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Shadow::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
@@ -617,7 +647,7 @@ border-right:0px;
          <number>8</number>
         </property>
         <property name="sizeConstraint">
-         <enum>QLayout::SetDefaultConstraint</enum>
+         <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
         </property>
        </layout>
       </item>
