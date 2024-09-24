@@ -11,7 +11,6 @@ class CompletingPlainTextEdit(QPlainTextEdit):
     def __init__(self, *args, OnlyFloat=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.OnlyFloat = OnlyFloat
-        self.setMinimumSize(QSize(500, 16))
         self.completions = QStringListModel(self)
         self.completer = QCompleter(self.completions, self)
         self.completer.setWidget(self)
@@ -20,7 +19,7 @@ class CompletingPlainTextEdit(QPlainTextEdit):
         self.setWordWrapMode(QTextOption.NoWrap)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred))
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred))
 
         self.setStyleSheet("""QPlainTextEdit {
 
