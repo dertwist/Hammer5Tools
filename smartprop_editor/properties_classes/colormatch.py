@@ -7,7 +7,7 @@ from smartprop_editor.properties_classes.ui_colormatch import Ui_Widget
 from completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QCompleter, QColorDialog, QTreeWidgetItem, QMenu, QToolButton
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QKeySequence
+from PySide6.QtGui import QKeySequence, QIcon
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 
 from smartprop_editor.properties_classes.color import PropertyColor
@@ -39,23 +39,57 @@ class PropertyColorMatch(QWidget):
         # self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
 
         if isinstance(value, list):
-            print(value)
+            print(value, 'list')
+            for item in value:
+                if isinstance(item, dict):
+                    print('dict')
+                    for key, value in item.items():
+                        self.add_color_widget(key, value)
 
-        self.ui.add_surface.clicked.connect(self.add_surface)
+        self.ui.add_surface.clicked.connect(lambda: self.add_color_widget(key='m_Color', value=[255,255,255]))
 
         self.on_changed()
-    def add_surface(self):
 
+    def add_color_widget(self, key, value):
+        ColorInstance = PropertyColor(key, value, self.variables_scrollArea)
         delete_button = QToolButton()
-        delete_button.clicked.connect(self.delete_action)
-        ColorInstance = PropertyColor('m_Color', [244,24,21], self.variables_scrollArea)
-        ColorInstance.ui.layout.addWidget(delete_button)
-        self.ui.layout_color.insertWidget(0,ColorInstance)
+        delete_button.setStyleSheet("""QToolButton {
+	icon: url(:/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg);
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+QToolButton:hover {
+    background-color: #414956;
+    color: white;
+}
+QToolButton:pressed {
+    background-color: red;
+    background-color: #1C1C1C;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+    font: 580 9pt "Segoe UI";
 
+}""")
+        delete_icon_path = ":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"
+        delete_icon = QIcon(delete_icon_path)
+        delete_button.setIcon(delete_icon)
+        delete_button.clicked.connect(lambda: self.delete_action(ColorInstance))
+        ColorInstance.ui.layout.addWidget(delete_button)
+        ColorInstance.edited.connect(self.on_changed)
+        self.ui.layout_color.addWidget(ColorInstance)
         self.on_changed()
 
     def delete_action(self, widget):
-        print(widget)
+        widget.deleteLater()
 
     def on_changed(self):
         # self.logic_switch()
@@ -64,8 +98,10 @@ class PropertyColorMatch(QWidget):
     def change_value(self):
         value = []
         for i in range(self.ui.layout_color.count()):
-            item = self.ui.layout_color.itemAt(i)
-            value.append({item.value_class: {item.value}})
+            item = self.ui.layout_color.itemAt(i).widget()
+            if isinstance(item, PropertyColor):
+                value.append(item.value)
+                print('1')
         self.value = {self.value_class: value}
 
 
