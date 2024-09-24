@@ -9,7 +9,6 @@ from PySide6.QtWidgets import QWidget, QCompleter, QColorDialog, QTreeWidgetItem
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QKeySequence
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
-from popup_menu.popup_menu_main import PopupMenu
 
 from smartprop_editor.properties_classes.color import PropertyColor
 
@@ -29,12 +28,6 @@ class PropertyColorMatch(QWidget):
 
         self.variables_scrollArea = variables_scrollArea
 
-        delete_button = QToolButton()
-        delete_button.clicked.connect(self.delete_action)
-        ColorInstance = PropertyColor('m_Color', [244,24,21], self.variables_scrollArea)
-        ColorInstance.ui.layout.addWidget(delete_button)
-        self.ui.layout_color.insertWidget(0,ColorInstance)
-
         self.dialog = QColorDialog()
         self.dialog.setStyleSheet(QT_Stylesheet_global)
 
@@ -48,34 +41,21 @@ class PropertyColorMatch(QWidget):
         if isinstance(value, list):
             print(value)
 
-        self.ui.add_surface.clicked.connect(self.surface_popup)
+        self.ui.add_surface.clicked.connect(self.add_surface)
 
         self.on_changed()
-    def add_surface(self, name, value):
-        item = QTreeWidgetItem()
-        item.setText(0, name)
-        # self.ui.surfaces_tree.invisibleRootItem().addChild(item)
+    def add_surface(self):
+
+        delete_button = QToolButton()
+        delete_button.clicked.connect(self.delete_action)
+        ColorInstance = PropertyColor('m_Color', [244,24,21], self.variables_scrollArea)
+        ColorInstance.ui.layout.addWidget(delete_button)
+        self.ui.layout_color.insertWidget(0,ColorInstance)
+
         self.on_changed()
 
     def delete_action(self, widget):
         print(widget)
-
-    def surface_popup(self):
-        elements_in_popupmenu = []
-        existing_items = []
-        for i in range(self.ui.surfaces_tree.topLevelItemCount()):
-            item = self.ui.surfaces_tree.topLevelItem(i)
-            existing_items.append(item.text(0))
-        for item in surfaces_list:
-            for key, value in item.items():
-                if key in existing_items:
-                    pass
-                else:
-                    elements_in_popupmenu.append(item)
-
-        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
-        self.popup_menu.add_property_signal.connect(lambda name, value: self.add_surface(name, value))
-        self.popup_menu.show()
 
     def on_changed(self):
         # self.logic_switch()
@@ -83,9 +63,9 @@ class PropertyColorMatch(QWidget):
         self.edited.emit()
     def change_value(self):
         value = []
-        # for i in range(self.ui.surfaces_tree.topLevelItemCount()):
-        #     item = self.ui.surfaces_tree.topLevelItem(i)
-        #     value.append(item.text(0))
+        for i in range(self.ui.layout_color.count()):
+            item = self.ui.layout_color.itemAt(i)
+            value.append({item.value_class: {item.value}})
         self.value = {self.value_class: value}
 
 
