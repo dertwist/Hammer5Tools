@@ -97,10 +97,10 @@
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <property name="lineWidth">
       <number>0</number>
@@ -124,7 +124,7 @@
       <item>
        <layout class="QHBoxLayout" name="layout">
         <property name="sizeConstraint">
-         <enum>QLayout::SizeConstraint::SetFixedSize</enum>
+         <enum>QLayout::SetFixedSize</enum>
         </property>
         <item>
          <widget class="QLabel" name="property_class">
@@ -149,7 +149,7 @@ color: rgb(247, 208, 255);</string>
         <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
+           <enum>Qt::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -167,10 +167,10 @@ color: rgb(247, 208, 255);</string>
    <item>
     <widget class="QFrame" name="frame_3">
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="leftMargin">
@@ -189,7 +189,7 @@ color: rgb(247, 208, 255);</string>
        <layout class="QVBoxLayout" name="layout_color"/>
       </item>
       <item>
-       <widget class="QPushButton" name="add_surface">
+       <widget class="QPushButton" name="add_color_widget">
         <property name="styleSheet">
          <string notr="true">
     /* QPushButton default and hover styles */
@@ -223,7 +223,7 @@ color: rgb(247, 208, 255);</string>
     }</string>
         </property>
         <property name="text">
-         <string>Add surface</string>
+         <string>Add Color</string>
         </property>
         <property name="icon">
          <iconset resource="../../resources.qrc">
