@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QStringListModel, QCommandLineParser, QCommandLineOption
+from PySide6.QtCore import Qt, QStringListModel, QCommandLineParser, QCommandLineOption, QSize
 from PySide6.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QLineEdit, QSizePolicy
 from PySide6.QtGui import QKeyEvent, QTextCursor, QTextOption
 
@@ -11,6 +11,7 @@ class CompletingPlainTextEdit(QPlainTextEdit):
     def __init__(self, *args, OnlyFloat=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.OnlyFloat = OnlyFloat
+        self.setMinimumSize(QSize(500, 200))
         self.completions = QStringListModel(self)
         self.completer = QCompleter(self.completions, self)
         self.completer.setWidget(self)
@@ -31,7 +32,7 @@ class CompletingPlainTextEdit(QPlainTextEdit):
             height:18px;
             padding: 2px;
             padding-left: 0px;
-            padding-right: 16px;
+            padding-right: 0px;
             color: #E3E3E3;
             background-color: #1C1C1C;
         }
