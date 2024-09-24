@@ -83,6 +83,7 @@ class PropertyFrame(QWidget):
         from smartprop_editor.properties_classes.color import PropertyColor
         from smartprop_editor.properties_classes.comparison import PropertyComparison
         from smartprop_editor.properties_classes.filtersurface import PropertySurface
+        from smartprop_editor.properties_classes.colormatch import PropertyColorMatch
 
 
 
@@ -163,6 +164,10 @@ class PropertyFrame(QWidget):
             # Color
             elif 'm_HandleColor' in value_class:
                 property_instance = PropertyColor(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                add_instance()
+            # Color match
+            elif 'm_ColorChoices' in value_class:
+                property_instance = PropertyColorMatch(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
 
             # Bool

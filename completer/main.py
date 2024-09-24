@@ -11,7 +11,7 @@ class CompletingPlainTextEdit(QPlainTextEdit):
     def __init__(self, *args, OnlyFloat=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.OnlyFloat = OnlyFloat
-        self.setMinimumSize(QSize(500, 200))
+        self.setMinimumSize(QSize(500, 16))
         self.completions = QStringListModel(self)
         self.completer = QCompleter(self.completions, self)
         self.completer.setWidget(self)
