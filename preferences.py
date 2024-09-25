@@ -111,6 +111,7 @@ class PreferencesDialog(QDialog):
             self.ui.editline_custom_discord_status.setText(get_config_value('DISCORD_STATUS', 'custom_status'))
             # other
             self.ui.launch_addon_after_nosteamlogon_fix.setChecked(get_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix'))
+            self.ui.checkBox_debug_info.setChecked(get_config_bool('OTHER', 'debug_info'))
             #     start with system
             self.ui.checkBox_start_with_system.setChecked(get_config_bool('APP', 'start_with_system'))
         except:
@@ -144,7 +145,7 @@ class PreferencesDialog(QDialog):
 
         # other
         set_config_value('OTHER', 'launch_addon_after_nosteamlogon_fix', str(self.ui.launch_addon_after_nosteamlogon_fix.isChecked()))
-
+        set_config_value('OTHER', 'debug_info',str(self.ui.checkBox_debug_info.isChecked()))
 
 
         #start with systenm

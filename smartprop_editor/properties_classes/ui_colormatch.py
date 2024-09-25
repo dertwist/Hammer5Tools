@@ -72,8 +72,8 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
         self.frame.setLineWidth(0)
         self.horizontalLayout_2 = QHBoxLayout(self.frame)
         self.horizontalLayout_2.setSpacing(16)
@@ -81,7 +81,7 @@ class Ui_Widget(object):
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.layout = QHBoxLayout()
         self.layout.setObjectName(u"layout")
-        self.layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
+        self.layout.setSizeConstraint(QLayout.SetFixedSize)
         self.property_class = QLabel(self.frame)
         self.property_class.setObjectName(u"property_class")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
@@ -109,8 +109,8 @@ class Ui_Widget(object):
 
         self.frame_3 = QFrame(Widget)
         self.frame_3.setObjectName(u"frame_3")
-        self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
+        self.frame_3.setFrameShape(QFrame.StyledPanel)
+        self.frame_3.setFrameShadow(QFrame.Raised)
         self.verticalLayout_3 = QVBoxLayout(self.frame_3)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -119,9 +119,9 @@ class Ui_Widget(object):
 
         self.verticalLayout_3.addLayout(self.layout_color)
 
-        self.add_surface = QPushButton(self.frame_3)
-        self.add_surface.setObjectName(u"add_surface")
-        self.add_surface.setStyleSheet(u"\n"
+        self.add_color_widget = QPushButton(self.frame_3)
+        self.add_color_widget.setObjectName(u"add_color_widget")
+        self.add_color_widget.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
@@ -153,9 +153,9 @@ class Ui_Widget(object):
 "    }")
         icon = QIcon()
         icon.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.add_surface.setIcon(icon)
+        self.add_color_widget.setIcon(icon)
 
-        self.verticalLayout_3.addWidget(self.add_surface)
+        self.verticalLayout_3.addWidget(self.add_color_widget)
 
 
         self.verticalLayout.addWidget(self.frame_3)
@@ -169,6 +169,6 @@ class Ui_Widget(object):
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
         self.property_class.setText(QCoreApplication.translate("Widget", u"Class", None))
-        self.add_surface.setText(QCoreApplication.translate("Widget", u"Add surface", None))
+        self.add_color_widget.setText(QCoreApplication.translate("Widget", u"Add Color", None))
     # retranslateUi
 

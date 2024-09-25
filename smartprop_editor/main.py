@@ -192,7 +192,8 @@ class SmartPropEditorMainWindow(QMainWindow):
             output_value.update({'m_Modifiers': modifiers})
             output_value.update({'m_SelectionCriteria': selection_criteria})
             self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
-            print(output_value)
+            if settings.value("OTHER/debug_info", type=bool):
+                print(output_value)
 
     # Create New element
     def keyPressEvent(self, event):
