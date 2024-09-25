@@ -4,6 +4,7 @@ from smartprop_editor.properties_classes.ui_color import Ui_Widget
 from completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QCompleter, QColorDialog
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QColor
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 
 
@@ -61,7 +62,8 @@ class PropertyColor(QWidget):
 
         self.on_changed()
     def open_dialog(self):
-        color = self.dialog.getColor().getRgb()[:3]
+        color_dialog = self.dialog
+        color = color_dialog.getColor(QColor(*self.color)).getRgb()[:3]
         self.ui.value.setStyleSheet(f"""background-color: rgb{color};
             padding:4px;
             border:0px;
