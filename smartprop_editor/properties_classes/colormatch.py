@@ -24,7 +24,6 @@ class PropertyColorMatch(QWidget):
         self.value = value
 
         self.color = [255, 255, 255]
-        # self.ui.logic_switch.setCurrentIndex(0)
 
         self.variables_scrollArea = variables_scrollArea
 
@@ -39,10 +38,8 @@ class PropertyColorMatch(QWidget):
         # self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
 
         if isinstance(value, list):
-            print(value, 'list')
             for item in value:
                 if isinstance(item, dict):
-                    print('dict')
                     for key, value in item.items():
                         self.add_color_widget(key, value)
 
@@ -101,7 +98,6 @@ QToolButton:pressed {
             item = self.ui.layout_color.itemAt(i).widget()
             if isinstance(item, PropertyColor):
                 value.append(item.value)
-                print('1')
         self.value = {self.value_class: value}
 
 
