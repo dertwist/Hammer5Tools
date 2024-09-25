@@ -43,7 +43,7 @@ class PropertyColorMatch(QWidget):
                     for key, value in item.items():
                         self.add_color_widget(key, value)
 
-        self.ui.add_surface.clicked.connect(lambda: self.add_color_widget(key='m_Color', value=[255,255,255]))
+        self.ui.add_color_widget.clicked.connect(lambda: self.add_color_widget(key='m_Color', value=[255,255,255]))
 
         self.on_changed()
 
