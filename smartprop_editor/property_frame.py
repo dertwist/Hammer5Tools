@@ -48,7 +48,6 @@ class PropertyFrame(QWidget):
             self.ui.enable.setChecked(self.enable)
         except:
             if isinstance(self.enable, dict):
-                print(self.enable)
                 if 'm_SourceName' in self.enable:
                     self.ui.variable_display.setText(self.enable['m_SourceName'])
                 if 'm_Expression' in self.enable:
@@ -316,7 +315,6 @@ class PropertyFrame(QWidget):
             self.ui.frame_layout.setMaximumSize(16666, 16666)
     def search_enable_variable(self):
         variables = self.get_variables()
-        print(variables)
         self.popup_menu = PopupMenu(variables, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.add_variable(name, value))
         self.popup_menu.show()
