@@ -276,7 +276,7 @@ class SoundEventEditorMainWidget(QMainWindow):
         elif name == 'use_distance_volume_mapping_curve':
             property_class = CheckboxProperty(name=name, display_name="Use distance volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
         elif name == 'hammer5tools_note':
-            property_class = LegacyProperty(name=name, value=value, widget_list=self.soundevent_properties_layout)
+            property_class = LegacyProperty(name=name, value=value, widget_list=self.soundevent_properties_layout, display_name='Note')
         else:
             property_class = LegacyProperty(name=name, value=value, widget_list=self.soundevent_properties_layout)
 
