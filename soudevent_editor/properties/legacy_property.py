@@ -35,7 +35,10 @@ class LegacyProperty(QWidget):
         self.customContextMenuRequested.connect(self.show_context_menu)
 
     def update_value_from_lineedit(self):
-        self.value = ast.literal_eval(self.ui.lineEdit.text())
+        try:
+            self.value = ast.literal_eval(self.ui.lineEdit.text())
+        except:
+            self.value = self.ui.lineEdit.text()
 
     mousePressEvent = PropertyActions.mousePressEvent
     mouseMoveEvent = PropertyActions.mouseMoveEvent

@@ -14,7 +14,7 @@ soundevent_editor_properties = [
     {'position': '[0,0,0]'},
     {'enable_child_events': 'true'},
     {'enable_retrigger': 'true'},
-    {'badsp_presetse': 'reverb_9_mediumChamber'},
+    {'dsp_preset': 'reverb_9_mediumChamber'},
     {'soundevent_01': ''},
     {'randomize_position_hemisphere': 'false'},
     {'distance_volume_mapping_curve': "[[97.14286, 1.0, -0.001763, -0.001763, 2.0, 3.0], [2000.0, 0.0, -0.000526, -0.000526, 1.0, 1.0]]"},
@@ -34,7 +34,8 @@ soundevent_editor_properties = [
     {'reverb_wet': '1.0'},
     {'position_relative_to_player': 'false'},
     {'use_world_position': 'false'},
-    {'base': 'amb.base'}
+    {'base': 'amb.base'},
+    {'hammer5tools_note': ''}
 
 
 ]
