@@ -5,7 +5,7 @@ from soudevent_editor.properties.property_actions import PropertyActions
 import ast
 
 class LegacyProperty(QWidget):
-    def __init__(self, name, value, widget_list):
+    def __init__(self, name, value, widget_list, display_name=None):
         super().__init__()
         self.ui = Ui_LegacyPropertyWidet()
         self.ui.setupUi(self)
@@ -14,6 +14,7 @@ class LegacyProperty(QWidget):
         self.widget_list = widget_list
         self.ui.lineEdit = self.ui.lineEdit
         self.name = name
+        self.display_name = display_name
 
         if '[' in value and ']' in value:
             self.value = ast.literal_eval(value)
@@ -26,7 +27,10 @@ class LegacyProperty(QWidget):
 
 
     def init_ui(self):
-        self.ui.label.setText(self.name)
+        if self.display_name:
+            self.ui.label.setText(self.display_name)
+        else:
+            self.ui.label.setText(self.name)
         self.ui.lineEdit.setText(str(self.value))
         self.ui.lineEdit.textChanged.connect(self.update_value_from_lineedit)
         self.ui.lineEdit.setClearButtonEnabled(True)
