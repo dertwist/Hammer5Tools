@@ -4,7 +4,7 @@ import subprocess
 
 def compile(input_file):
     resourcecompiler = os.path.join(get_cs2_path(), 'game', 'bin', 'win64', 'resourcecompiler.exe')
-    process = subprocess.Popen([resourcecompiler, '-i', input_file, '-f'], shell=True)
+    process = subprocess.Popen([resourcecompiler, '-i', input_file, '-f', '-fshallow2'], shell=True)
     process.wait()
 
 
