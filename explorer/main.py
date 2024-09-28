@@ -143,13 +143,6 @@ class Explorer(QMainWindow):
 
         self.layout = QVBoxLayout(self)
 
-        # Change dir frame
-        self.status_dir_frame = QFrame(self)
-        status_dir_line = QLineEdit(self)
-        self.status_dir_frame.setLayout(QVBoxLayout())
-        self.status_dir_frame.layout().addWidget(status_dir_line)
-        self.status_dir_frame.layout().setContentsMargins(0, 0, 0, 0)
-
         # Assuming self.layout is a QVBoxLayout
         self.layout.addWidget(self.tree)
         self.layout.addWidget(self.status_dir_frame)
