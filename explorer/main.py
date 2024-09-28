@@ -1,9 +1,9 @@
 import os.path
 import re
-from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox, QLineEdit, QTreeWidgetItem
+from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox, QLineEdit, QTreeWidgetItem, QPushButton, QHBoxLayout
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
-from preferences import get_config_value, set_config_value
+from preferences import get_config_value, set_config_value, get_cs2_path, get_addon_name
 from PySide6.QtCore import QModelIndex
 import shutil
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
@@ -125,6 +125,7 @@ class Explorer(QMainWindow):
 
         self.model = CustomFileSystemModel()
         self.model.setRootPath(tree_directory)
+        self.rootpath = (os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name()))
         if os.path.exists(tree_directory):
             pass
         else:
@@ -141,7 +142,17 @@ class Explorer(QMainWindow):
                 self.tree.setColumnHidden(column, True)
 
         self.layout = QVBoxLayout(self)
+
+        # Change dir frame
+        self.status_dir_frame = QFrame(self)
+        status_dir_line = QLineEdit(self)
+        self.status_dir_frame.setLayout(QVBoxLayout())
+        self.status_dir_frame.layout().addWidget(status_dir_line)
+        self.status_dir_frame.layout().setContentsMargins(0, 0, 0, 0)
+
+        # Assuming self.layout is a QVBoxLayout
         self.layout.addWidget(self.tree)
+        self.layout.addWidget(self.status_dir_frame)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.tree.setItemDelegateForColumn(CustomFileSystemModel.SIZE_COLUMN, QStyledItemDelegate())
@@ -396,7 +407,7 @@ class Explorer(QMainWindow):
     def copy_smartprop_path(self, index, to_clipboard):
         if to_clipboard:
             file_path = self.model.filePath(index)
-            file_path = os.path.relpath(file_path, self.tree_directory)
+            file_path = os.path.relpath(file_path, self.rootpath)
             file_path = file_path.replace('\\', '/')
             file_path = file_path.lower()
             root, ext = os.path.splitext(file_path)
@@ -405,7 +416,7 @@ class Explorer(QMainWindow):
             clipboard.setText(file_path)
         else:
             file_path = self.model.filePath(index)
-            file_path = os.path.relpath(file_path, self.tree_directory)
+            file_path = os.path.relpath(file_path, self.rootpath)
             file_path = file_path.replace('\\', '/')
             file_path = file_path.lower()
             root, ext = os.path.splitext(file_path)
