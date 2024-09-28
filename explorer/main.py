@@ -145,7 +145,6 @@ class Explorer(QMainWindow):
 
         # Assuming self.layout is a QVBoxLayout
         self.layout.addWidget(self.tree)
-        self.layout.addWidget(self.status_dir_frame)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.tree.setItemDelegateForColumn(CustomFileSystemModel.SIZE_COLUMN, QStyledItemDelegate())
