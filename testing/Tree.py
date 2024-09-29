@@ -121,6 +121,7 @@ class TreeViewExample(QMainWindow):
         super().closeEvent(event)
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setStyle('Fusion')
     window = TreeViewExample()
     window.show()
     sys.exit(app.exec())
