@@ -161,21 +161,12 @@ class VsmartSave:
 
     def save_file(self):
         # data = self.convert_children_to_list(data)
-        out_data = {'generic_data_type': "CSmartPropRoot"}
+        out_data = {'generic_data_type': "CSmartPropRoot", 'editor_info': [{'Info': 'Hammer5Tools Smartprop Editor by Twist', 'GitHub': 'https://github.com/dertwist/Hammer5Tools', 'Steam': 'https://steamcommunity.com/id/der_twist', 'Twitter': 'https://twitter.com/der_twist'}]}
         if self.var_data is not None:
             out_data.update({'m_Variables': self.var_data})
         converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
         out_data.update(converted_data)
         kv3.write(out_data, self.filename)
-        try:
-            with open(self.filename, 'r+') as file:
-                lines = file.readlines()
-                lines.insert(2,
-                             '//Hammer5Tools Smartprop Editor by Twist \n//Discord: twist0691 \n//Steam: https://steamcommunity.com/id/der_twist \n//Twitter: https://twitter.com/der_twist\n')
-                file.seek(0)  # Move the cursor to the start of the file
-                file.writelines(lines)
-        except Exception as error:
-            print(error)
 
     def tree_to_vsmart(self, item, data):
         if 'm_Children' not in data:
