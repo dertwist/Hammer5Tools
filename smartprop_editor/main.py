@@ -92,11 +92,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         self._restore_user_prefs()
 
         # create smartprops folder if doesn't exists
-        smartprops_folder = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), 'smartprops')
-        if os.path.exists(smartprops_folder):
-            pass
-        else:
-            os.makedirs(smartprops_folder)
+        # smartprops_folder = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), 'smartprops')
+        # if os.path.exists(smartprops_folder):
+        #     pass
+        # else:
+        #     os.makedirs(smartprops_folder)
 
         self.tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
         self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name='SmartProp_editor', parent=self.ui.explorer_layout_widget)
