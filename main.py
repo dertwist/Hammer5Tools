@@ -10,6 +10,8 @@ from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_add
 from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
 from loading_editor.loading_editor_main import Loading_editorMainWindow
 
+from hotkey_editor.main import HotkeyEditorMainWindow
+
 from create_addon.create_addon_mian import Create_addon_Dialog
 from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
 
@@ -129,6 +131,9 @@ class Widget(QMainWindow):
         self.LoadingEditorMainWindow = Loading_editorMainWindow()
         self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
 
+        self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
+        self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
+
 
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
@@ -189,7 +194,7 @@ class Widget(QMainWindow):
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
         try:
-            if hasattr(self, 'SoundEventEditorMainWidget') and self.SmartPropEditorMainWindow:
+            if hasattr(self, 'SmartPropEditorMainWindow') and self.SmartPropEditorMainWindow:
                 self.SmartPropEditorMainWindow.closeEvent(self.event)
                 self.SmartPropEditorMainWindow.deleteLater()
         except Exception as e:

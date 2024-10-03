@@ -6,26 +6,552 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>480</height>
+    <width>1171</width>
+    <height>698</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>640</width>
-     <height>21</height>
-    </rect>
-   </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <property name="leftMargin">
+     <number>9</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>9</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Keybindings editor</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTreeWidget" name="treeWidget">
+      <attribute name="headerMinimumSectionSize">
+       <number>150</number>
+      </attribute>
+      <attribute name="headerDefaultSectionSize">
+       <number>200</number>
+      </attribute>
+      <column>
+       <property name="text">
+        <string notr="true">Context</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Command</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Input</string>
+       </property>
+      </column>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QLineEdit" name="lineEdit">
+        <property name="placeholderText">
+         <string>Context</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_3">
+        <property name="placeholderText">
+         <string>Command</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_2">
+        <property name="placeholderText">
+         <string>Input</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <item>
+       <widget class="QKeySequenceEdit" name="keySequenceEdit"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="cerate_file_button_4">
+        <property name="minimumSize">
+         <size>
+          <width>128</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+        </property>
+        <property name="text">
+         <string>Save preset</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources.qrc">
+          <normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="shortcut">
+         <string>Ctrl+N</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="cerate_file_button_3">
+        <property name="minimumSize">
+         <size>
+          <width>256</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+        </property>
+        <property name="text">
+         <string>Save and restart the editor</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources.qrc">
+          <normaloff>:/icons/all_match_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/all_match_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="shortcut">
+         <string>Ctrl+N</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="dockWidget">
+   <property name="features">
+    <set>QDockWidget::DockWidgetMovable</set>
+   </property>
+   <property name="windowTitle">
+    <string>Keybindings presets</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <property name="minimumSize">
+     <size>
+      <width>400</width>
+      <height>0</height>
+     </size>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QComboBox" name="comboBox">
+       <property name="styleSheet">
+        <string notr="true">QMenu {
+background-color: red;
+ }
+
+QMenu::item {
+    padding: 5px 10px;
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    color: #E3E3E3;
+}
+QMenu::item:selected {
+    background-color: #414956;
+    color: white;
+}
+QWidget {
+    background-color: #151515;
+    outline: none;
+}
+
+QWidget:item:checked {
+    background-color: #151515;
+    color: white;
+}
+
+QWidget:item:selected {
+    background-color: #414956;
+    color: white;
+    border: 0px;
+}
+
+
+
+QMenu {
+    background-color: #1d1d1f;
+    color: #FFFFFF;
+    border: 1px solid #555555;
+    /* padding-top: 5px; */
+    /* padding-bottom: 5px; */
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+}
+
+QMenu::item {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border-top: 2px solid black;
+    border: 0px;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    padding-left: 12px;
+    padding-right: 12px;
+    color: #E3E3E3;
+}
+
+QMenu::item:selected {
+    background-color: #666666;
+    color: #FFFFFF;
+}
+
+QMenu::separator {
+    height: 1px;
+    background: #AAAAAA;
+    margin: 5px 0;
+}
+
+QMenu::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+QMenu::indicator:checked {
+    image: url(:/images/checkmark.png);
+}
+
+QMenu::indicator:unchecked {
+    image: url(:/images/empty.png);
+}
+
+
+QComboBox {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    height: 12px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+    padding-left: 5px;
+}
+
+QComboBox:hover {
+    background-color: #414956;
+    color: white;
+}
+
+QComboBox:pressed {
+    background-color: #2E2F30;
+    color: white;
+}
+
+QComboBox:item {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    color: #E3E3E3;
+    padding-left: 5px;
+    background-color: #1C1C1C;
+    border-style: none;
+}
+
+QComboBox::drop-down {
+    color: #E3E3E3;
+    padding: 2px;
+    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
+    border-bottom: 0px solid black;
+    border-top: 0px solid black;
+    border-right: 0px;
+    border-left: 2px solid;
+    margin-left: 5px;
+    padding: 5px;
+    width: 7px;
+    border-color: rgba(80, 80, 80, 255);
+    background-color: #1C1C1C;
+}
+
+
+QComboBox QAbstractItemView {
+    border: 2px solid gray;
+    border-color: rgba(80, 80, 80, 255);
+    selection-background-color: #414956;
+    background-color: #1C1C1C;
+}
+
+
+QComboBox QAbstractItemView::item {
+    height: 16px; /* Set the height of each item */
+    padding: 4px; /* Add padding to each item */
+    padding-left: 5px;
+    padding-right: 5px;
+    color: #ff8a8a8a;
+    border-style: none;
+    border-bottom: 0.5px solid black;
+    border-color: rgba(255, 255, 255, 10);
+}
+
+
+QComboBox QAbstractItemView::item:selected {
+    height: 16px; /* Set the height of each item */
+    padding: 4px; /* Add padding to each item */
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: #414956;
+    color: white;
+    border: none; /* Remove border */
+    outline: none; /* Remove outline */
+}</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>hammer</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QListWidget" name="presets_list"/>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QPushButton" name="open_file_as_button_2">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + O&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+         </property>
+         <property name="text">
+          <string>Set current</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../resources.qrc">
+           <normaloff>:/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="shortcut">
+          <string>Ctrl+O</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="cerate_file_button">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+         </property>
+         <property name="text">
+          <string>New preset</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../resources.qrc">
+           <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="shortcut">
+          <string>Ctrl+N</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_as">
+   <property name="text">
+    <string>Save as</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

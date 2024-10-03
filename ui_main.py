@@ -127,20 +127,6 @@ class Ui_MainWindow(object):
         self.hotkeyeditor_tab.setEnabled(True)
         self.verticalLayout_3 = QVBoxLayout(self.hotkeyeditor_tab)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.label = QLabel(self.hotkeyeditor_tab)
-        self.label.setObjectName(u"label")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
-        self.label.setSizePolicy(sizePolicy)
-        self.label.setStyleSheet(u"font: 24pt \"Segoe UI\";")
-        self.label.setScaledContents(False)
-        self.label.setAlignment(Qt.AlignCenter)
-        self.label.setMargin(0)
-
-        self.verticalLayout_3.addWidget(self.label)
-
         icon5 = QIcon()
         icon5.addFile(u":/icons/keyboard.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.MainWindowTools_tabs.addTab(self.hotkeyeditor_tab, icon5, "")
@@ -151,6 +137,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
         self.label_4 = QLabel(self.synchronization_tab)
         self.label_4.setObjectName(u"label_4")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_4.sizePolicy().hasHeightForWidth())
         self.label_4.setSizePolicy(sizePolicy)
         self.label_4.setStyleSheet(u"font: 24pt \"Segoe UI\";")
@@ -367,7 +356,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.MainWindowTools_tabs.setCurrentIndex(2)
+        self.MainWindowTools_tabs.setCurrentIndex(4)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -379,7 +368,6 @@ class Ui_MainWindow(object):
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.soundeditor_tab), QCoreApplication.translate("MainWindow", u"SoundEvent Editor", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.smartpropeditor_tab), QCoreApplication.translate("MainWindow", u"SmartProp Editor", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.BatchCreator_tab), QCoreApplication.translate("MainWindow", u"BatchCreator", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Will be soon", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.hotkeyeditor_tab), QCoreApplication.translate("MainWindow", u"Hotkey Editor", None))
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"Will be soon", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.synchronization_tab), QCoreApplication.translate("MainWindow", u"Sync Editor", None))
