@@ -37,6 +37,7 @@ def default_settings():
         set_config_value('PATHS', 'archive', desktop_user_path)
         set_config_value('PATHS', 'settings', os.path.dirname(os.path.normpath(settings.fileName())))
         set_config_value('PATHS', 'user_presets', (app_dir + '\\presets'))
+        set_config_value('PATHS', 'hotkeys_presets', (app_dir + '\\hotkeys'))
         set_config_value('DISCORD_STATUS', 'custom_status', 'Doing stuff')
         set_config_value('DISCORD_STATUS', 'show_status', True)
         set_config_value('DISCORD_STATUS', 'show_project_name', False)
@@ -105,6 +106,7 @@ class PreferencesDialog(QDialog):
             self.ui.preferences_lineedit_steam_path.setText(get_steam_path())
             self.ui.preferences_lineedit_archive_path.setText(get_config_value('PATHS', 'archive'))
             self.ui.preferences_lineedit_user_presets_path.setText(get_config_value('PATHS', 'user_presets'))
+            self.ui.preferences_lineedit_hotkeys_presets_path.setText(get_config_value('PATHS', 'hotkeys_presets'))
             # discord_status
             self.ui.checkBox_show_in_hammer_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_status'))
             self.ui.checkBox_hide_project_name_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_project_name'))
@@ -137,6 +139,7 @@ class PreferencesDialog(QDialog):
         set_config_value('PATHS', 'steam', self.ui.preferences_lineedit_steam_path.text())
         set_config_value('PATHS', 'archive', self.ui.preferences_lineedit_archive_path.text())
         set_config_value('PATHS', 'user_presets', self.ui.preferences_lineedit_user_presets_path.text())
+        set_config_value('PATHS', 'hotkeys_presets', self.ui.preferences_lineedit_hotkeys_presets_path.text())
 
         # discord_status
         set_config_value('DISCORD_STATUS', 'show_status',str(self.ui.checkBox_show_in_hammer_discord_status.isChecked()))
