@@ -4,7 +4,8 @@ from hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem, QSplitter
 from PySide6.QtCore import Qt
 from hotkey_editor.format import HotkeysOpen
-
+from preferences import get_config_value
+hotkeys_path = get_config_value('PATHS', 'hotkeys_presets')
 class HotkeyEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
