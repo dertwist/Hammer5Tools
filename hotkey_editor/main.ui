@@ -69,7 +69,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox">
+            <widget class="QComboBox" name="editor_combobox">
              <property name="styleSheet">
               <string notr="true">QMenu {
 background-color: red;
@@ -241,19 +241,22 @@ QComboBox QAbstractItemView::item:selected {
             <widget class="QListWidget" name="presets_list"/>
            </item>
            <item>
-            <widget class="QLineEdit" name="current_preset">
+            <widget class="QLineEdit" name="current_preset_line">
              <property name="text">
-              <string>Current hotkey preset</string>
+              <string/>
              </property>
              <property name="readOnly">
               <bool>true</bool>
+             </property>
+             <property name="placeholderText">
+              <string>Current hotkey preset</string>
              </property>
             </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
              <item>
-              <widget class="QPushButton" name="open_file_as_button_2">
+              <widget class="QPushButton" name="set_current_button">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + O&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
@@ -308,7 +311,7 @@ QComboBox QAbstractItemView::item:selected {
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="cerate_file_button">
+              <widget class="QPushButton" name="new_button">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
@@ -376,7 +379,7 @@ QComboBox QAbstractItemView::item:selected {
             </widget>
            </item>
            <item>
-            <widget class="QTreeWidget" name="treeWidget">
+            <widget class="QTreeWidget" name="keybindings_tree">
              <attribute name="headerMinimumSectionSize">
               <number>150</number>
              </attribute>
@@ -403,21 +406,21 @@ QComboBox QAbstractItemView::item:selected {
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_4">
              <item>
-              <widget class="QLineEdit" name="lineEdit">
+              <widget class="QLineEdit" name="context_filter_line">
                <property name="placeholderText">
                 <string>Context</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="lineEdit_3">
+              <widget class="QLineEdit" name="input_filter_line">
                <property name="placeholderText">
                 <string>Command</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="lineEdit_2">
+              <widget class="QLineEdit" name="command_filter_line">
                <property name="placeholderText">
                 <string>Input</string>
                </property>
@@ -431,7 +434,7 @@ QComboBox QAbstractItemView::item:selected {
               <widget class="QKeySequenceEdit" name="keySequenceEdit"/>
              </item>
              <item>
-              <widget class="QPushButton" name="cerate_file_button_4">
+              <widget class="QPushButton" name="save_button">
                <property name="minimumSize">
                 <size>
                  <width>128</width>
@@ -492,7 +495,7 @@ QComboBox QAbstractItemView::item:selected {
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="cerate_file_button_3">
+              <widget class="QPushButton" name="save_restart_button">
                <property name="minimumSize">
                 <size>
                  <width>256</width>
