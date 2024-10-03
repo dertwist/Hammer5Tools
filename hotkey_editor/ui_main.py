@@ -61,10 +61,10 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.label_3)
 
-        self.comboBox = QComboBox(self.widget)
-        self.comboBox.addItem("")
-        self.comboBox.setObjectName(u"comboBox")
-        self.comboBox.setStyleSheet(u"QMenu {\n"
+        self.editor_combobox = QComboBox(self.widget)
+        self.editor_combobox.addItem("")
+        self.editor_combobox.setObjectName(u"editor_combobox")
+        self.editor_combobox.setStyleSheet(u"QMenu {\n"
 "background-color: red;\n"
 " }\n"
 "\n"
@@ -226,24 +226,24 @@ class Ui_MainWindow(object):
 "    outline: none; /* Remove outline */\n"
 "}")
 
-        self.verticalLayout_4.addWidget(self.comboBox)
+        self.verticalLayout_4.addWidget(self.editor_combobox)
 
         self.presets_list = QListWidget(self.widget)
         self.presets_list.setObjectName(u"presets_list")
 
         self.verticalLayout_4.addWidget(self.presets_list)
 
-        self.current_preset = QLineEdit(self.widget)
-        self.current_preset.setObjectName(u"current_preset")
-        self.current_preset.setReadOnly(True)
+        self.current_preset_line = QLineEdit(self.widget)
+        self.current_preset_line.setObjectName(u"current_preset_line")
+        self.current_preset_line.setReadOnly(True)
 
-        self.verticalLayout_4.addWidget(self.current_preset)
+        self.verticalLayout_4.addWidget(self.current_preset_line)
 
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.open_file_as_button_2 = QPushButton(self.widget)
-        self.open_file_as_button_2.setObjectName(u"open_file_as_button_2")
-        self.open_file_as_button_2.setStyleSheet(u"\n"
+        self.set_current_button = QPushButton(self.widget)
+        self.set_current_button.setObjectName(u"set_current_button")
+        self.set_current_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
@@ -275,14 +275,14 @@ class Ui_MainWindow(object):
 "    }")
         icon = QIcon()
         icon.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_as_button_2.setIcon(icon)
-        self.open_file_as_button_2.setIconSize(QSize(20, 20))
+        self.set_current_button.setIcon(icon)
+        self.set_current_button.setIconSize(QSize(20, 20))
 
-        self.horizontalLayout_3.addWidget(self.open_file_as_button_2)
+        self.horizontalLayout_3.addWidget(self.set_current_button)
 
-        self.cerate_file_button = QPushButton(self.widget)
-        self.cerate_file_button.setObjectName(u"cerate_file_button")
-        self.cerate_file_button.setStyleSheet(u"\n"
+        self.new_button = QPushButton(self.widget)
+        self.new_button.setObjectName(u"new_button")
+        self.new_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
@@ -314,10 +314,10 @@ class Ui_MainWindow(object):
 "    }")
         icon1 = QIcon()
         icon1.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.cerate_file_button.setIcon(icon1)
-        self.cerate_file_button.setIconSize(QSize(20, 20))
+        self.new_button.setIcon(icon1)
+        self.new_button.setIconSize(QSize(20, 20))
 
-        self.horizontalLayout_3.addWidget(self.cerate_file_button)
+        self.horizontalLayout_3.addWidget(self.new_button)
 
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
@@ -333,32 +333,32 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addWidget(self.label)
 
-        self.treeWidget = QTreeWidget(self.widget1)
+        self.keybindings_tree = QTreeWidget(self.widget1)
         __qtreewidgetitem = QTreeWidgetItem()
         __qtreewidgetitem.setText(0, u"Context");
-        self.treeWidget.setHeaderItem(__qtreewidgetitem)
-        self.treeWidget.setObjectName(u"treeWidget")
-        self.treeWidget.header().setMinimumSectionSize(150)
-        self.treeWidget.header().setDefaultSectionSize(200)
+        self.keybindings_tree.setHeaderItem(__qtreewidgetitem)
+        self.keybindings_tree.setObjectName(u"keybindings_tree")
+        self.keybindings_tree.header().setMinimumSectionSize(150)
+        self.keybindings_tree.header().setDefaultSectionSize(200)
 
-        self.verticalLayout_3.addWidget(self.treeWidget)
+        self.verticalLayout_3.addWidget(self.keybindings_tree)
 
         self.horizontalLayout_4 = QHBoxLayout()
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.lineEdit = QLineEdit(self.widget1)
-        self.lineEdit.setObjectName(u"lineEdit")
+        self.context_filter_line = QLineEdit(self.widget1)
+        self.context_filter_line.setObjectName(u"context_filter_line")
 
-        self.horizontalLayout_4.addWidget(self.lineEdit)
+        self.horizontalLayout_4.addWidget(self.context_filter_line)
 
-        self.lineEdit_3 = QLineEdit(self.widget1)
-        self.lineEdit_3.setObjectName(u"lineEdit_3")
+        self.input_filter_line = QLineEdit(self.widget1)
+        self.input_filter_line.setObjectName(u"input_filter_line")
 
-        self.horizontalLayout_4.addWidget(self.lineEdit_3)
+        self.horizontalLayout_4.addWidget(self.input_filter_line)
 
-        self.lineEdit_2 = QLineEdit(self.widget1)
-        self.lineEdit_2.setObjectName(u"lineEdit_2")
+        self.command_filter_line = QLineEdit(self.widget1)
+        self.command_filter_line.setObjectName(u"command_filter_line")
 
-        self.horizontalLayout_4.addWidget(self.lineEdit_2)
+        self.horizontalLayout_4.addWidget(self.command_filter_line)
 
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_4)
@@ -370,10 +370,10 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_6.addWidget(self.keySequenceEdit)
 
-        self.cerate_file_button_4 = QPushButton(self.widget1)
-        self.cerate_file_button_4.setObjectName(u"cerate_file_button_4")
-        self.cerate_file_button_4.setMinimumSize(QSize(128, 0))
-        self.cerate_file_button_4.setStyleSheet(u"\n"
+        self.save_button = QPushButton(self.widget1)
+        self.save_button.setObjectName(u"save_button")
+        self.save_button.setMinimumSize(QSize(128, 0))
+        self.save_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
@@ -405,15 +405,15 @@ class Ui_MainWindow(object):
 "    }")
         icon2 = QIcon()
         icon2.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.cerate_file_button_4.setIcon(icon2)
-        self.cerate_file_button_4.setIconSize(QSize(20, 20))
+        self.save_button.setIcon(icon2)
+        self.save_button.setIconSize(QSize(20, 20))
 
-        self.horizontalLayout_6.addWidget(self.cerate_file_button_4)
+        self.horizontalLayout_6.addWidget(self.save_button)
 
-        self.cerate_file_button_3 = QPushButton(self.widget1)
-        self.cerate_file_button_3.setObjectName(u"cerate_file_button_3")
-        self.cerate_file_button_3.setMinimumSize(QSize(256, 0))
-        self.cerate_file_button_3.setStyleSheet(u"\n"
+        self.save_restart_button = QPushButton(self.widget1)
+        self.save_restart_button.setObjectName(u"save_restart_button")
+        self.save_restart_button.setMinimumSize(QSize(256, 0))
+        self.save_restart_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
@@ -445,10 +445,10 @@ class Ui_MainWindow(object):
 "    }")
         icon3 = QIcon()
         icon3.addFile(u":/icons/all_match_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.cerate_file_button_3.setIcon(icon3)
-        self.cerate_file_button_3.setIconSize(QSize(20, 20))
+        self.save_restart_button.setIcon(icon3)
+        self.save_restart_button.setIconSize(QSize(20, 20))
 
-        self.horizontalLayout_6.addWidget(self.cerate_file_button_3)
+        self.horizontalLayout_6.addWidget(self.save_restart_button)
 
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_6)
@@ -473,43 +473,44 @@ class Ui_MainWindow(object):
         self.actionSave_as.setText(QCoreApplication.translate("MainWindow", u"Save as", None))
         self.actionOpen.setText(QCoreApplication.translate("MainWindow", u"Open", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"Keybindings presets", None))
-        self.comboBox.setItemText(0, QCoreApplication.translate("MainWindow", u"Hammer", None))
+        self.editor_combobox.setItemText(0, QCoreApplication.translate("MainWindow", u"Hammer", None))
 
-        self.current_preset.setText(QCoreApplication.translate("MainWindow", u"Current hotkey preset", None))
+        self.current_preset_line.setText("")
+        self.current_preset_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Current hotkey preset", None))
 #if QT_CONFIG(tooltip)
-        self.open_file_as_button_2.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + O</p></body></html>", None))
+        self.set_current_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + O</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.open_file_as_button_2.setText(QCoreApplication.translate("MainWindow", u"Set current", None))
+        self.set_current_button.setText(QCoreApplication.translate("MainWindow", u"Set current", None))
 #if QT_CONFIG(shortcut)
-        self.open_file_as_button_2.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+O", None))
+        self.set_current_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+O", None))
 #endif // QT_CONFIG(shortcut)
 #if QT_CONFIG(tooltip)
-        self.cerate_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
+        self.new_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.cerate_file_button.setText(QCoreApplication.translate("MainWindow", u"New preset", None))
+        self.new_button.setText(QCoreApplication.translate("MainWindow", u"New preset", None))
 #if QT_CONFIG(shortcut)
-        self.cerate_file_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
+        self.new_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
 #endif // QT_CONFIG(shortcut)
         self.label.setText(QCoreApplication.translate("MainWindow", u"Keybindings editor", None))
-        ___qtreewidgetitem = self.treeWidget.headerItem()
+        ___qtreewidgetitem = self.keybindings_tree.headerItem()
         ___qtreewidgetitem.setText(2, QCoreApplication.translate("MainWindow", u"Input", None));
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Command", None));
-        self.lineEdit.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Context", None))
-        self.lineEdit_3.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Command", None))
-        self.lineEdit_2.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Input", None))
+        self.context_filter_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Context", None))
+        self.input_filter_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Command", None))
+        self.command_filter_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Input", None))
 #if QT_CONFIG(tooltip)
-        self.cerate_file_button_4.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
+        self.save_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.cerate_file_button_4.setText(QCoreApplication.translate("MainWindow", u"Save preset", None))
+        self.save_button.setText(QCoreApplication.translate("MainWindow", u"Save preset", None))
 #if QT_CONFIG(shortcut)
-        self.cerate_file_button_4.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
+        self.save_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
 #endif // QT_CONFIG(shortcut)
 #if QT_CONFIG(tooltip)
-        self.cerate_file_button_3.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
+        self.save_restart_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.cerate_file_button_3.setText(QCoreApplication.translate("MainWindow", u"Save and restart the editor", None))
+        self.save_restart_button.setText(QCoreApplication.translate("MainWindow", u"Save and restart the editor", None))
 #if QT_CONFIG(shortcut)
-        self.cerate_file_button_3.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
+        self.save_restart_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
 #endif // QT_CONFIG(shortcut)
     # retranslateUi
 
