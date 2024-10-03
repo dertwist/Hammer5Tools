@@ -12,5 +12,5 @@ class HotkeysOpen():
 
         kv3_ouput = kv3.textwriter.encode(self.data)
         print(kv3_ouput)
-
+        print(self.data.value)
 
