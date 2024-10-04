@@ -3,7 +3,7 @@ import re
 from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox, QLineEdit, QTreeWidgetItem, QPushButton, QHBoxLayout
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
-from preferences import get_config_value, set_config_value, get_cs2_path, get_addon_name
+from preferences import get_config_value, set_config_value, get_cs2_path, get_addon_name, debug
 from PySide6.QtCore import QModelIndex
 import shutil
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
@@ -41,19 +41,36 @@ class CustomFileSystemModel(QFileSystemModel):
                 return QIcon('://icons/assettypes/vmix_sm.png')
             if file_path.endswith(tuple(generic_extensions)):
                 return QIcon('://icons/assettypes/generic_sm.png')
-
+        # elif role == Qt.DisplayRole and index.column() == self.NAME_COLUMN:
+        #     file_path = self.filePath(index)
+        #     if file_path in self._cache:
+        #         return self._cache[file_path]
+        #     file_name = super().data(index, role)
+        #     if not self.isDir(index):
+        #         file_name = QFileInfo(file_name).completeBaseName()
+        #     self._cache[file_path] = file_name
+        #     if len(self._cache) > self.CACHE_LIMIT:
+        #         self._clean_cache()  # Clean up the cache if it exceeds the limit
+        #     return file_name
+        # return super().data(index, role)
         elif role == Qt.DisplayRole and index.column() == self.NAME_COLUMN:
             file_path = self.filePath(index)
             if file_path in self._cache:
                 return self._cache[file_path]
+
             file_name = super().data(index, role)
+
+            # Get the base name only (excluding extension) if not a directory
             if not self.isDir(index):
-                file_name = QFileInfo(file_name).completeBaseName()
+                file_name = QFileInfo(file_name).completeBaseName()  # Base name without extension
             self._cache[file_path] = file_name
+
+            # Clean up cache if limit exceeds
             if len(self._cache) > self.CACHE_LIMIT:
-                self._clean_cache()  # Clean up the cache if it exceeds the limit
+                self._clean_cache()
             return file_name
         return super().data(index, role)
+
 
     def _clean_cache(self):
         # Implement logic to clean up the cache, for example, removing the oldest entries
@@ -90,20 +107,31 @@ class CustomFileSystemModel(QFileSystemModel):
 
     def setData(self, index, value, role):
         if role == Qt.EditRole:
-            if not value:  # Check if the new value is empty
+            # Check if the new value is valid
+            if not value:
                 return False
 
             old_path = self.filePath(index)
-            new_path = QDir(os.path.dirname(old_path)).absoluteFilePath(value)  # Assuming rootPath() is the base directory
+            file_info = QFileInfo(old_path)
+            file_dir = file_info.dir()
 
+            # Separate the extension and base name
+            old_base_name = file_info.completeBaseName()
+            extension = file_info.suffix()
+            debug(f'Renaming file value: {value}')
+
+            # Ensure we keep the extension during renaming
+            new_name = value.replace('.' + extension, '') + ('.' + extension if extension else '')
+            new_path = file_dir.absoluteFilePath(new_name)
+
+            # Check for existing file with new name
             if QFile.exists(new_path):
-                # Handle the case where the new name already exists
-                return False
+                return False  # Fail if a file with the new name exists
 
+            # Rename the file without the extension in the edit line
             if QFile.rename(old_path, new_path):
-                # Update the cache if needed
                 if old_path in self._cache:
-                    del self._cache[old_path]
+                    del self._cache[old_path]  # Update cache
                 self._cache[new_path] = value
                 self.dataChanged.emit(index, index)
                 return True
@@ -111,7 +139,7 @@ class CustomFileSystemModel(QFileSystemModel):
 
     def flags(self, index):
         default_flags = super().flags(index)
-        if index.isValid():
+        if index.isValid() and index.column() == self.NAME_COLUMN:
             return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | Qt.ItemIsDropEnabled | default_flags
         return default_flags
 

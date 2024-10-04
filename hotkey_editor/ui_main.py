@@ -228,6 +228,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.editor_combobox)
 
+        self.explorer_layout = QVBoxLayout()
+        self.explorer_layout.setObjectName(u"explorer_layout")
+
+        self.verticalLayout_4.addLayout(self.explorer_layout)
+
         self.presets_list = QListWidget(self.layoutWidget)
         self.presets_list.setObjectName(u"presets_list")
 
