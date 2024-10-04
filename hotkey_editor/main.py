@@ -1,14 +1,18 @@
 import json
 import re
+import shutil
+
 from hotkey_editor.ui_main import Ui_MainWindow
-from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem, QSplitter, QLineEdit, QKeySequenceEdit, QPushButton
+from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem, QSplitter, QLineEdit, QKeySequenceEdit, QPushButton, QMessageBox
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeyEvent
 from hotkey_editor.dialog import KeyDialog
 from hotkey_editor.objects import *
-from preferences import debug, get_addon_name
+from preferences import debug, get_addon_name, get_cs2_path
+from minor_features.addon_functions import launch_addon, kill_addon
 from explorer.main import Explorer
 import os
+import datetime
 app_dir = os.getcwd()
 import keyvalues3 as kv3
 
@@ -74,19 +78,22 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.data = {}
         self.opened_file = ''
         self.editor = ''
+        self.explorer_instance = None
 
         self.FilterInputInstanceButton = KeyButton()
         self.FilterInputInstanceButton.setMinimumSize(256, 0)
         self.FilterInputInstanceButton.setMaximumHeight(26)
         self.ui.horizontalLayout_4.addWidget(self.FilterInputInstanceButton)
 
-        self.ui.editor_combobox.currentTextChanged.connect(self.populate_presets)
+        self.ui.editor_combobox.currentTextChanged.connect(self.editor_switch)
         self.get_path()
-        self.populate_presets()
+        self.editor_switch()
 
-        self.ui.presets_list.itemClicked.connect(lambda item: self.select_preset(item.text()))
+        self.ui.open_button.clicked.connect(self.open_preset)
         self.ui.new_button.clicked.connect(self.new_preset)
         self.ui.save_button.clicked.connect(self.save_preset)
+        self.ui.set_current_button.clicked.connect(lambda :self.set_current(True))
+        self.ui.save_restart_button.clicked.connect(self.set_save_restart)
 
         self.ui.command_filter_line.textChanged.connect(lambda text: self.filter_command(text, self.ui.keybindings_tree.invisibleRootItem()))
         self.FilterInputInstanceButton.clicked.connect(self.do_filter_input)
@@ -95,7 +102,29 @@ class HotkeyEditorMainWindow(QMainWindow):
     def do_filter_input(self):
         key = self.FilterInputInstanceButton.key
         self.filter_input(key, self.ui.keybindings_tree.invisibleRootItem())
+    def set_current(self, explorer_path=True):
+        path_keybindings = os.path.join(get_cs2_path(), 'game', 'core', 'tools', 'keybindings')
+        if explorer_path:
+            index = self.explorer_instance.tree.selectionModel().selectedIndexes()[0]
+            source = self.explorer_instance.model.filePath(index)
+        else:
+            source = self.opened_file
 
+        dest = os.path.join(path_keybindings, f'{self.editor}_key_bindings.txt')
+        debug(f'Source:{source}, dest: {dest}')
+        shutil.copy2(source, dest)
+        reply = QMessageBox.question(self, 'Confirmation', 'Would you like to restart the editor? Keybindings will be applied upon restart.', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        # Check the user's response and restart if they choose 'Yes'
+        if reply == QMessageBox.Yes:
+            self.restart()
+    def set_save_restart(self):
+        self.save_preset()
+        self.set_current(False)
+        self.restart()
+    def restart(self):
+        kill_addon()
+        launch_addon()
     def get_path(self):
         editor = self.ui.editor_combobox.currentText()
         # convert generic name to source format
@@ -103,7 +132,7 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.editor = editor.replace(' ', '_')
 
         self.hotkeys_path = os.path.join(app_dir, 'hotkeys', editor)
-    def populate_presets(self):
+    def editor_switch(self):
         try:
             self.ui.explorer_layout.itemAt(0).widget().deleteLater()
         except:
@@ -112,12 +141,9 @@ class HotkeyEditorMainWindow(QMainWindow):
             pass
         else:
             os.makedirs(self.hotkeys_path)
-        for file in os.listdir(self.hotkeys_path):
-            item = os.path.splitext(file)[0]
-            self.ui.presets_list.addItem(item)
 
-        explorer_instance = Explorer(editor_name='HotkeyEditor', tree_directory=self.hotkeys_path, parent=self.ui.frame, addon=get_addon_name())
-        self.ui.explorer_layout.insertWidget(0, explorer_instance.frame)
+        self.explorer_instance = Explorer(editor_name='HotkeyEditor', tree_directory=self.hotkeys_path, parent=self.ui.frame, addon=get_addon_name())
+        self.ui.explorer_layout.insertWidget(0, self.explorer_instance.frame)
     def populate_editor(self):
         root_item = self.ui.keybindings_tree.invisibleRootItem()
         unique_contexts = set()  # Define the set outside the loop
@@ -166,17 +192,18 @@ class HotkeyEditorMainWindow(QMainWindow):
 
         # self.ui.keybindings_tree.expandAll()
 
-    def select_preset(self, item):
+    def open_preset(self):
         self.ui.keybindings_tree.clear()
-        self.selected_preset = os.path.join(self.hotkeys_path, f'{item}.txt')
         debug(self.selected_preset)
-        self.open_preset(self.selected_preset)
+
+
+        index = self.explorer_instance.tree.selectionModel().selectedIndexes()[0]
+        filename = self.explorer_instance.model.filePath(index)
+        self.data.update(kv3.read(filename).value)
+        self.opened_file = filename
+
         self.populate_editor()
-
-
-    def open_preset(self, file):
-        self.data.update(kv3.read(file).value)
-        self.opened_file = file
+        print(f'Opened: {self.opened_file}')
 
 
     def save_preset(self):
@@ -187,22 +214,27 @@ class HotkeyEditorMainWindow(QMainWindow):
             output.update({'m_Bindings': self.serializing()})
             # There is a huge problem with python interpretation, avoid \\ in string. GizmoDebugHook have \\ as input.
             # So in output it would be only one \ test
-            name = 'test'
-            path = os.path.join(self.hotkeys_path, f'{name}.txt')
-            kv3.write(output, path)
+            kv3.write(output, self.opened_file)
+            print('Preset saved')
     def serializing(self):
         output = []
         root = self.ui.keybindings_tree.invisibleRootItem()
         for context_index in range(root.childCount()):
             for command_index in range(root.child(context_index).childCount()):
                 input_widget = (self.ui.keybindings_tree.itemWidget(root.child(context_index).child(command_index), 1)).key
-                if input_widget != 'None':
+                if input_widget is not None:
                     output.append({'m_Context': root.child(context_index).text(0), 'm_Command': root.child(context_index).child(command_index).text(0), 'm_Input': input_widget})
         return output
     def new_preset(self):
-        name = 'new_preset'
-        path = os.path.join(self.hotkeys_path, f'{name}.txt')
-        kv3.write(hammer_default, path)
+        name = f'{self.editor}_new_keybindings_{datetime.datetime.now().strftime("%m_%d_%Y")}'
+        path = os.path.join(self.hotkeys_path, f'{name}.keybindings')
+        output = {'editor_info': [
+            {'Info': 'Hammer5Tools Hotkey Editor by Twist', 'GitHub': 'https://github.com/dertwist/Hammer5Tools',
+             'Steam': 'https://steamcommunity.com/id/der_twist', 'Twitter': 'https://twitter.com/der_twist'}]}
+        if self.editor == 'hammer':
+            output.update(hammer_macros)
+        output.update(hammer_default)
+        kv3.write(output, path)
 
     def filter_input(self, filter_text, parent_item):
         debug(('filter text', filter_text))
@@ -256,11 +288,13 @@ class HotkeyEditorMainWindow(QMainWindow):
             item_text = ''
         else:
             item_text = str(item_widget.key).lower()
-        if item_text == 'none':
-            item_text = ''
-        debug(('t', item_text, filter_text))
-        item_visible = filter_text in item_text
+        if filter_text == 'none':
+            item_visible = True
+        else:
+            item_visible = filter_text in item_text
 
+
+        debug(('t', item_text, filter_text))
         # Always show the root, regardless of filter
         if is_root:
             item.setHidden(False)
