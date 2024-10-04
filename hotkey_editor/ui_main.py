@@ -19,8 +19,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
 from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
     QHeaderView, QLabel, QLineEdit, QListWidget,
     QListWidgetItem, QMainWindow, QPushButton, QSizePolicy,
-    QSplitter, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-    QWidget)
+    QSpacerItem, QSplitter, QTreeWidget, QTreeWidgetItem,
+    QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_MainWindow(object):
@@ -350,6 +350,10 @@ class Ui_MainWindow(object):
 
 
         self.horizontalLayout_6.addLayout(self.horizontalLayout_4)
+
+        self.horizontalSpacer = QSpacerItem(20, 20, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_6.addItem(self.horizontalSpacer)
 
         self.save_button = QPushButton(self.layoutWidget1)
         self.save_button.setObjectName(u"save_button")

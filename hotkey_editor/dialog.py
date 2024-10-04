@@ -17,7 +17,7 @@ class KeyDialog(QDialog):
         self.toggle_visibility()
 
         self.ui.key_line.keyPressEvent = self.key_pressed_event
-        self.ui.list.addItems(['NumEnter', 'Enter', 'Esc', 'Space', 'LMouse', 'RMouse', 'MMouse', 'MWheelUp', 'MWheelDn', 'LMouseDoubleClick', 'Up', 'Down', 'Left', 'Right', 'SELECTION_ADD_KEY', 'SELECTION_REMOVE_KEY', 'TOGGLE_SNAPPING_KEY'])
+        self.ui.list.addItems(['NumEnter', 'Enter', 'Esc', 'Space','Del', 'LMouse', 'RMouse', 'MMouse', 'MWheelUp', 'MWheelDn', 'LMouseDoubleClick', 'Up', 'Down', 'Left', 'Right', 'SELECTION_ADD_KEY', 'SELECTION_REMOVE_KEY', 'TOGGLE_SNAPPING_KEY'])
         self.ui.list.currentIndexChanged.connect(self.do_out)
         self.ui.ctrl.stateChanged.connect(self.do_out)
         self.ui.shift.stateChanged.connect(self.do_out)
