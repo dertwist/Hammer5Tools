@@ -50,6 +50,12 @@ def default_settings():
 default_settings()
 
 
+# debug
+
+def debug(value):
+    if settings.value("OTHER/debug_info", type=bool):
+        print(value)
+
 
 # get preferences from registry, if it new user search path to cs2 and set it to registry
 def get_cs2_path():
