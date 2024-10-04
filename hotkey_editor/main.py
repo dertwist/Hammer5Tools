@@ -13,19 +13,19 @@ app_dir = os.getcwd()
 import keyvalues3 as kv3
 
 class KeyButton(QPushButton):
-    def __init__(self, parent=None, Name=None):
-        super().__init__(parent)
-        if Name:
-            self.setButtonStyle("#E3E3E3")
-        else:
-            Name = 'Press a key'
-            self.setButtonStyle("#ababab")
+    DEFAULT_COLOR = "#ababab"
+    ACTIVE_COLOR = "#ababab"
+    BUTTON_TEXT_DEFAULT = 'Press a key'
 
+    def __init__(self, parent=None, name=None):
+        super().__init__(parent)
+        self.key = name if name else None
+        self.set_button_style(self.DEFAULT_COLOR)
         self.setMaximumWidth(256)
-        self.setText(Name)
+        self.setText(name if name else self.BUTTON_TEXT_DEFAULT)
         self.clicked.connect(self.show_dialog)
 
-    def setButtonStyle(self, color):
+    def set_button_style(self, color):
         style = f"""
             QPushButton {{
                 font: 580 9pt "Segoe UI";
@@ -51,10 +51,17 @@ class KeyButton(QPushButton):
 
     def show_dialog(self):
         dialog = KeyDialog()
-        dialog.exec_()
-        # Consider the necessity of simulating a key press event here
-        self.setText(dialog.value)
-        self.setButtonStyle("#E3E3E3")  # Apply the default style
+        if dialog.exec_():
+            val = dialog.value
+            if not val:
+                self.setText(self.BUTTON_TEXT_DEFAULT)
+                self.key = None
+            else:
+                self.setText(val)
+                self.key = val
+                self.set_button_style(self.ACTIVE_COLOR)
+        else:
+            debug((self.key))
 class HotkeyEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -69,6 +76,8 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.editor = ''
 
         Pushinstace = KeyButton()
+        Pushinstace.setMinimumSize(256, 0)
+        Pushinstace.setMaximumHeight(26)
         self.ui.horizontalLayout_4.addWidget(Pushinstace)
 
         self.ui.editor_combobox.currentTextChanged.connect(self.populate_presets)
@@ -114,7 +123,7 @@ class HotkeyEditorMainWindow(QMainWindow):
                             new_item = QTreeWidgetItem()
                             new_item.setText(0, item['m_Command'])
 
-                            key_editor = KeyButton(Name=item['m_Input'])
+                            key_editor = KeyButton(name=item['m_Input'])
                             root_item.child(i).addChild(new_item)
                             self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
