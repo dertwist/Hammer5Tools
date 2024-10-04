@@ -17,6 +17,7 @@ class HotkeyEditorMainWindow(QMainWindow):
         # variables definition
         self.selected_preset = ''
         self.hotkeys_path = ''
+        self.data = {}
 
 
         self.ui.keySequenceEdit.setMaximumSequenceLength(4)
@@ -47,13 +48,23 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.selected_preset = os.path.join(self.hotkeys_path, f'{item}.txt')
         print(self.selected_preset)
         self.open_preset(self.selected_preset)
+
     def open_preset(self, file):
         instance = HotkeysOpen(file)
-        print(instance.data)
+
+        self.data = {'editor_info': [{'Info': 'Hammer5Tools Hotkey Editor by Twist', 'GitHub': 'https://github.com/dertwist/Hammer5Tools', 'Steam': 'https://steamcommunity.com/id/der_twist', 'Twitter': 'https://twitter.com/der_twist'}]}
+        self.data.update(instance.data)
+        # There is a huge problem with python interpretation, avoid \\ in string. GizmoDebugHook have \\ as input.
+        # So in output it would be only one \ test
+        name = 'test'
+        path = os.path.join(self.hotkeys_path, f'{name}.txt')
+        kv3.write(self.data, path)
+        for item in instance.data.items():
+            for i in item:
+                print(i)
     def new_preset(self):
         name = 'new_preset'
         path = os.path.join(self.hotkeys_path, f'{name}.txt')
-        print(path)
         kv3.write(hammer_default, path)
 if __name__ == "__main__":
     app = QApplication([])
