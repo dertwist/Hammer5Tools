@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>420</width>
+    <height>128</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>420</width>
+    <height>128</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>420</width>
+    <height>128</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Change keybinding</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../resources.qrc">
+    <normaloff>:/icons/keyboard.png</normaloff>:/icons/keyboard.png</iconset>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QFrame" name="frame">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QCheckBox" name="select_from_list">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">
+    /* QPushButton default and hover styles */
+    QCheckBox {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QCheckBox:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QCheckBox:pressed {
+
+    }</string>
+        </property>
+        <property name="text">
+         <string>Select from list</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="key_line">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="placeholderText">
+         <string>Press a key</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="list">
+        <property name="styleSheet">
+         <string notr="true">QMenu {
+background-color: red;
+ }
+
+QMenu::item {
+    padding: 5px 10px;
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    color: #E3E3E3;
+}
+QMenu::item:selected {
+    background-color: #414956;
+    color: white;
+}
+QWidget {
+    background-color: #151515;
+    outline: none;
+}
+
+QWidget:item:checked {
+    background-color: #151515;
+    color: white;
+}
+
+QWidget:item:selected {
+    background-color: #414956;
+    color: white;
+    border: 0px;
+}
+
+
+
+QMenu {
+    background-color: #1d1d1f;
+    color: #FFFFFF;
+    border: 1px solid #555555;
+    /* padding-top: 5px; */
+    /* padding-bottom: 5px; */
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+}
+
+QMenu::item {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border-top: 2px solid black;
+    border: 0px;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    padding-left: 12px;
+    padding-right: 12px;
+    color: #E3E3E3;
+}
+
+QMenu::item:selected {
+    background-color: #666666;
+    color: #FFFFFF;
+}
+
+QMenu::separator {
+    height: 1px;
+    background: #AAAAAA;
+    margin: 5px 0;
+}
+
+QMenu::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+QMenu::indicator:checked {
+    image: url(:/images/checkmark.png);
+}
+
+QMenu::indicator:unchecked {
+    image: url(:/images/empty.png);
+}
+
+
+QComboBox {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    height: 12px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+    padding-left: 5px;
+}
+
+QComboBox:hover {
+    background-color: #414956;
+    color: white;
+}
+
+QComboBox:pressed {
+    background-color: #2E2F30;
+    color: white;
+}
+
+QComboBox:item {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    color: #E3E3E3;
+    padding-left: 5px;
+    background-color: #1C1C1C;
+    border-style: none;
+}
+
+QComboBox::drop-down {
+    color: #E3E3E3;
+    padding: 2px;
+    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
+    border-bottom: 0px solid black;
+    border-top: 0px solid black;
+    border-right: 0px;
+    border-left: 2px solid;
+    margin-left: 5px;
+    padding: 5px;
+    width: 7px;
+    border-color: rgba(80, 80, 80, 255);
+    background-color: #1C1C1C;
+}
+
+
+QComboBox QAbstractItemView {
+    border: 2px solid gray;
+    border-color: rgba(80, 80, 80, 255);
+    selection-background-color: #414956;
+    background-color: #1C1C1C;
+}
+
+
+QComboBox QAbstractItemView::item {
+    height: 16px; /* Set the height of each item */
+    padding: 4px; /* Add padding to each item */
+    padding-left: 5px;
+    padding-right: 5px;
+    color: #ff8a8a8a;
+    border-style: none;
+    border-bottom: 0.5px solid black;
+    border-color: rgba(255, 255, 255, 10);
+}
+
+
+QComboBox QAbstractItemView::item:selected {
+    height: 16px; /* Set the height of each item */
+    padding: 4px; /* Add padding to each item */
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: #414956;
+    color: white;
+    border: none; /* Remove border */
+    outline: none; /* Remove outline */
+}</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QCheckBox" name="ctrl">
+       <property name="styleSheet">
+        <string notr="true">
+    /* QPushButton default and hover styles */
+    QCheckBox {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QCheckBox:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QCheckBox:pressed {
+
+    }</string>
+       </property>
+       <property name="text">
+        <string>Ctrl</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="shift">
+       <property name="styleSheet">
+        <string notr="true">
+    /* QPushButton default and hover styles */
+    QCheckBox {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QCheckBox:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QCheckBox:pressed {
+
+    }</string>
+       </property>
+       <property name="text">
+        <string>Shift</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="alt">
+       <property name="styleSheet">
+        <string notr="true">
+    /* QPushButton default and hover styles */
+    QCheckBox {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QCheckBox:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QCheckBox:pressed {
+
+    }</string>
+       </property>
+       <property name="text">
+        <string>Alt</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="styleSheet">
+      <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+     <property name="centerButtons">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
