@@ -75,10 +75,10 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.opened_file = ''
         self.editor = ''
 
-        Pushinstace = KeyButton()
-        Pushinstace.setMinimumSize(256, 0)
-        Pushinstace.setMaximumHeight(26)
-        self.ui.horizontalLayout_4.addWidget(Pushinstace)
+        self.Pushinstace = KeyButton()
+        self.Pushinstace.setMinimumSize(256, 0)
+        self.Pushinstace.setMaximumHeight(26)
+        self.ui.horizontalLayout_4.addWidget(self.Pushinstace)
 
         self.ui.editor_combobox.currentTextChanged.connect(self.populate_presets)
         self.get_path()
@@ -87,6 +87,14 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.ui.presets_list.itemClicked.connect(lambda item: self.select_preset(item.text()))
         self.ui.new_button.clicked.connect(self.new_preset)
         self.ui.save_button.clicked.connect(self.save_preset)
+
+        self.ui.command_filter_line.textChanged.connect(lambda text: self.filter_command(text, self.ui.keybindings_tree.invisibleRootItem()))
+        self.Pushinstace.clicked.connect(self.do_filter_input)
+
+    def do_filter_input(self):
+        key = self.Pushinstace.key
+        self.filter_input(key, self.ui.keybindings_tree.invisibleRootItem())
+
     def get_path(self):
         editor = self.ui.editor_combobox.currentText()
         # convert generic name to source format
@@ -179,6 +187,89 @@ class HotkeyEditorMainWindow(QMainWindow):
         name = 'new_preset'
         path = os.path.join(self.hotkeys_path, f'{name}.txt')
         kv3.write(hammer_default, path)
+
+    def filter_input(self, filter_text, parent_item):
+        debug(('filter text', filter_text))
+        # Reset the root visibility and start the filtering process
+        self.filter_widget(parent_item, str(filter_text).lower(), True)
+    def filter_command(self, filter_text, parent_item):
+        # Reset the root visibility and start the filtering process
+        self.filter_item(parent_item, filter_text.lower(), True)
+
+    def filter_item(self, item, filter_text, is_root=False):
+        if not isinstance(item, QTreeWidgetItem):
+            return False
+
+        # Check if the current item's text matches the filter
+        item_text = item.text(0).lower()
+        item_visible = filter_text in item_text
+
+        # Always show the root, regardless of filter
+        if is_root:
+            item.setHidden(False)
+        else:
+            # Hide the item if it doesn't match the filter
+            item.setHidden(not item_visible)
+
+        # Track visibility of any child matching the filter
+        any_child_visible = False
+
+        # Recursively filter all children
+        for i in range(item.childCount()):
+            child_item = item.child(i)
+            child_visible = self.filter_item(child_item, filter_text, False)
+
+            if child_visible:
+                any_child_visible = True
+
+        # If any child is visible, make sure this item is also visible
+        if any_child_visible:
+            item.setHidden(False)
+            item.setExpanded(True)
+
+        # Return True if this item or any of its children is visible
+        return item_visible or any_child_visible
+
+    def filter_widget(self, item, filter_text, is_root=False):
+        if not isinstance(item, QTreeWidgetItem):
+            return False
+
+        # Check if the current item's text matches the filter
+        item_widget = self.ui.keybindings_tree.itemWidget(item, 1)
+        if item_widget is None:
+            item_text = ''
+        else:
+            item_text = str(item_widget.key).lower()
+        if item_text == 'none':
+            item_text = ''
+        debug(('t', item_text, filter_text))
+        item_visible = filter_text in item_text
+
+        # Always show the root, regardless of filter
+        if is_root:
+            item.setHidden(False)
+        else:
+            # Hide the item if it doesn't match the filter
+            item.setHidden(not item_visible)
+
+        # Track visibility of any child matching the filter
+        any_child_visible = False
+
+        # Recursively filter all children
+        for i in range(item.childCount()):
+            child_item = item.child(i)
+            child_visible = self.filter_widget(child_item, filter_text, False)
+
+            if child_visible:
+                any_child_visible = True
+
+        # If any child is visible, make sure this item is also visible
+        if any_child_visible:
+            item.setHidden(False)
+            item.setExpanded(True)
+
+        # Return True if this item or any of its children is visible
+        return item_visible or any_child_visible
 if __name__ == "__main__":
     app = QApplication([])
     app.setStyle('Fusion')

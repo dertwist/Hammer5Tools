@@ -489,7 +489,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.save_restart_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl+ Shif+S</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.save_restart_button.setText(QCoreApplication.translate("MainWindow", u"Save and restart the editor", None))
+        self.save_restart_button.setText(QCoreApplication.translate("MainWindow", u"Set and restart the editor", None))
 #if QT_CONFIG(shortcut)
         self.save_restart_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+Shift+S", None))
 #endif // QT_CONFIG(shortcut)

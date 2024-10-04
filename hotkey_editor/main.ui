@@ -525,7 +525,7 @@ QComboBox QAbstractItemView::item:selected {
     }</string>
                </property>
                <property name="text">
-                <string>Save and restart the editor</string>
+                <string>Set and restart the editor</string>
                </property>
                <property name="icon">
                 <iconset resource="../resources.qrc">
