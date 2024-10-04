@@ -59,7 +59,7 @@
          <property name="childrenCollapsible">
           <bool>false</bool>
          </property>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QVBoxLayout" name="verticalLayout_4">
            <item>
             <widget class="QLabel" name="label_3">
@@ -241,19 +241,6 @@ QComboBox QAbstractItemView::item:selected {
             <widget class="QListWidget" name="presets_list"/>
            </item>
            <item>
-            <widget class="QLineEdit" name="current_preset_line">
-             <property name="text">
-              <string/>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-             <property name="placeholderText">
-              <string>Current hotkey preset</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
              <item>
               <widget class="QPushButton" name="set_current_button">
@@ -369,7 +356,7 @@ QComboBox QAbstractItemView::item:selected {
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
             <widget class="QLabel" name="label">
@@ -380,20 +367,21 @@ QComboBox QAbstractItemView::item:selected {
            </item>
            <item>
             <widget class="QTreeWidget" name="keybindings_tree">
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
              <attribute name="headerMinimumSectionSize">
-              <number>150</number>
+              <number>300</number>
              </attribute>
              <attribute name="headerDefaultSectionSize">
-              <number>200</number>
+              <number>400</number>
+             </attribute>
+             <attribute name="headerHighlightSections">
+              <bool>false</bool>
              </attribute>
              <column>
               <property name="text">
-               <string notr="true">Context</string>
-              </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Command</string>
+               <string notr="true">Command</string>
               </property>
              </column>
              <column>
@@ -404,34 +392,27 @@ QComboBox QAbstractItemView::item:selected {
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_4">
-             <item>
-              <widget class="QLineEdit" name="context_filter_line">
-               <property name="placeholderText">
-                <string>Context</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="input_filter_line">
-               <property name="placeholderText">
-                <string>Command</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="command_filter_line">
-               <property name="placeholderText">
-                <string>Input</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
             <layout class="QHBoxLayout" name="horizontalLayout_6">
              <item>
-              <widget class="QKeySequenceEdit" name="keySequenceEdit"/>
+              <layout class="QHBoxLayout" name="horizontalLayout_4">
+               <item>
+                <widget class="QLineEdit" name="command_filter_line">
+                 <property name="placeholderText">
+                  <string>Command filter</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QKeySequenceEdit" name="input_filter_line">
+                 <property name="keySequence">
+                  <string/>
+                 </property>
+                 <property name="clearButtonEnabled">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
              <item>
               <widget class="QPushButton" name="save_button">
@@ -442,7 +423,7 @@ QComboBox QAbstractItemView::item:selected {
                 </size>
                </property>
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">
@@ -490,7 +471,7 @@ QComboBox QAbstractItemView::item:selected {
                 </size>
                </property>
                <property name="shortcut">
-                <string>Ctrl+N</string>
+                <string>Ctrl+S</string>
                </property>
               </widget>
              </item>
@@ -503,7 +484,7 @@ QComboBox QAbstractItemView::item:selected {
                 </size>
                </property>
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl + N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ctrl+ Shif+S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="styleSheet">
                 <string notr="true">
@@ -551,7 +532,10 @@ QComboBox QAbstractItemView::item:selected {
                 </size>
                </property>
                <property name="shortcut">
-                <string>Ctrl+N</string>
+                <string>Ctrl+Shift+S</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
