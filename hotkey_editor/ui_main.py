@@ -51,17 +51,17 @@ class Ui_MainWindow(object):
         self.splitter.setOrientation(Qt.Horizontal)
         self.splitter.setHandleWidth(8)
         self.splitter.setChildrenCollapsible(False)
-        self.widget = QWidget(self.splitter)
-        self.widget.setObjectName(u"widget")
-        self.verticalLayout_4 = QVBoxLayout(self.widget)
+        self.layoutWidget = QWidget(self.splitter)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.verticalLayout_4 = QVBoxLayout(self.layoutWidget)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.label_3 = QLabel(self.widget)
+        self.label_3 = QLabel(self.layoutWidget)
         self.label_3.setObjectName(u"label_3")
 
         self.verticalLayout_4.addWidget(self.label_3)
 
-        self.editor_combobox = QComboBox(self.widget)
+        self.editor_combobox = QComboBox(self.layoutWidget)
         self.editor_combobox.addItem("")
         self.editor_combobox.setObjectName(u"editor_combobox")
         self.editor_combobox.setStyleSheet(u"QMenu {\n"
@@ -228,20 +228,14 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.editor_combobox)
 
-        self.presets_list = QListWidget(self.widget)
+        self.presets_list = QListWidget(self.layoutWidget)
         self.presets_list.setObjectName(u"presets_list")
 
         self.verticalLayout_4.addWidget(self.presets_list)
 
-        self.current_preset_line = QLineEdit(self.widget)
-        self.current_preset_line.setObjectName(u"current_preset_line")
-        self.current_preset_line.setReadOnly(True)
-
-        self.verticalLayout_4.addWidget(self.current_preset_line)
-
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.set_current_button = QPushButton(self.widget)
+        self.set_current_button = QPushButton(self.layoutWidget)
         self.set_current_button.setObjectName(u"set_current_button")
         self.set_current_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
@@ -280,7 +274,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.set_current_button)
 
-        self.new_button = QPushButton(self.widget)
+        self.new_button = QPushButton(self.layoutWidget)
         self.new_button.setObjectName(u"new_button")
         self.new_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
@@ -322,55 +316,48 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
 
-        self.splitter.addWidget(self.widget)
-        self.widget1 = QWidget(self.splitter)
-        self.widget1.setObjectName(u"widget1")
-        self.verticalLayout_3 = QVBoxLayout(self.widget1)
+        self.splitter.addWidget(self.layoutWidget)
+        self.layoutWidget1 = QWidget(self.splitter)
+        self.layoutWidget1.setObjectName(u"layoutWidget1")
+        self.verticalLayout_3 = QVBoxLayout(self.layoutWidget1)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.label = QLabel(self.widget1)
+        self.label = QLabel(self.layoutWidget1)
         self.label.setObjectName(u"label")
 
         self.verticalLayout_3.addWidget(self.label)
 
-        self.keybindings_tree = QTreeWidget(self.widget1)
+        self.keybindings_tree = QTreeWidget(self.layoutWidget1)
         __qtreewidgetitem = QTreeWidgetItem()
-        __qtreewidgetitem.setText(0, u"Context");
+        __qtreewidgetitem.setText(0, u"Command");
         self.keybindings_tree.setHeaderItem(__qtreewidgetitem)
         self.keybindings_tree.setObjectName(u"keybindings_tree")
-        self.keybindings_tree.header().setMinimumSectionSize(150)
-        self.keybindings_tree.header().setDefaultSectionSize(200)
+        self.keybindings_tree.setAlternatingRowColors(True)
+        self.keybindings_tree.header().setMinimumSectionSize(300)
+        self.keybindings_tree.header().setDefaultSectionSize(400)
+        self.keybindings_tree.header().setHighlightSections(False)
 
         self.verticalLayout_3.addWidget(self.keybindings_tree)
 
+        self.horizontalLayout_6 = QHBoxLayout()
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
         self.horizontalLayout_4 = QHBoxLayout()
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.context_filter_line = QLineEdit(self.widget1)
-        self.context_filter_line.setObjectName(u"context_filter_line")
-
-        self.horizontalLayout_4.addWidget(self.context_filter_line)
-
-        self.input_filter_line = QLineEdit(self.widget1)
-        self.input_filter_line.setObjectName(u"input_filter_line")
-
-        self.horizontalLayout_4.addWidget(self.input_filter_line)
-
-        self.command_filter_line = QLineEdit(self.widget1)
+        self.command_filter_line = QLineEdit(self.layoutWidget1)
         self.command_filter_line.setObjectName(u"command_filter_line")
 
         self.horizontalLayout_4.addWidget(self.command_filter_line)
 
+        self.input_filter_line = QKeySequenceEdit(self.layoutWidget1)
+        self.input_filter_line.setObjectName(u"input_filter_line")
+        self.input_filter_line.setClearButtonEnabled(True)
 
-        self.verticalLayout_3.addLayout(self.horizontalLayout_4)
+        self.horizontalLayout_4.addWidget(self.input_filter_line)
 
-        self.horizontalLayout_6 = QHBoxLayout()
-        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
-        self.keySequenceEdit = QKeySequenceEdit(self.widget1)
-        self.keySequenceEdit.setObjectName(u"keySequenceEdit")
 
-        self.horizontalLayout_6.addWidget(self.keySequenceEdit)
+        self.horizontalLayout_6.addLayout(self.horizontalLayout_4)
 
-        self.save_button = QPushButton(self.widget1)
+        self.save_button = QPushButton(self.layoutWidget1)
         self.save_button.setObjectName(u"save_button")
         self.save_button.setMinimumSize(QSize(128, 0))
         self.save_button.setStyleSheet(u"\n"
@@ -410,7 +397,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_6.addWidget(self.save_button)
 
-        self.save_restart_button = QPushButton(self.widget1)
+        self.save_restart_button = QPushButton(self.layoutWidget1)
         self.save_restart_button.setObjectName(u"save_restart_button")
         self.save_restart_button.setMinimumSize(QSize(256, 0))
         self.save_restart_button.setStyleSheet(u"\n"
@@ -447,13 +434,14 @@ class Ui_MainWindow(object):
         icon3.addFile(u":/icons/all_match_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.save_restart_button.setIcon(icon3)
         self.save_restart_button.setIconSize(QSize(20, 20))
+        self.save_restart_button.setCheckable(True)
 
         self.horizontalLayout_6.addWidget(self.save_restart_button)
 
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_6)
 
-        self.splitter.addWidget(self.widget1)
+        self.splitter.addWidget(self.layoutWidget1)
 
         self.verticalLayout_5.addWidget(self.splitter)
 
@@ -475,8 +463,6 @@ class Ui_MainWindow(object):
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"Keybindings presets", None))
         self.editor_combobox.setItemText(0, QCoreApplication.translate("MainWindow", u"Hammer", None))
 
-        self.current_preset_line.setText("")
-        self.current_preset_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Current hotkey preset", None))
 #if QT_CONFIG(tooltip)
         self.set_current_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + O</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
@@ -493,24 +479,22 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(shortcut)
         self.label.setText(QCoreApplication.translate("MainWindow", u"Keybindings editor", None))
         ___qtreewidgetitem = self.keybindings_tree.headerItem()
-        ___qtreewidgetitem.setText(2, QCoreApplication.translate("MainWindow", u"Input", None));
-        ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Command", None));
-        self.context_filter_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Context", None))
-        self.input_filter_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Command", None))
-        self.command_filter_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Input", None))
+        ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Input", None));
+        self.command_filter_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Command filter", None))
+        self.input_filter_line.setKeySequence("")
 #if QT_CONFIG(tooltip)
-        self.save_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
+        self.save_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + S</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.save_button.setText(QCoreApplication.translate("MainWindow", u"Save preset", None))
 #if QT_CONFIG(shortcut)
-        self.save_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
+        self.save_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+S", None))
 #endif // QT_CONFIG(shortcut)
 #if QT_CONFIG(tooltip)
-        self.save_restart_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
+        self.save_restart_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl+ Shif+S</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.save_restart_button.setText(QCoreApplication.translate("MainWindow", u"Save and restart the editor", None))
 #if QT_CONFIG(shortcut)
-        self.save_restart_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
+        self.save_restart_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+Shift+S", None))
 #endif // QT_CONFIG(shortcut)
     # retranslateUi
 
