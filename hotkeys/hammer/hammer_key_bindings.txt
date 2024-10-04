@@ -9,6 +9,7 @@
 	m_Bindings =
 	[
 		{ m_Context = "HammerApp"  m_Command = "FileOpen"    m_Input = "Ctrl+O"},
+		{ m_Context = "ToolSelection"  m_Command = "BakeTransform"    m_Input = "Ctrl+O"},
 		{ m_Context = "HammerApp"  m_Command = "FileSave"    m_Input = "Ctrl+S"},
 		{ m_Context = "HammerApp"  m_Command = "FileSaveAs"    m_Input = "Ctrl+Shift+S"},
 		{ m_Context = "HammerApp"  m_Command = "SaveActivePrefab"    m_Input = "Shift+Alt+S"},

@@ -1,7 +1,7 @@
 
 # Hammer
 # actions
-hammer = {
+hammer_commands = {
     "ToolSelection": ["BakeTransform", "MergeMeshesByEdge", "ReplaceSelectionWithInstance", "RandomizeConfiguration"],
     "Camera": [
         "MoveCameraForward3D", "MoveCameraBackward3D", "MoveCameraLeft3D", "MoveCameraRight3D",

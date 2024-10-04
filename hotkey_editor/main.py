@@ -104,10 +104,25 @@ class HotkeyEditorMainWindow(QMainWindow):
             self.ui.presets_list.addItem(item)
     def populate_editor(self):
         root_item = self.ui.keybindings_tree.invisibleRootItem()
+        unique_contexts = set()  # Define the set outside the loop
+        for context, commands in hammer_commands.items():
+            if context not in unique_contexts:
+                unique_contexts.add(context)
+                context_item = QTreeWidgetItem(root_item)
+                context_item.setText(0, context)
+                for command in commands:
+                    new_item = QTreeWidgetItem(context_item)  # Add new_item as a child of context_item
+                    new_item.setText(0, command)
+
+                    key_editor = KeyButton(self.ui.keybindings_tree)  # Initialize KeyButton with parent
+                    context_item.addChild(new_item)
+                    self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
+
+        # Load from file
         for key, value in self.data.items():
             if key == 'm_Bindings':
                 # Create context categories
-                unique_contexts = set()
+                # unique_contexts = set()
                 for item in value:
                     context = item['m_Context']
                     if context not in unique_contexts:
@@ -117,24 +132,31 @@ class HotkeyEditorMainWindow(QMainWindow):
                 debug(unique_contexts)
 
                 for item in value:
-                    # Find the child item with the specific text 'm_Context'
                     for i in range(root_item.childCount()):
                         if root_item.child(i).text(0) == item['m_Context']:
                             new_item = QTreeWidgetItem()
                             new_item.setText(0, item['m_Command'])
 
                             key_editor = KeyButton(name=item['m_Input'])
-                            root_item.child(i).addChild(new_item)
-                            self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
+                            for i_child in range(root_item.child(i).childCount()):
+                                if item['m_Command'] == root_item.child(i).child(i_child).text(0):
+                                    self.ui.keybindings_tree.removeItemWidget(root_item.child(i).child(i_child), 1)
+                                    self.ui.keybindings_tree.setItemWidget(root_item.child(i).child(i_child), 1,key_editor)
+                                    break
+                            else:
+                                root_item.child(i).addChild(new_item)
+                                self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
+        # Add
 
-
-        self.ui.keybindings_tree.expandAll()
+        # self.ui.keybindings_tree.expandAll()
 
     def select_preset(self, item):
+        self.ui.keybindings_tree.clear()
         self.selected_preset = os.path.join(self.hotkeys_path, f'{item}.txt')
         debug(self.selected_preset)
         self.open_preset(self.selected_preset)
         self.populate_editor()
+
 
     def open_preset(self, file):
         instance = HotkeysOpen(file)
