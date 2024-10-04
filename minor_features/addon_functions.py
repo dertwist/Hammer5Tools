@@ -42,3 +42,6 @@ def launch_addon():
             set_config_bool('LAUNCH', 'ncm_mode_setup', True)
     else:
         psutil.Popen(cs2_launch_commands, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+def kill_addon():
+    subprocess.run(["taskkill", "/f", "/im", "cs2.exe"])
