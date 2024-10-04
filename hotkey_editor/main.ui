@@ -402,16 +402,6 @@ QComboBox QAbstractItemView::item:selected {
                  </property>
                 </widget>
                </item>
-               <item>
-                <widget class="QKeySequenceEdit" name="input_filter_line">
-                 <property name="keySequence">
-                  <string/>
-                 </property>
-                 <property name="clearButtonEnabled">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
               </layout>
              </item>
              <item>
