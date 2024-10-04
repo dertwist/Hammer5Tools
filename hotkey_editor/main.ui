@@ -238,6 +238,9 @@ QComboBox QAbstractItemView::item:selected {
             </widget>
            </item>
            <item>
+            <layout class="QVBoxLayout" name="explorer_layout"/>
+           </item>
+           <item>
             <widget class="QListWidget" name="presets_list"/>
            </item>
            <item>

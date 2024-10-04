@@ -4,10 +4,10 @@ from hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem, QSplitter, QLineEdit, QKeySequenceEdit, QPushButton
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeyEvent
-from hotkey_editor.format import HotkeysOpen
 from hotkey_editor.dialog import KeyDialog
 from hotkey_editor.objects import *
-from preferences import debug
+from preferences import debug, get_addon_name
+from explorer.main import Explorer
 import os
 app_dir = os.getcwd()
 import keyvalues3 as kv3
@@ -75,10 +75,10 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.opened_file = ''
         self.editor = ''
 
-        self.Pushinstace = KeyButton()
-        self.Pushinstace.setMinimumSize(256, 0)
-        self.Pushinstace.setMaximumHeight(26)
-        self.ui.horizontalLayout_4.addWidget(self.Pushinstace)
+        self.FilterInputInstanceButton = KeyButton()
+        self.FilterInputInstanceButton.setMinimumSize(256, 0)
+        self.FilterInputInstanceButton.setMaximumHeight(26)
+        self.ui.horizontalLayout_4.addWidget(self.FilterInputInstanceButton)
 
         self.ui.editor_combobox.currentTextChanged.connect(self.populate_presets)
         self.get_path()
@@ -89,10 +89,11 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.ui.save_button.clicked.connect(self.save_preset)
 
         self.ui.command_filter_line.textChanged.connect(lambda text: self.filter_command(text, self.ui.keybindings_tree.invisibleRootItem()))
-        self.Pushinstace.clicked.connect(self.do_filter_input)
+        self.FilterInputInstanceButton.clicked.connect(self.do_filter_input)
+
 
     def do_filter_input(self):
-        key = self.Pushinstace.key
+        key = self.FilterInputInstanceButton.key
         self.filter_input(key, self.ui.keybindings_tree.invisibleRootItem())
 
     def get_path(self):
@@ -103,6 +104,10 @@ class HotkeyEditorMainWindow(QMainWindow):
 
         self.hotkeys_path = os.path.join(app_dir, 'hotkeys', editor)
     def populate_presets(self):
+        try:
+            self.ui.explorer_layout.itemAt(0).widget().deleteLater()
+        except:
+            pass
         if os.path.exists(self.hotkeys_path):
             pass
         else:
@@ -110,6 +115,9 @@ class HotkeyEditorMainWindow(QMainWindow):
         for file in os.listdir(self.hotkeys_path):
             item = os.path.splitext(file)[0]
             self.ui.presets_list.addItem(item)
+
+        explorer_instance = Explorer(editor_name='HotkeyEditor', tree_directory=self.hotkeys_path, parent=self.ui.frame, addon=get_addon_name())
+        self.ui.explorer_layout.insertWidget(0, explorer_instance.frame)
     def populate_editor(self):
         root_item = self.ui.keybindings_tree.invisibleRootItem()
         unique_contexts = set()  # Define the set outside the loop
@@ -167,8 +175,7 @@ class HotkeyEditorMainWindow(QMainWindow):
 
 
     def open_preset(self, file):
-        instance = HotkeysOpen(file)
-        self.data.update(instance.data)
+        self.data.update(kv3.read(file).value)
         self.opened_file = file
 
 
