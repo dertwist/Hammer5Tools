@@ -8,7 +8,7 @@ from PySide6.QtCore import QModelIndex
 import shutil
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 smartprop_extensions = ['vsmart', 'vdata']
-generic_extensions = ['vpost', 'vsndevts', 'rect']
+generic_extensions = ['vpost', 'vsndevts', 'rect', 'keybindings']
 file_icons = {
     '.vsmart': '://icons/assettypes/vsmart_sm.png',
     '.vdata': '://icons/assettypes/vdata_sm.png',
