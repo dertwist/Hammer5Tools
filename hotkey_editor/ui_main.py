@@ -17,10 +17,10 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
-    QHeaderView, QKeySequenceEdit, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QMainWindow, QPushButton,
-    QSizePolicy, QSplitter, QTreeWidget, QTreeWidgetItem,
-    QVBoxLayout, QWidget)
+    QHeaderView, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QMainWindow, QPushButton, QSizePolicy,
+    QSplitter, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
+    QWidget)
 import rc_resources
 
 class Ui_MainWindow(object):
@@ -348,12 +348,6 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_4.addWidget(self.command_filter_line)
 
-        self.input_filter_line = QKeySequenceEdit(self.layoutWidget1)
-        self.input_filter_line.setObjectName(u"input_filter_line")
-        self.input_filter_line.setClearButtonEnabled(True)
-
-        self.horizontalLayout_4.addWidget(self.input_filter_line)
-
 
         self.horizontalLayout_6.addLayout(self.horizontalLayout_4)
 
@@ -481,7 +475,6 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem = self.keybindings_tree.headerItem()
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Input", None));
         self.command_filter_line.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Command filter", None))
-        self.input_filter_line.setKeySequence("")
 #if QT_CONFIG(tooltip)
         self.save_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + S</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)

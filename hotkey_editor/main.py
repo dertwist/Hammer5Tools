@@ -3,6 +3,7 @@ import re
 from hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem, QSplitter, QLineEdit, QKeySequenceEdit, QPushButton
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeyEvent
 from hotkey_editor.format import HotkeysOpen
 from hotkey_editor.dialog import KeyDialog
 from hotkey_editor.objects import *
@@ -14,42 +15,46 @@ import keyvalues3 as kv3
 class KeyButton(QPushButton):
     def __init__(self, parent=None, Name=None):
         super().__init__(parent)
-        self.setStyleSheet("""
-                                    QPushButton {
+        if Name:
+            self.setButtonStyle("#E3E3E3")
+        else:
+            Name = 'Press a key'
+            self.setButtonStyle("#ababab")
 
-                                        font: 580 9pt "Segoe UI";
-
-
-                                        border: 1px solid black;
-                                        border-radius: 1px;
-                                        border-color: rgba(80, 80, 80, 150);
-                                        height:22px;
-                                        padding-top: 4px;
-                                        padding-bottom:4px;
-                                        padding-left: 4px;
-                                        padding-right: 4px;
-                                        color: #E3E3E3;
-                                        background-color: #1C1C1C;
-                                    }
-                                    QPushButton:hover {
-                                        background-color: #414956;
-                                        color: white;
-                                    }
-                                    QPushButton:pressed {
-                                        background-color: red;
-                                        background-color: #1C1C1C;
-                                        margin: 1 px;
-                                        margin-left: 2px;
-                                        margin-right: 2px;
-
-                                    }""")
         self.setMaximumWidth(256)
         self.setText(Name)
         self.clicked.connect(self.show_dialog)
 
+    def setButtonStyle(self, color):
+        style = f"""
+            QPushButton {{
+                font: 580 9pt "Segoe UI";
+                border: 1px solid black;
+                border-radius: 1px;
+                border-color: rgba(80, 80, 80, 150);
+                height:22px;
+                padding: 4px;
+                color: {color};
+                background-color: #1C1C1C;
+            }}
+            QPushButton:hover {{
+                background-color: #414956;
+                color: white;
+            }}
+            QPushButton:pressed {{
+                background-color: red;
+                background-color: #1C1C1C;
+                margin: 1px 2px;
+            }}
+        """
+        self.setStyleSheet(style)
+
     def show_dialog(self):
         dialog = KeyDialog()
         dialog.exec_()
+        # Consider the necessity of simulating a key press event here
+        self.setText(dialog.value)
+        self.setButtonStyle("#E3E3E3")  # Apply the default style
 class HotkeyEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -63,9 +68,8 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.opened_file = ''
         self.editor = ''
 
-        if self.ui.input_filter_line.findChild(QLineEdit, "qt_keysequenceedit_lineedit"):
-            self.ui.input_filter_line.findChild(QLineEdit, "qt_keysequenceedit_lineedit").setPlaceholderText("Input filter")
-
+        Pushinstace = KeyButton()
+        self.ui.horizontalLayout_4.addWidget(Pushinstace)
 
         self.ui.editor_combobox.currentTextChanged.connect(self.populate_presets)
         self.get_path()
