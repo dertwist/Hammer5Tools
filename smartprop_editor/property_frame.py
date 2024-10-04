@@ -143,6 +143,12 @@ class PropertyFrame(QWidget):
             elif 'm_PointSpace' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'])
                 add_instance()
+            elif 'm_PathSpace' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'])
+                add_instance()
+            elif 'm_PlaceAtPositions' in value_class:
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'])
+                add_instance()
             elif 'm_Mode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'])
                 add_instance()
@@ -239,7 +245,7 @@ class PropertyFrame(QWidget):
             classes = ['m_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode']
             operator_adding_instances(classes)
         elif prop_class == 'PlaceOnPath':
-            classes = ['m_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace']
+            classes = ['m_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace', 'm_flSpacing', 'm_DefaultPath']
             operator_adding_instances(classes)
         elif prop_class == 'Model':
             classes = ['m_sModelName','m_vModelScale','m_MaterialGroupName']
