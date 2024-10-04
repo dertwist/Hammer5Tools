@@ -27,209 +27,559 @@
 	m_Bindings = 
 	[
 				{
-			m_Context = "HammerApp"
-			m_Command = "FileOpen"
-			m_Input = "Ctrl+O"
+			m_Context = "ToolSelection"
+			m_Command = "BakeTransform"
+			m_Input = "TOGGLE_SNAPPING_KEY"
 		},
 				{
 			m_Context = "ToolSelection"
-			m_Command = "BakeTransform"
-			m_Input = "Ctrl+O"
+			m_Command = "MergeMeshesByEdge"
+			m_Input = "Ctrl+Shift+Alt+TOGGLE_SNAPPING_KEY"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "FileSave"
-			m_Input = "Ctrl+S"
+			m_Context = "ToolSelection"
+			m_Command = "ReplaceSelectionWithInstance"
+			m_Input = null
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "FileSaveAs"
-			m_Input = "Ctrl+Shift+S"
+			m_Context = "ToolSelection"
+			m_Command = "RandomizeConfiguration"
+			m_Input = null
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "SaveActivePrefab"
-			m_Input = "Shift+Alt+S"
+			m_Context = "ToolSelection"
+			m_Command = "Select"
+			m_Input = "LMouse"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "FileReload"
-			m_Input = "Ctrl+Shift+F12"
+			m_Context = "ToolSelection"
+			m_Command = "BoxSelect"
+			m_Input = "LMouse"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "FileNew"
-			m_Input = "Ctrl+N"
+			m_Context = "ToolSelection"
+			m_Command = "ActivateObject"
+			m_Input = "LMouseDoubleClick"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "NextSession"
-			m_Input = "Ctrl+Tab"
+			m_Context = "ToolSelection"
+			m_Command = "LassoSelect"
+			m_Input = "MMouse"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "PreviousSession"
-			m_Input = "Ctrl+Shift+Tab"
+			m_Context = "ToolSelection"
+			m_Command = "TranslateLasso"
+			m_Input = "Space"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "BuildMap"
-			m_Input = "F9"
+			m_Context = "ToolSelection"
+			m_Command = "MoveSelected"
+			m_Input = "LMouse"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleShowHelpers"
-			m_Input = "Ctrl+Shift+H"
+			m_Context = "ToolSelection"
+			m_Command = "SelectAndMove2D"
+			m_Input = "Alt+LMouse"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleTextureLockScale"
-			m_Input = "Ctrl+Shift+Y"
+			m_Context = "ToolSelection"
+			m_Command = "AddObjectToSelection"
+			m_Input = "SELECTION_ADD_KEY"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "TogglePropertiesPopup"
-			m_Input = "Alt+Enter"
+			m_Context = "ToolSelection"
+			m_Command = "RemoveObjectFromSelection"
+			m_Input = "SELECTION_REMOVE_KEY"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "TogglePropertiesPopup"
-			m_Input = "Alt+NumEnter"
+			m_Context = "ToolSelection"
+			m_Command = "ToggleSnapping"
+			m_Input = "TOGGLE_SNAPPING_KEY"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "ShowMapVariablesPopup"
-			m_Input = "Ctrl+Shift+M"
+			m_Context = "ToolSelection"
+			m_Command = "StampClone"
+			m_Input = "Shift"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "ShowMapPropertiesPopup"
-			m_Input = "Ctrl+Shift+P"
+			m_Context = "ToolSelection"
+			m_Command = "CloneSelection"
+			m_Input = "Shift"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleShowGameObjectsOnly"
-			m_Input = "Shift+O"
+			m_Context = "ToolSelection"
+			m_Command = "ToggleAlignToSurface"
+			m_Input = "Alt"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleSelectThrough"
-			m_Input = "Ctrl+Shift+L"
+			m_Context = "ToolSelection"
+			m_Command = "SelectNext"
+			m_Input = "PgUp"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "ViewDistanceNext"
-			m_Input = "Alt+MWheelUp"
+			m_Context = "ToolSelection"
+			m_Command = "SelectPrev"
+			m_Input = "PgDn"
 		},
 				{
-			m_Context = "HammerApp"
-			m_Command = "ViewDistancePrev"
-			m_Input = "Alt+MWheelDn"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ShowMapManifestWidget"
-			m_Input = "Ctrl+Alt+M"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleGridNav"
-			m_Input = "Ctrl+Q"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleToolsMaterials"
-			m_Input = "Ctrl+Shift+F2"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleSelectionOverlay"
-			m_Input = "Ctrl+Shift+F4"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleInstanceOverlay"
-			m_Input = "Ctrl+Shift+F5"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleMeshSubdivision"
-			m_Input = "Ctrl+Shift+F6"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleMeshTiles3D"
-			m_Input = "Ctrl+Shift+F7"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleMeshTiles2D"
-			m_Input = "Ctrl+Shift+F8"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleSelectBackfacing"
-			m_Input = "Ctrl+Shift+F9"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ToggleFullscreenLayout"
-			m_Input = "Shift+Alt+Z"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ShowEntityReport"
-			m_Input = "Ctrl+Alt+R"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "CycleEditUVSet"
-			m_Input = "Alt+Y"
-		},
-				{
-			m_Context = "SessionCycleWidget"
-			m_Command = "KeepActive"
-			m_Input = "Ctrl"
-		},
-				{
-			m_Context = "SessionCycleWidget"
-			m_Command = "NextSession"
-			m_Input = "Ctrl+Tab"
-		},
-				{
-			m_Context = "SessionCycleWidget"
-			m_Command = "PreviousSession"
-			m_Input = "Ctrl+Shift+Tab"
-		},
-				{
-			m_Context = "MapManifestWidget"
-			m_Command = "RefreshView"
-			m_Input = "F5"
-		},
-				{
-			m_Context = "HammerObjectPropertyPopup"
-			m_Command = "HidePropertyWindow"
-			m_Input = "Alt+Enter"
-		},
-				{
-			m_Context = "HammerObjectPropertyPopup"
-			m_Command = "HidePropertyWindow"
-			m_Input = "Alt+NumEnter"
-		},
-				{
-			m_Context = "HammerObjectPropertyPopup"
-			m_Command = "HidePropertyWindow"
+			m_Context = "ToolSelection"
+			m_Command = "CancelSelectOperation"
 			m_Input = "Esc"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "ShrinkGizmo"
+			m_Input = "Ctrl+NumSub"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "EnlargeGizmo"
+			m_Input = "Ctrl+NumAdd"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NextPivotTap"
+			m_Input = "N"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NextPivotCycle"
+			m_Input = "N+MWheelUp"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "PrevPivotCycle"
+			m_Input = "N+MWheelDn"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "ClearPivot"
+			m_Input = "Home"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "CenterPivotInView"
+			m_Input = "Ctrl+Home"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "SetPivotToWorldOrigin"
+			m_Input = "Ctrl+End"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "SetPivotToSelectionCenter"
+			m_Input = "Alt+Home"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "EndPivotManipulation"
+			m_Input = "Ins"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "FlipNormals"
+			m_Input = "F"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "MergeSelectedMeshes"
+			m_Input = "M"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "SeparateMeshComponents"
+			m_Input = "Alt+N"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NudgeUp"
+			m_Input = "Up"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NudgeRotateUp"
+			m_Input = "Alt+Up"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NudgeDown"
+			m_Input = "Down"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NudgeRotateDown"
+			m_Input = "Alt+Down"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NudgeLeft"
+			m_Input = "Left"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NudgeRotateLeft"
+			m_Input = "Alt+Left"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NudgeRight"
+			m_Input = "Right"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NudgeRotateRight"
+			m_Input = "Alt+Right"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "ApplyMaterial"
+			m_Input = "Shift+T"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "SetOriginToCenter"
+			m_Input = "End"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "ClearRotationAndScale"
+			m_Input = "Ctrl+Num0"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "MoveObjectDownByTraceLocal"
+			m_Input = "Ctrl+Num1"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "MoveObjectDownByTrace"
+			m_Input = "Ctrl+Num2"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "ShowObjectProperties"
+			m_Input = "Alt+Enter"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GrowSelection"
+			m_Input = "="
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "ShrinkSelection"
+			m_Input = "-"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "SetOriginToPivot"
+			m_Input = "Ctrl+D"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "AlignObjects"
+			m_Input = "Alt+T"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "AlignObjectsRotation"
+			m_Input = "Alt+R"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "AlignObjectsToWorkplane"
+			m_Input = "Alt+E"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "AlignWorkplaneToObject"
+			m_Input = "Alt+Q"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "NextVariation"
+			m_Input = "Alt+F"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "PreviousVariation"
+			m_Input = "Alt+V"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "HideElement"
+			m_Input = "Alt+B"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "ResetConfiguration"
+			m_Input = "Alt+M"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "ReevaluateConfiguration"
+			m_Input = "Ctrl+F"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "BakeMeshDeformers"
+			m_Input = "Ctrl+L"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "ToggleDeformation"
+			m_Input = "Alt+D"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey0"
+			m_Input = "Num0"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey1"
+			m_Input = "Num1"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey2"
+			m_Input = "Num2"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey3"
+			m_Input = "Num3"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey4"
+			m_Input = "Num4"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey5"
+			m_Input = "Num5"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey6"
+			m_Input = "Num6"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey7"
+			m_Input = "Num7"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey8"
+			m_Input = "Num8"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKey9"
+			m_Input = "Num9"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKeyDecimal"
+			m_Input = "NumDec"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoComma"
+			m_Input = ","
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoNumKeyMinus"
+			m_Input = "NumSub"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoClearValue"
+			m_Input = "Backspace"
+		},
+				{
+			m_Context = "ToolSelection"
+			m_Command = "GizmoApplyValue"
+			m_Input = "NumEnter"
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MoveCameraForward3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MoveCameraBackward3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MoveCameraLeft3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MoveCameraRight3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MoveCameraUp3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MoveCameraDown3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "PitchCameraUp"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "PitchCameraDown"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "YawCameraLeft"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "YawCameraRight"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "IncreaseMoveSpeed"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "DecreaseMoveSpeed"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "ResetMoveSpeed"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "ZoomCameraIn"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "ZoomCameraOut"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "ZoomAllCamerasIn"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "ZoomAllCamerasOut"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MouseControlCamera"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MouseControlCamera3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MouseControlCamera2D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MouseControlCamera3D_Toggle"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "HorizontalStrafeCamera"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "VerticalStrafeCamera"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "ToggleLockCameraHeight"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "ZoomForwardBack3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "ZoomForwardBack2D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "PanCamera3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "RotateAboutTarget3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "MouseLook3D"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "SnapCameraToSelection"
+			m_Input = null
+		},
+				{
+			m_Context = "Camera"
+			m_Command = "CameraLookAtSelection"
+			m_Input = null
+		},
+				{
+			m_Context = "MapView"
+			m_Command = "ModelTraceLift"
+			m_Input = null
+		},
+				{
+			m_Context = "MapView"
+			m_Command = "RefreshRaytracedScene"
+			m_Input = null
+		},
+				{
+			m_Context = "MapView"
+			m_Command = "WriteRaytracedImage"
+			m_Input = null
 		},
 				{
 			m_Context = "MapView"
 			m_Command = "ShowContextMenu"
 			m_Input = "RMouse"
-		},
-				{
-			m_Context = "MapView"
-			m_Command = "MaterialTraceLift"
-			m_Input = "Shift+RMouse"
 		},
 				{
 			m_Context = "MapView"
@@ -245,6 +595,136 @@
 			m_Context = "MapView"
 			m_Command = "DetachViewFromObject"
 			m_Input = "Ctrl+Backspace"
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "3D_Wireframe"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "3D_HighContrastLighting"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "3D_DirectLightingOnly"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "3D_IndirectLightingOnly"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "3D_DirectPlusAmbientLighting"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "3D_TagVis"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "EngineView"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "AssetView"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ObjectProperties"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "EntityIO"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "TerrainGraph"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "RTX_Visualization"
+			m_Input = "Ctrl+Shift+Alt+F10"
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleLightingOnly"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleParticles"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleFog"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleSkybox"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleReflections"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleSSAO"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleWorklight"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleFOW"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleWaterFlow"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleFogFlow"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleResolutionGate"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleToggleGridOfThirds"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleHighlightDeprecated"
+			m_Input = null
+		},
+				{
+			m_Context = "PaneContainer"
+			m_Command = "CreateFloatingCopy"
+			m_Input = null
 		},
 				{
 			m_Context = "PaneContainer"
@@ -295,6 +775,436 @@
 			m_Context = "PaneContainer"
 			m_Command = "ToggleMeshEdges"
 			m_Input = "F11"
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "PasteKeys"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ConvertObjectsToModel"
+			m_Input = "Ctrl+Shift+Alt+F5"
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ConvertObjectsToSmartProp"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ConvertToStaticCables"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ConcertCablesToMesh"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SeperatePathSegments"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SeperatePathNodes"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "MergePaths"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ReversePaths"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ExportParticleSnapShot"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SendSelectedToModo"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "InsertNewImagePlane"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "RemovePaintData"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "RemovePoseData"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "AttachObjectToView"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "DetachObjectFromView"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SetHierarchyFromCurrentTransform"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SetTransformFromHierarchy"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToggleNaveAlwaysVisible"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToggleLightingPreviewLock"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToggleCordonsVisible"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SetManipulationModeTranslate"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SetManipulationModeRotate"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SetManipulationModeScale"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SetManipulationModePivot"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToolPolygon"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToolAssetSpray"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToolStaticOVerlay"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToolTextureProjection"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "HideUnselected"
+			m_Input = "Ctrl+Shift+R"
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToggleEntityNames"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToggleShowLightOverlap"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "AddNewKey"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "UpdateToCurrentVersion"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ConvertToStaticOVerlay"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "RemapBlendData"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToggleShow3DGrid"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToggleShow2DGrid"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "GotoCoords"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "TogglePrefabVisibility"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "TogglePrefabWireframColor"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ImportPrefab"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "CollapseAllPrefabs"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "CollapseSelectedPrefabs"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "CreatePrefabFromSelection"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "CreatePrefabFromSelectionCentered"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ConvertInstanceToPrefab"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ReplaceInstanceWithPrefab"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "EditSelectedPrefab"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "OpenPrefabs"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ReloadPrefabs"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SavePrefabs"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "AddPrefabsToVersionControl"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "CheckoutPrefabs"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "CreateWorldLayerFromSelection"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "CreateTestNode"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "CreateIsoSurface"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "BakeAllLighting"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "BakeAllCubemaps"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ClearAllLighting"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "BakeLightingOnSelection"
+			m_Input = "Ctrl+Shift+Alt+F12"
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "BakeCubemapsOnSelection"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ClearLightingOnSelection"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToggleBakedLightingUseRenderFarm"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "CleanupUnusedBakeResources"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "WriteCustomCubemap"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "EstimateLightingFromHDRSkybox"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ConvertToBarnDoorLights"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "AddEdgeFadeToEnvProbes"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ShowRemapVertexDataDialog"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ShowScreenshotDialog"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "AlignCameraToSelection"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "AlignSelectionToCamera"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "LoadMapInEngine"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ReloadMapInEngine"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "LoadVisClusters"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "DeleteVisClusters"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "OpenAssetPaneDockWidget"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "OpenMapViewPaneDockWidget"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SteamAudioPreviewScene"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SteamAudioExportScene"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SteamAudioCreateProbeBox"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SteamAudioGenerateProbes"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SteamAudioBakeReverb"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "SteamAudioBakePaths"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerEditorSession"
+			m_Command = "ToggleSnapRotation"
+			m_Input = null
 		},
 				{
 			m_Context = "HammerEditorSession"
@@ -464,22 +1374,7 @@
 				{
 			m_Context = "HammerEditorSession"
 			m_Command = "Undo"
-			m_Input = "Ctrl+Z"
-		},
-				{
-			m_Context = "HammerEditorSession"
-			m_Command = "Undo"
 			m_Input = "Alt+Backspace"
-		},
-				{
-			m_Context = "HammerEditorSession"
-			m_Command = "Redo"
-			m_Input = "Ctrl+Y"
-		},
-				{
-			m_Context = "HammerEditorSession"
-			m_Command = "Redo"
-			m_Input = "Ctrl+Shift+Z"
 		},
 				{
 			m_Context = "HammerEditorSession"
@@ -708,11 +1603,6 @@
 		},
 				{
 			m_Context = "HammerEditorSession"
-			m_Command = "HideUnselected"
-			m_Input = "Ctrl+Shift+R"
-		},
-				{
-			m_Context = "HammerEditorSession"
 			m_Command = "SelectionConvert"
 			m_Input = "Alt"
 		},
@@ -772,6 +1662,421 @@
 			m_Input = "Alt+G"
 		},
 				{
+			m_Context = "HammerApp"
+			m_Command = "FileClose"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ClearRecentFiles"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "VersionControlAdd"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "VersionControlCheckIn"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "VersionControlCheckOut"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "VersionControlCheckInAll"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "VersionControlStatus"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ActivateNextEditorSession"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ActivatePreviousEditorSession"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ReloadKeyBindings"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ResetLayout"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleDisableUndoRedo"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleTransformSpace"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleTextureLock"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleTextureLockComponent"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleSelectIntersecting"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleDisplacementMapping"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleFog"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "EditReplace"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "CheckMapForProblems"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "MapInformation"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "EntityGallery"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "NewMapFromTemplate"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "SaveAsText"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ReloadFGDFiles"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ImportFile"
+			m_Input = "Ctrl+Shift+Alt+F8"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ExportFile"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ExportSelected"
+			m_Input = "Ctrl+Shift+Alt+F9"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleShowVisContributorsOnly"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ShowOutputsPopup"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ShowInputsPopup"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ShowMapRelaysPopup"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "PauseGame"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "UnpauseGame"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleModelAnimation"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleForceLightsOn"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "CycleViewDistance"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleShowGrass"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleShowParticles"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleShowLPVSampleGrid"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "SetEditUVSet_All"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "SetEditUVSet_UV1"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "SetEditUVSet_UV2"
+			m_Input = null
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "FileOpen"
+			m_Input = "Ctrl+O"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "FileSave"
+			m_Input = "Ctrl+S"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "FileSaveAs"
+			m_Input = "Ctrl+Shift+S"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "SaveActivePrefab"
+			m_Input = "Shift+Alt+S"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "FileReload"
+			m_Input = "Ctrl+Shift+F12"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "FileNew"
+			m_Input = "Ctrl+N"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "NextSession"
+			m_Input = "Ctrl+Tab"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "PreviousSession"
+			m_Input = "Ctrl+Shift+Tab"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "BuildMap"
+			m_Input = "F9"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleShowHelpers"
+			m_Input = "Ctrl+Shift+H"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleTextureLockScale"
+			m_Input = "Ctrl+Shift+Y"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "TogglePropertiesPopup"
+			m_Input = "Alt+NumEnter"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ShowMapVariablesPopup"
+			m_Input = "Ctrl+Shift+M"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ShowMapPropertiesPopup"
+			m_Input = "Ctrl+Shift+P"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleShowGameObjectsOnly"
+			m_Input = "Shift+O"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleSelectThrough"
+			m_Input = "Ctrl+Shift+L"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ViewDistanceNext"
+			m_Input = "Alt+MWheelUp"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ViewDistancePrev"
+			m_Input = "Alt+MWheelDn"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ShowMapManifestWidget"
+			m_Input = "Ctrl+Alt+M"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleGridNav"
+			m_Input = "Ctrl+Q"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleToolsMaterials"
+			m_Input = "Ctrl+Shift+F2"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleSelectionOverlay"
+			m_Input = "Ctrl+Shift+F4"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleInstanceOverlay"
+			m_Input = "Ctrl+Shift+F5"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleMeshSubdivision"
+			m_Input = "Ctrl+Shift+F6"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleMeshTiles3D"
+			m_Input = "Ctrl+Shift+F7"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleMeshTiles2D"
+			m_Input = "Ctrl+Shift+F8"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleSelectBackfacing"
+			m_Input = "Ctrl+Shift+F9"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ToggleFullscreenLayout"
+			m_Input = "Shift+Alt+Z"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "ShowEntityReport"
+			m_Input = "Ctrl+Alt+R"
+		},
+				{
+			m_Context = "HammerApp"
+			m_Command = "CycleEditUVSet"
+			m_Input = "Alt+Y"
+		},
+				{
+			m_Context = "GlobalHotkeys"
+			m_Command = "FocusChainDebug_More"
+			m_Input = null
+		},
+				{
+			m_Context = "GlobalHotkeys"
+			m_Command = "FocusChainDebug_Less"
+			m_Input = null
+		},
+				{
+			m_Context = "GlobalHotkeys"
+			m_Command = "FocusChainDebug_Forward"
+			m_Input = null
+		},
+				{
+			m_Context = "GlobalHotkeys"
+			m_Command = "FocusChainDebug_Back"
+			m_Input = null
+		},
+				{
+			m_Context = "GlobalHotkeys"
+			m_Command = "FocusChainDebug_Toggle"
+			m_Input = null
+		},
+				{
+			m_Context = "SessionCycleWidget"
+			m_Command = "KeepActive"
+			m_Input = "Ctrl"
+		},
+				{
+			m_Context = "SessionCycleWidget"
+			m_Command = "NextSession"
+			m_Input = "Ctrl+Tab"
+		},
+				{
+			m_Context = "SessionCycleWidget"
+			m_Command = "PreviousSession"
+			m_Input = "Ctrl+Shift+Tab"
+		},
+				{
+			m_Context = "MapManifestWidget"
+			m_Command = "RefreshView"
+			m_Input = "F5"
+		},
+				{
+			m_Context = "HammerObjectPropertyPopup"
+			m_Command = "HidePropertyWindow"
+			m_Input = "Esc"
+		},
+				{
 			m_Context = "ToolPivotPicker"
 			m_Command = "PlacePivot"
 			m_Input = "LMouse"
@@ -814,11 +2119,6 @@
 				{
 			m_Context = "ToolBlock"
 			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolBlock"
-			m_Command = "Finish"
 			m_Input = "NumEnter"
 		},
 				{
@@ -849,17 +2149,7 @@
 				{
 			m_Context = "ToolPolygon"
 			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolPolygon"
-			m_Command = "Finish"
 			m_Input = "NumEnter"
-		},
-				{
-			m_Context = "ToolPolygon"
-			m_Command = "Apply"
-			m_Input = "LMouseDoubleClick"
 		},
 				{
 			m_Context = "ToolPolygon"
@@ -875,11 +2165,6 @@
 			m_Context = "ToolClipper"
 			m_Command = "DragClip"
 			m_Input = "LMouse"
-		},
-				{
-			m_Context = "ToolClipper"
-			m_Command = "FinishClip"
-			m_Input = "Enter"
 		},
 				{
 			m_Context = "ToolClipper"
@@ -905,16 +2190,6 @@
 			m_Context = "ToolClipper"
 			m_Command = "ToggleSnapping"
 			m_Input = "TOGGLE_SNAPPING_KEY"
-		},
-				{
-			m_Context = "ToolTextureProjection"
-			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolTextureProjection"
-			m_Command = "Finish"
-			m_Input = "NumEnter"
 		},
 				{
 			m_Context = "ToolTextureProjection"
@@ -949,11 +2224,6 @@
 				{
 			m_Context = "ToolMirror"
 			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolMirror"
-			m_Command = "Finish"
 			m_Input = "NumEnter"
 		},
 				{
@@ -980,11 +2250,6 @@
 			m_Context = "ToolEntity"
 			m_Command = "TraceAndCreate"
 			m_Input = "LMouse"
-		},
-				{
-			m_Context = "ToolEntity"
-			m_Command = "Create"
-			m_Input = "Enter"
 		},
 				{
 			m_Context = "ToolEntity"
@@ -1124,17 +2389,7 @@
 				{
 			m_Context = "ToolFaceSelection"
 			m_Command = "ShrinkSelection"
-			m_Input = "NumSub"
-		},
-				{
-			m_Context = "ToolFaceSelection"
-			m_Command = "ShrinkSelection"
 			m_Input = "-"
-		},
-				{
-			m_Context = "ToolFaceSelection"
-			m_Command = "GrowSelection"
-			m_Input = "NumAdd"
 		},
 				{
 			m_Context = "ToolFaceSelection"
@@ -1184,22 +2439,22 @@
 				{
 			m_Context = "ToolFaceSelection"
 			m_Command = "JustifyLeft"
-			m_Input = "Ctrl+Shift+Home"
+			m_Input = "Ctrl+Mouse4"
 		},
 				{
 			m_Context = "ToolFaceSelection"
 			m_Command = "JustifyRight"
-			m_Input = "Ctrl+Shift+End"
+			m_Input = "Ctrl+Mouse5"
 		},
 				{
 			m_Context = "ToolFaceSelection"
 			m_Command = "JustifyTop"
-			m_Input = "Ctrl+Shift+PgUp"
+			m_Input = "Ctrl+Shift+Mouse5"
 		},
 				{
 			m_Context = "ToolFaceSelection"
 			m_Command = "JustifyBottom"
-			m_Input = "Ctrl+Shift+PgDn"
+			m_Input = "Ctrl+Shift+Mouse4"
 		},
 				{
 			m_Context = "ToolFaceSelection"
@@ -1385,26 +2640,6 @@
 			m_Context = "ToolFaceSelection"
 			m_Command = "NudgeTextureDown"
 			m_Input = "Shift+Mouse4"
-		},
-				{
-			m_Context = "ToolFaceSelection"
-			m_Command = "JustifyRight"
-			m_Input = "Ctrl+Mouse5"
-		},
-				{
-			m_Context = "ToolFaceSelection"
-			m_Command = "JustifyLeft"
-			m_Input = "Ctrl+Mouse4"
-		},
-				{
-			m_Context = "ToolFaceSelection"
-			m_Command = "JustifyTop"
-			m_Input = "Ctrl+Shift+Mouse5"
-		},
-				{
-			m_Context = "ToolFaceSelection"
-			m_Command = "JustifyBottom"
-			m_Input = "Ctrl+Shift+Mouse4"
 		},
 				{
 			m_Context = "ToolFaceSelection"
@@ -1649,17 +2884,7 @@
 				{
 			m_Context = "ToolVertexSelection"
 			m_Command = "GrowSelection"
-			m_Input = "NumAdd"
-		},
-				{
-			m_Context = "ToolVertexSelection"
-			m_Command = "GrowSelection"
 			m_Input = "="
-		},
-				{
-			m_Context = "ToolVertexSelection"
-			m_Command = "ShrinkSelection"
-			m_Input = "NumSub"
 		},
 				{
 			m_Context = "ToolVertexSelection"
@@ -1924,17 +3149,7 @@
 				{
 			m_Context = "ToolEdgeSelection"
 			m_Command = "ShrinkSelection"
-			m_Input = "NumSub"
-		},
-				{
-			m_Context = "ToolEdgeSelection"
-			m_Command = "ShrinkSelection"
 			m_Input = "-"
-		},
-				{
-			m_Context = "ToolEdgeSelection"
-			m_Command = "GrowSelection"
-			m_Input = "NumAdd"
 		},
 				{
 			m_Context = "ToolEdgeSelection"
@@ -2254,11 +3469,6 @@
 				{
 			m_Context = "ToolEdgeCut"
 			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolEdgeCut"
-			m_Command = "Finish"
 			m_Input = "NumEnter"
 		},
 				{
@@ -2280,11 +3490,6 @@
 			m_Context = "ToolEdgeCut"
 			m_Command = "AlignedSnap"
 			m_Input = "Shift"
-		},
-				{
-			m_Context = "ToolEdgeCut"
-			m_Command = "PlaceCut"
-			m_Input = "B"
 		},
 				{
 			m_Context = "ToolEdgeCut"
@@ -2334,11 +3539,6 @@
 				{
 			m_Context = "ToolEdgeArc"
 			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolEdgeArc"
-			m_Command = "Finish"
 			m_Input = "NumEnter"
 		},
 				{
@@ -2370,21 +3570,6 @@
 			m_Context = "ToolEdgeArc"
 			m_Command = "ToggleSnapping"
 			m_Input = "TOGGLE_SNAPPING_KEY"
-		},
-				{
-			m_Context = "ToolFastTexture"
-			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolFastTexture"
-			m_Command = "Finish"
-			m_Input = "NumEnter"
-		},
-				{
-			m_Context = "ToolFastTexture"
-			m_Command = "Finish"
-			m_Input = "Space"
 		},
 				{
 			m_Context = "ToolFastTexture"
@@ -2449,16 +3634,6 @@
 				{
 			m_Context = "ToolFastTexture"
 			m_Command = "DecreaseInset"
-			m_Input = "NumSub"
-		},
-				{
-			m_Context = "ToolFastTexture"
-			m_Command = "IncreaseInset"
-			m_Input = "NumAdd"
-		},
-				{
-			m_Context = "ToolFastTexture"
-			m_Command = "DecreaseInset"
 			m_Input = "-"
 		},
 				{
@@ -2480,11 +3655,6 @@
 			m_Context = "ToolFastTexture_UVWidget"
 			m_Command = "PickRectangle"
 			m_Input = "LMouseDoubleClick"
-		},
-				{
-			m_Context = "ToolFastTexture_UVWidget"
-			m_Command = "Drag"
-			m_Input = "LMouse"
 		},
 				{
 			m_Context = "ToolFastTexture_UVWidget"
@@ -2554,11 +3724,6 @@
 				{
 			m_Context = "ToolBridge"
 			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolBridge"
-			m_Command = "Finish"
 			m_Input = "NumEnter"
 		},
 				{
@@ -2590,16 +3755,6 @@
 			m_Context = "ToolBridge"
 			m_Command = "LockPoints"
 			m_Input = "Ctrl"
-		},
-				{
-			m_Context = "ToolBevel"
-			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolBevel"
-			m_Command = "Finish"
-			m_Input = "NumEnter"
 		},
 				{
 			m_Context = "ToolBevel"
@@ -2639,16 +3794,6 @@
 				{
 			m_Context = "ToolFaceBevel"
 			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolFaceBevel"
-			m_Command = "Finish"
-			m_Input = "NumEnter"
-		},
-				{
-			m_Context = "ToolFaceBevel"
-			m_Command = "Finish"
 			m_Input = "LMouse"
 		},
 				{
@@ -2684,16 +3829,6 @@
 				{
 			m_Context = "ToolThicken"
 			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolThicken"
-			m_Command = "Finish"
-			m_Input = "NumEnter"
-		},
-				{
-			m_Context = "ToolThicken"
-			m_Command = "Finish"
 			m_Input = "LMouse"
 		},
 				{
@@ -2720,16 +3855,6 @@
 			m_Context = "ToolThicken"
 			m_Command = "ToggleSnapping"
 			m_Input = "TOGGLE_SNAPPING_KEY"
-		},
-				{
-			m_Context = "ToolPainting"
-			m_Command = "CycleChannelsForward"
-			m_Input = "C"
-		},
-				{
-			m_Context = "ToolPainting"
-			m_Command = "CycleChannelsBackward"
-			m_Input = "Shift+C"
 		},
 				{
 			m_Context = "ToolPainting"
@@ -2934,11 +4059,6 @@
 				{
 			m_Context = "ToolPhysics"
 			m_Command = "Select"
-			m_Input = "LMouse"
-		},
-				{
-			m_Context = "ToolPhysics"
-			m_Command = "Select"
 			m_Input = "LMouseDoubleClick"
 		},
 				{
@@ -3029,11 +4149,6 @@
 				{
 			m_Context = "ToolPath"
 			m_Command = "Finish"
-			m_Input = "Enter"
-		},
-				{
-			m_Context = "ToolPath"
-			m_Command = "Finish"
 			m_Input = "NumEnter"
 		},
 				{
@@ -3050,381 +4165,6 @@
 			m_Context = "ToolPath"
 			m_Command = "AdjustRadiusScale"
 			m_Input = "MMouse"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "Select"
-			m_Input = "LMouse"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "BoxSelect"
-			m_Input = "LMouse"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ActivateObject"
-			m_Input = "LMouseDoubleClick"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "LassoSelect"
-			m_Input = "MMouse"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "TranslateLasso"
-			m_Input = "Space"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "MoveSelected"
-			m_Input = "LMouse"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "SelectAndMove2D"
-			m_Input = "Alt+LMouse"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "AddObjectToSelection"
-			m_Input = "SELECTION_ADD_KEY"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "RemoveObjectFromSelection"
-			m_Input = "SELECTION_REMOVE_KEY"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ToggleSnapping"
-			m_Input = "TOGGLE_SNAPPING_KEY"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "StampClone"
-			m_Input = "Shift"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "CloneSelection"
-			m_Input = "Shift"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ToggleAlignToSurface"
-			m_Input = "Alt"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "SelectNext"
-			m_Input = "PgUp"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "SelectPrev"
-			m_Input = "PgDn"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "CancelSelectOperation"
-			m_Input = "Esc"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ShrinkGizmo"
-			m_Input = "Ctrl+NumSub"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "EnlargeGizmo"
-			m_Input = "Ctrl+NumAdd"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NextPivotTap"
-			m_Input = "N"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NextPivotCycle"
-			m_Input = "N+MWheelUp"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "PrevPivotCycle"
-			m_Input = "N+MWheelDn"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ClearPivot"
-			m_Input = "Home"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "CenterPivotInView"
-			m_Input = "Ctrl+Home"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "SetPivotToWorldOrigin"
-			m_Input = "Ctrl+End"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "SetPivotToSelectionCenter"
-			m_Input = "Alt+Home"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "EndPivotManipulation"
-			m_Input = "Ins"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "FlipNormals"
-			m_Input = "F"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "MergeSelectedMeshes"
-			m_Input = "M"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "SeparateMeshComponents"
-			m_Input = "Alt+N"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NudgeUp"
-			m_Input = "Up"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NudgeRotateUp"
-			m_Input = "Alt+Up"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NudgeDown"
-			m_Input = "Down"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NudgeRotateDown"
-			m_Input = "Alt+Down"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NudgeLeft"
-			m_Input = "Left"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NudgeRotateLeft"
-			m_Input = "Alt+Left"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NudgeRight"
-			m_Input = "Right"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NudgeRotateRight"
-			m_Input = "Alt+Right"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ApplyMaterial"
-			m_Input = "Shift+T"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoDebugHook"
-			m_Input = "\"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "SetOriginToCenter"
-			m_Input = "End"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ClearRotationAndScale"
-			m_Input = "Ctrl+Num0"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "MoveObjectDownByTraceLocal"
-			m_Input = "Ctrl+Num1"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "MoveObjectDownByTrace"
-			m_Input = "Ctrl+Num2"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ShowObjectProperties"
-			m_Input = "Alt+Enter"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GrowSelection"
-			m_Input = "NumAdd"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GrowSelection"
-			m_Input = "="
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ShrinkSelection"
-			m_Input = "NumSub"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ShrinkSelection"
-			m_Input = "-"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "SetOriginToPivot"
-			m_Input = "Ctrl+D"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "AlignObjects"
-			m_Input = "Alt+T"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "AlignObjectsRotation"
-			m_Input = "Alt+R"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "AlignObjectsToWorkplane"
-			m_Input = "Alt+E"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "AlignWorkplaneToObject"
-			m_Input = "Alt+Q"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "NextVariation"
-			m_Input = "Alt+F"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "PreviousVariation"
-			m_Input = "Alt+V"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "HideElement"
-			m_Input = "Alt+B"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ResetConfiguration"
-			m_Input = "Alt+M"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ReevaluateConfiguration"
-			m_Input = "Ctrl+F"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "BakeMeshDeformers"
-			m_Input = "Ctrl+L"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "ToggleDeformation"
-			m_Input = "Alt+D"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey0"
-			m_Input = "Num0"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey1"
-			m_Input = "Num1"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey2"
-			m_Input = "Num2"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey3"
-			m_Input = "Num3"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey4"
-			m_Input = "Num4"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey5"
-			m_Input = "Num5"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey6"
-			m_Input = "Num6"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey7"
-			m_Input = "Num7"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey8"
-			m_Input = "Num8"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKey9"
-			m_Input = "Num9"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKeyDecimal"
-			m_Input = "NumDec"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoComma"
-			m_Input = ","
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoNumKeyMinus"
-			m_Input = "NumSub"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoClearValue"
-			m_Input = "Backspace"
-		},
-				{
-			m_Context = "ToolSelection"
-			m_Command = "GizmoApplyValue"
-			m_Input = "NumEnter"
 		},
 				{
 			m_Context = "ToolmeshDisplacement"
@@ -3504,11 +4244,6 @@
 				{
 			m_Context = "ToolmeshDisplacement"
 			m_Command = "DropTool"
-			m_Input = "Space"
-		},
-				{
-			m_Context = "ToolmeshDisplacement"
-			m_Command = "DropTool"
 			m_Input = "Esc"
 		},
 				{
@@ -3579,11 +4314,6 @@
 				{
 			m_Context = "ToolWorkPlane"
 			m_Command = "DropTool"
-			m_Input = "Space"
-		},
-				{
-			m_Context = "ToolWorkPlane"
-			m_Command = "DropTool"
 			m_Input = "Enter"
 		},
 				{
@@ -3624,11 +4354,6 @@
 				{
 			m_Context = "TerrainGraphEditorView"
 			m_Command = "PanView"
-			m_Input = "RMouse"
-		},
-				{
-			m_Context = "TerrainGraphEditorView"
-			m_Command = "PanView"
 			m_Input = "Alt+MMouse"
 		},
 				{
@@ -3649,22 +4374,12 @@
 				{
 			m_Context = "TerrainGraphEditorView"
 			m_Command = "FitSelectionInView"
-			m_Input = "Shift+A"
-		},
-				{
-			m_Context = "TerrainGraphEditorView"
-			m_Command = "FitSelectionInView"
 			m_Input = "F"
 		},
 				{
 			m_Context = "TerrainGraphEditorView"
 			m_Command = "FitAllInView"
 			m_Input = "A"
-		},
-				{
-			m_Context = "ToolMeshProjection"
-			m_Command = "Finish"
-			m_Input = "Enter"
 		},
 				{
 			m_Context = "ToolMeshProjection"
@@ -3700,31 +4415,6 @@
 			m_Context = "EntityOutputWidget"
 			m_Command = "CreateNew"
 			m_Input = "Ctrl+N"
-		},
-				{
-			m_Context = "PaneContainer"
-			m_Command = "RTX_Visualization"
-			m_Input = "Ctrl+Shift+Alt+F10"
-		},
-				{
-			m_Context = "HammerEditorSession"
-			m_Command = "BakeLightingOnSelection"
-			m_Input = "Ctrl+Shift+Alt+F12"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ImportFile"
-			m_Input = "Ctrl+Shift+Alt+F8"
-		},
-				{
-			m_Context = "HammerApp"
-			m_Command = "ExportSelected"
-			m_Input = "Ctrl+Shift+Alt+F9"
-		},
-				{
-			m_Context = "HammerEditorSession"
-			m_Command = "ConvertObjectsToModel"
-			m_Input = "Ctrl+Shift+Alt+F5"
 		},
 	]
 }

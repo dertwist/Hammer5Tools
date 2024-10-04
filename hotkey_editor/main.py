@@ -177,12 +177,21 @@ class HotkeyEditorMainWindow(QMainWindow):
             output = {'editor_info': [{'Info': 'Hammer5Tools Hotkey Editor by Twist', 'GitHub': 'https://github.com/dertwist/Hammer5Tools', 'Steam': 'https://steamcommunity.com/id/der_twist', 'Twitter': 'https://twitter.com/der_twist'}]}
             if self.editor == 'hammer':
                 output.update(hammer_macros)
-            output.update(self.data)
+            output.update({'m_Bindings': self.serializing()})
             # There is a huge problem with python interpretation, avoid \\ in string. GizmoDebugHook have \\ as input.
             # So in output it would be only one \ test
             name = 'test'
             path = os.path.join(self.hotkeys_path, f'{name}.txt')
             kv3.write(output, path)
+    def serializing(self):
+        output = []
+        root = self.ui.keybindings_tree.invisibleRootItem()
+        for context_index in range(root.childCount()):
+            for command_index in range(root.child(context_index).childCount()):
+                input_widget = (self.ui.keybindings_tree.itemWidget(root.child(context_index).child(command_index), 1)).key
+                if input_widget != 'None':
+                    output.append({'m_Context': root.child(context_index).text(0), 'm_Command': root.child(context_index).child(command_index).text(0), 'm_Input': input_widget})
+        return output
     def new_preset(self):
         name = 'new_preset'
         path = os.path.join(self.hotkeys_path, f'{name}.txt')
