@@ -4,10 +4,52 @@ from hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem, QSplitter, QLineEdit, QKeySequenceEdit, QPushButton
 from PySide6.QtCore import Qt
 from hotkey_editor.format import HotkeysOpen
+from hotkey_editor.dialog import KeyDialog
 from hotkey_editor.objects import *
+from preferences import debug
 import os
 app_dir = os.getcwd()
 import keyvalues3 as kv3
+
+class KeyButton(QPushButton):
+    def __init__(self, parent=None, Name=None):
+        super().__init__(parent)
+        self.setStyleSheet("""
+                                    QPushButton {
+
+                                        font: 580 9pt "Segoe UI";
+
+
+                                        border: 1px solid black;
+                                        border-radius: 1px;
+                                        border-color: rgba(80, 80, 80, 150);
+                                        height:22px;
+                                        padding-top: 4px;
+                                        padding-bottom:4px;
+                                        padding-left: 4px;
+                                        padding-right: 4px;
+                                        color: #E3E3E3;
+                                        background-color: #1C1C1C;
+                                    }
+                                    QPushButton:hover {
+                                        background-color: #414956;
+                                        color: white;
+                                    }
+                                    QPushButton:pressed {
+                                        background-color: red;
+                                        background-color: #1C1C1C;
+                                        margin: 1 px;
+                                        margin-left: 2px;
+                                        margin-right: 2px;
+
+                                    }""")
+        self.setMaximumWidth(256)
+        self.setText(Name)
+        self.clicked.connect(self.show_dialog)
+
+    def show_dialog(self):
+        dialog = KeyDialog()
+        dialog.exec_()
 class HotkeyEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -59,7 +101,7 @@ class HotkeyEditorMainWindow(QMainWindow):
                         unique_contexts.add(context)
                         context_item = QTreeWidgetItem(root_item)
                         context_item.setText(0, context)
-                print(unique_contexts)
+                debug(unique_contexts)
 
                 for item in value:
                     # Find the child item with the specific text 'm_Context'
@@ -68,38 +110,7 @@ class HotkeyEditorMainWindow(QMainWindow):
                             new_item = QTreeWidgetItem()
                             new_item.setText(0, item['m_Command'])
 
-                            key_editor = QPushButton()
-                            key_editor.setStyleSheet("""
-                            QPushButton {
-                            
-                                font: 580 9pt "Segoe UI";
-                            
-                            
-                                border: 1px solid black;
-                                border-radius: 1px;
-                                border-color: rgba(80, 80, 80, 150);
-                                height:22px;
-                                padding-top: 4px;
-                                padding-bottom:4px;
-                                padding-left: 4px;
-                                padding-right: 4px;
-                                color: #E3E3E3;
-                                background-color: #1C1C1C;
-                            }
-                            QPushButton:hover {
-                                background-color: #414956;
-                                color: white;
-                            }
-                            QPushButton:pressed {
-                                background-color: red;
-                                background-color: #1C1C1C;
-                                margin: 1 px;
-                                margin-left: 2px;
-                                margin-right: 2px;
-                            
-                            }""")
-                            key_editor.setMaximumWidth(256)
-                            key_editor.setText(item['m_Input'])
+                            key_editor = KeyButton(Name=item['m_Input'])
                             root_item.child(i).addChild(new_item)
                             self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
@@ -108,7 +119,7 @@ class HotkeyEditorMainWindow(QMainWindow):
 
     def select_preset(self, item):
         self.selected_preset = os.path.join(self.hotkeys_path, f'{item}.txt')
-        print(self.selected_preset)
+        debug(self.selected_preset)
         self.open_preset(self.selected_preset)
         self.populate_editor()
 
