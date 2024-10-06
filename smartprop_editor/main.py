@@ -166,12 +166,12 @@ class SmartPropEditorMainWindow(QMainWindow):
             self.ui.properties_layout.insertWidget(0, property_instance)
             if data_modif:
                 for item in reversed(data_modif):
-                    property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
+                    property_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
                     property_instance.edited.connect(self.update_tree_item_value)
                     self.modifiers_group_instance.layout.insertWidget(0, property_instance)
             if data_sel_criteria:
                 for item in reversed(data_sel_criteria):
-                    property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
+                    property_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
                     property_instance.edited.connect(self.update_tree_item_value)
                     self.selection_criteria_group_instance.layout.insertWidget(0, property_instance)
         except Exception as error:
@@ -197,8 +197,11 @@ class SmartPropEditorMainWindow(QMainWindow):
                     value = widget.value
                     output_value.update(value)
             # if any modifier, set empty list
-            if modifiers[0] == None:
-                modifiers = []
+            try:
+                if modifiers[0] == None:
+                    modifiers = []
+            except:
+                pass
             output_value.update({'m_Modifiers': modifiers})
             output_value.update({'m_SelectionCriteria': selection_criteria})
             self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
