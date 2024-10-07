@@ -36,7 +36,7 @@ app_version = '2.2.2'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '0.5.1'
 smartprop_editor_version = '0.7.4'
-hotkey_editor_version = '1.0.1'
+hotkey_editor_version = '1.0.2'
 
 
 import sys
