@@ -202,6 +202,11 @@ class SmartPropEditorMainWindow(QMainWindow):
                     modifiers = []
             except:
                 pass
+            try:
+                if selection_criteria[0] == None:
+                    selection_criteria = []
+            except:
+                pass
             output_value.update({'m_Modifiers': modifiers})
             output_value.update({'m_SelectionCriteria': selection_criteria})
             self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
