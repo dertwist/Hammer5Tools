@@ -85,9 +85,10 @@ class HotkeyEditorMainWindow(QMainWindow):
         self.FilterInputInstanceButton.setMaximumHeight(26)
         self.ui.horizontalLayout_4.addWidget(self.FilterInputInstanceButton)
 
-        self.ui.editor_combobox.currentTextChanged.connect(self.editor_switch)
+
         self.get_path()
         self.editor_switch()
+        self.ui.editor_combobox.currentTextChanged.connect(self.editor_switch)
 
         self.ui.open_button.clicked.connect(self.open_preset)
         self.ui.new_button.clicked.connect(self.new_preset)

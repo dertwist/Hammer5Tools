@@ -153,7 +153,10 @@ class Explorer(QMainWindow):
 
         self.model = CustomFileSystemModel()
         self.model.setRootPath(tree_directory)
-        self.rootpath = (os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name()))
+        try:
+            self.rootpath = (os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name()))
+        except:
+            pass
         if os.path.exists(tree_directory):
             pass
         else:
