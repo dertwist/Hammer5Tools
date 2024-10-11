@@ -60,6 +60,7 @@ operators_list = [
     {'CreateLocator': {'_class': "CSmartPropOperation_CreateLocator"}},
     {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': -500, 'm_flTraceLength': 500}},
     {'SetVariableBool': {'_class': 'CSmartPropOperation_SetVariableBool', 'm_VariableName': None, 'm_VariableValue': None}},
+    {'StateSave': {'_class': 'CSmartPropOperation_SaveState', 'm_StateName': 'State'}},
     {'SetVariableFloat': {'_class': 'CSmartPropOperation_SetVariableFloat', 'm_VariableName': None, 'm_VariableValue': None}},
 ]
 
