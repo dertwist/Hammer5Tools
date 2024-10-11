@@ -207,6 +207,9 @@ class PropertyFrame(QWidget):
             elif 'm_OutputVariableMinX' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
                 add_instance()
+            elif 'm_StateName' in value_class:
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='State name')
+                add_instance()
 
             elif 'm_VariableName' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
@@ -300,6 +303,9 @@ class PropertyFrame(QWidget):
             operator_adding_instances(classes)
         elif prop_class == 'TraceInDirection':
             classes = ['m_DirectionSpace', 'm_nNoHitResult', 'm_flSurfaceUpInfluence', 'm_flOriginOffset', 'm_flTraceLength']
+            operator_adding_instances(classes)
+        elif prop_class == 'SaveState':
+            classes = ['m_StateName']
             operator_adding_instances(classes)
 
 
