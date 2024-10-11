@@ -1,1 +1,1 @@
-PySide6, pyinstaller, keyvalue3m, markdown2, packaging, psutil, portalocker, requests, setuptools
+PySide6, pyinstaller, keyvalues3, markdown2, packaging, psutil, portalocker, requests, setuptools
