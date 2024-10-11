@@ -93,3 +93,7 @@ dist/Hammer5Tools.zip.001
 dist/debug.kv3
 /dist
 .idea
+
+
+*.pyproject
+*.spec
