@@ -25,6 +25,7 @@ class VsmartOpen:
         self.fix_format()
         data = (kv3.read(self.filename)).value
         self.variables = data.get('m_Variables', None)
+        self.choices = data.get('m_Choices', None)
         self.tree.clear()
         self.populate_tree(data)
         self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
@@ -152,11 +153,13 @@ class VsmartOpen:
                 pass
 
 class VsmartSave:
-    def __init__(self, filename, tree=None, var_data=None):
+    def __init__(self, filename, tree=None, var_data=None, choices_data=None):
         self.filename = filename
         self.tree = tree
         self.var_data = var_data
+        self.choices_data = choices_data
         self.save_file()
+
         print(f'Saved File: {filename}')
 
     def save_file(self):
@@ -164,6 +167,8 @@ class VsmartSave:
         out_data = {'generic_data_type': "CSmartPropRoot", 'editor_info': [{'Info': 'Hammer5Tools Smartprop Editor by Twist', 'GitHub': 'https://github.com/dertwist/Hammer5Tools', 'Steam': 'https://steamcommunity.com/id/der_twist', 'Twitter': 'https://twitter.com/der_twist'}]}
         if self.var_data is not None:
             out_data.update({'m_Variables': self.var_data})
+        if self.choices_data is not None:
+            out_data.update({'m_Choices': self.choices_data})
         converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
         out_data.update(converted_data)
         kv3.write(out_data, self.filename)
