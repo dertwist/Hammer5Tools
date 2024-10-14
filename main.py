@@ -312,8 +312,14 @@ class Widget(QMainWindow):
         self._save_user_prefs()
 
         # Close editors
-        self.SmartPropEditorMainWindow.closeEvent(self.event)
-        self.SoundEventEditorMainWidget.closeEvent(self.event)
+        try:
+            self.SmartPropEditorMainWindow.closeEvent(self.event)
+        except:
+            pass
+        try:
+            self.SoundEventEditorMainWidget.closeEvent(self.event)
+        except:
+            pass
 
         self.current_tab(True)
         QApplication.quit()
