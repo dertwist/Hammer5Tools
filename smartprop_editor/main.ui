@@ -99,7 +99,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>694</width>
+            <width>634</width>
             <height>702</height>
            </rect>
           </property>
@@ -1251,7 +1251,66 @@ QToolButton:pressed {
    <attribute name="dockWidgetArea">
     <number>2</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_3"/>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTreeWidget" name="choices_tree_widget">
+       <property name="uniformRowHeights">
+        <bool>true</bool>
+       </property>
+       <attribute name="headerMinimumSectionSize">
+        <number>130</number>
+       </attribute>
+       <column>
+        <property name="text">
+         <string>Name</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Value</string>
+        </property>
+       </column>
+       <item>
+        <property name="text">
+         <string>Color</string>
+        </property>
+        <property name="text">
+         <string>Default</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>Red</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>Variable</string>
+          </property>
+          <property name="text">
+           <string>Value</string>
+          </property>
+         </item>
+        </item>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <action name="actionDebug_output">
    <property name="icon">

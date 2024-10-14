@@ -7,13 +7,13 @@ import json
 
 from distutils.util import strtobool
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit, QFileDialog
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit, QFileDialog, QComboBox, QPushButton
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction, QColor
 from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
 
 from smartprop_editor.ui_main import Ui_MainWindow
-from preferences import get_config_value, get_addon_name, get_cs2_path
+from preferences import get_config_value, get_addon_name, get_cs2_path, debug
 
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_list, operators_list, operator_prefix, selection_criteria_prefix, selection_criteria_list, filters_list, filter_prefix
@@ -59,6 +59,13 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
+
+        # Temp
+        self.choices_data = None
+        self.populate_choices()
+        self.init_choices_tree_widget()
+
+
 
         # Hierarchy setup
         self.ui.tree_hierarchy_widget.hideColumn(1)
@@ -449,6 +456,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
         variables = vsmart_instance.variables
+        self.choices_data = vsmart_instance.choices
         index = 0
         while index < self.ui.variables_scrollArea.count() - 1:
             item = self.ui.variables_scrollArea.takeAt(index)
@@ -550,7 +558,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             filename, _ = QFileDialog.getSaveFileName(None, "Save File", "","VData Files (*.vdata);;VSmart Files (*.vsmart)")
 
         var_data = save_variables()
-        VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data)
+        VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data, choices_data=self.choices_data)
         if external:
             opened_file = VsmartSaveInstance.filename
         else:
@@ -657,6 +665,25 @@ class SmartPropEditorMainWindow(QMainWindow):
                     item = {i: [widget.name, widget.var_class, widget.var_value, widget.var_visible_in_editor, widget.var_display_name]}
                     data_out.update(item)
             return data_out
+
+
+    # Choices
+    def init_choices_tree_widget(self):
+        # self.ui.choices_tree_widget.uniformRowHeights(True)
+        pass
+    def populate_choices(self):
+        pass
+        self.add_choice()
+    def add_choice(self):
+        combobox = QPushButton()
+        combobox.setStyleSheet('padding:16px')
+        item = self.ui.choices_tree_widget.itemAt(0,0)
+        # item = item.child(0)
+        debug(item.text(0))
+        self.ui.choices_tree_widget.setItemWidget(item, 0, combobox)
+        self.ui.choices_tree_widget.setStyleSheet("")
+        # self.ui.choices_tree_widget.setStyle('fusion')
+    # Choices context menu
 
     # ContextMenu
     def contextMenuEvent(self, event):
