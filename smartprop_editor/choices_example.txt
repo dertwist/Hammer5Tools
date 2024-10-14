@@ -1,0 +1,137 @@
+    m_Variables = 
+    [
+        
+        {
+            _class = "CSmartPropVariable_Int"
+            m_nElementID = 3
+            m_VariableName = "ColorIndex"
+            m_DefaultValue = 0
+        },
+        
+        {
+            _class = "CSmartPropVariable_Float"
+            m_nElementID = 7
+            m_VariableName = "SecondaryColorValue"
+            m_bExposeAsParameter = true
+            m_DisplayName = "Secondary Color"
+        },
+        
+        {
+            _class = "CSmartPropVariable_Color"
+            m_nElementID = 9
+            m_VariableName = "ColorFromGradient"
+            m_DefaultValue = 
+            [
+                255,
+                255,
+                255,
+            ]
+        },
+        
+        {
+            _class = "CSmartPropVariable_Int"
+            m_nElementID = 12
+            m_VariableName = "SecondaryModelIndex"
+        },
+    ]
+    m_Choices = 
+    [
+        
+        {
+            _class = "CSmartPropChoice"
+            m_nElementID = 2
+            m_Name = "Base Color"
+            m_Options = 
+            [
+                
+                {
+                    m_Name = "Red"
+                    m_VariableValues = 
+                    [
+                        
+                        {
+                            m_TargetName = "ColorIndex"
+                            m_DataType = "INTEGER"
+                            m_Value = 0
+                        },
+                    ]
+                },
+                
+                {
+                    m_Name = "Green"
+                    m_VariableValues = 
+                    [
+                        
+                        {
+                            m_TargetName = "ColorIndex"
+                            m_DataType = "INTEGER"
+                            m_Value = 1
+                        },
+                    ]
+                },
+                
+                {
+                    m_Name = "Blue"
+                    m_VariableValues = 
+                    [
+                        
+                        {
+                            m_TargetName = "ColorIndex"
+                            m_DataType = "INTEGER"
+                            m_Value = 2
+                        },
+                    ]
+                },
+            ]
+            m_DefaultOption = "Green"
+        },
+        
+        {
+            _class = "CSmartPropChoice"
+            m_nElementID = 11
+            m_Name = "Secondary Model"
+            m_Options = 
+            [
+                
+                {
+                    m_Name = "Sphere"
+                    m_VariableValues = 
+                    [
+                        
+                        {
+                            m_TargetName = "SecondaryModelIndex"
+                            m_DataType = "INTEGER"
+                            m_Value = 0
+                        },
+                    ]
+                },
+                
+                {
+                    m_Name = "Box"
+                    m_VariableValues = 
+                    [
+                        
+                        {
+                            m_TargetName = "SecondaryModelIndex"
+                            m_DataType = "INTEGER"
+                            m_Value = 1
+                        },
+                    ]
+                },
+                
+                {
+                    m_Name = "Arrow"
+                    m_VariableValues = 
+                    [
+                        
+                        {
+                            m_TargetName = "SecondaryModelIndex"
+                            m_DataType = "INTEGER"
+                            m_Value = 2
+                        },
+                    ]
+                },
+            ]
+            m_DefaultOption = "Sphere"
+        },
+    ]
