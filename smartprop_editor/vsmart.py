@@ -15,6 +15,7 @@ from preferences import get_cs2_path, get_addon_name, get_config_value
 import subprocess
 import shutil
 import os
+from common import editor_info
 class VsmartOpen:
     def __init__(self, filename, tree=None):
         self.filename = filename
@@ -164,7 +165,8 @@ class VsmartSave:
 
     def save_file(self):
         # data = self.convert_children_to_list(data)
-        out_data = {'generic_data_type': "CSmartPropRoot", 'editor_info': [{'Info': 'Hammer5Tools Smartprop Editor by Twist', 'GitHub': 'https://github.com/dertwist/Hammer5Tools', 'Steam': 'https://steamcommunity.com/id/der_twist', 'Twitter': 'https://twitter.com/der_twist'}]}
+        out_data = {'generic_data_type': "CSmartPropRoot"}
+        out_data.update(editor_info)
         if self.var_data is not None:
             out_data.update({'m_Variables': self.var_data})
         if self.choices_data is not None:

@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, Signal, Qt
 from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
-from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings
+from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
 from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
 from loading_editor.loading_editor_main import Loading_editorMainWindow
 
@@ -23,6 +23,8 @@ from export_and_import_addon.export_and_import_addon import export_and_import_ad
 from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 
+from minor_features.assettypes_cs2_process import AssetTypesProcess
+
 import ctypes
 import winsound
 
@@ -32,10 +34,10 @@ stop_discord_thread = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
-app_version = '2.2.2'
+app_version = '2.2.3'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '0.5.1'
-smartprop_editor_version = '0.7.4'
+smartprop_editor_version = '0.8.0'
 hotkey_editor_version = '1.0.2'
 
 
@@ -88,8 +90,13 @@ class Widget(QMainWindow):
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except Exception as e:
             print(f"Error checking updates: {e}")
+
         print(f'SmartProp Editor version: {smartprop_editor_version}')
         print(f'Hotkey Editor version: {hotkey_editor_version}')
+        try:
+            AssetTypesProcess()
+        except Exception as e:
+            debug(f"Error: {e}")
 
         self._restore_user_prefs()
         if get_config_bool('APP', 'first_launch'):
