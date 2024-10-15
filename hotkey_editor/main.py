@@ -15,6 +15,7 @@ import os
 import datetime
 app_dir = os.getcwd()
 import keyvalues3 as kv3
+from common import editor_info
 
 class KeyButton(QPushButton):
     DEFAULT_COLOR = "#ababab"
@@ -204,7 +205,7 @@ class HotkeyEditorMainWindow(QMainWindow):
 
     def save_preset(self):
         if self.opened_file != '':
-            output = {'editor_info': [{'Info': 'Hammer5Tools Hotkey Editor by Twist', 'GitHub': 'https://github.com/dertwist/Hammer5Tools', 'Steam': 'https://steamcommunity.com/id/der_twist', 'Twitter': 'https://twitter.com/der_twist'}]}
+            output = editor_info
             if self.editor == 'hammer':
                 output.update(hammer_macros)
             output.update({'m_Bindings': self.serializing()})
@@ -224,9 +225,7 @@ class HotkeyEditorMainWindow(QMainWindow):
     def new_preset(self):
         name = f'{self.editor}_new_keybindings_{datetime.datetime.now().strftime("%m_%d_%Y")}'
         path = os.path.join(self.hotkeys_path, f'{name}.keybindings')
-        output = {'editor_info': [
-            {'Info': 'Hammer5Tools Hotkey Editor by Twist', 'GitHub': 'https://github.com/dertwist/Hammer5Tools',
-             'Steam': 'https://steamcommunity.com/id/der_twist', 'Twitter': 'https://twitter.com/der_twist'}]}
+        output = editor_info
         if self.editor == 'hammer':
             output.update(hammer_macros)
         output.update(hammer_default)
