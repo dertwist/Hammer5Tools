@@ -985,8 +985,7 @@ QTreeView {
 }
 
 QTreeView::item {
-    height: 14px;
-    padding: 4px; /* Add padding to each item */
+    padding: 2px; /* Add padding to each item */
     padding-left: 5px;
     padding-right: 5px;
     color: #E3E3E3;

@@ -137,9 +137,6 @@ class Widget(QMainWindow):
         self.tray_icon.show()
 
     def setup_tabs(self):
-        self.LoadingEditorMainWindow = Loading_editorMainWindow()
-        self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
-
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
         self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
 
@@ -215,6 +212,15 @@ class Widget(QMainWindow):
         except Exception as e:
             print('Error while cleaning up BatchCreator_MainWindow:', e)
 
+        try:
+            if hasattr(self, 'LoadingEditorMainWindow') and self.LoadingEditorMainWindow:
+                self.LoadingEditorMainWindow.close()
+                self.LoadingEditorMainWindow.deleteLater()
+        except Exception as e:
+            print('Error while cleaning up Loading_editorMainWindow:', e)
+
+
+
 
 
         # Create a new instance of BatchCreatorMainWindow
@@ -233,13 +239,17 @@ class Widget(QMainWindow):
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
-
-
         try:
             self.SmartPropEditorMainWindow = SmartPropEditorMainWindow()
             self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
         except Exception as e:
-            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
+            print(f"Error while cleaning up SmartPropEditorMainWindow: {e}")
+
+        try:
+            self.LoadingEditorMainWindow = Loading_editorMainWindow()
+            self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
+        except Exception as e:
+            print(f"Error while cleaning up Loading_editorMainWindow: {e}")
 
 
     def open_addons_folder(self):
