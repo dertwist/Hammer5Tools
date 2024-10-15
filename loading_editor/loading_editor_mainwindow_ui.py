@@ -27,9 +27,7 @@ class Ui_Loading_editorMainWindow(object):
         self.centralwidget = QWidget(Loading_editorMainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_4 = QHBoxLayout(self.centralwidget)
-        self.horizontalLayout_4.setSpacing(6)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.explorer = QFrame(self.centralwidget)
@@ -37,7 +35,6 @@ class Ui_Loading_editorMainWindow(object):
         self.explorer.setFrameShape(QFrame.StyledPanel)
         self.explorer.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_5 = QHBoxLayout(self.explorer)
-        self.horizontalLayout_5.setSpacing(0)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
 
@@ -45,10 +42,10 @@ class Ui_Loading_editorMainWindow(object):
 
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.open_folder_button = QPushButton(self.centralwidget)
-        self.open_folder_button.setObjectName(u"open_folder_button")
-        self.open_folder_button.setMinimumSize(QSize(0, 32))
-        self.open_folder_button.setStyleSheet(u"    QLabel {\n"
+        self.apply_images_button_3 = QPushButton(self.centralwidget)
+        self.apply_images_button_3.setObjectName(u"apply_images_button_3")
+        self.apply_images_button_3.setMinimumSize(QSize(0, 32))
+        self.apply_images_button_3.setStyleSheet(u"    QLabel {\n"
 "        font-family: Sergo UI;\n"
 "        color: #9D9D9D;\n"
 "    }\n"
@@ -81,12 +78,12 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.horizontalLayout_2.addWidget(self.open_folder_button)
+        self.horizontalLayout_2.addWidget(self.apply_images_button_3)
 
-        self.clear_all_button = QPushButton(self.centralwidget)
-        self.clear_all_button.setObjectName(u"clear_all_button")
-        self.clear_all_button.setMinimumSize(QSize(0, 32))
-        self.clear_all_button.setStyleSheet(u"    QLabel {\n"
+        self.apply_images_button_4 = QPushButton(self.centralwidget)
+        self.apply_images_button_4.setObjectName(u"apply_images_button_4")
+        self.apply_images_button_4.setMinimumSize(QSize(0, 32))
+        self.apply_images_button_4.setStyleSheet(u"    QLabel {\n"
 "        font-family: Sergo UI;\n"
 "        color: #9D9D9D;\n"
 "    }\n"
@@ -119,12 +116,12 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.horizontalLayout_2.addWidget(self.clear_all_button)
+        self.horizontalLayout_2.addWidget(self.apply_images_button_4)
 
-        self.apply_screenshots_button = QPushButton(self.centralwidget)
-        self.apply_screenshots_button.setObjectName(u"apply_screenshots_button")
-        self.apply_screenshots_button.setMinimumSize(QSize(0, 32))
-        self.apply_screenshots_button.setStyleSheet(u"    QLabel {\n"
+        self.apply_images_button = QPushButton(self.centralwidget)
+        self.apply_images_button.setObjectName(u"apply_images_button")
+        self.apply_images_button.setMinimumSize(QSize(0, 32))
+        self.apply_images_button.setStyleSheet(u"    QLabel {\n"
 "        font-family: Sergo UI;\n"
 "        color: #9D9D9D;\n"
 "    }\n"
@@ -157,7 +154,7 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.horizontalLayout_2.addWidget(self.apply_screenshots_button)
+        self.horizontalLayout_2.addWidget(self.apply_images_button)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
@@ -348,7 +345,7 @@ class Ui_Loading_editorMainWindow(object):
     def retranslateUi(self, Loading_editorMainWindow):
         Loading_editorMainWindow.setWindowTitle(QCoreApplication.translate("Loading_editorMainWindow", u"MainWindow", None))
 #if QT_CONFIG(tooltip)
-        self.open_folder_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+        self.apply_images_button_3.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "hr { height: 1px; border-width: 0; }\n"
@@ -360,9 +357,9 @@ class Ui_Loading_editorMainWindow(object):
 "<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\""
                         ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.open_folder_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Open folder", None))
+        self.apply_images_button_3.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Open folder", None))
 #if QT_CONFIG(tooltip)
-        self.clear_all_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+        self.apply_images_button_4.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "hr { height: 1px; border-width: 0; }\n"
@@ -374,9 +371,9 @@ class Ui_Loading_editorMainWindow(object):
 "<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\""
                         ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.clear_all_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Clear all", None))
+        self.apply_images_button_4.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Clear all", None))
 #if QT_CONFIG(tooltip)
-        self.apply_screenshots_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+        self.apply_images_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "hr { height: 1px; border-width: 0; }\n"
@@ -388,7 +385,7 @@ class Ui_Loading_editorMainWindow(object):
 "<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\""
                         ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.apply_screenshots_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply screenshots", None))
+        self.apply_images_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply screenshots", None))
         self.apply_icon_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply Icon", None))
 #if QT_CONFIG(tooltip)
         self.PlainTextEdit_Description_2.setToolTip("")

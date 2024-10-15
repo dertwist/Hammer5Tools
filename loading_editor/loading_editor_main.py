@@ -4,11 +4,125 @@ from basic_operations import normalize_name, random_char
 
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QProgressBar, QDialog, QVBoxLayout
-from preferences import get_config_value, get_cs2_path, get_addon_name
+from preferences import get_config_value, get_cs2_path, get_addon_name, debug
 from loading_editor.ui_loading_editor_mainwindow import Ui_Loading_editorMainWindow
-from loading_editor.loading_editor_image_drag_and_drop_area import loading_editor_image_drag_and_drop_area_window
 from loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
+from explorer.image_viewer import ImageViewer
 
+class ApplyScreenshots:
+    def __init__(self, game_screenshot_path, content_screenshot_path):
+        self.game_screenshot_path = game_screenshot_path
+        self.content_screenshot_path = content_screenshot_path
+        debug(f'game screenshots path: {self.game_screenshot_path}')
+        debug(f'content screenshots path: {self.content_screenshot_path}')
+
+        self.addon_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
+
+        debug(f'addon_path path: {self.addon_path}')
+
+        self.copy_files()
+        self.rename_files()
+
+
+
+
+        # Collect image files from content folder
+        file_list = []
+        for root, dirs, files in os.walk(self.content_screenshot_path):
+            for file_name in files:
+                full_file_path = os.path.join(root, file_name)
+                relative_path = os.path.relpath(full_file_path, self.addon_path)
+                file_list.append(relative_path)
+        debug(f'File list: {file_list}')
+
+        # Delete old vtex files
+        try:
+            shutil.rmtree(os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", "1080p"))
+        except:
+            pass
+
+        #Process
+        for item in file_list:
+            print(f'Processing: {item}')
+            self.creating_vtex(item)
+
+    def copy_files(self):
+        shutil.rmtree(self.content_screenshot_path)
+        shutil.copytree(self.game_screenshot_path, self.content_screenshot_path)
+
+    def rename_files(self):
+        base_path = self.content_screenshot_path
+        for file_images_loop_count, file_name in enumerate(os.listdir(base_path)):
+            try:
+                if file_images_loop_count == 0:
+                    file_name_parts = os.path.splitext(file_name)
+                    file_extension = file_name_parts[1]
+                    new_file_name = f"{get_addon_name()}_png{file_extension}"
+                    debug(f'Old name {file_name}, New name {new_file_name}')
+                    os.rename(os.path.join(base_path, file_name), os.path.join(base_path, new_file_name))
+                else:
+                    file_name_parts = os.path.splitext(file_name)
+                    file_extension = file_name_parts[1]
+                    new_file_name = f"{get_addon_name()}_{file_images_loop_count}_png{file_extension}"
+                    debug(f'Old name {file_name}, New name {new_file_name}')
+                    os.rename(os.path.join(base_path, file_name), os.path.join(base_path, new_file_name))
+            except Exception as e:
+                print(f"An error occurred while renaming the file: {file_name}. Error: {e}")
+
+
+    def creating_vtex(self, path):
+        vtex_file = """<!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
+                        "CDmeVtex"
+                        {
+                            "m_inputTextureArray" "element_array"
+                            [
+                                "CDmeInputTexture"
+                                {
+                                    "m_name" "string" "SheetTexture"
+                                    "m_fileName" "string" "%%PATH%%"
+                                    "m_colorSpace" "string" "linear"
+                                    "m_typeString" "string" "2D"
+                                    "m_imageProcessorArray" "element_array"
+                                    [
+                                    ]
+                                }
+                            ]
+                            "m_outputTypeString" "string" "2D"
+                            "m_outputFormat" "string" "BC7"
+                            "m_outputClearColor" "vector4" "0 0 0 0"
+                            "m_nOutputMinDimension" "int" "0"
+                            "m_nOutputMaxDimension" "int" "2048"
+                            "m_textureOutputChannelArray" "element_array"
+                            [
+                                "CDmeTextureOutputChannel"
+                                {
+                                    "m_inputTextureArray" "string_array"
+                                    [
+                                        "SheetTexture"
+                                    ]
+                                    "m_srcChannels" "string" "rgba"
+                                    "m_dstChannels" "string" "rgba"
+                                    "m_mipAlgorithm" "CDmeImageProcessor"
+                                    {
+                                        "m_algorithm" "string" ""
+                                        "m_stringArg" "string" ""
+                                        "m_vFloat4Arg" "vector4" "0 0 0 0"
+                                    }
+                                    "m_outputColorSpace" "string" "linear"
+                                }
+                            ]
+                            "m_vClamp" "vector3" "0 0 0"
+                            "m_bNoLod" "bool" "1"
+                        }
+                        """
+        vtex_file = vtex_file.replace('%%PATH%%', path.replace('\\', '/'))
+        name = os.path.basename(path)
+        name = os.path.splitext(name)[0]
+        path = os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", "1080p", f'{name}.vtex')
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        with open(path, 'w') as file:
+            file.write(vtex_file)
 class ProgressDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -23,8 +137,18 @@ class Loading_editorMainWindow(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_Loading_editorMainWindow()
         self.ui.setupUi(self)
-        self.loading_editor_image_drag_and_drop_area_window = loading_editor_image_drag_and_drop_area_window()
-        self.ui.Loading_editor_tab_images_import.layout().addWidget(self.loading_editor_image_drag_and_drop_area_window)
+
+        game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), 'screenshots')
+        content_screenshot_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), 'screenshots')
+        if os.path.exists(game_screenshot_path):
+            pass
+        else:
+            os.makedirs(game_screenshot_path)
+
+        # Explorer init
+        explorer_view = ImageViewer(tree_directory=game_screenshot_path)
+        explorer_view.setStyleSheet("padding:0")
+        self.ui.explorer.layout().addWidget(explorer_view)
 
         self.Svg_Drap_and_Drop_Area = Svg_Drag_and_Drop()
         self.ui.svg_icon_frame.layout().addWidget(self.Svg_Drap_and_Drop_Area)
@@ -32,8 +156,19 @@ class Loading_editorMainWindow(QMainWindow):
         # apply_description_button
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
         # apply images
-        self.ui.apply_images_button.clicked.connect(self.do_loadin_editor_cs2_images)
+        self.ui.apply_screenshots_button.clicked.connect(lambda : ApplyScreenshots(game_screenshot_path=game_screenshot_path, content_screenshot_path=content_screenshot_path))
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
+
+        self.ui.clear_all_button.clicked.connect(self.clear_images)
+        self.ui.open_folder_button.clicked.connect(self.open_images_folder)
+
+    def clear_images(self):
+        game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), 'screenshots')
+        shutil.rmtree(game_screenshot_path)
+        os.makedirs(game_screenshot_path)
+    def open_images_folder(self):
+        game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), 'screenshots')
+        os.startfile(game_screenshot_path)
 
     def loading_editor_cs2_description(self, loading_editor_cs2_description_text):
         file_name = get_cs2_path() + '\\' + r"game\csgo_addons" + '\\' + str(
@@ -42,124 +177,6 @@ class Loading_editorMainWindow(QMainWindow):
         with open(file_name, 'w') as f:
             f.write("COMMUNITYMAPCREDITS:\n")
             f.write(loading_editor_cs2_description_text)
-
-    def loadin_editor_cs2_images(self, loadin_editor_cs2_images_images):
-        # Create and show progress dialog
-        self.progress_dialog = ProgressDialog(self)
-        total_images = len(loadin_editor_cs2_images_images)
-        self.progress_dialog.progress_bar.setMaximum(total_images)
-
-        self.progress_dialog.show()
-        self.progress_dialog.progress_bar.setValue(1)
-
-
-        # paths
-        # remove old images
-        try:
-            shutil.rmtree(
-                get_cs2_path() + r"\game\csgo_addons" + '\\' + get_addon_name() + r'\panorama\images\map_icons\screenshots\1080p' + "\\")
-            os.makedirs(
-                get_cs2_path() + r"\game\csgo_addons" + '\\' + get_addon_name() + r'\panorama\images\map_icons\screenshots\1080p' + "\\",
-                exist_ok=True)
-        except:
-            os.makedirs(
-                get_cs2_path() + r"\game\csgo_addons" + '\\' + get_addon_name() + r'\panorama\images\map_icons\screenshots\1080p' + "\\",
-                exist_ok=True)
-
-        # Initialize progress bar
-
-
-        # add images
-        for i in range(total_images):
-            image_path = loadin_editor_cs2_images_images[i]
-            image_extension = pathlib.Path(os.path.basename(image_path)).suffix
-            image_name = normalize_name(pathlib.Path(os.path.basename(image_path)).stem) + random_char(6)
-
-            image_dst = get_cs2_path() + r"\content\csgo_addons" + '\\' + get_addon_name() + r'\hammer5tools_screenshots' + '\\' + str(
-                i) + '_' + str(image_name + image_extension)
-
-            # copy images
-            try:
-                shutil.copy2((image_path), (image_dst))
-            except:
-                os.makedirs(
-                    get_cs2_path() + r"\content\csgo_addons" + '\\' + get_addon_name() + r'\hammer5tools_screenshots')
-                shutil.copy2((image_path), (image_dst))
-            # create vmat
-            vmat_file_path = get_cs2_path() + r"\content\csgo_addons" + '\\' + get_addon_name() + r'\hammer5tools_screenshots' + '\\' + str(
-                i) + '_' + str(image_name) + '.vmat'
-            vmat_content = """
-            // THIS FILE IS AUTO-GENERATED
-
-            Layer0
-            {
-                shader "csgo_composite_generic.vfx"
-
-                g_flAlphaBlend "0.000"
-
-                //---- Options ----
-                TextureA "hammer5tools_screenshots/%%NAME%%IMAGE%%"
-                TextureB ""
-
-                UnusedVariables
-                {
-                    "g_flBumpStrength" "1"
-                    "TextureNormal" ""
-                    "g_nTextureAddressModeU" "0"
-                    "g_nTextureAddressModeV" "0"
-                }
-
-
-                VariableState
-                {
-                    ""
-                    {
-                    }
-                    "Options"
-                    {
-                    }
-                }
-            }
-            """
-            vmat_content = vmat_content.replace("%%NAME%%IMAGE%%", (str(i) + '_' + image_name + image_extension))
-            with open(vmat_file_path, 'w') as f:
-                f.write(vmat_content)
-            # compilation
-            subprocess.run('"' + get_cs2_path() + r"\game\bin\win64\resourcecompiler.exe" + '"' + " -i " + '"' + str(
-                vmat_file_path) + '"', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-            # Update progress bar
-            self.progress_dialog.progress_bar.setValue(i + 1)
-            QApplication.processEvents()  # Allow the GUI to process events
-
-        # move images
-        for file_name in os.listdir(
-                get_cs2_path() + r"\game\csgo_addons" + '\\' + get_addon_name() + r'\hammer5tools_screenshots'):
-            source_dir = get_cs2_path() + r"\game\csgo_addons" + '\\' + get_addon_name() + r'\hammer5tools_screenshots'
-            target_dir = get_cs2_path() + r"\game\csgo_addons" + '\\' + get_addon_name() + r'\panorama\images\map_icons\screenshots\1080p'
-            if pathlib.Path(file_name).suffix == '.vtex_c':
-                shutil.move(os.path.join(source_dir, file_name), target_dir)
-
-        # rename images
-        file_images_loop_count = 0
-        for file_name in os.listdir(
-                get_cs2_path() + r"\game\csgo_addons" + '\\' + get_addon_name() + r'\panorama\images\map_icons\screenshots\1080p'):
-            folder_path = get_cs2_path() + r"\game\csgo_addons" + '\\' + get_addon_name() + r'\panorama\images\map_icons\screenshots\1080p' + '\\'
-
-            if file_images_loop_count == 0:
-                os.rename(str(folder_path + file_name), str(folder_path + get_addon_name() + "_png" + ".vtex_c"))
-            else:
-                os.rename(str(folder_path + file_name),
-                          str(folder_path + get_addon_name() + "_" + str(file_images_loop_count) + "_png" + ".vtex_c"))
-                pass
-            file_images_loop_count = file_images_loop_count + 1
-
-        # cleanup
-        shutil.rmtree(get_cs2_path() + r"\game\csgo_addons" + '\\' + get_addon_name() + r'\hammer5tools_screenshots')
-        shutil.rmtree(get_cs2_path() + r"\content\csgo_addons" + '\\' + get_addon_name() + r'\hammer5tools_screenshots')
-
-        # Close progress dialog
-        self.progress_dialog.close()
 
     def icon_processs(self):
         svg_path = self.Svg_Drap_and_Drop_Area.loading_editor_get_svg()
@@ -177,10 +194,6 @@ class Loading_editorMainWindow(QMainWindow):
 
     def do_loading_editor_cs2_description(self):
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
-
-    def do_loadin_editor_cs2_images(self):
-        images = self.loading_editor_image_drag_and_drop_area_window.loading_editor_get_all_images()
-        self.loadin_editor_cs2_images(images)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
