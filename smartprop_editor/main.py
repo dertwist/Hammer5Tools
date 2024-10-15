@@ -17,10 +17,9 @@ from preferences import get_config_value, get_addon_name, get_cs2_path, debug
 
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_list, operators_list, operator_prefix, selection_criteria_prefix, selection_criteria_list, filters_list, filter_prefix
-from smartprop_editor.vsmart import VsmartOpen, VsmartSave, VsmartCompile
+from smartprop_editor.vsmart import VsmartOpen, VsmartSave
 from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
-from smartprop_editor.new_file_options import NewFileOptions
 from popup_menu.popup_menu_main import PopupMenu
 
 from PySide6.QtGui import QKeySequence
@@ -33,25 +32,6 @@ opened_file = None
 
 # Get cs2_path
 cs2_path = get_cs2_path()
-
-class CompileAll(QObject):
-    progress = Signal(int, str)
-    finished = Signal()
-
-    def run(self, total_files):
-        progress = 0
-        for i in total_files:
-            loop = QEventLoop()
-
-            timer = QTimer()
-            timer.timeout.connect(loop.quit)
-            timer.start(1)
-
-            loop.exec()
-            VsmartCompile(filename=i)
-            progress += 1
-            self.progress.emit(progress, os.path.basename(i))
-        self.finished.emit()
 
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -120,16 +100,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.save_as_file_button.clicked.connect(lambda: self.save_file(external=True))
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
         self.ui.cerate_file_button.clicked.connect(self.create_new_file)
-        self.ui.compile_all_button.clicked.connect(self.compile_all)
-        self.ui.new_file_options_button.clicked.connect(self.new_file_options)
-        self.ui.all_to_vdata_button.clicked.connect(self.convert_all_to_vdata)
         self.ui.new_element_button.clicked.connect(self.add_an_element)
         self.ui.paste_variable_button.clicked.connect(self.paste_variable)
 
 
-    def new_file_options(self):
-        new_file_dialog = NewFileOptions(self)
-        new_file_dialog.show()
 
     def properties_groups_init(self):
         self.modifiers_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Modifiers'))
@@ -341,66 +315,9 @@ class SmartPropEditorMainWindow(QMainWindow):
 
 
     # Vsmart format
-    def reportProgress(self, n, progress_dialog, file):
-        progress_dialog.setValue(n)
-        progress_dialog.setLabelText(f'Compiling: {file}')
-
-    def compile_all(self):
-        reply = QMessageBox.question(self, 'Confirmation','Are you sure you want to compile? The current file will be closed. Proceed?',QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-
-        if reply == QMessageBox.Yes:
-            total_files = []
-
-            for root, dirs, files in os.walk(self.tree_directory):
-                for file in files:
-                    if file.endswith('.vsmart'):
-                        total_files.append(os.path.join(root, file))
-                    elif file.endswith('.vdata'):
-                        total_files.append(os.path.join(root, file))
-
-
-            progress = 0
-            progress_dialog = QProgressDialog('Compiling...', 'Cancel', 0, len(total_files), self)
-            progress_dialog.setValue(progress)
-            progress += 1
-
-            progress_dialog.show()
-            self.thread = QThread( )
-            self.worker = CompileAll()
-
-
-            self.worker.moveToThread(self.thread)
-
-            self.thread.started.connect(lambda: self.worker.run(total_files=total_files))
-            self.worker.finished.connect(self.thread.quit)
-            self.worker.finished.connect(self.worker.deleteLater)
-            self.thread.finished.connect(self.thread.deleteLater)
-            self.worker.progress.connect(lambda n, file: self.reportProgress(n, progress_dialog, file))
-
-            self.thread.start()
-
-
-    def convert_all_to_vdata(self):
-        reply = QMessageBox.question(self, 'Confirmation', 'Are you sure you want to convert all vsmart files in the addon to vdata? Proceed?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-
-        if reply == QMessageBox.Yes:
-            for root, dirs, files, in os.walk(self.tree_directory):
-                for file in files:
-                    file = os.path.join(root,file)
-                    print(file)
-                    filename = os.path.splitext(file)[0]
-                    extension= os.path.splitext(file)[1]
-                    if extension == '.vsmart':
-                        dist_name = filename + '.vdata'
-                        shutil.move(file, dist_name)
-                        print(f'Converted: {os.path.basename(file)} to vdata')
 
     def create_new_file(self):
-        extension = get_config_value('SmartpropEditor', 'Extension')
-        if extension:
-            pass
-        else:
-            extension = 'vdata'
+        extension = 'vsmart'
         from smartprop_editor.blank_vsmart import blank_vsmart
         try:
             index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
@@ -424,35 +341,12 @@ class SmartPropEditorMainWindow(QMainWindow):
     def open_file(self, external=False):
         global opened_file
         if external:
-            filename, _ = QFileDialog.getOpenFileName(None, "Open File", "~/Desktop","VData Files (*.vdata);;VSmart Files (*.vsmart)")
+            filename, _ = QFileDialog.getSaveFileName(None, "Save File", os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()), "VSmart Files (*.vsmart);;All Files (*)")
         else:
             index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
             filename = self.mini_explorer.model.filePath(index)
 
         opened_file = filename
-
-        if filename.endswith('.vsmart'):
-            show = settings.value("SmartPropEditor/ShowCompilationMessage", type=bool)
-            if show:
-                # Create a QMessageBox dialog
-                msg_box = QMessageBox()
-                msg_box.setWindowTitle("Smartprops Format Warning")
-                msg_box.setIcon(QMessageBox.Warning)
-                msg_box.setText(
-                    """Smartprops in the vsmart format cannot be compiled using the default launch options. To compile smartprops in this format, please run the application in NCM mode. If you convert vsmart to vdata, you can compile the smartprops without NCM mode by using the small button in the explorer window. However, if you have already compiled vsmart files in NCM mode, you will need to delete all compiled vsmart files and restart the application before proceeding.""")
-
-                # Add a checkbox for the 'Do not show again' option
-                do_not_show_checkbox = QCheckBox("Do not show this message again")
-                msg_box.setCheckBox(do_not_show_checkbox)
-
-                result = msg_box.exec_()
-                if result == QMessageBox.Ok:
-                    settings.setValue("SmartPropEditor/ShowCompilationMessage", not do_not_show_checkbox.isChecked())
-            else:
-                pass
-
-        # VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
-        # variables = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget).variables
 
         vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
         variables = vsmart_instance.variables
@@ -555,18 +449,11 @@ class SmartPropEditorMainWindow(QMainWindow):
 
             return variables
         if external:
-            filename, _ = QFileDialog.getSaveFileName(None, "Save File", "","VData Files (*.vdata);;VSmart Files (*.vsmart)")
+            filename, _ = QFileDialog.getSaveFileName(None, "Save File", os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()), "VSmart Files (*.vsmart);;All Files (*)")
 
         var_data = save_variables()
         VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data, choices_data=self.choices_data)
-        if external:
-            opened_file = VsmartSaveInstance.filename
-        else:
-            opened_file = VsmartSaveInstance.filename
-            try:
-                VsmartCompile(filename=opened_file)
-            except:
-                print('Failed to compile the smartprop. The source file should be in the addon folder')
+        opened_file = VsmartSaveInstance.filename
 
     # variables
 
