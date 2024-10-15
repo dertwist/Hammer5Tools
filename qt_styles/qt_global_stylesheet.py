@@ -200,7 +200,7 @@ QTabBar::tab:selected {
 
 /* ========================================================== */
 QDockWidget {
-    font: 700 9pt "Segoe UI";
+    font: 580 9pt "Segoe UI";
     color: #E3E3E3;
     background-color: #2C2C2C;
     border: 2px solid #1C1C1C;
@@ -209,7 +209,7 @@ QDockWidget {
 QDockWidget::title {
     background-color: #1C1C1C;
     /* padding: 4px; */
-    font: 700 10pt "Segoe UI";
+    font: 580 10pt "Segoe UI";
     color: #E3E3E3;
 }
 
@@ -810,25 +810,25 @@ QMenu::indicator:unchecked {
 
 
 QMenuBar {
-    background-color: #333;
     color: white;
 }
 
 QMenuBar::item {
-    background-color: #333;
+    background-color: #1C1C1C;
     color: white;
     padding-left: 12px;
     padding-right: 12px; 
-    padding-bottom: 12px;
-    padding-top: 6px;
+    padding-bottom: 2px;
+    padding-top: 2px;
+    
 }
 
 QMenuBar::item:selected {
-    background-color: #555;
+    background-color: #414956;
 }
 
 QMenuBar::item:pressed {
-    background-color: #777;
+    background-color: #414956;
 }
 
 

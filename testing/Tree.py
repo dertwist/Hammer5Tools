@@ -62,9 +62,7 @@ class TreeViewExample(QMainWindow):
                 combo_box.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
                 combo_box.currentIndexChanged.connect(lambda: self.update_status_bar(message='combo'))
                 combo_box.addItems(['Doublespinbox', 'Editline', 'Color'])
-                combo_box.currentIndexChanged.connect(
-                    lambda state, combo_box=combo_box, child_item=child_item: self.handle_combo_box(combo_box,
-                                                                                                    child_item))
+                combo_box.currentIndexChanged.connect(lambda state, combo_box=combo_box, child_item=child_item: self.handle_combo_box(combo_box,child_item))
 
                 h_layout.addWidget(combo_box)
 
