@@ -79,8 +79,7 @@ class AdvancedImageViewer(QMainWindow):
     def fitToWindow(self):
         """Fit the image to the size of the scroll area, keeping the original aspect ratio."""
         if self.current_pixmap:
-            self.zoom_level = min(self.scroll_area.viewport().width() / self.current_pixmap.width(),
-                                  self.scroll_area.viewport().height() / self.current_pixmap.height())
+            self.zoom_level = min(self.scroll_area.viewport().width() / self.current_pixmap.width(),self.scroll_area.viewport().height() / self.current_pixmap.height()) -0.025
             self.updateImageDisplay()
 
     def updateImageDisplay(self):

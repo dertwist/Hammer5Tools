@@ -17,7 +17,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
     QMainWindow, QPlainTextEdit, QPushButton, QSizePolicy,
-    QSpacerItem, QSplitter, QVBoxLayout, QWidget)
+    QSplitter, QVBoxLayout, QWidget)
 
 class Ui_Loading_editorMainWindow(object):
     def setupUi(self, Loading_editorMainWindow):
@@ -50,7 +50,7 @@ class Ui_Loading_editorMainWindow(object):
         self.horizontalLayout_5 = QHBoxLayout(self.explorer)
         self.horizontalLayout_5.setSpacing(0)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_5.setContentsMargins(4, 4, 4, 4)
 
         self.verticalLayout.addWidget(self.explorer)
 
@@ -187,10 +187,7 @@ class Ui_Loading_editorMainWindow(object):
         self.screenshot_preview.setBaseSize(QSize(1200, 0))
         self.verticalLayout_6 = QVBoxLayout(self.screenshot_preview)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        self.verticalLayout_6.addItem(self.horizontalSpacer)
-
+        self.verticalLayout_6.setContentsMargins(4, 4, 4, 4)
         self.splitter.addWidget(self.screenshot_preview)
         self.frame_2 = QFrame(self.splitter)
         self.frame_2.setObjectName(u"frame_2")
