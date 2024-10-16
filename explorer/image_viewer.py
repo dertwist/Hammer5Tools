@@ -62,20 +62,19 @@ class ImageViewer(QMainWindow):
         splitter.addWidget(self.image_label)
 
         # Set the central widget
-        self.setCentralWidget(splitter)
+        self.setCentralWidget(self.tree_view)
 
-        # Update header size when the widget is resized
-        self.resizeEvent = self.on_resize
+
 
         self.tree_view.header().setDefaultSectionSize(120)  # Set the default section size for all columns
 
         # Set the size for the first column specifically
         self.tree_view.header().resizeSection(0, 400)  # Adjust the size (200) as needed
 
-    def on_resize(self, event):
-        # Calculate and set the header size relative to the widget scale
-        header_size = min(self.size().width(), self.size().height()) // 4  # Adjust the divisor for desired header size
-        self.tree_view.setIconSize(QSize(header_size, header_size))
+        self.tree_view.header().hideSection(1)
+        self.tree_view.header().hideSection(2)
+        self.tree_view.header().hideSection(3)
+
 
 
 
