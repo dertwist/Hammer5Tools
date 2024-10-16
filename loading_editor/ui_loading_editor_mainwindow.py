@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QMainWindow,
-    QPlainTextEdit, QPushButton, QSizePolicy, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
+    QMainWindow, QPlainTextEdit, QPushButton, QSizePolicy,
+    QSplitter, QVBoxLayout, QWidget)
 
 class Ui_Loading_editorMainWindow(object):
     def setupUi(self, Loading_editorMainWindow):
@@ -26,13 +26,21 @@ class Ui_Loading_editorMainWindow(object):
         Loading_editorMainWindow.resize(1072, 745)
         self.centralwidget = QWidget(Loading_editorMainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.horizontalLayout_4 = QHBoxLayout(self.centralwidget)
-        self.horizontalLayout_4.setSpacing(6)
-        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout_7 = QVBoxLayout(self.centralwidget)
+        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
+        self.splitter_2 = QSplitter(self.centralwidget)
+        self.splitter_2.setObjectName(u"splitter_2")
+        self.splitter_2.setOrientation(Qt.Horizontal)
+        self.screenshots = QGroupBox(self.splitter_2)
+        self.screenshots.setObjectName(u"screenshots")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.screenshots.sizePolicy().hasHeightForWidth())
+        self.screenshots.setSizePolicy(sizePolicy)
+        self.verticalLayout = QVBoxLayout(self.screenshots)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.explorer = QFrame(self.centralwidget)
+        self.explorer = QFrame(self.screenshots)
         self.explorer.setObjectName(u"explorer")
         self.explorer.setFrameShape(QFrame.StyledPanel)
         self.explorer.setFrameShadow(QFrame.Raised)
@@ -43,9 +51,9 @@ class Ui_Loading_editorMainWindow(object):
 
         self.verticalLayout.addWidget(self.explorer)
 
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.open_folder_button = QPushButton(self.centralwidget)
+        self.verticalLayout_5 = QVBoxLayout()
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.open_folder_button = QPushButton(self.screenshots)
         self.open_folder_button.setObjectName(u"open_folder_button")
         self.open_folder_button.setMinimumSize(QSize(0, 32))
         self.open_folder_button.setStyleSheet(u"    QLabel {\n"
@@ -81,9 +89,9 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.horizontalLayout_2.addWidget(self.open_folder_button)
+        self.verticalLayout_5.addWidget(self.open_folder_button)
 
-        self.clear_all_button = QPushButton(self.centralwidget)
+        self.clear_all_button = QPushButton(self.screenshots)
         self.clear_all_button.setObjectName(u"clear_all_button")
         self.clear_all_button.setMinimumSize(QSize(0, 32))
         self.clear_all_button.setStyleSheet(u"    QLabel {\n"
@@ -119,9 +127,9 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.horizontalLayout_2.addWidget(self.clear_all_button)
+        self.verticalLayout_5.addWidget(self.clear_all_button)
 
-        self.apply_screenshots_button = QPushButton(self.centralwidget)
+        self.apply_screenshots_button = QPushButton(self.screenshots)
         self.apply_screenshots_button.setObjectName(u"apply_screenshots_button")
         self.apply_screenshots_button.setMinimumSize(QSize(0, 32))
         self.apply_screenshots_button.setStyleSheet(u"    QLabel {\n"
@@ -157,15 +165,25 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.horizontalLayout_2.addWidget(self.apply_screenshots_button)
+        self.verticalLayout_5.addWidget(self.apply_screenshots_button)
 
 
-        self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.verticalLayout.addLayout(self.verticalLayout_5)
 
-
-        self.horizontalLayout_4.addLayout(self.verticalLayout)
-
-        self.frame_2 = QFrame(self.centralwidget)
+        self.splitter_2.addWidget(self.screenshots)
+        self.splitter = QSplitter(self.splitter_2)
+        self.splitter.setObjectName(u"splitter")
+        self.splitter.setOrientation(Qt.Horizontal)
+        self.screenshot_preview = QGroupBox(self.splitter)
+        self.screenshot_preview.setObjectName(u"screenshot_preview")
+        sizePolicy.setHeightForWidth(self.screenshot_preview.sizePolicy().hasHeightForWidth())
+        self.screenshot_preview.setSizePolicy(sizePolicy)
+        self.screenshot_preview.setMinimumSize(QSize(600, 0))
+        self.screenshot_preview.setMaximumSize(QSize(16777215, 16777215))
+        self.verticalLayout_6 = QVBoxLayout(self.screenshot_preview)
+        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.splitter.addWidget(self.screenshot_preview)
+        self.frame_2 = QFrame(self.splitter)
         self.frame_2.setObjectName(u"frame_2")
         self.frame_2.setMaximumSize(QSize(360, 16777215))
         self.frame_2.setFrameShape(QFrame.StyledPanel)
@@ -173,7 +191,12 @@ class Ui_Loading_editorMainWindow(object):
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.svg_icon_frame = QFrame(self.frame_2)
+        self.groupBox_2 = QGroupBox(self.frame_2)
+        self.groupBox_2.setObjectName(u"groupBox_2")
+        self.verticalLayout_4 = QVBoxLayout(self.groupBox_2)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalLayout_4.setContentsMargins(4, 4, 4, 4)
+        self.svg_icon_frame = QFrame(self.groupBox_2)
         self.svg_icon_frame.setObjectName(u"svg_icon_frame")
         self.svg_icon_frame.setMinimumSize(QSize(0, 320))
         self.svg_icon_frame.setStyleSheet(u"        font: 580 10pt \"Segoe UI\";\n"
@@ -193,9 +216,9 @@ class Ui_Loading_editorMainWindow(object):
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.verticalLayout_3.addWidget(self.svg_icon_frame)
+        self.verticalLayout_4.addWidget(self.svg_icon_frame)
 
-        self.apply_icon_button = QPushButton(self.frame_2)
+        self.apply_icon_button = QPushButton(self.groupBox_2)
         self.apply_icon_button.setObjectName(u"apply_icon_button")
         self.apply_icon_button.setEnabled(True)
         self.apply_icon_button.setMinimumSize(QSize(0, 32))
@@ -249,9 +272,17 @@ class Ui_Loading_editorMainWindow(object):
 "        background-color: #1C1C1C;\n"
 "    }")
 
-        self.verticalLayout_3.addWidget(self.apply_icon_button)
+        self.verticalLayout_4.addWidget(self.apply_icon_button)
 
-        self.PlainTextEdit_Description_2 = QPlainTextEdit(self.frame_2)
+
+        self.verticalLayout_3.addWidget(self.groupBox_2)
+
+        self.groupBox = QGroupBox(self.frame_2)
+        self.groupBox.setObjectName(u"groupBox")
+        self.verticalLayout_2 = QVBoxLayout(self.groupBox)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(4, 4, 4, 4)
+        self.PlainTextEdit_Description_2 = QPlainTextEdit(self.groupBox)
         self.PlainTextEdit_Description_2.setObjectName(u"PlainTextEdit_Description_2")
         self.PlainTextEdit_Description_2.setStyleSheet(u"    QPlainTextEdit {\n"
 "\n"
@@ -295,9 +326,9 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.verticalLayout_3.addWidget(self.PlainTextEdit_Description_2)
+        self.verticalLayout_2.addWidget(self.PlainTextEdit_Description_2)
 
-        self.apply_description_button = QPushButton(self.frame_2)
+        self.apply_description_button = QPushButton(self.groupBox)
         self.apply_description_button.setObjectName(u"apply_description_button")
         self.apply_description_button.setMinimumSize(QSize(0, 32))
         self.apply_description_button.setStyleSheet(u"    QLabel {\n"
@@ -333,10 +364,15 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.verticalLayout_3.addWidget(self.apply_description_button)
+        self.verticalLayout_2.addWidget(self.apply_description_button)
 
 
-        self.horizontalLayout_4.addWidget(self.frame_2)
+        self.verticalLayout_3.addWidget(self.groupBox)
+
+        self.splitter.addWidget(self.frame_2)
+        self.splitter_2.addWidget(self.splitter)
+
+        self.verticalLayout_7.addWidget(self.splitter_2)
 
         Loading_editorMainWindow.setCentralWidget(self.centralwidget)
 
@@ -347,6 +383,7 @@ class Ui_Loading_editorMainWindow(object):
 
     def retranslateUi(self, Loading_editorMainWindow):
         Loading_editorMainWindow.setWindowTitle(QCoreApplication.translate("Loading_editorMainWindow", u"MainWindow", None))
+        self.screenshots.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshots", None))
 #if QT_CONFIG(tooltip)
         self.open_folder_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
@@ -389,7 +426,10 @@ class Ui_Loading_editorMainWindow(object):
                         ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.apply_screenshots_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply screenshots", None))
+        self.screenshot_preview.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshot Preview", None))
+        self.groupBox_2.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Icon", None))
         self.apply_icon_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply Icon", None))
+        self.groupBox.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Description", None))
 #if QT_CONFIG(tooltip)
         self.PlainTextEdit_Description_2.setToolTip("")
 #endif // QT_CONFIG(tooltip)
