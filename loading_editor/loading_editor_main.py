@@ -123,15 +123,6 @@ class ApplyScreenshots:
 
         with open(path, 'w') as file:
             file.write(vtex_file)
-class ProgressDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Progress")
-        self.setModal(True)
-        self.layout = QVBoxLayout(self)
-        self.progress_bar = QProgressBar(self)
-        self.layout.addWidget(self.progress_bar)
-
 class Loading_editorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -149,6 +140,7 @@ class Loading_editorMainWindow(QMainWindow):
         explorer_view = ImageViewer(tree_directory=game_screenshot_path)
         explorer_view.setStyleSheet("padding:0")
         self.ui.explorer.layout().addWidget(explorer_view)
+        self.ui.screenshot_preview.layout().addWidget(explorer_view.image_label)
 
         self.Svg_Drap_and_Drop_Area = Svg_Drag_and_Drop()
         self.ui.svg_icon_frame.layout().addWidget(self.Svg_Drap_and_Drop_Area)
