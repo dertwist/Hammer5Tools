@@ -7,7 +7,7 @@ import json
 
 from distutils.util import strtobool
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit, QFileDialog, QComboBox, QPushButton
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit, QFileDialog, QComboBox, QPushButton, QHBoxLayout, QLabel
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtGui import QCursor, QDrag, QAction, QColor
 from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
@@ -20,6 +20,7 @@ from smartprop_editor.objects import variables_list, variable_prefix, element_pr
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave
 from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
+from smartprop_editor.Widgets import ComboboxChoiceClass
 from popup_menu.popup_menu_main import PopupMenu
 
 from PySide6.QtGui import QKeySequence
@@ -561,13 +562,29 @@ class SmartPropEditorMainWindow(QMainWindow):
     def populate_choices(self):
         pass
         self.add_choice()
+
+    def add_class_choice(self):
+        layout = QHBoxLayout()
+        label = QLabel()
+        label.setText('Default')
+        label.setStyleSheet('background-color: rgba(0,0,0,0)')
+        combobox = QComboBox()
+        combobox.setStyleSheet('padding:4px')
+        layout.addWidget(label)
+        layout.addWidget(combobox)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        return widget
+
     def add_choice(self):
-        combobox = QPushButton()
-        combobox.setStyleSheet('padding:16px')
-        item = self.ui.choices_tree_widget.itemAt(0,0)
+        combobox = ComboboxChoiceClass()
+        new_items = ['A', 'B', 'C']
+        # combobox.signal.emit(new_items)
+        item = self.ui.choices_tree_widget.itemAt(1,1)
         # item = item.child(0)
         debug(item.text(0))
-        self.ui.choices_tree_widget.setItemWidget(item, 0, combobox)
+        self.ui.choices_tree_widget.setItemWidget(item, 1, combobox)
         self.ui.choices_tree_widget.setStyleSheet("")
         # self.ui.choices_tree_widget.setStyle('fusion')
     # Choices context menu

@@ -8,8 +8,9 @@ class AssetTypesProcess:
     def __init__(self):
         pass
         # Variables
-        self.processed = True
-        self.data = editor_info
+        self.process = True
+        self.data = {}
+        debug(path)
 
         self.load_file()
         self.check_processed()
@@ -18,12 +19,13 @@ class AssetTypesProcess:
         self.data.update(kv3.read(path).value)
     def check_processed(self):
         processed = self.data.get('editor_info', True)
+        debug(f'Process var: {processed}')
         if isinstance(processed, dict):
-            self.processed = True
+            self.process = True
         else:
-            self.processed = False
+            self.process = False
 
-        if self.processed:
+        if self.process:
             debug(f'Adding custom asset types to cs2 cfg')
             self.add_vsmart()
             self.save_file()
@@ -32,4 +34,6 @@ class AssetTypesProcess:
         self.data['assettypes'].update(vsmart_block)
         debug('Added vsmart asset type')
     def save_file(self):
+        output = editor_info
+        output.update(self.data)
         kv3.write(self.data, path)
