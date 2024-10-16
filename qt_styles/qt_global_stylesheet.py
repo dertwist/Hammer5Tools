@@ -22,7 +22,7 @@ QLabel {
 /* ========================================================== */
 
 QGroupBox {
-    border: 1px solid gray;
+    border: 1px solid #505050;
     border-bottom: none;
     border-left: none;
     border-right: none;
@@ -49,6 +49,9 @@ QGroupBox::indicator:checked {
 QGroupBox::indicator:unchecked {
     image: url(://icons/arrow_drop_right.png);
 }
+
+
+
 
 
 
