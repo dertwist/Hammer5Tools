@@ -17,7 +17,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
     QMainWindow, QPlainTextEdit, QPushButton, QSizePolicy,
-    QSplitter, QVBoxLayout, QWidget)
+    QSpacerItem, QSplitter, QVBoxLayout, QWidget)
 
 class Ui_Loading_editorMainWindow(object):
     def setupUi(self, Loading_editorMainWindow):
@@ -30,16 +30,19 @@ class Ui_Loading_editorMainWindow(object):
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
         self.splitter_2 = QSplitter(self.centralwidget)
         self.splitter_2.setObjectName(u"splitter_2")
-        self.splitter_2.setOrientation(Qt.Horizontal)
-        self.screenshots = QGroupBox(self.splitter_2)
-        self.screenshots.setObjectName(u"screenshots")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.splitter_2.sizePolicy().hasHeightForWidth())
+        self.splitter_2.setSizePolicy(sizePolicy)
+        self.splitter_2.setOrientation(Qt.Horizontal)
+        self.screenshots = QGroupBox(self.splitter_2)
+        self.screenshots.setObjectName(u"screenshots")
         sizePolicy.setHeightForWidth(self.screenshots.sizePolicy().hasHeightForWidth())
         self.screenshots.setSizePolicy(sizePolicy)
         self.verticalLayout = QVBoxLayout(self.screenshots)
         self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.explorer = QFrame(self.screenshots)
         self.explorer.setObjectName(u"explorer")
         self.explorer.setFrameShape(QFrame.StyledPanel)
@@ -173,6 +176,7 @@ class Ui_Loading_editorMainWindow(object):
         self.splitter_2.addWidget(self.screenshots)
         self.splitter = QSplitter(self.splitter_2)
         self.splitter.setObjectName(u"splitter")
+        self.splitter.setMidLineWidth(0)
         self.splitter.setOrientation(Qt.Horizontal)
         self.screenshot_preview = QGroupBox(self.splitter)
         self.screenshot_preview.setObjectName(u"screenshot_preview")
@@ -180,8 +184,13 @@ class Ui_Loading_editorMainWindow(object):
         self.screenshot_preview.setSizePolicy(sizePolicy)
         self.screenshot_preview.setMinimumSize(QSize(600, 0))
         self.screenshot_preview.setMaximumSize(QSize(16777215, 16777215))
+        self.screenshot_preview.setBaseSize(QSize(1200, 0))
         self.verticalLayout_6 = QVBoxLayout(self.screenshot_preview)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.verticalLayout_6.addItem(self.horizontalSpacer)
+
         self.splitter.addWidget(self.screenshot_preview)
         self.frame_2 = QFrame(self.splitter)
         self.frame_2.setObjectName(u"frame_2")

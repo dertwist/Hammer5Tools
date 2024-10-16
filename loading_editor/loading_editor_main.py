@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QProgressBar, QDialog, 
 from preferences import get_config_value, get_cs2_path, get_addon_name, debug
 from loading_editor.ui_loading_editor_mainwindow import Ui_Loading_editorMainWindow
 from loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
-from explorer.image_viewer import ImageViewer
+from explorer.image_viewer import ExplorerImageViewer
 
 class ApplyScreenshots:
     def __init__(self, game_screenshot_path, content_screenshot_path):
@@ -137,10 +137,11 @@ class Loading_editorMainWindow(QMainWindow):
             os.makedirs(game_screenshot_path)
 
         # Explorer init
-        explorer_view = ImageViewer(tree_directory=game_screenshot_path)
+        explorer_view = ExplorerImageViewer(tree_directory=game_screenshot_path)
         explorer_view.setStyleSheet("padding:0")
         self.ui.explorer.layout().addWidget(explorer_view)
-        self.ui.screenshot_preview.layout().addWidget(explorer_view.image_label)
+        self.ui.screenshot_preview.layout().addWidget(explorer_view.image_viewer)
+        self.ui.splitter_2.setSizes([200,100])
 
         self.Svg_Drap_and_Drop_Area = Svg_Drag_and_Drop()
         self.ui.svg_icon_frame.layout().addWidget(self.Svg_Drap_and_Drop_Area)
