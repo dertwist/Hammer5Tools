@@ -4,9 +4,9 @@ import keyvalues3
 from common import editor_info
 class AssetTypesProcess:
     def __init__(self):
-        super().__init__(AssetTypesProcess)
+        super().__init__()
         # Variables
-        self.process = True
+        self.process = False
         self.data = {}
         self.path = os.path.join(get_cs2_path(), 'game', 'bin', 'assettypes_common.txt')
         debug(self.path)
@@ -19,14 +19,14 @@ class AssetTypesProcess:
         self.data.update(keyvalues3.read(self.path).value)
     def check_processed(self):
         processed = self.data.get('editor_info', None)
-        debug(f'Process var: {processed}')
-        if isinstance(processed, dict):
+        debug(f'Process var: {type(processed)}')
+        if isinstance(processed, list):
             self.process = False
         else:
             self.process = True
-
         if self.process:
             debug(f'Adding custom asset types to cs2 cfg')
+            debug(self.process)
             self.add_vsmart()
             output = editor_info
             output.update(self.data)
