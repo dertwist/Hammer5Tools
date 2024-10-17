@@ -28,6 +28,7 @@ class Ui_Loading_editorMainWindow(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_7 = QVBoxLayout(self.centralwidget)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
+        self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
         self.splitter_2 = QSplitter(self.centralwidget)
         self.splitter_2.setObjectName(u"splitter_2")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
