@@ -17,7 +17,6 @@ from popup_menu.popup_menu_main import PopupMenu
 
 from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
 from soudevent_editor.soundevent_editor_recompile_all import compile
-from soudevent_editor.create_new_soundevent_dialog import CreateNewSoundEventOptions_Dialog
 
 
 import keyvalues3 as kv3
@@ -31,6 +30,24 @@ from soudevent_editor.properties.curve_property import CurveProperty
 from soudevent_editor.properties.files_property import FilesProperty
 
 global clipboard_app
+
+def child_key(data, key_child):
+    data_out = {}
+    if key_child in data and isinstance(data[key_child], dict):
+        for key in data[key_child]:
+            data_out[key_child] = data_out.get(key_child, {})
+            data_out[key_child].update({key: data[key_child][key]})
+            # print({key_child: {key: data[key_child][key]}})
+            child_key(data[key_child], key)
+    return data_out
+
+def parse_kv3(path):
+    data = kv3.read(path)
+    data_kv3 = {}
+    for parent in data.keys():
+        data_out = child_key(data, parent)
+        data_kv3.update(data_out)
+    return data_kv3
 
 class SoundEventEditorMainWidget(QMainWindow):
     def __init__(self, version, parent=None):
@@ -69,8 +86,6 @@ class SoundEventEditorMainWidget(QMainWindow):
 
         self.ui.create_new_soundevent.clicked.connect(self.create_new_soundevent)
 
-        self.ui.create_new_soundevent_options_button.clicked.connect(self.CreateNewSoundEventOptions_Dialog_show)
-
         # misc
 
         self.ui.soundevents_list_search_bar.textChanged.connect(self.filter_soundevents_list)
@@ -80,9 +95,6 @@ class SoundEventEditorMainWidget(QMainWindow):
     def open_output_file(self):
         file_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
         subprocess.Popen(['notepad.exe', file_path])
-    def CreateNewSoundEventOptions_Dialog_show(self):
-        self.dialog = CreateNewSoundEventOptions_Dialog()
-        self.dialog.show()
 
     def open_sounds_folder(self):
         if os.path.exists(self.tree_directory):
@@ -121,7 +133,6 @@ class SoundEventEditorMainWidget(QMainWindow):
 
     def populate_soundevent_list(self):
         global soundevents_data
-        from soudevent_editor.soundevent_editor_kv3_parser import parse_kv3
         soundevents_data = parse_kv3(os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts'))
         for key, _ in soundevents_data.items():
             item = QListWidgetItem(key)

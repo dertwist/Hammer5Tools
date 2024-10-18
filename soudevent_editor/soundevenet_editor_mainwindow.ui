@@ -36,10 +36,10 @@
     <item>
      <widget class="QFrame" name="frame_6">
       <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
+       <enum>QFrame::Shape::StyledPanel</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
+       <enum>QFrame::Shadow::Raised</enum>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <property name="spacing">
@@ -60,10 +60,10 @@
        <item>
         <widget class="QFrame" name="frame_7">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::Shape::StyledPanel</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
+          <enum>QFrame::Shadow::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <property name="leftMargin">
@@ -81,10 +81,10 @@
           <item>
            <widget class="QFrame" name="frame_3">
             <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
+             <enum>QFrame::Shape::StyledPanel</enum>
             </property>
             <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
+             <enum>QFrame::Shadow::Raised</enum>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_3">
              <property name="spacing">
@@ -153,20 +153,20 @@
                 <bool>true</bool>
                </property>
                <property name="alignment">
-                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
                </property>
                <widget class="QWidget" name="soundevent_properties">
                 <property name="geometry">
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>262</width>
+                  <width>335</width>
                   <height>608</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_2">
                  <property name="sizeConstraint">
-                  <enum>QLayout::SetFixedSize</enum>
+                  <enum>QLayout::SizeConstraint::SetFixedSize</enum>
                  </property>
                 </layout>
                </widget>
@@ -187,10 +187,10 @@
                 </size>
                </property>
                <property name="frameShape">
-                <enum>QFrame::StyledPanel</enum>
+                <enum>QFrame::Shape::StyledPanel</enum>
                </property>
                <property name="frameShadow">
-                <enum>QFrame::Raised</enum>
+                <enum>QFrame::Shadow::Raised</enum>
                </property>
                <layout class="QHBoxLayout" name="horizontalLayout_2">
                 <property name="spacing">
@@ -230,7 +230,7 @@
     </size>
    </property>
    <property name="features">
-    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
     <string>Soundevents</string>
@@ -286,26 +286,6 @@
         <property name="bottomMargin">
          <number>0</number>
         </property>
-        <item>
-         <widget class="QToolButton" name="create_new_soundevent_options_button">
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Quick setup options (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </widget>
-        </item>
         <item>
          <widget class="QPushButton" name="create_new_soundevent">
           <property name="font">
@@ -366,175 +346,6 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QComboBox" name="comboBox">
-          <property name="styleSheet">
-           <string notr="true">QMenu {
-background-color: red;
- }
-
-QMenu::item {
-    padding: 5px 10px;
-    font: 580 8pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    color: #E3E3E3;
-}
-QMenu::item:selected {
-    background-color: #414956;
-    color: white;
-}
-QWidget {
-    background-color: #151515;
-    outline: none;
-}
-
-QWidget:item:checked {
-    background-color: #151515;
-    color: white;
-}
-
-QWidget:item:selected {
-    background-color: #414956;
-    color: white;
-    border: 0px;
-}
-
-
-
-QMenu {
-    background-color: #1d1d1f;
-    color: #FFFFFF;
-    border: 1px solid #555555;
-    /* padding-top: 5px; */
-    /* padding-bottom: 5px; */
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-}
-
-QMenu::item {
-    font: 580 8pt &quot;Segoe UI&quot;;
-    border-top: 2px solid black;
-    border: 0px;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    padding-left: 12px;
-    padding-right: 12px;
-    color: #E3E3E3;
-}
-
-QMenu::item:selected {
-    background-color: #666666;
-    color: #FFFFFF;
-}
-
-QMenu::separator {
-    height: 1px;
-    background: #AAAAAA;
-    margin: 5px 0;
-}
-
-QMenu::indicator {
-    width: 13px;
-    height: 13px;
-}
-
-QMenu::indicator:checked {
-    image: url(:/images/checkmark.png);
-}
-
-QMenu::indicator:unchecked {
-    image: url(:/images/empty.png);
-}
-
-
-QComboBox {
-    font: 580 8pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    height: 12px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-    padding-left: 5px;
-}
-
-QComboBox:hover {
-    background-color: #414956;
-    color: white;
-}
-
-QComboBox:pressed {
-    background-color: #2E2F30;
-    color: white;
-}
-
-QComboBox:item {
-    font: 580 8pt &quot;Segoe UI&quot;;
-    color: #E3E3E3;
-    padding-left: 5px;
-    background-color: #1C1C1C;
-    border-style: none;
-}
-
-QComboBox::drop-down {
-    color: #E3E3E3;
-    padding: 2px;
-    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
-    border-bottom: 0px solid black;
-    border-top: 0px solid black;
-    border-right: 0px;
-    border-left: 2px solid;
-    margin-left: 5px;
-    padding: 5px;
-    width: 7px;
-    border-color: rgba(80, 80, 80, 255);
-    background-color: #1C1C1C;
-}
-
-
-QComboBox QAbstractItemView {
-    border: 2px solid gray;
-    border-color: rgba(80, 80, 80, 255);
-    selection-background-color: #414956;
-    background-color: #1C1C1C;
-}
-
-
-QComboBox QAbstractItemView::item {
-    height: 16px; /* Set the height of each item */
-    padding: 4px; /* Add padding to each item */
-    padding-left: 5px;
-    padding-right: 5px;
-    color: #ff8a8a8a;
-    border-style: none;
-    border-bottom: 0.5px solid black;
-    border-color: rgba(255, 255, 255, 10);
-}
-
-
-QComboBox QAbstractItemView::item:selected {
-    height: 16px; /* Set the height of each item */
-    padding: 4px; /* Add padding to each item */
-    padding-left: 5px;
-    padding-right: 5px;
-    background-color: #414956;
-    color: white;
-    border: none; /* Remove border */
-    outline: none; /* Remove outline */
-}</string>
-          </property>
-          <item>
-           <property name="text">
-            <string>Todo Preset</string>
-           </property>
-          </item>
-         </widget>
-        </item>
        </layout>
       </widget>
      </item>
@@ -549,7 +360,7 @@ QComboBox QAbstractItemView::item:selected {
     </size>
    </property>
    <property name="features">
-    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+    <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
     <string>Explorer</string>
@@ -577,10 +388,10 @@ QComboBox QAbstractItemView::item:selected {
      <item>
       <widget class="QFrame" name="audio_files_explorer_frame">
        <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
+        <enum>QFrame::Shape::StyledPanel</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
+        <enum>QFrame::Shadow::Raised</enum>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <property name="leftMargin">
@@ -610,10 +421,10 @@ QComboBox QAbstractItemView::item:selected {
         </size>
        </property>
        <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
+        <enum>QFrame::Shape::StyledPanel</enum>
        </property>
        <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
+        <enum>QFrame::Shadow::Raised</enum>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <property name="leftMargin">
@@ -639,84 +450,6 @@ QComboBox QAbstractItemView::item:selected {
           <property name="icon">
            <iconset resource="../resources.qrc">
             <normaloff>:/icons/folder_open.svg</normaloff>:/icons/folder_open.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="Import_audio_options_button">
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Improt audio options (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="Import_audio_button">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>32</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Improt audio (todo)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
-
-        font: 600 10pt &quot;Segoe UI&quot;;
-	
-
-        border: 2px solid black;
-        border-radius: 4px;
-        border-color: rgba(80, 80, 80, 255);
-        height:20px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QPushButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }</string>
-          </property>
-          <property name="text">
-           <string>Import audio</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/place_item_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
           </property>
           <property name="iconSize">
            <size>
