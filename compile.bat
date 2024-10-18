@@ -1,9 +1,12 @@
 @echo off
+setlocal enabledelayedexpansion
 
 REM Search for UI files in the project directory and compile them using PySide6
 for /r %%i in (*.ui) do (
-    set OUTPUT_FILE=%%i
-    pyside6-uic %%i -o !OUTPUT_FILE:.ui=.py!
+    if not "%%~nxi" == "ui_input.ui" (
+        set OUTPUT_FILE=%%i
+        pyside6-uic "%%i" -o "!OUTPUT_FILE:.ui=.py!"
+    )
 )
 
 REM Compile the specific UI file 'ui_input.ui'
