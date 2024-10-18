@@ -20,7 +20,7 @@ from smartprop_editor.objects import variables_list, variable_prefix, element_pr
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave
 from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
-from smartprop_editor.widgets import ComboboxChoiceClass
+from smartprop_editor.widgets import ComboboxDynamicItems
 from popup_menu.popup_menu_main import PopupMenu
 
 from PySide6.QtGui import QKeySequence
@@ -559,7 +559,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         # self.ui.choices_tree_widget.uniformRowHeights(True)
         pass
     def populate_choices(self):
-        pass
+        debug(f'Choices: {self.choices_data}')
         self.add_choice()
 
     def add_class_choice(self):
@@ -577,7 +577,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         return widget
 
     def add_choice(self):
-        combobox = ComboboxChoiceClass()
+        combobox = ComboboxDynamicItems()
         new_items = ['A', 'B', 'C']
         # combobox.signal.emit(new_items)
         item = self.ui.choices_tree_widget.itemAt(1,1)
