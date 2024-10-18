@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QHBoxLayout,
     QLayout, QLineEdit, QListWidget, QListWidgetItem,
     QMainWindow, QPushButton, QScrollArea, QSizePolicy,
     QToolButton, QVBoxLayout, QWidget)
-import rc_resources
+import resources_rc
 
 class Ui_SoundEvent_Editor_MainWindow(object):
     def setupUi(self, SoundEvent_Editor_MainWindow):
