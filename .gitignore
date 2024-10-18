@@ -97,3 +97,8 @@ dist/debug.kv3
 
 *.pyproject
 *.spec
+Hammer5Tools.pyproject.user
+Hammer5Tools.pyproject.user.47e72da
+Hammer5Tools.pyproject.user.85e345b
+Hammer5Tools.spec
+Hammer5Tools_Updater.spec
