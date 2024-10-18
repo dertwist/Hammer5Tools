@@ -1,844 +1,396 @@
-# -*- coding: utf-8 -*-
+import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logging
+from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow, QMessageBox, QDialog, QLabel, QMessageBox
+from PySide6.QtGui import QIcon, QAction, QTextCursor
+from PySide6.QtCore import QObject, Signal, Qt
+# from PySide6 import QtCore
+from ui_main import Ui_MainWindow
+from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
+from documentation.documentation import Documentation_Dialog
+from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
+from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
+from loading_editor.loading_editor_main import Loading_editorMainWindow
 
-################################################################################
-## Form generated from reading UI file 'main.ui'
-##
-## Created by: Qt User Interface Compiler version 6.7.2
-##
-## WARNING! All changes made in this file will be lost when recompiling UI file!
-################################################################################
+from hotkey_editor.main import HotkeyEditorMainWindow
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
-    QCursor, QFont, QFontDatabase, QGradient,
-    QIcon, QImage, QKeySequence, QLinearGradient,
-    QPainter, QPalette, QPixmap, QRadialGradient,
-    QTransform)
-from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDockWidget,
-    QFrame, QHBoxLayout, QHeaderView, QLabel,
-    QLineEdit, QMainWindow, QPushButton, QScrollArea,
-    QSizePolicy, QSpacerItem, QToolButton, QTreeWidget,
-    QTreeWidgetItem, QVBoxLayout, QWidget)
-import resources_rc
+from create_addon.create_addon_mian import Create_addon_Dialog
+from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        if not MainWindow.objectName():
-            MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1280, 720)
-        MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
-        self.actionCreateNewsmartprop = QAction(MainWindow)
-        self.actionCreateNewsmartprop.setObjectName(u"actionCreateNewsmartprop")
-        icon = QIcon()
-        icon.addFile(u":/valve_common/icons/tools/common/new.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.actionCreateNewsmartprop.setIcon(icon)
-        self.actionCreateNewsmartprop.setMenuRole(QAction.NoRole)
-        self.actionOpen_from_Explorer = QAction(MainWindow)
-        self.actionOpen_from_Explorer.setObjectName(u"actionOpen_from_Explorer")
-        icon1 = QIcon()
-        icon1.addFile(u":/valve_common/icons/tools/common/open.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.actionOpen_from_Explorer.setIcon(icon1)
-        self.actionSave_as = QAction(MainWindow)
-        self.actionSave_as.setObjectName(u"actionSave_as")
-        icon2 = QIcon()
-        icon2.addFile(u":/valve_common/icons/tools/common/save_all.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.actionSave_as.setIcon(icon2)
-        self.actionSave_current_file = QAction(MainWindow)
-        self.actionSave_current_file.setObjectName(u"actionSave_current_file")
-        icon3 = QIcon()
-        icon3.addFile(u":/valve_common/icons/tools/common/save.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.actionSave_current_file.setIcon(icon3)
-        self.actionRecompile_file = QAction(MainWindow)
-        self.actionRecompile_file.setObjectName(u"actionRecompile_file")
-        icon4 = QIcon()
-        icon4.addFile(u":/valve_common/icons/tools/common/options_activated.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.actionRecompile_file.setIcon(icon4)
-        self.actionRecompile_all_in_addon = QAction(MainWindow)
-        self.actionRecompile_all_in_addon.setObjectName(u"actionRecompile_all_in_addon")
-        self.actionRecompile_all_in_addon.setIcon(icon4)
-        self.actionConvert_all_vsmart_file_to_vdata = QAction(MainWindow)
-        self.actionConvert_all_vsmart_file_to_vdata.setObjectName(u"actionConvert_all_vsmart_file_to_vdata")
-        icon5 = QIcon()
-        icon5.addFile(u":/valve_common/icons/tools/common/move_to_changelist.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.actionConvert_all_vsmart_file_to_vdata.setIcon(icon5)
-        self.actionFormat_serttings = QAction(MainWindow)
-        self.actionFormat_serttings.setObjectName(u"actionFormat_serttings")
-        icon6 = QIcon()
-        icon6.addFile(u":/valve_common/icons/tools/common/setting.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.actionFormat_serttings.setIcon(icon6)
-        self.centralwidget = QWidget(MainWindow)
-        self.centralwidget.setObjectName(u"centralwidget")
-        self.verticalLayout_9 = QVBoxLayout(self.centralwidget)
-        self.verticalLayout_9.setSpacing(0)
-        self.verticalLayout_9.setObjectName(u"verticalLayout_9")
-        self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
-        self.frame_9 = QFrame(self.centralwidget)
-        self.frame_9.setObjectName(u"frame_9")
-        self.frame_9.setStyleSheet(u"")
-        self.frame_9.setFrameShape(QFrame.StyledPanel)
-        self.frame_9.setFrameShadow(QFrame.Raised)
-        self.frame_9.setLineWidth(0)
-        self.verticalLayout_5 = QVBoxLayout(self.frame_9)
-        self.verticalLayout_5.setSpacing(0)
-        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.label = QLabel(self.frame_9)
-        self.label.setObjectName(u"label")
-        font = QFont()
-        font.setPointSize(9)
-        self.label.setFont(font)
+from minor_features.addon_functions import delete_addon, launch_addon
 
-        self.verticalLayout_5.addWidget(self.label)
+from minor_features.update_check import check_updates
 
-        self.scrollArea = QScrollArea(self.frame_9)
-        self.scrollArea.setObjectName(u"scrollArea")
-        self.scrollArea.setFocusPolicy(Qt.NoFocus)
-        self.scrollArea.setStyleSheet(u"QScrollArea {\n"
-"    border: 0px solid black;\n"
-"}")
-        self.scrollArea.setLineWidth(0)
-        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollAreaWidgetContents = QWidget()
-        self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 710, 702))
-        self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
-"	border: 0px;\n"
-"}")
-        self.verticalLayout_17 = QVBoxLayout(self.scrollAreaWidgetContents)
-        self.verticalLayout_17.setSpacing(0)
-        self.verticalLayout_17.setObjectName(u"verticalLayout_17")
-        self.verticalLayout_17.setContentsMargins(0, 0, 0, 0)
-        self.properties_layout = QVBoxLayout()
-        self.properties_layout.setObjectName(u"properties_layout")
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
+from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
+from smartprop_editor.main import SmartPropEditorMainWindow
 
-        self.properties_layout.addItem(self.verticalSpacer)
+from minor_features.assettypes_cs2_process import AssetTypesProcess
+
+import ctypes
+import winsound
+
+steam_path = get_steam_path()
+cs2_path = get_cs2_path()
+stop_discord_thread = threading.Event()
+
+LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
+
+app_version = '2.3.0'
+batchcreator_version = '1.2.2'
+soundevent_editor_version = '0.5.1'
+smartprop_editor_version = '0.8.0'
+hotkey_editor_version = '1.0.2'
 
 
-        self.verticalLayout_17.addLayout(self.properties_layout)
-
-        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-
-        self.verticalLayout_5.addWidget(self.scrollArea)
+import sys
 
 
-        self.verticalLayout_9.addWidget(self.frame_9)
+class Notification(QMessageBox):
+    def __init__(self, parent=None):
+        super(Notification, self).__init__(parent)
+        self.setWindowTitle("Hammer 5 Tools")
+        self.setTextFormat(Qt.RichText)
 
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.dockWidget_4 = QDockWidget(MainWindow)
-        self.dockWidget_4.setObjectName(u"dockWidget_4")
-        self.dockWidget_4.setFeatures(QDockWidget.DockWidgetMovable)
-        self.dockWidget_4.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
-        self.dockWidgetContents_2 = QWidget()
-        self.dockWidgetContents_2.setObjectName(u"dockWidgetContents_2")
-        self.verticalLayout_8 = QVBoxLayout(self.dockWidgetContents_2)
-        self.verticalLayout_8.setObjectName(u"verticalLayout_8")
-        self.verticalLayout_8.setContentsMargins(0, 0, 0, 0)
-        self.frame_2 = QFrame(self.dockWidgetContents_2)
-        self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setFrameShape(QFrame.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Raised)
-        self.frame_2.setLineWidth(0)
-        self.verticalLayout_3 = QVBoxLayout(self.frame_2)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.new_element_button = QPushButton(self.frame_2)
-        self.new_element_button.setObjectName(u"new_element_button")
-        self.new_element_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.new_element_button.setIcon(icon7)
-        self.new_element_button.setIconSize(QSize(22, 22))
+        # Set the message box icon to a warning icon
+        self.setIcon(QMessageBox.Warning)
 
-        self.verticalLayout_3.addWidget(self.new_element_button)
+        self.setText("Another instance of the program is running")
+        self.setStandardButtons(QMessageBox.Ok)
+        self.buttonClicked.connect(self.bring_to_front)
+        self.hwnd = ctypes.windll.user32.FindWindowW(None, "Hammer 5 Tools")
 
-        self.tree_hierarchy_search_bar_widget = QLineEdit(self.frame_2)
-        self.tree_hierarchy_search_bar_widget.setObjectName(u"tree_hierarchy_search_bar_widget")
+    def bring_to_front(self):
 
-        self.verticalLayout_3.addWidget(self.tree_hierarchy_search_bar_widget)
+        if self.hwnd:
+            ctypes.windll.user32.SetForegroundWindow(self.hwnd)
 
-        self.tree_hierarchy_widget = QTreeWidget(self.frame_2)
-        __qtreewidgetitem = QTreeWidgetItem()
-        __qtreewidgetitem.setText(0, u"Operator");
-        self.tree_hierarchy_widget.setHeaderItem(__qtreewidgetitem)
-        self.tree_hierarchy_widget.setObjectName(u"tree_hierarchy_widget")
-        self.tree_hierarchy_widget.setDragEnabled(True)
-        self.tree_hierarchy_widget.setDragDropOverwriteMode(True)
-        self.tree_hierarchy_widget.setDragDropMode(QAbstractItemView.InternalMove)
-        self.tree_hierarchy_widget.setDefaultDropAction(Qt.CopyAction)
-        self.tree_hierarchy_widget.setAlternatingRowColors(True)
-        self.tree_hierarchy_widget.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.tree_hierarchy_widget.setUniformRowHeights(True)
-        self.tree_hierarchy_widget.setAllColumnsShowFocus(False)
-        self.tree_hierarchy_widget.setWordWrap(False)
-        self.tree_hierarchy_widget.setHeaderHidden(True)
-        self.tree_hierarchy_widget.setColumnCount(2)
-        self.tree_hierarchy_widget.header().setVisible(False)
-        self.tree_hierarchy_widget.header().setCascadingSectionResizes(False)
-        self.tree_hierarchy_widget.header().setMinimumSectionSize(135)
-        self.tree_hierarchy_widget.header().setDefaultSectionSize(135)
-        self.tree_hierarchy_widget.header().setStretchLastSection(True)
+class Stream(QObject):
+    newText = Signal(str)
 
-        self.verticalLayout_3.addWidget(self.tree_hierarchy_widget)
+    def write(self, text):
+        self.newText.emit(str(text))
 
+    def flush(self):
+        pass
+class Widget(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+        sys.stdout = Stream(newText=self.on_update)
+        self.setup_tray_icon()
+        self.setup_tabs()
+        self.populate_addon_combobox()
+        self.setup_buttons()
+        self.preferences_dialog = None
+        self.Create_addon_Dialog = None
+        self.Delete_addon_Dialog = None
+        self.current_tab(False)
+        self.settings = settings
+        try:
+            check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
+        except Exception as e:
+            print(f"Error checking updates: {e}")
 
-        self.verticalLayout_8.addWidget(self.frame_2)
+        print(f'SmartProp Editor version: {smartprop_editor_version}')
+        print(f'Hotkey Editor version: {hotkey_editor_version}')
+        try:
+            AssetTypesProcess()
+        except Exception as e:
+            debug(f"Error: {e}")
 
-        self.dockWidget_4.setWidget(self.dockWidgetContents_2)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_4)
-        self.dockWidget = QDockWidget(MainWindow)
-        self.dockWidget.setObjectName(u"dockWidget")
-        self.dockWidget.setFeatures(QDockWidget.DockWidgetMovable)
-        self.dockWidget.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
-        self.dockWidgetContents = QWidget()
-        self.dockWidgetContents.setObjectName(u"dockWidgetContents")
-        self.verticalLayout_7 = QVBoxLayout(self.dockWidgetContents)
-        self.verticalLayout_7.setSpacing(2)
-        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
-        self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
-        self.variables_scroll_area_searchbar = QLineEdit(self.dockWidgetContents)
-        self.variables_scroll_area_searchbar.setObjectName(u"variables_scroll_area_searchbar")
+        self._restore_user_prefs()
+        if get_config_bool('APP', 'first_launch'):
+            self.open_documentation()
+            self.settings.setValue("MainWindow/default_windowState", self.saveState())
+            set_config_bool('APP', 'first_launch', False)
+    # def __del__(self):
+    #     sys.stdout = sys.__stdout__
+    def on_update(self, text):
+        cursor = self.ui.console.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertText(text)
+        self.ui.console.setTextCursor(cursor)
+        self.ui.console.ensureCursorVisible()
+        # cursor = self.ui.console.textCursor()
+        cursor.removeSelectedText()
 
-        self.verticalLayout_7.addWidget(self.variables_scroll_area_searchbar)
+    def current_tab(self, set):
+        if set:
+            try:
+                set_config_value('APP', 'current_tab', str(self.ui.MainWindowTools_tabs.currentIndex()))
+            except:
+                pass
+        else:
+            try:
+                current_tab = int(get_config_value('APP', 'current_tab'))
+                self.ui.MainWindowTools_tabs.setCurrentIndex(current_tab)
+            except:
+                pass
+    def setup_tray_icon(self):
+        self.tray_icon = QSystemTrayIcon(QIcon.fromTheme(":/icons/appicon.ico"), self)
+        self.tray_icon.setToolTip("Hammer5Tools")
+        self.tray_menu = QMenu()
+        self.tray_menu.addAction(QAction("Show", self, triggered=self.show))
+        self.tray_menu.addAction(QAction("Exit", self, triggered=self.exit_application))
+        self.tray_icon.setContextMenu(self.tray_menu)
+        self.tray_icon.activated.connect(self.on_tray_icon_activated)
+        self.tray_icon.show()
 
-        self.variables_QscrollArea = QScrollArea(self.dockWidgetContents)
-        self.variables_QscrollArea.setObjectName(u"variables_QscrollArea")
-        self.variables_QscrollArea.setWidgetResizable(True)
-        self.variables_scrollArea_widget = QWidget()
-        self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 267, 354))
-        self.variables_scrollArea_widget.setStyleSheet(u"")
-        self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.variables_scrollArea = QVBoxLayout()
-        self.variables_scrollArea.setSpacing(0)
-        self.variables_scrollArea.setObjectName(u"variables_scrollArea")
-        self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.variables_scrollArea.addItem(self.verticalSpacer_2)
+    def setup_tabs(self):
+        self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
+        self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
 
 
-        self.verticalLayout_2.addLayout(self.variables_scrollArea)
+    def populate_addon_combobox(self):
+        exclude_addons = {"workshop_items", "addon_template"}
+        try:
+            for item in os.listdir(os.path.join(cs2_path, "content", "csgo_addons")):
+                if os.path.isdir(os.path.join(cs2_path, "content", "csgo_addons", item)) and item not in exclude_addons:
+                    self.ui.ComboBoxSelectAddon.addItem(item)
+            if not get_addon_name():
+                set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
+        except:
+            print("Wrong Cs2 Path")
+    def refresh_addon_combobox(self):
+        self.ui.ComboBoxSelectAddon.currentTextChanged.disconnect(self.selected_addon_name)
 
-        self.variables_QscrollArea.setWidget(self.variables_scrollArea_widget)
+        addon = get_addon_name()
+        self.ui.ComboBoxSelectAddon.clear()
+        self.populate_addon_combobox()
+        print(addon)
+        self.ui.ComboBoxSelectAddon.setCurrentText(addon)
 
-        self.verticalLayout_7.addWidget(self.variables_QscrollArea)
+        self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
 
-        self.frame = QFrame(self.dockWidgetContents)
-        self.frame.setObjectName(u"frame")
-        self.frame.setMinimumSize(QSize(0, 0))
-        self.frame.setMaximumSize(QSize(16777215, 28))
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout = QHBoxLayout(self.frame)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.paste_variable_button = QToolButton(self.frame)
-        self.paste_variable_button.setObjectName(u"paste_variable_button")
-        self.paste_variable_button.setMaximumSize(QSize(28, 28))
-        self.paste_variable_button.setStyleSheet(u"QToolButton {\n"
-"\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:18px;\n"
-"    padding: 3px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QToolButton:pressed {\n"
-"    background-color: red;\n"
-"    background-color: #1C1C1C;\n"
-"    margin: 1 px;\n"
-"    margin-left: 2px;\n"
-"    margin-right: 2px;\n"
-"    font: 580 9pt \"Segoe UI\";\n"
-"\n"
-"}")
-        icon8 = QIcon()
-        icon8.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.paste_variable_button.setIcon(icon8)
-        self.paste_variable_button.setIconSize(QSize(20, 20))
+    def setup_buttons(self):
+        self.ui.Launch_Addon_Button.clicked.connect(launch_addon)
+        self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)
+        self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
+        # if index 0, loads tabs
+        if self.ui.ComboBoxSelectAddon.currentText() == get_addon_name():
+            self.selected_addon_name()
+        self.ui.ComboBoxSelectAddon.setCurrentText(get_addon_name())
 
-        self.horizontalLayout.addWidget(self.paste_variable_button)
+        self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
+        self.ui.create_new_addon_button.clicked.connect(self.open_create_addon_dialog)
+        self.ui.delete_addon_button.clicked.connect(self.delete_addon)
+        self.ui.export_and_import_addon_button.clicked.connect(self.open_export_and_import_addon)
+        self.ui.check_Box_NCM_Mode.setChecked(get_config_bool('LAUNCH', 'ncm_mode'))
+        self.ui.check_Box_NCM_Mode.stateChanged.connect(self.handle_ncm_mode_checkbox)
+        self.ui.open_addons_folder_button.clicked.connect(self.open_addons_folder)
+        self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
+        self.ui.documentation_button.clicked.connect(self.open_documentation)
 
-        self.add_new_variable_button = QToolButton(self.frame)
-        self.add_new_variable_button.setObjectName(u"add_new_variable_button")
-        self.add_new_variable_button.setMaximumSize(QSize(28, 28))
-        self.add_new_variable_button.setStyleSheet(u"QToolButton {\n"
-"\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:18px;\n"
-"    padding: 3px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QToolButton:pressed {\n"
-"    background-color: red;\n"
-"    background-color: #1C1C1C;\n"
-"    margin: 1 px;\n"
-"    margin-left: 2px;\n"
-"    margin-right: 2px;\n"
-"    font: 580 9pt \"Segoe UI\";\n"
-"\n"
-"}")
-        self.add_new_variable_button.setIcon(icon7)
-        self.add_new_variable_button.setIconSize(QSize(20, 20))
+    def closeEvent(self, event):
+        event.ignore()
+        self.hide()
+        self.show_minimize_message_once()
 
-        self.horizontalLayout.addWidget(self.add_new_variable_button)
+    def selected_addon_name(self):
+        set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
+        # These tabs should be updated when addon name was changed
 
-        self.add_new_variable_combobox = QComboBox(self.frame)
-        self.add_new_variable_combobox.setObjectName(u"add_new_variable_combobox")
-        self.add_new_variable_combobox.setStyleSheet(u"QMenu {\n"
-"background-color: red;\n"
-" }\n"
-"\n"
-"QMenu::item {\n"
-"    padding: 5px 10px;\n"
-"    font: 580 8pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    color: #E3E3E3;\n"
-"}\n"
-"QMenu::item:selected {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QWidget {\n"
-"    background-color: #151515;\n"
-"    outline: none;\n"
-"}\n"
-"\n"
-"QWidget:item:checked {\n"
-"    background-color: #151515;\n"
-"    color: white;\n"
-"}\n"
-"\n"
-"QWidget:item:selected {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"    border: 0px;\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"QMenu {\n"
-"    background-color: #1d1d1f;\n"
-"    color: #FFFFFF;\n"
-"    border: 1px solid #555555;\n"
-"    /* padding-top: 5px; */\n"
-"    /* padding-bottom: 5px; */\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"\n"
-"QMenu::item {\n"
-"    font: 580 8pt \"Segoe UI\";\n"
-"    border-top: 2p"
-                        "x solid black;\n"
-"    border: 0px;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    padding-left: 12px;\n"
-"    padding-right: 12px;\n"
-"    color: #E3E3E3;\n"
-"}\n"
-"\n"
-"QMenu::item:selected {\n"
-"    background-color: #666666;\n"
-"    color: #FFFFFF;\n"
-"}\n"
-"\n"
-"QMenu::separator {\n"
-"    height: 1px;\n"
-"    background: #AAAAAA;\n"
-"    margin: 5px 0;\n"
-"}\n"
-"\n"
-"QMenu::indicator {\n"
-"    width: 13px;\n"
-"    height: 13px;\n"
-"}\n"
-"\n"
-"QMenu::indicator:checked {\n"
-"    image: url(:/images/checkmark.png);\n"
-"}\n"
-"\n"
-"QMenu::indicator:unchecked {\n"
-"    image: url(:/images/empty.png);\n"
-"}\n"
-"\n"
-"\n"
-"QComboBox {\n"
-"    font: 580 8pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height: 12px;\n"
-"    padding-top: 5px;\n"
-"    padding-bottom: 5px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"    padding-left: 5px;\n"
-"}\n"
-"\n"
-"QComboBox:hover {\n"
-"    backgr"
-                        "ound-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"\n"
-"QComboBox:pressed {\n"
-"    background-color: #2E2F30;\n"
-"    color: white;\n"
-"}\n"
-"\n"
-"QComboBox:item {\n"
-"    font: 580 8pt \"Segoe UI\";\n"
-"    color: #E3E3E3;\n"
-"    padding-left: 5px;\n"
-"    background-color: #1C1C1C;\n"
-"    border-style: none;\n"
-"}\n"
-"\n"
-"QComboBox::drop-down {\n"
-"    color: #E3E3E3;\n"
-"    padding: 2px;\n"
-"    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;\n"
-"    border-bottom: 0px solid black;\n"
-"    border-top: 0px solid black;\n"
-"    border-right: 0px;\n"
-"    border-left: 2px solid;\n"
-"    margin-left: 5px;\n"
-"    padding: 5px;\n"
-"    width: 7px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"\n"
-"\n"
-"QComboBox QAbstractItemView {\n"
-"    border: 2px solid gray;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    selection-background-color: #414956;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"\n"
-"\n"
-"QComboBox QAbstractItemView::item {\n"
-""
-                        "    height: 16px; /* Set the height of each item */\n"
-"    padding: 4px; /* Add padding to each item */\n"
-"    padding-left: 5px;\n"
-"    padding-right: 5px;\n"
-"    color: #ff8a8a8a;\n"
-"    border-style: none;\n"
-"    border-bottom: 0.5px solid black;\n"
-"    border-color: rgba(255, 255, 255, 10);\n"
-"}\n"
-"\n"
-"\n"
-"QComboBox QAbstractItemView::item:selected {\n"
-"    height: 16px; /* Set the height of each item */\n"
-"    padding: 4px; /* Add padding to each item */\n"
-"    padding-left: 5px;\n"
-"    padding-right: 5px;\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"    border: none; /* Remove border */\n"
-"    outline: none; /* Remove outline */\n"
-"}")
+        # SoundEventEditor
 
-        self.horizontalLayout.addWidget(self.add_new_variable_combobox)
+        # Clean up SoundEventEditorMainWidget
+        try:
+            if hasattr(self, 'SoundEventEditorMainWidget') and self.SoundEventEditorMainWidget:
+                self.SoundEventEditorMainWidget.deleteLater()
+        except Exception as e:
+            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
+
+        try:
+            if hasattr(self, 'SmartPropEditorMainWindow') and self.SmartPropEditorMainWindow:
+                self.SmartPropEditorMainWindow.closeEvent(self.event)
+                self.SmartPropEditorMainWindow.deleteLater()
+        except Exception as e:
+            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
+
+        try:
+            if hasattr(self, 'BatchCreator_MainWindow') and self.BatchCreator_MainWindow:
+                self.BatchCreator_MainWindow.close()
+        except Exception as e:
+            print('Error while cleaning up BatchCreator_MainWindow:', e)
+
+        try:
+            if hasattr(self, 'LoadingEditorMainWindow') and self.LoadingEditorMainWindow:
+                self.LoadingEditorMainWindow.close()
+                self.LoadingEditorMainWindow.deleteLater()
+        except Exception as e:
+            print('Error while cleaning up Loading_editorMainWindow:', e)
 
 
-        self.verticalLayout_7.addWidget(self.frame)
-
-        self.dockWidget.setWidget(self.dockWidgetContents)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget)
-        self.dockWidget_10 = QDockWidget(MainWindow)
-        self.dockWidget_10.setObjectName(u"dockWidget_10")
-        self.dockWidget_10.setFeatures(QDockWidget.DockWidgetMovable)
-        self.dockWidget_10.setAllowedAreas(Qt.BottomDockWidgetArea|Qt.LeftDockWidgetArea|Qt.RightDockWidgetArea)
-        self.explorer_layout_widget = QWidget()
-        self.explorer_layout_widget.setObjectName(u"explorer_layout_widget")
-        self.verticalLayout_10 = QVBoxLayout(self.explorer_layout_widget)
-        self.verticalLayout_10.setObjectName(u"verticalLayout_10")
-        self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
-        self.explorer_layout = QVBoxLayout()
-        self.explorer_layout.setObjectName(u"explorer_layout")
-
-        self.verticalLayout_10.addLayout(self.explorer_layout)
-
-        self.frame_3 = QFrame(self.explorer_layout_widget)
-        self.frame_3.setObjectName(u"frame_3")
-        self.frame_3.setMaximumSize(QSize(16777215, 32))
-        self.frame_3.setFrameShape(QFrame.StyledPanel)
-        self.frame_3.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_4 = QHBoxLayout(self.frame_3)
-        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.open_file_button = QPushButton(self.frame_3)
-        self.open_file_button.setObjectName(u"open_file_button")
-        self.open_file_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_button.setIcon(icon9)
-        self.open_file_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_4.addWidget(self.open_file_button)
-
-        self.save_file_button = QPushButton(self.frame_3)
-        self.save_file_button.setObjectName(u"save_file_button")
-        self.save_file_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon10 = QIcon()
-        icon10.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_file_button.setIcon(icon10)
-        self.save_file_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_4.addWidget(self.save_file_button)
-
-        self.cerate_file_button = QPushButton(self.frame_3)
-        self.cerate_file_button.setObjectName(u"cerate_file_button")
-        self.cerate_file_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        self.cerate_file_button.setIcon(icon7)
-        self.cerate_file_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_4.addWidget(self.cerate_file_button)
 
 
-        self.verticalLayout_10.addWidget(self.frame_3)
 
-        self.frame_4 = QFrame(self.explorer_layout_widget)
-        self.frame_4.setObjectName(u"frame_4")
-        self.frame_4.setMaximumSize(QSize(16777215, 32))
-        self.frame_4.setFrameShape(QFrame.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_2 = QHBoxLayout(self.frame_4)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.save_as_file_button = QPushButton(self.frame_4)
-        self.save_as_file_button.setObjectName(u"save_as_file_button")
-        self.save_as_file_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon11 = QIcon()
-        icon11.addFile(u":/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_as_file_button.setIcon(icon11)
-        self.save_as_file_button.setIconSize(QSize(20, 20))
+        # Create a new instance of BatchCreatorMainWindow
+        try:
+            self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
 
-        self.horizontalLayout_2.addWidget(self.save_as_file_button)
+            self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
+        except Exception as e:
+            print('Error while setting up BatchCreator_MainWindow:', e)
 
-        self.open_file_as_button = QPushButton(self.frame_4)
-        self.open_file_as_button.setObjectName(u"open_file_as_button")
-        self.open_file_as_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon12 = QIcon()
-        icon12.addFile(u":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_as_button.setIcon(icon12)
-        self.open_file_as_button.setIconSize(QSize(20, 20))
+        # Smartprop editior
 
-        self.horizontalLayout_2.addWidget(self.open_file_as_button)
+        try:
+            self.SoundEventEditorMainWidget = SoundEventEditorMainWidget(soundevent_editor_version)
+            self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
+        except Exception as e:
+            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
+
+        try:
+            self.SmartPropEditorMainWindow = SmartPropEditorMainWindow()
+            self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
+        except Exception as e:
+            print(f"Error while cleaning up SmartPropEditorMainWindow: {e}")
+
+        try:
+            self.LoadingEditorMainWindow = Loading_editorMainWindow()
+            self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
+        except Exception as e:
+            print(f"Error while cleaning up Loading_editorMainWindow: {e}")
 
 
-        self.verticalLayout_10.addWidget(self.frame_4)
+    def open_addons_folder(self):
+        addon_name = self.ui.ComboBoxSelectAddon.currentText()
+        folder_name = self.ui.open_addons_folder_downlist.currentText()
+        folder_path = r"\game\csgo_addons" if folder_name == "Game" else r"\content\csgo_addons"
+        os.startfile(f"{cs2_path}{folder_path}\\{addon_name}")
 
-        self.dockWidget_10.setWidget(self.explorer_layout_widget)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget_10)
-        self.dockWidget_2 = QDockWidget(MainWindow)
-        self.dockWidget_2.setObjectName(u"dockWidget_2")
-        self.dockWidget_2.setFeatures(QDockWidget.DockWidgetMovable)
-        self.dockWidgetContents_3 = QWidget()
-        self.dockWidgetContents_3.setObjectName(u"dockWidgetContents_3")
-        self.verticalLayout = QVBoxLayout(self.dockWidgetContents_3)
-        self.verticalLayout.setSpacing(0)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.choices_tree_widget = QTreeWidget(self.dockWidgetContents_3)
-        __qtreewidgetitem1 = QTreeWidgetItem(self.choices_tree_widget)
-        __qtreewidgetitem2 = QTreeWidgetItem(__qtreewidgetitem1)
-        QTreeWidgetItem(__qtreewidgetitem2)
-        self.choices_tree_widget.setObjectName(u"choices_tree_widget")
-        self.choices_tree_widget.setUniformRowHeights(True)
-        self.choices_tree_widget.header().setMinimumSectionSize(130)
-        self.choices_tree_widget.header().setDefaultSectionSize(160)
+    def reset_window(self):
+        state = self.settings.value("MainWindow/default_windowState")
+        self.restoreState(state)
+    def open_preferences_dialog(self):
+        if self.preferences_dialog is None:
+            self.preferences_dialog = PreferencesDialog(app_version, self)
+            self.preferences_dialog.show()
+            self.preferences_dialog.finished.connect(self.preferences_dialog_closed)
+            self.preferences_dialog.reset_window_signal.connect(self.reset_window)
 
-        self.verticalLayout.addWidget(self.choices_tree_widget)
+    def preferences_dialog_closed(self):
+        self.preferences_dialog = None
+    def open_create_addon_dialog(self):
+        if self.Create_addon_Dialog is None:
+            self.Create_addon_Dialog = Create_addon_Dialog(self)
+            self.Create_addon_Dialog.show()
+            self.Create_addon_Dialog.finished.connect(self.create_addon_dialog_closed)
 
-        self.dockWidget_2.setWidget(self.dockWidgetContents_3)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_2)
+    def create_addon_dialog_closed(self):
+        self.Create_addon_Dialog = None
+        self.refresh_addon_combobox()
 
-        self.retranslateUi(MainWindow)
+    def delete_addon(self):
+        delete_addon(self.ui, cs2_path, get_addon_name)
 
-        QMetaObject.connectSlotsByName(MainWindow)
-    # setupUi
+    def open_export_and_import_addon(self):
+        dialog = export_and_import_addon_dialog(self)
+        dialog.finished.connect(self.refresh_addon_combobox)
+        dialog.show()
+    def SteamNoLogonFix(self):
+        self.thread = SteamNoLogoFixThreadClass()
+        self.thread.start()
+        self.thread.stop()
 
-    def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.actionCreateNewsmartprop.setText(QCoreApplication.translate("MainWindow", u"CreateNewsmartprop", None))
-        self.actionOpen_from_Explorer.setText(QCoreApplication.translate("MainWindow", u"Open as", None))
-        self.actionSave_as.setText(QCoreApplication.translate("MainWindow", u"Save as", None))
-        self.actionSave_current_file.setText(QCoreApplication.translate("MainWindow", u"Save", None))
-        self.actionRecompile_file.setText(QCoreApplication.translate("MainWindow", u"Recompile file", None))
-        self.actionRecompile_all_in_addon.setText(QCoreApplication.translate("MainWindow", u"Recompile all in addon", None))
-        self.actionConvert_all_vsmart_file_to_vdata.setText(QCoreApplication.translate("MainWindow", u"Convert all vsmart file to vdata", None))
-#if QT_CONFIG(tooltip)
-        self.actionConvert_all_vsmart_file_to_vdata.setToolTip(QCoreApplication.translate("MainWindow", u"Convert all to data", None))
-#endif // QT_CONFIG(tooltip)
-        self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
-        self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
-        self.new_element_button.setText(QCoreApplication.translate("MainWindow", u"New element", None))
-        self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
-        ___qtreewidgetitem = self.tree_hierarchy_widget.headerItem()
-        ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
-        self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
-        self.variables_scroll_area_searchbar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
-#if QT_CONFIG(tooltip)
-        self.paste_variable_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Paste variable</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.paste_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-#if QT_CONFIG(tooltip)
-        self.add_new_variable_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Create variable</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.add_new_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-        self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
-#if QT_CONFIG(tooltip)
-        self.open_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><br/></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.open_file_button.setText(QCoreApplication.translate("MainWindow", u"Open", None))
-#if QT_CONFIG(tooltip)
-        self.save_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Save and compile Ctrl + S</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.save_file_button.setText(QCoreApplication.translate("MainWindow", u"Save", None))
-#if QT_CONFIG(shortcut)
-        self.save_file_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+S", None))
-#endif // QT_CONFIG(shortcut)
-#if QT_CONFIG(tooltip)
-        self.cerate_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.cerate_file_button.setText(QCoreApplication.translate("MainWindow", u"New file", None))
-#if QT_CONFIG(shortcut)
-        self.cerate_file_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
-#endif // QT_CONFIG(shortcut)
-#if QT_CONFIG(tooltip)
-        self.save_as_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Save and compile Ctrl + Shift+ S</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.save_as_file_button.setText(QCoreApplication.translate("MainWindow", u"Save as", None))
-#if QT_CONFIG(shortcut)
-        self.save_as_file_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+Shift+S", None))
-#endif // QT_CONFIG(shortcut)
-#if QT_CONFIG(tooltip)
-        self.open_file_as_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + O</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.open_file_as_button.setText(QCoreApplication.translate("MainWindow", u"Open as", None))
-#if QT_CONFIG(shortcut)
-        self.open_file_as_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+O", None))
-#endif // QT_CONFIG(shortcut)
-        self.dockWidget_2.setWindowTitle(QCoreApplication.translate("MainWindow", u"Choices", None))
-        ___qtreewidgetitem1 = self.choices_tree_widget.headerItem()
-        ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
-        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
+    def handle_ncm_mode_checkbox(self):
+        set_config_bool('LAUNCH', 'ncm_mode', self.ui.check_Box_NCM_Mode.isChecked())
 
-        __sortingEnabled = self.choices_tree_widget.isSortingEnabled()
-        self.choices_tree_widget.setSortingEnabled(False)
-        ___qtreewidgetitem2 = self.choices_tree_widget.topLevelItem(0)
-        ___qtreewidgetitem2.setText(0, QCoreApplication.translate("MainWindow", u"Color", None));
-        ___qtreewidgetitem3 = ___qtreewidgetitem2.child(0)
-        ___qtreewidgetitem3.setText(0, QCoreApplication.translate("MainWindow", u"Red", None));
-        ___qtreewidgetitem4 = ___qtreewidgetitem3.child(0)
-        ___qtreewidgetitem4.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
-        ___qtreewidgetitem4.setText(0, QCoreApplication.translate("MainWindow", u"Variable", None));
-        self.choices_tree_widget.setSortingEnabled(__sortingEnabled)
+    def open_my_twitter(self):
+        webbrowser.open("https://twitter.com/der_twist")
 
-    # retranslateUi
+    def open_documentation(self):
+        Documentation_Dialog(app_version, self).show()
 
+
+    def on_tray_icon_activated(self, reason):
+        if reason == QSystemTrayIcon.DoubleClick:
+            self.show()
+
+    def show_minimize_message_once(self):
+        if get_config_bool('APP', 'minimize_message_shown'):
+            self.tray_icon.showMessage("Hammer5Tools", "Application minimized to tray.", QSystemTrayIcon.Information,
+                                       2000)
+            set_config_bool('APP', 'minimize_message_shown', False)
+
+    def exit_application(self):
+        try:
+            discord_status_clear()
+        except:
+            pass
+        stop_discord_thread.set()
+
+        # Ensure all threads are properly stopped
+        if hasattr(self, 'discord_thread') and self.discord_thread.is_alive():
+            self.discord_thread.join()
+
+        # Explicitly delete the tray icon
+        self.tray_icon.hide()
+        self.tray_icon.deleteLater()
+        self._save_user_prefs()
+
+        # Close editors
+        try:
+            self.SmartPropEditorMainWindow.closeEvent(self.event)
+        except:
+            pass
+        try:
+            self.SoundEventEditorMainWidget.closeEvent(self.event)
+        except:
+            pass
+
+        self.current_tab(True)
+        QApplication.quit()
+        QApplication.instance().quit()
+        QApplication.exit(1)
+        sys.exit(0)
+
+    def _restore_user_prefs(self):
+        geo = self.settings.value("MainWindow/geometry")
+        if geo:
+            self.restoreGeometry(geo)
+
+        state = self.settings.value("MainWindow/windowState")
+        if state:
+            self.restoreState(state)
+
+    def _save_user_prefs(self):
+        self.settings.setValue("MainWindow/geometry", self.saveGeometry())
+        self.settings.setValue("MainWindow/windowState", self.saveState())
+
+
+def DiscordStatusMain_do():
+    while not stop_discord_thread.is_set():
+        update_discord_status()
+        time.sleep(1)
+
+if __name__ == "__main__":
+
+
+    # Create a lock file to ensure single instance
+    lock_file = open(LOCK_FILE, 'w')
+    try:
+        portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
+    except portalocker.LockException:
+        # If the lock file is already locked, bring the existing instance to the foreground
+        app = QApplication(sys.argv)
+        widget = Notification()  # Ensure to pass the parent if needed
+        app.setStyleSheet(QT_Stylesheet_global)
+        widget.show()
+        sys.exit(app.exec())
+
+    app = QApplication(sys.argv)
+    app.setStyleSheet(QT_Stylesheet_global)
+    widget = Widget()
+    widget.show()
+
+    try:
+        if get_config_bool('DISCORD_STATUS', 'show_status'):
+            from minor_features.discord_status_main import discord_status_clear, update_discord_status
+            widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
+            widget.discord_thread.start()
+        else:
+            print('Discord status updates are disabled.')
+    except:
+        "The status of the discord was not started"
+
+    sys.exit(app.exec())

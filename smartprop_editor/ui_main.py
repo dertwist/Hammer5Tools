@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDock
     QLineEdit, QMainWindow, QPushButton, QScrollArea,
     QSizePolicy, QSpacerItem, QToolButton, QTreeWidget,
     QTreeWidgetItem, QVBoxLayout, QWidget)
-import rc_resources
+import resources_rc
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

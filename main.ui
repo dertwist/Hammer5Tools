@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1432</width>
-    <height>771</height>
+    <width>1512</width>
+    <height>867</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -104,7 +104,7 @@ QTabBar::tab:selected {
 }</string>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>3</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -563,7 +563,7 @@ QTabBar::tab:selected {
    <property name="minimumSize">
     <size>
      <width>196</width>
-     <height>91</height>
+     <height>119</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -654,6 +654,9 @@ QPlainTextEdit:focus {
         <bool>false</bool>
        </property>
       </widget>
+     </item>
+     <item>
+      <widget class="QDateEdit" name="dateEdit"/>
      </item>
     </layout>
    </widget>
