@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QFrame,
     QHBoxLayout, QLabel, QLayout, QLineEdit,
     QPushButton, QSizePolicy, QSpacerItem, QTabWidget,
     QVBoxLayout, QWidget)
-import rc_resources
+import resources_rc
 
 class Ui_preferences_dialog(object):
     def setupUi(self, preferences_dialog):

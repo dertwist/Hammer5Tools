@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QHBoxLayout,
     QLabel, QLineEdit, QMainWindow, QPlainTextEdit,
     QPushButton, QSizePolicy, QSpacerItem, QTextEdit,
     QToolButton, QVBoxLayout, QWidget)
-import rc_resources
+import resources_rc
 
 class Ui_BatchCreator_MainWindow(object):
     def setupUi(self, BatchCreator_MainWindow):
