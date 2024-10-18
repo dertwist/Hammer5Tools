@@ -104,7 +104,7 @@ QTabBar::tab:selected {
 }</string>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>4</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -654,9 +654,6 @@ QPlainTextEdit:focus {
         <bool>false</bool>
        </property>
       </widget>
-     </item>
-     <item>
-      <widget class="QDateEdit" name="dateEdit"/>
      </item>
     </layout>
    </widget>
