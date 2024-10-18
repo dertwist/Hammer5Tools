@@ -58,22 +58,15 @@ QGroupBox::indicator:unchecked {
 
 /* ========================================================== */
 
-/* QSplitter {
-  background-color: transparent;
-  border: none
-}
 
-QMainWindow::separator:vertical,
-QSplitter::handle:horizontal {
-  image: url(://icons/more_.png);
-  width:4px;
-  height:4px;
-}
-
-QMainWindow::separator:horizontal,
+/* Optional: Add grip to handle */
 QSplitter::handle:vertical {
-  image: url(://icons/more_horiz.png);\
-} */
+    image: url(:/images/vertical-grip.png); /* Example image for vertical handle */
+}
+
+QSplitter::handle:horizontal {
+    image: url(:/images/horizontal-grip.png); /* Example image for horizontal handle */
+}
 
 /* ========================================================== */
 QPushButton {
