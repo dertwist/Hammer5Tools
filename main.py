@@ -380,6 +380,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     app.setStyleSheet(QT_Stylesheet_global)
+    # app.setStyle('fusion')
     widget = Widget()
     widget.show()
 
