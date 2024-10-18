@@ -1,19 +1,23 @@
-from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QComboBox
 
-class ComboboxChoiceClass(QComboBox):
-    signal = Signal(str)  # Define a signal that emits a string when the variable changes
+class ComboboxDynamicItems(QComboBox):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, items=None):
         super().__init__(parent)
         self.setStyleSheet('padding:4px')
-        self.items = ['1', '2', '65']
+        self.items = items
+
+    def updateItems(self):
+        current = self.currentText()
+        self.clear()
         self.addItems(self.items)
-        self.signal.connect(self.updateItems)
+        if current in self.items:
+            self.setCurrentText(current)
 
-    def type(self):
-        print('clicked')
+    def showPopup(self):
+        self.updateItems()
+        super().showPopup()
 
-    def updateItems(self, new_items):
-        self.clear()  # Clear existing items
-        self.addItems(new_items)  # Add new items to the QComboBox
+
+    def wheelEvent(self, event):
+        event.ignore()
