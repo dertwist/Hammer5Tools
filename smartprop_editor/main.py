@@ -101,7 +101,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.save_as_file_button.clicked.connect(lambda: self.save_file(external=True))
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
         self.ui.cerate_file_button.clicked.connect(self.create_new_file)
-        self.ui.new_element_button.clicked.connect(self.add_an_element)
         self.ui.paste_variable_button.clicked.connect(self.paste_variable)
 
 
@@ -618,6 +617,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def open_hierarchy_menu(self, position):
         menu = QMenu()
+        add_new_action = menu.addAction("Add new element")
         move_up_action = menu.addAction("Move Up")
         move_down_action = menu.addAction("Move Down")
         remove_action = menu.addAction("Remove")
@@ -626,6 +626,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position), self.ui.tree_hierarchy_widget))
 
         move_up_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), -1))
+        add_new_action.triggered.connect(self.add_an_element)
         move_down_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), 1))
         remove_action.triggered.connect(lambda: self.remove_item(self.ui.tree_hierarchy_widget.itemAt(position)))
 

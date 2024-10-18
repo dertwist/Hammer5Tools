@@ -372,7 +372,7 @@ class Ui_MainWindow(object):
         self.ComboBoxSelectAddon.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">Addon selection</span></p><p>In the Addon selection, all tools apply changes to the addon selected in this section.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
-        self.check_Box_NCM_Mode.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">NCM (--nocustomermachine)</span> is a launch parameter that enable<span style=\" font-weight:700;\">s baking lightmaps with CPU</span> and <span style=\" font-weight:700;\">smartprops compilation</span>.</p><p>However, when CS2 is launched with this parameter, default assets will not be visible; only your own assets will appear.</p><p><img src=\":/images/tooltip/tooltip_ncm_01.png\" width=\"259\"/></p></body></html>", None))
+        self.check_Box_NCM_Mode.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">NCM (--nocustomermachine)</span> is a launch parameter that enable<span style=\" font-weight:700;\">s baking lightmaps with CPU</span></p><p>However, when CS2 is launched with this parameter, default assets will not be visible; only your own assets will appear.</p><p><img src=\":/images/tooltip/tooltip_ncm_01.png\" width=\"259\"/></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(whatsthis)
         self.check_Box_NCM_Mode.setWhatsThis(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><br/></p></body></html>", None))

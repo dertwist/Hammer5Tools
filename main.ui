@@ -393,7 +393,7 @@ QTabBar::tab:selected {
          </font>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;NCM (--nocustomermachine)&lt;/span&gt; is a launch parameter that enable&lt;span style=&quot; font-weight:700;&quot;&gt;s baking lightmaps with CPU&lt;/span&gt; and &lt;span style=&quot; font-weight:700;&quot;&gt;smartprops compilation&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;However, when CS2 is launched with this parameter, default assets will not be visible; only your own assets will appear.&lt;/p&gt;&lt;p&gt;&lt;img src=&quot;:/images/tooltip/tooltip_ncm_01.png&quot; width=&quot;259&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;NCM (--nocustomermachine)&lt;/span&gt; is a launch parameter that enable&lt;span style=&quot; font-weight:700;&quot;&gt;s baking lightmaps with CPU&lt;/span&gt;&lt;/p&gt;&lt;p&gt;However, when CS2 is launched with this parameter, default assets will not be visible; only your own assets will appear.&lt;/p&gt;&lt;p&gt;&lt;img src=&quot;:/images/tooltip/tooltip_ncm_01.png&quot; width=&quot;259&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="whatsThis">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
