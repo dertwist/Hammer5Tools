@@ -20,7 +20,7 @@ from smartprop_editor.objects import variables_list, variable_prefix, element_pr
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave
 from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
-from smartprop_editor.Widgets import ComboboxChoiceClass
+from smartprop_editor.widgets import ComboboxChoiceClass
 from popup_menu.popup_menu_main import PopupMenu
 
 from PySide6.QtGui import QKeySequence
