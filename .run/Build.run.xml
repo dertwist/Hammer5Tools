@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Build" type="CompoundRunConfigurationType">
+    <toRun name="Build App" type="PythonConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>

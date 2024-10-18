@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateEdit,
-    QDockWidget, QGridLayout, QHBoxLayout, QMainWindow,
-    QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
-    QTabWidget, QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDockWidget,
+    QGridLayout, QHBoxLayout, QMainWindow, QPlainTextEdit,
+    QPushButton, QSizePolicy, QSpacerItem, QTabWidget,
+    QToolButton, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -329,17 +329,12 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_7.addWidget(self.console)
 
-        self.dateEdit = QDateEdit(self.dockWidgetContents)
-        self.dateEdit.setObjectName(u"dateEdit")
-
-        self.verticalLayout_7.addWidget(self.dateEdit)
-
         self.dockWidget.setWidget(self.dockWidgetContents)
         MainWindow.addDockWidget(Qt.DockWidgetArea.TopDockWidgetArea, self.dockWidget)
 
         self.retranslateUi(MainWindow)
 
-        self.MainWindowTools_tabs.setCurrentIndex(3)
+        self.MainWindowTools_tabs.setCurrentIndex(4)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
