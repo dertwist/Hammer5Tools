@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QComboBox
+from PySide6.QtWidgets import QComboBox, QTreeWidgetItem, QTreeWidget
 
 class ComboboxDynamicItems(QComboBox):
 
@@ -45,4 +45,28 @@ class ComboboxVariables(ComboboxDynamicItems):
             if widget:
                 var = {'name': widget.name, 'class': widget.var_class}
                 data_out.append(var)
+        return data_out
+
+class ComboboxTreeChild(ComboboxDynamicItems):
+    def __init__(self, parent=None, layout=QTreeWidget, root=QTreeWidgetItem):
+        super().__init__(parent)
+        self.layout = layout
+        self.root = root
+        self.items = None
+
+    def updateItems(self):
+        self.items = ['default']
+        self.items.extend(self.get_child(self.root))
+        current = self.currentText()
+        self.clear()
+        self.addItems(self.items)
+        if current in self.items:
+            self.setCurrentText(current)
+
+    def get_child(self, parent_item):
+        data_out = []
+        for i in range(parent_item.childCount()):
+            child_item = parent_item.child(i)
+            data_out.append(child_item.text(0))
+
         return data_out
