@@ -68,8 +68,7 @@ class ComboboxTreeChild(ComboboxDynamicItems):
         self.items = None
 
     def updateItems(self):
-        self.items = ['default']
-        self.items.extend(self.get_child(self.root))
+        self.items = self.get_child(self.root)
         current = self.currentText()
         self.clear()
         self.addItems(self.items)

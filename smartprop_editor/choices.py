@@ -81,7 +81,7 @@ class AddVariable():
 class VariableWidget(QWidget):
     def __init__(self, value=None, type=None):
         super().__init__()
-        self.data = {'m_Value': value, 'm_DataType': type}
+        self.data = {'m_DataType': type, 'm_Value': value}
         self.setupUI()
 
     def setupUI(self):
@@ -99,7 +99,7 @@ class VariableWidget(QWidget):
 class VariableFloat(QWidget):
     def __init__(self, value=None, type=None):
         super().__init__()
-        self.data = {'m_Value': value, 'm_DataType': type}
+        self.data = {'m_DataType': type, 'm_Value': value}
         self.setupUI()
 
     def setupUI(self):
@@ -144,7 +144,7 @@ class VariableFloat(QWidget):
 class VariableBool(QWidget):
     def __init__(self, value=None, type=None):
         super().__init__()
-        self.data = {'m_Value': value, 'm_DataType': type}
+        self.data = {'m_DataType': type, 'm_Value': value}
         self.setupUI()
 
     def setupUI(self):
@@ -161,8 +161,9 @@ class VariableBool(QWidget):
         self.checkbox.checkStateChanged.connect(self.on_checkbox_changed)
 
         self.setLayout(self.layout)
+        self.on_checkbox_changed()
 
-    def on_checkbox_changed(self, state):
+    def on_checkbox_changed(self):
         self.checkbox.setText(str(self.checkbox.isChecked()))
         self.set_value()
 
