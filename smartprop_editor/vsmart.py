@@ -134,15 +134,6 @@ class VsmartOpen:
                     for variable in variables:
                         AddVariable(parent=option_item, variables_scrollArea=self.variables_scrollArea, name=variable['m_TargetName'], type=variable['m_DataType'], value=variable['m_Value'])
 
-            def child_c(parent):
-                for i in range(parent.childCount()):
-                    child = parent.child(i)
-                    widget = parent.treeWidget().itemWidget(child, 1)
-                    print(widget.data)
-                    child_c(child)
-
-            # child_c(self.choices_tree.invisibleRootItem())
-
 
 
     def fix_names(self, parent):
@@ -177,11 +168,12 @@ class VsmartOpen:
                 pass
 
 class VsmartSave:
-    def __init__(self, filename, tree=None, var_data=None, choices_data=None):
+    def __init__(self, filename, tree=None, var_data=None, choices_tree=QTreeWidget):
         self.filename = filename
         self.tree = tree
         self.var_data = var_data
-        self.choices_data = choices_data
+        self.choices_tree = choices_tree
+        self.choices_data = self.choices(self.choices_tree.invisibleRootItem())
         self.save_file()
 
         print(f'Saved File: {filename}')
@@ -217,3 +209,36 @@ class VsmartSave:
             data['m_Children'].append(child_data)
 
         return data
+    def choices(self, parent):
+        m_Choices = []
+        # Choices
+        for choice_index in range(parent.childCount()):
+            child = parent.child(choice_index)
+            widget = parent.treeWidget().itemWidget(child, 1)
+            options = []
+            for option_index in range(child.childCount()):
+                option_child = parent.child(choice_index).child(option_index)
+                variables = []
+                for variable_index in range(option_child.childCount()):
+                    variable_child = parent.child(choice_index).child(option_index).child(variable_index)
+                    variable_widget = parent.treeWidget().itemWidget(variable_child, 1)
+                    variable_combobox = parent.treeWidget().itemWidget(variable_child, 0)
+                    if variable_widget == None:
+                        variables.append({})
+                    else:
+                        out = variable_widget.data
+                        out.update({'m_TargetName': variable_combobox.currentText()})
+                        variables.append(out)
+                options.append({'m_Name': option_child.text(0), 'm_VariableValues': variables})
+
+            m_Choices.append({'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_DefaultOption': widget.currentText(), 'm_Options': options})
+        # def child_c(parent):
+        #     for i in range(parent.childCount()):
+        #         child = parent.child(i)
+        #         widget = parent.treeWidget().itemWidget(child, 1)
+        #         print(widget.data)
+        #         child_c(child)
+        #
+        # child_c(parent)
+        # return {'m_Choices': m_Choices}
+        return m_Choices
