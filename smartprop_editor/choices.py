@@ -6,7 +6,7 @@ var_choice_identification_bool = ['boolean', 'bool']
 var_choice_identification_float = ['float']
 var_choice_identification_int = ['integer', 'int']
 class AddChoice():
-    def __init__(self, tree=QTreeWidget, name=None, default=None, options=None, variables_scrollArea=None):
+    def __init__(self, tree=QTreeWidget, name=None, default=None, variables_scrollArea=None):
         super().__init__()
         self.tree = tree
         self.variables_scrollArea = variables_scrollArea
@@ -18,54 +18,46 @@ class AddChoice():
             self.default = 'default'
         else:
             self.default = default
-        self.options = options
-        debug(f'Options of {self.name}: \n {self.options}')
-        debug(f'Default of {self.name}: \n {self.default}')
-    def add_choice(self):
-        """Adding choice"""
-        item = QTreeWidgetItem()
-        item.setText(0,self.name)
-        item.setFlags(item.flags() | Qt.ItemIsEditable)
+        self.item = QTreeWidgetItem()
+        self.item.setText(0,self.name)
+        self.item.setText(2, 'choice')
+        self.item.setFlags(self.item.flags() | Qt.ItemIsEditable)
         root = self.tree.invisibleRootItem()
-        root.addChild(item)
-        for option in self.options:
-            self.add_option(parent=item, name=option['m_Name'], variables=option['m_VariableValues'])
-            # AddOption(parent=item, name=option['m_Name'])
-
-        combobox = ComboboxTreeChild(layout=root, root=item)
+        root.addChild(self.item)
+        combobox = ComboboxTreeChild(layout=root, root=self.item)
         combobox.setCurrentText(self.default)
         combobox.addItem(self.default)
-        self.tree.setItemWidget(item, 1, combobox)
+        self.tree.setItemWidget(self.item, 1, combobox)
 
 
-    def add_option(self, name, variables, parent):
-        """Adding option"""
-        item = QTreeWidgetItem()
-        item.setText(0,name)
-        item.setFlags(item.flags() | Qt.ItemIsEditable)
-        parent.addChild(item)
-        for variable in variables:
-            self.add_variable(name=variable['m_TargetName'], type=variable['m_DataType'], value=variable['m_Value'], parent=item)
-    def add_variable(self, name, type, value, parent):
+class AddOption():
+    def __init__(self, parent=None, name=None):
+        super().__init__()
+        self.item = QTreeWidgetItem()
+        self.item.setText(0,name)
+        self.item.setText(2,'option')
+        self.item.setFlags(self.item.flags() | Qt.ItemIsEditable)
+        parent.addChild(self.item)
+class AddVariable():
+    def __init__(self, parent=QTreeWidgetItem, name=None, value=None, variables_scrollArea=None, type=None):
+        super().__init__()
         """Adding variable tree item"""
         item = QTreeWidgetItem()
-        item.setText(0,name)
-        item.setText(1,str(value))
+        item.setText(0, name)
+        item.setText(2, 'variable')
+        item.setText(1, str(value))
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         parent.addChild(item)
         # Combobox var
-        combobox = ComboboxVariables(layout=self.variables_scrollArea)
+        combobox = ComboboxVariables(layout=variables_scrollArea)
         combobox.setCurrentText(name)
         combobox.addItem(name)
-
-        # Init Widget
-        # widget = VariableWidget()
-        # parent.treeWidget().setItemWidget(item, 1, widget)
 
         combobox.changed.connect(lambda value_dict: self.variable_edit_line(value_dict, parent=item))
         value_dict = {'name': name, 'class': type, 'm_default': value}
         self.variable_edit_line(value_dict, parent=item)
-        self.tree.setItemWidget(item, 0, combobox)
+        parent.treeWidget().setItemWidget(item, 0, combobox)
+
     def variable_edit_line(self, value_dict, parent):
         """Select widget basing on the variable type"""
         print(value_dict)
@@ -75,29 +67,15 @@ class AddChoice():
         elif type in var_choice_identification_float:
             debug(f'Var choice type float')
             widget = VariableFloat(value=value_dict['m_default'], type=value_dict['class'])
-            parent.treeWidget().setItemWidget(parent,1, widget)
+            parent.treeWidget().setItemWidget(parent, 1, widget)
         elif type in var_choice_identification_int:
             debug(f'Var choice type int')
             widget = VariableFloat(value=value_dict['m_default'], type=value_dict['class'])
-            parent.treeWidget().setItemWidget(parent,1, widget)
+            parent.treeWidget().setItemWidget(parent, 1, widget)
         else:
             debug(f'Var choice type is generic ({type})')
             widget = VariableWidget(value=value_dict['m_default'], type=value_dict['class'])
-            parent.treeWidget().setItemWidget(parent,1, widget)
-class AddOption():
-    def __init__(self, parent=None, name=None):
-        super().__init__()
-        item = QTreeWidgetItem()
-        item.setText(0,name)
-        item.setFlags(item.flags() | Qt.ItemIsEditable)
-        parent.addChild(item)
-class AddVariable():
-    def __init__(self, parent=None, name=None):
-        super().__init__()
-        item = QTreeWidgetItem()
-        item.setText(0,name)
-        item.setFlags(item.flags() | Qt.ItemIsEditable)
-        parent.addChild(item)
+            parent.treeWidget().setItemWidget(parent, 1, widget)
 class VariableWidget(QWidget):
     def __init__(self, value=None, type=None):
         super().__init__()
