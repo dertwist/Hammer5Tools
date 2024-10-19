@@ -346,7 +346,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         opened_file = filename
 
-        vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget, choices_tree=self.ui.choices_tree_widget)
+        vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget, choices_tree=self.ui.choices_tree_widget, variables_scrollArea=self.ui.variables_scrollArea)
         variables = vsmart_instance.variables
         index = 0
         while index < self.ui.variables_scrollArea.count() - 1:
