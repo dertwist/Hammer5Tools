@@ -21,7 +21,7 @@ from smartprop_editor.vsmart import VsmartOpen, VsmartSave
 from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from smartprop_editor.widgets import ComboboxDynamicItems, ComboboxVariables, ComboboxTreeChild
-from smartprop_editor.choices import AddChoice
+from smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from popup_menu.popup_menu_main import PopupMenu
 
 from PySide6.QtGui import QKeySequence
@@ -42,9 +42,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.settings = settings
 
-        # Temp
-        self.init_choices_tree_widget()
-
 
 
         # Hierarchy setup
@@ -54,6 +51,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
 
         # Choices setup
+        self.ui.choices_tree_widget.hideColumn(2)
         self.ui.choices_tree_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.choices_tree_widget.customContextMenuRequested.connect(self.open_MenuChoices)
 
@@ -558,14 +556,23 @@ class SmartPropEditorMainWindow(QMainWindow):
     # Choices context menu
     def open_MenuChoices(self, position):
         menu = QMenu()
+        item = self.ui.choices_tree_widget.itemAt(position)
         add_choice = menu.addAction("Add Choice")
-        add_option = menu.addAction("Add Option")
-        add_option.triggered.connect(self.add_an_element)
+        add_choice.triggered.connect(lambda: AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.ui.variables_scrollArea))
+        if item:
+            if item.text(2) == 'choice':
+                add_option = menu.addAction("Add Option")
+                add_option.triggered.connect(lambda : AddOption(parent=item, name='Option'))
+            elif item.text(2) == 'option':
+                add_variable = menu.addAction("Add Variable")
+                add_variable.triggered.connect(lambda : AddVariable(parent=item,variables_scrollArea=self.ui.variables_scrollArea, name='default', value='', type='generic'))
+
+
 
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
-    def add_option(self):
-        new_option = AddChoice(name='Option', tree=self.choices_tree, default='', variables_scrollArea=self.variables_scrollArea).add_option()
+    # def add_option(self):
+    #     new_option = AddChoice(name='Option', tree=self.choices_tree, default='', variables_scrollArea=self.variables_scrollArea).add_option()
     # ContextMenu
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
