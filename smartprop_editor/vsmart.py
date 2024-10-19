@@ -25,14 +25,18 @@ class VsmartOpen:
             out = file.read()
         return out
     def fix_format(self, file_content):
+            """Fixing format from Source2Viewr and from null elements, usually it happens in case of Hammer5Tools export, but in valve's smartprops it also could be."""
             pattern = re.compile(r'= resource_name:')
             modified_content = re.sub(pattern, '= ', file_content)
             modified_content = modified_content.replace('null,', '')
             return modified_content
     def open_file(self):
+        """Open file data"""
         data = self.load_file(self.filename)
         data = self.fix_format(data)
         data = kv3.textreader.KV3TextReader().parse(data).value
+
+        # kv3.textwriter.encode(kv3_data) # kv3 encode to variable
         debug(f'Loaded data \n {data}')
 
         self.variables = data.get('m_Variables', None)
@@ -43,29 +47,19 @@ class VsmartOpen:
         self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
         self.fix_names(parent=self.tree.invisibleRootItem())
 
-
-
     def populate_tree(self, data, parent=None):
+        """Parsing every m_child as tree element"""
         if parent is None:
             parent = self.tree.invisibleRootItem()
-            # parent_element = QTreeWidgetItem(['Root'])
-            # parent.addChild(parent_element)
-            # parent = parent_element
         if isinstance(data, dict):
             for key, value in data.items():
                 if key == 'm_Children':
-                    # print(type(key), key)
                     if isinstance(value, dict):
                         item = QTreeWidgetItem([key])
                         item.setFlags(item.flags() | Qt.ItemIsEditable)
                         parent.addChild(item)
-                        # for child_data in value:
-                        #     self.populate_tree(child_data, item)
                         self.populate_tree(value, item)
                     elif isinstance(value, list):
-                        # trying to parse class elements
-                        # if key == 'm_SelectionCriteria':
-                        #     print(type(key), key)
                         try:
                             item_class = value[0].get('_class')
                             child = QTreeWidgetItem([key])
@@ -97,6 +91,7 @@ class VsmartOpen:
 
     # Remove m_children items
     def cleanup_tree(self, parent_item):
+        """Set m_child to parent element"""
         def search_recursively_loop(parent_item):
             for index in range(parent_item.childCount()):
                 item = parent_item.child(index)
@@ -129,6 +124,7 @@ class VsmartOpen:
             debug(f'Choices {data}')
 
     def fix_names(self, parent):
+        """Replace m_child name to class name with m_label, if didn't find m_label set class name with digits suffix"""
         counter = 1
 
         # Iterate through each child item under the parent
@@ -169,7 +165,7 @@ class VsmartSave:
         print(f'Saved File: {filename}')
 
     def save_file(self):
-        # data = self.convert_children_to_list(data)
+        """Saving file"""
         out_data = {'generic_data_type': "CSmartPropRoot"}
         out_data.update(editor_info)
         if self.var_data is not None:
@@ -181,6 +177,7 @@ class VsmartSave:
         kv3.write(out_data, self.filename)
 
     def tree_to_vsmart(self, item, data):
+        """Convert tree structure to json"""
         if 'm_Children' not in data:
             data['m_Children'] = []
 
