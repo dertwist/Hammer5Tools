@@ -707,9 +707,6 @@ class Ui_MainWindow(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.choices_tree_widget = QTreeWidget(self.dockWidgetContents_3)
-        __qtreewidgetitem1 = QTreeWidgetItem(self.choices_tree_widget)
-        __qtreewidgetitem2 = QTreeWidgetItem(__qtreewidgetitem1)
-        QTreeWidgetItem(__qtreewidgetitem2)
         self.choices_tree_widget.setObjectName(u"choices_tree_widget")
         self.choices_tree_widget.setUniformRowHeights(True)
         self.choices_tree_widget.header().setVisible(True)
@@ -794,17 +791,5 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
         ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
         ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
-
-        __sortingEnabled = self.choices_tree_widget.isSortingEnabled()
-        self.choices_tree_widget.setSortingEnabled(False)
-        ___qtreewidgetitem2 = self.choices_tree_widget.topLevelItem(0)
-        ___qtreewidgetitem2.setText(0, QCoreApplication.translate("MainWindow", u"Color", None));
-        ___qtreewidgetitem3 = ___qtreewidgetitem2.child(0)
-        ___qtreewidgetitem3.setText(0, QCoreApplication.translate("MainWindow", u"Red", None));
-        ___qtreewidgetitem4 = ___qtreewidgetitem3.child(0)
-        ___qtreewidgetitem4.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
-        ___qtreewidgetitem4.setText(0, QCoreApplication.translate("MainWindow", u"Variable", None));
-        self.choices_tree_widget.setSortingEnabled(__sortingEnabled)
-
     # retranslateUi
 
