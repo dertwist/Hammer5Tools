@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import QComboBox, QTreeWidgetItem, QTreeWidget
+from PySide6.QtCore import Signal
 
 class ComboboxDynamicItems(QComboBox):
+    clicked = Signal()
 
     def __init__(self, parent=None, items=None):
         super().__init__(parent)
@@ -15,6 +17,7 @@ class ComboboxDynamicItems(QComboBox):
             self.setCurrentText(current)
 
     def showPopup(self):
+        self.clicked.emit()
         self.updateItems()
         super().showPopup()
 
@@ -23,6 +26,7 @@ class ComboboxDynamicItems(QComboBox):
         event.ignore()
 
 class ComboboxVariables(ComboboxDynamicItems):
+
     def __init__(self, parent=None, layout=None):
         super().__init__(parent)
         self.variables_scrollArea = layout
