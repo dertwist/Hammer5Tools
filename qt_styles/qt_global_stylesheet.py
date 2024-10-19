@@ -257,7 +257,7 @@ QDockWidget DockTitleWidget QToolButton::menu-indicator {
 /* ========================================================== */
 
 QComboBox {
-    font: 580 10pt "Segoe UI";
+    font: 700 9pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -981,9 +981,10 @@ QTreeView {
 }
 
 QTreeView::item {
-    padding: 2px; /* Add padding to each item */
-    padding-left: 5px;
-    padding-right: 5px;
+    padding-left: 1px;
+    padding-right: 1px;
+    padding-top: 2px;
+    padding-bottom: 2px;
     color: #E3E3E3;
     border-style: none;
     border-bottom: 0.5px solid black;

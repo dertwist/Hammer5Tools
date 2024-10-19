@@ -14,8 +14,9 @@ from smartprop_editor.choices import AddChoice
 from preferences import debug
 from common import editor_info
 class VsmartOpen:
-    def __init__(self, filename, tree=None, choices_tree=None):
+    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_scrollArea=None):
         self.filename = filename
+        self.variables_scrollArea = variables_scrollArea
         self.tree = tree
         self.choices_tree = choices_tree
         self.open_file()
@@ -122,6 +123,11 @@ class VsmartOpen:
             return False
         else:
             debug(f'Choices {data}')
+            for choice in data:
+                name = choice['m_Name']
+                default = choice.get('m_DefaultOption', None)
+                options = choice.get('m_Options', None)
+                AddChoice(name=name, tree=self.choices_tree, default=default, options=options, variables_scrollArea=self.variables_scrollArea)
 
     def fix_names(self, parent):
         """Replace m_child name to class name with m_label, if didn't find m_label set class name with digits suffix"""
