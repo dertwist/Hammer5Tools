@@ -23,6 +23,7 @@ class Var_class_color(QWidget):
             self.default = [255, 255, 255]
         else:
             self.default = default
+
         self.ui.color.clicked.connect(self.open_dialog)
         # self.ui.value.setText(str(self.default))
         # self.ui.value.textChanged.connect(self.on_changed)
@@ -32,10 +33,12 @@ class Var_class_color(QWidget):
             border: 2px solid translucent;
             border-color: rgba(80, 80, 80, 100);
             """)
+        self.on_changed()
+
 
 
     def on_changed(self):
-        self.edited.emit(self.default, self.min, self.max, str(self.model))
+        self.edited.emit(self.default, '', '', '')
 
     def open_dialog(self):
         color = self.dialog.getColor().getRgb()[:3]
