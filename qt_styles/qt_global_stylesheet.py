@@ -257,7 +257,7 @@ QDockWidget DockTitleWidget QToolButton::menu-indicator {
 /* ========================================================== */
 
 QComboBox {
-    font: 700 10pt "Segoe UI";
+    font: 580 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
