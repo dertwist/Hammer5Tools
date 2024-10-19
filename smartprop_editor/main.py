@@ -21,6 +21,7 @@ from smartprop_editor.vsmart import VsmartOpen, VsmartSave
 from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from smartprop_editor.widgets import ComboboxDynamicItems, ComboboxVariables, ComboboxTreeChild
+from smartprop_editor.choices import AddChoice
 from popup_menu.popup_menu_main import PopupMenu
 
 from PySide6.QtGui import QKeySequence
@@ -51,6 +52,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
+
+        # Choices setup
+        self.ui.choices_tree_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.choices_tree_widget.customContextMenuRequested.connect(self.open_MenuChoices)
 
         # Apply style
 
@@ -550,13 +555,17 @@ class SmartPropEditorMainWindow(QMainWindow):
                     data_out.update(item)
             return data_out
 
-
-    # Choices
-    def init_choices_tree_widget(self):
-        # self.ui.choices_tree_widget.uniformRowHeights(True)
-        pass
     # Choices context menu
+    def open_MenuChoices(self, position):
+        menu = QMenu()
+        add_choice = menu.addAction("Add Choice")
+        add_option = menu.addAction("Add Option")
+        add_option.triggered.connect(self.add_an_element)
 
+
+        menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
+    def add_option(self):
+        new_option = AddChoice(name='Option', tree=self.choices_tree, default='', variables_scrollArea=self.variables_scrollArea).add_option()
     # ContextMenu
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
