@@ -969,6 +969,45 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
 
 /* ========================================================== */
 
+QSlider::groove:horizontal {
+    border: 2px solid black;
+    border-color: rgba(80, 80, 80, 0);
+    height: 8px;
+    margin: 2px 0;
+}
+
+QSlider::handle:horizontal {
+    background: #414956 ;
+    border: 2px solid black;
+    border-color: rgba(80, 80, 80, 255);
+    width: 6px;
+    height: 24px;
+    margin: -5px 0;
+}
+
+QSlider::handle:horizontal:hover {
+}
+
+QSlider::handle:horizontal:pressed {
+}
+
+QSlider::sub-page:horizontal {
+    background: #23272d;
+    border: 2px solid black;
+    border-radius: 1px;
+    border-color: rgba(80, 80, 80, 255);
+    height: 8px;
+}
+
+QSlider::add-page:horizontal {
+    border: 2px solid black;
+    border-radius: 1px;
+    border-color: rgba(80, 80, 80, 255);
+    height: 8px;
+}
+
+/* ========================================================== */
+
 
 QTreeView {
     color: #E3E3E3;
