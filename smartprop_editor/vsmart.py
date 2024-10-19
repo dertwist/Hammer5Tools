@@ -226,19 +226,10 @@ class VsmartSave:
                     if variable_widget == None:
                         variables.append({})
                     else:
-                        out = variable_widget.data
-                        out.update({'m_TargetName': variable_combobox.currentText()})
+                        out =  {'m_TargetName': variable_combobox.currentText()}
+                        out.update(variable_widget.data)
                         variables.append(out)
                 options.append({'m_Name': option_child.text(0), 'm_VariableValues': variables})
 
-            m_Choices.append({'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_DefaultOption': widget.currentText(), 'm_Options': options})
-        # def child_c(parent):
-        #     for i in range(parent.childCount()):
-        #         child = parent.child(i)
-        #         widget = parent.treeWidget().itemWidget(child, 1)
-        #         print(widget.data)
-        #         child_c(child)
-        #
-        # child_c(parent)
-        # return {'m_Choices': m_Choices}
+            m_Choices.append({'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_Options': options, 'm_DefaultOption': widget.currentText(), 'm_nElementID': choice_index})
         return m_Choices
