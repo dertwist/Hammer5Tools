@@ -2,7 +2,7 @@ from smartprop_editor.variables.ui_combobox import Ui_Widget
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
-
+from preferences import debug
 
 class Var_class_combobox(QWidget):
     edited = Signal(str, str, str, str)
@@ -21,7 +21,7 @@ class Var_class_combobox(QWidget):
 
         self.ui.value.addItems(elements)
         self.ui.value.setCurrentText(str(self.default))
-        self.ui.value.editTextChanged.connect(self.on_changed)
+        self.ui.value.currentTextChanged.connect(self.on_changed)
 
 
     def on_changed(self):
