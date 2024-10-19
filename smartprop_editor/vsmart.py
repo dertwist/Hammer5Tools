@@ -20,9 +20,21 @@ class VsmartOpen:
         self.choices_tree = choices_tree
         self.open_file()
 
+    def load_file(self, filename):
+        with open(filename, 'r') as file:
+            out = file.read()
+        return out
+    def fix_format(self, file_content):
+            pattern = re.compile(r'= resource_name:')
+            modified_content = re.sub(pattern, '= ', file_content)
+            modified_content = modified_content.replace('null,', '')
+            return modified_content
     def open_file(self):
-        self.fix_format()
-        data = (kv3.read(self.filename)).value
+        data = self.load_file(self.filename)
+        data = self.fix_format(data)
+        data = kv3.textreader.KV3TextReader().parse(data).value
+        debug(f'Loaded data \n {data}')
+
         self.variables = data.get('m_Variables', None)
         self.tree.clear()
         self.choices_tree.clear()
@@ -31,19 +43,6 @@ class VsmartOpen:
         self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
         self.fix_names(parent=self.tree.invisibleRootItem())
 
-    def fix_format(self):
-        try:
-            pattern = re.compile(r'= resource_name:')
-            with open(self.filename, 'r') as file:
-                file_content = file.read()
-
-            modified_content = re.sub(pattern, '= ', file_content)
-            modified_content = modified_content.replace('null,', '')
-            # modified_content = re.sub(r'null', '', modified_content)
-            with open(self.filename, 'w') as file:
-                file.write(modified_content)
-        except Exception as error:
-            print(error)
 
 
     def populate_tree(self, data, parent=None):
