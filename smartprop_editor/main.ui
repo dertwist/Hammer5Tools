@@ -1101,27 +1101,6 @@ QComboBox QAbstractItemView::item:selected {
          <string>Type</string>
         </property>
        </column>
-       <item>
-        <property name="text">
-         <string>Color</string>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <item>
-         <property name="text">
-          <string>Red</string>
-         </property>
-         <item>
-          <property name="text">
-           <string>Variable</string>
-          </property>
-          <property name="text">
-           <string>Value</string>
-          </property>
-         </item>
-        </item>
-       </item>
       </widget>
      </item>
     </layout>

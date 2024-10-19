@@ -21,7 +21,9 @@ class Var_class_combobox(QWidget):
 
         self.ui.value.addItems(elements)
         self.ui.value.setCurrentText(str(self.default))
+        self.on_changed()
         self.ui.value.currentTextChanged.connect(self.on_changed)
+
 
 
     def on_changed(self):
