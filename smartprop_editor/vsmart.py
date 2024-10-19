@@ -6,29 +6,28 @@ from PySide6.QtWidgets import (
     QInputDialog, QMessageBox, QToolBar, QPushButton, QFileDialog, QHeaderView
 )
 from PySide6.QtCore import Qt, Signal, QObject
-import json
 import re
 import keyvalues3 as kv3
 import ast
 from smartprop_editor.objects import element_prefix
-from preferences import get_cs2_path, get_addon_name, get_config_value
-import subprocess
-import shutil
-import os
+from smartprop_editor.choices import AddChoice
+from preferences import debug
 from common import editor_info
 class VsmartOpen:
-    def __init__(self, filename, tree=None):
+    def __init__(self, filename, tree=None, choices_tree=None):
         self.filename = filename
         self.tree = tree
+        self.choices_tree = choices_tree
         self.open_file()
 
     def open_file(self):
         self.fix_format()
         data = (kv3.read(self.filename)).value
         self.variables = data.get('m_Variables', None)
-        self.choices = data.get('m_Choices', None)
         self.tree.clear()
+        self.choices_tree.clear()
         self.populate_tree(data)
+        self.populate_choices(data.get('m_Choices', None))
         self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
         self.fix_names(parent=self.tree.invisibleRootItem())
 
@@ -122,6 +121,13 @@ class VsmartOpen:
                     search_recursively_loop(item)
 
         search_recursively_loop(parent_item)
+
+    def populate_choices(self, data):
+        if data == None:
+            print('No choices')
+            return False
+        else:
+            debug(f'Choices {data}')
 
     def fix_names(self, parent):
         counter = 1

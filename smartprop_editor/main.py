@@ -42,8 +42,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.settings = settings
 
         # Temp
-        self.choices_data = None
-        self.populate_choices()
         self.init_choices_tree_widget()
 
 
@@ -348,9 +346,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         opened_file = filename
 
-        vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget)
+        vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget, choices_tree=self.ui.choices_tree_widget)
         variables = vsmart_instance.variables
-        self.choices_data = vsmart_instance.choices
         index = 0
         while index < self.ui.variables_scrollArea.count() - 1:
             item = self.ui.variables_scrollArea.takeAt(index)
@@ -452,7 +449,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             filename, _ = QFileDialog.getSaveFileName(None, "Save File", os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()), "VSmart Files (*.vsmart);;All Files (*)")
 
         var_data = save_variables()
-        VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data, choices_data=self.choices_data)
+        VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data)
         opened_file = VsmartSaveInstance.filename
 
     # variables
@@ -558,33 +555,6 @@ class SmartPropEditorMainWindow(QMainWindow):
     def init_choices_tree_widget(self):
         # self.ui.choices_tree_widget.uniformRowHeights(True)
         pass
-    def populate_choices(self):
-        debug(f'Choices: {self.choices_data}')
-        self.add_choice()
-
-    def add_class_choice(self):
-        layout = QHBoxLayout()
-        label = QLabel()
-        label.setText('Default')
-        label.setStyleSheet('background-color: rgba(0,0,0,0)')
-        combobox = QComboBox()
-        combobox.setStyleSheet('padding:4px')
-        layout.addWidget(label)
-        layout.addWidget(combobox)
-
-        widget = QWidget()
-        widget.setLayout(layout)
-        return widget
-
-    def add_choice(self):
-        item = self.ui.choices_tree_widget.itemAt(1, 1)
-        combobox = ComboboxTreeChild(layout=self.ui.choices_tree_widget, root=item)
-        item.childCount()
-        # combobox = ComboboxVariables(layout=self.ui.variables_scrollArea)
-
-        debug(item.text(0))
-        self.ui.choices_tree_widget.setItemWidget(item, 1, combobox)
-        self.ui.choices_tree_widget.setStyleSheet("")
     # Choices context menu
 
     # ContextMenu
