@@ -4,7 +4,7 @@ class ComboboxDynamicItems(QComboBox):
 
     def __init__(self, parent=None, items=None):
         super().__init__(parent)
-        self.setStyleSheet('padding:4px')
+        self.setStyleSheet('padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px;')
         self.items = items
 
     def updateItems(self):
