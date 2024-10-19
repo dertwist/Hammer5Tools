@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QWidget, QLineEdit, QVBoxLayout, QSlider, QHBoxLayout
+from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QWidget, QLineEdit, QVBoxLayout, QSlider, QHBoxLayout, QCheckBox
 from PySide6.QtCore import Qt
 from smartprop_editor.widgets import ComboboxTreeChild, ComboboxDynamicItems, ComboboxVariables
 from preferences import debug
@@ -64,6 +64,8 @@ class AddVariable():
         type = value_dict['class'].lower()
         if type in var_choice_identification_bool:
             debug(f'Var choice type bool')
+            widget = VariableBool(value=value_dict['m_default'], type=value_dict['class'])
+            parent.treeWidget().setItemWidget(parent, 1, widget)
         elif type in var_choice_identification_float:
             debug(f'Var choice type float')
             widget = VariableFloat(value=value_dict['m_default'], type=value_dict['class'])
@@ -86,6 +88,7 @@ class VariableWidget(QWidget):
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         editline = QLineEdit()
+        editline.setText(str(self.data['m_Value']))
         editline.setFocusPolicy(Qt.StrongFocus)
         self.layout.addWidget(editline)
         self.setLayout(self.layout)
@@ -136,4 +139,32 @@ class VariableFloat(QWidget):
         self.editline.setText(str(float_value))
         self.set_value()
     def set_value(self):
-        self.data.update({'m_Value': self.editline.text()})
+        self.data.update({'m_Value': self.slider.value()/ 100.0})
+
+class VariableBool(QWidget):
+    def __init__(self, value=None, type=None):
+        super().__init__()
+        self.data = {'m_Value': value, 'm_DataType': type}
+        self.setupUI()
+
+    def setupUI(self):
+        self.layout = QHBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        self.checkbox = QCheckBox()
+
+        self.layout.addWidget(self.checkbox)
+
+        value = self.data['m_Value']
+        self.checkbox.setChecked(bool(value))
+        self.checkbox.setText(str(self.checkbox.isChecked()))
+        self.checkbox.checkStateChanged.connect(self.on_checkbox_changed)
+
+        self.setLayout(self.layout)
+
+    def on_checkbox_changed(self, state):
+        self.checkbox.setText(str(self.checkbox.isChecked()))
+        self.set_value()
+
+    def set_value(self):
+        self.data.update({'m_Value': self.checkbox.isChecked()})
