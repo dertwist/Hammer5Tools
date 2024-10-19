@@ -559,20 +559,22 @@ class SmartPropEditorMainWindow(QMainWindow):
         item = self.ui.choices_tree_widget.itemAt(position)
         add_choice = menu.addAction("Add Choice")
         add_choice.triggered.connect(lambda: AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.ui.variables_scrollArea))
+
+        remove_action = menu.addAction("Remove")
+        remove_action.triggered.connect(lambda: self.remove_item(item))
         if item:
             if item.text(2) == 'choice':
                 add_option = menu.addAction("Add Option")
                 add_option.triggered.connect(lambda : AddOption(parent=item, name='Option'))
             elif item.text(2) == 'option':
                 add_variable = menu.addAction("Add Variable")
-                add_variable.triggered.connect(lambda : AddVariable(parent=item,variables_scrollArea=self.ui.variables_scrollArea, name='default', value='', type='generic'))
+                add_variable.triggered.connect(lambda : AddVariable(parent=item,variables_scrollArea=self.ui.variables_scrollArea, name='default', value='', type=''))
 
 
 
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
-    # def add_option(self):
-    #     new_option = AddChoice(name='Option', tree=self.choices_tree, default='', variables_scrollArea=self.variables_scrollArea).add_option()
+
     # ContextMenu
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
@@ -606,6 +608,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         move_up_action = menu.addAction("Move Up")
         move_down_action = menu.addAction("Move Down")
         remove_action = menu.addAction("Remove")
+        remove_action.triggered.connect(lambda: self.remove_item(self.ui.tree_hierarchy_widget.itemAt(position)))
 
         duplicate_action = menu.addAction("Duplicate")
         duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position), self.ui.tree_hierarchy_widget))
@@ -722,7 +725,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def remove_item(self, item):
         if item:
-            parent = item.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
+            parent = item.parent() or item.treeWidget().invisibleRootItem()
             index = parent.indexOfChild(item)
             parent.takeChild(index)
 

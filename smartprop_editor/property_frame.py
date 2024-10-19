@@ -129,7 +129,7 @@ class PropertyFrame(QWidget):
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'])
                 add_instance()
             elif 'm_SelectionMode' in value_class:
-                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM', 'FIRST'])
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM', 'FIRST', 'SPECIFIC'])
                 add_instance()
             elif 'm_PlacementMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SPHERE', 'CIRCLE'])
@@ -166,6 +166,10 @@ class PropertyFrame(QWidget):
             elif 'm_n' in value_class:
                 property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, int_bool=True)
                 add_instance()
+            elif 'm_ColorSelection' in value_class:
+                property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, int_bool=True)
+                add_instance()
+
             # Color
             elif 'm_HandleColor' in value_class:
                 property_instance = PropertyColor(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
@@ -276,7 +280,7 @@ class PropertyFrame(QWidget):
             classes = ['m_flScale']
             operator_adding_instances(classes)
         elif prop_class == 'SetTintColor':
-            classes = ['m_Mode', 'm_ColorChoices']
+            classes = ['m_Mode', 'm_ColorChoices', 'm_SelectionMode', 'm_ColorSelection']
             operator_adding_instances(classes)
         # Filters
         elif prop_class == 'SurfaceProperties':
