@@ -103,7 +103,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 659, 702))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 793, 702))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -199,7 +199,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 285, 345))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 217, 345))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -791,6 +791,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(shortcut)
         self.dockWidget_2.setWindowTitle(QCoreApplication.translate("MainWindow", u"Choices", None))
         ___qtreewidgetitem1 = self.choices_tree_widget.headerItem()
+        ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
         ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
         ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
 

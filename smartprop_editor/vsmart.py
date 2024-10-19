@@ -10,7 +10,7 @@ import re
 import keyvalues3 as kv3
 import ast
 from smartprop_editor.objects import element_prefix
-from smartprop_editor.choices import AddChoice, VariableWidget, VariableFloat
+from smartprop_editor.choices import AddChoice, AddOption, AddVariable
 from preferences import debug
 from common import editor_info
 class VsmartOpen:
@@ -127,17 +127,21 @@ class VsmartOpen:
                 name = choice['m_Name']
                 default = choice.get('m_DefaultOption', None)
                 options = choice.get('m_Options', None)
-                AddChoice(name=name, tree=self.choices_tree, default=default, options=options, variables_scrollArea=self.variables_scrollArea).add_choice()
+                choice = AddChoice(name=name, tree=self.choices_tree, default=default,variables_scrollArea=self.variables_scrollArea).item
+                for option in options:
+                    option_item = AddOption(parent=choice, name=option['m_Name']).item
+                    variables = option['m_VariableValues']
+                    for variable in variables:
+                        AddVariable(parent=option_item, variables_scrollArea=self.variables_scrollArea, name=variable['m_TargetName'], type=variable['m_DataType'], value=variable['m_Value'])
 
             def child_c(parent):
                 for i in range(parent.childCount()):
                     child = parent.child(i)
                     widget = parent.treeWidget().itemWidget(child, 1)
-                    if isinstance(widget, VariableWidget):
-                        print(widget.data)
+                    print(widget.data)
                     child_c(child)
 
-            child_c(self.choices_tree.invisibleRootItem())
+            # child_c(self.choices_tree.invisibleRootItem())
 
 
 

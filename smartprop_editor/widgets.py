@@ -34,6 +34,7 @@ class ComboboxVariables(ComboboxDynamicItems):
         self.currentTextChanged.connect(self.changed_var)
 
     def updateItems(self):
+        self.currentTextChanged.disconnect(self.changed_var)
         self.items = []
         variables = self.get_variables()
         for item in variables:
@@ -44,6 +45,7 @@ class ComboboxVariables(ComboboxDynamicItems):
         self.addItems(self.items)
         if current in self.items:
             self.setCurrentText(current)
+        self.currentTextChanged.connect(self.changed_var)
     def changed_var(self):
         for item in self.get_variables():
             if item['name'] == self.currentText():
