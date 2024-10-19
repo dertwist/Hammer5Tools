@@ -44,9 +44,7 @@ class AdvancedImageViewer(QMainWindow):
     def loadImagesFromDirectory(self, directory):
         """Load images from the specified directory and set the first image."""
         valid_extensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga"]
-        self.image_files = [os.path.join(directory, f) for f in os.listdir(directory)
-                            if os.path.splitext(f)[1].lower() in valid_extensions]
-
+        self.image_files = [os.path.join(directory, f) for f in os.listdir(directory)if os.path.splitext(f)[1].lower() in valid_extensions]
         if self.image_files:
             self.current_image_index = 0
             self.showImage(self.image_files[self.current_image_index])
