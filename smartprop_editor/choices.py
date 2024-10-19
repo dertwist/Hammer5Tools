@@ -1,8 +1,10 @@
-from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
+from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QWidget, QLineEdit, QVBoxLayout, QSlider, QHBoxLayout
 from PySide6.QtCore import Qt
 from smartprop_editor.widgets import ComboboxTreeChild, ComboboxDynamicItems, ComboboxVariables
 from preferences import debug
-
+var_choice_identification_bool = ['boolean', 'bool']
+var_choice_identification_float = ['float']
+var_choice_identification_int = ['integer', 'int']
 class AddChoice():
     def __init__(self, tree=QTreeWidget, name=None, default=None, options=None, variables_scrollArea=None):
         super().__init__()
@@ -21,7 +23,6 @@ class AddChoice():
         debug(f'Default of {self.name}: \n {self.default}')
 
         self.add_choice()
-
     def add_choice(self):
         """Adding choice"""
         item = QTreeWidgetItem()
@@ -54,8 +55,36 @@ class AddChoice():
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         parent.addChild(item)
         # Combobox
-
         combobox = ComboboxVariables(layout=self.variables_scrollArea)
         combobox.setCurrentText(name)
         combobox.addItem(name)
+
+        widget = VariableWidget()
+        parent.treeWidget().setItemWidget(item, 1, widget)
+
+        combobox.clicked.connect(lambda : self.variable_edit_line(type, item))
         self.tree.setItemWidget(item, 0, combobox)
+    def variable_edit_line(self, type, parent):
+        """Select widget basing on the variable type"""
+        if type in var_choice_identification_bool:
+            debug(f'Var choice type bool')
+        elif type in var_choice_identification_float:
+            debug(f'Var choice type float')
+        elif type in var_choice_identification_int:
+            debug(f'Var choice type int')
+        else:
+            debug(f'Var choice type is generic ({type})')
+
+class VariableWidget(QWidget):
+    def __init__(self, value=None, type=None, parent=None):
+        super().__init__()
+        self.layout = QHBoxLayout()  # Create a QVBoxLayout for the layout
+        self.layout.setContentsMargins(0,0,0,0)
+        editline = QLineEdit()
+        slider = QSlider()
+        slider.setOrientation(Qt.Orientation.Horizontal)
+        self.layout.addWidget(editline)
+        self.layout.addWidget(slider)
+        self.setLayout(self.layout)  # Set the layout for the VariableWidget
+
+
