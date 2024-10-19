@@ -26,15 +26,17 @@ class ComboboxDynamicItems(QComboBox):
         event.ignore()
 
 class ComboboxVariables(ComboboxDynamicItems):
-
+    changed = Signal(dict)
     def __init__(self, parent=None, layout=None):
         super().__init__(parent)
         self.variables_scrollArea = layout
         self.items = None
+        self.currentTextChanged.connect(self.changed_var)
 
     def updateItems(self):
         self.items = []
-        for item in self.get_variables():
+        variables = self.get_variables()
+        for item in variables:
             self.items.append(item['name'])
 
         current = self.currentText()
@@ -42,12 +44,17 @@ class ComboboxVariables(ComboboxDynamicItems):
         self.addItems(self.items)
         if current in self.items:
             self.setCurrentText(current)
+    def changed_var(self):
+        for item in self.get_variables():
+            if item['name'] == self.currentText():
+                self.changed.emit({'name': item['name'], 'class': item['class'], 'm_default': item['m_default']})
+                break
     def get_variables(self):
         data_out = []
         for i in range(self.variables_scrollArea.count()):
             widget = self.variables_scrollArea.itemAt(i).widget()
             if widget:
-                var = {'name': widget.name, 'class': widget.var_class}
+                var = {'name': widget.name, 'class': widget.var_class, 'm_default': widget.var_value['default']}
                 data_out.append(var)
         return data_out
 

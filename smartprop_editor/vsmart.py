@@ -10,7 +10,7 @@ import re
 import keyvalues3 as kv3
 import ast
 from smartprop_editor.objects import element_prefix
-from smartprop_editor.choices import AddChoice
+from smartprop_editor.choices import AddChoice, VariableWidget, VariableFloat
 from preferences import debug
 from common import editor_info
 class VsmartOpen:
@@ -128,6 +128,18 @@ class VsmartOpen:
                 default = choice.get('m_DefaultOption', None)
                 options = choice.get('m_Options', None)
                 AddChoice(name=name, tree=self.choices_tree, default=default, options=options, variables_scrollArea=self.variables_scrollArea)
+
+            def child_c(parent):
+                for i in range(parent.childCount()):
+                    child = parent.child(i)
+                    widget = parent.treeWidget().itemWidget(child, 1)
+                    if isinstance(widget, VariableWidget):
+                        print(widget.data)
+                    child_c(child)
+
+            child_c(self.choices_tree.invisibleRootItem())
+
+
 
     def fix_names(self, parent):
         """Replace m_child name to class name with m_label, if didn't find m_label set class name with digits suffix"""
