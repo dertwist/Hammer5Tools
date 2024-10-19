@@ -127,7 +127,7 @@ class VsmartOpen:
                 name = choice['m_Name']
                 default = choice.get('m_DefaultOption', None)
                 options = choice.get('m_Options', None)
-                AddChoice(name=name, tree=self.choices_tree, default=default, options=options, variables_scrollArea=self.variables_scrollArea)
+                AddChoice(name=name, tree=self.choices_tree, default=default, options=options, variables_scrollArea=self.variables_scrollArea).add_choice()
 
             def child_c(parent):
                 for i in range(parent.childCount()):
