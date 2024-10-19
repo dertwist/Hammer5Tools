@@ -103,7 +103,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 793, 702))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 659, 702))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -199,7 +199,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 217, 345))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 285, 345))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -712,8 +712,11 @@ class Ui_MainWindow(object):
         QTreeWidgetItem(__qtreewidgetitem2)
         self.choices_tree_widget.setObjectName(u"choices_tree_widget")
         self.choices_tree_widget.setUniformRowHeights(True)
-        self.choices_tree_widget.header().setMinimumSectionSize(130)
-        self.choices_tree_widget.header().setDefaultSectionSize(160)
+        self.choices_tree_widget.header().setVisible(True)
+        self.choices_tree_widget.header().setCascadingSectionResizes(False)
+        self.choices_tree_widget.header().setMinimumSectionSize(150)
+        self.choices_tree_widget.header().setDefaultSectionSize(180)
+        self.choices_tree_widget.header().setProperty("showSortIndicator", True)
 
         self.verticalLayout.addWidget(self.choices_tree_widget)
 
