@@ -60,7 +60,6 @@ class AddVariable():
 
     def variable_edit_line(self, value_dict, parent):
         """Select widget basing on the variable type"""
-        print(value_dict)
         type = value_dict['class'].lower()
         if type in var_choice_identification_bool:
             debug(f'Var choice type bool')
