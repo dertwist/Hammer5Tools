@@ -4,6 +4,7 @@ import threading
 
 def compile_ui(file, output_file):
     subprocess.run(['pyside6-uic', file, '-o', output_file])
+    print(file,output_file)
 
 # Function to compile UI files with progress report
 def compile_with_progress(file, output_file):
@@ -25,3 +26,5 @@ for root, dirs, files in os.walk('.'):
 
 # Compile the specific UI file 'ui_input.ui'
 subprocess.run(['pyside6-uic', 'ui_input.ui', '-o', 'ui_input.py'])
+
+subprocess.run(['pyside6-rcc', '.\\resources.qrc', '-o', '.\\resources_rc.py'])
