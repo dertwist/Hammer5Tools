@@ -708,6 +708,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.choices_tree_widget = QTreeWidget(self.dockWidgetContents_3)
         self.choices_tree_widget.setObjectName(u"choices_tree_widget")
+        self.choices_tree_widget.setAlternatingRowColors(True)
         self.choices_tree_widget.setUniformRowHeights(True)
         self.choices_tree_widget.header().setVisible(True)
         self.choices_tree_widget.header().setCascadingSectionResizes(False)

@@ -1068,6 +1068,9 @@ QComboBox QAbstractItemView::item:selected {
      </property>
      <item>
       <widget class="QTreeWidget" name="choices_tree_widget">
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
        <property name="uniformRowHeights">
         <bool>true</bool>
        </property>

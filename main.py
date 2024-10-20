@@ -179,6 +179,8 @@ class Widget(QMainWindow):
         self.ui.check_Box_NCM_Mode.stateChanged.connect(self.handle_ncm_mode_checkbox)
         self.ui.open_addons_folder_button.clicked.connect(self.open_addons_folder)
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
+        self.ui.bluesky_button.clicked.connect(self.open_bluesky)
+        self.ui.discord.clicked.connect(self.open_discord)
         self.ui.documentation_button.clicked.connect(self.open_documentation)
 
     def closeEvent(self, event):
@@ -297,6 +299,10 @@ class Widget(QMainWindow):
 
     def open_my_twitter(self):
         webbrowser.open("https://twitter.com/der_twist")
+    def open_bluesky(self):
+        webbrowser.open("https://bsky.app/profile/der-twist.bsky.social")
+    def open_discord(self):
+        webbrowser.open("https://discord.gg/DvCXEyhssd")
 
     def open_documentation(self):
         Documentation_Dialog(app_version, self).show()
