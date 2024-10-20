@@ -560,8 +560,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         add_choice = menu.addAction("Add Choice")
         add_choice.triggered.connect(lambda: AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.ui.variables_scrollArea))
 
-        remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.remove_item(item))
         if item:
             if item.text(2) == 'choice':
                 add_option = menu.addAction("Add Option")
@@ -570,7 +568,30 @@ class SmartPropEditorMainWindow(QMainWindow):
                 add_variable = menu.addAction("Add Variable")
                 add_variable.triggered.connect(lambda : AddVariable(parent=item,variables_scrollArea=self.ui.variables_scrollArea, name='default', value='', type=''))
 
+        menu.addSection('')
 
+        move_up_action = menu.addAction("Move Up")
+        move_down_action = menu.addAction("Move Down")
+
+        move_up_action.triggered.connect(lambda: self.move_item(item, -1))
+        move_down_action.triggered.connect(lambda: self.move_item(item, 1))
+        menu.addSection('')
+
+
+        # copy_action = menu.addAction("Copy")
+        # copy_action.setShortcut(QKeySequence.Copy)
+        # copy_action.triggered.connect(lambda: self.copy_item(item))
+        #
+        # paste_action = menu.addAction("Paste")
+        # paste_action.setShortcut(QKeySequence.Paste)
+        # paste_action.triggered.connect(lambda: self.paste_item(item))
+        # menu.addSection('')
+        #
+        # duplicate_action = menu.addAction("Duplicate")
+        # duplicate_action.triggered.connect(lambda: self.duplicate_item(item, tree=self.ui.choices_tree_widget))
+
+        remove_action = menu.addAction("Remove")
+        remove_action.triggered.connect(lambda: self.remove_item(item))
 
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
