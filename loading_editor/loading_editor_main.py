@@ -8,7 +8,7 @@ from preferences import get_config_value, get_cs2_path, get_addon_name, debug
 from loading_editor.ui_loading_editor_mainwindow import Ui_Loading_editorMainWindow
 from loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
 from explorer.image_viewer import ExplorerImageViewer
-
+from common import compile
 class ApplyScreenshots:
     def __init__(self, game_screenshot_path, content_screenshot_path):
         self.game_screenshot_path = game_screenshot_path
@@ -123,6 +123,8 @@ class ApplyScreenshots:
 
         with open(path, 'w') as file:
             file.write(vtex_file)
+
+        compile(path)
 class Loading_editorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
