@@ -584,6 +584,8 @@ class Ui_preferences_dialog(object):
 
         self.horizontalLayout_10.addWidget(self.setup_ncm_mode)
 
+        self.horizontalLayout_19 = QHBoxLayout()
+        self.horizontalLayout_19.setObjectName(u"horizontalLayout_19")
         self.checkBox_start_with_system = QCheckBox(self.frame_11)
         self.checkBox_start_with_system.setObjectName(u"checkBox_start_with_system")
         self.checkBox_start_with_system.setEnabled(True)
@@ -619,7 +621,47 @@ class Ui_preferences_dialog(object):
 "}")
         self.checkBox_start_with_system.setTristate(False)
 
-        self.horizontalLayout_10.addWidget(self.checkBox_start_with_system)
+        self.horizontalLayout_19.addWidget(self.checkBox_start_with_system)
+
+        self.checkBox_close_to_tray = QCheckBox(self.frame_11)
+        self.checkBox_close_to_tray.setObjectName(u"checkBox_close_to_tray")
+        self.checkBox_close_to_tray.setEnabled(True)
+        self.checkBox_close_to_tray.setMinimumSize(QSize(96, 32))
+        self.checkBox_close_to_tray.setLayoutDirection(Qt.LeftToRight)
+        self.checkBox_close_to_tray.setStyleSheet(u"QCheckBox {\n"
+"    font: 580 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"    padding-left: 4px;\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:unchecked {\n"
+"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"/* -------------------------- */\n"
+"\n"
+"\n"
+"QCheckBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.checkBox_close_to_tray.setTristate(False)
+
+        self.horizontalLayout_19.addWidget(self.checkBox_close_to_tray)
+
+
+        self.horizontalLayout_10.addLayout(self.horizontalLayout_19)
 
 
         self.verticalLayout_4.addWidget(self.frame_11)
@@ -993,6 +1035,7 @@ class Ui_preferences_dialog(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Discord_status), QCoreApplication.translate("preferences_dialog", u"Discord Status", None))
         self.setup_ncm_mode.setText(QCoreApplication.translate("preferences_dialog", u"Setup NCM mode", None))
         self.checkBox_start_with_system.setText(QCoreApplication.translate("preferences_dialog", u"Start with system", None))
+        self.checkBox_close_to_tray.setText(QCoreApplication.translate("preferences_dialog", u"Minimize on Close", None))
         self.launch_addon_after_nosteamlogon_fix.setText(QCoreApplication.translate("preferences_dialog", u"Launch the addon after NoSteamLogon fix", None))
         self.reset_console_button.setText(QCoreApplication.translate("preferences_dialog", u"Reset console position", None))
         self.checkBox_debug_info.setText(QCoreApplication.translate("preferences_dialog", u"Debug info", None))

@@ -977,21 +977,23 @@ QCheckBox:hover {
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="checkBox_start_with_system">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>96</width>
-              <height>32</height>
-             </size>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QCheckBox {
+           <layout class="QHBoxLayout" name="horizontalLayout_19">
+            <item>
+             <widget class="QCheckBox" name="checkBox_start_with_system">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>96</width>
+                <height>32</height>
+               </size>
+              </property>
+              <property name="layoutDirection">
+               <enum>Qt::LeftToRight</enum>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QCheckBox {
     font: 580 10pt &quot;Segoe UI&quot;;
     border: 2px solid black;
     border-radius: 4px;
@@ -1019,14 +1021,68 @@ QCheckBox:hover {
     background-color: #414956;
     color: white;
 }</string>
-            </property>
-            <property name="text">
-             <string>Start with system</string>
-            </property>
-            <property name="tristate">
-             <bool>false</bool>
-            </property>
-           </widget>
+              </property>
+              <property name="text">
+               <string>Start with system</string>
+              </property>
+              <property name="tristate">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="checkBox_close_to_tray">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>96</width>
+                <height>32</height>
+               </size>
+              </property>
+              <property name="layoutDirection">
+               <enum>Qt::LeftToRight</enum>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QCheckBox {
+    font: 580 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding-top: 2px;
+    padding-bottom:2px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+    padding-left: 4px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}
+
+QCheckBox::indicator:checked {
+    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}
+
+/* -------------------------- */
+
+
+QCheckBox:hover {
+    background-color: #414956;
+    color: white;
+}</string>
+              </property>
+              <property name="text">
+               <string>Minimize on Close</string>
+              </property>
+              <property name="tristate">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
