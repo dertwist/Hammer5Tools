@@ -263,6 +263,9 @@ class PropertyFrame(QWidget):
         elif prop_class == 'PlaceMultiple':
             classes = ['m_nCount', 'm_Expression']
             operator_adding_instances(classes)
+        elif prop_class == 'BendDeformer':
+            classes = ['m_bDeformationEnabled', 'm_vSize', 'm_vOrigin', 'm_vAngles', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius']
+            operator_adding_instances(classes)
         # Operators
         elif prop_class == 'CreateSizer':
             classes = ['m_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX','m_OutputVariableMinX', 'm_OutputVariableMaxX', 'm_flInitialMinY', 'm_flInitialMaxY', 'm_flConstraintMinY', 'm_flConstraintMaxY', 'm_OutputVariableMinY', 'm_OutputVariableMaxY', 'm_flInitialMinZ', 'm_flInitialMaxZ', 'm_flConstraintMinZ', 'm_flConstraintMaxZ', 'm_OutputVariableMinZ', 'm_OutputVariableMaxZ']
