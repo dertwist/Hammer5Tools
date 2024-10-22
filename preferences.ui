@@ -47,10 +47,10 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="tabPosition">
-      <enum>QTabWidget::TabPosition::North</enum>
+      <enum>QTabWidget::North</enum>
      </property>
      <property name="tabShape">
-      <enum>QTabWidget::TabShape::Rounded</enum>
+      <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
       <number>2</number>
@@ -67,7 +67,7 @@
         <number>0</number>
        </property>
        <property name="sizeConstraint">
-        <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
+        <enum>QLayout::SetDefaultConstraint</enum>
        </property>
        <property name="leftMargin">
         <number>0</number>
@@ -93,10 +93,10 @@
           <string notr="true">background-color: #1C1C1C;</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
@@ -105,10 +105,10 @@
              <string notr="true">border:0px;</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::Shape::StyledPanel</enum>
+             <enum>QFrame::StyledPanel</enum>
             </property>
             <property name="frameShadow">
-             <enum>QFrame::Shadow::Raised</enum>
+             <enum>QFrame::Raised</enum>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_9">
              <property name="leftMargin">
@@ -149,7 +149,7 @@
                 <string>Steam path:</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
@@ -194,7 +194,7 @@
     }</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
            </widget>
           </item>
@@ -213,10 +213,10 @@
           <string notr="true">background-color: #1C1C1C;</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
@@ -245,7 +245,7 @@
              <string>Path to cs2:</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
            </widget>
           </item>
@@ -287,7 +287,7 @@
     }</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
            </widget>
           </item>
@@ -306,10 +306,10 @@
           <string notr="true">background-color: #1C1C1C;</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_6">
           <item>
@@ -318,10 +318,10 @@
              <string notr="true">border:0px;</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::Shape::StyledPanel</enum>
+             <enum>QFrame::StyledPanel</enum>
             </property>
             <property name="frameShadow">
-             <enum>QFrame::Shadow::Raised</enum>
+             <enum>QFrame::Raised</enum>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout">
              <property name="leftMargin">
@@ -362,7 +362,7 @@
                 <string>User presets path:</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
@@ -407,7 +407,7 @@
     }</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
            </widget>
           </item>
@@ -426,10 +426,10 @@
           <string notr="true">background-color: #1C1C1C;</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
@@ -438,10 +438,10 @@
              <string notr="true">border:0px;</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::Shape::StyledPanel</enum>
+             <enum>QFrame::StyledPanel</enum>
             </property>
             <property name="frameShadow">
-             <enum>QFrame::Shadow::Raised</enum>
+             <enum>QFrame::Raised</enum>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_7">
              <property name="leftMargin">
@@ -482,7 +482,7 @@
                 <string>Archive path:</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
@@ -527,7 +527,7 @@
     }</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
            </widget>
           </item>
@@ -537,7 +537,7 @@
        <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -578,10 +578,10 @@
           <string notr="true">background-color: #1C1C1C;</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <property name="spacing">
@@ -608,7 +608,7 @@
              </size>
             </property>
             <property name="layoutDirection">
-             <enum>Qt::LayoutDirection::LeftToRight</enum>
+             <enum>Qt::LeftToRight</enum>
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox {
@@ -697,10 +697,10 @@ QCheckBox:hover {
        <item>
         <widget class="QFrame" name="frame_13">
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_15">
           <property name="spacing">
@@ -730,10 +730,10 @@ QCheckBox:hover {
              <string notr="true">background-color: #1C1C1C;</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
+             <enum>QFrame::NoFrame</enum>
             </property>
             <property name="frameShadow">
-             <enum>QFrame::Shadow::Raised</enum>
+             <enum>QFrame::Raised</enum>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_13">
              <item>
@@ -742,10 +742,10 @@ QCheckBox:hover {
                 <string notr="true">border:0px;</string>
                </property>
                <property name="frameShape">
-                <enum>QFrame::Shape::StyledPanel</enum>
+                <enum>QFrame::StyledPanel</enum>
                </property>
                <property name="frameShadow">
-                <enum>QFrame::Shadow::Raised</enum>
+                <enum>QFrame::Raised</enum>
                </property>
                <layout class="QHBoxLayout" name="horizontalLayout_14">
                 <property name="leftMargin">
@@ -789,7 +789,7 @@ QCheckBox:hover {
                 <string>Custom status:</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
@@ -834,7 +834,7 @@ QCheckBox:hover {
                 <string>Doing stuff</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
                </property>
               </widget>
              </item>
@@ -847,10 +847,10 @@ QCheckBox:hover {
        <item>
         <widget class="QFrame" name="frame_14">
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_16">
           <property name="spacing">
@@ -874,7 +874,7 @@ QCheckBox:hover {
        <item>
         <spacer name="verticalSpacer_2">
          <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -912,10 +912,10 @@ QCheckBox:hover {
           <string notr="true">background-color: #1C1C1C;</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_10">
           <property name="spacing">
@@ -990,7 +990,7 @@ QCheckBox:hover {
                </size>
               </property>
               <property name="layoutDirection">
-               <enum>Qt::LayoutDirection::LeftToRight</enum>
+               <enum>Qt::LeftToRight</enum>
               </property>
               <property name="styleSheet">
                <string notr="true">QCheckBox {
@@ -1042,7 +1042,7 @@ QCheckBox:hover {
                </size>
               </property>
               <property name="layoutDirection">
-               <enum>Qt::LayoutDirection::LeftToRight</enum>
+               <enum>Qt::LeftToRight</enum>
               </property>
               <property name="styleSheet">
                <string notr="true">QCheckBox {
@@ -1075,7 +1075,7 @@ QCheckBox:hover {
 }</string>
               </property>
               <property name="text">
-               <string>Close to tray</string>
+               <string>Minimize on Close</string>
               </property>
               <property name="tristate">
                <bool>false</bool>
@@ -1093,10 +1093,10 @@ QCheckBox:hover {
           <string notr="true">background-color: #1C1C1C;</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_18">
           <property name="spacing">
@@ -1126,7 +1126,7 @@ QCheckBox:hover {
              </size>
             </property>
             <property name="layoutDirection">
-             <enum>Qt::LayoutDirection::LeftToRight</enum>
+             <enum>Qt::LeftToRight</enum>
             </property>
             <property name="styleSheet">
              <string notr="true">QCheckBox {
@@ -1223,7 +1223,7 @@ QCheckBox:hover {
                </size>
               </property>
               <property name="layoutDirection">
-               <enum>Qt::LayoutDirection::LeftToRight</enum>
+               <enum>Qt::LeftToRight</enum>
               </property>
               <property name="styleSheet">
                <string notr="true">QCheckBox {
@@ -1274,10 +1274,10 @@ QCheckBox:hover {
           <string notr="true">background-color: #1C1C1C;</string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Shape::NoFrame</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+          <enum>QFrame::Raised</enum>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_17">
           <property name="spacing">
@@ -1351,7 +1351,7 @@ QCheckBox:hover {
        <item>
         <spacer name="verticalSpacer_3">
          <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -1374,10 +1374,10 @@ QCheckBox:hover {
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+      <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
+      <enum>QFrame::Raised</enum>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <property name="spacing">
@@ -1398,10 +1398,10 @@ QCheckBox:hover {
       <item>
        <widget class="QFrame" name="frame_16">
         <property name="frameShape">
-         <enum>QFrame::Shape::StyledPanel</enum>
+         <enum>QFrame::StyledPanel</enum>
         </property>
         <property name="frameShadow">
-         <enum>QFrame::Shadow::Raised</enum>
+         <enum>QFrame::Raised</enum>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_11">
          <property name="leftMargin">
