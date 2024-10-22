@@ -438,10 +438,7 @@ class Ui_Loading_editorMainWindow(object):
 "li.unchecked::marker { content: \"\\2610\"; }\n"
 "li.checked::marker { content: \"\\2612\"; }\n"
 "</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:11pt; font-weight:700;\">Apply images</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Applies all images above to the loading screen of the selected addon. </p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\""
-                        ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
+"<p style=\"-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.clear_all_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Clear all", None))
 #if QT_CONFIG(tooltip)
@@ -452,10 +449,7 @@ class Ui_Loading_editorMainWindow(object):
 "li.unchecked::marker { content: \"\\2610\"; }\n"
 "li.checked::marker { content: \"\\2612\"; }\n"
 "</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:11pt; font-weight:700;\">Apply images</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Applies all images above to the loading screen of the selected addon. </p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\""
-                        ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
+"<p style=\"-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.open_folder_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Open folder", None))
         self.delete_existings.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete existing", None))
@@ -467,10 +461,7 @@ class Ui_Loading_editorMainWindow(object):
 "li.unchecked::marker { content: \"\\2610\"; }\n"
 "li.checked::marker { content: \"\\2612\"; }\n"
 "</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:11pt; font-weight:700;\">Apply images</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Applies all images above to the loading screen of the selected addon. </p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\""
-                        ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
+"<p style=\"-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.apply_screenshots_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply screenshots", None))
         self.screenshot_preview.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshot Preview", None))
