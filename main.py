@@ -187,9 +187,13 @@ class Widget(QMainWindow):
         self.ui.documentation_button.clicked.connect(self.open_documentation)
 
     def closeEvent(self, event):
-        event.ignore()
-        self.hide()
-        self.show_minimize_message_once()
+        if settings.value("APP/minimize_to_tray", type=bool, defaultValue=True):
+            event.ignore()
+            self.hide()
+            self.show_minimize_message_once()
+
+        else:
+            self.exit_application()
 
     def selected_addon_name(self):
         set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
