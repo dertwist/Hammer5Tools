@@ -187,10 +187,11 @@ class Widget(QMainWindow):
         self.ui.documentation_button.clicked.connect(self.open_documentation)
 
     def closeEvent(self, event):
-        if settings.value("APP/close_to_tray", type=bool):
+        if settings.value("APP/minimize_to_tray", type=bool, defaultValue=True):
             event.ignore()
             self.hide()
             self.show_minimize_message_once()
+
         else:
             self.exit_application()
 
