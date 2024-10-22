@@ -84,10 +84,14 @@ class PropertyFloat(QWidget):
     # Float Widget
     def on_SpinBox_updated(self):
         value = self.ui.SpinBox.value()
+        if self.int_bool:
+            value = round(value)
         self.ui.Slider.setValue(value*100)
         self.on_changed()
     def on_Slider_updated(self):
         value = self.ui.Slider.value()
+        if self.int_bool:
+            value = round(value)
         self.ui.SpinBox.setValue(value/100)
         self.on_changed()
 

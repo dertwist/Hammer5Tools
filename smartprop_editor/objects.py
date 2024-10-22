@@ -36,7 +36,7 @@ elements_list = [
     {'FitOnLine': {'_class': 'CSmartPropElement_FitOnLine', 'm_vStart': None, 'm_vEnd': None, 'm_PointSpace': None, 'm_bOrientAlongLine': None, 'm_vUpDirection': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PickOne': {'_class': 'CSmartPropElement_PickOne', 'm_SelectionMode': 'RANDOM', 'm_vHandleOffset': None, 'm_HandleShape': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'Model': {'_class': 'CSmartPropElement_Model', 'm_sModelName': '', 'm_vModelScale': None, 'm_MaterialGroupName': '', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
-    {'BendDeformer': {'_class': 'CSmartPropElement_BendDeformer', 'm_sModelName': '', 'm_vModelScale': None, 'm_MaterialGroupName': '', 'm_Modifiers': [], 'm_SelectionCriteria': []}}
+    {'BendDeformer': {'_class': 'CSmartPropElement_BendDeformer', 'm_Modifiers': [], 'm_SelectionCriteria': []}}
 ]
 filter_prefix = 'CSmartPropFilter_'
 filters_list = [
