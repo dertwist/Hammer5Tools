@@ -9,7 +9,7 @@ from smartprop_editor.objects import expression_completer
 
 class PropertyFloat(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, int_bool=False):
+    def __init__(self, value_class, value, variables_scrollArea, int_bool=False,slider_range=[-99,99]):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -69,25 +69,40 @@ class PropertyFloat(QWidget):
                 self.text_line.setPlainText(str(self.var_value))
         elif isinstance(value, float) or isinstance(value, int):
             self.ui.logic_switch.setCurrentIndex(1)
-            self.text_line.setPlainText(str(value))
+            self.ui.SpinBox.setValue(value)
+            self.on_SpinBox_updated()
+            # self.text_line.setPlainText(str(value))
 
-
-
+        # Float widget setup
+        self.ui.Slider.valueChanged.connect(self.on_Slider_updated)
+        self.ui.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
+        self.ui.Slider.setMinimum(slider_range[0]*100)
+        self.ui.Slider.setMaximum(slider_range[1]*100)
         self.on_changed()
 
 
-
+    # Float Widget
+    def on_SpinBox_updated(self):
+        value = self.ui.SpinBox.value()
+        self.ui.Slider.setValue(value*100)
+        self.on_changed()
+    def on_Slider_updated(self):
+        value = self.ui.Slider.value()
+        self.ui.SpinBox.setValue(value/100)
+        self.on_changed()
 
     def logic_switch(self):
         if self.ui.logic_switch.currentIndex() == 0:
             self.text_line.OnlyFloat = False
             self.text_line.hide()
+            self.ui.float_widget.hide()
         elif self.ui.logic_switch.currentIndex() == 1:
-            self.text_line.OnlyFloat = True
-            self.text_line.show()
+            self.text_line.hide()
+            self.ui.float_widget.show()
         else:
             self.text_line.OnlyFloat = False
             self.text_line.show()
+            self.ui.float_widget.hide()
 
     def on_changed(self):
         self.logic_switch()
@@ -102,7 +117,7 @@ class PropertyFloat(QWidget):
             self.value = None
         #Float or int
         elif self.ui.logic_switch.currentIndex() == 1:
-            value = self.text_line.toPlainText()
+            value = self.ui.SpinBox.value()
             if self.int_bool:
                 self.value = {self.value_class: round(float(value))}
             else:
