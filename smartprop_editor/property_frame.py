@@ -274,7 +274,7 @@ class PropertyFrame(QWidget):
             classes = ['m_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX','m_OutputVariableMinX', 'm_OutputVariableMaxX', 'm_flInitialMinY', 'm_flInitialMaxY', 'm_flConstraintMinY', 'm_flConstraintMaxY', 'm_OutputVariableMinY', 'm_OutputVariableMaxY', 'm_flInitialMinZ', 'm_flInitialMaxZ', 'm_flConstraintMinZ', 'm_flConstraintMaxZ', 'm_OutputVariableMinZ', 'm_OutputVariableMaxZ']
             operator_adding_instances(classes)
         elif prop_class == 'CreateRotator':
-            classes = ['m_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_bApplyToCurrentTrasnform','m_OutputVariable']
+            classes = ['m_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_bApplyToCurrentTrasnform','m_OutputVariable', 'm_flSnappingIncrement', 'm_bEnforceLimits', 'm_flMinAngle', 'm_flMaxAngle']
             operator_adding_instances(classes)
         elif prop_class == 'CreateLocator':
             classes = ['m_flDisplayScale', 'm_bAllowScale']
