@@ -4,3 +4,6 @@ markdown2
 pypresence
 requests
 portalocker
+keyvalues3
+setuptools
+psutil
