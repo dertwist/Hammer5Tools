@@ -15,15 +15,15 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
-    QMainWindow, QPlainTextEdit, QPushButton, QSizePolicy,
-    QSplitter, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGroupBox,
+    QHBoxLayout, QMainWindow, QPlainTextEdit, QPushButton,
+    QSizePolicy, QSplitter, QVBoxLayout, QWidget)
 
 class Ui_Loading_editorMainWindow(object):
     def setupUi(self, Loading_editorMainWindow):
         if not Loading_editorMainWindow.objectName():
             Loading_editorMainWindow.setObjectName(u"Loading_editorMainWindow")
-        Loading_editorMainWindow.resize(1072, 745)
+        Loading_editorMainWindow.resize(1339, 759)
         self.centralwidget = QWidget(Loading_editorMainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_7 = QVBoxLayout(self.centralwidget)
@@ -36,7 +36,7 @@ class Ui_Loading_editorMainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.splitter_2.sizePolicy().hasHeightForWidth())
         self.splitter_2.setSizePolicy(sizePolicy)
-        self.splitter_2.setOrientation(Qt.Horizontal)
+        self.splitter_2.setOrientation(Qt.Orientation.Horizontal)
         self.screenshots = QGroupBox(self.splitter_2)
         self.screenshots.setObjectName(u"screenshots")
         sizePolicy.setHeightForWidth(self.screenshots.sizePolicy().hasHeightForWidth())
@@ -46,8 +46,8 @@ class Ui_Loading_editorMainWindow(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.explorer = QFrame(self.screenshots)
         self.explorer.setObjectName(u"explorer")
-        self.explorer.setFrameShape(QFrame.StyledPanel)
-        self.explorer.setFrameShadow(QFrame.Raised)
+        self.explorer.setFrameShape(QFrame.Shape.StyledPanel)
+        self.explorer.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_5 = QHBoxLayout(self.explorer)
         self.horizontalLayout_5.setSpacing(0)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
@@ -57,44 +57,8 @@ class Ui_Loading_editorMainWindow(object):
 
         self.verticalLayout_5 = QVBoxLayout()
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.open_folder_button = QPushButton(self.screenshots)
-        self.open_folder_button.setObjectName(u"open_folder_button")
-        self.open_folder_button.setMinimumSize(QSize(0, 32))
-        self.open_folder_button.setStyleSheet(u"    QLabel {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 10pt \"Segoe UI\";\n"
-"        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-
-        self.verticalLayout_5.addWidget(self.open_folder_button)
-
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.clear_all_button = QPushButton(self.screenshots)
         self.clear_all_button.setObjectName(u"clear_all_button")
         self.clear_all_button.setMinimumSize(QSize(0, 32))
@@ -131,7 +95,79 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.verticalLayout_5.addWidget(self.clear_all_button)
+        self.horizontalLayout_3.addWidget(self.clear_all_button)
+
+        self.open_folder_button = QPushButton(self.screenshots)
+        self.open_folder_button.setObjectName(u"open_folder_button")
+        self.open_folder_button.setMinimumSize(QSize(0, 32))
+        self.open_folder_button.setStyleSheet(u"    QLabel {\n"
+"        font-family: Sergo UI;\n"
+"        color: #9D9D9D;\n"
+"    }\n"
+"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 10pt \"Segoe UI\";\n"
+"        border: 2px solid black;\n"
+"        border-radius: 4px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:18px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+
+        self.horizontalLayout_3.addWidget(self.open_folder_button)
+
+
+        self.verticalLayout_5.addLayout(self.horizontalLayout_3)
+
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.delete_existings = QCheckBox(self.screenshots)
+        self.delete_existings.setObjectName(u"delete_existings")
+        self.delete_existings.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QCheckBox {\n"
+"\n"
+"        font: 580 10pt \"Segoe UI\";\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QCheckBox:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QCheckBox:pressed {\n"
+"\n"
+"    }")
+
+        self.horizontalLayout_2.addWidget(self.delete_existings)
 
         self.apply_screenshots_button = QPushButton(self.screenshots)
         self.apply_screenshots_button.setObjectName(u"apply_screenshots_button")
@@ -169,7 +205,10 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
 
-        self.verticalLayout_5.addWidget(self.apply_screenshots_button)
+        self.horizontalLayout_2.addWidget(self.apply_screenshots_button)
+
+
+        self.verticalLayout_5.addLayout(self.horizontalLayout_2)
 
 
         self.verticalLayout.addLayout(self.verticalLayout_5)
@@ -178,7 +217,7 @@ class Ui_Loading_editorMainWindow(object):
         self.splitter = QSplitter(self.splitter_2)
         self.splitter.setObjectName(u"splitter")
         self.splitter.setMidLineWidth(0)
-        self.splitter.setOrientation(Qt.Horizontal)
+        self.splitter.setOrientation(Qt.Orientation.Horizontal)
         self.screenshot_preview = QGroupBox(self.splitter)
         self.screenshot_preview.setObjectName(u"screenshot_preview")
         sizePolicy.setHeightForWidth(self.screenshot_preview.sizePolicy().hasHeightForWidth())
@@ -193,8 +232,8 @@ class Ui_Loading_editorMainWindow(object):
         self.frame_2 = QFrame(self.splitter)
         self.frame_2.setObjectName(u"frame_2")
         self.frame_2.setMaximumSize(QSize(360, 16777215))
-        self.frame_2.setFrameShape(QFrame.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Raised)
+        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -217,8 +256,8 @@ class Ui_Loading_editorMainWindow(object):
 "        padding-right: 4px;\n"
 "        color: #E3E3E3;\n"
 "        background-color: #1C1C1C;")
-        self.svg_icon_frame.setFrameShape(QFrame.StyledPanel)
-        self.svg_icon_frame.setFrameShadow(QFrame.Raised)
+        self.svg_icon_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.svg_icon_frame.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout = QHBoxLayout(self.svg_icon_frame)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
@@ -392,20 +431,6 @@ class Ui_Loading_editorMainWindow(object):
         Loading_editorMainWindow.setWindowTitle(QCoreApplication.translate("Loading_editorMainWindow", u"MainWindow", None))
         self.screenshots.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshots", None))
 #if QT_CONFIG(tooltip)
-        self.open_folder_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"hr { height: 1px; border-width: 0; }\n"
-"li.unchecked::marker { content: \"\\2610\"; }\n"
-"li.checked::marker { content: \"\\2612\"; }\n"
-"</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:11pt; font-weight:700;\">Apply images</span></p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Applies all images above to the loading screen of the selected addon. </p>\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\""
-                        ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.open_folder_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Open folder", None))
-#if QT_CONFIG(tooltip)
         self.clear_all_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -419,6 +444,21 @@ class Ui_Loading_editorMainWindow(object):
                         ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.clear_all_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Clear all", None))
+#if QT_CONFIG(tooltip)
+        self.open_folder_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"hr { height: 1px; border-width: 0; }\n"
+"li.unchecked::marker { content: \"\\2610\"; }\n"
+"li.checked::marker { content: \"\\2612\"; }\n"
+"</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
+"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:11pt; font-weight:700;\">Apply images</span></p>\n"
+"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Applies all images above to the loading screen of the selected addon. </p>\n"
+"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\""
+                        ">Be careful: old images stored in <span style=\" font-family:'Courier New';\">game\\addons\\%addon_name%\\panorama\\images\\map_icons\\screenshots\\1080p\\</span> will be deleted.</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.open_folder_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Open folder", None))
+        self.delete_existings.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete existing", None))
 #if QT_CONFIG(tooltip)
         self.apply_screenshots_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
