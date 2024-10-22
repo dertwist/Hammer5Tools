@@ -103,6 +103,7 @@ class Widget(QMainWindow):
             self.open_documentation()
             self.settings.setValue("MainWindow/default_windowState", self.saveState())
             set_config_bool('APP', 'first_launch', False)
+
     # def __del__(self):
     #     sys.stdout = sys.__stdout__
     def on_update(self, text):
@@ -170,6 +171,8 @@ class Widget(QMainWindow):
         if self.ui.ComboBoxSelectAddon.currentText() == get_addon_name():
             self.selected_addon_name()
         self.ui.ComboBoxSelectAddon.setCurrentText(get_addon_name())
+
+        self.ui.ComboBoxSelectAddon.activated.connect(self.refresh_addon_combobox)
 
         self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
         self.ui.create_new_addon_button.clicked.connect(self.open_create_addon_dialog)
