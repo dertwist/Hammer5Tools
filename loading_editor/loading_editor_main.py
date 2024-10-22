@@ -10,11 +10,12 @@ from loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
 from explorer.image_viewer import ExplorerImageViewer
 from common import compile
 class ApplyScreenshots:
-    def __init__(self, game_screenshot_path, content_screenshot_path):
+    def __init__(self, game_screenshot_path, content_screenshot_path, delete_existing):
         self.game_screenshot_path = game_screenshot_path
         self.content_screenshot_path = content_screenshot_path
         debug(f'game screenshots path: {self.game_screenshot_path}')
         debug(f'content screenshots path: {self.content_screenshot_path}')
+
 
         if os.path.exists(self.content_screenshot_path):
             pass
@@ -45,6 +46,13 @@ class ApplyScreenshots:
             shutil.rmtree(os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", "1080p"))
         except:
             pass
+
+        # Delete old vtex_c
+        if delete_existing:
+            try:
+                shutil.rmtree(os.path.join(os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name()), "panorama", "images", "map_icons", "screenshots", "1080p"))
+            except:
+                pass
 
         #Process
         for item in file_list:
@@ -157,7 +165,7 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
         # apply images
         try:
-            self.ui.apply_screenshots_button.clicked.connect(lambda : ApplyScreenshots(game_screenshot_path=game_screenshot_path, content_screenshot_path=content_screenshot_path))
+            self.ui.apply_screenshots_button.clicked.connect(lambda : ApplyScreenshots(game_screenshot_path=game_screenshot_path, content_screenshot_path=content_screenshot_path, delete_existing=self.ui.delete_existings.isChecked()))
         except Exception as error:
             print(error)
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
