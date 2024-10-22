@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QHBoxLayout,
-    QLabel, QLayout, QSizePolicy, QSpacerItem,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QDoubleSpinBox, QFrame,
+    QHBoxLayout, QLabel, QLayout, QSizePolicy,
+    QSlider, QSpacerItem, QVBoxLayout, QWidget)
 
 class Ui_Widget(object):
     def setupUi(self, Widget):
@@ -71,8 +71,8 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.frame.setLineWidth(0)
         self.horizontalLayout_2 = QHBoxLayout(self.frame)
         self.horizontalLayout_2.setSpacing(16)
@@ -80,7 +80,7 @@ class Ui_Widget(object):
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.layout = QHBoxLayout()
         self.layout.setObjectName(u"layout")
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
+        self.layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
         self.property_class = QLabel(self.frame)
         self.property_class.setObjectName(u"property_class")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
@@ -195,6 +195,35 @@ class Ui_Widget(object):
 "")
 
         self.layout.addWidget(self.logic_switch)
+
+        self.float_widget = QFrame(self.frame)
+        self.float_widget.setObjectName(u"float_widget")
+        self.float_widget.setMinimumSize(QSize(54, 0))
+        self.float_widget.setFrameShape(QFrame.Shape.StyledPanel)
+        self.float_widget.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout = QHBoxLayout(self.float_widget)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.SpinBox = QDoubleSpinBox(self.float_widget)
+        self.SpinBox.setObjectName(u"SpinBox")
+        self.SpinBox.setDecimals(2)
+        self.SpinBox.setMinimum(-99999999.000000000000000)
+        self.SpinBox.setMaximum(99999999.000000000000000)
+        self.SpinBox.setValue(1.200000000000000)
+
+        self.horizontalLayout.addWidget(self.SpinBox)
+
+        self.Slider = QSlider(self.float_widget)
+        self.Slider.setObjectName(u"Slider")
+        self.Slider.setMinimum(-9999)
+        self.Slider.setMaximum(9999)
+        self.Slider.setOrientation(Qt.Orientation.Horizontal)
+        self.Slider.setInvertedAppearance(False)
+
+        self.horizontalLayout.addWidget(self.Slider)
+
+
+        self.layout.addWidget(self.float_widget)
 
         self.spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
