@@ -16,6 +16,11 @@ class ApplyScreenshots:
         debug(f'game screenshots path: {self.game_screenshot_path}')
         debug(f'content screenshots path: {self.content_screenshot_path}')
 
+        if os.path.exists(self.content_screenshot_path):
+            pass
+        else:
+            os.makedirs(self.content_screenshot_path)
+
         self.addon_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
 
         debug(f'addon_path path: {self.addon_path}')
@@ -151,7 +156,10 @@ class Loading_editorMainWindow(QMainWindow):
         # apply_description_button
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
         # apply images
-        self.ui.apply_screenshots_button.clicked.connect(lambda : ApplyScreenshots(game_screenshot_path=game_screenshot_path, content_screenshot_path=content_screenshot_path))
+        try:
+            self.ui.apply_screenshots_button.clicked.connect(lambda : ApplyScreenshots(game_screenshot_path=game_screenshot_path, content_screenshot_path=content_screenshot_path))
+        except Exception as error:
+            print(error)
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
 
         self.ui.clear_all_button.clicked.connect(self.clear_images)
