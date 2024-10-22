@@ -156,6 +156,9 @@ class PropertyFrame(QWidget):
                 property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
             # Float
+            elif 'm_flBendPoint' in value_class:
+                property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, slider_range=[0,1])
+                add_instance()
             elif 'm_fl' in value_class:
                 property_instance = PropertyFloat(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
