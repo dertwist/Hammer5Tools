@@ -224,7 +224,6 @@ class PropertyVector3D(QWidget):
         elif self.ui.logic_switch.currentIndex() == 2:
             def handle_value(line, combo_box, variable, float_widget):
                 index = combo_box.currentIndex()
-                print(index, combo_box.currentText())
                 if index == 0:
                     value = float_widget.value
                 elif index == 1:
