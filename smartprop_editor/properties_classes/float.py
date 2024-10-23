@@ -20,6 +20,23 @@ class PropertyFloat(QWidget):
         self.int_bool = int_bool
         self.variables_scrollArea = variables_scrollArea
 
+
+        # Float widget setup
+        self.float_widget = FloatWidget(slider_range=slider_range, int_output=int_bool)
+        self.float_widget.edited.connect(self.on_changed)
+        self.ui.layout.addWidget(self.float_widget)
+
+        # Spacer frame
+        spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacer = QWidget()
+        spacer_layout = QHBoxLayout()
+        spacer_layout.addSpacerItem(spacer_item)
+        spacer_layout.setContentsMargins(0,0,0,0)
+        self.spacer.setLayout(spacer_layout)
+        self.spacer.setStyleSheet('border:None;')
+        self.spacer.setContentsMargins(0,0,0,0)
+        self.ui.layout.addWidget(self.spacer)
+
         if self.int_bool:
             self.ui.logic_switch.setItemText(1, 'Int')
             self.ui.property_class.setStyleSheet("""
@@ -57,21 +74,7 @@ class PropertyFloat(QWidget):
 
         self.ui.logic_switch.setCurrentIndex(0)
         self.text_line.setPlainText('0')
-        # Float widget setup
-        self.float_widget = FloatWidget(slider_range=slider_range, int_output=int_bool)
-        self.float_widget.edited.connect(self.on_changed)
-        self.ui.layout.addWidget(self.float_widget)
 
-        # Spacer frame
-        spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.spacer = QWidget()
-        spacer_layout = QHBoxLayout()
-        spacer_layout.addSpacerItem(spacer_item)
-        spacer_layout.setContentsMargins(0,0,0,0)
-        self.spacer.setLayout(spacer_layout)
-        self.spacer.setStyleSheet('border:None;')
-        self.spacer.setContentsMargins(0,0,0,0)
-        self.ui.layout.addWidget(self.spacer)
 
         if isinstance(value, dict):
             if 'm_Expression' in value:
