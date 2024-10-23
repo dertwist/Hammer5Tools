@@ -209,7 +209,7 @@ class Ui_Widget(object):
         self.SpinBox.setDecimals(2)
         self.SpinBox.setMinimum(-99999999.000000000000000)
         self.SpinBox.setMaximum(99999999.000000000000000)
-        self.SpinBox.setValue(1.200000000000000)
+        self.SpinBox.setValue(1.000000000000000)
 
         self.horizontalLayout.addWidget(self.SpinBox)
 
