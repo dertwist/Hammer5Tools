@@ -624,11 +624,12 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def open_hierarchy_menu(self, position):
         menu = QMenu()
+        item = self.ui.choices_tree_widget.itemAt(position)
         add_new_action = menu.addAction("Add new element")
         move_up_action = menu.addAction("Move Up")
         move_down_action = menu.addAction("Move Down")
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.remove_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+        remove_action.triggered.connect(lambda: self.remove_item(item))
 
         duplicate_action = menu.addAction("Duplicate")
         duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position), self.ui.tree_hierarchy_widget))
