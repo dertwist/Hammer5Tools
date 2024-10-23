@@ -85,6 +85,16 @@ class PropertyFrame(QWidget):
         from smartprop_editor.properties_classes.colormatch import PropertyColorMatch
 
 
+        # only_variable_properties
+        only_variable_properties = [
+            'm_OutputVariableMaxZ',
+            'm_OutputVariableMinZ',
+            'm_OutputVariableMaxY',
+            'm_OutputVariableMinY',
+            'm_OutputVariableMaxX',
+            'm_OutputVariableMinX',
+            'm_OutputVariable'
+        ]
 
         def operator_adding_instances(classes):
             for item in classes:
@@ -196,23 +206,8 @@ class PropertyFrame(QWidget):
             elif 'm_Expression' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=True, placeholder='Expression example: var_bool ? var_sizer * var_multiply')
                 add_instance()
-            elif 'm_OutputVariableMaxZ' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
-                add_instance()
-            elif 'm_OutputVariableMinZ' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
-                add_instance()
-            elif 'm_OutputVariableMaxY' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
-                add_instance()
-            elif 'm_OutputVariableMinY' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
-                add_instance()
-            elif 'm_OutputVariableMaxX' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
-                add_instance()
-            elif 'm_OutputVariableMinX' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
+            elif value_class in only_variable_properties:
+                property_instance = PropertyString(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea, only_variable=True)
                 add_instance()
             elif 'm_StateName' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='State name')
@@ -220,9 +215,6 @@ class PropertyFrame(QWidget):
 
             elif 'm_VariableName' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable name')
-                add_instance()
-            elif 'm_OutputVariable' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='Variable Output')
                 add_instance()
             elif 'm_VariableValue' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
