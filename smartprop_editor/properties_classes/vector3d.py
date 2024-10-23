@@ -49,6 +49,7 @@ class PropertyVector3D(QWidget):
         layout.addSpacerItem(spacer)
         self.variable_x_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
         self.variable_x_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.variable_x.changed.connect(self.on_changed)
         self.ui.layout_x.insertWidget(3, self.variable_x_frame)
 
         # Expression
@@ -73,6 +74,7 @@ class PropertyVector3D(QWidget):
         layout.addSpacerItem(spacer)
         self.variable_y_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
         self.variable_y_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.variable_y.changed.connect(self.on_changed)
         self.ui.layout_y.insertWidget(3, self.variable_y_frame)
 
         # Expression
@@ -97,6 +99,7 @@ class PropertyVector3D(QWidget):
         layout.addSpacerItem(spacer)
         self.variable_z_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
         self.variable_z_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.variable_z.changed.connect(self.on_changed)
         self.ui.layout_z.insertWidget(3, self.variable_z_frame)
 
         # Expression
@@ -114,6 +117,8 @@ class PropertyVector3D(QWidget):
                     layout.setPlainText(str(value['m_Expression']))
                     combo.setCurrentIndex(2)
                 if 'm_SourceName' in value:
+                    print(value['m_SourceName'])
+                    variable.updateItems()
                     variable.addItem(value['m_SourceName'])
                     variable.setCurrentText(value['m_SourceName'])
                     combo.setCurrentIndex(1)
@@ -218,38 +223,21 @@ class PropertyVector3D(QWidget):
                 pass
             self.value = {self.value_class: {'m_SourceName': value}}
         elif self.ui.logic_switch.currentIndex() == 2:
-            value_x = self.text_line_x.toPlainText()
-            value_y = self.text_line_y.toPlainText()
-            value_z = self.text_line_z.toPlainText()
-            try:
-                if self.ui.comboBox_x.currentIndex() == 0:
-                    value_x = self.float_widget_x.value
-                else:
-                    value_x = ast.literal_eval(value_x)
-            except:
-                pass
-            try:
-                value_y = ast.literal_eval(value_y)
-            except:
-                pass
-            try:
-                value_z = ast.literal_eval(value_z)
-            except:
-                pass
-            def handle_value(value, combo_box):
+            def handle_value(line, combo_box, variable, float_widget):
                 index = combo_box.currentIndex()
+                print(index, combo_box.currentText())
                 if index == 0:
-                    pass
+                    value = float_widget.value
                 elif index == 1:
-                    value = {'m_SourceName': value}
+                    value = {'m_SourceName': variable.currentText()}
                 elif index == 2:
-                    value = {'m_Expression': str(value)}
+                    value = {'m_Expression': line.toPlainText()}
                 return value
 
             # Update values
-            value_x = handle_value(value_x, self.ui.comboBox_x)
-            value_y = handle_value(value_y, self.ui.comboBox_y)
-            value_z = handle_value(value_z, self.ui.comboBox_z)
+            value_x = handle_value(self.text_line_x, self.ui.comboBox_x, self.variable_x, self.float_widget_x)
+            value_y = handle_value(self.text_line_y, self.ui.comboBox_y, self.variable_y, self.float_widget_y)
+            value_z = handle_value(self.text_line_z, self.ui.comboBox_z, self.variable_z, self.float_widget_z)
             self.value = {self.value_class: {'m_Components': [value_x, value_y, value_z]}}
 
     def get_variables(self, search_term=None):
