@@ -1,10 +1,55 @@
-from PySide6.QtWidgets import QComboBox, QTreeWidgetItem, QTreeWidget
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem
+class FloatWidget(QWidget):
+    edited = Signal(float)
+    def __init__(self, int_output=False, slider_range=[-99,99]):
+        """Float widget is a widget with sping box and slider that are synchronized with each-other. This widget give float or round(float) which is int variable type"""
+        super().__init__()
+        # Variables
+        self.int_output = int_output
+        self.value = 0.0
+        # SpinnBox setup
+        self.SpinBox = QDoubleSpinBox()
+        self.SpinBox.setMinimum(-99999999)
+        self.SpinBox.setMaximum(99999999)
+        self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
+        # Slider setup
+        self.Slider = QSlider()
+        self.Slider.setOrientation(Qt.Horizontal)
+        self.Slider.setMinimum(slider_range[0] * 100)
+        self.Slider.setMaximum(slider_range[1] * 100)
+        self.Slider.valueChanged.connect(self.on_Slider_updated)
+        # Layout setup
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+        layout.addWidget(self.SpinBox)
+        layout.addWidget(self.Slider)
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        layout.addItem(spacer)
+        self.setLayout(layout)
+        # Widget class
+
+    # Updating
+    def on_SpinBox_updated(self):
+        value = self.SpinBox.value()
+        if self.int_output:
+            value = round(value)
+        self.Slider.setValue(value*100)
+        self.value = value
+        self.edited.emit(value)
+    def on_Slider_updated(self):
+        value = self.Slider.value() / 100
+        if self.int_output:
+            value = round(value)
+        self.SpinBox.setValue(value)
+        self.value = value
+        self.edited.emit(value)
 
 class ComboboxDynamicItems(QComboBox):
     clicked = Signal()
 
     def __init__(self, parent=None, items=None):
+        """Combobox that updates it's items when user clicked on it"""
         super().__init__(parent)
         self.setStyleSheet('padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px;')
         self.items = items
@@ -28,6 +73,7 @@ class ComboboxDynamicItems(QComboBox):
 class ComboboxVariables(ComboboxDynamicItems):
     changed = Signal(dict)
     def __init__(self, parent=None, layout=None):
+        """Getting variables and put them into combobox"""
         super().__init__(parent)
         self.variables_scrollArea = layout
         self.items = None

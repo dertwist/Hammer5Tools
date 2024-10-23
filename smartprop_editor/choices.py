@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QWidget, QLineEdit, QVBoxLayout, QSlider, QHBoxLayout, QCheckBox
 from PySide6.QtCore import Qt
-from smartprop_editor.widgets import ComboboxTreeChild, ComboboxDynamicItems, ComboboxVariables
+from widgets import ComboboxTreeChild, ComboboxDynamicItems, ComboboxVariables
 from preferences import debug
 var_choice_identification_bool = ['boolean', 'bool']
 var_choice_identification_float = ['float']

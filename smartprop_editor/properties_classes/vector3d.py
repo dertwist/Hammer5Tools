@@ -3,9 +3,10 @@ import re
 
 from smartprop_editor.properties_classes.ui_vector3d import Ui_Widget
 from completer.main import CompletingPlainTextEdit
-from PySide6.QtWidgets import QWidget, QCompleter
-from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QWidget, QCompleter, QSizePolicy
+from PySide6.QtCore import Signal, Qt
 from smartprop_editor.objects import expression_completer
+from widgets import FloatWidget, ComboboxVariables
 
 
 class PropertyVector3D(QWidget):
@@ -33,8 +34,14 @@ class PropertyVector3D(QWidget):
         self.text_line.textChanged.connect(self.on_changed)
 
         # Vector X
+
+        # Float widget
+        self.float_widget_x = FloatWidget()
+        self.float_widget_x.edited.connect(self.on_changed)
+        self.ui.layout_x.insertWidget(2, self.float_widget_x)
+        # Line
         self.text_line_x = CompletingPlainTextEdit()
-        self.ui.layout_x.insertWidget(2, self.text_line_x)
+        self.ui.layout_x.insertWidget(3, self.text_line_x)
         self.text_line_x.textChanged.connect(self.on_changed)
         self.ui.comboBox_x.currentIndexChanged.connect(self.on_changed)
 
@@ -91,9 +98,11 @@ class PropertyVector3D(QWidget):
 
     def logic_switch_line(self):
         if self.ui.comboBox_x.currentIndex() == 0:
-            self.text_line_x.OnlyFloat = True
+            self.text_line_x.hide()
+            self.float_widget_x.show()
         else:
-            self.text_line_x.OnlyFloat = False
+            self.text_line_x.show()
+            self.float_widget_x.hide()
 
         if self.ui.comboBox_y.currentIndex() == 0:
             self.text_line_y.OnlyFloat = True
@@ -143,7 +152,10 @@ class PropertyVector3D(QWidget):
             value_y = self.text_line_y.toPlainText()
             value_z = self.text_line_z.toPlainText()
             try:
-                value_x = ast.literal_eval(value_x)
+                if self.ui.comboBox_x.currentIndex() == 0:
+                    value_x = self.float_widget_x.value
+                else:
+                    value_x = ast.literal_eval(value_x)
             except:
                 pass
             try:
