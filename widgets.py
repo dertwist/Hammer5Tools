@@ -57,6 +57,9 @@ class FloatWidget(QWidget):
         self.SpinBox.setValue(value)
         self.value = value
         self.edited.emit(value)
+    def set_value(self, value):
+        self.SpinBox.setValue(value)
+        self.on_SpinBox_updated()
 
 class ComboboxDynamicItems(QComboBox):
     clicked = Signal()
