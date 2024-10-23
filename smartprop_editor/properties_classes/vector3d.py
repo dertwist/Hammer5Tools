@@ -26,12 +26,12 @@ class PropertyVector3D(QWidget):
         self.ui.property_class.setText(output)
         self.ui.logic_switch.currentIndexChanged.connect(self.on_changed)
 
+
         # Variable
-        self.text_line = CompletingPlainTextEdit()
-        self.text_line.completion_tail = ''
-        self.text_line.setPlaceholderText('Variable name')
-        self.ui.layout.insertWidget(2, self.text_line)
-        self.text_line.textChanged.connect(self.on_changed)
+        self.variable_logic_switch = ComboboxVariables(layout=self.variables_scrollArea)
+        self.variable_logic_switch.setMinimumWidth(128)
+        self.variable_logic_switch.changed.connect(self.on_changed)
+        self.ui.layout.insertWidget(2, self.variable_logic_switch)
 
         # Vector X Setup
 
@@ -131,7 +131,7 @@ class PropertyVector3D(QWidget):
                 combo.setCurrentIndex(0)
 
         if isinstance(value, dict):
-            if  'm_Components' in value:
+            if 'm_Components' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x, self.variable_x, self.float_widget_x)
                 add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y, self.variable_y, self.float_widget_y)
@@ -139,7 +139,8 @@ class PropertyVector3D(QWidget):
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(1)
                 self.var_value = value['m_SourceName']
-                self.text_line.setPlainText(self.var_value)
+                self.variable_logic_switch.addItem(value['m_SourceName'])
+                self.variable_logic_switch.setCurrentText(value['m_SourceName'])
         elif isinstance(value, list):
             self.ui.logic_switch.setCurrentIndex(2)
             add_value(self.text_line_x, value[0], self.ui.comboBox_x, self.variable_x, self.float_widget_x)
@@ -193,17 +194,19 @@ class PropertyVector3D(QWidget):
         if self.ui.logic_switch.currentIndex() == 0:
             self.ui.frame_4.setMaximumHeight(0)
             widget.hide()
+            self.variable_logic_switch.hide()
         elif self.ui.logic_switch.currentIndex() == 1:
             self.ui.frame_4.setMaximumHeight(0)
             widget.show()
+            self.variable_logic_switch.show()
         else:
             self.ui.frame_4.setMaximumHeight(1600)
             if isinstance(widget, CompletingPlainTextEdit):
                 widget.hide()
+            self.variable_logic_switch.hide()
 
     def on_changed(self):
         variables = self.get_variables()
-        self.text_line.completions.setStringList(variables + expression_completer)
         self.text_line_x.completions.setStringList(variables + expression_completer)
         self.text_line_y.completions.setStringList(variables + expression_completer)
         self.text_line_z.completions.setStringList(variables + expression_completer)
@@ -216,11 +219,7 @@ class PropertyVector3D(QWidget):
         if self.ui.logic_switch.currentIndex() == 0:
             self.value = None
         elif self.ui.logic_switch.currentIndex() == 1:
-            value = self.text_line.toPlainText()
-            try:
-                value = ast.literal_eval(value)
-            except:
-                pass
+            value = self.variable_logic_switch.currentText()
             self.value = {self.value_class: {'m_SourceName': value}}
         elif self.ui.logic_switch.currentIndex() == 2:
             def handle_value(line, combo_box, variable, float_widget):
