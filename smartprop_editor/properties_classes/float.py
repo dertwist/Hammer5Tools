@@ -2,9 +2,10 @@ import ast
 import re
 from smartprop_editor.properties_classes.ui_float import Ui_Widget
 from completer.main import CompletingPlainTextEdit
-from PySide6.QtWidgets import QWidget, QCompleter
+from PySide6.QtWidgets import QWidget, QCompleter, QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
 from smartprop_editor.objects import expression_completer
+from widgets import FloatWidget
 
 
 class PropertyFloat(QWidget):
@@ -56,7 +57,21 @@ class PropertyFloat(QWidget):
 
         self.ui.logic_switch.setCurrentIndex(0)
         self.text_line.setPlainText('0')
+        # Float widget setup
+        self.float_widget = FloatWidget(slider_range=slider_range, int_output=int_bool)
+        self.float_widget.edited.connect(self.on_changed)
+        self.ui.layout.addWidget(self.float_widget)
 
+        # Spacer frame
+        spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacer = QWidget()
+        spacer_layout = QHBoxLayout()
+        spacer_layout.addSpacerItem(spacer_item)
+        spacer_layout.setContentsMargins(0,0,0,0)
+        self.spacer.setLayout(spacer_layout)
+        self.spacer.setStyleSheet('border:None;')
+        self.spacer.setContentsMargins(0,0,0,0)
+        self.ui.layout.addWidget(self.spacer)
 
         if isinstance(value, dict):
             if 'm_Expression' in value:
@@ -69,52 +84,24 @@ class PropertyFloat(QWidget):
                 self.text_line.setPlainText(str(self.var_value))
         elif isinstance(value, float) or isinstance(value, int):
             self.ui.logic_switch.setCurrentIndex(1)
-            self.ui.SpinBox.setValue(value)
-            self.on_SpinBox_updated()
-            # self.text_line.setPlainText(str(value))
-
-        # Float widget setup
-        self.ui.Slider.valueChanged.connect(self.on_Slider_updated)
-        self.ui.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
-        if slider_range[0] == 0 and slider_range[1] == 0:
-            value = self.ui.SpinBox.value()
-            self.ui.Slider.setMaximum(abs(value) * 10 * 100)
-            self.ui.Slider.setMinimum(-abs(value) * 10 * 100)
-        else:
-            self.ui.Slider.setMinimum(slider_range[0])
-            self.ui.Slider.setMaximum(slider_range[1])
-        self.on_changed()
-
-
-    # Float Widget
-    def on_SpinBox_updated(self):
-        value = self.ui.SpinBox.value()
-        if self.int_bool:
-            value = round(value)
-        if value > self.ui.Slider.maximum()/100:
-            self.ui.Slider.setMaximum(abs(value) * 10 * 100)
-            self.ui.Slider.setMinimum(-abs(value) * 10 * 100)
-        self.ui.Slider.setValue(value * 100)
-        self.on_changed()
-    def on_Slider_updated(self):
-        value = self.ui.Slider.value()
-        if self.int_bool:
-            value = round(value)
-        self.ui.SpinBox.setValue(value/100)
+            self.float_widget.set_value(value)
         self.on_changed()
 
     def logic_switch(self):
         if self.ui.logic_switch.currentIndex() == 0:
             self.text_line.OnlyFloat = False
             self.text_line.hide()
-            self.ui.float_widget.hide()
+            self.float_widget.hide()
+            self.spacer.show()
         elif self.ui.logic_switch.currentIndex() == 1:
             self.text_line.hide()
-            self.ui.float_widget.show()
+            self.float_widget.show()
+            self.spacer.hide()
         else:
             self.text_line.OnlyFloat = False
             self.text_line.show()
-            self.ui.float_widget.hide()
+            self.float_widget.hide()
+            self.spacer.hide()
 
     def on_changed(self):
         self.logic_switch()
@@ -129,7 +116,7 @@ class PropertyFloat(QWidget):
             self.value = None
         #Float or int
         elif self.ui.logic_switch.currentIndex() == 1:
-            value = self.ui.SpinBox.value()
+            value = self.float_widget.value
             if self.int_bool:
                 self.value = {self.value_class: round(float(value))}
             else:
