@@ -118,7 +118,10 @@ class VariableFloat(QWidget):
 
         value = self.data['m_Value']
         self.editline.setText(str(value))
-        self.slider.setValue(int(value * 100))
+        try:
+            self.slider.setValue(int(value * 100))
+        except:
+            pass
 
         self.editline.textChanged.connect(self.on_editline_changed)
         self.slider.valueChanged.connect(self.on_slider_changed)
