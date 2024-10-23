@@ -1,5 +1,18 @@
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem
+
+class Spacer(QWidget):
+    def __init__(self):
+        """Spacer widget, can be hidden or shown"""
+        super().__init__()
+
+        spacer_layout = QHBoxLayout()
+        spacer_layout.setContentsMargins(0,0,0,0)
+        spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacer_layout.addSpacerItem(spacer_item)
+        self.setLayout(spacer_layout)
+        self.setStyleSheet('border:None;')
+        self.setContentsMargins(0,0,0,0)
 class FloatWidget(QWidget):
     edited = Signal(float)
     def __init__(self, int_output=False, slider_range=[-0,0], value=0.0):
@@ -101,7 +114,7 @@ class ComboboxVariables(ComboboxDynamicItems):
         variables = self.get_variables()
         for item in variables:
             self.items.append(item['name'])
-
+        self.items.append('')
         current = self.currentText()
         self.clear()
         self.addItems(self.items)
@@ -121,6 +134,9 @@ class ComboboxVariables(ComboboxDynamicItems):
                 var = {'name': widget.name, 'class': widget.var_class, 'm_default': widget.var_value['default']}
                 data_out.append(var)
         return data_out
+    def set_variable(self, value):
+        self.addItem(value)
+        self.setCurrentText(value)
 
 class ComboboxTreeChild(ComboboxDynamicItems):
     def __init__(self, parent=None, layout=QTreeWidget, root=QTreeWidgetItem):
