@@ -9,7 +9,7 @@ from smartprop_editor.objects import expression_completer
 
 class PropertyFloat(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, int_bool=False,slider_range=[-99,99]):
+    def __init__(self, value_class, value, variables_scrollArea, int_bool=False,slider_range=[0,0]):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -76,8 +76,13 @@ class PropertyFloat(QWidget):
         # Float widget setup
         self.ui.Slider.valueChanged.connect(self.on_Slider_updated)
         self.ui.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
-        self.ui.Slider.setMinimum(slider_range[0]*100)
-        self.ui.Slider.setMaximum(slider_range[1]*100)
+        if slider_range[0] == 0 and slider_range[1] == 0:
+            value = self.ui.SpinBox.value()
+            self.ui.Slider.setMaximum(abs(value) * 10 * 100)
+            self.ui.Slider.setMinimum(-abs(value) * 10 * 100)
+        else:
+            self.ui.Slider.setMinimum(slider_range[0])
+            self.ui.Slider.setMaximum(slider_range[1])
         self.on_changed()
 
 
@@ -86,7 +91,10 @@ class PropertyFloat(QWidget):
         value = self.ui.SpinBox.value()
         if self.int_bool:
             value = round(value)
-        self.ui.Slider.setValue(value*100)
+        if value > self.ui.Slider.maximum()/100:
+            self.ui.Slider.setMaximum(abs(value) * 10 * 100)
+            self.ui.Slider.setMinimum(-abs(value) * 10 * 100)
+        self.ui.Slider.setValue(value * 100)
         self.on_changed()
     def on_Slider_updated(self):
         value = self.ui.Slider.value()

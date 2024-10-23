@@ -2,23 +2,33 @@ from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem
 class FloatWidget(QWidget):
     edited = Signal(float)
-    def __init__(self, int_output=False, slider_range=[-99,99]):
+    def __init__(self, int_output=False, slider_range=[-0,0], value=0.0):
         """Float widget is a widget with sping box and slider that are synchronized with each-other. This widget give float or round(float) which is int variable type"""
         super().__init__()
         # Variables
         self.int_output = int_output
-        self.value = 0.0
+        self.value = value
+
         # SpinnBox setup
         self.SpinBox = QDoubleSpinBox()
         self.SpinBox.setMinimum(-99999999)
         self.SpinBox.setMaximum(99999999)
         self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
+        self.SpinBox.setValue(value)
+
         # Slider setup
         self.Slider = QSlider()
         self.Slider.setOrientation(Qt.Horizontal)
-        self.Slider.setMinimum(slider_range[0] * 100)
-        self.Slider.setMaximum(slider_range[1] * 100)
+        # Range
+        if slider_range[0] == 0 and slider_range[1] == 0:
+            value = self.SpinBox.value()
+            self.Slider.setMaximum(abs(value) * 10 * 100 +1000)
+            self.Slider.setMinimum(-abs(value) * 10 * 100 -1000)
+        else:
+            self.Slider.setMinimum(slider_range[0])
+            self.Slider.setMaximum(slider_range[1])
         self.Slider.valueChanged.connect(self.on_Slider_updated)
+
         # Layout setup
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
@@ -34,6 +44,9 @@ class FloatWidget(QWidget):
         value = self.SpinBox.value()
         if self.int_output:
             value = round(value)
+        if value > self.Slider.maximum()/100 or value < self.Slider.minimum()/100:
+            self.Slider.setMaximum(abs(value) * 10 * 100 + 1000)
+            self.Slider.setMinimum(-abs(value) * 10 * 100 - 1000)
         self.Slider.setValue(value*100)
         self.value = value
         self.edited.emit(value)

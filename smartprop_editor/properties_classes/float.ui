@@ -304,7 +304,7 @@ QComboBox QAbstractItemView::item:selected {
               <double>99999999.000000000000000</double>
              </property>
              <property name="value">
-              <double>1.200000000000000</double>
+              <double>1.000000000000000</double>
              </property>
             </widget>
            </item>
