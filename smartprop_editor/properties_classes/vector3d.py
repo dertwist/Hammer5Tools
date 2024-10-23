@@ -3,7 +3,7 @@ import re
 
 from smartprop_editor.properties_classes.ui_vector3d import Ui_Widget
 from completer.main import CompletingPlainTextEdit
-from PySide6.QtWidgets import QWidget, QCompleter, QSizePolicy
+from PySide6.QtWidgets import QWidget, QCompleter, QSizePolicy, QFrame, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal, Qt
 from smartprop_editor.objects import expression_completer
 from widgets import FloatWidget, ComboboxVariables
@@ -33,43 +33,93 @@ class PropertyVector3D(QWidget):
         self.ui.layout.insertWidget(2, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)
 
-        # Vector X
+        # Vector X Setup
 
         # Float widget
         self.float_widget_x = FloatWidget()
         self.float_widget_x.edited.connect(self.on_changed)
         self.ui.layout_x.insertWidget(2, self.float_widget_x)
-        # Line
+        # Variable
+        self.variable_x = ComboboxVariables(layout=self.variables_scrollArea)
+        self.variable_x.setMinimumWidth(128)
+        layout = QHBoxLayout()
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        layout.setContentsMargins(0,0,0,0)
+        layout.addWidget(self.variable_x)
+        layout.addSpacerItem(spacer)
+        self.variable_x_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
+        self.variable_x_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.ui.layout_x.insertWidget(3, self.variable_x_frame)
+
+        # Expression
         self.text_line_x = CompletingPlainTextEdit()
-        self.ui.layout_x.insertWidget(3, self.text_line_x)
+        self.ui.layout_x.insertWidget(4, self.text_line_x)
         self.text_line_x.textChanged.connect(self.on_changed)
         self.ui.comboBox_x.currentIndexChanged.connect(self.on_changed)
 
-        # Vector Y
+        # Vector Y Setup
+
+        # Float widget
+        self.float_widget_y = FloatWidget()
+        self.float_widget_y.edited.connect(self.on_changed)
+        self.ui.layout_y.insertWidget(2, self.float_widget_y)
+        # Variable
+        self.variable_y = ComboboxVariables(layout=self.variables_scrollArea)
+        self.variable_y.setMinimumWidth(128)
+        layout = QHBoxLayout()
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        layout.setContentsMargins(0,0,0,0)
+        layout.addWidget(self.variable_y)
+        layout.addSpacerItem(spacer)
+        self.variable_y_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
+        self.variable_y_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.ui.layout_y.insertWidget(3, self.variable_y_frame)
+
+        # Expression
         self.text_line_y = CompletingPlainTextEdit()
-        self.ui.layout_y.insertWidget(2, self.text_line_y)
+        self.ui.layout_y.insertWidget(4, self.text_line_y)
         self.text_line_y.textChanged.connect(self.on_changed)
         self.ui.comboBox_y.currentIndexChanged.connect(self.on_changed)
 
-        # Vector Z
+        # Vector Z Setup
+
+        # Float widget
+        self.float_widget_z = FloatWidget()
+        self.float_widget_z.edited.connect(self.on_changed)
+        self.ui.layout_z.insertWidget(2, self.float_widget_z)
+        # Variable
+        self.variable_z = ComboboxVariables(layout=self.variables_scrollArea)
+        self.variable_z.setMinimumWidth(128)
+        layout = QHBoxLayout()
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        layout.setContentsMargins(0,0,0,0)
+        layout.addWidget(self.variable_z)
+        layout.addSpacerItem(spacer)
+        self.variable_z_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
+        self.variable_z_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.ui.layout_z.insertWidget(3, self.variable_z_frame)
+
+        # Expression
         self.text_line_z = CompletingPlainTextEdit()
-        self.ui.layout_z.insertWidget(2, self.text_line_z)
+        self.ui.layout_z.insertWidget(4, self.text_line_z)
         self.text_line_z.textChanged.connect(self.on_changed)
         self.ui.comboBox_z.currentIndexChanged.connect(self.on_changed)
 
         self.value = None
         self.ui.logic_switch.setCurrentIndex(0)
 
-        def add_value(layout, value, combo):
+        def add_value(layout, value, combo, variable, float_widget):
             if isinstance(value, dict):
                 if 'm_Expression' in value:
                     layout.setPlainText(str(value['m_Expression']))
                     combo.setCurrentIndex(2)
                 if 'm_SourceName' in value:
-                    layout.setPlainText(str(value['m_SourceName']))
+                    variable.addItem(value['m_SourceName'])
+                    variable.setCurrentText(value['m_SourceName'])
                     combo.setCurrentIndex(1)
             elif isinstance(value, int) or isinstance(value, float):
-                layout.setPlainText(str(value))
+                float_widget.SpinBox.setValue(value)
+                float_widget.on_SpinBox_updated()
                 combo.setCurrentIndex(0)
             else:
                 layout.setPlainText(str(value))
@@ -78,41 +128,61 @@ class PropertyVector3D(QWidget):
         if isinstance(value, dict):
             if  'm_Components' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
-                add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x)
-                add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y)
-                add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z)
+                add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x, self.variable_x, self.float_widget_x)
+                add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y, self.variable_y, self.float_widget_y)
+                add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z, self.variable_z, self.float_widget_z)
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(1)
                 self.var_value = value['m_SourceName']
                 self.text_line.setPlainText(self.var_value)
         elif isinstance(value, list):
             self.ui.logic_switch.setCurrentIndex(2)
-            add_value(self.text_line_x, value[0], self.ui.comboBox_x)
-            add_value(self.text_line_y, value[1], self.ui.comboBox_y)
-            add_value(self.text_line_z, value[2], self.ui.comboBox_z)
+            add_value(self.text_line_x, value[0], self.ui.comboBox_x, self.variable_x, self.float_widget_x)
+            add_value(self.text_line_y, value[1], self.ui.comboBox_x, self.variable_x, self.float_widget_y)
+            add_value(self.text_line_z, value[2], self.ui.comboBox_x, self.variable_x, self.float_widget_z)
 
 
         self.on_changed()
-
-
 
     def logic_switch_line(self):
         if self.ui.comboBox_x.currentIndex() == 0:
             self.text_line_x.hide()
             self.float_widget_x.show()
+            self.variable_x_frame.hide()
+        elif self.ui.comboBox_x.currentIndex() == 1:
+            self.text_line_x.hide()
+            self.float_widget_x.hide()
+            self.variable_x_frame.show()
         else:
             self.text_line_x.show()
             self.float_widget_x.hide()
+            self.variable_x_frame.hide()
 
         if self.ui.comboBox_y.currentIndex() == 0:
-            self.text_line_y.OnlyFloat = True
+            self.text_line_y.hide()
+            self.float_widget_y.show()
+            self.variable_y_frame.hide()
+        elif self.ui.comboBox_y.currentIndex() == 1:
+            self.text_line_y.hide()
+            self.float_widget_y.hide()
+            self.variable_y_frame.show()
         else:
-            self.text_line_y.OnlyFloat = False
+            self.text_line_y.show()
+            self.float_widget_y.hide()
+            self.variable_y_frame.hide()
 
         if self.ui.comboBox_z.currentIndex() == 0:
-            self.text_line_z.OnlyFloat = True
+            self.text_line_z.hide()
+            self.float_widget_z.show()
+            self.variable_z_frame.hide()
+        elif self.ui.comboBox_z.currentIndex() == 1:
+            self.text_line_z.hide()
+            self.float_widget_z.hide()
+            self.variable_z_frame.show()
         else:
-            self.text_line_z.OnlyFloat = False
+            self.text_line_z.show()
+            self.float_widget_z.hide()
+            self.variable_z_frame.hide()
     def logic_switch(self):
         widget = self.ui.layout.itemAt(2).widget()
         if self.ui.logic_switch.currentIndex() == 0:
