@@ -23,7 +23,7 @@ class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.setWindowModality(Qt.NonModal)
+        Widget.setWindowModality(Qt.WindowModality.NonModal)
         Widget.resize(838, 128)
         Widget.setMinimumSize(QSize(0, 0))
         Widget.setMaximumSize(QSize(16777215, 200))
@@ -77,15 +77,15 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame_5.setFrameShape(QFrame.NoFrame)
-        self.frame_5.setFrameShadow(QFrame.Raised)
+        self.frame_5.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_5.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame_5)
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.layout = QHBoxLayout()
         self.layout.setObjectName(u"layout")
-        self.layout.setSizeConstraint(QLayout.SetDefaultConstraint)
+        self.layout.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
         self.property_class = QLabel(self.frame_5)
         self.property_class.setObjectName(u"property_class")
         self.property_class.setStyleSheet(u"border:0px;\n"
@@ -201,8 +201,8 @@ class Ui_Widget(object):
 
         self.frame_4 = QFrame(Widget)
         self.frame_4.setObjectName(u"frame_4")
-        self.frame_4.setFrameShape(QFrame.NoFrame)
-        self.frame_4.setFrameShadow(QFrame.Raised)
+        self.frame_4.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
         self.frame_4.setLineWidth(0)
         self.verticalLayout_2 = QVBoxLayout(self.frame_4)
         self.verticalLayout_2.setSpacing(0)
@@ -229,8 +229,8 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame.setFrameShape(QFrame.NoFrame)
-        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.frame.setLineWidth(0)
         self.horizontalLayout_2 = QHBoxLayout(self.frame)
         self.horizontalLayout_2.setSpacing(0)
@@ -379,8 +379,8 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame_2.setFrameShape(QFrame.NoFrame)
-        self.frame_2.setFrameShadow(QFrame.Raised)
+        self.frame_2.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
         self.frame_2.setLineWidth(0)
         self.horizontalLayout_7 = QHBoxLayout(self.frame_2)
         self.horizontalLayout_7.setSpacing(0)
@@ -523,8 +523,8 @@ class Ui_Widget(object):
 ".QFrame::selected {\n"
 "    background-color: #414956;\n"
 "}")
-        self.frame_3.setFrameShape(QFrame.NoFrame)
-        self.frame_3.setFrameShadow(QFrame.Raised)
+        self.frame_3.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
         self.frame_3.setLineWidth(0)
         self.horizontalLayout_8 = QHBoxLayout(self.frame_3)
         self.horizontalLayout_8.setSpacing(0)
