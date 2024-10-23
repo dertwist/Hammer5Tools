@@ -257,7 +257,7 @@ QDockWidget DockTitleWidget QToolButton::menu-indicator {
 /* ========================================================== */
 
 QComboBox {
-    font: 700 10pt "Segoe UI";
+    font: 700 pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -969,20 +969,23 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
 
 /* ========================================================== */
 
+
+
+
 QSlider::groove:horizontal {
     border: 2px solid black;
     border-color: rgba(80, 80, 80, 0);
-    height: 8px;
+    height: 2px;
     margin: 2px 0;
 }
 
 QSlider::handle:horizontal {
-    background: #414956 ;
+    background: #414956;
     border: 2px solid black;
     border-color: rgba(80, 80, 80, 255);
     width: 6px;
-    height: 24px;
-    margin: -5px 0;
+    height: 36px;  
+    margin: -17px 0; 
 }
 
 QSlider::handle:horizontal:hover {
@@ -996,14 +999,14 @@ QSlider::sub-page:horizontal {
     border: 2px solid black;
     border-radius: 1px;
     border-color: rgba(80, 80, 80, 255);
-    height: 8px;
+    height: 2px;
 }
 
 QSlider::add-page:horizontal {
     border: 2px solid black;
     border-radius: 1px;
     border-color: rgba(80, 80, 80, 255);
-    height: 8px;
+    height: 2px;
 }
 
 /* ========================================================== */
@@ -1040,6 +1043,15 @@ QTreeView::item:hover {
     background-color: #272729; /* Background color for hovered item */
     color: #E3E3E3; /* Text color for hovered item */
 }
+
+QTreeView::branch:has-siblings {
+    border-image: url(:/icons/vertical_line.png) 0; /* Set the vertical line for branches with siblings */
+}
+
+QTreeView::branch:has-siblings:adjoins-item {
+    border-image: none; /* Remove the line where the branch adjoins an item */
+}
+
 
 QTreeView::branch:closed:has-children {
      image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
