@@ -19,10 +19,8 @@ class PropertyString(QWidget):
         self.only_string = only_string
         self.expression_bool = expression_bool
         self.variables_scrollArea = variables_scrollArea
-        self.ui.float_widget.deleteLater()
 
         self.ui.logic_switch.setItemText(1, 'String')
-        self.ui.layout.removeItem(self.ui.spacer)
 
         if expression_bool:
             self.ui.property_class.setStyleSheet("""
