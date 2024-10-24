@@ -83,6 +83,7 @@ class PropertyFrame(QWidget):
         from smartprop_editor.properties_classes.comparison import PropertyComparison
         from smartprop_editor.properties_classes.filtersurface import PropertySurface
         from smartprop_editor.properties_classes.colormatch import PropertyColorMatch
+        from smartprop_editor.properties_classes.variable import PropertyVariableOutput
 
 
         # only_variable_properties
@@ -206,11 +207,12 @@ class PropertyFrame(QWidget):
             elif 'm_Expression' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=True, placeholder='Expression example: var_bool ? var_sizer * var_multiply')
                 add_instance()
-            elif value_class in only_variable_properties:
-                property_instance = PropertyString(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea, only_variable=True)
-                add_instance()
             elif 'm_StateName' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='State name')
+                add_instance()
+            # Variable Output
+            elif value_class in only_variable_properties:
+                property_instance = PropertyVariableOutput(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
 
             elif 'm_VariableName' in value_class:
