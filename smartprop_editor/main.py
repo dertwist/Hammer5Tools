@@ -40,7 +40,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
-
+        self.realtime_save = False
 
 
         # Hierarchy setup
@@ -102,8 +102,13 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
         self.ui.cerate_file_button.clicked.connect(self.create_new_file)
         self.ui.paste_variable_button.clicked.connect(self.paste_variable)
+        self.ui.realtime_save_checkbox.clicked.connect(self.realtime_save_action)
 
-
+    def realtime_save_action(self):
+        if self.ui.realtime_save_checkbox.isChecked():
+            self.realtime_save = True
+        else:
+            self.realtime_save = False
 
     def properties_groups_init(self):
         self.modifiers_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Modifiers'))
@@ -193,6 +198,8 @@ class SmartPropEditorMainWindow(QMainWindow):
             self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
             if settings.value("OTHER/debug_info", type=bool):
                 print(output_value)
+            if self.realtime_save:
+                self.save_file()
 
     # Create New element
     def keyPressEvent(self, event):
