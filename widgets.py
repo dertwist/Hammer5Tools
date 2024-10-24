@@ -101,19 +101,25 @@ class ComboboxDynamicItems(QComboBox):
 
 class ComboboxVariables(ComboboxDynamicItems):
     changed = Signal(dict)
-    def __init__(self, parent=None, layout=None):
+    def __init__(self, parent=None, layout=None,filter_types=None):
         """Getting variables and put them into combobox"""
         super().__init__(parent)
         self.variables_scrollArea = layout
         self.items = None
+        self.filter_types = filter_types
         self.currentTextChanged.connect(self.changed_var)
 
     def updateItems(self):
+        """Updating widget items on click. Filter items depends on their type if you need"""
         self.currentTextChanged.disconnect(self.changed_var)
         self.items = []
         variables = self.get_variables()
         for item in variables:
-            self.items.append(item['name'])
+            if self.filter_types is not None:
+                if item['class'] in self.filter_types:
+                    self.items.append(item['name'])
+            else:
+                self.items.append(item['name'])
         self.items.append('')
         current = self.currentText()
         self.clear()
