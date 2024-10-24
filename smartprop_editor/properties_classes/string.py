@@ -58,6 +58,7 @@ class PropertyString(QWidget):
         # Variable
         self.variable = ComboboxVariables(layout=self.variables_scrollArea)
         self.variable.setFixedWidth(128)  # Set a fixed width if needed
+        self.variable.filter_types = ['String','MaterialGroup', 'Model']
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
