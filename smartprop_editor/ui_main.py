@@ -16,11 +16,11 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDockWidget,
-    QFrame, QHBoxLayout, QHeaderView, QLabel,
-    QLineEdit, QMainWindow, QPushButton, QScrollArea,
-    QSizePolicy, QSpacerItem, QToolButton, QTreeWidget,
-    QTreeWidgetItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox,
+    QDockWidget, QFrame, QHBoxLayout, QHeaderView,
+    QLabel, QLineEdit, QMainWindow, QPushButton,
+    QScrollArea, QSizePolicy, QSpacerItem, QToolButton,
+    QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -103,7 +103,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 793, 702))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 730, 702))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -199,7 +199,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 217, 345))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 280, 345))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -692,6 +692,35 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.open_file_as_button)
 
+        self.realtime_save_checkbox = QCheckBox(self.frame_4)
+        self.realtime_save_checkbox.setObjectName(u"realtime_save_checkbox")
+        self.realtime_save_checkbox.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QCheckBox {\n"
+"\n"
+"        font: 580 10pt \"Segoe UI\";\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QCheckBox:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QCheckBox:pressed {\n"
+"\n"
+"    }")
+
+        self.horizontalLayout_2.addWidget(self.realtime_save_checkbox)
+
 
         self.verticalLayout_10.addWidget(self.frame_4)
 
@@ -789,6 +818,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(shortcut)
         self.open_file_as_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+O", None))
 #endif // QT_CONFIG(shortcut)
+        self.realtime_save_checkbox.setText(QCoreApplication.translate("MainWindow", u"Realtime save", None))
         self.dockWidget_2.setWindowTitle(QCoreApplication.translate("MainWindow", u"Choices", None))
         ___qtreewidgetitem1 = self.choices_tree_widget.headerItem()
         ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
