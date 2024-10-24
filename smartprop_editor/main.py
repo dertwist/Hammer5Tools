@@ -1,4 +1,4 @@
-import ast
+import ast, sys
 import os.path
 import shutil
 import threading
@@ -9,7 +9,7 @@ from distutils.util import strtobool
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit, QFileDialog, QComboBox, QPushButton, QHBoxLayout, QLabel
 from PySide6.QtWidgets import QMenu, QApplication
-from PySide6.QtGui import QCursor, QDrag, QAction, QColor
+from PySide6.QtGui import QCursor, QDrag, QAction, QColor, QKeyEvent
 from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
 
 from smartprop_editor.ui_main import Ui_MainWindow
@@ -41,6 +41,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.settings = settings
         self.realtime_save = False
+
+        self.ui.tree_hierarchy_widget.installEventFilter(self)
 
 
         # Hierarchy setup
@@ -200,35 +202,36 @@ class SmartPropEditorMainWindow(QMainWindow):
                 print(output_value)
             if self.realtime_save:
                 self.save_file()
-
-    # Create New element
     def keyPressEvent(self, event):
         focus_widget = QApplication.focusWidget()
         if isinstance(focus_widget, QLineEdit):
             pass
         else:
-            # Update focus widget at mouse position
-            # cursor_pos = QCursor.pos()
-            # widget_under_cursor = QApplication.widgetAt(cursor_pos)
-            # if widget_under_cursor:
-            #     widget_under_cursor.setFocus()
-
-            focus_widget = QApplication.focusWidget()
-
             if focus_widget is self.ui.tree_hierarchy_widget:
                 if focus_widget.viewport().underMouse():
+                    # Disable the Ctrl + F shortcut for the tree_hierarchy_widget
                     if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                        self.add_an_element()
-
                         event.accept()
+                        return
             if focus_widget is self.modifiers_group_instance.ui.property_class:
                 if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                    self.add_an_operator()
                     event.accept()
+                    return
             if focus_widget is self.selection_criteria_group_instance.ui.property_class:
                 if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                    self.add_a_selection_criteria()
                     event.accept()
+                    return
+
+    def eventFilter(self, source, event):
+        """Handle keyboard events for the tree view."""
+        if event.type() == QKeyEvent.KeyPress and source == self.ui.tree_hierarchy_widget:
+            if event.matches(QKeySequence.Copy):
+                self.copy_item(self.ui.tree_hierarchy_widget)
+                return True
+            if event.matches(QKeySequence.Paste):
+                self.paste_item(self.ui.tree_hierarchy_widget)
+                return True
+        return super().eventFilter(source, event)
     def add_an_element(self):
         self.popup_menu = PopupMenu(elements_list, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
@@ -647,30 +650,37 @@ class SmartPropEditorMainWindow(QMainWindow):
         remove_action.triggered.connect(lambda: self.remove_item(self.ui.tree_hierarchy_widget.itemAt(position)))
 
         copy_action = menu.addAction("Copy")
-        copy_action.setShortcut(QKeySequence.Copy)
-        copy_action.triggered.connect(lambda: self.copy_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+        copy_action.setShortcut(QKeySequence(QKeySequence.Copy))
+        copy_action.triggered.connect(lambda: self.copy_item(self.ui.tree_hierarchy_widget))
 
         paste_action = menu.addAction("Paste")
-        paste_action.setShortcut(QKeySequence.Paste)
+        paste_action.setShortcut(QKeySequence(QKeySequence.Paste))
         paste_action.triggered.connect(lambda: self.paste_item(self.ui.tree_hierarchy_widget.itemAt(position)))
 
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
 
-    def copy_item(self, tree_item):
-        item_data = self.serialize_tree_item(tree_item)
-        clipboard = QApplication.clipboard()
-        clipboard.setText(json.dumps(item_data, indent=4))
+    def copy_item(self, tree):
+        selected_indexes = tree.selectedIndexes()
+        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
 
-    def paste_item(self, position):
+        items_data = []
+        for tree_item in selected_items:
+            item_data = self.serialize_tree_item(tree_item)
+            items_data.append(item_data)
+
+        clipboard = QApplication.clipboard()
+        clipboard.setText(json.dumps(items_data, indent=4))
+
+    def paste_item(self, tree):
         clipboard = QApplication.clipboard()
         item_data = json.loads(clipboard.text())
 
-        tree_item = self.deserialize_tree_item(item_data)
-
-        try:
-            self.ui.tree_hierarchy_widget.currentItem().addChild(tree_item)
-        except:
-            self.ui.tree_hierarchy_widget.invisibleRootItem().addChild(tree_item)
+        for item in item_data:
+            tree_item = self.deserialize_tree_item(item)
+            try:
+                tree.currentItem().addChild(tree_item)
+            except:
+                tree.invisibleRootItem().addChild(tree_item)
 
     def serialize_tree_item(self, tree_item):
         item_data = {
@@ -753,9 +763,12 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def remove_item(self, item):
         if item:
-            parent = item.parent() or item.treeWidget().invisibleRootItem()
-            index = parent.indexOfChild(item)
-            parent.takeChild(index)
+            if item == item.treeWidget().invisibleRootItem():
+                pass
+            else:
+                parent = item.parent() or item.treeWidget().invisibleRootItem()
+                index = parent.indexOfChild(item)
+                parent.takeChild(index)
 
     # Prefs
     def _restore_user_prefs(self):
@@ -778,3 +791,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.settings.setValue("SmartPropEditorMainWindow/windowState", self.saveState())
     def closeEvent(self, event):
         self._save_user_prefs()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = SmartPropEditorMainWindow()
+    window.show()
+    sys.exit(app.exec())
