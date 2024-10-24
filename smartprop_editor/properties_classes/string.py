@@ -138,7 +138,7 @@ class PropertyString(QWidget):
             self.value = {self.value_class: value}
         # Variable
         elif self.ui.logic_switch.currentIndex() == 2:
-            value = self.text_line.toPlainText()
+            value = self.variable.currentText()
             self.value = {self.value_class: {'m_SourceName': value}}
         # Expression
         elif self.ui.logic_switch.currentIndex() == 3:
