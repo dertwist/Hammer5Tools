@@ -202,6 +202,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                 print(output_value)
             if self.realtime_save:
                 self.save_file()
+
     def keyPressEvent(self, event):
         focus_widget = QApplication.focusWidget()
         if isinstance(focus_widget, QLineEdit):
@@ -222,6 +223,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                     event.accept()
                     return
 
+    # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
         """Handle keyboard events for the tree view."""
         if event.type() == QKeyEvent.KeyPress and source == self.ui.tree_hierarchy_widget:
@@ -232,10 +234,31 @@ class SmartPropEditorMainWindow(QMainWindow):
                 self.paste_item(self.ui.tree_hierarchy_widget)
                 return True
         return super().eventFilter(source, event)
+
+
+    # ======================================[Tree Widget Hierarchy New Element]========================================
     def add_an_element(self):
         self.popup_menu = PopupMenu(elements_list, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
         self.popup_menu.show()
+    def new_element(self, element_class, element_value):
+        name = element_class
+        new_element = QTreeWidgetItem()
+        new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
+        new_element.setText(0, name)
+        new_element.setText(1, str(element_value))
+        if self.ui.tree_hierarchy_widget.currentItem() == None:
+            parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
+        else:
+            parent = self.ui.tree_hierarchy_widget.currentItem()
+        parent.addChild(new_element)
+
+    # ======================================[Properties operator]========================================
+    def new_operator(self, element_class, element_value):
+        operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
+        operator_instance.edited.connect(self.update_tree_item_value)
+        self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
+        self.update_tree_item_value()
     def add_an_operator(self):
         operators_and_filters = operators_list + filters_list
         elements_in_popupmenu = []
@@ -256,6 +279,21 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_operator(name, value))
         self.popup_menu.show()
 
+    def paste_operator(self):
+        clipboard = QApplication.clipboard()
+        clipboard_text = clipboard.text()
+        clipboard_data = clipboard_text.split(';;')
+
+        if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
+            operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=ast.literal_eval(clipboard_data[2]),variables_scrollArea=self.ui.variables_scrollArea)
+            operator_instance.edited.connect(self.update_tree_item_value)
+            self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
+        else:
+            print("Clipboard data format is not valid.")
+        self.update_tree_item_value()
+
+    # ======================================[Properties Selection Criteria]========================================
+
     def add_a_selection_criteria(self):
         elements_in_popupmenu = []
         exists_classes = []
@@ -274,36 +312,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_selection_criteria(name, value))
         self.popup_menu.show()
 
-    def new_element(self, element_class, element_value):
-        name = element_class
-        new_element = QTreeWidgetItem()
-        new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
-        new_element.setText(0, name)
-        new_element.setText(1, str(element_value))
-        if self.ui.tree_hierarchy_widget.currentItem() == None:
-            parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
-        else:
-            parent = self.ui.tree_hierarchy_widget.currentItem()
-        parent.addChild(new_element)
-    def new_operator(self, element_class, element_value):
-        operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
+    def new_selection_criteria(self, element_class, element_value):
+        operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
         operator_instance.edited.connect(self.update_tree_item_value)
-        self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
+        self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
         self.update_tree_item_value()
-
-    def paste_operator(self):
-        clipboard = QApplication.clipboard()
-        clipboard_text = clipboard.text()
-        clipboard_data = clipboard_text.split(';;')
-
-        if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
-            operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=ast.literal_eval(clipboard_data[2]),variables_scrollArea=self.ui.variables_scrollArea)
-            operator_instance.edited.connect(self.update_tree_item_value)
-            self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
-        else:
-            print("Clipboard data format is not valid.")
-        self.update_tree_item_value()
-
     def paste_selection_criteria(self):
         clipboard = QApplication.clipboard()
         clipboard_text = clipboard.text()
@@ -317,14 +330,15 @@ class SmartPropEditorMainWindow(QMainWindow):
             print("Clipboard data format is not valid.")
         self.update_tree_item_value()
 
-    def new_selection_criteria(self, element_class, element_value):
-        operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
-        operator_instance.edited.connect(self.update_tree_item_value)
-        self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
-        self.update_tree_item_value()
 
+    # ======================================[Explorer]========================================
 
-    # Vsmart format
+    def explorer_status(self):
+        global opened_file
+        if opened_file == '':
+            self.ui.dockWidget_10.setWindowTitle('Explorer')
+        else:
+            self.ui.dockWidget_10.setWindowTitle(f'Explorer: ({os.path.basename(opened_file)})')
 
     def create_new_file(self):
         extension = 'vsmart'
@@ -348,6 +362,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         with open(os.path.join(current_folder, new_file_name), 'w') as file:
             file.write(blank_vsmart)
             pass
+
+    # ======================================[Open File]========================================
     def open_file(self, external=False):
         global opened_file
         if external:
@@ -397,12 +413,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                 self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
         print(f'Opened file: {filename}')
         self.explorer_status()
-    def explorer_status(self):
-        global opened_file
-        if opened_file == '':
-            self.ui.dockWidget_10.setWindowTitle('Explorer')
-        else:
-            self.ui.dockWidget_10.setWindowTitle(f'Explorer: ({os.path.basename(opened_file)})')
+
+    # ======================================[Save File]========================================
     def save_file(self, external=False):
         global opened_file
         if external:
@@ -464,54 +476,55 @@ class SmartPropEditorMainWindow(QMainWindow):
         VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data, choices_tree=self.ui.choices_tree_widget)
         opened_file = VsmartSaveInstance.filename
 
-    # variables
+    def open_MenuChoices(self, position):
+        menu = QMenu()
+        item = self.ui.choices_tree_widget.itemAt(position)
+        add_choice = menu.addAction("Add Choice")
+        add_choice.triggered.connect(lambda: AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.ui.variables_scrollArea))
 
-    def search_variables(self, search_term=None):
-        for i in range(self.ui.variables_scrollArea.layout().count()):
-            widget = self.ui.variables_scrollArea.layout().itemAt(i).widget()
-            if widget:
-                if search_term.lower() in widget.name.lower():  # Adjust the search logic as needed
-                    widget.show()
-                else:
-                    widget.hide()
+        if item:
+            if item.text(2) == 'choice':
+                add_option = menu.addAction("Add Option")
+                add_option.triggered.connect(lambda : AddOption(parent=item, name='Option'))
+            elif item.text(2) == 'option':
+                add_variable = menu.addAction("Add Variable")
+                add_variable.triggered.connect(lambda : AddVariable(parent=item,variables_scrollArea=self.ui.variables_scrollArea, name='default', value='', type=''))
 
-    def search_hierarchy(self, filter_text, parent_item):
-        # Reset the root visibility and start the filtering process
-        self.filter_item(parent_item, filter_text.lower(), True)
+        menu.addSection('')
 
-    def filter_item(self, item, filter_text, is_root=False):
-        if not isinstance(item, QTreeWidgetItem):
-            return False
+        move_up_action = menu.addAction("Move Up")
+        move_down_action = menu.addAction("Move Down")
 
-        # Check if the current item's text matches the filter
-        item_text = item.text(0).lower()
-        item_visible = filter_text in item_text
+        move_up_action.triggered.connect(lambda: self.move_tree_item(item, -1))
+        move_down_action.triggered.connect(lambda: self.move_tree_item(item, 1))
+        menu.addSection('')
 
-        # Always show the root, regardless of filter
-        if is_root:
-            item.setHidden(False)
-        else:
-            # Hide the item if it doesn't match the filter
-            item.setHidden(not item_visible)
 
-        # Track visibility of any child matching the filter
-        any_child_visible = False
+        # copy_action = menu.addAction("Copy")
+        # copy_action.setShortcut(QKeySequence.Copy)
+        # copy_action.triggered.connect(lambda: self.copy_item(item))
+        #
+        # paste_action = menu.addAction("Paste")
+        # paste_action.setShortcut(QKeySequence.Paste)
+        # paste_action.triggered.connect(lambda: self.paste_item(item))
+        # menu.addSection('')
+        #
+        # duplicate_action = menu.addAction("Duplicate")
+        # duplicate_action.triggered.connect(lambda: self.duplicate_item(item, tree=self.ui.choices_tree_widget))
 
-        # Recursively filter all children
-        for i in range(item.childCount()):
-            child_item = item.child(i)
-            child_visible = self.filter_item(child_item, filter_text, False)
+        remove_action = menu.addAction("Remove")
+        remove_action.triggered.connect(lambda: self.remove_tree_item(item))
 
-            if child_visible:
-                any_child_visible = True
 
-        # If any child is visible, make sure this item is also visible
-        if any_child_visible:
-            item.setHidden(False)
-            item.setExpanded(True)
+        menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
 
-        # Return True if this item or any of its children is visible
-        return item_visible or any_child_visible
+    # ======================================[Variables Actions]========================================
+
+    def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name):
+        variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class, var_visible_in_editor=var_visible_in_editor, var_display_name=var_display_name)
+        index = (self.ui.variables_scrollArea.count()) - 1
+        self.ui.variables_scrollArea.insertWidget(index, variable)
+
 
     def add_new_variable(self):
         name = 'new_var'
@@ -539,10 +552,16 @@ class SmartPropEditorMainWindow(QMainWindow):
         }
         self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor,var_class=var_class, var_display_name=var_display_name)
 
-    def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name):
-        variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class, var_visible_in_editor=var_visible_in_editor, var_display_name=var_display_name)
-        index = (self.ui.variables_scrollArea.count()) - 1
-        self.ui.variables_scrollArea.insertWidget(index, variable)
+    # ======================================[Variables Other]========================================
+    def search_variables(self, search_term=None):
+        for i in range(self.ui.variables_scrollArea.layout().count()):
+            widget = self.ui.variables_scrollArea.layout().itemAt(i).widget()
+            if widget:
+                if search_term.lower() in widget.name.lower():  # Adjust the search logic as needed
+                    widget.show()
+                else:
+                    widget.hide()
+
 
     def get_variables(self, layout, only_names=False):
         if only_names:
@@ -562,50 +581,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                     data_out.update(item)
             return data_out
 
-    # Choices context menu
-    def open_MenuChoices(self, position):
-        menu = QMenu()
-        item = self.ui.choices_tree_widget.itemAt(position)
-        add_choice = menu.addAction("Add Choice")
-        add_choice.triggered.connect(lambda: AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.ui.variables_scrollArea))
-
-        if item:
-            if item.text(2) == 'choice':
-                add_option = menu.addAction("Add Option")
-                add_option.triggered.connect(lambda : AddOption(parent=item, name='Option'))
-            elif item.text(2) == 'option':
-                add_variable = menu.addAction("Add Variable")
-                add_variable.triggered.connect(lambda : AddVariable(parent=item,variables_scrollArea=self.ui.variables_scrollArea, name='default', value='', type=''))
-
-        menu.addSection('')
-
-        move_up_action = menu.addAction("Move Up")
-        move_down_action = menu.addAction("Move Down")
-
-        move_up_action.triggered.connect(lambda: self.move_item(item, -1))
-        move_down_action.triggered.connect(lambda: self.move_item(item, 1))
-        menu.addSection('')
-
-
-        # copy_action = menu.addAction("Copy")
-        # copy_action.setShortcut(QKeySequence.Copy)
-        # copy_action.triggered.connect(lambda: self.copy_item(item))
-        #
-        # paste_action = menu.addAction("Paste")
-        # paste_action.setShortcut(QKeySequence.Paste)
-        # paste_action.triggered.connect(lambda: self.paste_item(item))
-        # menu.addSection('')
-        #
-        # duplicate_action = menu.addAction("Duplicate")
-        # duplicate_action.triggered.connect(lambda: self.duplicate_item(item, tree=self.ui.choices_tree_widget))
-
-        remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.remove_item(item))
-
-
-        menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
-
-    # ContextMenu
+    #======================================[Variables Context menu]========================================
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
         if self.ui.variables_QscrollArea is QApplication.focusWidget():
@@ -631,7 +607,46 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             print("Clipboard data format is not valid.")
 
+    # ======================================[Tree widget hierarchy filter]========================================
+    def search_hierarchy(self, filter_text, parent_item):
+        # Reset the root visibility and start the filtering process
+        self.filter_tree_item(parent_item, filter_text.lower(), True)
 
+    def filter_tree_item(self, item, filter_text, is_root=False):
+        if not isinstance(item, QTreeWidgetItem):
+            return False
+
+        # Check if the current item's text matches the filter
+        item_text = item.text(0).lower()
+        item_visible = filter_text in item_text
+
+        # Always show the root, regardless of filter
+        if is_root:
+            item.setHidden(False)
+        else:
+            # Hide the item if it doesn't match the filter
+            item.setHidden(not item_visible)
+
+        # Track visibility of any child matching the filter
+        any_child_visible = False
+
+        # Recursively filter all children
+        for i in range(item.childCount()):
+            child_item = item.child(i)
+            child_visible = self.filter_tree_item(child_item, filter_text, False)
+
+            if child_visible:
+                any_child_visible = True
+
+        # If any child is visible, make sure this item is also visible
+        if any_child_visible:
+            item.setHidden(False)
+            item.setExpanded(True)
+
+        # Return True if this item or any of its children is visible
+        return item_visible or any_child_visible
+
+    # ======================================[Tree widget hierarchy context menu]========================================
     def open_hierarchy_menu(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
@@ -639,15 +654,15 @@ class SmartPropEditorMainWindow(QMainWindow):
         move_up_action = menu.addAction("Move Up")
         move_down_action = menu.addAction("Move Down")
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.remove_item(item))
+        remove_action.triggered.connect(lambda: self.remove_tree_item(item))
 
         duplicate_action = menu.addAction("Duplicate")
         duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position), self.ui.tree_hierarchy_widget))
 
-        move_up_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), -1))
+        move_up_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget.itemAt(position), -1))
         add_new_action.triggered.connect(self.add_an_element)
-        move_down_action.triggered.connect(lambda: self.move_item(self.ui.tree_hierarchy_widget.itemAt(position), 1))
-        remove_action.triggered.connect(lambda: self.remove_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+        move_down_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget.itemAt(position), 1))
+        remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.tree_hierarchy_widget.itemAt(position)))
 
         copy_action = menu.addAction("Copy")
         copy_action.setShortcut(QKeySequence(QKeySequence.Copy))
@@ -659,6 +674,27 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
 
+    # ======================================[Tree widget functions]========================================
+    def move_tree_item(self, item, direction):
+        """Move tree item"""
+        if not item:
+            return
+        parent = item.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
+        index = parent.indexOfChild(item)
+        new_index = index + direction
+
+        if 0 <= new_index < parent.childCount():
+            parent.takeChild(index)
+            parent.insertChild(new_index, item)
+    def remove_tree_item(self, item):
+        """Removing Tree item"""
+        if item:
+            if item == item.treeWidget().invisibleRootItem():
+                pass
+            else:
+                parent = item.parent() or item.treeWidget().invisibleRootItem()
+                index = parent.indexOfChild(item)
+                parent.takeChild(index)
     def copy_item(self, tree):
         selected_indexes = tree.selectedIndexes()
         selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
@@ -681,6 +717,42 @@ class SmartPropEditorMainWindow(QMainWindow):
                 tree.currentItem().addChild(tree_item)
             except:
                 tree.invisibleRootItem().addChild(tree_item)
+
+    def duplicate_item(self, item: QTreeWidgetItem, tree):
+        """Duplicate Tree item"""
+        parent = item.parent() or tree.invisibleRootItem()
+        existing_names = [parent.child(i).text(0) for i in range(parent.childCount())]
+
+        base_text = item.text(0)
+        counter = 0
+        new_text = base_text
+
+        # Check if the element name has digits at the end
+        if base_text[-1].isdigit():
+            counter = int(base_text.split('_')[-1]) + 1
+            new_text = f"{base_text.rsplit('_', 1)[0]}_{counter:02}"
+        else:
+            while new_text in existing_names:
+                counter += 1
+                new_text = f"{base_text}_{counter:02}"  # Change the format to include leading zeros
+
+        new_item = QTreeWidgetItem([new_text, item.text(1)])  # Duplicate the second column as well
+        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
+        parent.addChild(new_item)
+
+        # Recursively duplicate children
+        self.duplicate_children(item, new_item)
+
+    def duplicate_children(self, source_item, target_item):
+        """Duplicate children of tree item"""
+        for i in range(source_item.childCount()):
+            child = source_item.child(i)
+            new_child = QTreeWidgetItem([child.text(0), child.text(1)])  # Duplicate the second column as well
+            new_child.setFlags(new_child.flags() | Qt.ItemIsEditable)
+            target_item.addChild(new_child)
+            self.duplicate_children(child, new_child)
+
+    # ======================================[Tree item serialization and deserialization]========================================
 
     def serialize_tree_item(self, tree_item):
         item_data = {
@@ -706,72 +778,11 @@ class SmartPropEditorMainWindow(QMainWindow):
             tree_item.addChild(child_item)
 
         return tree_item
-    def open_properties_menu(self, position):
-        item = self.ui.properties_tree.itemAt(position)
-        if item and item.parent():  # Check if the item has a parent (not a top-level item)
-            menu = QMenu()
-            remove_action = menu.addAction("Remove")
-            # duplicate_action = menu.addAction("Duplicate")
-
-            # duplicate_action.triggered.connect(lambda: self.duplicate_item(item, self.ui.properties_tree))
-            remove_action.triggered.connect(lambda: self.remove_item(item))
-
-            menu.exec(self.ui.properties_tree.viewport().mapToGlobal(position))
-    def move_item(self, item, direction):
-        if not item:
-            return
-        parent = item.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
-        index = parent.indexOfChild(item)
-        new_index = index + direction
-
-        if 0 <= new_index < parent.childCount():
-            parent.takeChild(index)
-            parent.insertChild(new_index, item)
 
 
-    def duplicate_item(self, item: QTreeWidgetItem, tree):
-        parent = item.parent() or tree.invisibleRootItem()
-        existing_names = [parent.child(i).text(0) for i in range(parent.childCount())]
-
-        base_text = item.text(0)
-        counter = 0
-        new_text = base_text
-
-        # Check if the element name has digits at the end
-        if base_text[-1].isdigit():
-            counter = int(base_text.split('_')[-1]) + 1
-            new_text = f"{base_text.rsplit('_', 1)[0]}_{counter:02}"
-        else:
-            while new_text in existing_names:
-                counter += 1
-                new_text = f"{base_text}_{counter:02}"  # Change the format to include leading zeros
-
-        new_item = QTreeWidgetItem([new_text, item.text(1)])  # Duplicate the second column as well
-        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
-        parent.addChild(new_item)
-
-        # Recursively duplicate children
-        self.duplicate_children(item, new_item)
-
-    def duplicate_children(self, source_item, target_item):
-        for i in range(source_item.childCount()):
-            child = source_item.child(i)
-            new_child = QTreeWidgetItem([child.text(0), child.text(1)])  # Duplicate the second column as well
-            new_child.setFlags(new_child.flags() | Qt.ItemIsEditable)
-            target_item.addChild(new_child)
-            self.duplicate_children(child, new_child)
-
-    def remove_item(self, item):
-        if item:
-            if item == item.treeWidget().invisibleRootItem():
-                pass
-            else:
-                parent = item.parent() or item.treeWidget().invisibleRootItem()
-                index = parent.indexOfChild(item)
-                parent.takeChild(index)
-
-    # Prefs
+    #======================================[Window State]========================================
     def _restore_user_prefs(self):
+        """Restore window state"""
         geo = self.settings.value("SmartPropEditorMainWindow/geometry")
         if geo:
             self.restoreGeometry(geo)
@@ -785,6 +796,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             self.ui.add_new_variable_combobox.setCurrentIndex(int(saved_index))
 
     def _save_user_prefs(self):
+        """Save window state"""
         current_index = self.ui.add_new_variable_combobox.currentIndex()
         self.settings.setValue("SmartPropEditorMainWindow/currentComboBoxIndex", current_index)
         self.settings.setValue("SmartPropEditorMainWindow/geometry", self.saveGeometry())
@@ -794,5 +806,10 @@ class SmartPropEditorMainWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SmartPropEditorMainWindow()
+    # import qtvscodestyle as qtvsc
+    #
+    # stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
+    # app.setStyleSheet(stylesheet)
+    app.setStyle('fusion')
     window.show()
     sys.exit(app.exec())
