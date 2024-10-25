@@ -37,7 +37,6 @@ class VsmartOpen:
         data = self.fix_format(data)
         data = kv3.textreader.KV3TextReader().parse(data).value
 
-        # kv3.textwriter.encode(kv3_data) # kv3 encode to variable
         debug(f'Loaded data \n {data}')
 
         self.variables = data.get('m_Variables', None)
@@ -233,3 +232,12 @@ class VsmartSave:
 
             m_Choices.append({'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_Options': options, 'm_DefaultOption': widget.currentText(), 'm_nElementID': choice_index})
         return m_Choices
+
+class VsmartSerialization():
+    def __init__(self, data):
+        super().__init__()
+
+
+class VsmartDeserialization():
+    def __init__(self, data):
+        super().__init__()
