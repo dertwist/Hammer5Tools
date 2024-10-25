@@ -20,7 +20,10 @@
       <widget class="QPlainTextEdit" name="viewport_QplainText"/>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
+      <layout class="QHBoxLayout" name="horizontalLayout_2"/>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <widget class="QCheckBox" name="match_case_checkBox">
          <property name="text">
@@ -35,34 +38,6 @@
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="QCheckBox" name="only_selection_checkBox">
-         <property name="text">
-          <string>Only selection</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="user_ignore_list_checkBox">
-         <property name="text">
-          <string>Use ignore list</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="edit_ignore_list_button">
-         <property name="text">
-          <string>Edit Ignore list</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_2"/>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <widget class="QLineEdit" name="find_text_lineEdit">
          <property name="text">
