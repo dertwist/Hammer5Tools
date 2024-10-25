@@ -12,7 +12,7 @@ import ast
 from smartprop_editor.objects import element_prefix
 from smartprop_editor.choices import AddChoice, AddOption, AddVariable
 from preferences import debug
-from common import editor_info
+from common import editor_info, JsonToKv3, Kv3ToJson
 class VsmartOpen:
     def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_scrollArea=None):
         self.filename = filename
@@ -79,12 +79,9 @@ class VsmartOpen:
                                     child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
                                     child.addChild(child_item)
                                     self.populate_tree(item, child_item)
-                                # elif key == 'm_vEnd':
-                                #     print('m_vEnd')
                         except Exception as error:
                             print(error)
                             pass
-                            # if didn't find any class element just set value to key row
                             print(key, value)
                     elif isinstance(value, (str, float, int)):
                         pass
@@ -234,9 +231,32 @@ class VsmartSave:
         return m_Choices
 
 class VsmartSerialization():
-    def __init__(self, data):
+    def __init__(self):
         super().__init__()
+    def tree_serialization(self, item, data):
+        """Convert tree structure to json"""
+        if item.childCount() == 0:
+            child = item
+            key = child.text(0)
+            value_row = child.text(1)
+            child_data = ast.literal_eval(value_row)
+            child_data['m_sLabel'] = key
+            data['m_Children'].append(child_data)
+        for index in range(item.childCount()):
+            child = item.child(index)
+            key = child.text(0)
+            value_row = child.text(1)
 
+            child_data = ast.literal_eval(value_row)
+            child_data['m_sLabel'] = key
+
+            if child.childCount() > 0:
+                child_data['m_Children'] = []
+                self.tree_serialization(child, child_data)
+
+            data['m_Children'].append(child_data)
+
+        return data
 
 class VsmartDeserialization():
     def __init__(self, data):
