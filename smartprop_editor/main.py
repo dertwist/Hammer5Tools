@@ -56,8 +56,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.choices_tree_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.choices_tree_widget.customContextMenuRequested.connect(self.open_MenuChoices)
 
-        # Apply style
+        #Groups setup
+        self.properties_groups_init()
 
+        # Apply setup
         self.ui.frame_9.setStyleSheet("""
         QFrame#frame_9 {
             border: 2px solid black; 
@@ -67,10 +69,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             border: 0px solid black; 
         }
         """)
-
-        # Adding the properties_classes group
-        self.properties_groups_init()
-
 
         self.ui.tree_hierarchy_search_bar_widget.textChanged.connect(lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem()))
 
@@ -106,12 +104,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.paste_variable_button.clicked.connect(self.paste_variable)
         self.ui.realtime_save_checkbox.clicked.connect(self.realtime_save_action)
 
-    def realtime_save_action(self):
-        if self.ui.realtime_save_checkbox.isChecked():
-            self.realtime_save = True
-        else:
-            self.realtime_save = False
-
+    # ======================================[Properties groups]========================================
     def properties_groups_init(self):
         self.modifiers_group_instance = PropertiesGroupFrame(widget_list=self.ui.properties_layout, name=str('Modifiers'))
         self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
@@ -124,7 +117,27 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.properties_layout.insertWidget(1, self.selection_criteria_group_instance)
         self.selection_criteria_group_instance.paste_signal.connect(self.paste_selection_criteria)
 
-    def on_tree_current_item_changed(self, item):
+        self.properties_groups_hide()
+    def properties_groups_hide(self):
+        self.ui.properties_spacer.hide()
+        self.ui.properties_placeholder.show()
+        self.modifiers_group_instance.hide()
+        self.selection_criteria_group_instance.hide()
+    def properties_groups_show(self):
+        self.ui.properties_placeholder.hide()
+        self.ui.properties_spacer.show()
+        self.modifiers_group_instance.show()
+        self.selection_criteria_group_instance.show()
+
+    # ======================================[Tree Hierarchy updating]========================================
+
+    def on_tree_current_item_changed(self, current_item, previous_item):
+        item = current_item
+        if current_item is not None:
+            self.properties_groups_show()
+        else:
+            self.properties_groups_hide()
+
         try:
             for i in range(self.ui.properties_layout.count()):
                 widget = self.ui.properties_layout.itemAt(i).widget()
@@ -203,36 +216,28 @@ class SmartPropEditorMainWindow(QMainWindow):
             if self.realtime_save:
                 self.save_file()
 
-    def keyPressEvent(self, event):
-        focus_widget = QApplication.focusWidget()
-        if isinstance(focus_widget, QLineEdit):
-            pass
-        else:
-            if focus_widget is self.ui.tree_hierarchy_widget:
-                if focus_widget.viewport().underMouse():
-                    # Disable the Ctrl + F shortcut for the tree_hierarchy_widget
-                    if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                        event.accept()
-                        return
-            if focus_widget is self.modifiers_group_instance.ui.property_class:
-                if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                    event.accept()
-                    return
-            if focus_widget is self.selection_criteria_group_instance.ui.property_class:
-                if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                    event.accept()
-                    return
-
     # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
-        """Handle keyboard events for the tree view."""
-        if event.type() == QKeyEvent.KeyPress and source == self.ui.tree_hierarchy_widget:
-            if event.matches(QKeySequence.Copy):
-                self.copy_item(self.ui.tree_hierarchy_widget)
-                return True
-            if event.matches(QKeySequence.Paste):
-                self.paste_item(self.ui.tree_hierarchy_widget)
-                return True
+        """Handle keyboard and shortcut events for various widgets."""
+
+        if event.type() == QKeyEvent.KeyPress:
+            # Handle events for tree_hierarchy_widget
+            if source == self.ui.tree_hierarchy_widget:
+                # Copy (Ctrl + C)
+                if event.matches(QKeySequence.Copy):
+                    self.copy_item(self.ui.tree_hierarchy_widget)
+                    return True
+
+                # Paste (Ctrl + V)
+                if event.matches(QKeySequence.Paste):
+                    self.paste_item(self.ui.tree_hierarchy_widget)
+                    return True
+
+                if source.viewport().underMouse():
+                    if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                        self.add_an_element()
+                        return True
+
         return super().eventFilter(source, event)
 
 
@@ -339,6 +344,11 @@ class SmartPropEditorMainWindow(QMainWindow):
             self.ui.dockWidget_10.setWindowTitle('Explorer')
         else:
             self.ui.dockWidget_10.setWindowTitle(f'Explorer: ({os.path.basename(opened_file)})')
+    def realtime_save_action(self):
+        if self.ui.realtime_save_checkbox.isChecked():
+            self.realtime_save = True
+        else:
+            self.realtime_save = False
 
     def create_new_file(self):
         extension = 'vsmart'
@@ -476,6 +486,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data, choices_tree=self.ui.choices_tree_widget)
         opened_file = VsmartSaveInstance.filename
 
+    # ======================================[Choices Context Menu]========================================
     def open_MenuChoices(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
