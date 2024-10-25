@@ -20,25 +20,11 @@ class FindAndReplaceDialog(QDialog):
         self.ui.buttonBox.accepted.connect(self.on_accepted)
         self.ui.buttonBox.rejected.connect(self.reject)
 
-        self.ui.find_text_lineEdit.textChanged.connect(self.on_text_changed)
+        self.ui.find_text_lineEdit.textChanged.connect(self.update_highlight)
 
 
-        # Checkboxes
-        self.ui.match_case_checkBox.stateChanged.connect(self.on_match_case_changed)
-        self.ui.whole_words_checkBox.stateChanged.connect(self.on_whole_words_changed)
-
-
-
-    def on_match_case_changed(self, state):
-        self.update_highlight()
-
-
-
-    def on_whole_words_changed(self, state):
-        self.update_highlight()
-
-    def on_text_changed(self):
-        self.update_highlight()
+        self.ui.match_case_checkBox.stateChanged.connect(self.update_highlight)
+        self.ui.whole_words_checkBox.stateChanged.connect(self.update_highlight)
 
     def update_highlight(self):
         text_to_find = self.ui.find_text_lineEdit.text()
@@ -91,8 +77,9 @@ class FindAndReplaceDialog(QDialog):
 
         text_content = self.ui.viewport_QplainText.toPlainText()
         replaced_text = self.text_replacer(text_content, text_to_find, replace_with, match_case, whole_words)
-        self.ui.viewport_QplainText.setPlainText(replaced_text)  # Display updated text
+        self.ui.viewport_QplainText.setPlainText(replaced_text)
         print("Result after replacement:", replaced_text)
+        return replaced_text
 
     def text_replacer(self, text_content, text_to_find, replace_with, match_case, whole_words):
         flags = 0
