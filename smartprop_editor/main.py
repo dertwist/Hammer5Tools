@@ -880,6 +880,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.settings.setValue("SmartPropEditorMainWindow/windowState", self.saveState())
     def closeEvent(self, event):
         self._save_user_prefs()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SmartPropEditorMainWindow()
