@@ -113,9 +113,24 @@ class Ui_MainWindow(object):
         self.verticalLayout_17.setContentsMargins(0, 0, 0, 0)
         self.properties_layout = QVBoxLayout()
         self.properties_layout.setObjectName(u"properties_layout")
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.properties_placeholder = QLabel(self.scrollAreaWidgetContents)
+        self.properties_placeholder.setObjectName(u"properties_placeholder")
+        self.properties_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.properties_layout.addItem(self.verticalSpacer)
+        self.properties_layout.addWidget(self.properties_placeholder)
+
+        self.properties_spacer = QFrame(self.scrollAreaWidgetContents)
+        self.properties_spacer.setObjectName(u"properties_spacer")
+        self.properties_spacer.setFrameShape(QFrame.Shape.StyledPanel)
+        self.properties_spacer.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_4 = QVBoxLayout(self.properties_spacer)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalSpacer = QSpacerItem(20, 655, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.verticalLayout_4.addItem(self.verticalSpacer)
+
+
+        self.properties_layout.addWidget(self.properties_spacer)
 
 
         self.verticalLayout_17.addLayout(self.properties_layout)
@@ -771,6 +786,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
+        self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select an element in the hierarchy", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem = self.tree_hierarchy_widget.headerItem()
