@@ -1,6 +1,5 @@
 # This Python file uses the following encoding: utf-8
 import os, shutil, pathlib, subprocess,time
-from basic_operations import normalize_name, random_char
 
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QProgressBar, QDialog, QVBoxLayout
