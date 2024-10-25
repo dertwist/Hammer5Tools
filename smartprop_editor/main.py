@@ -631,7 +631,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                 display_name = ''
             self.add_variable(clipboard_data[1], clipboard_data[2], ast.literal_eval(clipboard_data[3]), visible_in_editor, display_name)
         else:
-            print("Clipboard data format is not valid.")
+            ErrorInfo(text="Clipboard data format is not valid.", details=clipboard_data).exec()
 
     # ======================================[Tree widget hierarchy filter]========================================
     def search_hierarchy(self, filter_text, parent_item):
@@ -839,16 +839,14 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def deserialize_tree_item(self, m_Children=QTreeWidgetItem):
         tree_item = QTreeWidgetItem()
-        print(type(m_Children), m_Children)
         item_value = {}
         for key in m_Children:
-            print(type(key), key)
             if key == 'm_Children':
                 pass
             else:
                 item_value.update({key:m_Children[key]})
-        print(item_value)
-        tree_item.setText(0, m_Children.get('m_sLabel', self.generate_tree_name(self.ui.tree_hierarchy_widget, prefix=self.get_clean_class_name(m_Children.get("_class")))))
+        tree_item.setText(0, self.get_clean_class_name(m_Children.get('m_sLabel', m_Children.get("_class"))) + '_pasted')
+
         tree_item.setText(1, str(item_value))
         tree_item.setFlags(tree_item.flags() | Qt.ItemIsEditable)
 
@@ -856,15 +854,11 @@ class SmartPropEditorMainWindow(QMainWindow):
             child_item = self.deserialize_tree_item(child_data)
             tree_item.addChild(child_item)
         return tree_item
-
-    def generate_tree_name(self, tree, prefix):
-        unique_number = 1
-        while tree.findItems(f"{prefix}_{unique_number}", Qt.MatchStartsWith, 0):
-            unique_number += 1
-        return f"{prefix}_{unique_number}"
     def get_clean_class_name(self, input):
         if element_prefix in input:
             return input.replace(element_prefix, '')
+        else:
+            return input
 
 
     #======================================[Window State]========================================
