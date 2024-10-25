@@ -31,9 +31,43 @@ def Kv3ToJson(input):
     else:
         input = '<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{' + input + '\n}'
     output = kv3.textreader.KV3TextReader().parse(input).value
-    return kv3.textwriter.encode(output)
+    return output
 def JsonToKv3(input):
     if isinstance(input, dict):
         return kv3.textwriter.encode(input)
     else:
         raise ValueError('[JsonToKv3] Invalid input type: Input should be a dictionary')
+
+data = """		_class = "CSmartPropElement_Group"
+		m_bEnabled = true
+		m_Modifiers = 
+		[
+			
+			{
+				_class = "CSmartPropFilter_VariableValue"
+				m_bEnabled = true
+				m_VariableComparison = 
+				{
+					m_Name = "negative"
+					m_Value = true
+					m_Comparison = "EQUAL"
+				}
+			},
+			
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_bEnabled = true
+				m_VariableName = "switcher"
+				m_VariableValue = 
+				{
+					m_Expression = "-1"
+				}
+			},
+		]
+		m_SelectionCriteria = 
+		[
+		]
+		m_sLabel = "SetVariable_01"
+		"""
+
+print(type(Kv3ToJson(data)), Kv3ToJson(data))

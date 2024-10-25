@@ -2,12 +2,13 @@ import sys
 import re  # For regex search functionality
 from PySide6.QtWidgets import QDialog, QApplication, QMessageBox, QInputDialog
 from PySide6.QtGui import QTextCharFormat, QColor, QTextCursor
-
+from PySide6.QtCore import Signal
 
 from find_and_replace.ui_main import Ui_Dialog
 
 
 class FindAndReplaceDialog(QDialog):
+    accepted_output = Signal(str)
     def __init__(self, parent=None, data='Test text, 12 - 23, regex, find next'):
         super().__init__(parent)
         self.ui = Ui_Dialog()
@@ -77,9 +78,7 @@ class FindAndReplaceDialog(QDialog):
 
         text_content = self.ui.viewport_QplainText.toPlainText()
         replaced_text = self.text_replacer(text_content, text_to_find, replace_with, match_case, whole_words)
-        self.ui.viewport_QplainText.setPlainText(replaced_text)
-        print("Result after replacement:", replaced_text)
-        return replaced_text
+        self.accepted_output.emit(replaced_text)
 
     def text_replacer(self, text_content, text_to_find, replace_with, match_case, whole_words):
         flags = 0

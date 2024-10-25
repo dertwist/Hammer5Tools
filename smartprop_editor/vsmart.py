@@ -229,35 +229,3 @@ class VsmartSave:
 
             m_Choices.append({'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_Options': options, 'm_DefaultOption': widget.currentText(), 'm_nElementID': choice_index})
         return m_Choices
-
-class VsmartSerialization():
-    def __init__(self):
-        super().__init__()
-    def tree_serialization(self, item, data):
-        """Convert tree structure to json"""
-        if item.childCount() == 0:
-            child = item
-            key = child.text(0)
-            value_row = child.text(1)
-            child_data = ast.literal_eval(value_row)
-            child_data['m_sLabel'] = key
-            data['m_Children'].append(child_data)
-        for index in range(item.childCount()):
-            child = item.child(index)
-            key = child.text(0)
-            value_row = child.text(1)
-
-            child_data = ast.literal_eval(value_row)
-            child_data['m_sLabel'] = key
-
-            if child.childCount() > 0:
-                child_data['m_Children'] = []
-                self.tree_serialization(child, child_data)
-
-            data['m_Children'].append(child_data)
-
-        return data
-
-class VsmartDeserialization():
-    def __init__(self, data):
-        super().__init__()
