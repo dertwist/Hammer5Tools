@@ -23,6 +23,8 @@ from smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from popup_menu.popup_menu_main import PopupMenu
 
+from find_and_replace.main import FindAndReplaceDialog
+
 from PySide6.QtGui import QKeySequence
 
 from explorer.main import Explorer
@@ -669,16 +671,22 @@ class SmartPropEditorMainWindow(QMainWindow):
         add_new_action = menu.addAction("Add new element")
         add_new_action.triggered.connect(self.add_an_element)
 
+        menu.addSeparator()
+
         move_up_action = menu.addAction("Move Up")
         move_up_action.triggered.connect(lambda: self.move_tree_item(item, -1))
         move_down_action = menu.addAction("Move Down")
         move_down_action.triggered.connect(lambda: self.move_tree_item(item, 1))
+
+        menu.addSeparator()
 
         remove_action = menu.addAction("Remove")
         remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.tree_hierarchy_widget))
 
         duplicate_action = menu.addAction("Duplicate")
         duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position), self.ui.tree_hierarchy_widget))
+
+        menu.addSeparator()
 
         copy_action = menu.addAction("Copy")
         copy_action.setShortcut(QKeySequence(QKeySequence.Copy))
@@ -688,9 +696,17 @@ class SmartPropEditorMainWindow(QMainWindow):
         paste_action.setShortcut(QKeySequence(QKeySequence.Paste))
         paste_action.triggered.connect(lambda: self.paste_item(self.ui.tree_hierarchy_widget))
 
+        paste_action = menu.addAction("Paste with replacement")
+        paste_action.setShortcut(QKeySequence(QKeySequence("Ctrl+Shift+V")))
+        paste_action.triggered.connect(lambda: self.new_item_with_replacement(QApplication.clipboard().text()))
+
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
 
     # ======================================[Tree widget functions]========================================
+
+    def new_item_with_replacement(self, data):
+        text = FindAndReplaceDialog(data=data).exec()
+        print(text)
     def move_tree_item(self, item, direction):
         """Move tree item"""
         if not item:
