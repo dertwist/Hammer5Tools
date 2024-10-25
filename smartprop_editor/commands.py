@@ -1,3 +1,12 @@
+import sys
+import json
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QTreeView, QVBoxLayout, QWidget,
+    QTableView, QPlainTextEdit, QSplitter
+)
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QKeySequence, QUndoStack, QUndoCommand
+from PySide6.QtCore import Qt, QEvent
+
 class AddItemCommand(QUndoCommand):
     def __init__(self, item_data, model, parent=None):
         super().__init__()

@@ -813,30 +813,31 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def tree_serialization(self, item, data):
         """Convert tree structure to json"""
-        if item.childCount() == 0:
-            child = item
-            key = child.text(0)
-            value_row = child.text(1)
-            child_data = ast.literal_eval(value_row)
-            child_data['m_sLabel'] = key
-            data['m_Children'].append(child_data)
-        for index in range(item.childCount()):
-            child = item.child(index)
-            key = child.text(0)
-            value_row = child.text(1)
+        key = item.text(0)
+        value_row = item.text(1)
+        parent_data = ast.literal_eval(value_row)
+        parent_data['m_sLabel'] = key
+        if item.childCount() > 0:
+            parent_data['m_Children'] = []
+        data['m_Children'].append(parent_data)
+        if item.childCount() > 0:
+            for index in range(item.childCount()):
+                child = item.child(index)
+                key = child.text(0)
+                value_row = child.text(1)
 
-            child_data = ast.literal_eval(value_row)
-            child_data['m_sLabel'] = key
+                child_data = ast.literal_eval(value_row)
+                child_data['m_sLabel'] = key
 
-            if child.childCount() > 0:
-                child_data['m_Children'] = []
-                self.tree_serialization(child, child_data)
+                if child.childCount() > 0:
+                    child_data['m_Children'] = []
+                    self.tree_serialization(child, child_data)
 
-            data['m_Children'].append(child_data)
+                parent_data['m_Children'].append(child_data)
 
         return data
 
-    def deserialize_tree_item(self, m_Children):
+    def deserialize_tree_item(self, m_Children=QTreeWidgetItem):
         tree_item = QTreeWidgetItem()
         print(type(m_Children), m_Children)
         item_value = {}
@@ -847,7 +848,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             else:
                 item_value.update({key:m_Children[key]})
         print(item_value)
-        tree_item.setText(0, m_Children.get('m_sLabel', 'emptyname'))
+        tree_item.setText(0, m_Children.get('m_sLabel', self.generate_tree_name(self.ui.tree_hierarchy_widget, prefix=self.get_clean_class_name(m_Children.get("_class")))))
         tree_item.setText(1, str(item_value))
         tree_item.setFlags(tree_item.flags() | Qt.ItemIsEditable)
 
@@ -855,6 +856,15 @@ class SmartPropEditorMainWindow(QMainWindow):
             child_item = self.deserialize_tree_item(child_data)
             tree_item.addChild(child_item)
         return tree_item
+
+    def generate_tree_name(self, tree, prefix):
+        unique_number = 1
+        while tree.findItems(f"{prefix}_{unique_number}", Qt.MatchStartsWith, 0):
+            unique_number += 1
+        return f"{prefix}_{unique_number}"
+    def get_clean_class_name(self, input):
+        if element_prefix in input:
+            return input.replace(element_prefix, '')
 
 
     #======================================[Window State]========================================
