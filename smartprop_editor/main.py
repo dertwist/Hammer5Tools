@@ -233,6 +233,11 @@ class SmartPropEditorMainWindow(QMainWindow):
                     self.paste_item(self.ui.tree_hierarchy_widget)
                     return True
 
+                # Delete
+                if event.matches(QKeySequence.Delete):
+                    self.remove_tree_item(self.ui.tree_hierarchy_widget)
+                    return True
+
                 if source.viewport().underMouse():
                     if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
                         self.add_an_element()
@@ -524,7 +529,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         # duplicate_action.triggered.connect(lambda: self.duplicate_item(item, tree=self.ui.choices_tree_widget))
 
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.remove_tree_item(item))
+        remove_action.triggered.connect(lambda: self.ui.choices_tree_widget)
 
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
@@ -662,18 +667,18 @@ class SmartPropEditorMainWindow(QMainWindow):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
         add_new_action = menu.addAction("Add new element")
+        add_new_action.triggered.connect(self.add_an_element)
+
         move_up_action = menu.addAction("Move Up")
+        move_up_action.triggered.connect(lambda: self.move_tree_item(item, -1))
         move_down_action = menu.addAction("Move Down")
+        move_down_action.triggered.connect(lambda: self.move_tree_item(item, 1))
+
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.remove_tree_item(item))
+        remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.tree_hierarchy_widget))
 
         duplicate_action = menu.addAction("Duplicate")
         duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position), self.ui.tree_hierarchy_widget))
-
-        move_up_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget.itemAt(position), -1))
-        add_new_action.triggered.connect(self.add_an_element)
-        move_down_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget.itemAt(position), 1))
-        remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.tree_hierarchy_widget.itemAt(position)))
 
         copy_action = menu.addAction("Copy")
         copy_action.setShortcut(QKeySequence(QKeySequence.Copy))
@@ -681,7 +686,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         paste_action = menu.addAction("Paste")
         paste_action.setShortcut(QKeySequence(QKeySequence.Paste))
-        paste_action.triggered.connect(lambda: self.paste_item(self.ui.tree_hierarchy_widget.itemAt(position)))
+        paste_action.triggered.connect(lambda: self.paste_item(self.ui.tree_hierarchy_widget))
 
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
 
@@ -697,16 +702,20 @@ class SmartPropEditorMainWindow(QMainWindow):
         if 0 <= new_index < parent.childCount():
             parent.takeChild(index)
             parent.insertChild(new_index, item)
-    def remove_tree_item(self, item):
+    def remove_tree_item(self, tree):
         """Removing Tree item"""
-        if item:
-            if item == item.treeWidget().invisibleRootItem():
-                pass
-            else:
-                parent = item.parent() or item.treeWidget().invisibleRootItem()
-                index = parent.indexOfChild(item)
-                parent.takeChild(index)
+        selected_indexes = tree.selectedIndexes()
+        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
+        for item in selected_items:
+            if item:
+                if item == item.treeWidget().invisibleRootItem():
+                    pass
+                else:
+                    parent = item.parent() or item.treeWidget().invisibleRootItem()
+                    index = parent.indexOfChild(item)
+                    parent.takeChild(index)
     def copy_item(self, tree):
+        """Coping Tree item"""
         selected_indexes = tree.selectedIndexes()
         selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
 
@@ -719,6 +728,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         clipboard.setText(json.dumps(items_data, indent=4))
 
     def paste_item(self, tree):
+        """Pasting tree item"""
         clipboard = QApplication.clipboard()
         item_data = json.loads(clipboard.text())
 
