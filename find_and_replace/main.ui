@@ -29,45 +29,37 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="regex_checkBox">
-         <property name="text">
-          <string>Regex</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QCheckBox" name="whole_words_checkBox">
          <property name="text">
           <string>Whole words</string>
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QCheckBox" name="only_selection_checkBox">
+         <property name="text">
+          <string>Only selection</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="user_ignore_list_checkBox">
+         <property name="text">
+          <string>Use ignore list</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="edit_ignore_list_button">
+         <property name="text">
+          <string>Edit Ignore list</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <item>
-        <widget class="QCheckBox" name="serach_backward_checkBox">
-         <property name="text">
-          <string>Search backward</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="search_from_start_checkBox">
-         <property name="text">
-          <string>Search from start</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="serach_selection_checkBox">
-         <property name="text">
-          <string>Search selection</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <layout class="QHBoxLayout" name="horizontalLayout_2"/>
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
