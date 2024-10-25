@@ -17,7 +17,7 @@ from preferences import get_config_value, get_addon_name, get_cs2_path, debug
 
 from smartprop_editor.variable_frame import VariableFrame
 from smartprop_editor.objects import variables_list, variable_prefix, element_prefix, elements_list, operators_list, operator_prefix, selection_criteria_prefix, selection_criteria_list, filters_list, filter_prefix
-from smartprop_editor.vsmart import VsmartOpen, VsmartSave
+from smartprop_editor.vsmart import VsmartOpen, VsmartSave, VsmartSerialization, VsmartDeserialization
 from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from smartprop_editor.choices import AddChoice, AddVariable, AddOption
@@ -29,6 +29,7 @@ from PySide6.QtGui import QKeySequence
 
 from explorer.main import Explorer
 from preferences import settings
+from common import Kv3ToJson, JsonToKv3
 
 global opened_file
 opened_file = None
@@ -735,13 +736,25 @@ class SmartPropEditorMainWindow(QMainWindow):
         selected_indexes = tree.selectedIndexes()
         selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
 
-        items_data = []
+        data = {'m_Children': []}
         for tree_item in selected_items:
-            item_data = self.serialize_tree_item(tree_item)
-            items_data.append(item_data)
-
+            item_data = VsmartSerialization().tree_serialization(item=tree_item, data=data)
+            print(item_data)
+            # data['m_Children'].append(item_data)
+        # print(json.dumps(data, indent=4))
         clipboard = QApplication.clipboard()
-        clipboard.setText(json.dumps(items_data, indent=4))
+        clipboard.setText(JsonToKv3(item_data))
+
+        # selected_indexes = tree.selectedIndexes()
+        # selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
+        #
+        # items_data = []
+        # for tree_item in selected_items:
+        #     item_data = self.serialize_tree_item(tree_item)
+        #     items_data.append(item_data)
+        #
+        # clipboard = QApplication.clipboard()
+        # clipboard.setText(json.dumps(items_data, indent=4))
 
     def paste_item(self, tree):
         """Pasting tree item"""
