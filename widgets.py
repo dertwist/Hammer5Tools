@@ -1,5 +1,7 @@
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication
+from PySide6.QtGui import QIcon
+import sys, webbrowser
 
 class Spacer(QWidget):
     def __init__(self):
@@ -166,3 +168,39 @@ class ComboboxTreeChild(ComboboxDynamicItems):
             data_out.append(child_item.text(0))
 
         return data_out
+
+
+class ErrorInfo(QMessageBox):
+    def __init__(self, text="Test", details=""):
+        super().__init__()
+
+
+        self.setWindowTitle("Error")
+        self.setText(text)
+        self.setMinimumSize(400, 200)
+        self.setIcon(QMessageBox.Critical)
+        self.setWindowIcon(QIcon("appicon.ico"))
+
+
+        self.setDetailedText(details)
+
+        report_button = self.addButton("Report", QMessageBox.ActionRole)
+        close_button = self.addButton(QMessageBox.Close)
+
+
+        report_button.clicked.connect(self.report_issue)
+
+    def report_issue(self):
+        webbrowser.open("https://discord.gg/mMaub4jCBa")
+
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+
+    import qtvscodestyle as qtvsc
+
+    stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
+    app.setStyleSheet(stylesheet)
+    ErrorInfo('Testhgkhkljhklhklj asf asf asf asf asdf asdf asf asdf ', 'dfaasd').exec()
+    sys.exit(app.exec())
