@@ -194,13 +194,13 @@ class ErrorInfo(QMessageBox):
         webbrowser.open("https://discord.gg/mMaub4jCBa")
 
 
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    import qtvscodestyle as qtvsc
-
-    stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
-    app.setStyleSheet(stylesheet)
-    ErrorInfo('Testhgkhkljhklhklj asf asf asf asf asdf asdf asf asdf ', 'dfaasd').exec()
-    sys.exit(app.exec())
+#
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#
+#     import qtvscodestyle as qtvsc
+#
+#     stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
+#     app.setStyleSheet(stylesheet)
+#     ErrorInfo('Testhgkhkljhklhklj asf asf asf asf asdf asdf asf asdf ', 'dfaasd').exec()
+#     sys.exit(app.exec())
