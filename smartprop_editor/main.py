@@ -1,5 +1,5 @@
 import ast, sys
-import os.path
+import os.path, re
 import shutil
 import threading
 import time
@@ -247,6 +247,15 @@ class SmartPropEditorMainWindow(QMainWindow):
                 if event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier) and event.key() == Qt.Key_V:
                     self.new_item_with_replacement(QApplication.clipboard().text())
                     return True
+                # Move Up
+                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_Up:
+                    self.move_tree_item(self.ui.tree_hierarchy_widget, -1)
+                    return True
+                # Move Down
+                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_Down:
+                    self.move_tree_item(self.ui.tree_hierarchy_widget, 1)
+                    return True
+
 
                 if source.viewport().underMouse():
                     if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
@@ -678,18 +687,22 @@ class SmartPropEditorMainWindow(QMainWindow):
         item = self.ui.choices_tree_widget.itemAt(position)
         add_new_action = menu.addAction("Add new element")
         add_new_action.triggered.connect(self.add_an_element)
+        add_new_action.setShortcut(QKeySequence(QKeySequence("Ctrl+F")))
 
         menu.addSeparator()
 
         move_up_action = menu.addAction("Move Up")
-        move_up_action.triggered.connect(lambda: self.move_tree_item(item, -1))
-        move_down_action = menu.addAction("Move Down")
-        move_down_action.triggered.connect(lambda: self.move_tree_item(item, 1))
+        move_up_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget, -1))
+        move_up_action.setShortcut(QKeySequence(QKeySequence("Ctrl+Up")))
 
+        move_down_action = menu.addAction("Move Down")
+        move_down_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget, 1))
+        move_down_action.setShortcut(QKeySequence(QKeySequence("Ctrl+Down")))
         menu.addSeparator()
 
         remove_action = menu.addAction("Remove")
         remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.tree_hierarchy_widget))
+        remove_action.setShortcut(QKeySequence(QKeySequence("Delete")))
 
         duplicate_action = menu.addAction("Duplicate")
         duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position), self.ui.tree_hierarchy_widget))
@@ -716,17 +729,31 @@ class SmartPropEditorMainWindow(QMainWindow):
         instance = FindAndReplaceDialog(data=data)
         instance.accepted_output.connect(lambda text:self.paste_item(tree=self.ui.tree_hierarchy_widget, data_input=text))
         instance.exec()
-    def move_tree_item(self, item, direction):
-        """Move tree item"""
-        if not item:
-            return
-        parent = item.parent() or self.ui.tree_hierarchy_widget.invisibleRootItem()
-        index = parent.indexOfChild(item)
-        new_index = index + direction
 
-        if 0 <= new_index < parent.childCount():
-            parent.takeChild(index)
-            parent.insertChild(new_index, item)
+    def move_tree_item(self, tree, direction):
+        """Move selected tree item up or down within its parent."""
+        selected_indexes = tree.selectedIndexes()
+
+        if not selected_indexes:
+            return  # No item selected, exit early
+
+        for index in selected_indexes:
+            item = tree.itemFromIndex(index)
+            if item is None:
+                continue  # Skip if no item is found for this index
+
+            parent = item.parent() or tree.invisibleRootItem()
+            current_index = parent.indexOfChild(item)
+            new_index = current_index + direction
+
+            # Check bounds and move the item
+            if 0 <= new_index < parent.childCount():
+                parent.takeChild(current_index)
+                parent.insertChild(new_index, item)
+
+            # Optionally: keep the item selected after the move
+            tree.setCurrentItem(item)
+
     def remove_tree_item(self, tree):
         """Removing Tree item"""
         selected_indexes = tree.selectedIndexes()
@@ -755,7 +782,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         if data_input is None:
             data_input = QApplication.clipboard().text()
         try:
-            input = Kv3ToJson(data_input)
+            input =  Kv3ToJson(self.fix_format(data_input))
             if 'm_Children' in input:
                 for key in input['m_Children']:
                     tree_item = self.deserialize_tree_item(key)
@@ -884,6 +911,14 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.settings.setValue("SmartPropEditorMainWindow/windowState", self.saveState())
     def closeEvent(self, event):
         self._save_user_prefs()
+    #===============================================================<  Other  >=============================================================
+
+    def fix_format(self, file_content):
+            """Fixing format from Source2Viewr and from null elements, usually it happens in case of Hammer5Tools export, but in valve's smartprops it also could be."""
+            pattern = re.compile(r'= resource_name:')
+            modified_content = re.sub(pattern, '= ', file_content)
+            modified_content = modified_content.replace('null,', '')
+            return modified_content
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

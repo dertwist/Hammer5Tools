@@ -96,13 +96,13 @@ class FindAndReplaceDialog(QDialog):
         return replaced_text
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    dialog = FindAndReplaceDialog()
-    import qtvscodestyle as qtvsc
-
-    stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
-    app.setStyleSheet(stylesheet)
-    # app.setStyle('fusion')
-    dialog.exec()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     dialog = FindAndReplaceDialog()
+#     import qtvscodestyle as qtvsc
+#
+#     stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
+#     app.setStyleSheet(stylesheet)
+#     # app.setStyle('fusion')
+#     dialog.exec()
+#     sys.exit(app.exec())
