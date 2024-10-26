@@ -306,15 +306,15 @@ class Explorer(QMainWindow):
 
         file_path = self.model.filePath(index)
         file_extension = file_path.split('.')[-1]  # Get the file extension from the file path
+
+        copy_relative_path_action = QAction("Copy relative path", self)
+        copy_relative_path_action.triggered.connect(lambda: self.copy_relative_path(index, True))
+        menu.addAction(copy_relative_path_action)
         if file_extension in audio_extensions:
-            copy_audio_path_action = QAction("Copy Audio Path", self)  # Updated action text for clarity
+            copy_audio_path_action = QAction("Copy Audio Path", self)
             copy_audio_path_action.triggered.connect(lambda: self.copy_audio_path(index, True))
             menu.addAction(copy_audio_path_action)
 
-        elif file_extension in smartprop_extensions:
-            copy_smartprop_path_action = QAction("Copy Smartprop Path", self)  # Updated action text for clarity
-            copy_smartprop_path_action.triggered.connect(lambda: self.copy_smartprop_path(index, True))
-            menu.addAction(copy_smartprop_path_action)
 
     def duplicate_file(self, index):
         file_path = self.model.filePath(index)
@@ -426,15 +426,14 @@ class Explorer(QMainWindow):
             root, ext = os.path.splitext(file_path)
             file_path = root + '.vsnd'
             return file_path
-
-    def copy_smartprop_path(self, index, to_clipboard):
+    def copy_relative_path(self, index, to_clipboard):
         if to_clipboard:
             file_path = self.model.filePath(index)
             file_path = os.path.relpath(file_path, self.rootpath)
             file_path = file_path.replace('\\', '/')
             file_path = file_path.lower()
             root, ext = os.path.splitext(file_path)
-            file_path = root + '.vsmart'
+            file_path = root + ext
             clipboard = QGuiApplication.clipboard()
             clipboard.setText(file_path)
         else:
@@ -443,9 +442,8 @@ class Explorer(QMainWindow):
             file_path = file_path.replace('\\', '/')
             file_path = file_path.lower()
             root, ext = os.path.splitext(file_path)
-            file_path = root + '.vsmart'
+            file_path = root + ext
             return file_path
-
     def delete_selected_items(self):
         indexes = self.tree.selectionModel().selectedIndexes()
         if not indexes:
