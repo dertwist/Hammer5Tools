@@ -159,7 +159,7 @@ class PreferencesDialog(QDialog):
 
         #APP
         set_config_bool('APP', 'start_with_system', self.ui.checkBox_start_with_system.isChecked())
-        set_config_bool('APP', 'close_to_tray', self.ui.checkBox_close_to_tray.isChecked())
+        set_config_bool('APP', 'minimize_to_tray', self.ui.checkBox_close_to_tray.isChecked())
         self.start_with_system()
 
 
