@@ -40,8 +40,8 @@ class FloatWidget(QWidget):
             self.Slider.setMaximum(abs(value) * 10 * 100 +1000)
             self.Slider.setMinimum(-abs(value) * 10 * 100 -1000)
         else:
-            self.Slider.setMinimum(slider_range[0])
-            self.Slider.setMaximum(slider_range[1])
+            self.Slider.setMinimum(slider_range[0]*100)
+            self.Slider.setMaximum(slider_range[1]*100)
         self.Slider.valueChanged.connect(self.on_Slider_updated)
 
         # Layout setup
