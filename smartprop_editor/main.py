@@ -559,7 +559,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         # duplicate_action.triggered.connect(lambda: self.duplicate_item(item, tree=self.ui.choices_tree_widget))
 
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.choices_tree_widget)))
+        remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.choices_tree_widget))
+        # remove_action.triggered.connect(lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.choices_tree_widget)))
 
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
@@ -712,7 +713,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         menu.addSeparator()
 
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.tree_hierarchy_widget))
+        # remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.tree_hierarchy_widget))
+        remove_action.triggered.connect(lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.tree_hierarchy_widget)))
         remove_action.setShortcut(QKeySequence(QKeySequence("Delete")))
 
         duplicate_action = menu.addAction("Duplicate")
@@ -799,6 +801,18 @@ class SmartPropEditorMainWindow(QMainWindow):
             error_dialog = ErrorInfo(text="Wrong format of the pasting content", details=error_message)
             error_dialog.exec()
 
+    def remove_tree_item(self, tree):
+        """Removing Tree item"""
+        selected_indexes = tree.selectedIndexes()
+        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
+        for item in selected_items:
+            if item:
+                if item == item.treeWidget().invisibleRootItem():
+                    pass
+                else:
+                    parent = item.parent() or item.treeWidget().invisibleRootItem()
+                    index = parent.indexOfChild(item)
+                    parent.takeChild(index)
 
     def duplicate_item(self, item: QTreeWidgetItem, tree):
         """Duplicate Tree item"""
