@@ -33,7 +33,14 @@ class DeleteTreeItemCommand(QUndoCommand):
         """Restore tree items from stored data during undo."""
         for item_data in items_data:
             parent_item = self.get_parent_item(item_data)
-            self.add_item_from_data(item_data, parent_item)
+            if parent_item is not None:
+                self.add_item_from_data(item_data, parent_item)
+            else:
+                # If the parent is None (i.e., invisible root), add to the root.
+                if item_data['parent_id'] is None:
+                    self.add_item_from_data(item_data, self.model.invisibleRootItem())
+                else:
+                    print(f"Warning: Parent item not found for '{item_data['text']}'.")
 
     def get_parent_item(self, item_data):
         """Retrieve the parent item for a given item data based on its unique ID."""
@@ -68,13 +75,14 @@ class DeleteTreeItemCommand(QUndoCommand):
         new_item = QTreeWidgetItem([item_data['text'], item_data['value']])
         new_item.setData(0, Qt.UserRole, item_data.get('id', str(uuid.uuid4())))  # Assign unique ID if not provided
 
+        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
+
         for child_data in item_data.get('children', []):
             self.add_item_from_data(child_data, new_item)
 
         if parent is not None:
             parent.addChild(new_item)
         else:
-            # Handle top-level items that do not have a valid parent
             if item_data['is_top_level']:
                 self.model.insertTopLevelItem(item_data['position'], new_item)
             else:
@@ -91,8 +99,6 @@ class DeleteTreeItemCommand(QUndoCommand):
                 item_data = self.get_item_data(item)
                 selected_items_data.append(item_data)
 
-        # For debugging
-        print("Serialized Item Data:", json.dumps(selected_items_data, indent=2))
         return selected_items_data
 
     def get_item_data(self, item):
@@ -110,7 +116,6 @@ class DeleteTreeItemCommand(QUndoCommand):
         item.setData(0, Qt.UserRole, item_id)
 
         parent_id = parent.data(0, Qt.UserRole) if parent != item.treeWidget().invisibleRootItem() else None
-
         children_data = [self.get_item_data(item.child(i)) for i in range(item.childCount())]
 
         return {
