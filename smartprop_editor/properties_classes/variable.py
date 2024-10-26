@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QWidget, QCompleter, QSizePolicy, QSpacerItem, QHB
 from PySide6.QtCore import Signal
 from smartprop_editor.objects import expression_completer
 from widgets import ComboboxVariables, Spacer
+from preferences import debug
 
 
 class PropertyVariableOutput(QWidget):
@@ -56,13 +57,18 @@ class PropertyVariableOutput(QWidget):
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.variable.set_variable(value['m_SourceName'])
+                debug(f'Loaded value in variable widget: dict {value['m_SourceName']}')
+
         elif isinstance(value, str):
             self.variable.set_variable(value)
+            debug(f'Loaded value in variable widget: str {value}')
         else:
-            pass
+            self.variable.set_variable(value)
+            debug(f'Loaded value in variable widget: None {value}')
         self.on_changed()
     def on_changed(self):
         self.change_value()
         self.edited.emit()
     def change_value(self):
-        self.value = {self.value_class: self.variable.currentText()}
+        self.value = {self.value_class: self.variable.get_variable()}
+        debug(f'Changed value in variable widget {self.value}')
