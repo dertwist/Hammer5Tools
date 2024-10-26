@@ -115,6 +115,7 @@ class ComboboxVariables(ComboboxDynamicItems):
         """Updating widget items on click. Filter items depends on their type if you need"""
         self.currentTextChanged.disconnect(self.changed_var)
         self.items = []
+        self.items.append('None')
         variables = self.get_variables()
         for item in variables:
             if self.filter_types is not None:
@@ -122,7 +123,6 @@ class ComboboxVariables(ComboboxDynamicItems):
                     self.items.append(item['name'])
             else:
                 self.items.append(item['name'])
-        self.items.append('')
         current = self.currentText()
         self.clear()
         self.addItems(self.items)
@@ -130,10 +130,13 @@ class ComboboxVariables(ComboboxDynamicItems):
             self.setCurrentText(current)
         self.currentTextChanged.connect(self.changed_var)
     def changed_var(self):
-        for item in self.get_variables():
-            if item['name'] == self.currentText():
-                self.changed.emit({'name': item['name'], 'class': item['class'], 'm_default': item['m_default']})
-                break
+        if self.currentIndex() == 0:
+            self.changed.emit({'name': None, 'class': None, 'm_default': None})
+        else:
+            for item in self.get_variables():
+                if item['name'] == self.currentText():
+                    self.changed.emit({'name': item['name'], 'class': item['class'], 'm_default': item['m_default']})
+                    break
     def get_variables(self):
         data_out = []
         for i in range(self.variables_scrollArea.count()):
@@ -143,9 +146,17 @@ class ComboboxVariables(ComboboxDynamicItems):
                 data_out.append(var)
         return data_out
     def set_variable(self, value):
-        self.addItem(value)
-        self.setCurrentText(value)
-
+        self.updateItems()
+        if value == "" or value is None:
+            self.setCurrentIndex(0)
+        else:
+            self.addItem(value)
+            self.setCurrentText(value)
+    def get_variable(self):
+        if self.currentIndex() == 0:
+            return ''
+        else:
+            return self.currentText()
 class ComboboxTreeChild(ComboboxDynamicItems):
     def __init__(self, parent=None, layout=QTreeWidget, root=QTreeWidgetItem):
         super().__init__(parent)

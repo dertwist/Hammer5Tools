@@ -219,7 +219,7 @@ class PropertyVector3D(QWidget):
         if self.ui.logic_switch.currentIndex() == 0:
             self.value = None
         elif self.ui.logic_switch.currentIndex() == 1:
-            value = self.variable_logic_switch.currentText()
+            value = self.variable_logic_switch.get_variable()
             self.value = {self.value_class: {'m_SourceName': value}}
         elif self.ui.logic_switch.currentIndex() == 2:
             def handle_value(line, combo_box, variable, float_widget):
@@ -227,7 +227,7 @@ class PropertyVector3D(QWidget):
                 if index == 0:
                     value = float_widget.value
                 elif index == 1:
-                    value = {'m_SourceName': variable.currentText()}
+                    value = {'m_SourceName': variable.get_variable()}
                 elif index == 2:
                     value = {'m_Expression': line.toPlainText()}
                 return value
