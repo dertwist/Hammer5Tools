@@ -9,7 +9,7 @@ from distutils.util import strtobool
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit, QFileDialog, QComboBox, QPushButton, QHBoxLayout, QLabel
 from PySide6.QtWidgets import QMenu, QApplication
-from PySide6.QtGui import QCursor, QDrag, QAction, QColor, QKeyEvent
+from PySide6.QtGui import QCursor, QDrag, QAction, QColor, QKeyEvent, QUndoStack
 from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
 
 from smartprop_editor.ui_main import Ui_MainWindow
@@ -22,6 +22,7 @@ from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from popup_menu.popup_menu_main import PopupMenu
+from smartprop_editor.commands import DeleteTreeItemCommand
 
 from find_and_replace.main import FindAndReplaceDialog
 
@@ -95,6 +96,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
         self.buttons()
+
+        self.undo_stack = QUndoStack(self)
 
 
 
@@ -241,7 +244,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
                 # Delete
                 if event.matches(QKeySequence.Delete):
-                    self.remove_tree_item(self.ui.tree_hierarchy_widget)
+                    self.undo_stack.push(DeleteTreeItemCommand(self.ui.tree_hierarchy_widget))
+
                     return True
                 # Paste with replacement
                 if event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier) and event.key() == Qt.Key_V:
@@ -254,6 +258,13 @@ class SmartPropEditorMainWindow(QMainWindow):
                 # Move Down
                 if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_Down:
                     self.move_tree_item(self.ui.tree_hierarchy_widget, 1)
+                    return True
+
+                if event.matches(QKeySequence.Undo):
+                    self.undo_stack.undo()
+                    return True
+                if event.matches(QKeySequence.Redo):
+                    self.undo_stack.redo()
                     return True
 
 
@@ -548,7 +559,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         # duplicate_action.triggered.connect(lambda: self.duplicate_item(item, tree=self.ui.choices_tree_widget))
 
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.choices_tree_widget))
+        remove_action.triggered.connect(lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.choices_tree_widget)))
 
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
@@ -753,19 +764,6 @@ class SmartPropEditorMainWindow(QMainWindow):
 
             # Optionally: keep the item selected after the move
             tree.setCurrentItem(item)
-
-    def remove_tree_item(self, tree):
-        """Removing Tree item"""
-        selected_indexes = tree.selectedIndexes()
-        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
-        for item in selected_items:
-            if item:
-                if item == item.treeWidget().invisibleRootItem():
-                    pass
-                else:
-                    parent = item.parent() or item.treeWidget().invisibleRootItem()
-                    index = parent.indexOfChild(item)
-                    parent.takeChild(index)
     def copy_item(self, tree):
         """Coping Tree item"""
         selected_indexes = tree.selectedIndexes()
