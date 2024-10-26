@@ -530,8 +530,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         move_up_action = menu.addAction("Move Up")
         move_down_action = menu.addAction("Move Down")
 
-        move_up_action.triggered.connect(lambda: self.move_tree_item(item, -1))
-        move_down_action.triggered.connect(lambda: self.move_tree_item(item, 1))
+        move_up_action.triggered.connect(lambda: self.move_tree_item(self.ui.choices_tree_widget, -1))
+        move_down_action.triggered.connect(lambda: self.move_tree_item(self.ui.choices_tree_widget, 1))
         menu.addSection('')
 
 
@@ -548,7 +548,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         # duplicate_action.triggered.connect(lambda: self.duplicate_item(item, tree=self.ui.choices_tree_widget))
 
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.ui.choices_tree_widget)
+        remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.choices_tree_widget))
 
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
