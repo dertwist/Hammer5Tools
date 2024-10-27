@@ -884,7 +884,12 @@ class SmartPropEditorMainWindow(QMainWindow):
                 pass
             else:
                 item_value.update({key:m_Children[key]})
-        tree_item.setText(0, self.get_clean_class_name(m_Children.get('m_sLabel', m_Children.get("_class"))) + '_pasted')
+        name = self.get_clean_class_name(m_Children.get('m_sLabel', m_Children.get("_class")))
+        if '_pasted' in name:
+            pass
+        else:
+            name = name + '_pasted'
+        tree_item.setText(0,  name)
 
         tree_item.setText(1, str(item_value))
         tree_item.setFlags(tree_item.flags() | Qt.ItemIsEditable)
