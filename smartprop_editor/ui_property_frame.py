@@ -296,8 +296,70 @@ class Ui_Form(object):
 
         self.horizontalLayout_2.addWidget(self.variables_search)
 
+        self.property_class_4 = QLineEdit(self.frame_2)
+        self.property_class_4.setObjectName(u"property_class_4")
+        self.property_class_4.setMaximumSize(QSize(16, 16777215))
+        self.property_class_4.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.property_class_4.setStyleSheet(u"QLineEdit {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border-top: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #242424;\n"
+"}\n"
+"\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.property_class_4.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
+        self.property_class_4.setMaxLength(32)
+        self.property_class_4.setReadOnly(True)
+
+        self.horizontalLayout_2.addWidget(self.property_class_4)
+
 
         self.horizontalLayout.addWidget(self.frame_2)
+
+        self.element_id_display_2 = QLineEdit(self.frame)
+        self.element_id_display_2.setObjectName(u"element_id_display_2")
+        self.element_id_display_2.setMaximumSize(QSize(32, 16777215))
+        self.element_id_display_2.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.element_id_display_2.setStyleSheet(u"QLineEdit {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border-top: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"    color: #6D6D6D;\n"
+"    background-color: #242424;\n"
+"}\n"
+"\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.element_id_display_2.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
+        self.element_id_display_2.setMaxLength(32)
+        self.element_id_display_2.setReadOnly(True)
+
+        self.horizontalLayout.addWidget(self.element_id_display_2)
 
         self.element_id_display = QLineEdit(self.frame)
         self.element_id_display.setObjectName(u"element_id_display")
@@ -311,7 +373,7 @@ class Ui_Form(object):
 "    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
 "    border-radius: 0px;\n"
 "    padding: 2px;\n"
-"    color: #E3E3E3;\n"
+"    color: #6D6D6D;\n"
 "    background-color: #242424;\n"
 "}\n"
 "\n"
@@ -506,6 +568,15 @@ class Ui_Form(object):
         self.variable_display.setPlaceholderText(QCoreApplication.translate("Form", u"Set enable from variable", None))
         self.variable_clear.setText("")
         self.variables_search.setText("")
+#if QT_CONFIG(tooltip)
+        self.property_class_4.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.property_class_4.setText("")
+#if QT_CONFIG(tooltip)
+        self.element_id_display_2.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.element_id_display_2.setText(QCoreApplication.translate("Form", u"ID:", None))
+        self.element_id_display_2.setPlaceholderText(QCoreApplication.translate("Form", u"ID", None))
 #if QT_CONFIG(tooltip)
         self.element_id_display.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)

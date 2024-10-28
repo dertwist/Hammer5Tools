@@ -167,7 +167,7 @@ class Ui_MainWindow(object):
 
         self.tree_hierarchy_widget = QTreeWidget(self.frame_2)
         __qtreewidgetitem = QTreeWidgetItem()
-        __qtreewidgetitem.setText(0, u"Operator");
+        __qtreewidgetitem.setText(0, u"Name");
         self.tree_hierarchy_widget.setHeaderItem(__qtreewidgetitem)
         self.tree_hierarchy_widget.setObjectName(u"tree_hierarchy_widget")
         self.tree_hierarchy_widget.setDragEnabled(True)
