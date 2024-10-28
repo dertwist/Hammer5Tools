@@ -6,7 +6,7 @@ from smartprop_editor.objects import elements_list
 from preferences import debug
 
 global m_nElementID
-m_nElementID = -1
+m_nElementID = 0
 global m_nElementID_list
 m_nElementID_list = [0]
 
@@ -32,7 +32,7 @@ def set_ElementID():
         debug(f"There is {m_nElementID} next id")
         return m_nElementID
 
-def reset_ElementID(id=-1, list=None):
+def reset_ElementID(id=0, list=None):
     if list is None:
         list = [0]
     global m_nElementID_list

@@ -88,14 +88,13 @@ class VsmartOpen:
                                     return updated_value
                                 return value
 
-                            if self.next_element_id:
-                                pass
-                            else:
+                            if self.next_element_id is None:
                                 update_value_ElementID(value_dict)
                                 value_dict = assign_ElementID(value_dict)
 
+
                             # Add tree item
-                            child_item = HierarchyItemModel(_name=item_class, _data = str(value_dict), _class=get_clean_class_name(value_dict['_class']), _id= get_ElementID_key(value_dict))
+                            child_item = HierarchyItemModel(_name=value_dict.get('m_sLabel', 'None'), _data = str(value_dict), _class=get_clean_class_name(value_dict['_class']), _id= get_ElementID_key(value_dict))
 
                             parent.addChild(child_item)
                             self.populate_tree(item, child_item)
