@@ -32,7 +32,7 @@ from PySide6.QtGui import QKeySequence
 from explorer.main import Explorer
 from preferences import settings
 from common import Kv3ToJson, JsonToKv3
-from widgets import ErrorInfo
+from widgets import ErrorInfo, on_three_hierarchyitem_clicked
 from smartprop_editor.element_id import *
 from smartprop_editor._common import *
 
@@ -54,10 +54,11 @@ class SmartPropEditorMainWindow(QMainWindow):
 
 
         # Hierarchy setup
-        # self.ui.tree_hierarchy_widget.hideColumn(1)
+        self.ui.tree_hierarchy_widget.hideColumn(1)
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
+        self.ui.tree_hierarchy_widget.itemClicked.connect(on_three_hierarchyitem_clicked)
 
         # Choices setup
         self.ui.choices_tree_widget.hideColumn(2)
