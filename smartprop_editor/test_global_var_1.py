@@ -10,7 +10,7 @@ for i in range(20200):
 class test2():
     def __init__(self):
         super().__init__()
-        print(f'test2 {set_ElemntID(5)}')
+        print(f'test2 {set_ElementId(5)}')
 
 test2()
 
