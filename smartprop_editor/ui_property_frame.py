@@ -299,6 +299,36 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.frame_2)
 
+        self.element_id_display = QLineEdit(self.frame)
+        self.element_id_display.setObjectName(u"element_id_display")
+        self.element_id_display.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.element_id_display.setStyleSheet(u"QLineEdit {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border-top: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #242424;\n"
+"}\n"
+"\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.element_id_display.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
+        self.element_id_display.setMaxLength(32)
+        self.element_id_display.setReadOnly(True)
+
+        self.horizontalLayout.addWidget(self.element_id_display)
+
         self.property_class_3 = QLineEdit(self.frame)
         self.property_class_3.setObjectName(u"property_class_3")
         self.property_class_3.setMaximumSize(QSize(16777215, 16777215))
@@ -476,6 +506,11 @@ class Ui_Form(object):
         self.variable_display.setPlaceholderText(QCoreApplication.translate("Form", u"Set enable from variable", None))
         self.variable_clear.setText("")
         self.variables_search.setText("")
+#if QT_CONFIG(tooltip)
+        self.element_id_display.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.element_id_display.setText("")
+        self.element_id_display.setPlaceholderText(QCoreApplication.translate("Form", u"ID", None))
 #if QT_CONFIG(tooltip)
         self.property_class_3.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
