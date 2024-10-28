@@ -214,13 +214,13 @@ class HierarchyItemModel(QTreeWidgetItem):
         super().__init__(parent)
 
         # Set text for name and data
-        self.setText(0, _name)
+        self.setText(0, str(_name))
         if _data is not None:
-            self.setText(1, _data)
+            self.setText(1, str(_data))
         if _class is not None:
-            self.setText(2, _class)
+            self.setText(2, str(_class))
         if _id is not None:
-            self.setText(3, _id)
+            self.setText(3, str(_id))
 
         # Initially set editable flags only on the first column
         self.setFlags(self.flags() | Qt.ItemIsEditable)
@@ -233,7 +233,7 @@ class HierarchyItemModel(QTreeWidgetItem):
             self.setFlags(self.flags() & ~Qt.ItemIsEditable)
 
 
-def on_item_clicked(item, column):
+def on_three_hierarchyitem_clicked(item, column):
     """Set item as editable if clicked on the first column; otherwise, make it non-editable."""
     if column == 0:
         item.set_editable(True)
