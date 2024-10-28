@@ -103,7 +103,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 730, 702))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 727, 702))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -180,7 +180,7 @@ class Ui_MainWindow(object):
         self.tree_hierarchy_widget.setAllColumnsShowFocus(False)
         self.tree_hierarchy_widget.setWordWrap(False)
         self.tree_hierarchy_widget.setHeaderHidden(True)
-        self.tree_hierarchy_widget.setColumnCount(2)
+        self.tree_hierarchy_widget.setColumnCount(4)
         self.tree_hierarchy_widget.header().setVisible(False)
         self.tree_hierarchy_widget.header().setCascadingSectionResizes(False)
         self.tree_hierarchy_widget.header().setMinimumSectionSize(135)
@@ -214,7 +214,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 280, 345))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 283, 327))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -790,6 +790,8 @@ class Ui_MainWindow(object):
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem = self.tree_hierarchy_widget.headerItem()
+        ___qtreewidgetitem.setText(3, QCoreApplication.translate("MainWindow", u"ID", None));
+        ___qtreewidgetitem.setText(2, QCoreApplication.translate("MainWindow", u"Class", None));
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
         self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
         self.variables_scroll_area_searchbar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
