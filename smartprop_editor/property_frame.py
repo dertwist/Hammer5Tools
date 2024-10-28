@@ -1,5 +1,6 @@
 from time import process_time_ns
 
+from preferences import debug
 from smartprop_editor.ui_property_frame import Ui_Form
 
 
@@ -12,6 +13,7 @@ from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
 
 from popup_menu.popup_menu_main import PopupMenu
+from smartprop_editor.element_id import get_ElementID
 
 
 import ast
@@ -37,6 +39,12 @@ class PropertyFrame(QWidget):
         del value['_class']
         self.value = value
         self.layout = self.ui.layout
+
+        #===========================================================<  Element ID  >========================================================
+        self.element_id =get_ElementID(value)
+        debug(f'element id {self.element_id}')
+        self.ui.element_id_display.setText(str(self.element_id))
+
 
         self.enable = value.get('m_bEnabled', True)
 
@@ -116,6 +124,8 @@ class PropertyFrame(QWidget):
             elif value_class == 'm_bEnabled':
                 pass
             elif value_class == 'm_sLabel':
+                pass
+            elif value_class == 'm_nElementID':
                 pass
 
             elif 'm_nScaleMode' in value_class:
@@ -318,11 +328,12 @@ class PropertyFrame(QWidget):
             # Generic shit
             for value_class, value in reversed(list(self.value.items())):
                 adding_instances(value_class, value)
-        self.on_edited()
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
 
+
         self.init_ui()
+        self.on_edited()
 
     def show_child(self):
         if not self.ui.show_child.isChecked():
@@ -348,13 +359,15 @@ class PropertyFrame(QWidget):
         return data_out
 
     def on_edited(self):
+        debug('Property frame was edited')
         if self.ui.variable_display.text() != '':
             enabled = {'m_Expression': str(self.ui.variable_display.text())}
         else:
             enabled = self.ui.enable.isChecked()
         self.value = {
             '_class': f'{self.name_prefix}_{self.name}',
-            'm_bEnabled': enabled
+            'm_bEnabled': enabled,
+            'm_nElementID': self.element_id
         }
         try:
             for index in range(self.ui.layout.count()):
