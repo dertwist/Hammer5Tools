@@ -454,7 +454,112 @@ QToolButton:hover {
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QLineEdit" name="property_class_4">
+           <property name="maximumSize">
+            <size>
+             <width>16</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::NoFocus</enum>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLineEdit {
+    font-size: 8pt;
+    font-family: &quot;Segoe UI&quot;;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid rgba(80, 80, 80, 255);
+    border-radius: 0px;
+    padding: 2px;
+    color: #E3E3E3;
+    background-color: #242424;
+}
+
+QLineEdit:focus {
+    border-color: rgba(80, 80, 80, 255);
+}
+
+QLineEdit::selection {
+    background-color: #414956;
+    color: white;
+}</string>
+           </property>
+           <property name="inputMethodHints">
+            <set>Qt::InputMethodHint::ImhLatinOnly|Qt::InputMethodHint::ImhLowercaseOnly</set>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="maxLength">
+            <number>32</number>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
         </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="element_id_display_2">
+        <property name="maximumSize">
+         <size>
+          <width>32</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::FocusPolicy::NoFocus</enum>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Variable name and display name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QLineEdit {
+    font-size: 8pt;
+    font-family: &quot;Segoe UI&quot;;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 2px solid rgba(80, 80, 80, 255);
+    border-radius: 0px;
+    padding: 2px;
+    color: #6D6D6D;
+    background-color: #242424;
+}
+
+QLineEdit:focus {
+    border-color: rgba(80, 80, 80, 255);
+}
+
+QLineEdit::selection {
+    background-color: #414956;
+    color: white;
+}</string>
+        </property>
+        <property name="inputMethodHints">
+         <set>Qt::InputMethodHint::ImhLatinOnly|Qt::InputMethodHint::ImhLowercaseOnly</set>
+        </property>
+        <property name="text">
+         <string>ID:</string>
+        </property>
+        <property name="maxLength">
+         <number>32</number>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="placeholderText">
+         <string>ID</string>
+        </property>
        </widget>
       </item>
       <item>
@@ -475,7 +580,7 @@ QToolButton:hover {
     border-bottom: 2px solid rgba(80, 80, 80, 255);
     border-radius: 0px;
     padding: 2px;
-    color: #E3E3E3;
+    color: #6D6D6D;
     background-color: #242424;
 }
 
