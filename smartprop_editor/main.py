@@ -441,6 +441,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                 var_class = (item['_class']).replace(variable_prefix, '')
                 var_name = item.get('m_VariableName', None)
                 var_display_name = item.get('m_DisplayName', None)
+                if var_display_name is None:
+                    var_display_name = item.get('m_ParameterName', None)
                 var_visible_in_editor = bool(item.get('m_bExposeAsParameter', None))
 
                 var_value = {
