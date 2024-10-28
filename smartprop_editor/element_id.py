@@ -3,7 +3,7 @@ m_nElementID = 0
 global m_nElementID_list
 m_nElementID_list = []
 
-def set_ElemntID(current_id):
+def set_ElementId(current_id):
     global m_nElementID
     global m_nElementID_list
     if current_id in m_nElementID_list:
