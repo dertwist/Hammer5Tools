@@ -15,7 +15,7 @@ from preferences import debug
 from common import editor_info, JsonToKv3, Kv3ToJson
 from smartprop_editor.element_id import *
 from smartprop_editor.common import *
-from widgets import HierarchyItemModel
+from widgets import HierarchyItemModel, set_HierarchyItemModel_labels
 class VsmartOpen:
     def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
         self.filename = filename
@@ -49,9 +49,8 @@ class VsmartOpen:
         self.populate_tree(data)
         reset_ElementID()
         self.populate_choices(data.get('m_Choices', None))
-        self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
-        self.fix_names(parent=self.tree.invisibleRootItem())
-        self.set_id(self.tree.invisibleRootItem())
+        # self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
+        # self.fix_names(parent=self.tree.invisibleRootItem())
 
     def populate_tree(self, data, parent=None):
         """Parsing every m_child as tree element"""
@@ -60,17 +59,15 @@ class VsmartOpen:
         if isinstance(data, dict):
             for key, value in data.items():
                 if key == 'm_Children':
-                    if isinstance(value, dict):
-                        item = HierarchyItemModel(tree_widget=parent.treeWidget(), _name="m_Children")
-                        parent.addChild(item)
-                        self.populate_tree(value, item)
-                    elif isinstance(value, list):
+                    if isinstance(value, list):
                         for item in value:
                             item_class = item.get('_class')
                             value_dict = item.copy()
                             value_dict.pop('m_Children', None)
-                            child_item = HierarchyItemModel(tree_widget=parent.treeWidget(), _name=item_class, _data= str(value_dict))
+                            update_value_ElementID(value_dict)
+                            child_item = HierarchyItemModel(_name=item_class, _data= str(value_dict))
                             parent.addChild(child_item)
+                            set_HierarchyItemModel_labels(item=child_item, _class=get_clean_class_name(item_class), _id=get_ElementID_key(value_dict))
                             self.populate_tree(item, child_item)
 
     # Remove m_children items
@@ -149,21 +146,6 @@ class VsmartOpen:
             else:
                 # If the current name does not have 'element_prefix', pass
                 pass
-    def set_id(self, parent=None):
-        """Sets and generate unique id for each element if it need"""
-        if parent is None:
-            parent =QTreeWidgetItem
-        for child_index in range(parent.childCount()):
-            item = parent.child(child_index)
-            value = item.text(1)
-            debug(f"Value before m_nElementID set {value}")
-            value = get_ElementID_value(value)
-            item.setText(1, str(value))
-            item.setText(3, str(value['m_nElementID']))
-            item.setText(2, str(get_clean_class_name(value['_class'])))
-            debug(f"Value after m_nElementID set {item.text(1)}")
-            if item.childCount() != 0:
-                self.set_id(item)
 
 
 class VsmartSave:
