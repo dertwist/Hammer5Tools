@@ -53,7 +53,7 @@ class VsmartOpen:
         # self.fix_names(parent=self.tree.invisibleRootItem())
 
     def populate_tree(self, data, parent=None):
-        """Parsing every m_child as tree element"""
+        """Populating hierarchy"""
         if parent is None:
             parent = self.tree.invisibleRootItem()
         if isinstance(data, dict):
@@ -61,41 +61,36 @@ class VsmartOpen:
                 if key == 'm_Children':
                     if isinstance(value, list):
                         for item in value:
+                            # Get keys
                             item_class = item.get('_class')
                             value_dict = item.copy()
+
+                            # Delete m_Children key
                             value_dict.pop('m_Children', None)
+
+                            # Assign or get element id
+                            # Update class element
                             update_value_ElementID(value_dict)
-                            child_item = HierarchyItemModel(_name=item_class, _data= str(value_dict))
+
+                            def assign_ElementID(value):
+                                if isinstance(value, list):
+                                    for index, item in enumerate(value):
+                                        value[index] = assign_ElementID(item)
+                                elif isinstance(value, dict):
+                                    updated_value = update_value_ElementID(value)
+                                    for key in updated_value:
+                                        updated_value[key] = assign_ElementID(updated_value[key])
+                                    return updated_value
+                                return value
+                            # Update child
+                            value_dict = assign_ElementID(value_dict)
+
+                            # Add tree item
+                            child_item = HierarchyItemModel(_name=item_class, _data = str(value_dict))
                             parent.addChild(child_item)
+                            # Set labels for element
                             set_HierarchyItemModel_labels(item=child_item, _class=get_clean_class_name(item_class), _id=get_ElementID_key(value_dict))
                             self.populate_tree(item, child_item)
-
-    # Remove m_children items
-    def cleanup_tree(self, parent_item):
-        """Set m_child to parent element"""
-        def search_recursively_loop(parent_item):
-            for index in range(parent_item.childCount()):
-                item = parent_item.child(index)
-                if item.text(0) == 'm_Children':
-                    # move all child from m_children to parent
-                    child_item = parent_item.child(index)
-                    search_recursively_loop(child_item)
-                    for i in range(child_item.childCount()):
-                        child = child_item.child(i)
-                        parent_item.addChild(child.clone())
-                    parent_item.takeChild(index)
-                    # check items in parent element
-                    for i in range(parent_item.childCount()):
-                        child = child_item.child(i)
-                        if child:
-                            # print(child.text(0))
-                            pass
-
-                    self.cleanup_tree(parent_item)
-                else:
-                    search_recursively_loop(item)
-
-        search_recursively_loop(parent_item)
 
     def populate_choices(self, data):
         if data == None:
