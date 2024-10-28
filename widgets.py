@@ -210,24 +210,27 @@ class ComboboxTreeChild(ComboboxDynamicItems):
 #==============================================================<  Tree widgets  >===========================================================
 
 class HierarchyItemModel(QTreeWidgetItem):
-    def __init__(self, tree_widget, _name="New Hierarchy Item", _data=None, _class=None, _id=None):
-        super().__init__(tree_widget)
+    def __init__(self, _name="New Hierarchy Item", _data=None, parent=None):
+        super().__init__(parent)
 
         # Set text for name and data
         self.setText(0, _name)
         self.setText(1, _data)
         self.setFlags(self.flags() | Qt.ItemIsEditable)
 
-        # If _class is provided, create QLabel and set it in the tree widget
+
+def set_HierarchyItemModel_labels(_class=None, _id=None, item=QTreeWidgetItem):
+    print(item.text(0))
+    if item is not None and item.treeWidget() is not None:
         if _class:
             label = QLabel()
-            label.setText(_class)
-            tree_widget.setItemWidget(self, 2, label)
+            label.setText(str(_class))
+            item.treeWidget().setItemWidget(item, 2, label)
 
         if _id:
             label = QLabel()
-            label.setText(_id)
-            tree_widget.setItemWidget(self, 3, label)
+            label.setText(str(_id))
+            item.treeWidget().setItemWidget(item, 3, label)
 #
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
@@ -239,14 +242,18 @@ class HierarchyItemModel(QTreeWidgetItem):
 #     ErrorInfo('Testhgkhkljhklhklj asf asf asf asf asdf asdf asf asdf ', 'dfaasd').exec()
 #     sys.exit(app.exec())
 
-# Example usage
+
 # app = QApplication([])
 # tree_widget = QTreeWidget()
 # tree_widget.setColumnCount(4)
 # tree_widget.setHeaderLabels(['Name', 'Data', 'Class', 'ID'])
 #
-# # Adding an example item
+# # Creating the main item
 # item = HierarchyItemModel(tree_widget, 'Item1', 'Data1', 'Class1', 'ID1')
+#
+# # Adding a child item to the main item
+# item.add_child('Child1', 'Data1', 'Class1', 'ID1')
+#
 #
 # tree_widget.show()
 # app.exec_()

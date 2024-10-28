@@ -22,19 +22,17 @@ def set_ElementID():
     global m_nElementID_list
     for id in m_nElementID_list:
         if id in m_nElementID_list:
-            debug(f"There is {id} id in the list")
+            new_id = id + 1
+            while new_id in m_nElementID_list:
+                new_id += 1
+
+            debug(f"New Id for element {new_id}")
+            m_nElementID_list.append(new_id)
+            return new_id
+
         else:
-            i = 0
-            while i > 0:
-                m_nElementID = id + 1
-                debug(f"Checking id for {m_nElementID}")
-                if m_nElementID in m_nElementID_list:
-                    debug(f"Found  {m_nElementID} in the list")
-                    continue
-                else:
-                    debug(f"New Id for element {m_nElementID}")
-                    m_nElementID_list.append(m_nElementID)
-                    return m_nElementID
+            debug(f"There is {id} id in the list")
+            return id
 
 def reset_ElementID():
     global m_nElementID_list
@@ -46,15 +44,6 @@ def get_ElementID(value):
     """Setting m_nElementID for each element in the vsmart file. It's necessary for keeping user inputs in the map editor """
     global m_nElementID
     global m_nElementID_list
-    m_nElementID = value.get('m_nElementID', set_ElementID())
-    add_ElementID(m_nElementID)
-    print(f'id {m_nElementID}, list {m_nElementID_list}')
-    return m_nElementID
-
-def get_ElementID_value(value):
-    """Sets unique id for whole element. Input dict and output dict as well"""
-    global m_nElementID
-    global m_nElementID_list
 
     if not isinstance(value, dict):
         value = ast.literal_eval(value)
@@ -62,13 +51,32 @@ def get_ElementID_value(value):
         debug(f"not dict{type(id)}, {id}")
         if not isinstance(id, int):
             id = set_ElementID()
-    else:
+    elif isinstance(value, dict):
         id = value.get('m_nElementID', set_ElementID())
         debug(f"dict{type(id)}, {id}")
         if not isinstance(id, int):
             id = set_ElementID()
+    else:
+        id = set_ElementID()
+    m_nElementID = id
+    add_ElementID(m_nElementID)
+    debug(f'get_ElementID {m_nElementID}')
+    return m_nElementID
+
+def update_value_ElementID(value):
+    """Sets unique id for whole element. Input dict and output dict as well. Important for updating the value you don't need to assign new one"""
+    global m_nElementID
+    global m_nElementID_list
+
+    id = get_ElementID(value)
+
     value.update({'m_nElementID': id})
+
     # Debug
-    debug(f'SetElementID value {value}')
-    debug(f'SetElementID id {id}, type of the value {type(id)}')
+    debug(f'update_value_ElementID value {value}')
+    debug(f'update_value_ElementID id {id}, type of the value {type(id)}')
     return value
+def get_ElementID_key(value):
+    """Get m_nElementID key from dict"""
+    debug(f'get_ElementID_key {m_nElementID}')
+    return value.get('m_nElementID')
