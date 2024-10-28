@@ -103,7 +103,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 727, 702))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 730, 702))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -179,12 +179,13 @@ class Ui_MainWindow(object):
         self.tree_hierarchy_widget.setUniformRowHeights(True)
         self.tree_hierarchy_widget.setAllColumnsShowFocus(False)
         self.tree_hierarchy_widget.setWordWrap(False)
-        self.tree_hierarchy_widget.setHeaderHidden(True)
+        self.tree_hierarchy_widget.setHeaderHidden(False)
         self.tree_hierarchy_widget.setColumnCount(4)
-        self.tree_hierarchy_widget.header().setVisible(False)
+        self.tree_hierarchy_widget.header().setVisible(True)
         self.tree_hierarchy_widget.header().setCascadingSectionResizes(False)
         self.tree_hierarchy_widget.header().setMinimumSectionSize(135)
         self.tree_hierarchy_widget.header().setDefaultSectionSize(135)
+        self.tree_hierarchy_widget.header().setProperty("showSortIndicator", True)
         self.tree_hierarchy_widget.header().setStretchLastSection(True)
 
         self.verticalLayout_3.addWidget(self.tree_hierarchy_widget)
@@ -214,7 +215,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 283, 327))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 280, 345))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
