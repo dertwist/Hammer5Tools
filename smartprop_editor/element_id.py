@@ -11,4 +11,4 @@ def set_ElementId(current_id):
     else:
         m_nElementID = current_id
     m_nElementID_list.append(m_nElementID)
-    return m_nElementID
+    return {'m_nElementID': m_nElementID}
