@@ -14,8 +14,8 @@ from smartprop_editor.choices import AddChoice, AddOption, AddVariable
 from preferences import debug
 from common import editor_info, JsonToKv3, Kv3ToJson
 from smartprop_editor.element_id import *
-from smartprop_editor.common import *
-from widgets import HierarchyItemModel, set_HierarchyItemModel_labels
+from smartprop_editor._common import *
+from widgets import HierarchyItemModel
 class VsmartOpen:
     def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
         self.filename = filename
@@ -46,8 +46,15 @@ class VsmartOpen:
         #=======================================================<  Clear previous data  >====================================================
         self.tree.clear()
         self.choices_tree.clear()
-        self.populate_tree(data)
         reset_ElementID()
+        #=========================================================<  Load new data  >======================================================
+        self.next_element_id = data.get('editor_info', None)
+        if self.next_element_id:
+            if isinstance(self.next_element_id, dict):
+                self.next_element_id = self.next_element_id.get('m_nElementID', None)
+                if self.next_element_id:
+                    reset_ElementID(self.next_element_id, [self.next_element_id])
+        self.populate_tree(data)
         self.populate_choices(data.get('m_Choices', None))
         # self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
         # self.fix_names(parent=self.tree.invisibleRootItem())
@@ -69,9 +76,6 @@ class VsmartOpen:
                             value_dict.pop('m_Children', None)
 
                             # Assign or get element id
-                            # Update class element
-                            update_value_ElementID(value_dict)
-
                             def assign_ElementID(value):
                                 if isinstance(value, list):
                                     for index, item in enumerate(value):
@@ -82,14 +86,16 @@ class VsmartOpen:
                                         updated_value[key] = assign_ElementID(updated_value[key])
                                     return updated_value
                                 return value
-                            # Update child
-                            value_dict = assign_ElementID(value_dict)
+
+                            if self.next_element_id:
+                                pass
+                            else:
+                                update_value_ElementID(value_dict)
+                                value_dict = assign_ElementID(value_dict)
 
                             # Add tree item
                             child_item = HierarchyItemModel(_name=item_class, _data = str(value_dict))
                             parent.addChild(child_item)
-                            # Set labels for element
-                            set_HierarchyItemModel_labels(item=child_item, _class=get_clean_class_name(item_class), _id=get_ElementID_key(value_dict))
                             self.populate_tree(item, child_item)
 
     def populate_choices(self, data):
@@ -157,6 +163,7 @@ class VsmartSave:
     def save_file(self):
         """Saving file"""
         out_data = {'generic_data_type': "CSmartPropRoot"}
+        editor_info['editor_info'].update({'m_nElementID': ElementId()})
         out_data.update(editor_info)
         if self.var_data is not None:
             out_data.update({'m_Variables': self.var_data})
@@ -206,6 +213,6 @@ class VsmartSave:
                         out.update(variable_widget.data)
                         variables.append(out)
                 options.append({'m_Name': option_child.text(0), 'm_VariableValues': variables})
-
-            m_Choices.append({'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_Options': options, 'm_DefaultOption': widget.currentText(), 'm_nElementID': choice_index})
+            # Temp m_nElementID. Needs to be rewritten
+            m_Choices.append({'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_Options': options, 'm_DefaultOption': widget.currentText(), 'm_nElementID': set_ElementID()})
         return m_Choices
