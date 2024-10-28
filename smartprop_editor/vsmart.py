@@ -14,6 +14,8 @@ from smartprop_editor.choices import AddChoice, AddOption, AddVariable
 from preferences import debug
 from common import editor_info, JsonToKv3, Kv3ToJson
 from smartprop_editor.element_id import *
+from smartprop_editor.common import *
+from widgets import HierarchyItemModel
 class VsmartOpen:
     def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
         self.filename = filename
@@ -59,36 +61,17 @@ class VsmartOpen:
             for key, value in data.items():
                 if key == 'm_Children':
                     if isinstance(value, dict):
-                        item = QTreeWidgetItem([key])
-                        item.setFlags(item.flags() | Qt.ItemIsEditable)
+                        item = HierarchyItemModel(tree_widget=parent.treeWidget(), _name="m_Children")
                         parent.addChild(item)
                         self.populate_tree(value, item)
                     elif isinstance(value, list):
-                        try:
-                            item_class = value[0].get('_class')
-                            child = QTreeWidgetItem([key])
-                            child.setFlags(child.flags() | Qt.ItemIsEditable)
-                            parent.addChild(child)
-                            for item in value:
-
-                                if key == 'm_Children':
-                                    item_class = item.get('_class')
-                                    value_dict = item.copy()
-                                    try:
-                                        del value_dict['m_Children']
-                                        pass
-                                    except:
-                                        pass
-                                    child_item = QTreeWidgetItem([item_class,str(value_dict)])
-                                    child_item.setFlags(child_item.flags() | Qt.ItemIsEditable)
-                                    child.addChild(child_item)
-                                    self.populate_tree(item, child_item)
-                        except Exception as error:
-                            print(error)
-                            pass
-                            print(key, value)
-                    elif isinstance(value, (str, float, int)):
-                        pass
+                        for item in value:
+                            item_class = item.get('_class')
+                            value_dict = item.copy()
+                            value_dict.pop('m_Children', None)
+                            child_item = HierarchyItemModel(tree_widget=parent.treeWidget(), _name=item_class, _data= str(value_dict))
+                            parent.addChild(child_item)
+                            self.populate_tree(item, child_item)
 
     # Remove m_children items
     def cleanup_tree(self, parent_item):
@@ -167,13 +150,17 @@ class VsmartOpen:
                 # If the current name does not have 'element_prefix', pass
                 pass
     def set_id(self, parent=None):
+        """Sets and generate unique id for each element if it need"""
         if parent is None:
             parent =QTreeWidgetItem
         for child_index in range(parent.childCount()):
             item = parent.child(child_index)
             value = item.text(1)
             debug(f"Value before m_nElementID set {value}")
-            item.setText(1, get_ElementID_value(value))
+            value = get_ElementID_value(value)
+            item.setText(1, str(value))
+            item.setText(3, str(value['m_nElementID']))
+            item.setText(2, str(get_clean_class_name(value['_class'])))
             debug(f"Value after m_nElementID set {item.text(1)}")
             if item.childCount() != 0:
                 self.set_id(item)
