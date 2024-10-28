@@ -1,8 +1,11 @@
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel
+from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon
 import sys, webbrowser
+from qt_styles.common import *
 
+#============================================================<  Generic widgets  >==========================================================
 class Spacer(QWidget):
     def __init__(self):
         """Spacer widget, can be hidden or shown"""
@@ -15,6 +18,29 @@ class Spacer(QWidget):
         self.setLayout(spacer_layout)
         self.setStyleSheet('border:None;')
         self.setContentsMargins(0,0,0,0)
+class ErrorInfo(QMessageBox):
+    def __init__(self, text="Test", details=""):
+        super().__init__()
+
+
+        self.setWindowTitle("Error")
+        self.setText(text)
+        self.setMinimumSize(400, 200)
+        self.setIcon(QMessageBox.Critical)
+        self.setWindowIcon(QIcon("appicon.ico"))
+
+
+        self.setDetailedText(details)
+
+        report_button = self.addButton("Report", QMessageBox.ActionRole)
+        close_button = self.addButton(QMessageBox.Close)
+
+
+        report_button.clicked.connect(self.report_issue)
+
+    def report_issue(self):
+        webbrowser.open("https://discord.gg/mMaub4jCBa")
+#============================================================<  Property widgets  >=========================================================
 class FloatWidget(QWidget):
     edited = Signal(float)
     def __init__(self, int_output=False, slider_range=[-0,0], value=0.0):
@@ -75,7 +101,7 @@ class FloatWidget(QWidget):
     def set_value(self, value):
         self.SpinBox.setValue(value)
         self.on_SpinBox_updated()
-
+#================================================================<  Combobox  >=============================================================
 class ComboboxDynamicItems(QComboBox):
     clicked = Signal()
 
@@ -158,6 +184,7 @@ class ComboboxVariables(ComboboxDynamicItems):
         else:
             return self.currentText()
 class ComboboxTreeChild(ComboboxDynamicItems):
+    """Shows a tree child as items """
     def __init__(self, parent=None, layout=QTreeWidget, root=QTreeWidgetItem):
         super().__init__(parent)
         self.layout = layout
@@ -180,31 +207,27 @@ class ComboboxTreeChild(ComboboxDynamicItems):
 
         return data_out
 
+#==============================================================<  Tree widgets  >===========================================================
 
-class ErrorInfo(QMessageBox):
-    def __init__(self, text="Test", details=""):
-        super().__init__()
+class HierarchyItemModel(QTreeWidgetItem):
+    def __init__(self, tree_widget, _name="New Hierarchy Item", _data=None, _class=None, _id=None):
+        super().__init__(tree_widget)
 
+        # Set text for name and data
+        self.setText(0, _name)
+        self.setText(1, _data)
+        self.setFlags(self.flags() | Qt.ItemIsEditable)
 
-        self.setWindowTitle("Error")
-        self.setText(text)
-        self.setMinimumSize(400, 200)
-        self.setIcon(QMessageBox.Critical)
-        self.setWindowIcon(QIcon("appicon.ico"))
+        # If _class is provided, create QLabel and set it in the tree widget
+        if _class:
+            label = QLabel()
+            label.setText(_class)
+            tree_widget.setItemWidget(self, 2, label)
 
-
-        self.setDetailedText(details)
-
-        report_button = self.addButton("Report", QMessageBox.ActionRole)
-        close_button = self.addButton(QMessageBox.Close)
-
-
-        report_button.clicked.connect(self.report_issue)
-
-    def report_issue(self):
-        webbrowser.open("https://discord.gg/mMaub4jCBa")
-
-
+        if _id:
+            label = QLabel()
+            label.setText(_id)
+            tree_widget.setItemWidget(self, 3, label)
 #
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
@@ -215,3 +238,15 @@ class ErrorInfo(QMessageBox):
 #     app.setStyleSheet(stylesheet)
 #     ErrorInfo('Testhgkhkljhklhklj asf asf asf asf asdf asdf asf asdf ', 'dfaasd').exec()
 #     sys.exit(app.exec())
+
+# Example usage
+# app = QApplication([])
+# tree_widget = QTreeWidget()
+# tree_widget.setColumnCount(4)
+# tree_widget.setHeaderLabels(['Name', 'Data', 'Class', 'ID'])
+#
+# # Adding an example item
+# item = HierarchyItemModel(tree_widget, 'Item1', 'Data1', 'Class1', 'ID1')
+#
+# tree_widget.show()
+# app.exec_()
