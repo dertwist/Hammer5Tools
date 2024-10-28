@@ -54,6 +54,7 @@ class VsmartOpen:
                 self.next_element_id = self.next_element_id.get('m_nElementID', None)
                 if self.next_element_id:
                     reset_ElementID(self.next_element_id, [self.next_element_id])
+                    debug(f'Last ElementID from file {self.next_element_id}')
         self.populate_tree(data)
         self.populate_choices(data.get('m_Choices', None))
         # self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
@@ -94,7 +95,8 @@ class VsmartOpen:
                                 value_dict = assign_ElementID(value_dict)
 
                             # Add tree item
-                            child_item = HierarchyItemModel(_name=item_class, _data = str(value_dict))
+                            child_item = HierarchyItemModel(_name=item_class, _data = str(value_dict), _class=get_clean_class_name(value_dict['_class']), _id= get_ElementID_key(value_dict))
+
                             parent.addChild(child_item)
                             self.populate_tree(item, child_item)
 
@@ -163,7 +165,7 @@ class VsmartSave:
     def save_file(self):
         """Saving file"""
         out_data = {'generic_data_type': "CSmartPropRoot"}
-        editor_info['editor_info'].update({'m_nElementID': ElementId()})
+        editor_info['editor_info'].update({'m_nElementID': get_ElementID_last()})
         out_data.update(editor_info)
         if self.var_data is not None:
             out_data.update({'m_Variables': self.var_data})

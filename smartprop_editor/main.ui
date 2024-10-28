@@ -285,7 +285,7 @@
           </attribute>
           <column>
            <property name="text">
-            <string notr="true">Operator</string>
+            <string notr="true">Name</string>
            </property>
           </column>
           <column>
