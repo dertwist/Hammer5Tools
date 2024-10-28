@@ -71,4 +71,4 @@ def get_ElementID_value(value):
     # Debug
     debug(f'SetElementID value {value}')
     debug(f'SetElementID id {id}, type of the value {type(id)}')
-    return str(value)
+    return value

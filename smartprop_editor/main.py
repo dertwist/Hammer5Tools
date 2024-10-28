@@ -34,6 +34,7 @@ from preferences import settings
 from common import Kv3ToJson, JsonToKv3
 from widgets import ErrorInfo
 from smartprop_editor.element_id import *
+from smartprop_editor.common import *
 
 global opened_file
 opened_file = None
@@ -892,7 +893,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                 pass
             else:
                 item_value.update({key:m_Children[key]})
-        name = self.get_clean_class_name(m_Children.get('m_sLabel', m_Children.get("_class")))
+        name = get_clean_class_name(m_Children.get('m_sLabel', m_Children.get("_class")))
         if '_pasted' in name:
             pass
         else:
@@ -906,11 +907,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             child_item = self.deserialize_tree_item(child_data)
             tree_item.addChild(child_item)
         return tree_item
-    def get_clean_class_name(self, input):
-        if element_prefix in input:
-            return input.replace(element_prefix, '')
-        else:
-            return input
 
 
     #======================================[Window State]========================================
