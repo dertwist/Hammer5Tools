@@ -183,13 +183,11 @@ class SmartPropEditorMainWindow(QMainWindow):
                 for item in reversed(data_modif):
                     property_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
                     property_instance.edited.connect(self.update_tree_item_value)
-                    property_instance.on_edited()
                     self.modifiers_group_instance.layout.insertWidget(0, property_instance)
             if data_sel_criteria:
                 for item in reversed(data_sel_criteria):
                     property_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
                     property_instance.edited.connect(self.update_tree_item_value)
-                    property_instance.on_edited()
                     self.selection_criteria_group_instance.layout.insertWidget(0, property_instance)
         except Exception as error:
             print(error)
@@ -295,7 +293,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         new_element = QTreeWidgetItem()
         new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
         new_element.setText(0, name)
-        new_element.setText(1, str(get_ElementID_value(element_value)))
+        new_element.setText(1, str(update_value_ElementID(element_value)))
         if self.ui.tree_hierarchy_widget.currentItem() == None:
             parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
         else:
