@@ -34,7 +34,7 @@ from preferences import settings
 from common import Kv3ToJson, JsonToKv3
 from widgets import ErrorInfo
 from smartprop_editor.element_id import *
-from smartprop_editor.common import *
+from smartprop_editor._common import *
 
 global opened_file
 opened_file = None

@@ -210,27 +210,36 @@ class ComboboxTreeChild(ComboboxDynamicItems):
 #==============================================================<  Tree widgets  >===========================================================
 
 class HierarchyItemModel(QTreeWidgetItem):
-    def __init__(self, _name="New Hierarchy Item", _data=None, parent=None):
+    def __init__(self, _name="New Hierarchy Item", _data=None, _class=None, _id=None, parent=None):
         super().__init__(parent)
 
         # Set text for name and data
         self.setText(0, _name)
-        self.setText(1, _data)
+        if _data is not None:
+            self.setText(1, _data)
+        if _class is not None:
+            self.setText(2, _class)
+        if _id is not None:
+            self.setText(3, _id)
+
+        # Initially set editable flags only on the first column
         self.setFlags(self.flags() | Qt.ItemIsEditable)
 
+    def set_editable(self, editable):
+        """Set the item editable flag based on `editable` boolean."""
+        if editable:
+            self.setFlags(self.flags() | Qt.ItemIsEditable)
+        else:
+            self.setFlags(self.flags() & ~Qt.ItemIsEditable)
 
-def set_HierarchyItemModel_labels(_class=None, _id=None, item=QTreeWidgetItem):
-    print(item.text(0))
-    if item is not None and item.treeWidget() is not None:
-        if _class:
-            label = QLabel()
-            label.setText(str(_class))
-            item.treeWidget().setItemWidget(item, 2, label)
 
-        if _id:
-            label = QLabel()
-            label.setText(str(_id))
-            item.treeWidget().setItemWidget(item, 3, label)
+def on_item_clicked(item, column):
+    """Set item as editable if clicked on the first column; otherwise, make it non-editable."""
+    if column == 0:
+        item.set_editable(True)
+    else:
+        item.set_editable(False)
+
 #
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
@@ -241,19 +250,3 @@ def set_HierarchyItemModel_labels(_class=None, _id=None, item=QTreeWidgetItem):
 #     app.setStyleSheet(stylesheet)
 #     ErrorInfo('Testhgkhkljhklhklj asf asf asf asf asdf asdf asf asdf ', 'dfaasd').exec()
 #     sys.exit(app.exec())
-
-
-# app = QApplication([])
-# tree_widget = QTreeWidget()
-# tree_widget.setColumnCount(4)
-# tree_widget.setHeaderLabels(['Name', 'Data', 'Class', 'ID'])
-#
-# # Creating the main item
-# item = HierarchyItemModel(tree_widget, 'Item1', 'Data1', 'Class1', 'ID1')
-#
-# # Adding a child item to the main item
-# item.add_child('Child1', 'Data1', 'Class1', 'ID1')
-#
-#
-# tree_widget.show()
-# app.exec_()
