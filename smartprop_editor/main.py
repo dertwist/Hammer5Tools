@@ -753,29 +753,39 @@ class SmartPropEditorMainWindow(QMainWindow):
         instance.accepted_output.connect(lambda text:self.paste_item(tree=self.ui.tree_hierarchy_widget, data_input=text))
         instance.exec()
 
-    def move_tree_item(self, tree, direction):
-        """Move selected tree item up or down within its parent."""
-        selected_indexes = tree.selectedIndexes()
+    def move_tree_item(self,tree, direction):
+        """Move selected tree items up or down within their parent."""
+        selected_items = tree.selectedItems()
+        if not selected_items:
+            return  # Exit if no items are selected
 
-        if not selected_indexes:
-            return  # No item selected, exit early
-
-        for index in selected_indexes:
-            item = tree.itemFromIndex(index)
-            if item is None:
-                continue  # Skip if no item is found for this index
-
+        # Group items by parent and sort by current index
+        parent_to_items = {}
+        for item in selected_items:
             parent = item.parent() or tree.invisibleRootItem()
-            current_index = parent.indexOfChild(item)
-            new_index = current_index + direction
+            if parent not in parent_to_items:
+                parent_to_items[parent] = []
+            parent_to_items[parent].append(item)
 
-            # Check bounds and move the item
-            if 0 <= new_index < parent.childCount():
-                parent.takeChild(current_index)
-                parent.insertChild(new_index, item)
+        # Move items for each parent separately
+        for parent, items in parent_to_items.items():
+            # Sort items by their index in reverse if moving down (to avoid index shifting)
+            items.sort(key=lambda item: parent.indexOfChild(item), reverse=(direction > 0))
 
-            # Optionally: keep the item selected after the move
-            tree.setCurrentItem(item)
+            for item in items:
+                current_index = parent.indexOfChild(item)
+                new_index = current_index + direction
+
+                # Check bounds
+                if 0 <= new_index < parent.childCount():
+                    # Move item
+                    parent.takeChild(current_index)
+                    parent.insertChild(new_index, item)
+
+        tree.clearSelection()
+        for item in selected_items:
+            item.setSelected(True)
+        tree.scrollToItem(selected_items[-1] if direction > 0 else selected_items[0])
     def copy_item(self, tree):
         """Coping Tree item"""
         selected_indexes = tree.selectedIndexes()
