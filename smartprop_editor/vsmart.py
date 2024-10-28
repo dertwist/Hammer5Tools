@@ -13,8 +13,9 @@ from smartprop_editor.objects import element_prefix
 from smartprop_editor.choices import AddChoice, AddOption, AddVariable
 from preferences import debug
 from common import editor_info, JsonToKv3, Kv3ToJson
+from smartprop_editor.element_id import *
 class VsmartOpen:
-    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_scrollArea=None):
+    def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
         self.filename = filename
         self.variables_scrollArea = variables_scrollArea
         self.tree = tree
@@ -40,12 +41,15 @@ class VsmartOpen:
         debug(f'Loaded data \n {data}')
 
         self.variables = data.get('m_Variables', None)
+        #=======================================================<  Clear previous data  >====================================================
         self.tree.clear()
         self.choices_tree.clear()
         self.populate_tree(data)
+        reset_ElementID()
         self.populate_choices(data.get('m_Choices', None))
         self.cleanup_tree(parent_item=self.tree.invisibleRootItem())
         self.fix_names(parent=self.tree.invisibleRootItem())
+        self.set_id(self.tree.invisibleRootItem())
 
     def populate_tree(self, data, parent=None):
         """Parsing every m_child as tree element"""
@@ -162,6 +166,18 @@ class VsmartOpen:
             else:
                 # If the current name does not have 'element_prefix', pass
                 pass
+    def set_id(self, parent=None):
+        if parent is None:
+            parent =QTreeWidgetItem
+        for child_index in range(parent.childCount()):
+            item = parent.child(child_index)
+            value = item.text(1)
+            debug(f"Value before m_nElementID set {value}")
+            item.setText(1, get_ElementID_value(value))
+            debug(f"Value after m_nElementID set {item.text(1)}")
+            if item.childCount() != 0:
+                self.set_id(item)
+
 
 class VsmartSave:
     def __init__(self, filename, tree=None, var_data=None, choices_tree=QTreeWidget):

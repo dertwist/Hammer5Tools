@@ -33,6 +33,7 @@ from explorer.main import Explorer
 from preferences import settings
 from common import Kv3ToJson, JsonToKv3
 from widgets import ErrorInfo
+from smartprop_editor.element_id import *
 
 global opened_file
 opened_file = None
@@ -52,7 +53,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
 
         # Hierarchy setup
-        self.ui.tree_hierarchy_widget.hideColumn(1)
+        # self.ui.tree_hierarchy_widget.hideColumn(1)
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
@@ -174,21 +175,27 @@ class SmartPropEditorMainWindow(QMainWindow):
             property_instance = PropertyFrame(widget_list=self.ui.properties_layout, value=data, variables_scrollArea=self.ui.variables_scrollArea, element=True)
             property_instance.edited.connect(self.update_tree_item_value)
 
+
+
             self.ui.properties_layout.insertWidget(0, property_instance)
             if data_modif:
                 for item in reversed(data_modif):
                     property_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
                     property_instance.edited.connect(self.update_tree_item_value)
+                    property_instance.on_edited()
                     self.modifiers_group_instance.layout.insertWidget(0, property_instance)
             if data_sel_criteria:
                 for item in reversed(data_sel_criteria):
                     property_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=item, variables_scrollArea=self.ui.variables_scrollArea)
                     property_instance.edited.connect(self.update_tree_item_value)
+                    property_instance.on_edited()
                     self.selection_criteria_group_instance.layout.insertWidget(0, property_instance)
         except Exception as error:
             print(error)
-    def update_tree_item_value(self):
-        if self.ui.tree_hierarchy_widget.currentItem():
+    def update_tree_item_value(self, item=None):
+        if item is None:
+            item = self.ui.tree_hierarchy_widget.currentItem()
+        if item:
             output_value = {}
             modifiers = []
             selection_criteria = []
@@ -287,7 +294,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         new_element = QTreeWidgetItem()
         new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
         new_element.setText(0, name)
-        new_element.setText(1, str(element_value))
+        new_element.setText(1, str(get_ElementID_value(element_value)))
         if self.ui.tree_hierarchy_widget.currentItem() == None:
             parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
         else:
