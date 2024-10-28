@@ -13,7 +13,7 @@ from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
 
 from popup_menu.popup_menu_main import PopupMenu
-from smartprop_editor.element_id import get_ElementID
+from smartprop_editor.element_id import get_ElementID, update_value_ElementID, get_ElementID_key
 
 
 import ast
@@ -41,8 +41,9 @@ class PropertyFrame(QWidget):
         self.layout = self.ui.layout
 
         #===========================================================<  Element ID  >========================================================
-        self.element_id =get_ElementID(value)
-        debug(f'element id {self.element_id}')
+        update_value_ElementID(self.value)
+        self.element_id = get_ElementID_key(self.value)
+        debug(f'Property frame get_ElementID: {self.element_id}')
         self.ui.element_id_display.setText(str(self.element_id))
 
 
