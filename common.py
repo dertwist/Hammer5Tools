@@ -8,7 +8,7 @@ import re, unicodedata, random, string
 #===============================================================<  Variables  >=============================================================
 editor_info = {
     'editor_info':
-    [{
+    {
     'Info': 'Hammer5Tools by Twist',
     'GitHub': 'https://github.com/dertwist/Hammer5Tools',
     'Discord_Server': 'https://discord.gg/DvCXEyhssd',
@@ -19,7 +19,7 @@ editor_info = {
         'ArtStation': 'https://www.artstation.com/nucky3d',
     }
     }
-    ]}
+    }
 
 #===========================================================<  generic functions  >=========================================================
 def compile(input_file):

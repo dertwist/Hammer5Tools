@@ -10,6 +10,9 @@ m_nElementID = -1
 global m_nElementID_list
 m_nElementID_list = [0]
 
+def ElementId():
+    global m_nElementID
+    return int(m_nElementID)
 def add_ElementID(new_id):
     global m_nElementID_list
     if new_id in m_nElementID_list:
@@ -34,11 +37,13 @@ def set_ElementID():
             debug(f"There is {id} id in the list")
             return id
 
-def reset_ElementID():
+def reset_ElementID(id=-1, list=None):
+    if list is None:
+        list = [0]
     global m_nElementID_list
     global m_nElementID
-    m_nElementID_list = [0]
-    m_nElementID = -1
+    m_nElementID_list = list
+    m_nElementID = id
 
 def get_ElementID(value):
     """Setting m_nElementID for each element in the vsmart file. It's necessary for keeping user inputs in the map editor """
