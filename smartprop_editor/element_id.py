@@ -105,18 +105,13 @@ def get_ElementID_last():
 
 
 def update_child_ElementID_value(value, force=False):
-    print(value)
     if isinstance(value, list):
         for index, item in enumerate(value):
-            value[index] = update_child_ElementID_value(item)
+            value[index] = update_child_ElementID_value(item, force=force)
     elif isinstance(value, dict):
         if '_class' in value:
             updated_value = update_value_ElementID(value, force=force)
-            for key in updated_value:
-                updated_value[key] = update_child_ElementID_value(updated_value[key])
+            for key in value:
+                updated_value[key] = update_child_ElementID_value(updated_value[key], force=force)
             return updated_value
     return value
-
-value = {'_class': 'CSmartPropElement_SmartProp', 'm_sSmartProp': 'smartprops/sp_stairs_line.vsmart', 'm_Modifiers': [], 'm_SelectionCriteria': [{'_class': 'CSmartPropSelectionCriteria_LinearLength', 'm_flLength': 8, 'm_bAllowScale': False, 'm_flMinLength': 8, 'm_flMaxLength': 8, 'm_sLabel': '', 'm_nElementID': 20}], 'm_sLabel': 'SmartProp_01', 'm_nElementID': 19}
-update_child_ElementID_value(value, force=True)
-print(value)
