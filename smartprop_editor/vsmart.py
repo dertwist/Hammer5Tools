@@ -77,25 +77,13 @@ class VsmartOpen:
                             value_dict.pop('m_Children', None)
 
                             # Assign or get element id
-                            def assign_ElementID(value):
-                                if isinstance(value, list):
-                                    for index, item in enumerate(value):
-                                        value[index] = assign_ElementID(item)
-                                elif isinstance(value, dict):
-                                    if '_class' in value:
-                                        updated_value = update_value_ElementID(value)
-                                        for key in updated_value:
-                                            updated_value[key] = assign_ElementID(updated_value[key])
-                                        return updated_value
-                                return value
-
                             if self.next_element_id is None:
-                                # update_value_ElementID(value_dict)
-                                value_dict = assign_ElementID(value_dict)
+                                update_value_ElementID(value_dict)
+                                value_dict = update_child_ElementID_value(value_dict)
 
 
                             # Add tree item
-                            child_item = HierarchyItemModel(_name=value_dict.get('m_sLabel', get_label_id_from_value(value_dict)), _data = str(value_dict), _class=get_clean_class_name(value_dict['_class']), _id= get_ElementID_key(value_dict))
+                            child_item = HierarchyItemModel(_name=value_dict.get('m_sLabel', get_label_id_from_value(value_dict)), _data = str(value_dict), _class=get_clean_class_name(item_class), _id= get_ElementID_key(value_dict))
 
                             parent.addChild(child_item)
                             self.populate_tree(item, child_item)
