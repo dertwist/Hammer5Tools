@@ -802,7 +802,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             else:
                 selected_items_unique.append(item)
 
-        print(selected_items_unique)
         selected_items = selected_items_unique
         data = {'m_Children': []}
         for tree_item in selected_items:
@@ -915,11 +914,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             else:
                 item_value.update({key:m_Children[key]})
 
-        print(item_value, '\n')
-        update_value_ElementID(item_value, force=True)
-
         item_value = update_child_ElementID_value(item_value, force=True)
-        print(item_value, '\n')
         name = item_value.get('m_sLabel',get_label_id_from_value(item_value))
         if '_pasted' in name:
             pass
