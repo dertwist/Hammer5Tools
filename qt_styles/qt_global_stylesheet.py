@@ -1027,7 +1027,7 @@ QTreeView::item {
     padding-right: 1px;
     padding-top: 2px;
     padding-bottom: 2px;
-    color: #E3E3E3;
+/*    color: #E3E3E3;*/
     border-style: none;
     border-bottom: 0.5px solid black;
     border-color: rgba(255, 255, 255, 10);
