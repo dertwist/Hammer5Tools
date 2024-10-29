@@ -32,7 +32,7 @@ from PySide6.QtGui import QKeySequence
 from explorer.main import Explorer
 from preferences import settings
 from common import Kv3ToJson, JsonToKv3
-from widgets import ErrorInfo, on_three_hierarchyitem_clicked
+from widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
 from smartprop_editor.element_id import *
 from smartprop_editor._common import *
 
@@ -663,7 +663,9 @@ class SmartPropEditorMainWindow(QMainWindow):
             display_name = clipboard_data[5]
             if display_name == 'None':
                 display_name = ''
-            self.add_variable(clipboard_data[1], clipboard_data[2], ast.literal_eval(clipboard_data[3]), visible_in_editor, display_name)
+            var_value = ast.literal_eval(clipboard_data[3])
+            update_value_ElementID(var_value, force=True)
+            self.add_variable(clipboard_data[1], clipboard_data[2], var_value, visible_in_editor, display_name)
         else:
             ErrorInfo(text="Clipboard data format is not valid.", details=clipboard_data).exec()
 
@@ -793,7 +795,15 @@ class SmartPropEditorMainWindow(QMainWindow):
         """Coping Tree item"""
         selected_indexes = tree.selectedIndexes()
         selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
+        selected_items_unique = []
+        for item in selected_items:
+            if item in selected_items_unique:
+                pass
+            else:
+                selected_items_unique.append(item)
 
+        print(selected_items_unique)
+        selected_items = selected_items_unique
         data = {'m_Children': []}
         for tree_item in selected_items:
             item_data = self.tree_serialization(item=tree_item, data=data)
@@ -875,10 +885,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def tree_serialization(self, item, data):
         """Convert tree structure to json"""
-        key = item.text(0)
         value_row = item.text(1)
         parent_data = ast.literal_eval(value_row)
-        parent_data['m_sLabel'] = key
         if item.childCount() > 0:
             parent_data['m_Children'] = []
         data['m_Children'].append(parent_data)
@@ -899,23 +907,22 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         return data
 
-    def deserialize_tree_item(self, m_Children=QTreeWidgetItem):
-        tree_item = QTreeWidgetItem()
+    def deserialize_tree_item(self, m_Children=HierarchyItemModel):
         item_value = {}
         for key in m_Children:
             if key == 'm_Children':
                 pass
             else:
                 item_value.update({key:m_Children[key]})
-        name = get_clean_class_name(m_Children.get('m_sLabel', m_Children.get("_class")))
+        update_value_ElementID(item_value, force=True)
+        item_value = update_child_ElementID_value(item_value, force=True)
+        name = item_value.get('m_sLabel',get_label_id_from_value(item_value))
         if '_pasted' in name:
             pass
         else:
             name = name + '_pasted'
-        tree_item.setText(0,  name)
 
-        tree_item.setText(1, str(item_value))
-        tree_item.setFlags(tree_item.flags() | Qt.ItemIsEditable)
+        tree_item = HierarchyItemModel(_data=item_value, _name=name, _id=get_ElementID_key(item_value), _class=get_clean_class_name_value(item_value))
 
         for child_data in m_Children.get('m_Children', []):
             child_item = self.deserialize_tree_item(child_data)
