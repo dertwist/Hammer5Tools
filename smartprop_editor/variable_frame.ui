@@ -41,10 +41,10 @@
       </size>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Shape::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Shadow::Raised</enum>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="spacing">
@@ -221,7 +221,7 @@ QLineEdit::selection {
 </string>
         </property>
         <property name="inputMethodHints">
-         <set>Qt::ImhLatinOnly|Qt::ImhLowercaseOnly</set>
+         <set>Qt::InputMethodHint::ImhLatinOnly|Qt::InputMethodHint::ImhLowercaseOnly</set>
         </property>
         <property name="text">
          <string>Variable name</string>
@@ -279,16 +279,106 @@ QLineEdit::selection {
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QLineEdit" name="id_display_label">
+        <property name="maximumSize">
+         <size>
+          <width>32</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;class&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QLineEdit {
+	font: 8pt &quot;Segoe UI&quot;;
+    border: 2px solid #CCCCCC;
+	border-top: 0px;
+	border-left: 0px;
+	border-right: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    border-radius: 0px;
+    padding: 2px;
+	color: rgb(188, 188, 188);
+	background-color: #242424;
+}
+QLineEdit:focus {
+    border-color: rgba(80, 80, 80, 255);
+}
+QLineEdit::selection {
+    background-color: #414956;
+    color: white;
+}
+
+</string>
+        </property>
+        <property name="text">
+         <string>ID</string>
+        </property>
+        <property name="maxLength">
+         <number>64</number>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="id_display">
+        <property name="maximumSize">
+         <size>
+          <width>32</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;class&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QLineEdit {
+	font: 8pt &quot;Segoe UI&quot;;
+    border: 2px solid #CCCCCC;
+	border-top: 0px;
+	border-left: 0px;
+	border-right: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    border-radius: 0px;
+    padding: 2px;
+	color: rgb(188, 188, 188);
+	background-color: #242424;
+}
+QLineEdit:focus {
+    border-color: rgba(80, 80, 80, 255);
+}
+QLineEdit::selection {
+    background-color: #414956;
+    color: white;
+}
+
+</string>
+        </property>
+        <property name="text">
+         <string>ID</string>
+        </property>
+        <property name="maxLength">
+         <number>64</number>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
    <item>
     <widget class="QFrame" name="frame_layout">
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Shape::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Shadow::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <property name="spacing">
@@ -312,7 +402,7 @@ QLineEdit::selection {
          <number>0</number>
         </property>
         <property name="sizeConstraint">
-         <enum>QLayout::SetDefaultConstraint</enum>
+         <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
         </property>
         <item>
          <widget class="QFrame" name="frame_3">
@@ -342,10 +432,10 @@ QLineEdit::selection {
 }</string>
           </property>
           <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
+           <enum>QFrame::Shape::StyledPanel</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
+           <enum>QFrame::Shadow::Raised</enum>
           </property>
           <property name="lineWidth">
            <number>0</number>
