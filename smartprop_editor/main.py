@@ -914,8 +914,12 @@ class SmartPropEditorMainWindow(QMainWindow):
                 pass
             else:
                 item_value.update({key:m_Children[key]})
+
+        print(item_value, '\n')
         update_value_ElementID(item_value, force=True)
+
         item_value = update_child_ElementID_value(item_value, force=True)
+        print(item_value, '\n')
         name = item_value.get('m_sLabel',get_label_id_from_value(item_value))
         if '_pasted' in name:
             pass
