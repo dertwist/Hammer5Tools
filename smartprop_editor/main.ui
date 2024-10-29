@@ -272,10 +272,10 @@
            <bool>false</bool>
           </attribute>
           <attribute name="headerMinimumSectionSize">
-           <number>135</number>
+           <number>20</number>
           </attribute>
           <attribute name="headerDefaultSectionSize">
-           <number>135</number>
+           <number>70</number>
           </attribute>
           <attribute name="headerShowSortIndicator" stdset="0">
            <bool>true</bool>
