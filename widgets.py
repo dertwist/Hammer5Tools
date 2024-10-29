@@ -1,7 +1,7 @@
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel
 from PySide6.QtGui import QStandardItemModel
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
 from qt_styles.common import *
 
@@ -213,7 +213,7 @@ class HierarchyItemModel(QTreeWidgetItem):
     def __init__(self, _name="New Hierarchy Item", _data=None, _class=None, _id=None, parent=None):
         super().__init__(parent)
 
-        # Set text for name and data
+        # Set text for name, data, class, and id
         self.setText(0, str(_name))
         if _data is not None:
             self.setText(1, str(_data))
@@ -224,6 +224,31 @@ class HierarchyItemModel(QTreeWidgetItem):
 
         # Initially set editable flags only on the first column
         self.setFlags(self.flags() | Qt.ItemIsEditable)
+
+        # Set up custom colors and font for specific columns
+        self.custom_colors = {
+            2: QColor("#9D9D9D"),
+            3: QColor("#9D9D9D"),
+        }
+        self.background_colors = {
+            0: QColor("#f0f0f0"),  # Light grey background in column 0
+        }
+        self.custom_font = QFont("Segoe UI", 10, QFont.DemiBold)
+
+    def data(self, column, role):
+        if role == Qt.ForegroundRole and column in self.custom_colors:
+            # Set text color for specific columns
+            return self.custom_colors[column]
+
+        if role == Qt.BackgroundRole and column in self.background_colors:
+            # Set background color for specific columns
+            return self.background_colors[column]
+
+        if role == Qt.FontRole and column == 0:
+            # Set custom font for column 0
+            return self.custom_font
+
+        return super().data(column, role)
 
     def set_editable(self, editable):
         """Set the item editable flag based on `editable` boolean."""
