@@ -20,7 +20,7 @@ def add_ElementID(new_id):
     else:
         m_nElementID_list.append(new_id)
 def set_ElementID():
-    """Set unique ID"""
+    """Set unique ID if found current ID in the list"""
     global m_nElementID
     global m_nElementID_list
     if m_nElementID in m_nElementID_list:
