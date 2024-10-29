@@ -5,11 +5,12 @@ import threading
 import time
 import json
 from http.cookiejar import cut_port_re
+from qt_styles.common import qt_stylesheet_classes
 
 from distutils.util import strtobool
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QTreeWidgetItem, QVBoxLayout, QSpacerItem, QSizePolicy, QInputDialog, QTreeWidget, QMessageBox, QProgressDialog, QCheckBox, QLineEdit, QFileDialog, QComboBox, QPushButton, QHBoxLayout, QLabel
-from PySide6.QtWidgets import QMenu, QApplication
+from PySide6.QtWidgets import QMenu, QApplication, QHeaderView
 from PySide6.QtGui import QCursor, QDrag, QAction, QColor, QKeyEvent, QUndoStack
 from PySide6.QtCore import Qt, Signal, QThread, QObject, QTimer, QEventLoop
 
@@ -59,6 +60,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
         self.ui.tree_hierarchy_widget.itemClicked.connect(on_three_hierarchyitem_clicked)
+        self.ui.tree_hierarchy_widget.header().setSectionResizeMode(QHeaderView.Stretch)
 
         # Choices setup
         self.ui.choices_tree_widget.hideColumn(2)
