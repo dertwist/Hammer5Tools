@@ -8,7 +8,7 @@ from soudevent_editor.properties.property_actions import PropertyActions
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
-
+from smartprop_editor.element_id import *
 
 import ast
 
@@ -34,7 +34,10 @@ class VariableFrame(QWidget):
             'max':  self.var_max,
             'model':  self.var_model
         }
+        update_value_ElementID(self.var_value)
+        self.element_id = get_ElementID(self.var_value)
 
+        self.ui.id_display.setText(str(self.element_id))
         self.ui.variable_name.setText(name)
         self.ui.varialbe_display_name.setText(var_display_name)
         self.ui.variable_class.setText(var_class)
@@ -128,14 +131,16 @@ class VariableFrame(QWidget):
                 'default': var_default if var_default is not None else False,
                 'min': None,
                 'max': None,
-                'model': None
+                'model': None,
+                'm_nElementID' : self.element_id
             }
         else:
             self.var_value = {
                 'default': var_default if var_default else None,
                 'min': var_min if var_min else None,
                 'max': var_max if var_max else None,
-                'model': var_model if var_model else None
+                'model': var_model if var_model else None,
+                'm_nElementID': self.element_id
             }
 
     def update_self(self):
