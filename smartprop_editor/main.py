@@ -60,7 +60,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
         self.ui.tree_hierarchy_widget.itemClicked.connect(on_three_hierarchyitem_clicked)
-        self.ui.tree_hierarchy_widget.header().setSectionResizeMode(QHeaderView.Stretch)
+        self.ui.tree_hierarchy_widget.header().setSectionResizeMode(0, QHeaderView.ResizeToContents);
 
         # Choices setup
         self.ui.choices_tree_widget.hideColumn(2)
