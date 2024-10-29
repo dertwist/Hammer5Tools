@@ -238,7 +238,7 @@ QLineEdit::selection {
        <widget class="QLineEdit" name="variable_class">
         <property name="maximumSize">
          <size>
-          <width>136</width>
+          <width>140</width>
           <height>16777215</height>
          </size>
         </property>
@@ -283,7 +283,7 @@ QLineEdit::selection {
        <widget class="QLineEdit" name="id_display_label">
         <property name="maximumSize">
          <size>
-          <width>32</width>
+          <width>24</width>
           <height>16777215</height>
          </size>
         </property>
@@ -328,7 +328,7 @@ QLineEdit::selection {
        <widget class="QLineEdit" name="id_display">
         <property name="maximumSize">
          <size>
-          <width>32</width>
+          <width>24</width>
           <height>16777215</height>
          </size>
         </property>

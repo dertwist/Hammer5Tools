@@ -169,7 +169,7 @@ class Ui_Form(object):
 
         self.variable_class = QLineEdit(self.frame)
         self.variable_class.setObjectName(u"variable_class")
-        self.variable_class.setMaximumSize(QSize(136, 16777215))
+        self.variable_class.setMaximumSize(QSize(140, 16777215))
         self.variable_class.setStyleSheet(u"QLineEdit {\n"
 "	font: 8pt \"Segoe UI\";\n"
 "    border: 2px solid #CCCCCC;\n"
@@ -198,7 +198,7 @@ class Ui_Form(object):
 
         self.id_display_label = QLineEdit(self.frame)
         self.id_display_label.setObjectName(u"id_display_label")
-        self.id_display_label.setMaximumSize(QSize(32, 16777215))
+        self.id_display_label.setMaximumSize(QSize(24, 16777215))
         self.id_display_label.setStyleSheet(u"QLineEdit {\n"
 "	font: 8pt \"Segoe UI\";\n"
 "    border: 2px solid #CCCCCC;\n"
@@ -227,7 +227,7 @@ class Ui_Form(object):
 
         self.id_display = QLineEdit(self.frame)
         self.id_display.setObjectName(u"id_display")
-        self.id_display.setMaximumSize(QSize(32, 16777215))
+        self.id_display.setMaximumSize(QSize(24, 16777215))
         self.id_display.setStyleSheet(u"QLineEdit {\n"
 "	font: 8pt \"Segoe UI\";\n"
 "    border: 2px solid #CCCCCC;\n"
