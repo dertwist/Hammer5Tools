@@ -493,13 +493,15 @@ class SmartPropEditorMainWindow(QMainWindow):
                 var_max = (var_key_value[2])['max']
                 var_model = (var_key_value[2])['model']
                 var_class = var_key_value[1]
+                var_id = (var_key_value[2])['m_nElementID']
 
                 # Basic
                 var_dict = {
                     '_class': variable_prefix+var_class,
                     'm_VariableName': var_key_value[0],
                     'm_bExposeAsParameter':  var_key_value[3],
-                    'm_DefaultValue': var_default
+                    'm_DefaultValue': var_default,
+                    'm_nElementID': var_id
                 }
                 # If display name none set variable name as display
                 if var_key_value[4] == None or var_key_value[4] == '':
