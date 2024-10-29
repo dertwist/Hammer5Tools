@@ -82,14 +82,15 @@ class VsmartOpen:
                                     for index, item in enumerate(value):
                                         value[index] = assign_ElementID(item)
                                 elif isinstance(value, dict):
-                                    updated_value = update_value_ElementID(value)
-                                    for key in updated_value:
-                                        updated_value[key] = assign_ElementID(updated_value[key])
-                                    return updated_value
+                                    if '_class' in value:
+                                        updated_value = update_value_ElementID(value)
+                                        for key in updated_value:
+                                            updated_value[key] = assign_ElementID(updated_value[key])
+                                        return updated_value
                                 return value
 
                             if self.next_element_id is None:
-                                update_value_ElementID(value_dict)
+                                # update_value_ElementID(value_dict)
                                 value_dict = assign_ElementID(value_dict)
 
 
