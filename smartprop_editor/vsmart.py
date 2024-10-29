@@ -95,7 +95,7 @@ class VsmartOpen:
 
 
                             # Add tree item
-                            child_item = HierarchyItemModel(_name=value_dict.get('m_sLabel', 'None'), _data = str(value_dict), _class=get_clean_class_name(value_dict['_class']), _id= get_ElementID_key(value_dict))
+                            child_item = HierarchyItemModel(_name=value_dict.get('m_sLabel', get_label_id_from_value(value_dict)), _data = str(value_dict), _class=get_clean_class_name(value_dict['_class']), _id= get_ElementID_key(value_dict))
 
                             parent.addChild(child_item)
                             self.populate_tree(item, child_item)
