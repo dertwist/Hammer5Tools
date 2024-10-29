@@ -292,11 +292,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
         self.popup_menu.show()
     def new_element(self, element_class, element_value):
-        name = element_class
-        new_element = QTreeWidgetItem()
-        new_element.setFlags(new_element.flags() | Qt.ItemIsEditable)
-        new_element.setText(0, name)
-        new_element.setText(1, str(update_value_ElementID(element_value)))
+        element_value = ast.literal_eval(element_value)
+        update_value_ElementID(element_value)
+        new_element = HierarchyItemModel(_name=get_label_id_from_value(element_value), _data=element_value, _class=get_clean_class_name_value(element_value), _id=get_ElementID_key(element_value))
         if self.ui.tree_hierarchy_widget.currentItem() == None:
             parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
         else:
