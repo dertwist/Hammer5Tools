@@ -32,12 +32,16 @@ class VariableFrame(QWidget):
             'default': self.var_default,
             'min':  self.var_min,
             'max':  self.var_max,
-            'model':  self.var_model
+            'model':  self.var_model,
+            'm_nElementID': get_ElementID(var_value)
         }
+        debug(f"Variable Frame var_value:{self.var_class}")
+
+        # ID
         update_value_ElementID(self.var_value)
         self.element_id = get_ElementID(self.var_value)
-
         self.ui.id_display.setText(str(self.element_id))
+
         self.ui.variable_name.setText(name)
         self.ui.varialbe_display_name.setText(var_display_name)
         self.ui.variable_class.setText(var_class)

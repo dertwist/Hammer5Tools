@@ -448,7 +448,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
                 var_value = {
                     'default': item.get('m_DefaultValue', None),
-                    'model': item.get('m_sModelName', None)
+                    'model': item.get('m_sModelName', None),
+                    'm_nElementID': item.get('m_nElementID', None)
                 }
                 if var_class == 'Float':
                     var_value.update({
