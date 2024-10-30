@@ -227,7 +227,7 @@ class Ui_Form(object):
 
         self.id_display = QLineEdit(self.frame)
         self.id_display.setObjectName(u"id_display")
-        self.id_display.setMaximumSize(QSize(24, 16777215))
+        self.id_display.setMaximumSize(QSize(36, 16777215))
         self.id_display.setStyleSheet(u"QLineEdit {\n"
 "	font: 8pt \"Segoe UI\";\n"
 "    border: 2px solid #CCCCCC;\n"
