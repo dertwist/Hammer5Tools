@@ -54,17 +54,17 @@ def get_ElementID(value):
         value = ast.literal_eval(value)
         id = value.get('m_nElementID',  None)
         if id is None:
-            set_ElementID()
+            id = set_ElementID(force=True)
         debug(f"not dict{type(id)}, {id}")
         if not isinstance(id, int):
-            id = set_ElementID()
+            id = set_ElementID(force=True)
     elif isinstance(value, dict):
         id = value.get('m_nElementID',  None)
         if id is None:
-            set_ElementID()
+            id = set_ElementID(force=True)
         debug(f"dict{type(id)}, {id}")
         if not isinstance(id, int):
-            id = set_ElementID()
+            id = set_ElementID(force=True)
     else:
         id = set_ElementID()
     add_ElementID(id)
