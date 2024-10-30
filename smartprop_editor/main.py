@@ -269,6 +269,10 @@ class SmartPropEditorMainWindow(QMainWindow):
                 if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_Down:
                     self.move_tree_item(self.ui.tree_hierarchy_widget, 1)
                     return True
+                # Duplicate
+                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_D:
+                    self.duplicate_hierarchy_items(self.ui.tree_hierarchy_widget)
+                    return True
 
                 if event.matches(QKeySequence.Undo):
                     self.undo_stack.undo()
@@ -733,7 +737,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         remove_action.setShortcut(QKeySequence(QKeySequence("Delete")))
 
         duplicate_action = menu.addAction("Duplicate")
-        duplicate_action.triggered.connect(lambda: self.duplicate_item(self.ui.tree_hierarchy_widget.itemAt(position), self.ui.tree_hierarchy_widget))
+        duplicate_action.triggered.connect(lambda: self.duplicate_hierarchy_items(self.ui.tree_hierarchy_widget))
+        duplicate_action.setShortcut(QKeySequence(QKeySequence("Ctrl+D")))
 
         menu.addSeparator()
 
@@ -791,7 +796,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         for item in selected_items:
             item.setSelected(True)
         tree.scrollToItem(selected_items[-1] if direction > 0 else selected_items[0])
-    def copy_item(self, tree):
+    def copy_item(self, tree, copy_to_clipboard=True):
         """Coping Tree item"""
         selected_indexes = tree.selectedIndexes()
         selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
@@ -803,13 +808,15 @@ class SmartPropEditorMainWindow(QMainWindow):
                 selected_items_unique.append(item)
 
         selected_items = selected_items_unique
-        data = {'m_Children': []}
         for tree_item in selected_items:
-            item_data = self.tree_serialization(item=tree_item, data=data)
-        clipboard = QApplication.clipboard()
-        clipboard.setText(JsonToKv3(item_data))
+            item_data = self.serialization_hierarchy_items(item=tree_item)
+        if copy_to_clipboard:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(JsonToKv3(item_data))
+        else:
+            return JsonToKv3(item_data)
 
-    def paste_item(self, tree, data_input=None):
+    def paste_item(self, tree, data_input=None, paste_to_parent=False):
         """Pasting tree item"""
         if data_input is None:
             data_input = QApplication.clipboard().text()
@@ -817,15 +824,21 @@ class SmartPropEditorMainWindow(QMainWindow):
             input =  Kv3ToJson(self.fix_format(data_input))
             if 'm_Children' in input:
                 for key in input['m_Children']:
-                    tree_item = self.deserialize_tree_item(key)
+                    tree_item = self.deserialize_hierarchy_items(key)
                     try:
-                        tree.currentItem().addChild(tree_item)
+                        if paste_to_parent:
+                            tree.currentItem().parent().addChild(tree_item)
+                        else:
+                            tree.currentItem().addChild(tree_item)
                     except:
                         tree.invisibleRootItem().addChild(tree_item)
             else:
-                tree_item = self.deserialize_tree_item(input)
+                tree_item = self.deserialize_hierarchy_items(input)
                 try:
-                    tree.currentItem().addChild(tree_item)
+                    if paste_to_parent:
+                        tree.currentItem().parent().addChild(tree_item)
+                    else:
+                        tree.currentItem().addChild(tree_item)
                 except:
                     tree.invisibleRootItem().addChild(tree_item)
         except Exception as error:
@@ -846,44 +859,16 @@ class SmartPropEditorMainWindow(QMainWindow):
                     index = parent.indexOfChild(item)
                     parent.takeChild(index)
 
-    def duplicate_item(self, item: QTreeWidgetItem, tree):
-        """Duplicate Tree item"""
-        parent = item.parent() or tree.invisibleRootItem()
-        existing_names = [parent.child(i).text(0) for i in range(parent.childCount())]
-
-        base_text = item.text(0)
-        counter = 0
-        new_text = base_text
-
-        # Check if the element name has digits at the end
-        if base_text[-1].isdigit():
-            counter = int(base_text.split('_')[-1]) + 1
-            new_text = f"{base_text.rsplit('_', 1)[0]}_{counter:02}"
-        else:
-            while new_text in existing_names:
-                counter += 1
-                new_text = f"{base_text}_{counter:02}"  # Change the format to include leading zeros
-
-        new_item = QTreeWidgetItem([new_text, item.text(1)])  # Duplicate the second column as well
-        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
-        parent.addChild(new_item)
-
-        # Recursively duplicate children
-        self.duplicate_children(item, new_item)
-
-    def duplicate_children(self, source_item, target_item):
-        """Duplicate children of tree item"""
-        for i in range(source_item.childCount()):
-            child = source_item.child(i)
-            new_child = QTreeWidgetItem([child.text(0), child.text(1)])  # Duplicate the second column as well
-            new_child.setFlags(new_child.flags() | Qt.ItemIsEditable)
-            target_item.addChild(new_child)
-            self.duplicate_children(child, new_child)
+    def duplicate_hierarchy_items(self, tree):
+        data = self.copy_item(tree=tree, copy_to_clipboard=False)
+        self.paste_item(tree, data, paste_to_parent=True)
 
     # ======================================[Tree item serialization and deserialization]========================================
 
-    def tree_serialization(self, item, data):
+    def serialization_hierarchy_items(self, item, data=None):
         """Convert tree structure to json"""
+        if data is None:
+            data = {'m_Children': []}
         value_row = item.text(1)
         parent_data = ast.literal_eval(value_row)
         if item.childCount() > 0:
@@ -900,31 +885,38 @@ class SmartPropEditorMainWindow(QMainWindow):
 
                 if child.childCount() > 0:
                     child_data['m_Children'] = []
-                    self.tree_serialization(child, child_data)
+                    self.serialization_hierarchy_items(child, child_data)
 
                 parent_data['m_Children'].append(child_data)
 
         return data
 
-    def deserialize_tree_item(self, m_Children=HierarchyItemModel):
+    def deserialize_hierarchy_items(self, m_Children=HierarchyItemModel):
         item_value = {}
+
+        # If there is a dict with child element, copy all expect child key in a new variable, and process it.
         for key in m_Children:
             if key == 'm_Children':
                 pass
             else:
                 item_value.update({key:m_Children[key]})
 
+        # Unique ID fro each element that have _class key. Without force option output will use ID that in the value
         item_value = update_child_ElementID_value(item_value, force=True)
+        # Get tree item name
         name = item_value.get('m_sLabel',get_label_id_from_value(item_value))
         if '_pasted' in name:
             pass
         else:
             name = name + '_pasted'
 
+
+        # New element
         tree_item = HierarchyItemModel(_data=item_value, _name=name, _id=get_ElementID_key(item_value), _class=get_clean_class_name_value(item_value))
 
+        # Child processing
         for child_data in m_Children.get('m_Children', []):
-            child_item = self.deserialize_tree_item(child_data)
+            child_item = self.deserialize_hierarchy_items(child_data)
             tree_item.addChild(child_item)
         return tree_item
 
