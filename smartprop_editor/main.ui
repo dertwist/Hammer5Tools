@@ -1165,7 +1165,7 @@ QComboBox QAbstractItemView::item:selected {
        </attribute>
        <column>
         <property name="text">
-         <string>Name</string>
+         <string>Label</string>
         </property>
        </column>
        <column>
