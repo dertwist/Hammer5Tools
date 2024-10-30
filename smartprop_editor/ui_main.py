@@ -842,6 +842,6 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem1 = self.choices_tree_widget.headerItem()
         ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
         ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
-        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Name", None));
+        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Label", None));
     # retranslateUi
 
