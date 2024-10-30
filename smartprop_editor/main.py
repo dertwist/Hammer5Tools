@@ -4,7 +4,6 @@ import shutil
 import threading
 import time
 import json
-from http.cookiejar import cut_port_re
 from qt_styles.common import qt_stylesheet_classes
 
 from distutils.util import strtobool
@@ -799,18 +798,16 @@ class SmartPropEditorMainWindow(QMainWindow):
         tree.scrollToItem(selected_items[-1] if direction > 0 else selected_items[0])
     def copy_item(self, tree, copy_to_clipboard=True):
         """Coping Tree item"""
+        # Gathering selected items
         selected_indexes = tree.selectedIndexes()
         selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
-        selected_items_unique = []
-        for item in selected_items:
-            if item in selected_items_unique:
-                pass
-            else:
-                selected_items_unique.append(item)
 
-        selected_items = selected_items_unique
+        # Remove the same items
+        selected_items = list(set(selected_items))
+
         for tree_item in selected_items:
             item_data = self.serialization_hierarchy_items(item=tree_item)
+        # Output
         if copy_to_clipboard:
             clipboard = QApplication.clipboard()
             clipboard.setText(JsonToKv3(item_data))
