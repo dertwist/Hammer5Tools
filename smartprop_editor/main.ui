@@ -285,7 +285,7 @@
           </attribute>
           <column>
            <property name="text">
-            <string notr="true">Name</string>
+            <string notr="true">Label</string>
            </property>
           </column>
           <column>
