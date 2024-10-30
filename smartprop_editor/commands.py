@@ -1,9 +1,11 @@
+import ast
 import json
 import uuid
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QUndoCommand
-
+from widgets import HierarchyItemModel
+from smartprop_editor._common import get_clean_class_name_value, get_ElementID_key
 class DeleteTreeItemCommand(QUndoCommand):
     def __init__(self, model, parent=None):
         super().__init__()
@@ -22,9 +24,9 @@ class DeleteTreeItemCommand(QUndoCommand):
 
     def remove_tree_items(self):
         """Remove selected tree items and store their data for undo."""
-        selected_indexes = sorted(self.model.selectedIndexes(), key=lambda idx: idx.row(), reverse=True)
-        for index in selected_indexes:
-            item = self.model.itemFromIndex(index)
+        selected_items = self.model.selectedItems()
+
+        for item in selected_items:
             if item and item != self.model.invisibleRootItem():
                 parent = item.parent() or self.model.invisibleRootItem()
                 parent.takeChild(parent.indexOfChild(item))
@@ -72,10 +74,10 @@ class DeleteTreeItemCommand(QUndoCommand):
 
     def add_item_from_data(self, item_data, parent=None):
         """Helper to restore an item and its children in the original position."""
-        new_item = QTreeWidgetItem([item_data['text'], item_data['value']])
+        value_dict = ast.literal_eval(item_data['value'])
+        new_item = HierarchyItemModel(_data=item_data['value'], _name=item_data['text'], _class=get_clean_class_name_value(value_dict), _id=get_ElementID_key(value_dict))
         new_item.setData(0, Qt.UserRole, item_data.get('id', str(uuid.uuid4())))  # Assign unique ID if not provided
 
-        new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
 
         for child_data in item_data.get('children', []):
             self.add_item_from_data(child_data, new_item)
@@ -91,10 +93,12 @@ class DeleteTreeItemCommand(QUndoCommand):
     def collect_selected_item_data(self):
         """Collect data of selected items, including position, parent ID, and children."""
         selected_indexes = self.model.selectedIndexes()
+        selected_items = [self.model.itemFromIndex(index) for index in selected_indexes]
+        selected_items = list(set(selected_items))
+
         selected_items_data = []
 
-        for index in selected_indexes:
-            item = self.model.itemFromIndex(index)
+        for item in selected_items:
             if item:
                 item_data = self.get_item_data(item)
                 selected_items_data.append(item_data)
