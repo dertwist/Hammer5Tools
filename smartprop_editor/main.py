@@ -424,7 +424,7 @@ class SmartPropEditorMainWindow(QMainWindow):
     def open_file(self, external=False):
         global opened_file
         if external:
-            filename, _ = QFileDialog.getSaveFileName(None, "Save File", os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()), "VSmart Files (*.vsmart);;All Files (*)")
+            filename, _ = QFileDialog.getOpenFileName(None, "Open File", os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()), "VSmart Files (*.vsmart);;All Files (*)")
         else:
             index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
             filename = self.mini_explorer.model.filePath(index)
