@@ -824,7 +824,8 @@ class SmartPropEditorMainWindow(QMainWindow):
             input =  Kv3ToJson(self.fix_format(data_input))
             if 'm_Children' in input:
                 for key in input['m_Children']:
-                    tree_item = self.deserialize_hierarchy_items(key)
+                    tree_item = self.deserialize_hierarchy_item(key)
+                    tree_item.setText(0,unique_counter_name(tree_item, tree))
                     try:
                         if paste_to_parent:
                             tree.currentItem().parent().addChild(tree_item)
@@ -833,7 +834,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                     except:
                         tree.invisibleRootItem().addChild(tree_item)
             else:
-                tree_item = self.deserialize_hierarchy_items(input)
+                tree_item = self.deserialize_hierarchy_item(input)
+                tree_item.setText(0, unique_counter_name(tree_item, tree))
                 try:
                     if paste_to_parent:
                         tree.currentItem().parent().addChild(tree_item)
@@ -871,6 +873,8 @@ class SmartPropEditorMainWindow(QMainWindow):
             data = {'m_Children': []}
         value_row = item.text(1)
         parent_data = ast.literal_eval(value_row)
+        # Label form tree element name
+        parent_data['m_sLabel'] = item.text(0)
         if item.childCount() > 0:
             parent_data['m_Children'] = []
         data['m_Children'].append(parent_data)
@@ -891,7 +895,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         return data
 
-    def deserialize_hierarchy_items(self, m_Children=HierarchyItemModel):
+    def deserialize_hierarchy_item(self, m_Children=HierarchyItemModel):
         item_value = {}
 
         # If there is a dict with child element, copy all expect child key in a new variable, and process it.
@@ -904,19 +908,14 @@ class SmartPropEditorMainWindow(QMainWindow):
         # Unique ID fro each element that have _class key. Without force option output will use ID that in the value
         item_value = update_child_ElementID_value(item_value, force=True)
         # Get tree item name
-        name = item_value.get('m_sLabel',get_label_id_from_value(item_value))
-        if '_pasted' in name:
-            pass
-        else:
-            name = name + '_pasted'
-
+        name = item_value.get('m_sLabel',get_clean_class_name_value(item_value))
 
         # New element
         tree_item = HierarchyItemModel(_data=item_value, _name=name, _id=get_ElementID_key(item_value), _class=get_clean_class_name_value(item_value))
 
         # Child processing
         for child_data in m_Children.get('m_Children', []):
-            child_item = self.deserialize_hierarchy_items(child_data)
+            child_item = self.deserialize_hierarchy_item(child_data)
             tree_item.addChild(child_item)
         return tree_item
 
