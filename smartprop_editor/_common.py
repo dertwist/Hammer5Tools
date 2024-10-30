@@ -18,19 +18,20 @@ def get_label_id_from_value(value):
 
 
 def unique_counter_name(item, tree):
-    parent = item.parent() or tree.invisibleRootItem()
-    existing_names = [parent.child(i).text(0) for i in range(parent.childCount())]
+    parent = tree.invisibleRootItem()
+    existing_names = {parent.child(i).text(0) for i in range(parent.childCount())}
 
     base_text = item.text(0)
     counter = 0
     new_text = base_text
 
-    # Check if the element name has digits at the end
     if base_text[-1].isdigit():
-        counter = int(base_text.split('_')[-1]) + 1
-        new_text = f"{base_text.rsplit('_', 1)[0]}_{counter:02}"
+        base_text, last_digit = base_text.rsplit('_', 1)
+        counter = int(last_digit) + 1
+        new_text = f"{base_text}_{counter:02}"
     else:
         while new_text in existing_names:
             counter += 1
             new_text = f"{base_text}_{counter:02}"
-    return  new_text
+
+    return new_text
