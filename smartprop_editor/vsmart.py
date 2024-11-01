@@ -204,5 +204,7 @@ class VsmartSave:
                         variables.append(out)
                 options.append({'m_Name': option_child.text(0), 'm_VariableValues': variables})
             # Temp m_nElementID. Needs to be rewritten
-            m_Choices.append({'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_Options': options, 'm_DefaultOption': widget.currentText(), 'm_nElementID': set_ElementID(force=True)})
+            choice = {'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_Options': options, 'm_DefaultOption': widget.currentText(), 'm_nElementID': set_ElementID(force=True)}
+            update_child_ElementID_value(choice, force=True)
+            m_Choices.append(choice)
         return m_Choices
