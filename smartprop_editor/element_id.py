@@ -26,7 +26,7 @@ def set_ElementID(force=False):
     if force:
         m_nElementID = get_ElementID_last() + 1
         debug(f"New Id for element {m_nElementID}")
-        m_nElementID_list.append(m_nElementID)
+
         return m_nElementID
     else:
         if m_nElementID in m_nElementID_list:
@@ -79,6 +79,7 @@ def update_value_ElementID(value, force=False):
 
     if force:
         id = set_ElementID(force=True)
+        m_nElementID_list.append(id)
 
     else:
         id = get_ElementID(value)
