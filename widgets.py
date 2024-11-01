@@ -40,6 +40,13 @@ class ErrorInfo(QMessageBox):
 
     def report_issue(self):
         webbrowser.open("https://discord.gg/mMaub4jCBa")
+
+def ExpetionErrorDialog(function, id):
+    try:
+        function()
+    except (Exception, ValueError, EOFError, InterruptedError, TypeError) as e:
+        error_details = str(e)
+        ErrorInfo(text=f"{id} Error: {e}", details=error_details).exec_()
 #============================================================<  Property widgets  >=========================================================
 class FloatWidget(QWidget):
     edited = Signal(float)

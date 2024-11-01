@@ -23,7 +23,7 @@ from export_and_import_addon.export_and_import_addon import export_and_import_ad
 from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 
-from minor_features.assettypes_cs2_process import AssetTypesProcess
+from minor_features.assettypes import AssetTypesModify
 
 import ctypes
 import winsound
@@ -94,7 +94,7 @@ class Widget(QMainWindow):
         print(f'SmartProp Editor version: {smartprop_editor_version}')
         print(f'Hotkey Editor version: {hotkey_editor_version}')
         try:
-            AssetTypesProcess()
+            AssetTypesModify()
         except Exception as e:
             debug(f"Error: {e}")
 
