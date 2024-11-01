@@ -118,6 +118,8 @@ class VariableFloat(QWidget):
 
         value = self.data['m_Value']
         self.editline.setText(str(value))
+        if value is None:
+            self.editline.setText(str(0))
         try:
             self.slider.setValue(int(value * 100))
         except:
@@ -128,20 +130,23 @@ class VariableFloat(QWidget):
 
         self.setLayout(self.layout)
 
-    def on_editline_changed(self, text_value):
-        try:
-            float_value = float(text_value)
-        except ValueError:
-            float_value = 0
-        self.slider.setValue(int(float_value * 100))
-        self.set_value()
+    def on_editline_changed(self):
+        value = float(self.editline.text())
+        if value > self.slider.maximum() / 100 or value < self.slider.minimum() / 100:
+            self.slider.setMaximum(abs(value) * 10 * 100 + 1000)
+            self.slider.setMinimum(-abs(value) * 10 * 100 - 1000)
+        self.slider.setValue(value * 100)
+        self.data['m_Value'] = value
 
-    def on_slider_changed(self, slider_value):
-        float_value = slider_value / 100.0
-        self.editline.setText(str(float_value))
-        self.set_value()
-    def set_value(self):
-        self.data.update({'m_Value': self.slider.value()/ 100.0})
+    def on_slider_changed(self):
+        value = self.slider.value() / 100
+        self.editline.setText(str(value))
+        self.data['m_Value'] = value
+
+    def set_value(self, value):
+        self.editline.setText(str(value))
+        self.slider.setValue(value * 100)
+        self.data['m_Value'] = value
 
 class VariableBool(QWidget):
     def __init__(self, value=None, type=None):
