@@ -49,7 +49,7 @@ class AddVariable():
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         parent.addChild(item)
         # Combobox var
-        combobox = ComboboxVariables(layout=variables_scrollArea)
+        combobox = ComboboxVariables(layout=variables_scrollArea, filter_types=['Float', 'MaterialGroup', 'Bool', 'Int','ScaleMode','PickMode', 'Model'])
         combobox.setCurrentText(name)
         combobox.addItem(name)
 
@@ -86,10 +86,11 @@ class VariableWidget(QWidget):
     def setupUI(self):
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
-        editline = QLineEdit()
-        editline.setText(str(self.data['m_Value']))
-        editline.setFocusPolicy(Qt.StrongFocus)
-        self.layout.addWidget(editline)
+        self.editline = QLineEdit()
+        self.editline.setText(str(self.data['m_Value']))
+        self.editline.setFocusPolicy(Qt.StrongFocus)
+        self.editline.textChanged.connect(self.set_value)
+        self.layout.addWidget(self.editline)
         self.setLayout(self.layout)
     def set_value(self):
         self.data.update({'m_Value': self.editline.text()})

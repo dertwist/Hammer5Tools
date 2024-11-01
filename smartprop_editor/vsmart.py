@@ -103,7 +103,7 @@ class VsmartOpen:
                     option_item = AddOption(parent=choice, name=option['m_Name']).item
                     variables = option['m_VariableValues']
                     for variable in variables:
-                        AddVariable(parent=option_item, variables_scrollArea=self.variables_scrollArea, name=variable['m_TargetName'], type=variable['m_DataType'], value=variable['m_Value'])
+                        AddVariable(parent=option_item, variables_scrollArea=self.variables_scrollArea, name=variable['m_TargetName'], type=variable.get('m_DataType', ''), value=variable['m_Value'])
 
 
 
