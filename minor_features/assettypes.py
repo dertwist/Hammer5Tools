@@ -2,7 +2,7 @@ import os.path
 from preferences import get_cs2_path, debug
 import keyvalues3
 from common import editor_info
-class AssetTypesProcess:
+class AssetTypesModify:
     def __init__(self):
         super().__init__()
         # Variables
