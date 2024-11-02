@@ -22,11 +22,46 @@ editor_info = {
     }
 
 #===========================================================<  generic functions  >=========================================================
-def compile(input_file):
-    """Compiling a file through game resourcecompiler"""
+def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=False):
+    """Compiling a file through game resourcecompiler
+
+    Usage: resourcecompiler <in resource file list>
+          Options:
+           -i:    Source dmx file list, or resource project file list.
+                  Wildcards are accepted. Can skip using the -i option
+                  if you put file names @ the end of the commandline.
+           -filelist <filename>: specify a text file containing a list of files
+                  to be processed as inputs.
+           -r:    If wildcards are specified, recursively searches subdirectories (you may want to use contentbuilder!)
+           -nop4: Disables auto perforce checkout/add.
+           -game <path>: Specifies path to a gameinfo.gi file (which mod to build for).
+                  If this is not specified, it is derived from the input file name.
+           -v:    Verbose mode
+           -f:    Force-compile all encountered resources
+           -fshallow: Force compile top-level resources, but only compile children and associates as needed
+           -fshallow2: Force compile all top-level resources and their children, but associates as needed
+           -pc:   compile resources for Windows PC (default)
+           -novpk: generate loose files for the map resource and its children instead of generating a vpk
+           -vpkincr: incrementally generate vpk, files already in vpk are left intact unless overwritten
+           -pauseiferror: pauses for a user keypress before quitting if there was an error
+           -pause: pauses for a user keypress before quitting
+           -changelist <name>:  use named changelist for p4 operations
+           -skiptype <ext,ext>: Skip the specified resource type recompilation by extension, comma-separated list, e.g. -skiptype vmat,vtex
+           -crc <abspath>: Diagnostic - report the CRC of the specified file and quit
+    """
+
     def compile(input_file):
         resourcecompiler = os.path.join(get_cs2_path(), 'game', 'bin', 'win64', 'resourcecompiler.exe')
-        process = subprocess.Popen([resourcecompiler, '-i', input_file], shell=True)
+        arguments = ''
+        if fshallow2:
+            arguments += ' -fshallow'
+        if fshallow2:
+            arguments += ' -fshallow2'
+        if force:
+            arguments += ' -f'
+        if force:
+            arguments += ' -v'
+        process = subprocess.Popen([resourcecompiler, arguments,'-i', input_file, ], shell=True)
         process.wait()
 
     # Create a new thread for the compile function
