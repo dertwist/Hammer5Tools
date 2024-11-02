@@ -7,7 +7,6 @@ from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
 from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
-from soudevent_editor.soundevent_editor_main import SoundEventEditorMainWidget
 from loading_editor.loading_editor_main import Loading_editorMainWindow
 
 from hotkey_editor.main import HotkeyEditorMainWindow
@@ -22,6 +21,7 @@ from minor_features.update_check import check_updates
 from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
 from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
+from soudevent_editor.main import SoundEventEditorMainWindow
 
 from minor_features.assettypes import AssetTypesModify
 
@@ -203,8 +203,9 @@ class Widget(QMainWindow):
 
         # Clean up SoundEventEditorMainWidget
         try:
-            if hasattr(self, 'SoundEventEditorMainWidget') and self.SoundEventEditorMainWidget:
-                self.SoundEventEditorMainWidget.deleteLater()
+            if hasattr(self, 'SoundEventEditorMainWindow') and self.SoundEventEditorMainWindow:
+                self.SoundEventEditorMainWindow.closeEvent(self.event)
+                self.SoundEventEditorMainWindow.deleteLater()
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
@@ -243,8 +244,8 @@ class Widget(QMainWindow):
         # Smartprop editior
 
         try:
-            self.SoundEventEditorMainWidget = SoundEventEditorMainWidget(soundevent_editor_version)
-            self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWidget)
+            self.SoundEventEditorMainWindow = SoundEventEditorMainWindow(soundevent_editor_version)
+            self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWindow)
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 

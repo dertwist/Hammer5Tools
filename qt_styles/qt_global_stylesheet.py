@@ -50,24 +50,6 @@ QGroupBox::indicator:unchecked {
     image: url(://icons/arrow_drop_right.png);
 }
 
-
-
-
-
-
-
-/* ========================================================== */
-
-
-/* Optional: Add grip to handle */
-QSplitter::handle:vertical {
-    image: url(:/images/vertical-grip.png); /* Example image for vertical handle */
-}
-
-QSplitter::handle:horizontal {
-    image: url(:/images/horizontal-grip.png); /* Example image for horizontal handle */
-}
-
 /* ========================================================== */
 QPushButton {
 
@@ -1100,6 +1082,43 @@ QStatusBar {
 QStatusBar::item {
     border: none;
 }
+
+
+/* ========================================================== */
+
+
+
+/*QSplitter {
+    border: none;
+}
+QSplitter::handle {
+    background-color: #1C1C1C;
+    margin: 1px 1px;
+}
+QSplitter::handle:hover {
+    background-color: #1C1C1C;
+}
+
+QSplitterHandle::item:hover {}
+
+QSplitter::handle:vertical:hover, QSplitter::handle:horizontal:hover {
+    background: #505050;
+}
+QSplitter::handle:vertical {
+    image: url(://icons/splitter-vertical.svg);
+    width: 13px;
+    height: 16px;
+    padding: 0px;
+    margin: 0px;
+}  
+
+QSplitter::handle:horizontal {
+    image: url(://icons/splitter-horizontal.svg);
+    height: 13px;
+    width: 16px;
+    padding: 0px;
+    margin: 0px;
+}*/
 
 
 """

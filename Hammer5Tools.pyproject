@@ -4,7 +4,6 @@
         "resources.qrc",
         "preferences.py",
         "preferences.ui",
-        "basic_operations.py",
         "documentation/documentation_dialog.ui",
         "soudevent_editor/soundevenet_editor_mainwindow.ui",
         "create_addon/create_addon_dialog.ui",
@@ -19,6 +18,7 @@
         "soudevent_editor/properties/combobox_property.ui",
         "soudevent_editor/properties/curve_property.ui",
         "soudevent_editor/properties/files_property.ui",
+        "soudevent_editor/main.ui",
         "popup_menu/popup_menu.ui",
         "popup_menu/popup_menu_tree.ui",
         "smartprop_editor/main.ui",
@@ -34,6 +34,7 @@
         "smartprop_editor/variables/vector3d.ui",
         "smartprop_editor/variables/vector4d.ui",
         "main.ui",
+
         "smartprop_editor/properties_classes/legacy.ui",
         "smartprop_editor/properties_classes/float.ui",
         "smartprop_editor/properties_classes/bool.ui",
@@ -45,6 +46,7 @@
         "smartprop_editor/properties_classes/filtersurface.ui",
         "smartprop_editor/properties_group_frame.ui",
         "smartprop_editor/property_frame.ui",
+
         "hotkey_editor/main.ui",
         "hotkey_editor/dialog.ui"
     ]
