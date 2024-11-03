@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Widget</class>
+ <widget class="QWidget" name="Widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>790</width>
+    <height>32</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>32</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">.QWidget {
+    font: 580 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+	border-top: 0px;
+    border-color: rgba(50, 50, 50, 255);
+    padding: 8px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+.QWidget::hover {
+}
+.QWidget::selected {
+    background-color: #414956;
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="frame">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">.QFrame {
+    font: 580 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+	border-top: 0px;
+    border-color: rgba(50, 50, 50, 255);
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+.QFrame::hover {
+}
+.QFrame::selected {
+    background-color: #414956;
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <property name="spacing">
+       <number>16</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="layout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetFixedSize</enum>
+        </property>
+        <item>
+         <widget class="QLabel" name="property_class">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">border:0px;
+background-color: rgba(255, 255, 255, 0);
+font: 8pt &quot;Segoe UI&quot;;
+padding-right: 16px;
+
+color: rgb(255, 189, 190);</string>
+          </property>
+          <property name="text">
+           <string>Value</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="logic_switch">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QComboBox {
+    font: 580 8pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    height: 18px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+	border-top:none;
+border-bottom:none;
+border:none;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+QComboBox:hover {
+    background-color: #414956;
+    color: white;
+}
+
+QComboBox:pressed {
+}
+
+QComboBox:item {
+    font: 580  8pt &quot;Segoe UI&quot;;
+    color: #E3E3E3;
+    padding-left: 5px;
+    background-color: #1C1C1C;
+    border-style: none;
+}
+
+QComboBox::drop-down {
+    color: #E3E3E3;
+    padding: 2px;
+    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
+    border-bottom: 0px solid black;
+    border-top: 0px solid black;
+    border-right: 0px;
+    border-left: 2px solid;
+    margin-left: 5px;
+    padding: 5px;
+    width: 7px;
+    border-color: rgba(80, 80, 80, 255);
+    background-color: #1C1C1C;
+border:none;
+}
+
+QComboBox::drop-down:hover {
+    background-color: #414956;
+    color: white;
+}
+
+
+QComboBox QAbstractItemView {
+    border: 2px solid gray;
+    border-color: rgba(80, 80, 80, 255);
+    selection-background-color: #414956;
+    background-color: #1C1C1C;
+}
+
+
+QComboBox QAbstractItemView::item {
+    height: 16px; /* Set the height of each item */
+    padding: 4px; /* Add padding to each item */
+    padding-left: 5px;
+    padding-right: 5px;
+    color: #ff8a8a8a;
+    border-style: none;
+    border-bottom: 0.5px solid black;
+    border-color: rgba(255, 255, 255, 10);
+}
+
+
+QComboBox QAbstractItemView::item:selected {
+    height: 16px; /* Set the height of each item */
+    padding: 4px; /* Add padding to each item */
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: #414956;
+    color: white;
+    border: none; /* Remove border */
+    outline: none; /* Remove outline */
+}
+</string>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <item>
+           <property name="text">
+            <string>Default</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Bool</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Variable</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Expression</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="value">
+          <property name="styleSheet">
+           <string notr="true">QCheckBox {
+    font: 600 8pt &quot;Segoe UI&quot;;
+    border: 0px solid black;
+    border-radius: 0px;
+    border-color: rgba(80, 80, 80, 255);
+    height:14px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+    padding-top: 2px;
+    padding-bottom:2px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}
+
+QCheckBox::indicator:checked {
+    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+}
+
+/* ========================================================== */
+
+
+QCheckBox:hover {
+    background-color: #414956;
+    color: white;
+}</string>
+          </property>
+          <property name="text">
+           <string>CheckBox</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
