@@ -813,11 +813,14 @@ class SmartPropEditorMainWindow(QMainWindow):
         if data_input is None:
             data_input = QApplication.clipboard().text()
         try:
-            input =  Kv3ToJson(self.fix_format(data_input))
+            input = Kv3ToJson(self.fix_format(data_input))
             if 'm_Children' in input:
                 for key in input['m_Children']:
                     tree_item = self.deserialize_hierarchy_item(key)
-                    tree_item.setText(0,unique_counter_name(tree_item, tree))
+                    try:
+                        tree_item.setText(0, unique_counter_name(tree_item, tree))
+                    except:
+                        pass
                     try:
                         if paste_to_parent:
                             tree.currentItem().parent().addChild(tree_item)
@@ -827,7 +830,10 @@ class SmartPropEditorMainWindow(QMainWindow):
                         tree.invisibleRootItem().addChild(tree_item)
             else:
                 tree_item = self.deserialize_hierarchy_item(input)
-                tree_item.setText(0, unique_counter_name(tree_item, tree))
+                try:
+                    tree_item.setText(0, unique_counter_name(tree_item, tree))
+                except:
+                    pass
                 try:
                     if paste_to_parent:
                         tree.currentItem().parent().addChild(tree_item)
