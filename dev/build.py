@@ -1,16 +1,21 @@
 import subprocess
 import zipfile
 import os
+import subprocess
+
+# Kill the process
+subprocess.run(["taskkill", "/IM", "Hammer5Tools.exe"])
+
 # Command 1
-subprocess.run(['pyinstaller', '--name=Hammer5Tools', '--noconfirm', '--onefile', '--windowed', '--optimize=2', '--icon=appicon.ico', '--add-data=appicon.ico:.', '--add-data=images;images/', '--add-data=qt_styles;qt_styles/', '--noupx', '--distpath=hammer5tools', '--exclude-module=PyQt5', 'main.py'])
+subprocess.run(['pyinstaller', '--name=Hammer5Tools', '--noconfirm', '--onefile', '--windowed', '--optimize=2', '--icon=src/appicon.ico', '--add-data=src/appicon.ico:.', '--add-data=src/images;images/', '--add-data=src/qt_styles;qt_styles/', '--noupx', '--distpath=hammer5tools', '--exclude-module=PyQt5', 'src/main.py'])
 
 # Command 2
-subprocess.run(['pyinstaller', '--name=Hammer5Tools_Updater', '--noconfirm', '--onefile', '--optimize=2', '--icon=appicon.ico', '--noupx', '--distpath=hammer5tools', '--exclude-module=PySide6', '--exclude-module=PyQt5', '--exclude-module=numpy', '--exclude-module=PIL', '--exclude', 'matplotlib', '--exclude', 'pandas', 'updater.py'])
+subprocess.run(['pyinstaller', '--name=Hammer5Tools_Updater', '--noconfirm', '--onefile', '--optimize=2', '--icon=src/appicon.ico', '--noupx', '--distpath=hammer5tools', '--exclude-module=PySide6', '--exclude-module=PyQt5', '--exclude-module=numpy', '--exclude-module=PIL', '--exclude', 'matplotlib', '--exclude', 'pandas', 'src/updater.py'])
 
 
 
-folder_path = '../hammer5tools'
-output_path = '../hammer5tools/hammer5tools.zip'
+folder_path = 'hammer5tools'
+output_path = 'hammer5tools/hammer5tools.zip'
 
 
 files_to_archive = [file for file in os.listdir(folder_path) if file != 'hammer5tools.zip']
