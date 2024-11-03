@@ -7,10 +7,17 @@
 
 
 <p align="center">
-    <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/download.svg" height="45" onclick="window.location.href='https://github.com/dertwist/Hammer5Tools/releases/latest'">
-    <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/discord.svg" height="45" onclick="window.location.href='https://discord.gg/JzcHMFbCEC'">
-    <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/docs.svg" height="45" onclick="window.location.href='https://developer.valvesoftware.com/wiki/Hammer_5_Tools'">
+    <a href="https://github.com/dertwist/Hammer5Tools/releases/latest">
+        <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/download.svg" height="45" alt="Download">
+    </a>
+    <a href="https://discord.gg/JzcHMFbCEC">
+        <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/discord.svg" height="45" alt="Discord">
+    </a>
+    <a href="https://developer.valvesoftware.com/wiki/Hammer_5_Tools">
+        <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/docs.svg" height="45" alt="Docs">
+    </a>
 </p>
+
 
 
 # A bunch of tools for Counter-Strike 2 Workshop:
