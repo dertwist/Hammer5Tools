@@ -272,7 +272,7 @@
            <bool>false</bool>
           </attribute>
           <attribute name="headerMinimumSectionSize">
-           <number>100</number>
+           <number>20</number>
           </attribute>
           <attribute name="headerDefaultSectionSize">
            <number>135</number>

@@ -183,7 +183,7 @@ class Ui_MainWindow(object):
         self.tree_hierarchy_widget.setColumnCount(4)
         self.tree_hierarchy_widget.header().setVisible(True)
         self.tree_hierarchy_widget.header().setCascadingSectionResizes(False)
-        self.tree_hierarchy_widget.header().setMinimumSectionSize(100)
+        self.tree_hierarchy_widget.header().setMinimumSectionSize(20)
         self.tree_hierarchy_widget.header().setDefaultSectionSize(135)
         self.tree_hierarchy_widget.header().setProperty("showSortIndicator", False)
         self.tree_hierarchy_widget.header().setStretchLastSection(True)
