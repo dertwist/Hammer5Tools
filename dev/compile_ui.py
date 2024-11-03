@@ -13,7 +13,7 @@ def compile_with_progress(file, output_file):
     print(f'{file} compiled successfully.')
 
 # Search for UI files in the project directory and compile them using PySide6
-for root, dirs, files in os.walk('../src'):
+for root, dirs, files in os.walk('../'):
     for file in files:
         if file.endswith('.ui') and file != 'ui_input.ui':
             filename = os.path.basename(file)
@@ -24,7 +24,4 @@ for root, dirs, files in os.walk('../src'):
             thread = threading.Thread(target=compile_with_progress, args=(os.path.join(root, file), output_file))
             thread.start()
 
-# Compile the specific UI file 'ui_input.ui'
-subprocess.run(['pyside6-uic', 'ui_input.ui', '-o', 'ui_input.py'])
-
-subprocess.run(['pyside6-rcc', '.\\resources.qrc', '-o', '.\\resources_rc.py'])
+subprocess.run(['pyside6-rcc', '.\\src\\resources.qrc', '-o', '.\\src\\resources_rc.py'])
