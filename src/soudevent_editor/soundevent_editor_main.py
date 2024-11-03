@@ -1,0 +1,446 @@
+import os.path
+import sys
+import subprocess
+
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea
+)
+from PySide6.QtCore import Qt, QSize, QTimer
+from PySide6.QtGui import QAction,QCursor
+from soudevent_editor.ui_soundevenet_editor_mainwindow import Ui_SoundEvent_Editor_MainWindow
+from preferences import get_config_value, get_cs2_path, get_addon_name
+from src.explorer.main import Explorer
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListWidgetItem, QMenu, QScrollArea, QInputDialog
+from PySide6.QtWidgets import QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QProgressBar
+from popup_menu.popup_menu_main import PopupMenu
+
+from soudevent_editor.properties.soundevent_editor_properties_list import soundevent_editor_properties
+from soudevent_editor.soundevent_editor_recompile_all import compile
+
+
+import keyvalues3 as kv3
+
+from soudevent_editor.properties.legacy_property import LegacyProperty
+from soudevent_editor.properties.volume_property import VolumeProperty
+from soudevent_editor.properties.checkbox_property import CheckboxProperty
+from soudevent_editor.properties.origin_property import OriginProperty
+from soudevent_editor.properties.combobox_property import ComboboxProperty
+from soudevent_editor.properties.curve_property import CurveProperty
+from soudevent_editor.properties.files_property import FilesProperty
+
+global clipboard_app
+
+def child_key(data, key_child):
+    data_out = {}
+    if key_child in data and isinstance(data[key_child], dict):
+        for key in data[key_child]:
+            data_out[key_child] = data_out.get(key_child, {})
+            data_out[key_child].update({key: data[key_child][key]})
+            # print({key_child: {key: data[key_child][key]}})
+            child_key(data[key_child], key)
+    return data_out
+
+def parse_kv3(path):
+    data = kv3.read(path)
+    data_kv3 = {}
+    for parent in data.keys():
+        data_out = child_key(data, parent)
+        data_kv3.update(data_out)
+    return data_kv3
+
+class SoundEventEditorMainWidget(QMainWindow):
+    def __init__(self, version, parent=None):
+        super().__init__(parent)
+        self.ui = Ui_SoundEvent_Editor_MainWindow()
+        self.ui.setupUi(self)
+        print(f"Soundevent Editor version: v{version}")
+
+        # Set up the custom file system model
+        counter_strike_2_path = get_cs2_path()
+        addon_name = get_addon_name()
+        self.tree_directory = rf"{counter_strike_2_path}\content\csgo_addons\{addon_name}\sounds"
+
+        # Initialize the mini windows explorer
+        self.mini_explorer = Explorer(parent=self.ui.audio_files_explorer_frame, tree_directory=self.tree_directory, editor_name='SoundEventEditor', addon=get_addon_name())
+
+        self.ui.audio_files_explorer_layout.addWidget(self.mini_explorer.frame)
+
+        container = QWidget()
+        container.setLayout(self.ui.horizontalLayout)
+        self.setCentralWidget(container)
+
+        self.soundevent_properties_widget = QWidget()
+        self.soundevent_properties_layout = QVBoxLayout(self.ui.soundevent_properties)
+        self.soundevent_properties_widget.setLayout(self.soundevent_properties_layout)
+        self.ui.scrollArea.setWidget(self.soundevent_properties_widget)
+        self.ui.scrollArea.setFocusPolicy(Qt.StrongFocus)
+
+        self.ui.soundevents_list.itemClicked.connect(self.on_soundevent_clicked)
+        self.populate_soundevent_list()
+
+        self.ui.save_button.clicked.connect(self.save)
+        self.ui.recompile_all_button.clicked.connect(self.recomppile_all)
+
+        self.ui.open_output_file_button.clicked.connect(self.open_output_file)
+
+        self.ui.create_new_soundevent.clicked.connect(self.create_new_soundevent)
+
+        # misc
+
+        self.ui.soundevents_list_search_bar.textChanged.connect(self.filter_soundevents_list)
+        self.ui.open_sounds_folder_button.clicked.connect(self.open_sounds_folder)
+        self.ui.add_a_property_button.clicked.connect(self.add_a_property)
+
+    def open_output_file(self):
+        file_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
+        subprocess.Popen(['notepad.exe', file_path])
+
+    def open_sounds_folder(self):
+        if os.path.exists(self.tree_directory):
+            # Open the folder using Windows Explorer
+            os.startfile(self.tree_directory)
+        else:
+            print(f"Directory '{self.tree_directory}' does not exist.")
+
+    def filter_soundevents_list(self):
+        search_text = self.ui.soundevents_list_search_bar.text().lower()
+        for index in range(self.ui.soundevents_list.count()):
+            item = self.ui.soundevents_list.item(index)
+            if search_text in item.text().lower():
+                item.setHidden(False)
+            else:
+                item.setHidden(True)
+
+    def create_new_soundevent(self):
+        global soundevents_data
+        existing_items = [self.ui.soundevents_list.item(item).text() for item in range(self.ui.soundevents_list.count())]
+
+        new_soundevent_name = 'new.soundevent'
+        unique_name = new_soundevent_name
+        counter = 1
+
+        while unique_name in existing_items:
+            unique_name = f'{new_soundevent_name}_{counter}'
+            counter += 1
+        new_sondevent = {unique_name: {'volume': 1.0, 'vsnd_files_track_01': ['bird_01.vsnd'], 'base': 'amb.base'}}
+        soundevents_data.update(new_sondevent)
+
+        self.ui.soundevents_list.addItem(unique_name)
+
+
+
+
+    def populate_soundevent_list(self):
+        global soundevents_data
+        soundevents_data = parse_kv3(os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts'))
+        for key, _ in soundevents_data.items():
+            item = QListWidgetItem(key)
+            self.ui.soundevents_list.addItem(item)
+
+
+
+    def save(self):
+        global soundevents_data
+        self.merge_global_data()
+        kv3.write(soundevents_data, (os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts')))
+        print(f"Saved and exported")
+    def get_element_layout_kv3(self, layout, data_out):
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if widget:
+                item = {widget.name: widget.value}
+                data_out.update(item)
+        return data_out
+    def clear_layout(self, layout):
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
+    def merge_global_data(self):
+        data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
+        global soundevents_data
+        # print(type(soundevents_data),'soundevents_data')
+        item_text = self.ui.soundevents_list.currentItem().text()
+        try:
+            del soundevents_data[item_text]
+        except:
+            pass
+        properties_data = {item_text: data_out}
+        soundevents_data.update(properties_data)
+    def on_soundevent_clicked(self, item):
+        global soundevents_data
+        item_text = item.text()
+        print(f"Selected: {item_text}")
+        self.clear_layout(self.soundevent_properties_layout)
+        if item_text in soundevents_data:
+            details = soundevents_data[item_text]
+            for key, value in reversed(details.items()):
+                value = str(value)
+                self.add_property(key, value)
+
+        # if self.soundevent_properties_layout.count() != 0:
+        #     data_out = self.get_element_layout_kv3(self.soundevent_properties_layout, {})
+        #     self.clear_layout(self.soundevent_properties_layout)
+        #     if item_text in soundevents_data:
+        #         details = soundevents_data[item_text]
+        #         for key, value in details.items():
+        #             value = str(value)
+        #             self.add_property(key, value)
+        #     del soundevents_data[item_text]
+        #     properties_data = {item_text: data_out}
+        #     soundevents_data = child_merge(soundevents_data, properties_data)
+        # else:
+        #     if item_text in soundevents_data:
+        #         details = soundevents_data[item_text]
+        #         for key, value in details.items():
+        #             value = str(value)
+        #             self.add_property(key, value)
+
+
+    def add_property(self, name, value):
+        # value
+        if name == 'volume':
+            property_class = VolumeProperty(name=name, display_name="Volume", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
+        elif name == 'pitch':
+            property_class = VolumeProperty(name=name, display_name="Pitch", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
+        elif name == 'delay':
+            property_class = VolumeProperty(name=name, display_name="Delay", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
+        elif name == 'volume_random_min':
+            property_class = VolumeProperty(name=name, display_name="Volume random minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
+        elif name == 'volume_random_max':
+            property_class = VolumeProperty(name=name, display_name="Volume random maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
+        elif name == 'pitch_random_min':
+            property_class = VolumeProperty(name=name, display_name="Pitch random minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
+        elif name == 'pitch_random_max':
+            property_class = VolumeProperty(name=name, display_name="Pitch random maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=-10, max_value=10)
+        elif name == 'retrigger_radius':
+            property_class = VolumeProperty(name=name, display_name="Retrigger radius", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=19999)
+        elif name == 'retrigger_interval_max':
+            property_class = VolumeProperty(name=name, display_name="Retrigger interval maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=99)
+        elif name == 'retrigger_interval_min':
+            property_class = VolumeProperty(name=name, display_name="Retrigger interval minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=99)
+        elif name == 'randomize_position_max_radius':
+            property_class = VolumeProperty(name=name, display_name="Randomize position maximum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=19999)
+        elif name == 'randomize_position_min_radius':
+            property_class = VolumeProperty(name=name, display_name="Randomize position minimum", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=19999)
+        elif name == 'reverb_wet':
+            property_class = VolumeProperty(name=name, display_name="Reverb wet", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
+        elif name == 'block_distance':
+            property_class = VolumeProperty(name=name, display_name="Block distance", value=value,widget_list=self.soundevent_properties_layout, min_value=-999, max_value=999)
+        elif name == 'vsnd_duration':
+            property_class = VolumeProperty(name=name, display_name="Vsound duration", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=9999)
+        elif name == 'occlusion_intensity':
+            property_class = VolumeProperty(name=name, display_name="Occlusion intensity", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
+        elif name == 'distance_effect_mix':
+            property_class = VolumeProperty(name=name, display_name="Distance effect mix", value=value,widget_list=self.soundevent_properties_layout, min_value=0, max_value=10)
+        # curve
+        elif name == 'time_volume_mapping_curve':
+            property_class = CurveProperty(name=name, display_name="Time volume mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Time', second_value_d='Volume')
+        elif name == 'fadetime_volume_mapping_curve':
+            property_class = CurveProperty(name=name, display_name="Fadetime volume mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='FadeTime', second_value_d='Volume')
+        elif name == 'distance_volume_mapping_curve':
+            property_class = CurveProperty(name=name, display_name="Distance volume mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Distance', second_value_d='Volume')
+        elif name == 'distance_unfiltered_stereo_mapping_curve':
+            property_class = CurveProperty(name=name, display_name="Distance unfiltered stereo mapping curve", value=value,widget_list=self.soundevent_properties_layout, first_value_d='Distance', second_value_d='Stereo')
+        # files
+        elif name == 'vsnd_files_track_01':
+            property_class = FilesProperty(name=name, display_name="vsnd files_track_01", value=value,tree_list=self.mini_explorer)
+        elif name == 'soundevent_01':
+            property_class = FilesProperty(name=name, display_name="Sound Event 01", value=value,tree_list=self.mini_explorer)
+        # combobox
+        elif name == 'base':
+            property_class = ComboboxProperty(name=name, display_name="Base", value=value,widget_list=self.soundevent_properties_layout)
+        # origin
+        elif name == 'position':
+            property_class = OriginProperty(name=name, display_name="Position", value=value,widget_list=self.soundevent_properties_layout)
+        # bool
+        elif name == 'enable_child_events':
+            property_class = CheckboxProperty(name=name, display_name="Enable child events", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'enable_retrigger':
+            property_class = CheckboxProperty(name=name, display_name="Enable retrigger", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_time_volume_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use time volume_mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_time_volume_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use time volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'override_dsp_preset':
+            property_class = CheckboxProperty(name=name, display_name="Override dsp preset", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'set_child_position':
+            property_class = CheckboxProperty(name=name, display_name="Set child position", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'position_relative_to_player':
+            property_class = CheckboxProperty(name=name, display_name="Position relative to player", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_world_position':
+            property_class = CheckboxProperty(name=name, display_name="Use world position", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'randomize_position_hemisphere':
+            property_class = CheckboxProperty(name=name, display_name="Randomize position hemisphere", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_time_volume_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use time volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_distance_unfiltered_stereo_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use distance unfiltered stereo mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'restrict_source_reverb':
+            property_class = CheckboxProperty(name=name, display_name="Restrict source reverb", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'block_match_entity':
+            property_class = CheckboxProperty(name=name, display_name="Block match entity", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'block_matching_events':
+            property_class = CheckboxProperty(name=name, display_name="Block matching events", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'use_distance_volume_mapping_curve':
+            property_class = CheckboxProperty(name=name, display_name="Use distance volume mapping curve", value=value,widget_list=self.soundevent_properties_layout)
+        elif name == 'hammer5tools_note':
+            property_class = LegacyProperty(name=name, value=value, widget_list=self.soundevent_properties_layout, display_name='Note')
+        else:
+            property_class = LegacyProperty(name=name, value=value, widget_list=self.soundevent_properties_layout)
+
+        self.soundevent_properties_layout.insertWidget(0, property_class)
+        self.soundevent_properties_layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+    def add_a_property(self):
+        def get_names_from_layout(layout):
+            names = []
+            for i in range(layout.count()):
+                widget = layout.itemAt(i).widget()
+                if widget:
+                    names.append(widget.name)
+            return names
+
+        names_to_remove = get_names_from_layout(self.soundevent_properties_layout)
+        elements_in_popupmenu = {}
+        for index, item in enumerate(soundevent_editor_properties):
+            for key, value in item.items():
+                if key in names_to_remove:
+                    pass
+                else:
+                    elements_in_popupmenu.update({key: value})
+
+        elements_in_popupmenu = [elements_in_popupmenu]
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.add_property(name, value))
+        self.popup_menu.show()
+
+    def keyPressEvent(self, event):
+        focus_widget = QApplication.focusWidget()
+
+        if isinstance(focus_widget, QScrollArea) and focus_widget.viewport().underMouse():
+            if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                def get_names_from_layout(layout):
+                    names = []
+                    for i in range(layout.count()):
+                        widget = layout.itemAt(i).widget()
+                        if widget:
+                            names.append(widget.name)
+                    return names
+                names_to_remove = get_names_from_layout(self.soundevent_properties_layout)
+                elements_in_popupmenu = {}
+                for index, item in enumerate(soundevent_editor_properties):
+                    for key, value in item.items():
+                        if key in names_to_remove:
+                            pass
+                        else:
+                            elements_in_popupmenu.update({key: value})
+
+                elements_in_popupmenu = [elements_in_popupmenu]
+                self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
+                self.popup_menu.add_property_signal.connect(lambda name, value: self.add_property(name, value))
+                self.popup_menu.show()
+
+                event.accept()
+
+
+            elif event.key() == Qt.Key_A and event.modifiers() == Qt.ControlModifier:
+                self.select_all_items()
+                event.accept()
+            elif event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
+                self.paste_action()
+                event.accept()
+        if isinstance(focus_widget, QScrollArea) and focus_widget.viewport().underMouse():
+            if event.key() == Qt.Key_S and event.modifiers() == Qt.ControlModifier:
+                self.save()
+                event.accept()
+
+    def contextMenuEvent(self, event):
+        context_menu = QMenu(self)
+
+        if self.ui.soundevents_list is QApplication.focusWidget():
+            delete_action = QAction("Delete", self)
+            delete_action.triggered.connect(self.delete_action)
+            context_menu.addAction(delete_action)
+
+            rename_action = QAction("Rename", self)
+            rename_action.triggered.connect(self.rename_action)
+            context_menu.addAction(rename_action)
+
+            duplicate_action = QAction("Duplicate", self)
+            duplicate_action.triggered.connect(self.duplicate_action)
+            context_menu.addAction(duplicate_action)
+        else:
+            paste_action = QAction("Paste", self)
+            paste_action.triggered.connect(self.paste_action)
+            context_menu.addAction(paste_action)
+
+        context_menu.exec_(event.globalPos())
+
+    def paste_action(self):
+        clipboard = QApplication.clipboard()
+        clipboard_text = clipboard.text()
+        clipboard_data = clipboard_text.split(';;')
+
+        if clipboard_data[0] == "hammer5tools:soundeventeditor":
+            self.add_property(clipboard_data[1], clipboard_data[2])
+        else:
+            print("Clipboard data format is not valid.")
+
+    def delete_action(self):
+        selected_item = self.ui.soundevents_list.currentItem()
+        if selected_item:
+            item_text = selected_item.text()
+            self.ui.soundevents_list.takeItem(self.ui.soundevents_list.row(selected_item))
+            global soundevents_data
+            del soundevents_data[item_text]
+            # Perform any additional deletion logic here
+
+    def rename_action(self):
+        selected_item = self.ui.soundevents_list.currentItem()
+        global soundevents_data
+        if selected_item:
+            item_text = selected_item.text()  # Get the current text of the selected item
+            new_name, ok = QInputDialog.getText(self, 'Rename Soundevent', 'Enter new name:', text=item_text)
+            if ok and new_name:
+                soundevents_data[new_name] = soundevents_data.pop(item_text)
+                selected_item.setText(new_name)
+
+    def duplicate_action(self):
+        selected_item = self.ui.soundevents_list.currentItem()
+        global soundevents_data
+        if selected_item:
+            item_text = selected_item.text()
+            duplicated_data = soundevents_data[item_text].copy()
+            new_item_text = f"{item_text}_copy"
+            soundevents_data[new_item_text] = duplicated_data
+            self.ui.soundevents_list.addItem(new_item_text)
+
+    def recomppile_all(self):
+        total_files = len(os.listdir(self.tree_directory))
+        progress_bar = QProgressBar()
+        progress_bar.setMaximum(total_files)
+        progress_bar.show()
+        progress_bar.setFixedWidth(300)
+        progress_bar.setWindowTitle("Compiling...")
+
+        for index, file_name in enumerate(os.listdir(self.tree_directory), start=1):
+            file_path = os.path.join(self.tree_directory, file_name)
+            compile(file_path)
+            progress_bar.setValue(index)
+            QApplication.processEvents()  # Update the GUI to show the progress
+
+        compile(os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts'))
+
+        # Hide or reset the progress bar after the loop completes
+        progress_bar.hide()
+    def closeEvent(self, event):
+        pass
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = SoundEventEditorMainWidget()
+    window.show()
+    sys.exit(app.exec())
