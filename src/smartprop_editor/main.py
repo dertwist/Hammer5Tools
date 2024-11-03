@@ -7,13 +7,11 @@ from PySide6.QtWidgets import QMainWindow, QTreeWidgetItem, QFileDialog
 from PySide6.QtWidgets import QMenu, QApplication, QHeaderView
 from PySide6.QtGui import QAction, QKeyEvent, QUndoStack
 from PySide6.QtCore import Qt
-
 from smartprop_editor.ui_main import Ui_MainWindow
 from preferences import get_addon_name, get_cs2_path
 
 from smartprop_editor.variable_frame import VariableFrame
-from smartprop_editor.objects import variables_list, variable_prefix, elements_list, operators_list, \
-    selection_criteria_list, filters_list
+from smartprop_editor.objects import variables_list, variable_prefix, elements_list, operators_list, selection_criteria_list, filters_list
 from smartprop_editor.vsmart import VsmartOpen, VsmartSave
 from smartprop_editor.property_frame import PropertyFrame
 from smartprop_editor.properties_group_frame import PropertiesGroupFrame
@@ -55,9 +53,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
         self.ui.tree_hierarchy_widget.itemClicked.connect(on_three_hierarchyitem_clicked)
-        self.ui.tree_hierarchy_widget.header().setSectionResizeMode(0, QHeaderView.ResizeToContents);
-        self.ui.tree_hierarchy_widget.header().resizeSection(4, 30)
-        self.ui.tree_hierarchy_widget.header().resizeSection(3, 50)
+        self.ui.tree_hierarchy_widget.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.ui.tree_hierarchy_widget.header().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.ui.tree_hierarchy_widget.header().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         # Choices setup
         self.ui.choices_tree_widget.hideColumn(2)
         self.ui.choices_tree_widget.setContextMenuPolicy(Qt.CustomContextMenu)
