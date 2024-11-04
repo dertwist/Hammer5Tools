@@ -5,12 +5,15 @@
 
 from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QSettings, Signal
-from ui_preferences import Ui_preferences_dialog
+try:
+    from src.ui_preferences import Ui_preferences_dialog
+except:
+    pass
 import os,subprocess
-from minor_features.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
-from minor_features.NCM_mode_setup_main import NCM_mode_setup
+from src.minor_features.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
+from src.minor_features.NCM_mode_setup_main import NCM_mode_setup
 import winreg as reg
-from minor_features.update_check import check_updates
+from src.minor_features.update_check import check_updates
 
 
 

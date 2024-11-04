@@ -1,24 +1,24 @@
 import subprocess
 import os
 from pydoc import importfile
-
+import sys
 from src.preferences import get_addon_name, get_cs2_path
-from src.soudevent_editor.ui_main import Ui_MainWindow
+from src.soudevent_editor.ui_preset_manager import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QApplication
 from src.preferences import settings
 from src.soudevent_editor.properties_window import SoundEventEditorPropertiesWindow
-from src.soudevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
 
 
-class SoundEventEditorMainWindow(QMainWindow):
+class SoundEventEditorPresetManagerWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
-        self.realtime_save = False
 
+
+        self.PropertiesWindowInit()
         # Stylesheet
         self.ui.frame.setStyleSheet("""
         QFrame#frame {
@@ -29,11 +29,6 @@ class SoundEventEditorMainWindow(QMainWindow):
             border: 0px solid black; 
         }
         """)
-
-        self.PropertiesWindowInit()
-    #============================================================<  Connections  >==========================================================
-
-        self.ui.open_preset_manager_button.clicked.connect(self.OpenPresetManager)
 
     #==============================================================<  Explorer  >===========================================================
         self.tree_directory = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), 'sounds')
@@ -50,25 +45,25 @@ class SoundEventEditorMainWindow(QMainWindow):
         PropertiesWindow = SoundEventEditorPropertiesWindow()
         self.ui.frame.layout().addWidget(PropertiesWindow)
 
-    #===========================================================<  Preset Manager  >========================================================
-    def OpenPresetManager(self):
-        PresetManager = SoundEventEditorPresetManagerWindow()
-        PresetManager.show()
-
     #======================================[Window State]========================================
     def _restore_user_prefs(self):
         """Restore window state"""
-        geo = self.settings.value("SoundEventEditorMainWindow/geometry")
+        geo = self.settings.value("SoundEventEditorPresetManagerWindow/geometry")
         if geo:
             self.restoreGeometry(geo)
 
-        state = self.settings.value("SoundEventEditorMainWindow/windowState")
+        state = self.settings.value("SoundEventEditorPresetManagerWindow/windowState")
         if state:
             self.restoreState(state)
 
     def _save_user_prefs(self):
         """Save window state"""
-        self.settings.setValue("SoundEventEditorMainWindow/geometry", self.saveGeometry())
-        self.settings.setValue("SoundEventEditorMainWindow/windowState", self.saveState())
+        self.settings.setValue("SoundEventEditorPresetManagerWindow/geometry", self.saveGeometry())
+        self.settings.setValue("SoundEventEditorPresetManagerWindow/windowState", self.saveState())
     def closeEvent(self, event):
         self._save_user_prefs()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    main_window = SoundEventEditorPresetManagerWindow()
+    main_window.show()
+    sys.exit(app.exec())
