@@ -175,16 +175,22 @@ class HotkeyEditorMainWindow(QMainWindow):
                 unique_contexts.add(context)
                 context_item = QTreeWidgetItem(root_item)
                 context_item.setText(0, context)
-                for i in range(root_item.childCount()):
-                    existing_commands = [root_item.child(i).child(j).text(0) for j in
-                                         range(root_item.child(i).childCount())]
-                    for command in commands:
-                        if command not in existing_commands:
-                            new_item = QTreeWidgetItem(context_item)
-                            new_item.setText(0, command)
-                            key_editor = KeyButton(self.ui.keybindings_tree)
-                            context_item.addChild(new_item)
-                            self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
+
+            # Collect existing commands once per context
+            existing_commands = set()
+            for i in range(root_item.childCount()):
+                existing_commands.update(
+                    root_item.child(i).child(j).text(0) for j in range(root_item.child(i).childCount())
+                )
+            debug(f'Hotkey Editor Existing commands:{existing_commands}')
+            # Add new commands that are not in existing_commands
+            for command in commands:
+                if command not in existing_commands:
+                    new_item = QTreeWidgetItem(context_item)
+                    new_item.setText(0, command)
+                    key_editor = KeyButton(self.ui.keybindings_tree)
+                    context_item.addChild(new_item)
+                    self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
     def open_preset(self):
         self.ui.keybindings_tree.clear()
