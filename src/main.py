@@ -34,11 +34,12 @@ stop_discord_thread = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
-app_version = '2.4.0'
+app_version = '2.5.0'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '1.1.0'
 smartprop_editor_version = '0.9.4'
 hotkey_editor_version = '1.1.0'
+loading_editor_version = '1.0.0'
 
 
 import sys
@@ -94,6 +95,8 @@ class Widget(QMainWindow):
         print(f'SmartProp Editor version: {smartprop_editor_version}')
         print(f'Hotkey Editor version: {hotkey_editor_version}')
         print(f"Soundevent Editor version: v{soundevent_editor_version}")
+        print(f"BatchCreator version: {batchcreator_version}")
+        print(f"Loading Editor version: {loading_editor_version}")
         try:
             AssetTypesModify()
         except Exception as e:
