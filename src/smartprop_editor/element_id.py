@@ -1,9 +1,7 @@
 import ast
 from multiprocessing.util import debug
-from plistlib import dumps
 
-from smartprop_editor.objects import elements_list
-from preferences import debug
+from src.preferences import debug
 
 global m_nElementID
 m_nElementID = 0
