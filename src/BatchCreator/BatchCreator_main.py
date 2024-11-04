@@ -102,7 +102,6 @@ class BatchCreatorMainWindow(QMainWindow):
             self.current_file_path = file_path if not self.mini_explorer.model.isDir(index) else None
         else:
             self.ui.Status_Line_Qedit.clear()
-            print(f"BatchCreator version: {self.version}")
             self.current_file_path = None
 
     def dragEnterEvent(self, event: QDragEnterEvent):
