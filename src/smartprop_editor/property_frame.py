@@ -1,19 +1,17 @@
-from time import process_time_ns
-
 from src.preferences import debug
 from src.smartprop_editor.ui_property_frame import Ui_Form
 
 
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt, Signal
-from src.soudevent_editor.properties.property_actions import PropertyActions
+from PySide6.QtCore import Signal
+from src.soundevent_editor_legacy.properties.property_actions import PropertyActions
 
 from PySide6.QtWidgets import QMenu, QApplication
-from PySide6.QtCore import Qt, QMimeData
-from PySide6.QtGui import QCursor, QDrag,QAction
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QCursor, QAction
 
 from src.popup_menu.popup_menu_main import PopupMenu
-from src.smartprop_editor.element_id import get_ElementID, update_value_ElementID, get_ElementID_key
+from src.smartprop_editor.element_id import update_value_ElementID, get_ElementID_key
 
 
 import ast
