@@ -16,7 +16,7 @@ class PopupMenu(QDialog):
         self.ui = Ui_PoPupMenu()
         self.ui.setupUi(self)
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
-        self.setGeometry(200, 200, 400, 300)
+        self.setGeometry(200, 200, 400, 400)
 
 
         self.ui.lineEdit.textChanged.connect(self.search_text_changed)
@@ -24,7 +24,7 @@ class PopupMenu(QDialog):
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout(scroll_content)
         scroll_layout.setContentsMargins(0, 0, 2, 0)
-        scroll_layout.addSpacerItem( QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        scroll_layout.addSpacerItem( QSpacerItem(20, 30, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.scroll_layout = scroll_layout
 
 
