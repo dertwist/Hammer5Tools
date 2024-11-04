@@ -150,8 +150,9 @@ class HotkeyEditorMainWindow(QMainWindow):
         root_item = self.ui.keybindings_tree.invisibleRootItem()
         existing_items = {}
 
-        def is_command_exist(context, command):
-            return command in existing_items.get(context, set())
+        def is_command_exist(context, command, input_value):
+            # Check if the command with the specific input exists in the context
+            return (command, input_value) in existing_items.get(context, set())
 
         def add_context_if_not_exist(context):
             if context not in existing_items:
@@ -172,14 +173,15 @@ class HotkeyEditorMainWindow(QMainWindow):
                 for item in value:
                     context = item['m_Context']
                     command = item['m_Command']
+                    input_value = item['m_Input']
                     context_item = add_context_if_not_exist(context)
 
-                    if not is_command_exist(context, command):
-                        existing_items[context].add(command)
+                    if not is_command_exist(context, command, input_value):
+                        existing_items[context].add((command, input_value))
                         new_item = QTreeWidgetItem(context_item)
                         new_item.setText(0, command)
 
-                        key_editor = KeyButton(name=item['m_Input'])
+                        key_editor = KeyButton(name=input_value)
                         context_item.addChild(new_item)
                         self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
@@ -193,8 +195,8 @@ class HotkeyEditorMainWindow(QMainWindow):
 
             # Add new commands that are not in existing_commands
             for command in commands:
-                if command not in existing_commands:
-                    existing_items[context].add(command)
+                if command not in {cmd for cmd, _ in existing_commands}:
+                    existing_items[context].add((command, ""))  # Assuming no specific input for additional actions
                     new_item = QTreeWidgetItem(context_item)
                     new_item.setText(0, command)
                     key_editor = KeyButton(name="")  # Assuming no specific input for additional actions

@@ -315,26 +315,26 @@ class Explorer(QMainWindow):
             copy_audio_path_action.triggered.connect(lambda: self.copy_audio_path(index, True))
             menu.addAction(copy_audio_path_action)
 
-
     def duplicate_file(self, index):
         file_path = self.model.filePath(index)
 
         base_name, extension = os.path.splitext(os.path.basename(file_path))
         counter = 1
 
+        # Initialize new_base_name with the base_name
+        new_base_name = base_name
+
         # Extract the numeric part from the base name
         numeric_part = base_name.split('_')[-1]
         if numeric_part.isdigit():
             new_base_name = base_name.rsplit('_', 1)[0] + '_'  # Extract the base name without the numeric part
-            new_file_name = f"{new_base_name}{counter:02d}{extension}"
-        else:
-            new_file_name = f"{base_name}_{counter:02d}{extension}"  # Initialize new_file_name before the loop
 
+        new_file_name = f"{new_base_name}_{counter:02d}{extension}"
         new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
 
         while QFile.exists(new_file_path):
             counter += 1
-            new_file_name = f"{new_base_name}{counter:02d}{extension}"
+            new_file_name = f"{new_base_name}_{counter:02d}{extension}"
             new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
 
         if QFile.copy(file_path, new_file_path):
