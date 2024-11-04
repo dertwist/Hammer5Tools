@@ -9,13 +9,13 @@ from PySide6.QtCore import Qt, Signal, QObject
 import re
 import keyvalues3 as kv3
 import ast
-from smartprop_editor.objects import element_prefix
-from smartprop_editor.choices import AddChoice, AddOption, AddVariable
-from preferences import debug
-from common import editor_info, JsonToKv3, Kv3ToJson
-from smartprop_editor.element_id import *
-from smartprop_editor._common import *
-from widgets import HierarchyItemModel
+from src.smartprop_editor.objects import element_prefix
+from src.smartprop_editor.choices import AddChoice, AddOption, AddVariable
+from src.preferences import debug
+from src.common import editor_info, JsonToKv3, Kv3ToJson
+from src.smartprop_editor.element_id import *
+from src.smartprop_editor._common import *
+from src.widgets import HierarchyItemModel
 class VsmartOpen:
     def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
         self.filename = filename

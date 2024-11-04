@@ -2,20 +2,20 @@ import json
 import re
 import shutil
 
-from hotkey_editor.ui_main import Ui_MainWindow
+from src.hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem, QSplitter, QLineEdit, QKeySequenceEdit, QPushButton, QMessageBox
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeyEvent
-from hotkey_editor.dialog import KeyDialog
-from hotkey_editor.objects import *
-from preferences import debug, get_addon_name, get_cs2_path
-from minor_features.addon_functions import launch_addon, kill_addon
+from src.hotkey_editor.dialog import KeyDialog
+from src.hotkey_editor.objects import *
+from src.preferences import debug, get_addon_name, get_cs2_path
+from src.minor_features.addon_functions import launch_addon, kill_addon
 from src.explorer.main import Explorer
 import os
 import datetime
 app_dir = os.getcwd()
 import keyvalues3 as kv3
-from common import editor_info
+from src.common import editor_info
 
 class KeyButton(QPushButton):
     DEFAULT_COLOR = "#ababab"

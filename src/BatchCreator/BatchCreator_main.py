@@ -2,7 +2,7 @@ from src.BatchCreator.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 # from BatchCreator.BatchCreator_mini_windows_explorer import MiniWindowsExplorer
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtCore import Qt, QMimeData
-from preferences import get_addon_name, get_cs2_path
+from src.preferences import get_addon_name, get_cs2_path
 import os
 from src.BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
 from src.BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse, batch_creator_file_parser_initialize, batch_creator_file_parser_output

@@ -3,11 +3,11 @@ import os, shutil
 
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow
-from preferences import get_cs2_path, get_addon_name, debug
-from loading_editor.ui_loading_editor_mainwindow import Ui_Loading_editorMainWindow
-from loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
+from src.preferences import get_cs2_path, get_addon_name, debug
+from src.loading_editor.ui_loading_editor_mainwindow import Ui_Loading_editorMainWindow
+from src.loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
 from src.explorer.image_viewer import ExplorerImageViewer
-from common import compile
+from src.common import compile
 class ApplyScreenshots:
     def __init__(self, game_screenshot_path, content_screenshot_path, delete_existing):
         self.game_screenshot_path = game_screenshot_path

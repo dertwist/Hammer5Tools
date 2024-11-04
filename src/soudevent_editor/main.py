@@ -1,9 +1,9 @@
 import subprocess
 
-from soudevent_editor.ui_main import Ui_MainWindow
+from src.soudevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu
-from preferences import settings
+from src.preferences import settings
 
 
 class SoundEventEditorMainWindow(QMainWindow):

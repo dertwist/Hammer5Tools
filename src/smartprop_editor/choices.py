@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QWidget, QLineEdit, QVBoxLayout, QSlider, QHBoxLayout, QCheckBox
 from PySide6.QtCore import Qt
-from widgets import ComboboxTreeChild, ComboboxDynamicItems, ComboboxVariables
-from preferences import debug
+from src.widgets import ComboboxTreeChild, ComboboxDynamicItems, ComboboxVariables
+from src.preferences import debug
 var_choice_identification_bool = ['boolean', 'bool']
 var_choice_identification_float = ['float']
 var_choice_identification_int = ['integer', 'int']

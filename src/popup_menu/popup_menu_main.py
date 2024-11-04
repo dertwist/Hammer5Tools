@@ -4,7 +4,7 @@ from PySide6.QtGui import QKeySequence, QShortcut, QCursor, QIcon
 from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import QEvent, Qt, QSize
 from PySide6.QtCore import Signal
-from popup_menu.ui_popup_menu import Ui_PoPupMenu
+from src.popup_menu.ui_popup_menu import Ui_PoPupMenu
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
 class PopupMenu(QDialog):
     label_clicked = Signal(str)
