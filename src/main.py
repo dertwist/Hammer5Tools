@@ -36,9 +36,9 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
 app_version = '2.4.0'
 batchcreator_version = '1.2.2'
-soundevent_editor_version = '1.0.1'
+soundevent_editor_version = '1.1.0'
 smartprop_editor_version = '0.9.4'
-hotkey_editor_version = '1.0.2'
+hotkey_editor_version = '1.1.0'
 
 
 import sys
