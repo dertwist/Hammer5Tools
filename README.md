@@ -22,9 +22,9 @@
 
 # A bunch of tools for Counter-Strike 2 Workshop:
 
-| ![image](https://i.imgur.com/V6UkCvr.png) Loading Editor | ![image](https://i.imgur.com/HMmbQgR.png) SoundEvent Editor | ![image](https://i.imgur.com/cRFsq49.png)  SmartProp Editor |
+| ![image](https://i.imgur.com/7znAlv4.jpeg) Loading Editor | ![image](https://i.imgur.com/HMmbQgR.png) SoundEvent Editor | ![image](https://i.imgur.com/kFjGhI7.png)  SmartProp Editor |
 | ----------- | ----------- | ----------- |
-| ![image](https://i.imgur.com/cRFsq49.png) # Hotkey Editor | ![image](https://i.imgur.com/cRFsq49.png) BatchCreator |
+| ![image](https://i.imgur.com/D9v7e6w.png) # Hotkey Editor | ![image](https://i.imgur.com/cRFsq49.png) BatchCreator |
 
 ### Tools Description
 
