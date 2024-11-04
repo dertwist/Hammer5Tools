@@ -5,7 +5,7 @@ from pydoc import importfile
 from src.preferences import get_addon_name, get_cs2_path
 from src.soudevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog
 from src.preferences import settings
 from src.soudevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from src.soudevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
@@ -52,8 +52,8 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     #===========================================================<  Preset Manager  >========================================================
     def OpenPresetManager(self):
-        PresetManager = SoundEventEditorPresetManagerWindow()
-        PresetManager.show()
+        self.PresetManager = SoundEventEditorPresetManagerWindow()
+        self.PresetManager.show()
 
     #======================================[Window State]========================================
     def _restore_user_prefs(self):
