@@ -145,50 +145,59 @@ class HotkeyEditorMainWindow(QMainWindow):
             os.makedirs(self.hotkeys_path)
         self.explorer_instance = Explorer(editor_name='HotkeyEditor', tree_directory=self.hotkeys_path, parent=self.ui.frame, addon=get_addon_name())
         self.ui.explorer_layout.insertWidget(0, self.explorer_instance.frame)
+
     def populate_editor(self):
         root_item = self.ui.keybindings_tree.invisibleRootItem()
-        unique_contexts = set()
+        existing_items = {}
+
+        def is_command_exist(context, command):
+            return command in existing_items.get(context, set())
+
+        def add_context_if_not_exist(context):
+            if context not in existing_items:
+                existing_items[context] = set()
+                context_item = QTreeWidgetItem(root_item)
+                context_item.setText(0, context)
+                return context_item
+            else:
+                # Find the existing context item
+                for i in range(root_item.childCount()):
+                    if root_item.child(i).text(0) == context:
+                        return root_item.child(i)
+            return None
 
         # Load from file
         for key, value in self.data.items():
             if key == 'm_Bindings':
                 for item in value:
                     context = item['m_Context']
-                    if context not in unique_contexts:
-                        unique_contexts.add(context)
-                        context_item = QTreeWidgetItem(root_item)
-                        context_item.setText(0, context)
-                debug(unique_contexts)
-                for item in value:
-                    for i in range(root_item.childCount()):
+                    command = item['m_Command']
+                    context_item = add_context_if_not_exist(context)
 
-                        if root_item.child(i).text(0) == item['m_Context']:
-                            new_item = QTreeWidgetItem()
-                            new_item.setText(0, item['m_Command'])
+                    if not is_command_exist(context, command):
+                        existing_items[context].add(command)
+                        new_item = QTreeWidgetItem(context_item)
+                        new_item.setText(0, command)
 
-                            key_editor = KeyButton(name=item['m_Input'])
-                            root_item.child(i).addChild(new_item)
-                            self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
+                        key_editor = KeyButton(name=item['m_Input'])
+                        context_item.addChild(new_item)
+                        self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
+
         # Load additional actions
         for context, commands in hammer_commands.items():
-            if context not in unique_contexts:
-                unique_contexts.add(context)
-                context_item = QTreeWidgetItem(root_item)
-                context_item.setText(0, context)
+            context_item = add_context_if_not_exist(context)
 
             # Collect existing commands once per context
-            existing_commands = set()
-            for i in range(root_item.childCount()):
-                existing_commands.update(
-                    root_item.child(i).child(j).text(0) for j in range(root_item.child(i).childCount())
-                )
-            debug(f'Hotkey Editor Existing commands:{existing_commands}')
+            existing_commands = existing_items.get(context, set())
+            debug(f'Hotkey Editor Existing commands: {existing_commands}')
+
             # Add new commands that are not in existing_commands
             for command in commands:
                 if command not in existing_commands:
+                    existing_items[context].add(command)
                     new_item = QTreeWidgetItem(context_item)
                     new_item.setText(0, command)
-                    key_editor = KeyButton(self.ui.keybindings_tree)
+                    key_editor = KeyButton(name="")  # Assuming no specific input for additional actions
                     context_item.addChild(new_item)
                     self.ui.keybindings_tree.setItemWidget(new_item, 1, key_editor)
 
