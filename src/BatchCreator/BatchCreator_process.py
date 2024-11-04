@@ -1,6 +1,6 @@
 import os
 from src.BatchCreator.BatchCreator_file_parser import batch_creator_file_parser_parse
-from preferences import get_cs2_path, get_addon_name
+from src.preferences import get_cs2_path, get_addon_name
 from distutils.util import strtobool
 import ast
 

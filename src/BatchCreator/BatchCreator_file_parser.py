@@ -1,5 +1,5 @@
 import configparser, os, json
-from preferences import settings
+from src.preferences import settings
 
 
 def batch_creator_file_parser_parse(config_file):

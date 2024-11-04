@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QMessageBox
-from minor_features.NCM_mode_setup_main import NCM_mode_setup
-from minor_features.assettypes import AssetTypesModify
-from preferences import get_addon_name, get_cs2_path, get_config_bool, set_config_bool
+from src.minor_features.NCM_mode_setup_main import NCM_mode_setup
+from src.minor_features.assettypes import AssetTypesModify
+from src.preferences import get_addon_name, get_cs2_path, get_config_bool, set_config_bool
 import os, subprocess, shutil, psutil
-from widgets import ErrorInfo, ExpetionErrorDialog
+from src.widgets import ErrorInfo, ExpetionErrorDialog
 
 def delete_addon(ui, cs2_path, get_addon_name):
     delete_paths = [
