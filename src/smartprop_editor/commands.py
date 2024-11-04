@@ -4,8 +4,8 @@ import uuid
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QUndoCommand
-from widgets import HierarchyItemModel
-from smartprop_editor._common import get_clean_class_name_value, get_ElementID_key
+from src.widgets import HierarchyItemModel
+from src.smartprop_editor._common import get_clean_class_name_value, get_ElementID_key
 class DeleteTreeItemCommand(QUndoCommand):
     def __init__(self, model, parent=None):
         super().__init__()

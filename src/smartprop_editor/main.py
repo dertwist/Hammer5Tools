@@ -7,28 +7,28 @@ from PySide6.QtWidgets import QMainWindow, QTreeWidgetItem, QFileDialog
 from PySide6.QtWidgets import QMenu, QApplication, QHeaderView
 from PySide6.QtGui import QAction, QKeyEvent, QUndoStack
 from PySide6.QtCore import Qt
-from smartprop_editor.ui_main import Ui_MainWindow
-from preferences import get_addon_name, get_cs2_path
+from src.smartprop_editor.ui_main import Ui_MainWindow
+from src.preferences import get_addon_name, get_cs2_path
 
-from smartprop_editor.variable_frame import VariableFrame
-from smartprop_editor.objects import variables_list, variable_prefix, elements_list, operators_list, selection_criteria_list, filters_list
-from smartprop_editor.vsmart import VsmartOpen, VsmartSave
-from smartprop_editor.property_frame import PropertyFrame
-from smartprop_editor.properties_group_frame import PropertiesGroupFrame
-from smartprop_editor.choices import AddChoice, AddVariable, AddOption
-from popup_menu.popup_menu_main import PopupMenu
-from smartprop_editor.commands import DeleteTreeItemCommand
+from src.smartprop_editor.variable_frame import VariableFrame
+from src.smartprop_editor.objects import variables_list, variable_prefix, elements_list, operators_list, selection_criteria_list, filters_list
+from src.smartprop_editor.vsmart import VsmartOpen, VsmartSave
+from src.smartprop_editor.property_frame import PropertyFrame
+from src.smartprop_editor.properties_group_frame import PropertiesGroupFrame
+from src.smartprop_editor.choices import AddChoice, AddVariable, AddOption
+from src.popup_menu.popup_menu_main import PopupMenu
+from src.smartprop_editor.commands import DeleteTreeItemCommand
 
 from src.find_and_replace.main import FindAndReplaceDialog
 
 from PySide6.QtGui import QKeySequence
 
 from src.explorer.main import Explorer
-from preferences import settings
-from common import Kv3ToJson, JsonToKv3
-from widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
-from smartprop_editor.element_id import *
-from smartprop_editor._common import *
+from src.preferences import settings
+from src.common import Kv3ToJson, JsonToKv3
+from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
+from src.smartprop_editor.element_id import *
+from src.smartprop_editor._common import *
 
 global opened_file
 opened_file = None
