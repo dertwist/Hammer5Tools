@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1490</width>
+    <height>941</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: #1C1C1C;</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_5">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Orientation::Vertical</enum>
+      </property>
+      <property name="handleWidth">
+       <number>6</number>
+      </property>
+      <widget class="QScrollArea" name="scrollArea">
+       <property name="focusPolicy">
+        <enum>Qt::FocusPolicy::NoFocus</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QScrollArea {
+    border: 0px solid black;
+}</string>
+       </property>
+       <property name="lineWidth">
+        <number>0</number>
+       </property>
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
+       </property>
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="scrollAreaWidgetContents">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>1490</width>
+          <height>591</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QWidget: {
+	border: 0px;
+}</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_17">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="properties_layout">
+           <item>
+            <widget class="QLabel" name="properties_placeholder">
+             <property name="text">
+              <string>Select event in the hierarchy</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="properties_spacer">
+             <property name="styleSheet">
+              <string notr="true">color:#bbb;
+border: none;</string>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_4">
+              <item>
+               <spacer name="verticalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>655</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="layoutWidget">
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QGroupBox" name="groupBox">
+          <property name="title">
+           <string>Comment</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <property name="leftMargin">
+            <number>6</number>
+           </property>
+           <property name="topMargin">
+            <number>6</number>
+           </property>
+           <property name="rightMargin">
+            <number>6</number>
+           </property>
+           <property name="bottomMargin">
+            <number>6</number>
+           </property>
+           <item>
+            <widget class="QPlainTextEdit" name="plainTextEdit"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <action name="actionCreateNewsmartprop">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/new.png</normaloff>:/valve_common/icons/tools/common/new.png</iconset>
+   </property>
+   <property name="text">
+    <string>CreateNewsmartprop</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionOpen_from_Explorer">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open as</string>
+   </property>
+  </action>
+  <action name="actionSave_as">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/save_all.png</normaloff>:/valve_common/icons/tools/common/save_all.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save as</string>
+   </property>
+  </action>
+  <action name="actionSave_current_file">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/save.png</normaloff>:/valve_common/icons/tools/common/save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionRecompile_file">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
+   </property>
+   <property name="text">
+    <string>Recompile file</string>
+   </property>
+  </action>
+  <action name="actionRecompile_all_in_addon">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
+   </property>
+   <property name="text">
+    <string>Recompile all in addon</string>
+   </property>
+  </action>
+  <action name="actionConvert_all_vsmart_file_to_vdata">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</iconset>
+   </property>
+   <property name="text">
+    <string>Convert all vsmart file to vdata</string>
+   </property>
+   <property name="toolTip">
+    <string>Convert all to data</string>
+   </property>
+  </action>
+  <action name="actionFormat_serttings">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/setting.png</normaloff>:/valve_common/icons/tools/common/setting.png</iconset>
+   </property>
+   <property name="text">
+    <string>Format serttings</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
