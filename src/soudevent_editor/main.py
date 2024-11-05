@@ -62,6 +62,13 @@ class SoundEventEditorMainWindow(QMainWindow):
     def PropertiesWindowInit(self):
         PropertiesWindow = SoundEventEditorPropertiesWindow()
         self.ui.frame.layout().addWidget(PropertiesWindow)
+    def UpdatePropertiesWindow(self):
+        pass
+
+    #================================================================<  Hierarchy  >=============================================================
+
+    def update_hierarchy_item(self):
+        pass
 
     #===========================================================<  Preset Manager  >========================================================
     def OpenPresetManager(self):
