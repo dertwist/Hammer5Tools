@@ -19,16 +19,6 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
 
 
         self.PropertiesWindowInit()
-        # Stylesheet
-        self.ui.frame.setStyleSheet("""
-        QFrame#frame {
-            border: 2px solid black; 
-            border-color: rgba(80, 80, 80, 255);
-        }
-        QFrame#frame QLabel {
-            border: 0px solid black; 
-        }
-        """)
 
     #==============================================================<  Explorer  >===========================================================
         self.tree_directory = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), 'sounds')
