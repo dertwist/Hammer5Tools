@@ -135,7 +135,7 @@ class Ui_MainWindow(object):
         self.hierarchy_widget.setAllColumnsShowFocus(False)
         self.hierarchy_widget.setWordWrap(False)
         self.hierarchy_widget.setHeaderHidden(False)
-        self.hierarchy_widget.setColumnCount(3)
+        self.hierarchy_widget.setColumnCount(2)
         self.hierarchy_widget.header().setVisible(True)
         self.hierarchy_widget.header().setCascadingSectionResizes(False)
         self.hierarchy_widget.header().setMinimumSectionSize(45)
@@ -397,7 +397,6 @@ class Ui_MainWindow(object):
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem = self.hierarchy_widget.headerItem()
-        ___qtreewidgetitem.setText(2, QCoreApplication.translate("MainWindow", u"Note", None));
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
 #if QT_CONFIG(tooltip)
         self.open_preset_manager_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Save and compile Ctrl + S</p></body></html>", None))
