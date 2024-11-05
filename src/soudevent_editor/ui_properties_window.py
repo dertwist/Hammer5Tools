@@ -68,13 +68,12 @@ class Ui_MainWindow(object):
         self.actionFormat_serttings.setIcon(icon6)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.verticalLayout_5 = QVBoxLayout(self.centralwidget)
-        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_3 = QVBoxLayout(self.centralwidget)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.splitter = QSplitter(self.centralwidget)
         self.splitter.setObjectName(u"splitter")
         self.splitter.setOrientation(Qt.Orientation.Vertical)
-        self.splitter.setHandleWidth(6)
         self.scrollArea = QScrollArea(self.splitter)
         self.scrollArea.setObjectName(u"scrollArea")
         self.scrollArea.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -86,7 +85,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1490, 591))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1490, 574))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -122,27 +121,29 @@ class Ui_MainWindow(object):
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.splitter.addWidget(self.scrollArea)
-        self.layoutWidget = QWidget(self.splitter)
-        self.layoutWidget.setObjectName(u"layoutWidget")
-        self.verticalLayout = QVBoxLayout(self.layoutWidget)
+        self.CommetSeciton = QFrame(self.splitter)
+        self.CommetSeciton.setObjectName(u"CommetSeciton")
+        self.CommetSeciton.setFrameShape(QFrame.Shape.StyledPanel)
+        self.CommetSeciton.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout = QVBoxLayout(self.CommetSeciton)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.groupBox = QGroupBox(self.layoutWidget)
+        self.groupBox = QGroupBox(self.CommetSeciton)
         self.groupBox.setObjectName(u"groupBox")
         self.verticalLayout_2 = QVBoxLayout(self.groupBox)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(6, 6, 6, 6)
-        self.plainTextEdit = QPlainTextEdit(self.groupBox)
-        self.plainTextEdit.setObjectName(u"plainTextEdit")
+        self.comment_widget = QPlainTextEdit(self.groupBox)
+        self.comment_widget.setObjectName(u"comment_widget")
 
-        self.verticalLayout_2.addWidget(self.plainTextEdit)
+        self.verticalLayout_2.addWidget(self.comment_widget)
 
 
         self.verticalLayout.addWidget(self.groupBox)
 
-        self.splitter.addWidget(self.layoutWidget)
+        self.splitter.addWidget(self.CommetSeciton)
 
-        self.verticalLayout_5.addWidget(self.splitter)
+        self.verticalLayout_3.addWidget(self.splitter)
 
         MainWindow.setCentralWidget(self.centralwidget)
 

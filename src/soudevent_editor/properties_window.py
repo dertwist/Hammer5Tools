@@ -21,9 +21,11 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     def properties_groups_hide(self):
         self.ui.properties_spacer.hide()
         self.ui.properties_placeholder.show()
+        self.ui.CommetSeciton.hide()
     def properties_groups_show(self):
         self.ui.properties_placeholder.hide()
         self.ui.properties_spacer.show()
+        self.ui.CommetSeciton.show()
 
     #=============================================================<  Property  >==========================================================
     def create_property(self):
