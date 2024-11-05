@@ -32,6 +32,15 @@
     </property>
     <item>
      <widget class="QFrame" name="frame">
+      <property name="styleSheet">
+       <string notr="true">        QFrame#frame {
+            border: 2px solid black; 
+            border-color: rgba(80, 80, 80, 255);
+        }
+        QFrame#frame QLabel {
+            border: 0px solid black; 
+        }</string>
+      </property>
       <property name="frameShape">
        <enum>QFrame::Shape::StyledPanel</enum>
       </property>

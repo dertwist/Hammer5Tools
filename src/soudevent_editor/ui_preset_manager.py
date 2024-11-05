@@ -76,6 +76,13 @@ class Ui_MainWindow(object):
         self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
         self.frame = QFrame(self.centralwidget)
         self.frame.setObjectName(u"frame")
+        self.frame.setStyleSheet(u"        QFrame#frame {\n"
+"            border: 2px solid black; \n"
+"            border-color: rgba(80, 80, 80, 255);\n"
+"        }\n"
+"        QFrame#frame QLabel {\n"
+"            border: 0px solid black; \n"
+"        }")
         self.frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_5 = QVBoxLayout(self.frame)
