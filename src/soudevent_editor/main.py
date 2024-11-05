@@ -33,19 +33,22 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.settings = settings
         self.realtime_save = False
 
+        # Variables
         self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
         self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
 
+        # Variables debug
         debug(f"self.filepath_vsndevts : {self.filepath_vsndevts}")
+        debug(f"self.filepath_sounds : {self.filepath_sounds}")
 
+        # Init
         LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
-
         self.PropertiesWindowInit()
-    #============================================================<  Connections  >==========================================================
 
+        # Connections
         self.ui.open_preset_manager_button.clicked.connect(self.OpenPresetManager)
 
-    #==============================================================<  Explorer  >===========================================================
+        # Explorer
         self.tree_directory = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), 'sounds')
         if os.path.exists(self.tree_directory):
             pass
