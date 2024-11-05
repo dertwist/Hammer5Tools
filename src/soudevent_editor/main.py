@@ -2,15 +2,29 @@ import subprocess
 import os
 from pydoc import importfile
 
-from src.preferences import get_addon_name, get_cs2_path
+
+from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soudevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList
+from src.widgets import HierarchyItemModel
 from src.preferences import settings
 from src.soudevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from src.soudevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
+from src.common import JsonToKv3,Kv3ToJson
 
-
+class LoadSoundEvents:
+    def __init__(self, tree: QTreeWidget, path: str):
+        super().__init__()
+        data = open(path, "r")
+        data = Kv3ToJson(data.read())
+        self.tree = tree
+        self.tree.clear()
+        self.root = self.tree.invisibleRootItem()
+        print(f'FD12: {data}')
+        for key in data:
+            new_item = HierarchyItemModel(_data=data[key], _name=key)
+            self.root.addChild(new_item)
 class SoundEventEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -19,16 +33,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.settings = settings
         self.realtime_save = False
 
-        # Stylesheet
-        self.ui.frame.setStyleSheet("""
-        QFrame#frame {
-            border: 2px solid black; 
-            border-color: rgba(80, 80, 80, 255);
-        }
-        QFrame#frame QLabel {
-            border: 0px solid black; 
-        }
-        """)
+        self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
+        self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
+
+        debug(f"self.filepath_vsndevts : {self.filepath_vsndevts}")
+
+        LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
 
         self.PropertiesWindowInit()
     #============================================================<  Connections  >==========================================================
