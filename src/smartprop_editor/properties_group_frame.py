@@ -1,9 +1,9 @@
-from smartprop_editor.ui_properties_group_frame import Ui_Form
+from src.smartprop_editor.ui_properties_group_frame import Ui_Form
 
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt, Signal
-from soudevent_editor.properties.property_actions import PropertyActions
+from src.property.methods import PropertyMethods
 
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtCore import Qt, QMimeData
@@ -46,25 +46,7 @@ class PropertiesGroupFrame(QWidget):
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
-    # def init_ui(self):
-    #     self.setContextMenuPolicy(Qt.CustomContextMenu)
-    #     self.customContextMenuRequested.connect(self.show_context_menu)
-
-    mousePressEvent = PropertyActions.mousePressEvent
-    mouseMoveEvent = PropertyActions.mouseMoveEvent
-    dragEnterEvent = PropertyActions.dragEnterEvent
-    dropEvent = PropertyActions.dropEvent
-    # def show_context_menu(self):
-    #     context_menu = QMenu()
-    #     delete_action = QAction("Delete", context_menu)
-    #     copy_action = QAction("Copy", context_menu)  # Change 'Duplicate' to 'Copy'
-    #     context_menu.addActions([delete_action, copy_action])  # Replace 'duplicate_action' with 'copy_action'
-    #
-    #     action = context_menu.exec(QCursor.pos())
-    #
-    #     if action == delete_action:
-    #         self.deleteLater()
-    #
-    #     elif action == copy_action:
-    #         clipboard = QApplication.clipboard()
-    #         clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.var_class};;{self.var_value};;{self.var_visible_in_editor};;{self.var_display_name}")
+    mousePressEvent = PropertyMethods.mousePressEvent
+    mouseMoveEvent = PropertyMethods.mouseMoveEvent
+    dragEnterEvent = PropertyMethods.dragEnterEvent
+    dropEvent = PropertyMethods.dropEvent

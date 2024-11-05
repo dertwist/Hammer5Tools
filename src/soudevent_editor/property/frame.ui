@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>512</width>
+    <height>128</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>512</width>
+    <height>128</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16666</width>
+    <height>16777215</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
