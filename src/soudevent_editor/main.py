@@ -1,3 +1,4 @@
+import ast
 import subprocess
 import os
 from pydoc import importfile
@@ -6,7 +7,7 @@ from pydoc import importfile
 from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soudevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QTreeWidgetItem
 from src.widgets import HierarchyItemModel
 from src.preferences import settings
 from src.soudevent_editor.properties_window import SoundEventEditorPropertiesWindow
@@ -44,6 +45,9 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Init
         LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
         self.PropertiesWindowInit()
+        # Init Hierarchy
+        self.ui.hierarchy_widget.header().setSectionHidden(1, True)
+        self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
 
         # Connections
         self.ui.open_preset_manager_button.clicked.connect(self.OpenPresetManager)
@@ -60,15 +64,27 @@ class SoundEventEditorMainWindow(QMainWindow):
     #=======================================================<  Properties Window  >=====================================================
 
     def PropertiesWindowInit(self):
-        PropertiesWindow = SoundEventEditorPropertiesWindow()
-        self.ui.frame.layout().addWidget(PropertiesWindow)
+        self.PropertiesWindow = SoundEventEditorPropertiesWindow()
+        self.ui.frame.layout().addWidget(self.PropertiesWindow)
     def UpdatePropertiesWindow(self):
         pass
 
     #================================================================<  Hierarchy  >=============================================================
 
-    def update_hierarchy_item(self):
-        pass
+    def update_hierarchy_item(self, item: QTreeWidgetItem, _data: dict):
+        "Sets Value to data column"
+        item.setText(1, str(_data))
+    def on_changed_hierarchy_item(self, current_item: QTreeWidgetItem):
+        "On changed hierarchy item clear, shows or hide properties placeholder widget"
+        if current_item is not None:
+            self.PropertiesWindow.properties_groups_show()
+            self.PropertiesWindow.properties_clear()
+            # Convert column text to dict value
+            data = ast.literal_eval(current_item.text(1))
+            self.PropertiesWindow.populate_properties(data)
+        else:
+            self.PropertiesWindow.properties_clear()
+            self.PropertiesWindow.properties_groups_hide()
 
     #===========================================================<  Preset Manager  >========================================================
     def OpenPresetManager(self):
