@@ -44,7 +44,7 @@ smartprop_editor_version = '0.9.4'
 hotkey_editor_version = '1.1.0'
 loading_editor_version = '1.0.0'
 
-timestamp = datetime.datetime.now().strftime('%d%H%M')
+timestamp = datetime.datetime.now().strftime('%m%d')
 app_version = f'{app_version}.{timestamp}'
 
 
