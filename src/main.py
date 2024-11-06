@@ -2,6 +2,7 @@ import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logg
 from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow, QMessageBox, QDialog, QLabel, QMessageBox
 from PySide6.QtGui import QIcon, QAction, QTextCursor
 from PySide6.QtCore import QObject, Signal, Qt
+import subprocess, datetime
 # from PySide6 import QtCore
 from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
@@ -34,12 +35,18 @@ stop_discord_thread = threading.Event()
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
+
+
 app_version = '2.5.0'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '1.1.0'
 smartprop_editor_version = '0.9.4'
 hotkey_editor_version = '1.1.0'
 loading_editor_version = '1.0.0'
+
+timestamp = datetime.datetime.now().strftime('%d%H%M')
+app_version = f'{app_version}.{timestamp}'
+
 
 
 import sys
