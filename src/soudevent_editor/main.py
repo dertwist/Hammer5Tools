@@ -7,12 +7,16 @@ from pydoc import importfile
 from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soudevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QTreeWidgetItem
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QTreeWidgetItem, QMessageBox
 from src.widgets import HierarchyItemModel
 from src.preferences import settings
 from src.soudevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from src.soudevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
 from src.common import JsonToKv3,Kv3ToJson
+
+class CopyDefaultSoundFolders:
+    pass
+
 
 class LoadSoundEvents:
     def __init__(self, tree: QTreeWidget, path: str):
@@ -36,29 +40,41 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         # Variables
         self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
-        self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
+        self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'sounds')
 
         # Variables debug
         debug(f"self.filepath_vsndevts : {self.filepath_vsndevts}")
         debug(f"self.filepath_sounds : {self.filepath_sounds}")
 
-        # Init
-        LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+        # Init LoadSoundEvents
+        if os.path.exists(self.filepath_vsndevts):
+            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+        else:
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setText(
+                "There is no soundevents file. Will you create default? Attention: it would overwrite existing wav files in sounds folder, if it exists.")
+            msg_box.setWindowTitle("Warning")
+            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msg_box.exec()
+
+        # Init PropertiesWindow
         self.PropertiesWindowInit()
+
         # Init Hierarchy
         self.ui.hierarchy_widget.header().setSectionHidden(1, True)
         self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
 
         # Connections
         self.ui.open_preset_manager_button.clicked.connect(self.OpenPresetManager)
+        self.ui.reload_button.clicked.connect(lambda: LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts))
 
         # Explorer
-        self.tree_directory = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), 'sounds')
-        if os.path.exists(self.tree_directory):
+        if os.path.exists(self.filepath_sounds):
             pass
         else:
-            os.makedirs(self.tree_directory)
-        self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.ui.explorer_layout_widget)
+            os.makedirs(self.filepath_sounds)
+        self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.ui.explorer_layout_widget)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
     #=======================================================<  Properties Window  >=====================================================
