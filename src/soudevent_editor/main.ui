@@ -144,7 +144,7 @@
            <bool>true</bool>
           </property>
           <property name="dragDropMode">
-           <enum>QAbstractItemView::DragDropMode::InternalMove</enum>
+           <enum>QAbstractItemView::DragDropMode::NoDragDrop</enum>
           </property>
           <property name="defaultDropAction">
            <enum>Qt::DropAction::MoveAction</enum>
@@ -153,7 +153,10 @@
            <bool>true</bool>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+           <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectionBehavior::SelectItems</enum>
           </property>
           <property name="uniformRowHeights">
            <bool>true</bool>
