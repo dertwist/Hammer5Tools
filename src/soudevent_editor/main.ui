@@ -78,6 +78,12 @@
    </layout>
   </widget>
   <widget class="QDockWidget" name="dockWidget_4">
+   <property name="minimumSize">
+    <size>
+     <width>320</width>
+     <height>161</height>
+    </size>
+   </property>
    <property name="features">
     <set>QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
@@ -268,6 +274,12 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_10">
+   <property name="minimumSize">
+    <size>
+     <width>320</width>
+     <height>102</height>
+    </size>
+   </property>
    <property name="features">
     <set>QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
