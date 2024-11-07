@@ -393,7 +393,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def create_new_file(self):
         extension = 'vsmart'
-        from smartprop_editor.blank_vsmart import blank_vsmart
+        from src.smartprop_editor.blank_vsmart import blank_vsmart
         try:
             index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
             filename = self.mini_explorer.model.filePath(index)
