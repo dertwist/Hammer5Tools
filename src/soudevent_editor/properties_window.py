@@ -5,6 +5,10 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu
 from src.preferences import settings
 from src.soudevent_editor.property.frame import SoundEventEditorPropertyFrame
 
+class genericObejct:
+    def __init__(self):
+        super().__init__()
+
 class SoundEventEditorPropertiesWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
