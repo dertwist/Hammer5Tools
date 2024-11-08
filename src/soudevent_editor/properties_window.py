@@ -43,8 +43,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         "Loading properties from given data"
         if isinstance(_data, dict):
             # Reverse input data and use insertWidget with index 0 because in that way all widgets will be upper spacer
-            for item in reversed(_data):
-                new_widget = SoundEventEditorPropertyFrame()
+            for item, value in reversed(_data):
+                print(f'_data itme populate properties{item}')
+                new_widget = SoundEventEditorPropertyFrame(_data={item:value})
                 self.ui.properties_layout.insertWidget(0,new_widget)
         else:
             print(f"[SoundEventEditorProperties]: Wrong input data format. Given data: \n {_data} \n {type(_data)}")
