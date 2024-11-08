@@ -16,16 +16,17 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QLabel,
-    QMainWindow, QPlainTextEdit, QScrollArea, QSizePolicy,
-    QSpacerItem, QSplitter, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
+    QLabel, QMainWindow, QPlainTextEdit, QPushButton,
+    QScrollArea, QSizePolicy, QSpacerItem, QSplitter,
+    QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1490, 941)
+        MainWindow.resize(1179, 707)
         MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
         self.actionCreateNewsmartprop = QAction(MainWindow)
         self.actionCreateNewsmartprop.setObjectName(u"actionCreateNewsmartprop")
@@ -73,6 +74,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.splitter = QSplitter(self.centralwidget)
         self.splitter.setObjectName(u"splitter")
+        self.splitter.setBaseSize(QSize(0, -14428))
         self.splitter.setOrientation(Qt.Orientation.Vertical)
         self.scrollArea = QScrollArea(self.splitter)
         self.scrollArea.setObjectName(u"scrollArea")
@@ -85,7 +87,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1490, 574))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1179, 443))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -130,16 +132,105 @@ class Ui_MainWindow(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.groupBox = QGroupBox(self.CommetSeciton)
         self.groupBox.setObjectName(u"groupBox")
-        self.verticalLayout_2 = QVBoxLayout(self.groupBox)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(6, 6, 6, 6)
-        self.comment_widget = QPlainTextEdit(self.groupBox)
-        self.comment_widget.setObjectName(u"comment_widget")
+        self.horizontalLayout_2 = QHBoxLayout(self.groupBox)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.verticalLayout_2.addWidget(self.comment_widget)
+        self.horizontalLayout_2.addItem(self.horizontalSpacer)
+
+        self.pushButton = QPushButton(self.groupBox)
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setMaximumSize(QSize(128, 16777215))
+        self.pushButton.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.pushButton.setIcon(icon7)
+
+        self.horizontalLayout_2.addWidget(self.pushButton)
+
+        self.pushButton_2 = QPushButton(self.groupBox)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.pushButton_2.setMaximumSize(QSize(128, 16777215))
+        self.pushButton_2.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon8 = QIcon()
+        icon8.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.pushButton_2.setIcon(icon8)
+
+        self.horizontalLayout_2.addWidget(self.pushButton_2)
 
 
         self.verticalLayout.addWidget(self.groupBox)
+
+        self.groupBox_2 = QGroupBox(self.CommetSeciton)
+        self.groupBox_2.setObjectName(u"groupBox_2")
+        self.horizontalLayout = QHBoxLayout(self.groupBox_2)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.comment_widget = QPlainTextEdit(self.groupBox_2)
+        self.comment_widget.setObjectName(u"comment_widget")
+
+        self.horizontalLayout.addWidget(self.comment_widget)
+
+
+        self.verticalLayout.addWidget(self.groupBox_2)
 
         self.splitter.addWidget(self.CommetSeciton)
 
@@ -166,6 +257,9 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select event in the hierarchy", None))
-        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Comment", None))
+        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Actions", None))
+        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"New property", None))
+        self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"Paste property", None))
+        self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"Comment", None))
     # retranslateUi
 
