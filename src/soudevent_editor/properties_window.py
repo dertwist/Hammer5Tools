@@ -2,6 +2,8 @@ import subprocess
 import os
 from src.soudevent_editor.ui_properties_window import Ui_MainWindow
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu
+from PySide6.QtGui import QKeySequence
+from PySide6.QtCore import Qt
 from src.preferences import settings
 from src.soudevent_editor.property.frame import SoundEventEditorPropertyFrame
 
@@ -16,6 +18,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self.ui.setupUi(self)
         self.settings = settings
         self.realtime_save = False
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.open_context_menu)
 
         self.properties_groups_hide()
 
@@ -54,3 +58,14 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         pass
     def set_property_value(self):
         pass
+    #============================================================<  Context menu  >=========================================================
+    def open_context_menu(self, position):
+        menu = QMenu()
+        menu.addSeparator()
+        # New Property action
+        new_property = menu.addAction("New Property")
+        new_property.setShortcut(QKeySequence(QKeySequence("Ctrl + F")))
+        # Paste action
+        paste = menu.addAction("Paste")
+        paste.setShortcut(QKeySequence(QKeySequence("Ctrl + V")))
+        menu.exec(self.ui.scrollArea.viewport().mapToGlobal(position))
