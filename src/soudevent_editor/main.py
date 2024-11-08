@@ -64,6 +64,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Init Hierarchy
         self.ui.hierarchy_widget.header().setSectionHidden(1, True)
         self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
+        self.ui.hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
 
         # Connections
         self.ui.open_preset_manager_button.clicked.connect(self.OpenPresetManager)
