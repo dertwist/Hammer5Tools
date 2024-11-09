@@ -2,7 +2,8 @@ import ast
 import subprocess
 import os
 from pydoc import importfile
-
+import os
+import shutil
 
 from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soudevent_editor.ui_main import Ui_MainWindow
@@ -18,8 +19,34 @@ from src.common import JsonToKv3,Kv3ToJson
 from src.smartprop_editor.commands import DeleteTreeItemCommand
 
 class CopyDefaultSoundFolders:
-    pass
+    def __init__(self):
+        """Coping  soundevents file and sounds from sounds folder from addon_template to the current addon"""
+        super().__init__()
+        # Source
+        self.soundevents_source_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', 'addon_template', 'soundevents', 'soundevents_addon.vsndevts')
+        self.sounds_source_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', 'addon_template', 'sounds')
+        # Destination
+        self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts')
+        self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'sounds')
+        self.copy_with_overwrite()
 
+    def copy_with_overwrite(self):
+        # Ensure destination directories exist
+        os.makedirs(os.path.dirname(self.filepath_vsndevts), exist_ok=True)
+        os.makedirs(self.filepath_sounds, exist_ok=True)
+
+        # Copy the soundevents file, overwriting if it exists
+        shutil.copy2(self.soundevents_source_path, self.filepath_vsndevts)
+
+        # Copy the sounds directory, overwriting existing files
+        if os.path.exists(self.sounds_source_path):
+            for item in os.listdir(self.sounds_source_path):
+                source_item = os.path.join(self.sounds_source_path, item)
+                destination_item = os.path.join(self.filepath_sounds, item)
+                if os.path.isdir(source_item):
+                    shutil.copytree(source_item, destination_item, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(source_item, destination_item)
 
 class LoadSoundEvents:
     def __init__(self, tree: QTreeWidget, path: str):
@@ -59,7 +86,11 @@ class SoundEventEditorMainWindow(QMainWindow):
                 "There is no soundevents file. Will you create default? Attention: it would overwrite existing wav files in sounds folder, if it exists.")
             msg_box.setWindowTitle("Warning")
             msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            msg_box.exec()
+
+            response = msg_box.exec()
+            if response == QMessageBox.Yes:
+                CopyDefaultSoundFolders()
+                LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
 
         # Init PropertiesWindow
         self.PropertiesWindowInit()
