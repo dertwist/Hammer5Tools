@@ -359,7 +359,7 @@ class Widget(QMainWindow):
         except:
             pass
         try:
-            self.SoundEventEditorMainWidget.closeEvent(self.event)
+            self.SoundEventEditorMainWindow.closeEvent(self.event)
         except:
             pass
 
