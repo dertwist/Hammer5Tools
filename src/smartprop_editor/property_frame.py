@@ -4,7 +4,7 @@ from src.smartprop_editor.ui_property_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
-from src.soundevent_editor_legacy.properties.property_actions import PropertyActions
+from src.property.methods import PropertyMethods
 
 from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtCore import Qt
@@ -387,10 +387,10 @@ class PropertyFrame(QWidget):
             self.setContextMenuPolicy(Qt.CustomContextMenu)
             self.customContextMenuRequested.connect(self.show_context_menu)
 
-    mousePressEvent = PropertyActions.mousePressEvent
-    mouseMoveEvent = PropertyActions.mouseMoveEvent
-    dragEnterEvent = PropertyActions.dragEnterEvent
-    dropEvent = PropertyActions.dropEvent
+    mousePressEvent = PropertyMethods.mousePressEvent
+    mouseMoveEvent = PropertyMethods.mouseMoveEvent
+    dragEnterEvent = PropertyMethods.dragEnterEvent
+    dropEvent = PropertyMethods.dropEvent
     def show_context_menu(self):
         context_menu = QMenu()
         delete_action = QAction("Delete", context_menu)
