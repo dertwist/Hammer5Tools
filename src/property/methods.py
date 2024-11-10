@@ -33,12 +33,12 @@ class PropertyMethods:
 
     @staticmethod
     def dropEvent(self, event):
+        print(event)
         if event.source() == self:
             return
 
         mime_data = event.mimeData()
         if mime_data.hasText():
-            name = mime_data.text()
 
             if event.source() != self:
                 source_index = self.widget_list.layout().indexOf(event.source())

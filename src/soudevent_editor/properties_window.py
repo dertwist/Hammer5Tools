@@ -1,10 +1,11 @@
+import ast
 import subprocess
 import os
 from src.soudevent_editor.ui_properties_window import Ui_MainWindow
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu
 from PySide6.QtGui import QKeySequence
 from PySide6.QtCore import Qt
-from src.preferences import settings
+from src.preferences import settings, debug
 from src.soudevent_editor.property.frame import SoundEventEditorPropertyFrame
 
 class genericObejct:
@@ -43,9 +44,10 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         "Loading properties from given data"
         if isinstance(_data, dict):
             # Reverse input data and use insertWidget with index 0 because in that way all widgets will be upper spacer
-            for item, value in reversed(_data):
+            debug(f"_data \n {_data}")
+            for item, value in reversed(_data.items()):
                 print(f'_data itme populate properties{item}')
-                new_widget = SoundEventEditorPropertyFrame(_data={item:value})
+                new_widget = SoundEventEditorPropertyFrame(_data={item:value}, widget_list=self.ui.properties_layout)
                 self.ui.properties_layout.insertWidget(0,new_widget)
         else:
             print(f"[SoundEventEditorProperties]: Wrong input data format. Given data: \n {_data} \n {type(_data)}")
