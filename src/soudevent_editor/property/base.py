@@ -5,15 +5,15 @@ class SoundEventEditorPropertyBase(QWidget):
     def __init__(self, parent=None, label_text: str = None, value: dict = None):
         """Base property class. There is only a label widget and a frame. New widget can be replaced or added"""
         super().__init__(parent)
-        self.init_root_layout()
 
+        # Init
+        self.init_root_layout()
         self.init_label(label_text)
         self.init_widget()
+        self.set_widget_size()
+
         # Value variable
         self.value = value
-
-        self.setMaximumHeight(64)
-        self.setMinimumHeight(64)
 
     def init_root_layout(self):
         """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
@@ -31,9 +31,10 @@ class SoundEventEditorPropertyBase(QWidget):
         self.root_layout.addWidget(widget)
     def init_widget(self):
         """Function to overwriting."""
-    def set_maxheight(self):
+    def set_widget_size(self):
         """Set maximum height"""
-        self.setMaximumHeight(32)
+        self.setMaximumHeight(48)
+        self.setMinimumHeight(48)
 
 class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
     def init_widget(self):
