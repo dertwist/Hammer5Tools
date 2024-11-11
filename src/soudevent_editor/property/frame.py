@@ -29,9 +29,16 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.value = dict()
             self.name = str(_data)
             self.widget_list = widget_list
+            self._height = 24
 
             # Populate
             self.populate_properties(data=_data)
+
+            # Init
+            self.init_connections()
+    def init_connections(self):
+        """Adding connections to the buttons"""
+        self.ui.show_child.clicked.connect(self.show_child_action)
 
 
     def add_property(self, name: str, value:str):
@@ -41,7 +48,7 @@ class SoundEventEditorPropertyFrame(QWidget):
         """
         from src.soudevent_editor.property.base import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat
         self.property_instance = SoundEventEditorPropertyFloat(label_text=name)
-        self.layout().addWidget(self.property_instance)
+        self.ui.content.layout().addWidget(self.property_instance)
 
     def get_property(self):
         """Getting single property from the frame widget"""
@@ -70,6 +77,15 @@ class SoundEventEditorPropertyFrame(QWidget):
         self.value = None
         self.edited.emit()
         self.deleteLater()
+
+
+    def show_child_action(self):
+        if not self.ui.show_child.isChecked():
+            self.ui.content.setMaximumHeight(0)
+        else:
+            self.ui.content.setMaximumHeight(16666)
+
+    #===========================================================<  Drag and drop  >=========================================================
 
     mousePressEvent = PropertyMethods.mousePressEvent
     mouseMoveEvent = PropertyMethods.mouseMoveEvent

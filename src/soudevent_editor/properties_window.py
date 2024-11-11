@@ -46,7 +46,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             # Reverse input data and use insertWidget with index 0 because in that way all widgets will be upper spacer
             debug(f"_data \n {_data}")
             for item, value in reversed(_data.items()):
-                print(f'_data itme populate properties{item}')
+                debug(f'_data itme populate properties{item}')
                 new_widget = SoundEventEditorPropertyFrame(_data={item:value}, widget_list=self.ui.properties_layout)
                 self.ui.properties_layout.insertWidget(0,new_widget)
         else:
