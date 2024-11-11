@@ -24,8 +24,8 @@ class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(776, 221)
-        Form.setMinimumSize(QSize(512, 128))
+        Form.resize(776, 346)
+        Form.setMinimumSize(QSize(512, 0))
         Form.setMaximumSize(QSize(16666, 16777215))
         self.verticalLayout = QVBoxLayout(Form)
         self.verticalLayout.setSpacing(0)
@@ -33,6 +33,7 @@ class Ui_Form(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.header = QFrame(Form)
         self.header.setObjectName(u"header")
+        self.header.setMinimumSize(QSize(0, 24))
         self.header.setMaximumSize(QSize(16777215, 24))
         self.header.setFrameShape(QFrame.Shape.StyledPanel)
         self.header.setFrameShadow(QFrame.Shadow.Raised)
