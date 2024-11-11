@@ -68,6 +68,22 @@ def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=Fa
     thread = threading.Thread(target=compile, args=(input_file,))
     thread.start()
 
+
+def convert_snake_case(name: str = None):
+    """
+    Converts a snake_case string to a more readable Title Case format.
+    For instance: 'distance_volume_mapping_curve' would be converted to 'Distance Volume Mapping Curve'.
+    """
+    if name is None:
+        raise ValueError
+    else:
+        # Split the snake_case string by underscores
+        words = name.split('_')
+
+        # Capitalize the first letter of each word and join them with spaces
+        pretty_label = ' '.join(word.capitalize() for word in words)
+        return pretty_label
+
 #===============================================================<  Format  >============================================================
 def Kv3ToJson(input):
     if '<!-- kv3 encoding:' in input:
