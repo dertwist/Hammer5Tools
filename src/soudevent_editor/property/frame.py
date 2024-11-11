@@ -5,6 +5,7 @@ from PySide6.QtCore import Signal
 from src.soudevent_editor.property.ui_frame import Ui_Form
 from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
+from src.common import convert_snake_case
 
 
 class SoundEventEditorPropertyFrame(QWidget):
@@ -27,7 +28,7 @@ class SoundEventEditorPropertyFrame(QWidget):
 
             # Variables
             self.value = dict()
-            self.name = str(_data)
+            self.name = str(next(iter(_data)))
             self.widget_list = widget_list
             self._height = 24
 
@@ -36,16 +37,30 @@ class SoundEventEditorPropertyFrame(QWidget):
 
             # Init
             self.init_connections()
+            self.init_header()
     def init_connections(self):
         """Adding connections to the buttons"""
         self.ui.show_child.clicked.connect(self.show_child_action)
+        self.ui.delete_button.clicked.connect(self.delete_action)
+        self.ui.copy_button.clicked.connect(self.copy_action)
+    def init_header(self):
+        """Setup for header frame"""
+        self.ui.property_class.setText(convert_snake_case(self.name))
 
+    #=============================================================<  Properties  >===========================================================
 
     def add_property(self, name: str, value:str):
         """
         Adding a property to the frame widget.
         Import properties classes form another file
         """
+        # Curve
+        # Float
+        # Int
+        # Bool
+        # Vector3
+        # Files
+        # Str
         from src.soudevent_editor.property.base import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat
         self.property_instance = SoundEventEditorPropertyFloat(label_text=name)
         self.ui.content.layout().addWidget(self.property_instance)

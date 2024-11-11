@@ -80,17 +80,17 @@ class PropertyFrame(QWidget):
             self.ui.delete_button.clicked.connect(self.delete_action)
 
         # For parsed stuff
-        from smartprop_editor.properties_classes.legacy import PropertyLegacy
-        from smartprop_editor.properties_classes.vector3d import PropertyVector3D
-        from smartprop_editor.properties_classes.float import PropertyFloat
-        from smartprop_editor.properties_classes.bool import PropertyBool
-        from smartprop_editor.properties_classes.combobox import PropertyCombobox
-        from smartprop_editor.properties_classes.string import PropertyString
-        from smartprop_editor.properties_classes.color import PropertyColor
-        from smartprop_editor.properties_classes.comparison import PropertyComparison
-        from smartprop_editor.properties_classes.filtersurface import PropertySurface
-        from smartprop_editor.properties_classes.colormatch import PropertyColorMatch
-        from smartprop_editor.properties_classes.variable import PropertyVariableOutput
+        from src.smartprop_editor.properties_classes.legacy import PropertyLegacy
+        from src.smartprop_editor.properties_classes.vector3d import PropertyVector3D
+        from src.smartprop_editor.properties_classes.float import PropertyFloat
+        from src.smartprop_editor.properties_classes.bool import PropertyBool
+        from src.smartprop_editor.properties_classes.combobox import PropertyCombobox
+        from src.smartprop_editor.properties_classes.string import PropertyString
+        from src.smartprop_editor.properties_classes.color import PropertyColor
+        from src.smartprop_editor.properties_classes.comparison import PropertyComparison
+        from src.smartprop_editor.properties_classes.filtersurface import PropertySurface
+        from src.smartprop_editor.properties_classes.colormatch import PropertyColorMatch
+        from src.smartprop_editor.properties_classes.variable import PropertyVariableOutput
 
 
         # only_variable_properties
