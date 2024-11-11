@@ -1,7 +1,9 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
 from src.widgets import FloatWidget
+from PySide6.QtCore import Signal
 
 class SoundEventEditorPropertyBase(QWidget):
+    edited = Signal()
     def __init__(self, parent=None, label_text: str = None, value: dict = None):
         """Base property class. There is only a label widget and a frame. New widget can be replaced or added"""
         super().__init__(parent)
@@ -38,5 +40,21 @@ class SoundEventEditorPropertyBase(QWidget):
 
 class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
     def init_widget(self):
-        widget = FloatWidget()
-        self.add_property_widget(widget)
+        """Initialize float widget instance"""
+
+
+        self.range = None
+        if self.range is None:
+            self.float_widget_instance = FloatWidget()
+        else:
+            self.float_widget_instance = FloatWidget(slider_range=self.range)
+
+        self.add_property_widget(self.float_widget_instance)
+    def init_float_widget(self):
+        """Specific properties for float widget instance that can be overwritten"""
+        pass
+
+class SoundEventEditorPropertyInt(SoundEventEditorPropertyFloat):
+    def init_float_widget(self):
+        """Adding parameter init for float widget instance"""
+        self.float_widget_instance.int_output = True

@@ -54,15 +54,25 @@ class SoundEventEditorPropertyFrame(QWidget):
         Adding a property to the frame widget.
         Import properties classes form another file
         """
-        # Curve
+
+        # Widgets import
+        from src.soudevent_editor.property.base import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat
+
         # Float
+        if name == 'volume':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name)
+            self.property_instance.range = [0,10]
+        elif name == 'delay':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name)
+        else:
+            self.property_instance = SoundEventEditorPropertyBase(label_text=name)
         # Int
         # Bool
+        # Curve
+        # Combobox
         # Vector3
         # Files
-        # Str
-        from src.soudevent_editor.property.base import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat
-        self.property_instance = SoundEventEditorPropertyFloat(label_text=name)
+        self.property_instance.edited.connect(self.on_property_updated)
         self.ui.content.layout().addWidget(self.property_instance)
 
     def get_property(self):
@@ -79,6 +89,8 @@ class SoundEventEditorPropertyFrame(QWidget):
         return str(value)
     def deserialize_property(self):
         """Deserialize property from json"""
+    def on_property_updated(self):
+        """Geather all values into dict value"""
 
     #==============================================================<  Actions  >============================================================
 
