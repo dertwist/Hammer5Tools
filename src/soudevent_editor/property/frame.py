@@ -56,16 +56,17 @@ class SoundEventEditorPropertyFrame(QWidget):
         """
 
         # Widgets import
-        from src.soudevent_editor.property.base import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat
+        from src.soudevent_editor.property.base import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat, SoundEventEditorPropertyInt
 
         # Float
         if name == 'volume':
-            self.property_instance = SoundEventEditorPropertyFloat(label_text=name)
-            self.property_instance.range = [0,10]
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 0],
+                                                                   only_positive=True)
         elif name == 'delay':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name)
         else:
-            self.property_instance = SoundEventEditorPropertyBase(label_text=name)
+            # self.property_instance = SoundEventEditorPropertyBase(label_text=name)
+            self.property_instance = SoundEventEditorPropertyInt(label_text=name, slider_range=[0,10], only_positive=True)
         # Int
         # Bool
         # Curve
