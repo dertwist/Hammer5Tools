@@ -12,6 +12,9 @@ class SoundEventEditorPropertyBase(QWidget):
         # Value variable
         self.value = value
 
+        self.setMaximumHeight(64)
+        self.setMinimumHeight(64)
+
     def init_root_layout(self):
         """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
         self.root_layout = QHBoxLayout()
@@ -28,6 +31,9 @@ class SoundEventEditorPropertyBase(QWidget):
         self.root_layout.addWidget(widget)
     def init_widget(self):
         """Function to overwriting."""
+    def set_maxheight(self):
+        """Set maximum height"""
+        self.setMaximumHeight(32)
 
 class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
     def init_widget(self):

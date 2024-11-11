@@ -111,7 +111,7 @@ class Ui_MainWindow(object):
         self.properties_spacer.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_4 = QVBoxLayout(self.properties_spacer)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalSpacer = QSpacerItem(20, 655, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer = QSpacerItem(20, 655, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
 
         self.verticalLayout_4.addItem(self.verticalSpacer)
 
