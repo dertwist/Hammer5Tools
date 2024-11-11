@@ -11,12 +11,10 @@ class SoundEventEditorPropertyBase(QWidget):
         # Init
         self.init_root_layout()
         self.init_label(label_text)
-        self.init_widget()
         self.set_widget_size()
 
         # Value variable
         self.value = value
-
     def init_root_layout(self):
         """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
         self.root_layout = QHBoxLayout()
@@ -31,25 +29,31 @@ class SoundEventEditorPropertyBase(QWidget):
     def add_property_widget(self, widget):
         """Adding property widget to the root"""
         self.root_layout.addWidget(widget)
-    def init_widget(self):
-        """Function to overwriting."""
     def set_widget_size(self):
         """Set maximum height"""
         self.setMaximumHeight(48)
         self.setMinimumHeight(48)
 
 class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
+    def __init__(self, parent=None, label_text: str = None, value: dict = None, slider_range: list = [0, 0],only_positive: bool = False):
+        """
+        Float property. Accepts inputs:
+
+        slider_range: list = [-10,10]
+        only_positive: bool = False
+
+        """
+        super().__init__(parent, label_text, value)
+
+        self.float_widget_instance = FloatWidget(slider_range=slider_range, only_positive=only_positive)
+        self.add_property_widget(self.float_widget_instance)
+        self.init_float_widget()
+
     def init_widget(self):
         """Initialize float widget instance"""
-
-
-        self.range = None
-        if self.range is None:
-            self.float_widget_instance = FloatWidget()
-        else:
-            self.float_widget_instance = FloatWidget(slider_range=self.range)
-
-        self.add_property_widget(self.float_widget_instance)
+        # self.float_widget_instance = FloatWidget(slider_range=self.slider_range, only_positive=self.only_positive)
+        pass
+        # self.add_property_widget(self.float_widget_instance)
     def init_float_widget(self):
         """Specific properties for float widget instance that can be overwritten"""
         pass
