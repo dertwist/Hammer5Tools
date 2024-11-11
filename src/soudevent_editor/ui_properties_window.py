@@ -16,10 +16,10 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QGroupBox,
-    QHBoxLayout, QLabel, QMainWindow, QPlainTextEdit,
-    QScrollArea, QSizePolicy, QSpacerItem, QSplitter,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
+    QLabel, QMainWindow, QPlainTextEdit, QScrollArea,
+    QSizePolicy, QSpacerItem, QSplitter, QVBoxLayout,
+    QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -142,65 +142,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.comment_widget)
 
         self.splitter_2.addWidget(self.groupBox_2)
-        self.frame = QFrame(self.splitter_2)
-        self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.verticalLayout = QVBoxLayout(self.frame)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.groupBox = QGroupBox(self.frame)
-        self.groupBox.setObjectName(u"groupBox")
-        self.verticalLayout_2 = QVBoxLayout(self.groupBox)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.frame_4 = QFrame(self.groupBox)
-        self.frame_4.setObjectName(u"frame_4")
-        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_7 = QHBoxLayout(self.frame_4)
-        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
-        self.label_3 = QLabel(self.frame_4)
-        self.label_3.setObjectName(u"label_3")
-
-        self.horizontalLayout_7.addWidget(self.label_3)
-
-        self.comboBox_3 = QComboBox(self.frame_4)
-        self.comboBox_3.setObjectName(u"comboBox_3")
-
-        self.horizontalLayout_7.addWidget(self.comboBox_3)
-
-
-        self.verticalLayout_2.addWidget(self.frame_4)
-
-        self.frame_2 = QFrame(self.groupBox)
-        self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_5 = QHBoxLayout(self.frame_2)
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.label = QLabel(self.frame_2)
-        self.label.setObjectName(u"label")
-
-        self.horizontalLayout_5.addWidget(self.label)
-
-        self.comboBox = QComboBox(self.frame_2)
-        self.comboBox.setObjectName(u"comboBox")
-
-        self.horizontalLayout_5.addWidget(self.comboBox)
-
-
-        self.verticalLayout_2.addWidget(self.frame_2)
-
-
-        self.verticalLayout.addWidget(self.groupBox)
-
-        self.groupBox_5 = QGroupBox(self.frame)
-        self.groupBox_5.setObjectName(u"groupBox_5")
-
-        self.verticalLayout.addWidget(self.groupBox_5)
-
-        self.splitter_2.addWidget(self.frame)
 
         self.horizontalLayout_3.addWidget(self.splitter_2)
 
@@ -230,9 +171,5 @@ class Ui_MainWindow(object):
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select event in the hierarchy", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"Comment", None))
-        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Quick setup", None))
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"Volume", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Base", None))
-        self.groupBox_5.setTitle(QCoreApplication.translate("MainWindow", u"Vsnd Files", None))
     # retranslateUi
 
