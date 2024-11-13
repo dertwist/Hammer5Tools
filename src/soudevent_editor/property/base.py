@@ -16,7 +16,7 @@ class SoundEventEditorPropertyBase(QWidget):
         self.init_root_layout()
         self.init_label(label_text)
         self.set_widget_size()
-        self.on_property_update()
+        # self.on_property_update()
 
     def init_root_layout(self):
         """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
@@ -36,13 +36,13 @@ class SoundEventEditorPropertyBase(QWidget):
         """Set maximum height"""
         self.setMaximumHeight(48)
         self.setMinimumHeight(48)
-    def on_property_update(self):
-        """Send signal that user changed the property"""
-        self.value_update()
-        self.edited.emit()
-    def value_update(self):
-        """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
-        self.value = {}
+    # def on_property_update(self):
+    #     """Send signal that user changed the property"""
+    #     self.value_update()
+    #     self.edited.emit()
+    # def value_update(self):
+    #     """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
+    #     self.value = {}
 class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
     def __init__(self, parent=None, label_text: str = None, value: dict = None, slider_range: list = [0, 0],only_positive: bool = False):
         """
@@ -60,7 +60,6 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
         self.float_widget_instance.edited.connect(self.on_property_update)
         self.add_property_widget(self.float_widget_instance)
         self.value_class = label_text
-        print(self.float_widget_instance.value)
         self.init_float_widget()
 
     def init_widget(self):
@@ -71,6 +70,12 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
 
     def init_float_widget(self):
         """Adding parameter init for float widget instance"""
+
+    def on_property_update(self):
+        """Send signal that user changed the property"""
+        self.value_update()
+        self.edited.emit()
+
     def value_update(self):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         _value = self.float_widget_instance.value
@@ -87,10 +92,10 @@ class SoundEventEditorPropertyInt(SoundEventEditorPropertyFloat):
         """
         # Call the parent constructor to ensure float_widget_instance is initialized
         super().__init__(parent, label_text, value, slider_range, only_positive)
-        self.init_float_widget()
+        # self.float_widget_instance.int_output = True
 
     def init_float_widget(self):
         """Adding parameter init for float widget instance"""
         # Ensure float_widget_instance is initialized before accessing it
-        if hasattr(self, 'float_widget_instance'):
-            self.float_widget_instance.int_output = True
+        # if hasattr(self, 'float_widget_instance'):
+        self.float_widget_instance.int_output = True

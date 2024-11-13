@@ -57,7 +57,10 @@ class SoundEventEditorPropertyFrame(QWidget):
         """
         # Convert value str to dict
         if isinstance(value, str):
-            value = ast.literal_eval(value)
+            try:
+                value = ast.literal_eval(value)
+            except Exception as error:
+                print(ValueError, error)
 
         # Widgets import
         from src.soudevent_editor.property.base import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat, SoundEventEditorPropertyInt
@@ -92,8 +95,8 @@ class SoundEventEditorPropertyFrame(QWidget):
         _data = {}
         for index in range(self.ui.content.layout().count()):
             widget_instance = self.ui.content.layout().itemAt(index).widget()
-            value_dict = {widget_instance.label_text: widget_instance.value}
-            _data.update()
+            value_dict = {widget_instance.value_class: widget_instance.value}
+            _data.update(value_dict)
         return _data
 
     def get_property(self, index):
