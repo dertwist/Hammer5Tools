@@ -39,6 +39,10 @@ class SoundEventEditorPropertyFrame(QWidget):
             # Init
             self.init_connections()
             self.init_header()
+
+            # Update data
+            self.on_property_updated()
+
     def init_connections(self):
         """Adding connections to the buttons"""
         self.ui.show_child.clicked.connect(self.show_child_action)
@@ -72,7 +76,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
         else:
             # self.property_instance = SoundEventEditorPropertyBase(label_text=name)
-            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10],only_positive=True, value=value)
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name,only_positive=True, value=value)
         # Int
         # Bool
         # Curve
