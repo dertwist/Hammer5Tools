@@ -79,13 +79,15 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         widget_instance = SoundEventEditorPropertyFrame(_data={key: value}, widget_list=self.ui.properties_layout)
         widget_instance.edited.connect(self.on_update)
         self.ui.properties_layout.insertWidget(0, widget_instance)
+
     def get_property_value(self, index):
-        """Getting dict value form widget instance frame"""
+        """Getting dict value from widget instance frame"""
         widget_instance = self.ui.properties_layout.itemAt(index).widget()
         if isinstance(widget_instance, SoundEventEditorPropertyFrame):
             value = widget_instance.value
             debug(f"Getting SoundEventEditorPropertyFrame Value: \n {value}")
-            return  value
+            return value if value is not None else {}
+        return {}
     def get_properties_value(self):
         """Getting all values from frame widget which in layout"""
         _data: dict = {}
