@@ -5,7 +5,7 @@ from PySide6.QtCore import Signal
 from src.soudevent_editor.property.ui_frame import Ui_Form
 from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
-from src.common import convert_snake_case
+from src.common import convert_snake_case, JsonToKv3, Kv3ToJson
 
 
 class SoundEventEditorPropertyFrame(QWidget):
@@ -75,30 +75,37 @@ class SoundEventEditorPropertyFrame(QWidget):
         # Files
         self.property_instance.edited.connect(self.on_property_updated)
         self.ui.content.layout().addWidget(self.property_instance)
-
-    def get_property(self):
-        """Getting single property from the frame widget"""
-        pass
+    def on_property_updated(self):
+        """If some of the properties were changed send signa with dict value"""
+        self.value = self.serialize_properties()
+        self.edited.emit()
 
     def populate_properties(self, data: dict):
         """Adding properties from received data"""
         for name in data:
             self.add_property(name, data[name])
-    def serialize_property(self):
-        """Serialize property to json"""
-        value = {}
-        return str(value)
-    def deserialize_property(self):
-        """Deserialize property from json"""
-    def on_property_updated(self):
+    def serialize_properties(self):
         """Geather all values into dict value"""
+        _data = {}
+        for index in range(self.ui.content.layout().count()):
+            widget_instance = self.ui.content.layout().itemAt(index).widget()
+            _data.update(widget_instance.value)
+        return _data
+
+    def get_property(self, index):
+        """Getting single property from the frame widget"""
+        pass
+    def deserialize_property(self, _data: dict = None):
+        """Deserialize property from json"""
 
     #==============================================================<  Actions  >============================================================
 
     def copy_action(self):
         """Copy action"""
         clipboard = QApplication.clipboard()
-        clipboard.setText(self.serialize_property())
+        _data = self.serialize_properties()
+        _data = str(_data)
+        clipboard.setText(_data)
 
     def delete_action(self):
         """Set value to None, then send signal that updates value then delete self"""
