@@ -1,3 +1,4 @@
+import ast
 import random
 
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication
@@ -54,19 +55,21 @@ class SoundEventEditorPropertyFrame(QWidget):
         Adding a property to the frame widget.
         Import properties classes form another file
         """
+        # Convert value str to dict
+        if isinstance(value, str):
+            value = ast.literal_eval(value)
 
         # Widgets import
         from src.soudevent_editor.property.base import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat, SoundEventEditorPropertyInt
 
         # Float
         if name == 'volume':
-            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 0],
-                                                                   only_positive=True)
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
         elif name == 'delay':
-            self.property_instance = SoundEventEditorPropertyFloat(label_text=name)
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
         else:
             # self.property_instance = SoundEventEditorPropertyBase(label_text=name)
-            self.property_instance = SoundEventEditorPropertyInt(label_text=name, slider_range=[0,10], only_positive=True)
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10],only_positive=True, value=value)
         # Int
         # Bool
         # Curve
@@ -82,14 +85,15 @@ class SoundEventEditorPropertyFrame(QWidget):
 
     def populate_properties(self, data: dict):
         """Adding properties from received data"""
-        for name in data:
-            self.add_property(name, data[name])
+        for name, value in data.items():
+            self.add_property(name, value)
     def serialize_properties(self):
         """Geather all values into dict value"""
         _data = {}
         for index in range(self.ui.content.layout().count()):
             widget_instance = self.ui.content.layout().itemAt(index).widget()
-            _data.update(widget_instance.value)
+            value_dict = {widget_instance.label_text: widget_instance.value}
+            _data.update()
         return _data
 
     def get_property(self, index):
