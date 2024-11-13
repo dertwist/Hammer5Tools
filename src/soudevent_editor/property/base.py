@@ -48,28 +48,49 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
         """
         Float property. Accepts inputs:
 
-        slider_range: list = [-10,10]
+        slider_range: list = [-10.0,10.0]
         only_positive: bool = False
 
         """
         super().__init__(parent, label_text, value)
-
-        self.float_widget_instance = FloatWidget(slider_range=slider_range, only_positive=only_positive, value=value)
+        float_value  = 0
+        if isinstance(value, float):
+            float_value = value
+        self.float_widget_instance = FloatWidget(slider_range=slider_range, only_positive=only_positive, value=float_value)
         self.float_widget_instance.edited.connect(self.on_property_update)
         self.add_property_widget(self.float_widget_instance)
         self.value_class = label_text
+        print(self.float_widget_instance.value)
+        self.init_float_widget()
 
     def init_widget(self):
         """Initialize float widget instance"""
         # self.float_widget_instance = FloatWidget(slider_range=self.slider_range, only_positive=self.only_positive)
         pass
         # self.add_property_widget(self.float_widget_instance)
+
+    def init_float_widget(self):
+        """Adding parameter init for float widget instance"""
     def value_update(self):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         _value = self.float_widget_instance.value
         self.value = {self.value_class: _value}
 
 class SoundEventEditorPropertyInt(SoundEventEditorPropertyFloat):
+    def __init__(self, parent=None, label_text: str = None, value: dict = None, slider_range: list = [0, 0], only_positive: bool = False):
+        """
+        Int property. Accepts inputs:
+
+        slider_range: list = [-10,10]
+        only_positive: bool = False
+
+        """
+        # Call the parent constructor to ensure float_widget_instance is initialized
+        super().__init__(parent, label_text, value, slider_range, only_positive)
+        self.init_float_widget()
+
     def init_float_widget(self):
         """Adding parameter init for float widget instance"""
-        self.float_widget_instance.int_output = True
+        # Ensure float_widget_instance is initialized before accessing it
+        if hasattr(self, 'float_widget_instance'):
+            self.float_widget_instance.int_output = True
