@@ -1,42 +1,30 @@
-import sys, os, threading, portalocker, tempfile, webbrowser, time, socket, logging
+import os, threading, portalocker, tempfile, webbrowser, time, socket, logging, ctypes, hashlib, sys, subprocess, datetime
 from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow, QMessageBox, QDialog, QLabel, QMessageBox
 from PySide6.QtGui import QIcon, QAction, QTextCursor
 from PySide6.QtCore import QObject, Signal, Qt
-import subprocess, datetime
-# from PySide6 import QtCore
 from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
 from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
 from loading_editor.loading_editor_main import Loading_editorMainWindow
-
 from hotkey_editor.main import HotkeyEditorMainWindow
-
 from create_addon.create_addon_mian import Create_addon_Dialog
 from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
-
 from minor_features.addon_functions import delete_addon, launch_addon
-
 from minor_features.update_check import check_updates
-
 from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
 from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 from soudevent_editor.main import SoundEventEditorMainWindow
-
 from minor_features.assettypes import AssetTypesModify
 
-import ctypes
-import winsound
-
+# Variables
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
 stop_discord_thread = threading.Event()
-
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
-
-
+# Versions
 app_version = '2.5.0'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '1.1.0'
@@ -44,12 +32,16 @@ smartprop_editor_version = '0.9.4'
 hotkey_editor_version = '1.1.0'
 loading_editor_version = '1.0.0'
 
-timestamp = datetime.datetime.now().strftime('%m%d')
-app_version = f'{app_version}.{timestamp}'
+# Retrieve the latest commit hash
+try:
+    commit_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
+except subprocess.CalledProcessError:
+    commit_hash = '0000000'
 
+# Convert the commit hash to a numeric value and get the last 4 digits
+commit_number = int(hashlib.sha1(commit_hash.encode()).hexdigest(), 16) % (10 ** 4)
+app_version = f'{app_version}.{commit_number}'
 
-
-import sys
 
 
 class Notification(QMessageBox):
