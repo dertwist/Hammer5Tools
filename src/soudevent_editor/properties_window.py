@@ -1,19 +1,14 @@
-import ast
-import subprocess
-import os
 from src.soudevent_editor.ui_properties_window import Ui_MainWindow
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu
-from PySide6.QtGui import QKeySequence
-from PySide6.QtCore import Qt
 from src.preferences import settings, debug
 from src.soudevent_editor.property.frame import SoundEventEditorPropertyFrame
-
-class genericObejct:
-    def __init__(self):
-        super().__init__()
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu
+from PySide6.QtGui import QKeySequence
+from PySide6.QtCore import Qt, Signal
 
 class SoundEventEditorPropertiesWindow(QMainWindow):
+    edited = Signal()
     def __init__(self, parent=None):
+        """Properties """
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
