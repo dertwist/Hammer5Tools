@@ -67,7 +67,7 @@ class SoundEventEditorPropertyFrame(QWidget):
                 print(ValueError, error)
 
         # Widgets import
-        from src.soudevent_editor.property.base import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat, SoundEventEditorPropertyInt
+        from src.soudevent_editor.property.common import SoundEventEditorPropertyBase, SoundEventEditorPropertyFloat, SoundEventEditorPropertyInt
 
         # Float
         if name == 'volume':
