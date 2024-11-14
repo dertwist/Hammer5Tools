@@ -66,7 +66,6 @@ class FloatWidget(QWidget):
         else:
             self.SpinBox.setMinimum(-99999999)
         self.SpinBox.setMaximum(99999999)
-        self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
         self.SpinBox.setValue(value)
 
         # Slider setup
@@ -96,6 +95,8 @@ class FloatWidget(QWidget):
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         layout.addItem(spacer)
         self.setLayout(layout)
+        self.on_SpinBox_updated()
+        self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
         # Widget class
 
     # Updating
