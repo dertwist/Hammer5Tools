@@ -1,9 +1,4 @@
-import ast
-import subprocess
-import os
-from pydoc import importfile
-import os
-import shutil
+import ast, os, shutil
 
 from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soudevent_editor.ui_main import Ui_MainWindow
@@ -127,7 +122,7 @@ class SoundEventEditorMainWindow(QMainWindow):
     #================================================================<  Hierarchy  >=============================================================
 
     def update_hierarchy_item(self, item: QTreeWidgetItem, _data: dict):
-        "Sets Value to data column"
+        """Sets Value to data column"""
         item.setText(1, str(_data))
     def on_changed_hierarchy_item(self, current_item: QTreeWidgetItem):
         "On changed hierarchy item clear, shows or hide properties placeholder widget"
