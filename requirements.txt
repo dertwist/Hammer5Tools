@@ -7,3 +7,4 @@ portalocker
 keyvalues3
 setuptools
 psutil
+py3nvml
