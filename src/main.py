@@ -35,7 +35,7 @@ loading_editor_version = '1.0.0'
 # Retrieve the latest commit hash
 try:
     commit_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
-except subprocess.CalledProcessError:
+except:
     commit_hash = '0000000'
 
 # Convert the commit hash to a numeric value and get the last 4 digits
