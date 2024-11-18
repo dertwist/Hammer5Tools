@@ -7,6 +7,7 @@ from src.soudevent_editor.property.ui_frame import Ui_Form
 from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
 from src.common import convert_snake_case, JsonToKv3, Kv3ToJson
+from src.preferences import debug
 
 
 class SoundEventEditorPropertyFrame(QWidget):
@@ -99,8 +100,9 @@ class SoundEventEditorPropertyFrame(QWidget):
         _data = {}
         for index in range(self.ui.content.layout().count()):
             widget_instance = self.ui.content.layout().itemAt(index).widget()
-            value_dict = {widget_instance.value_class: widget_instance.value}
+            value_dict = widget_instance.value
             _data.update(value_dict)
+        debug(f"serialize_properties frame Data: \n {_data}")
         return _data
 
     def get_property(self, index):
