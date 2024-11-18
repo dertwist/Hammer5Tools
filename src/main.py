@@ -25,22 +25,12 @@ stop_discord_thread = threading.Event()
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
 # Versions
-app_version = '2.5.0'
+app_version = '2.5.0.40'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '1.1.0'
 smartprop_editor_version = '0.9.4'
 hotkey_editor_version = '1.1.0'
 loading_editor_version = '1.0.0'
-
-# Retrieve the latest commit hash
-try:
-    commit_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
-except subprocess.CalledProcessError:
-    commit_hash = '0000000'
-
-# Convert the commit hash to a numeric value and get the last 4 digits
-commit_number = int(hashlib.sha1(commit_hash.encode()).hexdigest(), 16) % (10 ** 4)
-app_version = f'{app_version}.{commit_number}'
 
 
 
