@@ -54,6 +54,17 @@ class LoadSoundEvents:
         for key in data:
             new_item = HierarchyItemModel(_data=data[key], _name=key)
             self.root.addChild(new_item)
+class SaveSoundEvents:
+    def __init__(self, tree: QTreeWidget, path:str):
+        super().__init__()
+        data = {}
+        for index in range(tree.invisibleRootItem().childCount()):
+            item = tree.invisibleRootItem().child(index)
+            key = item.text(0)
+            value = item.text(1)
+            value = ast.literal_eval(value)
+            item_value = {key:value}
+            data.update(itemd)
 class SoundEventEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -388,3 +399,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.settings.setValue("SoundEventEditorMainWindow/windowState", self.saveState())
     def closeEvent(self, event):
         self._save_user_prefs()
+
+    #============================================================<  File actions  >=========================================================
+    def save_file(self, file_path):
+        """Serializing tree and save to the filepath"""
