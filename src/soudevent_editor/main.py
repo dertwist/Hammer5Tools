@@ -92,7 +92,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.PropertiesWindowInit()
 
         # Init Hierarchy
-        # self.ui.hierarchy_widget.header().setSectionHidden(1, True)
+        self.ui.hierarchy_widget.header().setSectionHidden(1, True)
         self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
         self.ui.hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
