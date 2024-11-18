@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
-from src.widgets import FloatWidget
+from src.widgets import FloatWidget, LegacyWidget
 from PySide6.QtCore import Signal
+from src.common import convert_snake_case
 
 class SoundEventEditorPropertyBase(QWidget):
     edited = Signal()
@@ -27,8 +28,12 @@ class SoundEventEditorPropertyBase(QWidget):
         if label_text is None:
             label_text = "Label"
         label_instance = QLabel()
-        label_instance.setText(label_text)
+        label_instance.setText(convert_snake_case(label_text))
+        label_instance.setStyleSheet(f"""
+        color: {self.init_label_color()}""")
         self.root_layout.addWidget(label_instance)
+    def init_label_color(self):
+        return "#C7C7BB"
     def add_property_widget(self, widget):
         """Adding property widget to the root"""
         self.root_layout.addWidget(widget)
@@ -56,7 +61,7 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
         float_value  = 0
         if isinstance(value, float):
             float_value = value
-        self.float_widget_instance = FloatWidget(slider_range=slider_range, only_positive=only_positive, value=float_value)
+        self.float_widget_instance = FloatWidget(slider_range=slider_range, only_positive=only_positive, value=float_value, spacer_enable=False)
         self.float_widget_instance.edited.connect(self.on_property_update)
         self.add_property_widget(self.float_widget_instance)
         self.value_class = label_text
@@ -83,6 +88,8 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         _value = self.float_widget_instance.value
         self.value = {self.value_class: _value}
+    def init_label_color(self):
+        return "#4CE4C7"
 
 class SoundEventEditorPropertyInt(SoundEventEditorPropertyFloat):
     def __init__(self, parent=None, label_text: str = None, value: dict = None, slider_range: list = [0, 0], only_positive: bool = False):
@@ -102,3 +109,29 @@ class SoundEventEditorPropertyInt(SoundEventEditorPropertyFloat):
         # Ensure float_widget_instance is initialized before accessing it
         # if hasattr(self, 'float_widget_instance'):
         self.float_widget_instance.int_output = True
+    def init_label_color(self):
+        return "#25A7BC"
+class SoundEventEditorPropertyLegacy(SoundEventEditorPropertyBase):
+    def __init__(self, parent=None, label_text: str = None, value: dict = None):
+        """
+        Legacy property (placeholder)
+        """
+        super().__init__(parent, label_text, value)
+        self.legacy_widget_instance = LegacyWidget(value=value, spacer_enable=False)
+        self.legacy_widget_instance.edited.connect(self.on_property_update)
+        self.add_property_widget(self.legacy_widget_instance)
+        self.value_class = label_text
+
+        # Updating value
+        self.value_update(value)
+
+    def on_property_update(self, value):
+        """Send signal that user changed the property"""
+        self.value_update(value)
+        self.edited.emit()
+
+    def value_update(self, value):
+        """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
+        self.value = {self.value_class: value}
+    def init_label_color(self):
+        return "#BCB925"

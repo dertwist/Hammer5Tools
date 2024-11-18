@@ -1,5 +1,7 @@
+import ast
+
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
@@ -50,7 +52,7 @@ def ExpetionErrorDialog(function, id):
 #============================================================<  Property widgets  >=========================================================
 class FloatWidget(QWidget):
     edited = Signal(float)
-    def __init__(self, int_output: bool =False, slider_range: list = [0,0], value: float=0.0, only_positive: bool = False, lock_range: bool = False):
+    def __init__(self, int_output: bool =False, slider_range: list = [0,0], value: float=0.0, only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True):
         """Float widget is a widget with sping box and slider that are synchronized with each-other. This widget give float or round(float) which is int variable type"""
         super().__init__()
 
@@ -93,7 +95,8 @@ class FloatWidget(QWidget):
         layout.addWidget(self.SpinBox)
         layout.addWidget(self.Slider)
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        layout.addItem(spacer)
+        if spacer_enable:
+            layout.addItem(spacer)
         self.setLayout(layout)
         self.on_SpinBox_updated()
         self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
@@ -123,6 +126,52 @@ class FloatWidget(QWidget):
     def set_value(self, value):
         self.SpinBox.setValue(value)
         self.on_SpinBox_updated()
+
+class LegacyWidget(QWidget):
+    edited = Signal(str)  # Define the signal to accept a string argument
+
+    def __init__(self, value: str = None, spacer_enable: bool = True):
+        """Initialize the LegacyWidget with a given value."""
+        super().__init__()
+        self.isdict = False
+
+        # Edit line initialization
+        self.edit_line = QLineEdit()
+        self.edit_line.textChanged.connect(self.on_editline_updated)
+
+        # Layout initialization
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.edit_line)
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        if spacer_enable:
+            layout.addItem(spacer)
+        self.setLayout(layout)
+
+        # Set initial value
+        self.set_value(value)
+
+    def on_editline_updated(self):
+        """Handle updates to the edit line."""
+        value = self.edit_line.text()
+        try:
+            value = ast.literal_eval(value)
+        except:
+            pass
+        self.edited.emit(value)
+
+    def set_value(self, value):
+        """Set the value of the edit line."""
+        if isinstance(value, dict):
+            self.isdict = True
+            self.edit_line.setText(str(value))
+        elif isinstance(value, str):
+            self.isdict = False
+            self.edit_line.setText(value)
+        else:
+            # raise ValueError("Value must be a string or a dictionary.")
+            self.isdict = False
+            self.edit_line.setText(str(value))
 #================================================================<  Combobox  >=============================================================
 class ComboboxDynamicItems(QComboBox):
     clicked = Signal()
