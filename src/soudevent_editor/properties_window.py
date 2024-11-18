@@ -45,6 +45,12 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             return ast.literal_eval(value)
         elif isinstance(value, dict):
             return value
+    #===========================================================<  Comment Widget  >========================================================
+
+    def get_comment(self):
+        return self.ui.comment_widget.toPlainText()
+    def set_comment(self, value):
+        self.ui.comment_widget.setPlainText(value)
 
     #=======================================================<  Properties widget  >=====================================================
 
@@ -63,13 +69,17 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             widget = self.ui.properties_layout.itemAt(i).widget()
             if isinstance(widget, SoundEventEditorPropertyFrame):
                 widget.deleteLater()
+        self.set_comment("")
     def populate_properties(self, _data):
         """Loading properties from given data"""
         if isinstance(_data, dict):
             # Reverse input data and use insertWidget with index 0 because in that way all widgets will be upper spacer
             debug(f"_data \n {_data}")
             for item, value in reversed(_data.items()):
-                self.create_property(item,value)
+                if item == 'comment':
+                    self.set_comment(value)
+                else:
+                    self.create_property(item,value)
         else:
             print(f"[SoundEventEditorProperties]: Wrong input data format. Given data: \n {_data} \n {type(_data)}")
 
@@ -100,6 +110,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     def on_update(self):
         """Updating dict value and send signal"""
         _data = self.get_properties_value()
+        comment = self.get_comment()
+        if comment != "":
+            _data.update({'comment': comment})
         debug(f"Some of widget instance were edited, Data: \n {_data}")
         self.edited.emit(_data)
 
