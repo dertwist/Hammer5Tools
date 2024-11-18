@@ -3,12 +3,12 @@ import ast
 from src.soudevent_editor.ui_properties_window import Ui_MainWindow
 from src.preferences import settings, debug
 from src.soudevent_editor.property.frame import SoundEventEditorPropertyFrame
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QPlainTextEdit
 from PySide6.QtGui import QKeySequence
 from PySide6.QtCore import Qt, Signal
 
 class SoundEventEditorPropertiesWindow(QMainWindow):
-    edited = Signal(dict)
+    edited = Signal()
     def __init__(self, parent=None, value: str = None):
         """
         The properties window is supposed to store property frame instances in the layout.
@@ -16,7 +16,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         sends a signal that can be used to save the file or update the tree item in the hierarchy.
         """
 
-        # TOOD remove self.value and value, load value
         super().__init__(parent)
 
         # Load ui file
@@ -48,10 +47,17 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     #===========================================================<  Comment Widget  >========================================================
 
     def get_comment(self):
-        return self.ui.comment_widget.toPlainText()
-    def set_comment(self, value):
-        self.ui.comment_widget.setPlainText(value)
-
+        return self.comment_widget.toPlainText()
+    def init_comment(self, value):
+        self.comment_widget = QPlainTextEdit()
+        self.comment_widget.setPlainText(value)
+        self.ui.groupBox_2.layout().addWidget(self.comment_widget)
+        self.comment_widget.textChanged.connect(self.on_update)
+    def delete_comment(self):
+        try:
+            self.comment_widget.deleteLater()
+        except:
+            pass
     #=======================================================<  Properties widget  >=====================================================
 
     def properties_groups_hide(self):
@@ -69,19 +75,27 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             widget = self.ui.properties_layout.itemAt(i).widget()
             if isinstance(widget, SoundEventEditorPropertyFrame):
                 widget.deleteLater()
-        self.set_comment("")
+
+        self.delete_comment()
     def populate_properties(self, _data):
         """Loading properties from given data"""
         if isinstance(_data, dict):
             # Reverse input data and use insertWidget with index 0 because in that way all widgets will be upper spacer
-            debug(f"_data \n {_data}")
+            debug(f"populate_properties _data \n {_data}")
+            # If there is no comment in data init comment widget
+            if 'comment' in _data:
+                pass
+            else:
+                self.init_comment("")
+
             for item, value in reversed(_data.items()):
                 if item == 'comment':
-                    self.set_comment(value)
+                    self.init_comment(value)
                 else:
                     self.create_property(item,value)
         else:
             print(f"[SoundEventEditorProperties]: Wrong input data format. Given data: \n {_data} \n {type(_data)}")
+
 
     #=============================================================<  Property  >==========================================================
     def create_property(self, key, value):
@@ -109,13 +123,15 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     #==============================================================<  Updating  >===========================================================
     def on_update(self):
         """Updating dict value and send signal"""
+        self.update_value()
+        debug(f"Some of widget instance were edited, Data: \n {self.value}")
+        self.edited.emit()
+    def update_value(self):
         _data = self.get_properties_value()
         comment = self.get_comment()
         if comment != "":
             _data.update({'comment': comment})
-        debug(f"Some of widget instance were edited, Data: \n {_data}")
-        self.edited.emit(_data)
-
+        self.value = _data
     #============================================================<  Context menu  >=========================================================
     def open_context_menu(self, position):
         """Layout context menu"""

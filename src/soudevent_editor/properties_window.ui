@@ -65,7 +65,7 @@
           <x>0</x>
           <y>0</y>
           <width>1179</width>
-          <height>443</height>
+          <height>427</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -155,11 +155,7 @@ border: none;</string>
            <property name="title">
             <string>Comment</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout">
-            <item>
-             <widget class="QPlainTextEdit" name="comment_widget"/>
-            </item>
-           </layout>
+           <layout class="QHBoxLayout" name="horizontalLayout"/>
           </widget>
          </widget>
         </item>

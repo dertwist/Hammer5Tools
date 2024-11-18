@@ -17,9 +17,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
-    QLabel, QMainWindow, QPlainTextEdit, QScrollArea,
-    QSizePolicy, QSpacerItem, QSplitter, QVBoxLayout,
-    QWidget)
+    QLabel, QMainWindow, QScrollArea, QSizePolicy,
+    QSpacerItem, QSplitter, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -87,7 +86,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1179, 443))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1179, 427))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -136,11 +135,6 @@ class Ui_MainWindow(object):
         self.groupBox_2.setObjectName(u"groupBox_2")
         self.horizontalLayout = QHBoxLayout(self.groupBox_2)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.comment_widget = QPlainTextEdit(self.groupBox_2)
-        self.comment_widget.setObjectName(u"comment_widget")
-
-        self.horizontalLayout.addWidget(self.comment_widget)
-
         self.splitter_2.addWidget(self.groupBox_2)
 
         self.horizontalLayout_3.addWidget(self.splitter_2)
