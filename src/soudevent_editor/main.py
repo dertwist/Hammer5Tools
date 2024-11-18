@@ -92,7 +92,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.PropertiesWindowInit()
 
         # Init Hierarchy
-        self.ui.hierarchy_widget.header().setSectionHidden(1, True)
+        # self.ui.hierarchy_widget.header().setSectionHidden(1, True)
         self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
         self.ui.hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
@@ -123,7 +123,11 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def load_soundevents(self):
         """Load soundevents. If there is no soundevents file, ask the user if they want to copy it from the CS2 addon template folder."""
-
+        # Cleanup
+        try:
+            self.PropertiesWindow.properties_clear()
+        except:
+            pass
         if os.path.exists(self.filepath_vsndevts):
             LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
         else:
@@ -149,28 +153,34 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.PropertiesWindow = SoundEventEditorPropertiesWindow()
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
         self.PropertiesWindow.edited.connect(self.PropertiesWindowUpdate)
-    def PropertiesWindowUpdate(self, _data):
+    def PropertiesWindowUpdate(self):
         item = self.ui.hierarchy_widget.currentItem()
+        _data = self.PropertiesWindow.value
         self.update_hierarchy_item(item, _data)
 
     #================================================================<  Hierarchy  >=============================================================
 
     def update_hierarchy_item(self, item: QTreeWidgetItem, _data: dict):
-        """Sets Value to data column"""
+        """Sets the value to the data column and saves if in realtime mode."""
         item.setText(1, str(_data))
-        debug(f'Updated hierarchy item{item.text(0)} with data: \n {_data}')
+        debug(f'Updated hierarchy item {item.text(0)} with data: \n {_data}')
         if self.realtime_save():
             self.save_soundevents()
+
     def on_changed_hierarchy_item(self, current_item: QTreeWidgetItem):
-        "On changed hierarchy item clear, shows or hide properties placeholder widget"
+        """Handles changes in the hierarchy item by updating the properties window."""
         if current_item is not None:
             self.PropertiesWindow.properties_groups_show()
             self.PropertiesWindow.properties_clear()
-            # Convert column text to dict value
-            data = ast.literal_eval(current_item.text(1))
-            self.PropertiesWindow.populate_properties(data)
+
+            # Safely convert column text to dict value
+            try:
+                data = ast.literal_eval(current_item.text(1))
+                self.PropertiesWindow.populate_properties(data)
+            except (ValueError, SyntaxError) as e:
+                debug(f"Error parsing item data: {e}")
+                QMessageBox.warning(self, "Data Error", "Failed to parse item data. Please check the format.")
         else:
-            self.PropertiesWindow.properties_clear()
             self.PropertiesWindow.properties_groups_hide()
 
 
