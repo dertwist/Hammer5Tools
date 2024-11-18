@@ -86,13 +86,15 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         if isinstance(widget_instance, SoundEventEditorPropertyFrame):
             value = widget_instance.value
             debug(f"Getting SoundEventEditorPropertyFrame Value: \n {value}")
-            return value if value is not None else {}
-        return {}
+            return value
+        else:
+            return {}
     def get_properties_value(self):
         """Getting all values from frame widget which in layout"""
         _data: dict = {}
         for index in range(self.ui.properties_layout.count()):
             _data.update(self.get_property_value(index))
+        return _data
 
     #==============================================================<  Updating  >===========================================================
     def on_update(self):

@@ -1,5 +1,7 @@
 import ast, os, shutil
 
+from networkx.utils import open_file
+
 from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soudevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
@@ -64,14 +66,16 @@ class SaveSoundEvents:
             value = item.text(1)
             value = ast.literal_eval(value)
             item_value = {key:value}
-            data.update(itemd)
+            data.update(item_value)
+        # Write to file
+        with open(path, 'w') as output:
+            output.write(JsonToKv3(data))
 class SoundEventEditorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
-        self.realtime_save = False
         self.undo_stack = QUndoStack(self)
 
         # Variables
@@ -83,21 +87,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         debug(f"self.filepath_sounds : {self.filepath_sounds}")
 
         # Init LoadSoundEvents
-        if os.path.exists(self.filepath_vsndevts):
-            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
-        else:
-            msg_box = QMessageBox()
-            msg_box.setIcon(QMessageBox.Warning)
-            msg_box.setText(
-                "There is no soundevents file. Will you create default? Attention: it would overwrite existing wav files in sounds folder, if it exists.")
-            msg_box.setWindowTitle("Warning")
-            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-
-            response = msg_box.exec()
-            if response == QMessageBox.Yes:
-                CopyDefaultSoundFolders()
-                LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
-
+        self.load_soundevents()
         # Init PropertiesWindow
         self.PropertiesWindowInit()
 
@@ -112,7 +102,9 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         # Connections
         self.ui.open_preset_manager_button.clicked.connect(self.OpenPresetManager)
-        self.ui.reload_button.clicked.connect(lambda: LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts))
+        self.ui.reload_button.clicked.connect(self.load_soundevents)
+        self.ui.output_button.clicked.connect(self.open_soundevnets_file)
+        self.ui.save_file_button.clicked.connect(self.save_soundevents)
 
         # Explorer
         if os.path.exists(self.filepath_sounds):
@@ -122,19 +114,53 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.ui.explorer_layout_widget)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
+    #==============================================================<  Actions  >============================================================
+    def realtime_save(self):
+        return self.ui.realtime_save_checkbox.isChecked()
+    #============================================================<  SoundEvents  >==========================================================
+    def open_soundevnets_file(self):
+        os.startfile(self.filepath_vsndevts)
+
+    def load_soundevents(self):
+        """Load soundevents. If there is no soundevents file, ask the user if they want to copy it from the CS2 addon template folder."""
+
+        if os.path.exists(self.filepath_vsndevts):
+            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+        else:
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setText(
+                "There is no soundevents file. Will you create default? Attention: it would overwrite existing wav files in sounds folder, if it exists.")
+            msg_box.setWindowTitle("Warning")
+            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+            response = msg_box.exec()
+            if response == QMessageBox.Yes:
+                CopyDefaultSoundFolders()
+                LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+    def save_soundevents(self):
+        SaveSoundEvents(tree=self.ui.hierarchy_widget, path=(self.filepath_vsndevts + "_test"))
+        if not self.realtime_save():
+            print(f'Saved file: {self.filepath_vsndevts}')
+
     #=======================================================<  Properties Window  >=====================================================
 
     def PropertiesWindowInit(self):
         self.PropertiesWindow = SoundEventEditorPropertiesWindow()
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
-    def UpdatePropertiesWindow(self):
-        pass
+        self.PropertiesWindow.edited.connect(self.PropertiesWindowUpdate)
+    def PropertiesWindowUpdate(self, _data):
+        item = self.ui.hierarchy_widget.currentItem()
+        self.update_hierarchy_item(item, _data)
 
     #================================================================<  Hierarchy  >=============================================================
 
     def update_hierarchy_item(self, item: QTreeWidgetItem, _data: dict):
         """Sets Value to data column"""
         item.setText(1, str(_data))
+        debug(f'Updated hierarchy item{item.text(0)} with data: \n {_data}')
+        if self.realtime_save():
+            self.save_soundevents()
     def on_changed_hierarchy_item(self, current_item: QTreeWidgetItem):
         "On changed hierarchy item clear, shows or hide properties placeholder widget"
         if current_item is not None:

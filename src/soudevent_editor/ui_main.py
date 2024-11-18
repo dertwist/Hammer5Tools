@@ -402,11 +402,11 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem = self.hierarchy_widget.headerItem()
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
 #if QT_CONFIG(tooltip)
-        self.open_preset_manager_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Save and compile Ctrl + S</p></body></html>", None))
+        self.open_preset_manager_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Oopen Preset Manager Ctrl + P</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.open_preset_manager_button.setText(QCoreApplication.translate("MainWindow", u"Preset manager", None))
 #if QT_CONFIG(shortcut)
-        self.open_preset_manager_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+S", None))
+        self.open_preset_manager_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+P", None))
 #endif // QT_CONFIG(shortcut)
         self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
 #if QT_CONFIG(tooltip)
