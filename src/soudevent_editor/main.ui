@@ -215,7 +215,7 @@
            <bool>true</bool>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save and compile Ctrl + S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Oopen Preset Manager Ctrl + P&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="styleSheet">
            <string notr="true">
@@ -263,7 +263,7 @@
            </size>
           </property>
           <property name="shortcut">
-           <string>Ctrl+S</string>
+           <string>Ctrl+P</string>
           </property>
          </widget>
         </item>
