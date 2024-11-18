@@ -62,6 +62,9 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
         self.value_class = label_text
         self.init_float_widget()
 
+        # Updating value
+        self.value_update()
+
     def init_widget(self):
         """Initialize float widget instance"""
         # self.float_widget_instance = FloatWidget(slider_range=self.slider_range, only_positive=self.only_positive)
