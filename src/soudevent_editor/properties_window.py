@@ -91,6 +91,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             for item, value in reversed(_data.items()):
                 if item == 'comment':
                     self.init_comment(value)
+                elif item == 'm_sLabel':
+                    pass
                 else:
                     self.create_property(item,value)
         else:
