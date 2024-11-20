@@ -7,6 +7,7 @@ from src.widgets import ErrorInfo, ExpetionErrorDialog
 from py3nvml import py3nvml
 
 
+
 def delete_addon(ui, cs2_path, get_addon_name):
     delete_paths = [
         os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name()),
@@ -36,19 +37,43 @@ def __launch_addon():
     addon_name = get_addon_name()
     cs2_path = get_cs2_path()
 
-    # Initialize NVML
-    py3nvml.nvmlInit()
+    supports_ray_tracing = False
+
+    # Check for NVIDIA GPU
     try:
-        # Get the handle for the first GPU
-        handle = py3nvml.nvmlDeviceGetHandleByIndex(0)
-        # Get the GPU name
-        gpu_name = py3nvml.nvmlDeviceGetName(handle)
-        # Check if the GPU supports ray tracing
-        # This is a simplified check; you might need a more specific check based on your requirements
-        supports_ray_tracing = "RTX" in gpu_name
-    finally:
-        # Shutdown NVML
-        py3nvml.nvmlShutdown()
+        py3nvml.nvmlInit()
+        try:
+            handle = py3nvml.nvmlDeviceGetHandleByIndex(0)
+            gpu_name = py3nvml.nvmlDeviceGetName(handle)
+            supports_ray_tracing = "RTX" in gpu_name
+        finally:
+            py3nvml.nvmlShutdown()
+    except py3nvml.NVMLError as e:
+        print(f"NVML Error: {e}")
+
+    # Check for AMD GPU
+    if not supports_ray_tracing:
+        try:
+            # Use subprocess to run a command that lists GPU information
+            result = subprocess.run(['lspci'], capture_output=True, text=True)
+            for line in result.stdout.splitlines():
+                if "VGA compatible controller" in line and "AMD" in line:
+                    if "Radeon" in line and "RX" in line:
+                        supports_ray_tracing = True
+                        break
+        except Exception as e:
+            print(f"AMD GPU Info Error: {e}")
+
+    # Check for Intel GPU
+    if not supports_ray_tracing:
+        try:
+            # Attempt to run intel_gpu_top to check for Intel GPU
+            result = subprocess.run(['intel_gpu_top', '-l'], capture_output=True, text=True)
+            if "Intel" in result.stdout:
+                # Simplified check for ray tracing support
+                supports_ray_tracing = "Xe" in result.stdout
+        except Exception as e:
+            print(f"Intel GPU Info Error: {e}")
 
     # Construct the launch command
     cs2_launch_commands = (
@@ -57,6 +82,7 @@ def __launch_addon():
         ' -tool hammer' +
         ' -asset maps/' + addon_name + '.vmap' +
         " -tools -steam -retail -noinsecru +install_dlc_workshoptools_cvar 1"
+        + '-gpuraytracing'
     )
 
     # Add the -gpuraytracing command if the GPU supports ray tracing
@@ -72,6 +98,7 @@ def __launch_addon():
             set_config_bool('LAUNCH', 'ncm_mode_setup', True)
     else:
         psutil.Popen(cs2_launch_commands, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 def launch_addon():
     ExpetionErrorDialog(AssetTypesModify, 'AssetTypesModify')
     ExpetionErrorDialog(__launch_addon, 'LaunchAddon')
