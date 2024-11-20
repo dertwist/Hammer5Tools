@@ -143,7 +143,7 @@ class SoundEventEditorMainWindow(QMainWindow):
                 CopyDefaultSoundFolders()
                 LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
     def save_soundevents(self):
-        SaveSoundEvents(tree=self.ui.hierarchy_widget, path=(self.filepath_vsndevts + "_test"))
+        SaveSoundEvents(tree=self.ui.hierarchy_widget, path=(self.filepath_vsndevts))
         if not self.realtime_save():
             print(f'Saved file: {self.filepath_vsndevts}')
 
