@@ -210,16 +210,6 @@ class SoundEventEditorMainWindow(QMainWindow):
                         return True
 
         return super().eventFilter(source, event)
-    #=========================================================<  Properties Actions  >======================================================
-
-    def new_property_popup(self):
-        """Call popup menu with all properties"""
-
-    def new_property(self):
-        """Creates new property in Properties Window"""
-
-    def paste_property(self):
-        """Creates new property from clipboard using new_property function"""
 
     #=========================================================<  Hierarchy Actions  >=======================================================
 
