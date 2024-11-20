@@ -6,7 +6,7 @@ from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soudevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QTreeWidgetItem, QMessageBox, QApplication
-from PySide6.QtGui import QKeySequence, QUndoStack
+from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
 from PySide6.QtCore import Qt
 from src.widgets import HierarchyItemModel, ErrorInfo
 from src.preferences import settings
@@ -97,6 +97,9 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.ui.hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
 
+        # Init filter
+        self.ui.hierarchy_widget.installEventFilter(self)
+
         # Init Hierarchy filer bar
         self.ui.hierarchy_search_bar_widget.textChanged.connect(lambda text:self.search_hierarchy(text, self.ui.hierarchy_widget.invisibleRootItem()))
 
@@ -158,6 +161,76 @@ class SoundEventEditorMainWindow(QMainWindow):
         item = self.ui.hierarchy_widget.currentItem()
         _data = self.PropertiesWindow.value
         self.update_hierarchy_item(item, _data)
+    #===============================================================<  Filter  >============================================================
+    def eventFilter(self, source, event):
+        """Handle keyboard and shortcut events for various widgets."""
+
+        if event.type() == QKeyEvent.KeyPress:
+            # Handle events for hierarchy_widget
+            if source == self.ui.hierarchy_widget:
+                # Copy (Ctrl + C)
+                if event.matches(QKeySequence.Copy):
+                    self.copy_item(self.ui.hierarchy_widget)
+                    return True
+
+                # Paste (Ctrl + V)
+                if event.matches(QKeySequence.Paste):
+                    self.paste_item(self.ui.hierarchy_widget, paste_to_parent=True)
+                    return True
+
+                # Delete
+                if event.matches(QKeySequence.Delete):
+                    self.undo_stack.push(DeleteTreeItemCommand(self.ui.hierarchy_widget))
+
+                    return True
+                # Move Up
+                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_Up:
+                    self.move_tree_item(self.ui.hierarchy_widget, -1)
+                    return True
+                # Move Down
+                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_Down:
+                    self.move_tree_item(self.ui.hierarchy_widget, 1)
+                    return True
+                # Duplicate
+                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_D:
+                    self.duplicate_hierarchy_items(self.ui.hierarchy_widget)
+                    return True
+
+                if event.matches(QKeySequence.Undo):
+                    self.undo_stack.undo()
+                    return True
+                if event.matches(QKeySequence.Redo):
+                    self.undo_stack.redo()
+                    return True
+
+
+                if source.viewport().underMouse():
+                    if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                        self.add_an_element()
+                        return True
+
+        return super().eventFilter(source, event)
+    #=========================================================<  Properties Actions  >======================================================
+
+    def new_property_popup(self):
+        """Call popup menu with all properties"""
+
+    def new_property(self):
+        """Creates new property in Properties Window"""
+
+    def paste_property(self):
+        """Creates new property from clipboard using new_property function"""
+
+    #=========================================================<  Hierarchy Actions  >=======================================================
+
+    def new_soundevent(self, _data: dict = None):
+        """Creates new soundevent using given data. Input dict"""
+
+    def new_soundevent_blank(self):
+        """Create empty soundevent using """
+
+    def new_soundevent_preset(self):
+        """Call popup menu with all presets that are in the folder"""
 
     #================================================================<  Hierarchy  >=============================================================
 

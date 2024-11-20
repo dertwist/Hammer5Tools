@@ -6,7 +6,7 @@ def get_clean_class_name(input):
     else:
         return input
 def get_clean_class_name_value(value):
-    _class = value['_class']
+    _class = value.get('_class', 'class')
     return get_clean_class_name(_class)
 def get_label_id_from_value(value):
     suffix = get_ElementID_key(value)
