@@ -126,6 +126,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Cleanup
         try:
             self.PropertiesWindow.properties_clear()
+            self.ui.hierarchy_widget.clear()
         except:
             pass
         if os.path.exists(self.filepath_vsndevts):
