@@ -65,7 +65,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             try:
                 value = ast.literal_eval(value)
             except Exception as error:
-                print(ValueError, error)
+                debug(error)
 
         # Widgets import
         from src.soudevent_editor.property.common import (
