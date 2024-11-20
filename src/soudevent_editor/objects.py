@@ -50,3 +50,5 @@ soundevent_editor_properties = [
 
 
 ]
+
+soundevent_blank = {}
