@@ -3,8 +3,10 @@ import ast
 from src.soudevent_editor.ui_properties_window import Ui_MainWindow
 from src.preferences import settings, debug
 from src.soudevent_editor.property.frame import SoundEventEditorPropertyFrame
+from src.popup_menu.popup_menu_main import PopupMenu
+from src.soudevent_editor.objects import *
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QPlainTextEdit
-from PySide6.QtGui import QKeySequence
+from PySide6.QtGui import QKeySequence, QKeyEvent
 from PySide6.QtCore import Qt, Signal
 
 class SoundEventEditorPropertiesWindow(QMainWindow):
@@ -35,6 +37,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.open_context_menu)
 
+        # Init Event Filter
+        self.installEventFilter(self)
+
         # Hide properties on start
         self.properties_groups_hide()
 
@@ -58,6 +63,38 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             self.comment_widget.deleteLater()
         except:
             pass
+
+    # =========================================================<  Properties Actions  >======================================================
+
+    def new_property_popup(self):
+        """Call popup menu with all properties"""
+        self.popup_menu = PopupMenu(soundevent_editor_properties, add_once=False)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.new_property(name, value))
+        self.popup_menu.show()
+
+    def new_property(self, name:str = None, value:dict  = None):
+        """Creates new property in Properties Window"""
+        if name is None:
+            name = 'Name'
+        if value is None:
+            value = {}
+
+    def paste_property(self):
+        """Creates new property from clipboard using new_property function"""
+    #===============================================================<  Filter  >============================================================
+
+    def eventFilter(self, source, event):
+        """Handle keyboard and shortcut events for various widgets."""
+
+        if event.type() == QKeyEvent.KeyPress:
+            # Handle events for tree_hierarchy_widget
+            if source == self:
+                if source.viewport().underMouse():
+                    if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
+                        self.new_property_popup()
+                        return True
+
+        return super().eventFilter(source, event)
     #=======================================================<  Properties widget  >=====================================================
 
     def properties_groups_hide(self):
