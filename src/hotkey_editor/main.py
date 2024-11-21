@@ -13,9 +13,8 @@ from src.minor_features.addon_functions import launch_addon, kill_addon
 from src.explorer.main import Explorer
 import os
 import datetime
-app_dir = os.getcwd()
 import keyvalues3 as kv3
-from src.common import editor_info
+from src.common import editor_info, app_dir
 
 class KeyButton(QPushButton):
     DEFAULT_COLOR = "#ababab"
