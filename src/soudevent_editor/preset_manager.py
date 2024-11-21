@@ -8,6 +8,7 @@ from src.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QApplication
 from src.preferences import settings
 from src.soudevent_editor.properties_window import SoundEventEditorPropertiesWindow
+from src.common import app_dir, Kv3ToJson, JsonToKv3
 
 
 class SoundEventEditorPresetManagerWindow(QMainWindow):
@@ -17,23 +18,62 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.setupUi(self)
         self.settings = settings
 
+        self.PropertiesWindow = SoundEventEditorPropertiesWindow()
+        self.ui.frame.layout().addWidget(self.PropertiesWindow)
 
-        self.PropertiesWindowInit()
+        # Connections
+        self.ui.open_folder_button.clicked.connect(self.open_folder)
+        self.ui.new_button.clicked.connect(self.create_new_preset)
+        self.ui.open_button.clicked.connect(self.open_preset)
 
     #==============================================================<  Explorer  >===========================================================
-        self.tree_directory = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), 'sounds')
+        self.tree_directory = os.path.join(app_dir, "SoundEventEditor", "Presets")
         if os.path.exists(self.tree_directory):
             pass
         else:
             os.makedirs(self.tree_directory)
-        self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.ui.explorer_layout_widget)
+        self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name='SoundEvent_Editor_PresetManager', parent=self.ui.explorer_layout_widget)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
-    #=======================================================<  Properties Window  >=====================================================
+    #=======================================================<  Preset Manager Actions  >====================================================
+    def create_new_preset(self):
+        """Create a blank preset."""
+        # Convert an empty dictionary to KV3 format
+        data = JsonToKv3({})
 
-    def PropertiesWindowInit(self):
-        PropertiesWindow = SoundEventEditorPropertiesWindow()
-        self.ui.frame.layout().addWidget(PropertiesWindow)
+        # Define a base name for the new preset
+        new_name = "SE_Preset"
+        unique_digit = 1
+
+        # Generate a unique file name by checking existing files
+        while True:
+            filepath = os.path.join(self.tree_directory, f"{new_name}_{unique_digit}.vdata")
+            if not os.path.exists(filepath):
+                break
+            unique_digit += 1
+
+        # Write the data to the new file
+        with open(filepath, 'w') as file:
+            file.write(data)
+
+    def open_folder(self):
+        """Opening preset folder path"""
+        os.startfile(self.tree_directory)
+    def open_preset(self):
+        """Loads a preset into the Window Properties"""
+        current_index = self.mini_explorer.tree.selectionModel().currentIndex()
+        __filepath = self.mini_explorer.tree.model().filePath(current_index)  # Convert QModelIndex to file path
+        with open(__filepath, 'r') as file:
+            __data = file.read()
+        __data = Kv3ToJson(__data)
+        self.PropertiesWindow.properties_clear()
+        self.PropertiesWindow.properties_groups_show()
+        self.PropertiesWindow.populate_properties(__data)
+        print(f'Opened file: {__filepath}')
+    def save_preset(self):
+        """Saving preset"""
+        self.PropertiesWindow.value()
+    #=======================================================<  Properties Window  >=====================================================
 
     #======================================[Window State]========================================
     def _restore_user_prefs(self):
