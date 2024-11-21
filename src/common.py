@@ -20,6 +20,7 @@ editor_info = {
     }
     }
     }
+app_dir = os.getcwd()
 
 #===========================================================<  generic functions  >=========================================================
 def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=False):
