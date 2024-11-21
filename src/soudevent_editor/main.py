@@ -1,7 +1,5 @@
 import ast, os, shutil
 
-from networkx.utils import open_file
-
 from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soudevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
