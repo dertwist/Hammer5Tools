@@ -1,7 +1,4 @@
-import subprocess
-import os
-from pydoc import importfile
-import sys
+import sys, os
 from src.preferences import get_addon_name, get_cs2_path
 from src.soudevent_editor.ui_preset_manager import Ui_MainWindow
 from src.explorer.main import Explorer
