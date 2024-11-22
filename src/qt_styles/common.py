@@ -97,3 +97,26 @@ qt_stylesheet_classes = {
         color: #E3E3E3; /* Match the text color of the tree view */
     }"""
 }
+qt_stylesheet_checkbox = """
+    QCheckBox {
+
+        font: 580 10pt "Segoe UI";
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QCheckBox:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QCheckBox:pressed {
+
+    }"""
