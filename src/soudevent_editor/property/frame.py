@@ -72,7 +72,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyBase,
             SoundEventEditorPropertyFloat,
             SoundEventEditorPropertyInt,
-            SoundEventEditorPropertyLegacy
+            SoundEventEditorPropertyLegacy,
+            SoundEventEditorPropertyBool
         )
 
         # Float
@@ -82,14 +83,15 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
         # Int
         # Legacy
-        else:
-            self.property_instance = SoundEventEditorPropertyLegacy(label_text=name,value=value)
-        # Int
         # Bool
+        elif name == 'enable_child_events':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
         # Curve
         # Combobox
         # Vector3
         # Files
+        else:
+            self.property_instance = SoundEventEditorPropertyLegacy(label_text=name,value=value)
         self.property_instance.edited.connect(self.on_property_updated)
         self.ui.content.layout().addWidget(self.property_instance)
     def on_property_updated(self):
