@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
-from src.widgets import FloatWidget, LegacyWidget
+from src.widgets import FloatWidget, LegacyWidget, BoolWidget
 from PySide6.QtCore import Signal
 from src.common import convert_snake_case
 
@@ -135,3 +135,29 @@ class SoundEventEditorPropertyLegacy(SoundEventEditorPropertyBase):
         self.value = {self.value_class: value}
     def init_label_color(self):
         return "#BCB925"
+class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
+    def __init__(self, parent=None, label_text: str = None, value: dict = None):
+        """
+        Bool property
+
+        value : dict
+        """
+        super().__init__(parent, label_text, value)
+        self.bool_widget_instance = BoolWidget(value=value, spacer_enable=True)
+        self.bool_widget_instance.edited.connect(self.on_property_update)
+        self.add_property_widget(self.bool_widget_instance)
+        self.value_class = label_text
+
+        # Updating value
+        self.value_update(value)
+
+    def on_property_update(self, value):
+        """Send signal that user changed the property"""
+        self.value_update(value)
+        self.edited.emit()
+
+    def value_update(self, value):
+        """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
+        self.value = {self.value_class: value}
+    def init_label_color(self):
+        return "#D20103"
