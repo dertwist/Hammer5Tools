@@ -1,7 +1,7 @@
 import ast
 
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, QCheckBox, QVBoxLayout, QToolBox
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
@@ -128,7 +128,7 @@ class FloatWidget(QWidget):
         self.on_SpinBox_updated()
 
 class LegacyWidget(QWidget):
-    edited = Signal(str)  # Define the signal to accept a string argument
+    edited = Signal(str)
 
     def __init__(self, value: str = None, spacer_enable: bool = True):
         """Initialize the LegacyWidget with a given value."""
@@ -172,6 +172,41 @@ class LegacyWidget(QWidget):
             # raise ValueError("Value must be a string or a dictionary.")
             self.isdict = False
             self.edit_line.setText(str(value))
+
+class BoolWidget(QWidget):
+    edited = Signal(bool)
+
+    def __init__(self, value: bool = None, spacer_enable: bool = True):
+        """Initialize the LegacyWidget with a given value."""
+        super().__init__()
+
+        # Init checkbox
+        self.checkbox = QCheckBox()
+        self.checkbox.stateChanged.connect(self.on_updated)
+        self.checkbox.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkbox.setMinimumWidth(72)
+        # Layout initialization
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.checkbox)
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        if spacer_enable:
+            layout.addItem(spacer)
+        self.setLayout(layout)
+
+        # Set initial value
+        self.set_value(value)
+
+    def on_updated(self):
+        """Handle updates to the edit line."""
+        value = self.checkbox.isChecked()
+        # Updating text in the checkbox
+        self.set_value(value)
+        self.edited.emit(value)
+
+    def set_value(self, value):
+        """Set value as text for checkbox"""
+        self.checkbox.setText(str(value))
 #================================================================<  Combobox  >=============================================================
 class ComboboxDynamicItems(QComboBox):
     clicked = Signal()
