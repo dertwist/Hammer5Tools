@@ -1,4 +1,4 @@
-import sys
+import sys, webbrowser
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QScrollArea, QLabel, QDialog, QToolButton, QHBoxLayout
 from PySide6.QtGui import QKeySequence, QShortcut, QCursor, QIcon
 from PySide6.QtWidgets import QPushButton
@@ -6,12 +6,14 @@ from PySide6.QtCore import QEvent, Qt, QSize
 from PySide6.QtCore import Signal
 from src.popup_menu.ui_popup_menu import Ui_PoPupMenu
 from PySide6.QtWidgets import QSpacerItem, QSizePolicy
+from src.widgets import ErrorInfo
 class PopupMenu(QDialog):
     label_clicked = Signal(str)
     add_property_signal = Signal(str, str)
 
-    def __init__(self, properties, add_once=False, parent=None):
+    def __init__(self, properties: dict, add_once: bool = False, parent=None, help_url: str = None):
         super().__init__(parent)
+        self.help_url = help_url
         self.properties = properties
         self.ui = Ui_PoPupMenu()
         self.ui.setupUi(self)
@@ -37,9 +39,14 @@ class PopupMenu(QDialog):
                     label.mousePressEvent = lambda event, key=key, value=value: self.add_property_signal.emit(key, str(value))
 
 
+
                 element_layout = QHBoxLayout()
                 element_layout.setContentsMargins(0, 0, 0, 0)
                 element_layout.addWidget(label)
+                if self.help_url is None:
+                    pass
+                else:
+                    element_layout.addWidget(self.help_button(label=key, help_url=self.help_url))
                 scroll_layout.insertLayout(scroll_layout.count() - 1, element_layout)
                 label.setStyleSheet("""
                 QLabel {
@@ -79,6 +86,46 @@ class PopupMenu(QDialog):
                                 widget.deleteLater()
                                 print(key)
                         break
+
+    #============================================================<  Help Button  >==========================================================
+
+    def help_button(self, label: str = None, help_url: str = None):
+        """
+        Opens a web page on the documentation site with a search for the given label.
+
+        :param label: The section of the documentation to navigate to. Defaults to 'Workflow'.
+        """
+        button_instance = QToolButton()
+        button_instance.setIcon(QIcon(":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        button_instance.clicked.connect(lambda : self.open_wiki_page(label=label, url=help_url))
+        return button_instance
+    def open_wiki_page(self, label: str = None, url: str = None):
+        if url is None:
+            url = ''
+        base_url = "https://developer.valvesoftware.com/wiki/"
+
+        if label is None:
+            label = "Workflow"
+        label = self.clean_spaces(label)
+        url = f"{base_url + url}#{label}"
+
+        try:
+            webbrowser.open(url)
+        except Exception as e:
+            ErrorInfo(f"Failed to open the URL: {e}").exec()
+
+    def clean_spaces(self, text: str) -> str:
+        """
+        Cleans spaces in the input text by replacing them with underscores.
+
+        Args:
+            text (str): The input string to be processed.
+
+        Returns:
+            str: The processed string with spaces replaced by underscores.
+        """
+        return text.replace(" ", "_")
+
     def event(self, event):
         if event.type() == QEvent.WindowDeactivate:
             self.close()
@@ -105,5 +152,7 @@ class PopupMenu(QDialog):
 
                     if search_text in label.text().lower():
                         element_layout.itemAt(0).widget().show()
+                        element_layout.itemAt(1).widget().show()
                     else:
                         element_layout.itemAt(0).widget().hide()
+                        element_layout.itemAt(1).widget().hide()
