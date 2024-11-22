@@ -17,6 +17,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
+        self.opened_file = ""
 
         self.PropertiesWindow = SoundEventEditorPropertiesWindow()
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
@@ -25,6 +26,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.open_folder_button.clicked.connect(self.open_folder)
         self.ui.new_button.clicked.connect(self.create_new_preset)
         self.ui.open_button.clicked.connect(self.open_preset)
+        self.ui.save_button.clicked.connect(self.save_preset)
 
     #==============================================================<  Explorer  >===========================================================
         self.tree_directory = os.path.join(app_dir, "SoundEventEditor", "Presets")
@@ -36,6 +38,14 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
     #=======================================================<  Preset Manager Actions  >====================================================
+    def explorer_status(self):
+        """Displays current opened preset"""
+        __filepath = self.opened_file
+        if __filepath == '':
+            self.ui.ExplorerDockWidget.setWindowTitle('Preset Explorer')
+        else:
+            __filename = os.path.basename(__filepath)
+            self.ui.ExplorerDockWidget.setWindowTitle(f'Preset Explorer ({__filename})')
     def create_new_preset(self):
         """Create a blank preset."""
         # Convert an empty dictionary to KV3 format
@@ -47,7 +57,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
 
         # Generate a unique file name by checking existing files
         while True:
-            filepath = os.path.join(self.tree_directory, f"{new_name}_{unique_digit}.vdata")
+            filepath = os.path.join(self.tree_directory, f"{new_name}_{unique_digit}.kv3")
             if not os.path.exists(filepath):
                 break
             unique_digit += 1
@@ -61,18 +71,29 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         os.startfile(self.tree_directory)
     def open_preset(self):
         """Loads a preset into the Window Properties"""
-        current_index = self.mini_explorer.tree.selectionModel().currentIndex()
-        __filepath = self.mini_explorer.tree.model().filePath(current_index)  # Convert QModelIndex to file path
+        index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
+        __filepath = self.mini_explorer.tree.model().filePath(index)
+
         with open(__filepath, 'r') as file:
             __data = file.read()
         __data = Kv3ToJson(__data)
+
         self.PropertiesWindow.properties_clear()
         self.PropertiesWindow.properties_groups_show()
         self.PropertiesWindow.populate_properties(__data)
+
+        self.opened_file = __filepath
         print(f'Opened file: {__filepath}')
+        self.explorer_status()
     def save_preset(self):
         """Saving preset"""
-        self.PropertiesWindow.value()
+        __filepath = self.opened_file
+        self.PropertiesWindow.on_update()
+        __data = self.PropertiesWindow.value
+        __data = JsonToKv3(__data)
+        with open(__filepath, 'w') as file:
+            file.write(__data)
+        print(f'Saved file: {__filepath}')
     #=======================================================<  Properties Window  >=====================================================
 
     #======================================[Window State]========================================
