@@ -81,7 +81,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                 if key_value not in existing_items:
                     soundevent_editor_properties_filtered.append({key:value})
         # Use the filtered properties for the popup menu
-        self.popup_menu = PopupMenu(soundevent_editor_properties_filtered, add_once=True)
+        self.popup_menu = PopupMenu(soundevent_editor_properties_filtered, add_once=True, help_url="SoundEvent_Editor")
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_property(name, value))
         self.popup_menu.show()
 
