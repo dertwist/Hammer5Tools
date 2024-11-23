@@ -206,6 +206,7 @@ class BoolWidget(QWidget):
 
     def set_value(self, value):
         """Set value as text for checkbox"""
+        self.checkbox.setChecked(value)
         self.checkbox.setText(str(value))
 #================================================================<  Combobox  >=============================================================
 class ComboboxDynamicItems(QComboBox):
