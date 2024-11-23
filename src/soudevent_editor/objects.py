@@ -14,6 +14,8 @@ soundevent_editor_properties = [
     {'Occlusion Intensity': {'occlusion_intensity': 0.0}},
     {'Distance Effect Mix': {'distance_effect_mix': 0.0}},
     {'Reverb Wet': {'reverb_wet': 1.0}},
+    {'Occlusion Frequency Scale ': {'occlusion_frequency_scale ': 1.0}},
+
 
     # Files
     {'Sound Files track': {'vsnd_files_track_01': []}},
