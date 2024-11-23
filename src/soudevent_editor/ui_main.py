@@ -19,7 +19,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDockWidget,
     QFrame, QHBoxLayout, QHeaderView, QLabel,
     QLineEdit, QMainWindow, QPushButton, QSizePolicy,
-    QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
+    QTabWidget, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
+    QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -194,7 +195,7 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_4)
         self.dockWidget_10 = QDockWidget(MainWindow)
         self.dockWidget_10.setObjectName(u"dockWidget_10")
-        self.dockWidget_10.setMinimumSize(QSize(320, 102))
+        self.dockWidget_10.setMinimumSize(QSize(320, 154))
         self.dockWidget_10.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.dockWidget_10.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
         self.explorer_layout_widget = QWidget()
@@ -202,10 +203,25 @@ class Ui_MainWindow(object):
         self.verticalLayout_10 = QVBoxLayout(self.explorer_layout_widget)
         self.verticalLayout_10.setObjectName(u"verticalLayout_10")
         self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
+        self.tabWidget = QTabWidget(self.explorer_layout_widget)
+        self.tabWidget.setObjectName(u"tabWidget")
+        self.CustomSounds = QWidget()
+        self.CustomSounds.setObjectName(u"CustomSounds")
+        self.verticalLayout = QVBoxLayout(self.CustomSounds)
+        self.verticalLayout.setSpacing(0)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.explorer_layout = QVBoxLayout()
         self.explorer_layout.setObjectName(u"explorer_layout")
 
-        self.verticalLayout_10.addLayout(self.explorer_layout)
+        self.verticalLayout.addLayout(self.explorer_layout)
+
+        self.tabWidget.addTab(self.CustomSounds, "")
+        self.Valve = QWidget()
+        self.Valve.setObjectName(u"Valve")
+        self.tabWidget.addTab(self.Valve, "")
+
+        self.verticalLayout_10.addWidget(self.tabWidget)
 
         self.frame_3 = QFrame(self.explorer_layout_widget)
         self.frame_3.setObjectName(u"frame_3")
@@ -380,6 +396,9 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
+        self.tabWidget.setCurrentIndex(1)
+
+
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
 
@@ -409,6 +428,8 @@ class Ui_MainWindow(object):
         self.open_preset_manager_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+P", None))
 #endif // QT_CONFIG(shortcut)
         self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.CustomSounds), QCoreApplication.translate("MainWindow", u"Custom", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.Valve), QCoreApplication.translate("MainWindow", u"Valve", None))
 #if QT_CONFIG(tooltip)
         self.save_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Save soundevents_addon.vsndevts Ctrl + S</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
