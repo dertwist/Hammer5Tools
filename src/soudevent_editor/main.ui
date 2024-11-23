@@ -311,9 +311,9 @@
        <property name="currentIndex">
         <number>0</number>
        </property>
-       <widget class="QWidget" name="CustomSounds">
+       <widget class="QWidget" name="addon_sounds">
         <attribute name="title">
-         <string>Custom</string>
+         <string>Addon</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="spacing">
@@ -336,9 +336,9 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="Valve">
+       <widget class="QWidget" name="internal_sounds">
         <attribute name="title">
-         <string>Valve</string>
+         <string>Internal</string>
         </attribute>
        </widget>
       </widget>

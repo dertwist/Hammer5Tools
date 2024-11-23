@@ -21,6 +21,7 @@ editor_info = {
     }
     }
 app_dir = os.getcwd()
+SoundEventEditor_Preset_Path = os.path.join(app_dir, "SoundEventEditor", "Presets")
 
 #===========================================================<  generic functions  >=========================================================
 def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=False):
