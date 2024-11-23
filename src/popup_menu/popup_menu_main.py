@@ -13,7 +13,7 @@ class PopupMenu(QDialog):
     label_clicked = Signal(str)
     add_property_signal = Signal(str, str)
 
-    def __init__(self, properties: dict, add_once: bool = False, parent=None, help_url: str = None):
+    def __init__(self, properties: list, add_once: bool = False, parent=None, help_url: str = None):
         super().__init__(parent)
         self.help_url = help_url
         self.properties = properties
