@@ -126,7 +126,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             if key not in existing_items:
                 print(existing_items)
                 self.create_property(key, data[key])
-                self.on_update()
             else:
                 ErrorInfo(
                     text='A property with the same name already exists in the sound event. Please choose a different name or delete the existing property.').exec()
@@ -210,6 +209,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         widget_instance.edited.connect(self.on_update)
         index = self.ui.properties_layout.count() - 1
         self.ui.properties_layout.insertWidget(index, widget_instance)
+        self.on_update()
 
     def get_property_value(self, index):
         """Getting dict value from widget instance frame"""

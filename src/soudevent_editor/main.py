@@ -6,11 +6,12 @@ from src.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QTreeWidgetItem, QMessageBox, QApplication
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
 from PySide6.QtCore import Qt
+from src.popup_menu.popup_menu_main import PopupMenu
 from src.widgets import HierarchyItemModel, ErrorInfo
 from src.preferences import settings
 from src.soudevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from src.soudevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
-from src.common import JsonToKv3,Kv3ToJson
+from src.common import *
 from src.smartprop_editor.commands import DeleteTreeItemCommand
 
 class CopyDefaultSoundFolders:
@@ -159,6 +160,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         item = self.ui.hierarchy_widget.currentItem()
         _data = self.PropertiesWindow.value
         self.update_hierarchy_item(item, _data)
+
     #===============================================================<  Filter  >============================================================
     def eventFilter(self, source, event):
         """Handle keyboard and shortcut events for various widgets."""
@@ -204,7 +206,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
                 if source.viewport().underMouse():
                     if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
-                        self.add_an_element()
+                        self.call_soundevent_preset_menu()
                         return True
 
         return super().eventFilter(source, event)
@@ -213,12 +215,41 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def new_soundevent(self, _data: dict = None):
         """Creates new soundevent using given data. Input dict"""
+        __soundevent_name = "SoundEvent"
+        __soundevent = QTreeWidgetItem()
+        __soundevent.setText(0, __soundevent_name)
+        __soundevent.setText(1, str(_data))
+        self.ui.hierarchy_widget.invisibleRootItem().addChild(__soundevent)
 
     def new_soundevent_blank(self):
         """Create empty soundevent using """
-
-    def new_soundevent_preset(self):
+        self.new_soundevent(_data={})
+    def new_soundevent_preset(self, _preset: str = None, __preset_url: str = None):
         """Call popup menu with all presets that are in the folder"""
+        # Load data form preset path
+        __data = self.load_preset(__preset_url)
+        self.new_soundevent(__data)
+
+    #=========================================================<  Preset Popup menu  >=======================================================
+
+    def call_soundevent_preset_menu(self):
+        """Calls sound events preset menu"""
+        presets = list()
+        for root, dirs, files in os.walk(SoundEventEditor_Preset_Path):
+            for file in files:
+                presets.append({file: os.path.join(root, file)})
+
+        self.soundevent_preset_menu = PopupMenu(properties=list(presets))
+        self.soundevent_preset_menu.add_property_signal.connect(lambda name, value: self.new_soundevent_preset(name, value))
+        self.soundevent_preset_menu.show()
+
+    def load_preset(self, path: str = None):
+        """Load data from preset using url"""
+        debug(f"LoadPreset from {path}")
+        with open(path, 'r') as file:
+            __data = file.read()
+        __data = Kv3ToJson(__data)
+        return __data
 
     #================================================================<  Hierarchy  >=============================================================
 
@@ -291,8 +322,9 @@ class SoundEventEditorMainWindow(QMainWindow):
         add_new_preset_lat_action = menu.addAction("(Last) - New from")
         menu.addSeparator()
         add_new_preset_action = menu.addAction("New event (Preset)")
+        add_new_preset_action.triggered.connect(self.call_soundevent_preset_menu)
         add_new_blank_action = menu.addAction("New event (Blank)")
-        # add_new_action.triggered.connect(self.add_an_element)
+        add_new_blank_action.triggered.connect(self.new_soundevent_blank)
         add_new_preset_action.setShortcut(QKeySequence(QKeySequence("Ctrl+F")))
 
         menu.addSeparator()

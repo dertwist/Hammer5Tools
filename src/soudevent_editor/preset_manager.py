@@ -5,7 +5,7 @@ from src.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QApplication
 from src.preferences import settings
 from src.soudevent_editor.properties_window import SoundEventEditorPropertiesWindow
-from src.common import app_dir, Kv3ToJson, JsonToKv3
+from src.common import app_dir, Kv3ToJson, JsonToKv3, SoundEventEditor_Preset_Path
 from src.widgets import ExpetionErrorDialog
 
 
@@ -27,7 +27,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.save_button.clicked.connect(self.save_preset)
 
     #==============================================================<  Explorer  >===========================================================
-        self.tree_directory = os.path.join(app_dir, "SoundEventEditor", "Presets")
+        self.tree_directory = SoundEventEditor_Preset_Path
         if os.path.exists(self.tree_directory):
             pass
         else:
