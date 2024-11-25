@@ -181,12 +181,6 @@ class SoundEventEditorPropertyCurve(QWidget):
 
         # Updating value
         self.value_update(value)
-        self.init_root_layout()
-
-        # Init
-        self.init_label('Datapoints', self.horizontal_layout_top)
-        self.init_label('Preview', self.horizontal_layout_bottom)
-        self.init_datapoints_frame()
 
         # Init labels
         if labels is None:
@@ -215,10 +209,6 @@ class SoundEventEditorPropertyCurve(QWidget):
         # connections
         self.ui.add_data_point_button.clicked.connect(lambda : self.add_datapoint())
 
-    def init_datapoints_frame(self):
-        self.datapoints_frame_layout = QVBoxLayout()
-        self.horizontal_layout_top.addLayout(self.datapoints_frame_layout)
-
     def add_datapoint(self, value: list = None):
         """Adding datapoint"""
         if value is None:
@@ -240,17 +230,6 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.value_update(__value)
         self.set_widget_size(__value)
         self.edited.emit()
-
-    def init_root_layout(self):
-        """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
-        self.horizontal_layout_top = QHBoxLayout()
-        self.horizontal_layout_bottom = QHBoxLayout()
-        self.vertical_layout = QVBoxLayout()
-
-        self.vertical_layout.addLayout(self.horizontal_layout_top)
-        self.vertical_layout.addLayout(self.horizontal_layout_bottom)
-
-        self.setLayout(self.vertical_layout)
 
     def init_label(self, label_text, layout):
         """Adding received text to the label widget"""
