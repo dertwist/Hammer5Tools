@@ -98,7 +98,7 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
         _value = self.float_widget_instance.value
         self.value = {self.value_class: _value}
     def init_label_color(self):
-        return "#4CE4C7"
+        return "#73d1bf"
 
 class SoundEventEditorPropertyInt(SoundEventEditorPropertyFloat):
     def __init__(self, parent=None, label_text: str = None, value: dict = None, slider_range: list = [0, 0], only_positive: bool = False):
@@ -119,7 +119,7 @@ class SoundEventEditorPropertyInt(SoundEventEditorPropertyFloat):
         # if hasattr(self, 'float_widget_instance'):
         self.float_widget_instance.int_output = True
     def init_label_color(self):
-        return "#25A7BC"
+        return "#4ca0ad"
 class SoundEventEditorPropertyLegacy(SoundEventEditorPropertyBase):
     def __init__(self, parent=None, label_text: str = None, value: dict = None):
         """
@@ -143,7 +143,7 @@ class SoundEventEditorPropertyLegacy(SoundEventEditorPropertyBase):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         self.value = {self.value_class: value}
     def init_label_color(self):
-        return "#BCB925"
+        return "#d9b34c"
 class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
     def __init__(self, parent=None, label_text: str = None, value: dict = None):
         """
@@ -169,7 +169,7 @@ class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         self.value = {self.value_class: value}
     def init_label_color(self):
-        return "#D20103"
+        return "#d1494a"
 
 class SoundEventEditorPropertyCurve(QWidget):
     edited = Signal()
