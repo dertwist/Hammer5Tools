@@ -57,13 +57,6 @@ class SoundEventEditorPropertyBase(QWidget):
         """Set maximum height"""
         self.setMaximumHeight(44)
         self.setMinimumHeight(44)
-    # def on_property_update(self):
-    #     """Send signal that user changed the property"""
-    #     self.value_update()
-    #     self.edited.emit()
-    # def value_update(self):
-    #     """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
-    #     self.value = {}
 class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
     def __init__(self, parent=None, label_text: str = None, value: dict = None, slider_range: list = [0, 0],only_positive: bool = False):
         """
@@ -219,7 +212,8 @@ class SoundEventEditorPropertyCurve(QWidget):
             self.add_datapoint(list)
         # Set widget size according to datapoint count
         # connections
-        self.ui.add_data_point_button.clicked.connect(lambda : self.add_datapoint())
+        self.ui.add_data_point_button.clicked.connect(lambda: self.add_datapoint())
+        self.on_property_update()
 
     def add_datapoint(self, value: list = None):
         """Adding datapoint"""
@@ -255,10 +249,10 @@ class SoundEventEditorPropertyCurve(QWidget):
         # for item in __value:
         #     count = count + len(item)
 
-        height = count * 64 + 346
+        height = count * 44 + 50
         debug(f"set_widget_size, height: {height}, len __value:{count}")
-        self.setMaximumHeight(height)
-        self.setMinimumHeight(height)
+        self.ui.top.setMaximumHeight(height)
+        self.ui.top.setMinimumHeight(height)
     def preview_update(self, values):
         """
         Updates the preview with the given values.
@@ -267,7 +261,6 @@ class SoundEventEditorPropertyCurve(QWidget):
         def get_value(list_value:list, index:int):
             __data: list = []
             for datapoint in list_value:
-                print(datapoint)
                 __data.append(datapoint[index])
             while len(__data) < 2:
                 __data.append(0)
@@ -275,13 +268,13 @@ class SoundEventEditorPropertyCurve(QWidget):
 
         __data_01 = get_value(list_value=values, index=0)
         __data_02 = get_value(list_value=values, index=1)
-        print(f"preview_update {__data_01}, {__data_02}")
 
         # Ensure the scene is set up
         self.setup_scene()
 
         # Draw the curve using the given values
         self.preview_curve(values=__data_01, widget=self.ui.graphicsView_01)
+        self.preview_curve(values=__data_02, widget=self.ui.graphicsView_02)
 
     def setup_scene(self):
         """
@@ -290,14 +283,42 @@ class SoundEventEditorPropertyCurve(QWidget):
         if self.ui.graphicsView_01.scene() is None:
             scene = QGraphicsScene()
             self.ui.graphicsView_01.setScene(scene)
+        if self.ui.graphicsView_02.scene() is None:
+            scene = QGraphicsScene()
+            self.ui.graphicsView_02.setScene(scene)
 
         # Disable scrollbars to prevent unwanted scrolling
         self.ui.graphicsView_01.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.ui.graphicsView_01.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-    def linear_interpolate(self, x_values, y_values, num_points):
+    def scale_values(self, values, width, height):
         """
-        Linearly interpolates between given x and y values.
+        Scales the given y-values to fit within the widget's height.
+        :param values: List of y-values to scale.
+        :param width: The width of the widget.
+        :param height: The height of the widget.
+        :return: Tuple of scaled x and y values.
+        """
+        # Generate x values evenly spaced across the widget's width
+        x_values = [i * (width / (len(values) - 1)) for i in range(len(values))]
+
+        # Determine the min and max of the input values for dynamic scaling
+        min_value = min(values)
+        max_value = max(values)
+        value_range = max_value - min_value
+
+        # Scale y-values to fit within the widget's height
+        if value_range > 0:
+            y_values = [(height - ((y - min_value) / value_range) * height) for y in values]
+        else:
+            # If all values are the same, center them vertically
+            y_values = [height / 2] * len(values)
+
+        return x_values, y_values
+
+    def bezier_interpolate(self, x_values, y_values, num_points):
+        """
+        Interpolates between given x and y values using cubic Bezier curves.
         :param x_values: List of x-values.
         :param y_values: List of y-values.
         :param num_points: Number of points to interpolate.
@@ -313,10 +334,21 @@ class SoundEventEditorPropertyCurve(QWidget):
             x_start, x_end = x_values[i], x_values[i + 1]
             y_start, y_end = y_values[i], y_values[i + 1]
 
+            # Calculate control points for the Bezier curve
+            control_x1 = x_start + (x_end - x_start) / 3
+            control_y1 = y_start
+            control_x2 = x_start + 2 * (x_end - x_start) / 3
+            control_y2 = y_end
+
             for j in range(num_points):
                 t = j / num_points
-                interpolated_x.append(x_start + t * (x_end - x_start))
-                interpolated_y.append(y_start + t * (y_end - y_start))
+                # Cubic Bezier formula
+                x = (1 - t) ** 3 * x_start + 3 * (1 - t) ** 2 * t * control_x1 + 3 * (
+                            1 - t) * t ** 2 * control_x2 + t ** 3 * x_end
+                y = (1 - t) ** 3 * y_start + 3 * (1 - t) ** 2 * t * control_y1 + 3 * (
+                            1 - t) * t ** 2 * control_y2 + t ** 3 * y_end
+                interpolated_x.append(x)
+                interpolated_y.append(y)
 
         # Add the last point
         interpolated_x.append(x_values[-1])
@@ -324,25 +356,9 @@ class SoundEventEditorPropertyCurve(QWidget):
 
         return interpolated_x, interpolated_y
 
-    def scale_values(self, values, width, height):
-        """
-        Scales the given y-values to fit within the widget's height.
-        :param values: List of y-values to scale.
-        :param width: The width of the widget.
-        :param height: The height of the widget.
-        :return: Tuple of scaled x and y values.
-        """
-        # Generate x values evenly spaced across the widget's width
-        x_values = [i * (width / (len(values) - 1)) for i in range(len(values))]
-
-        # Flip y-values for Qt's coordinate system and clamp within the widget's height
-        y_values = [max(0, min(height, height - y)) for y in values]
-
-        return x_values, y_values
-
     def preview_curve(self, values=None, widget=None):
         """
-        Renders a sharp, linear curve based on the given values in the specified widget.
+        Renders a smooth curve based on the given values in the specified widget.
         :param values: List of y-values for the curve.
         :param widget: QGraphicsView widget to render the curve on.
         """
@@ -362,8 +378,8 @@ class SoundEventEditorPropertyCurve(QWidget):
         # Scale x and y values to fit the widget
         x_values, y_values = self.scale_values(values, width, height)
 
-        # Interpolate the values for a smoother curve
-        interpolated_x, interpolated_y = self.linear_interpolate(x_values, y_values, num_points=10)
+        # Interpolate the values for a smoother curve using Bezier interpolation
+        interpolated_x, interpolated_y = self.bezier_interpolate(x_values, y_values, num_points=10)
 
         # Create a QPainterPath for the curve
         path = QPainterPath()
