@@ -154,11 +154,15 @@ class Ui_CurveWidget(object):
         self.horizontalLayout_8.setContentsMargins(-1, -1, -1, 0)
         self.graphicsView_01 = QGraphicsView(CurveWidget)
         self.graphicsView_01.setObjectName(u"graphicsView_01")
+        self.graphicsView_01.setMinimumSize(QSize(0, 256))
+        self.graphicsView_01.setMaximumSize(QSize(16777215, 256))
 
         self.horizontalLayout_8.addWidget(self.graphicsView_01)
 
         self.graphicsView_02 = QGraphicsView(CurveWidget)
         self.graphicsView_02.setObjectName(u"graphicsView_02")
+        self.graphicsView_02.setMinimumSize(QSize(0, 256))
+        self.graphicsView_02.setMaximumSize(QSize(16777215, 256))
 
         self.horizontalLayout_8.addWidget(self.graphicsView_02)
 

@@ -224,10 +224,36 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QGraphicsView" name="graphicsView_01"/>
+              <widget class="QGraphicsView" name="graphicsView_01">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>256</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>256</height>
+                </size>
+               </property>
+              </widget>
              </item>
              <item>
-              <widget class="QGraphicsView" name="graphicsView_02"/>
+              <widget class="QGraphicsView" name="graphicsView_02">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>256</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>256</height>
+                </size>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
