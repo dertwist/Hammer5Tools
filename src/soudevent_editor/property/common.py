@@ -1,7 +1,14 @@
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
+from typing import Any
+
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout
+
+from src.preferences import debug
 from src.widgets import FloatWidget, LegacyWidget, BoolWidget
 from PySide6.QtCore import Signal
 from src.common import convert_snake_case
+from src.soudevent_editor.property.ui_curve import Ui_CurveWidget
+
+#===============================================================<  Properties >============================================================
 
 class SoundEventEditorPropertyBase(QWidget):
     edited = Signal()
@@ -14,9 +21,9 @@ class SoundEventEditorPropertyBase(QWidget):
         self.value_class = label_text
 
         # Init
+        self.set_widget_size()
         self.init_root_layout()
         self.init_label(label_text)
-        self.set_widget_size()
         # self.on_property_update()
 
     def init_root_layout(self):
@@ -39,8 +46,8 @@ class SoundEventEditorPropertyBase(QWidget):
         self.root_layout.addWidget(widget)
     def set_widget_size(self):
         """Set maximum height"""
-        self.setMaximumHeight(48)
-        self.setMinimumHeight(48)
+        self.setMaximumHeight(39)
+        self.setMinimumHeight(39)
     # def on_property_update(self):
     #     """Send signal that user changed the property"""
     #     self.value_update()
@@ -161,3 +168,103 @@ class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
         self.value = {self.value_class: value}
     def init_label_color(self):
         return "#D20103"
+
+class SoundEventEditorPropertyCurve(QWidget):
+    edited = Signal()
+    def __init__(self, parent=None, label_text: str = None, value: dict = None):
+        """
+        Bool property
+
+        value : dict
+        """
+        super().__init__(parent)
+        self.ui = Ui_CurveWidget()
+        self.ui.setupUi(self)
+        self.value_class = label_text
+
+        # Updating value
+        self.value_update(value)
+        self.init_root_layout()
+
+        # Init
+        self.init_label('Datapoints', self.horizontal_layout_top)
+        self.init_label('Preview', self.horizontal_layout_bottom)
+        self.init_datapoints_frame()
+
+        for list in value:
+            self.CurveWidgetDatapoint = CurveWidgetDatapoint(list)
+            self.ui.datapoints_layout.addWidget(self.CurveWidgetDatapoint)
+        # Set widget size according to datapoint count
+        self.set_widget_size()
+    def init_datapoints_frame(self):
+        self.datapoints_frame_layout = QVBoxLayout()
+        self.horizontal_layout_top.addLayout(self.datapoints_frame_layout)
+
+    def on_property_update(self, value):
+        """Send signal that user changed the property"""
+        self.value_update(value)
+        self.edited.emit()
+    def init_root_layout(self):
+        """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
+        self.horizontal_layout_top = QHBoxLayout()
+        self.horizontal_layout_bottom = QHBoxLayout()
+        self.vertical_layout = QVBoxLayout()
+
+        self.vertical_layout.addLayout(self.horizontal_layout_top)
+        self.vertical_layout.addLayout(self.horizontal_layout_bottom)
+
+        self.setLayout(self.vertical_layout)
+    def init_label(self, label_text, layout):
+        """Adding received text to the label widget"""
+        if label_text is None:
+            label_text = "Label"
+        label_instance = QLabel()
+        label_instance.setText(convert_snake_case(label_text))
+        label_instance.setStyleSheet(f"""
+        color: {self.init_label_color()}""")
+        layout.addWidget(label_instance)
+
+    def value_update(self, value):
+        """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
+        self.value = {self.value_class: value}
+    def set_widget_size(self):
+        """Set maximum height"""
+        height = self.ui.datapoints_layout.count()
+        height = height * 2 + 256
+        self.setMaximumHeight(height)
+        self.setMinimumHeight(height)
+    def init_label_color(self):
+        return "#FE9900"
+
+#==========================================================<  Properties Widgets  >=======================================================
+
+class CurveWidgetDatapoint(QWidget):
+    def __init__(self, value: list = None):
+        """A line of six float widgets (last 4 hidden by default)"""
+        super().__init__()
+        if value is None:
+            value = [0,0, 0,0,2,3]
+        debug(f"CurveWidgetDatapoint value: {value}")
+
+        # Init layout
+        self.layout_horizontal = QHBoxLayout()
+        self.setLayout(self.layout_horizontal)
+
+        for index in range(len(value)):
+            if index >= 2:
+                self.create_widget_control(value[index], True)
+            else:
+                self.create_widget_control(value[index], False)
+    def create_widget_control(self, value, hidden):
+        """Creating float widget with value and adding"""
+        float_instance = FloatWidget(value=value, spacer_enable=False)
+        if hidden:
+            float_instance.hide()
+        self.layout().addWidget(float_instance)
+    def hide_widget_controls(self):
+        """Hides widget controls. I don't know what does last four numbers mean, so let's just hide them."""
+        for index in range(self.layout().count()):
+            if index >= 2:
+                pass
+    def show_widget_controls(self):
+        """Showing widget controls"""
