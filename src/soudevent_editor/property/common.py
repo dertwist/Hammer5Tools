@@ -1,5 +1,21 @@
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem
+from PySide6.QtCore import QEasingCurve, Qt
+from PySide6.QtGui import QPainterPath, QPen, QColor
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem
+from PySide6.QtWidgets import QGraphicsView, QGraphicsPathItem, QGraphicsScene
+from PySide6.QtGui import QPainterPath
+import numpy as np
+from PySide6.QtCore import QEasingCurve, QRectF
+from PySide6.QtGui import QPainterPath, QPen, QColor
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem
+import numpy as np
+from scipy.interpolate import CubicSpline
+from src.preferences import debug
+from PySide6.QtCore import QEasingCurve
+from PySide6.QtWidgets import QGraphicsView
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QPainterPath
+import numpy as np
 from src.preferences import debug
 from src.common import convert_snake_case
 from src.soudevent_editor.property.ui_curve import Ui_CurveWidget
@@ -229,6 +245,7 @@ class SoundEventEditorPropertyCurve(QWidget):
                 debug(f'on_property_update: widget:{widget}, value:{__value}')
         self.value_update(__value)
         self.set_widget_size(__value)
+        self.preview_update(__value)
         self.edited.emit()
 
 
@@ -245,7 +262,90 @@ class SoundEventEditorPropertyCurve(QWidget):
         debug(f"set_widget_size, height: {height}")
         self.setMaximumHeight(height)
         self.setMinimumHeight(height)
+    def preview_update(self, values):
+        """
+        Updates the preview with the given values.
+        :param values: A list of y-values representing the curve data points.
+        """
+        if not values or not isinstance(values, list) or len(values) < 2:
+            raise ValueError("Invalid input: 'values' must be a list with at least 2 values.")
 
+        print(f"preview_update: values to process: {values}")
+
+        # Ensure the scene is set up
+        self.setup_scene()
+
+        # Draw the curve using the given values
+        self.preview_curve(values=[0,6,8], widget=self.ui.graphicsView_01)
+
+    def setup_scene(self):
+        """
+        Ensures the graphics view has an associated scene and disables scrolling.
+        """
+        if self.ui.graphicsView_01.scene() is None:
+            scene = QGraphicsScene()
+            self.ui.graphicsView_01.setScene(scene)
+
+        # Disable scrollbars to prevent unwanted scrolling
+        self.ui.graphicsView_01.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.ui.graphicsView_01.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+    def scale_values(self, values, width, height):
+        """
+        Scales the given y-values to fit within the widget's height.
+        :param values: List of y-values to scale.
+        :param width: The width of the widget.
+        :param height: The height of the widget.
+        :return: Tuple of scaled x and y values.
+        """
+        # Generate x values evenly spaced across the widget's width
+        x_values = [i * (width / (len(values) - 1)) for i in range(len(values))]
+
+        # Flip y-values for Qt's coordinate system and clamp within the widget's height
+        y_values = [max(0, min(height, height - y)) for y in values]
+
+        return x_values, y_values
+
+    def preview_curve(self, values=None, widget=None):
+        """
+        Renders a sharp, linear curve based on the given values in the specified widget.
+        :param values: List of y-values for the curve.
+        :param widget: QGraphicsView widget to render the curve on.
+        """
+        if widget is None:
+            raise ValueError("Widget cannot be None")
+        if values is None or len(values) < 2:
+            raise ValueError("Values list must contain at least two elements")
+
+        # Get the size of the widget's viewport
+        viewport_size = widget.viewport().size()
+        width = viewport_size.width()
+        height = viewport_size.height()
+
+        # Set the scene size to match the widget's viewport
+        widget.scene().setSceneRect(0, 0, width, height)
+
+        # Scale x and y values to fit the widget
+        x_values, y_values = self.scale_values(values, width, height)
+
+        # Create a QPainterPath for the curve
+        path = QPainterPath()
+        path.moveTo(x_values[0], y_values[0])
+        for x, y in zip(x_values[1:], y_values[1:]):
+            path.lineTo(x, y)
+
+        # Create a QGraphicsPathItem to display the curve
+        curve_item = QGraphicsPathItem(path)
+
+        # Set the pen color and style for the curve
+        pen = QPen(QColor("gray"))
+        pen.setWidth(2)  # Optional: Adjust the width of the curve
+        curve_item.setPen(pen)
+
+        # Clear the scene before adding the new curve to avoid overlaps
+        scene = widget.scene()
+        scene.clear()
+        scene.addItem(curve_item)
 
 #==========================================================<  Properties Widgets  >=======================================================
 
