@@ -1,7 +1,7 @@
 import ast
 
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, QCheckBox, QVBoxLayout, QToolBox
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, QCheckBox, QVBoxLayout, QToolBox, QToolButton
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
@@ -313,7 +313,26 @@ class ComboboxTreeChild(ComboboxDynamicItems):
             data_out.append(child_item.text(0))
 
         return data_out
+#================================================================<  Buttons  >==============================================================
 
+class DeleteButton(QToolButton):
+    def __init__(self, instance: QWidget = None):
+        super().__init__()
+        if instance is None:
+            raise ValueError
+
+        self.instance = instance
+        self.clicked.connect(self.delete)
+        self.setIcon(QIcon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        # self.setMinimumHeight(24)
+        # self.setMinimumWidth(24)
+        # self.setMaximumWidth(24)
+        # self.setMaximumHeight(24)
+    def delete(self):
+        """Deleting Instance"""
+        # self.instance.close()
+        self.instance.closeEvent(self.event)
+        # self.instance.deleteLater()
 #==============================================================<  Tree widgets  >===========================================================
 
 class HierarchyItemModel(QTreeWidgetItem):
