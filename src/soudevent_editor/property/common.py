@@ -1,12 +1,9 @@
-from typing import Any
-
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout
-
-from src.preferences import debug
-from src.widgets import FloatWidget, LegacyWidget, BoolWidget
 from PySide6.QtCore import Signal
+from src.preferences import debug
 from src.common import convert_snake_case
 from src.soudevent_editor.property.ui_curve import Ui_CurveWidget
+from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton
 
 #===============================================================<  Properties >============================================================
 
@@ -46,8 +43,8 @@ class SoundEventEditorPropertyBase(QWidget):
         self.root_layout.addWidget(widget)
     def set_widget_size(self):
         """Set maximum height"""
-        self.setMaximumHeight(39)
-        self.setMinimumHeight(39)
+        self.setMaximumHeight(44)
+        self.setMinimumHeight(44)
     # def on_property_update(self):
     #     """Send signal that user changed the property"""
     #     self.value_update()
@@ -192,18 +189,37 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.init_datapoints_frame()
 
         for list in value:
-            self.CurveWidgetDatapoint = CurveWidgetDatapoint(list)
-            self.ui.datapoints_layout.addWidget(self.CurveWidgetDatapoint)
+            self.add_datapoint(list)
         # Set widget size according to datapoint count
-        self.set_widget_size()
+        # connections
+        self.ui.add_data_point_button.clicked.connect(lambda : self.add_datapoint())
+
     def init_datapoints_frame(self):
         self.datapoints_frame_layout = QVBoxLayout()
         self.horizontal_layout_top.addLayout(self.datapoints_frame_layout)
 
-    def on_property_update(self, value):
+    def add_datapoint(self, value: list = None):
+        """Adding datapoint"""
+        if value is None:
+            value = [0,0, 0,0,2,3]
+        self.datapoint_instance = CurveWidgetDatapoint(value)
+        self.datapoint_instance.edited.connect(self.on_property_update)
+        self.ui.datapoints_layout.addWidget(self.datapoint_instance)
+        self.on_property_update()
+    def on_property_update(self):
         """Send signal that user changed the property"""
-        self.value_update(value)
+        __value = []
+        for index in range(self.ui.datapoints_layout.count()):
+            widget = self.ui.datapoints_layout.itemAt(index).widget()
+            if isinstance(widget, CurveWidgetDatapoint):
+                __list = widget.value
+                if isinstance(__list, list):
+                    __value.append(__list)
+                debug(f'on_property_update: widget:{widget}, value:{__value}')
+        self.value_update(__value)
+        self.set_widget_size(__value)
         self.edited.emit()
+
     def init_root_layout(self):
         """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
         self.horizontal_layout_top = QHBoxLayout()
@@ -214,6 +230,7 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.vertical_layout.addLayout(self.horizontal_layout_bottom)
 
         self.setLayout(self.vertical_layout)
+
     def init_label(self, label_text, layout):
         """Adding received text to the label widget"""
         if label_text is None:
@@ -227,21 +244,28 @@ class SoundEventEditorPropertyCurve(QWidget):
     def value_update(self, value):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         self.value = {self.value_class: value}
-    def set_widget_size(self):
+
+    def set_widget_size(self, __value):
         """Set maximum height"""
-        height = self.ui.datapoints_layout.count()
-        height = height * 2 + 256
+        # height = self.ui.datapoints_layout.count()
+        count = len(__value)
+
+        height = count * 48 + 256
+        debug(f"set_widget_size, height: {height}")
         self.setMaximumHeight(height)
         self.setMinimumHeight(height)
+
     def init_label_color(self):
         return "#FE9900"
 
 #==========================================================<  Properties Widgets  >=======================================================
 
 class CurveWidgetDatapoint(QWidget):
+    edited = Signal()
     def __init__(self, value: list = None):
         """A line of six float widgets (last 4 hidden by default)"""
         super().__init__()
+        self.value: list = []
         if value is None:
             value = [0,0, 0,0,2,3]
         debug(f"CurveWidgetDatapoint value: {value}")
@@ -255,16 +279,59 @@ class CurveWidgetDatapoint(QWidget):
                 self.create_widget_control(value[index], True)
             else:
                 self.create_widget_control(value[index], False)
+        # Init delete button
+        self.delete_button = DeleteButton(self)
+        self.layout().addWidget(self.delete_button)
+        self.on_update()
     def create_widget_control(self, value, hidden):
         """Creating float widget with value and adding"""
         float_instance = FloatWidget(value=value, spacer_enable=False)
+        float_instance.on_Slider_updated()
+        float_instance.edited.connect(self.on_update)
         if hidden:
             float_instance.hide()
         self.layout().addWidget(float_instance)
+
+    def on_update(self):
+        self.value = self.get_value()
+        self.edited.emit()
+
+    def get_value(self):
+        """
+        Getting value
+
+        returns: list
+        """
+        __data = []
+        for index in range(self.layout().count()):
+            widget = self.layout().itemAt(index).widget()
+            if isinstance(widget, FloatWidget):
+                __value = widget.value
+                __data.append(__value)
+        debug(f'getting value widget control curve property, data: {__data}')
+        return __data
+    def closeEvent(self, event):
+        self.value = None
+        self.edited.emit()
+        self.deleteLater()
     def hide_widget_controls(self):
-        """Hides widget controls. I don't know what does last four numbers mean, so let's just hide them."""
+        """
+        Hides widget controls. I don't know what does last four numbers mean, so let's just hide them.
+
+        --Tmp--
+
+        """
         for index in range(self.layout().count()):
             if index >= 2:
-                pass
+             self.layout().itemAt(index).widget().hide()
+
     def show_widget_controls(self):
-        """Showing widget controls"""
+        """
+        Showing widget controls
+
+        --Tmp--
+
+        """
+        for index in range(self.layout().count()):
+            if index >= 2:
+             self.layout().itemAt(index).widget().show()
