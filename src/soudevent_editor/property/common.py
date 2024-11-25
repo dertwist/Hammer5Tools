@@ -4,18 +4,14 @@ from PySide6.QtGui import QPainterPath, QPen, QColor
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem
 from PySide6.QtWidgets import QGraphicsView, QGraphicsPathItem, QGraphicsScene
 from PySide6.QtGui import QPainterPath
-import numpy as np
 from PySide6.QtCore import QEasingCurve, QRectF
 from PySide6.QtGui import QPainterPath, QPen, QColor
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem
-import numpy as np
-from scipy.interpolate import CubicSpline
 from src.preferences import debug
 from PySide6.QtCore import QEasingCurve
 from PySide6.QtWidgets import QGraphicsView
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QPainterPath
-import numpy as np
 from src.preferences import debug
 from src.common import convert_snake_case
 from src.soudevent_editor.property.ui_curve import Ui_CurveWidget
@@ -242,7 +238,6 @@ class SoundEventEditorPropertyCurve(QWidget):
                 __list = widget.value
                 if isinstance(__list, list):
                     __value.append(__list)
-                debug(f'on_property_update: widget:{widget}, value:{__value}')
         self.value_update(__value)
         self.set_widget_size(__value)
         self.preview_update(__value)
@@ -254,12 +249,14 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.value = {self.value_class: value}
 
     def set_widget_size(self, __value):
-        """Set maximum height"""
-        # height = self.ui.datapoints_layout.count()
-        count = len(__value)
+        """Set maximum height depending on datapoints instances in the frame"""
+        count: int = 0
+        count = count + len(__value)
+        # for item in __value:
+        #     count = count + len(item)
 
-        height = count * 48 + 256
-        debug(f"set_widget_size, height: {height}")
+        height = count * 64 + 346
+        debug(f"set_widget_size, height: {height}, len __value:{count}")
         self.setMaximumHeight(height)
         self.setMinimumHeight(height)
     def preview_update(self, values):
@@ -267,16 +264,22 @@ class SoundEventEditorPropertyCurve(QWidget):
         Updates the preview with the given values.
         :param values: A list of y-values representing the curve data points.
         """
-        if not values or not isinstance(values, list) or len(values) < 2:
-            raise ValueError("Invalid input: 'values' must be a list with at least 2 values.")
+        def get_value(list_value):
+            __data: list = []
+            for datapoint in list_value:
+                __data.append(datapoint[0])
+            while len(__data) < 2:
+                __data.append(0)
+            return __data
 
-        print(f"preview_update: values to process: {values}")
+        __data_01 = get_value(list_value=values)
+        __data_02 = get_value(list_value=values)
 
         # Ensure the scene is set up
         self.setup_scene()
 
         # Draw the curve using the given values
-        self.preview_curve(values=[0,6,8], widget=self.ui.graphicsView_01)
+        self.preview_curve(values=__data_01, widget=self.ui.graphicsView_01)
 
     def setup_scene(self):
         """
@@ -289,6 +292,35 @@ class SoundEventEditorPropertyCurve(QWidget):
         # Disable scrollbars to prevent unwanted scrolling
         self.ui.graphicsView_01.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.ui.graphicsView_01.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+    def linear_interpolate(self, x_values, y_values, num_points):
+        """
+        Linearly interpolates between given x and y values.
+        :param x_values: List of x-values.
+        :param y_values: List of y-values.
+        :param num_points: Number of points to interpolate.
+        :return: Tuple of interpolated x and y values.
+        """
+        if len(x_values) != len(y_values):
+            raise ValueError("x_values and y_values must have the same length")
+
+        interpolated_x = []
+        interpolated_y = []
+
+        for i in range(len(x_values) - 1):
+            x_start, x_end = x_values[i], x_values[i + 1]
+            y_start, y_end = y_values[i], y_values[i + 1]
+
+            for j in range(num_points):
+                t = j / num_points
+                interpolated_x.append(x_start + t * (x_end - x_start))
+                interpolated_y.append(y_start + t * (y_end - y_start))
+
+        # Add the last point
+        interpolated_x.append(x_values[-1])
+        interpolated_y.append(y_values[-1])
+
+        return interpolated_x, interpolated_y
 
     def scale_values(self, values, width, height):
         """
@@ -328,10 +360,13 @@ class SoundEventEditorPropertyCurve(QWidget):
         # Scale x and y values to fit the widget
         x_values, y_values = self.scale_values(values, width, height)
 
+        # Interpolate the values for a smoother curve
+        interpolated_x, interpolated_y = self.linear_interpolate(x_values, y_values, num_points=10)
+
         # Create a QPainterPath for the curve
         path = QPainterPath()
-        path.moveTo(x_values[0], y_values[0])
-        for x, y in zip(x_values[1:], y_values[1:]):
+        path.moveTo(interpolated_x[0], interpolated_y[0])
+        for x, y in zip(interpolated_x[1:], interpolated_y[1:]):
             path.lineTo(x, y)
 
         # Create a QGraphicsPathItem to display the curve
@@ -378,6 +413,8 @@ class CurveWidgetDatapoint(QWidget):
         self.delete_button = DeleteButton(self)
         self.layout().addWidget(self.delete_button)
         self.on_update()
+        self.setMinimumHeight(48)
+        self.setMaximumHeight(48)
     def create_widget_control(self, value: float, hidden: bool, color: str):
         """Creating float widget with value and adding"""
         float_instance = FloatWidget(value=value, spacer_enable=False)
