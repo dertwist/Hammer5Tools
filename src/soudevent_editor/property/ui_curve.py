@@ -80,7 +80,7 @@ class Ui_CurveWidget(object):
         self.verticalLayout_5.addLayout(self.datapoints_layout)
 
         self.horizontalLayout_4 = QHBoxLayout()
-        self.horizontalLayout_4.setSpacing(16)
+        self.horizontalLayout_4.setSpacing(0)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(8, -1, 8, 0)
         self.add_data_point_button = QPushButton(self.top)
