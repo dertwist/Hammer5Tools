@@ -73,7 +73,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyFloat,
             SoundEventEditorPropertyInt,
             SoundEventEditorPropertyLegacy,
-            SoundEventEditorPropertyBool
+            SoundEventEditorPropertyBool,
+            SoundEventEditorPropertyCurve
         )
 
         # Float
@@ -87,6 +88,14 @@ class SoundEventEditorPropertyFrame(QWidget):
         elif name == 'enable_child_events':
             self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
         # Curve
+        elif name == 'distance_volume_mapping_curve':
+            self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value)
+        elif name == 'distance_unfiltered_stereo_mapping_curve':
+            self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value)
+        elif name == 'fadetime_volume_mapping_curve':
+            self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value)
+        elif name == 'time_volume_mapping_curve':
+            self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value)
         # Combobox
         # Vector3
         # Files
