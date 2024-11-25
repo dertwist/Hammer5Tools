@@ -210,10 +210,11 @@ class SoundEventEditorPropertyCurve(QWidget):
         # Populate datapoints
         for list in value:
             self.add_datapoint(list)
+        self.on_property_update()
         # Set widget size according to datapoint count
         # connections
         self.ui.add_data_point_button.clicked.connect(lambda: self.add_datapoint())
-        self.on_property_update()
+
 
     def add_datapoint(self, value: list = None):
         """Adding datapoint"""
