@@ -168,7 +168,7 @@ class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
 
 class SoundEventEditorPropertyCurve(QWidget):
     edited = Signal()
-    def __init__(self, parent=None, label_text: str = None, value: dict = None):
+    def __init__(self, parent=None, label_text: str = None, value: dict = None, labels: list=None):
         """
         Bool property
 
@@ -188,6 +188,27 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.init_label('Preview', self.horizontal_layout_bottom)
         self.init_datapoints_frame()
 
+        # Init labels
+        if labels is None:
+            labels = ['Label 00', 'Label 01']
+        # Texts
+        self.ui.label_01.setText(labels[0])
+        self.ui.label_02.setText(labels[1])
+
+        self.ui.preview_label_01.setText(labels[0])
+        self.ui.preview_label_02.setText(labels[1])
+        # Colors
+        label_01_color = "#dbff99"
+        label_02_color = "#CAF9E9"
+        self.ui.label_01.setStyleSheet(f"color: {label_01_color};")
+        self.ui.label_02.setStyleSheet(f"color: {label_02_color};")
+
+        self.ui.preview_label_02.setStyleSheet(f"color: {label_02_color};")
+        self.ui.preview_label_01.setStyleSheet(f"color: {label_01_color};")
+
+        self.labels_color = [label_01_color, label_02_color]
+
+        # Populate datapoints
         for list in value:
             self.add_datapoint(list)
         # Set widget size according to datapoint count
@@ -202,7 +223,7 @@ class SoundEventEditorPropertyCurve(QWidget):
         """Adding datapoint"""
         if value is None:
             value = [0,0, 0,0,2,3]
-        self.datapoint_instance = CurveWidgetDatapoint(value)
+        self.datapoint_instance = CurveWidgetDatapoint(value=value, labels_color=self.labels_color)
         self.datapoint_instance.edited.connect(self.on_property_update)
         self.ui.datapoints_layout.addWidget(self.datapoint_instance)
         self.on_property_update()
@@ -262,30 +283,38 @@ class SoundEventEditorPropertyCurve(QWidget):
 
 class CurveWidgetDatapoint(QWidget):
     edited = Signal()
-    def __init__(self, value: list = None):
+    def __init__(self, value: list = None, labels_color: list = None):
         """A line of six float widgets (last 4 hidden by default)"""
         super().__init__()
+        # Variables
         self.value: list = []
         if value is None:
             value = [0,0, 0,0,2,3]
         debug(f"CurveWidgetDatapoint value: {value}")
 
+        if labels_color is None:
+            labels_color = ['#FFFFFF', '#FFFFFF']
         # Init layout
         self.layout_horizontal = QHBoxLayout()
         self.setLayout(self.layout_horizontal)
 
         for index in range(len(value)):
-            if index >= 2:
-                self.create_widget_control(value[index], True)
+            if index == 1:
+                self.create_widget_control(value[index], False, labels_color[0])
+            elif index == 2:
+                self.create_widget_control(value[index], False, labels_color[1])
             else:
-                self.create_widget_control(value[index], False)
+                self.create_widget_control(value[index], True, '#FFFFFF')
+
         # Init delete button
         self.delete_button = DeleteButton(self)
         self.layout().addWidget(self.delete_button)
         self.on_update()
-    def create_widget_control(self, value, hidden):
+    def create_widget_control(self, value: float, hidden: bool, color: str):
         """Creating float widget with value and adding"""
         float_instance = FloatWidget(value=value, spacer_enable=False)
+        # float_instance.setStyleSheet(f"color:{color};")
+        float_instance.set_color(color)
         float_instance.on_Slider_updated()
         float_instance.edited.connect(self.on_update)
         if hidden:

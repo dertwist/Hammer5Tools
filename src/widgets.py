@@ -101,6 +101,9 @@ class FloatWidget(QWidget):
         self.on_SpinBox_updated()
         self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
         # Widget class
+    # Colors
+    def set_color(self, color):
+        self.SpinBox.setStyleSheet(f"color: {color};")
 
     # Updating
     def on_SpinBox_updated(self):
