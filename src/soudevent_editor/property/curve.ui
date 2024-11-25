@@ -157,39 +157,6 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QCheckBox" name="advanced_mode_checkBox">
-             <property name="styleSheet">
-              <string notr="true">
-    /* QPushButton default and hover styles */
-    QCheckBox {
-
-        font: 580 10pt &quot;Segoe UI&quot;;
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QCheckBox:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QCheckBox:pressed {
-
-    }</string>
-             </property>
-             <property name="text">
-              <string>Advanced mode</string>
-             </property>
-            </widget>
-           </item>
           </layout>
          </item>
         </layout>
