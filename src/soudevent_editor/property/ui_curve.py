@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QGraphicsView, QHBoxLayout,
-    QLabel, QPushButton, QSizePolicy, QSpacerItem,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QGraphicsView, QHBoxLayout, QLabel,
+    QPushButton, QSizePolicy, QSpacerItem, QVBoxLayout,
+    QWidget)
 import resources_rc
 
 class Ui_CurveWidget(object):
@@ -108,35 +108,6 @@ class Ui_CurveWidget(object):
 
         self.horizontalLayout_4.addWidget(self.add_data_point_button)
 
-        self.advanced_mode_checkBox = QCheckBox(CurveWidget)
-        self.advanced_mode_checkBox.setObjectName(u"advanced_mode_checkBox")
-        self.advanced_mode_checkBox.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QCheckBox {\n"
-"\n"
-"        font: 580 10pt \"Segoe UI\";\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QCheckBox:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QCheckBox:pressed {\n"
-"\n"
-"    }")
-
-        self.horizontalLayout_4.addWidget(self.advanced_mode_checkBox)
-
 
         self.verticalLayout_5.addLayout(self.horizontalLayout_4)
 
@@ -216,7 +187,6 @@ class Ui_CurveWidget(object):
         self.label_01.setText(QCoreApplication.translate("CurveWidget", u"Distance", None))
         self.label_02.setText(QCoreApplication.translate("CurveWidget", u"Volume", None))
         self.add_data_point_button.setText(QCoreApplication.translate("CurveWidget", u"Add datapoint", None))
-        self.advanced_mode_checkBox.setText(QCoreApplication.translate("CurveWidget", u"Advanced mode", None))
         self.label_2.setText(QCoreApplication.translate("CurveWidget", u"Preview", None))
         self.preview_label_01.setText(QCoreApplication.translate("CurveWidget", u"Distance", None))
         self.preview_label_02.setText(QCoreApplication.translate("CurveWidget", u"Volume", None))
