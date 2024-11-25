@@ -77,15 +77,66 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyCurve
         )
 
-        # Float
+        # Float (Only Positive)
         if name == 'volume':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
         elif name == 'delay':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
+        elif name == 'pitch':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
+        elif name == 'retrigger_interval_min':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
+        elif name == 'retrigger_interval_max':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
+        elif name == 'randomize_position_min_radius':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[-200, 200], only_positive=True, value=value)
+        elif name == 'randomize_position_max_radius':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[-200, 200], only_positive=True, value=value)
+        elif name == 'occlusion_intensity':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
+        elif name == 'distance_effect_mix':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
+        elif name == 'reverb_wet':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 1], only_positive=True, value=value)
+        elif name == 'occlusion_frequency_scale':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 1], only_positive=True, value=value)
+        elif name == 'vsnd_duration':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
+
+
+        # Float
+        elif name == 'volume_random_min':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=False, value=value)
+        elif name == 'volume_random_max':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=False, value=value)
+        elif name == 'pitch_random_min':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=False, value=value)
+        elif name == 'pitch_random_max':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=False, value=value)
         # Int
         # Legacy
         # Bool
         elif name == 'enable_child_events':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'enable_retrigger':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'restrict_source_reverb':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'randomize_position_hemisphere':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'use_distance_unfiltered_stereo_mapping_curve':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'use_distance_volume_mapping_curve':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'use_time_volume_mapping_curve':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'override_dsp_preset':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'set_child_position':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'position_relative_to_player':
+            self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
+        elif name == 'use_world_position':
             self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
         # Curve
         elif name == 'distance_volume_mapping_curve':

@@ -52,7 +52,10 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     #===========================================================<  Comment Widget  >========================================================
 
     def get_comment(self):
-        return self.comment_widget.toPlainText()
+        try:
+            return self.comment_widget.toPlainText()
+        except:
+            return ""
     def init_comment(self, value):
         self.comment_widget = QPlainTextEdit()
         self.comment_widget.setPlainText(value)

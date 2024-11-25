@@ -319,8 +319,8 @@ class SoundEventEditorMainWindow(QMainWindow):
     # ======================================[Tree widget hierarchy context menu]========================================
     def open_hierarchy_menu(self, position):
         menu = QMenu()
-        add_new_preset_lat_action = menu.addAction("(Last) - New from")
-        menu.addSeparator()
+        # add_new_preset_lat_action = menu.addAction("(Last) - New from")
+        # menu.addSeparator()
         add_new_preset_action = menu.addAction("New event (Preset)")
         add_new_preset_action.triggered.connect(self.call_soundevent_preset_menu)
         add_new_blank_action = menu.addAction("New event (Blank)")
