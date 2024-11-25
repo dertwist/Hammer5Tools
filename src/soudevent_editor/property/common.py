@@ -231,15 +231,6 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.set_widget_size(__value)
         self.edited.emit()
 
-    def init_label(self, label_text, layout):
-        """Adding received text to the label widget"""
-        if label_text is None:
-            label_text = "Label"
-        label_instance = QLabel()
-        label_instance.setText(convert_snake_case(label_text))
-        label_instance.setStyleSheet(f"""
-        color: {self.init_label_color()}""")
-        layout.addWidget(label_instance)
 
     def value_update(self, value):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
@@ -255,8 +246,6 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.setMaximumHeight(height)
         self.setMinimumHeight(height)
 
-    def init_label_color(self):
-        return "#FE9900"
 
 #==========================================================<  Properties Widgets  >=======================================================
 
