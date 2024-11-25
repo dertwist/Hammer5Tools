@@ -40,6 +40,7 @@ class Ui_CurveWidget(object):
         self.label.setObjectName(u"label")
         self.label.setMinimumSize(QSize(78, 0))
         self.label.setMaximumSize(QSize(78, 16777215))
+        self.label.setStyleSheet(u"color: rgb(216, 75, 255);")
 
         self.horizontalLayout.addWidget(self.label)
 
@@ -123,6 +124,7 @@ class Ui_CurveWidget(object):
         self.label_2.setObjectName(u"label_2")
         self.label_2.setMinimumSize(QSize(78, 0))
         self.label_2.setMaximumSize(QSize(78, 16777215))
+        self.label_2.setStyleSheet(u"color: rgb(255, 149, 78);")
 
         self.horizontalLayout_2.addWidget(self.label_2)
 

@@ -62,6 +62,9 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="styleSheet">
+          <string notr="true">color: rgb(216, 75, 255);</string>
+         </property>
          <property name="text">
           <string>Datapoints</string>
          </property>
@@ -178,6 +181,9 @@
            <width>78</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">color: rgb(255, 149, 78);</string>
          </property>
          <property name="text">
           <string>Preview</string>
