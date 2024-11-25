@@ -205,9 +205,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
         self.tabWidget = QTabWidget(self.explorer_layout_widget)
         self.tabWidget.setObjectName(u"tabWidget")
-        self.CustomSounds = QWidget()
-        self.CustomSounds.setObjectName(u"CustomSounds")
-        self.verticalLayout = QVBoxLayout(self.CustomSounds)
+        self.addon_sounds = QWidget()
+        self.addon_sounds.setObjectName(u"addon_sounds")
+        self.verticalLayout = QVBoxLayout(self.addon_sounds)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -216,10 +216,10 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.explorer_layout)
 
-        self.tabWidget.addTab(self.CustomSounds, "")
-        self.Valve = QWidget()
-        self.Valve.setObjectName(u"Valve")
-        self.tabWidget.addTab(self.Valve, "")
+        self.tabWidget.addTab(self.addon_sounds, "")
+        self.internal_sounds = QWidget()
+        self.internal_sounds.setObjectName(u"internal_sounds")
+        self.tabWidget.addTab(self.internal_sounds, "")
 
         self.verticalLayout_10.addWidget(self.tabWidget)
 
@@ -428,8 +428,8 @@ class Ui_MainWindow(object):
         self.open_preset_manager_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+P", None))
 #endif // QT_CONFIG(shortcut)
         self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.CustomSounds), QCoreApplication.translate("MainWindow", u"Custom", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.Valve), QCoreApplication.translate("MainWindow", u"Valve", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.addon_sounds), QCoreApplication.translate("MainWindow", u"Addon", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.internal_sounds), QCoreApplication.translate("MainWindow", u"Internal", None))
 #if QT_CONFIG(tooltip)
         self.save_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Save soundevents_addon.vsndevts Ctrl + S</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
