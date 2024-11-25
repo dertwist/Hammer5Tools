@@ -264,16 +264,18 @@ class SoundEventEditorPropertyCurve(QWidget):
         Updates the preview with the given values.
         :param values: A list of y-values representing the curve data points.
         """
-        def get_value(list_value):
+        def get_value(list_value:list, index:int):
             __data: list = []
             for datapoint in list_value:
-                __data.append(datapoint[0])
+                print(datapoint)
+                __data.append(datapoint[index])
             while len(__data) < 2:
                 __data.append(0)
             return __data
 
-        __data_01 = get_value(list_value=values)
-        __data_02 = get_value(list_value=values)
+        __data_01 = get_value(list_value=values, index=0)
+        __data_02 = get_value(list_value=values, index=1)
+        print(f"preview_update {__data_01}, {__data_02}")
 
         # Ensure the scene is set up
         self.setup_scene()
@@ -402,9 +404,9 @@ class CurveWidgetDatapoint(QWidget):
         self.setLayout(self.layout_horizontal)
 
         for index in range(len(value)):
-            if index == 1:
+            if index == 0:
                 self.create_widget_control(value[index], False, labels_color[0])
-            elif index == 2:
+            elif index == 1:
                 self.create_widget_control(value[index], False, labels_color[1])
             else:
                 self.create_widget_control(value[index], True, '#FFFFFF')
