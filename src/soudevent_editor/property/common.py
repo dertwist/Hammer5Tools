@@ -182,6 +182,8 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
 
         # init button
         self.paste_button = Button()
+        self.paste_button.set_text("Paste from clipboard")
+        self.paste_button.set_icon_paste()
         self.paste_button.clicked.connect(self.paste_from_clipboard)
         self.vertical_layout.addWidget(self.paste_button)
         # Updating value
@@ -193,8 +195,8 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
             float_value = value
         float_widget_instance = FloatWidget(value=float_value, spacer_enable=False)
         float_widget_instance.edited.connect(self.on_property_update)
-        float_widget_instance.setMaximumHeight(44)
-        float_widget_instance.setMinimumHeight(44)
+        float_widget_instance.setMaximumHeight(30)
+        float_widget_instance.setMinimumHeight(30)
         self.vertical_layout.addWidget(float_widget_instance)
         self.float_widget_instances.append(float_widget_instance)  # Append to the list
 
@@ -202,8 +204,12 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
         """Init paste button. The paste button suppose to be used take position form transforms when you copy transforms to the clipboard from hammer editor"""
         # Create a QFrame to hold the vertical layout
         self.frame = QFrame(self)
+        self.frame.setObjectName("frame")
+        self.frame.setStyleSheet("""QFrame#frame {border: None;}""")
+        self.frame.setContentsMargins(0,0,0,0)
         self.frame.setFrameShape(QFrame.StyledPanel)  # Optional: Set the frame shape
         self.frame.setFrameShadow(QFrame.Raised)      # Optional: Set the frame shadow
+
 
         # Initialize the vertical layout
         self.vertical_layout = QVBoxLayout(self.frame)
@@ -244,8 +250,9 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
         return "#73d1bf"
     def set_widget_size(self):
         """Set maximum height"""
-        self.setMaximumHeight(256)
-        self.setMinimumHeight(256)
+        # height = 44 * 3 + 40
+        # self.setMaximumHeight(height)
+        # self.setMinimumHeight(height)
 
 class SoundEventEditorPropertyCurve(QWidget):
     edited = Signal()
