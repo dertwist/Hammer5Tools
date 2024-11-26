@@ -53,15 +53,17 @@ class LoadSoundEvents:
         self.tree.clear()
         self.root = self.tree.invisibleRootItem()
         for key in data:
-            new_item = HierarchyItemModel(_data=data[key], _name=key)
-            self.root.addChild(new_item)
+            if key != "editor_info":
+                new_item = HierarchyItemModel(_data=data[key], _name=key)
+                self.root.addChild(new_item)
 class SaveSoundEvents:
     def __init__(self, tree: QTreeWidget, path:str):
         super().__init__()
         data = {}
+        data.update(editor_info)
         for index in range(tree.invisibleRootItem().childCount()):
             item = tree.invisibleRootItem().child(index)
-            key = item.text(0)
+            key = str(item.text(0))
             value = item.text(1)
             value = ast.literal_eval(value)
             item_value = {key:value}
@@ -180,7 +182,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
                 # Delete
                 if event.matches(QKeySequence.Delete):
-                    self.undo_stack.push(DeleteTreeItemCommand(self.ui.hierarchy_widget))
+                    self.undo_stack.push(DeleteTreeItemCommand(self.ui.hierarchy_widget, parent=None))
 
                     return True
                 # Move Up

@@ -298,6 +298,9 @@ class SoundEventEditorPropertyCurve(QWidget):
         # connections
         self.ui.add_data_point_button.clicked.connect(lambda: self.add_datapoint())
 
+    def resizeEvent(self, event):
+        self.on_property_update()
+
 
     def add_datapoint(self, value: list = None):
         """Adding datapoint"""
@@ -427,10 +430,8 @@ class SoundEventEditorPropertyCurve(QWidget):
             for j in range(num_points):
                 t = j / num_points
                 # Cubic Bezier formula
-                x = (1 - t) ** 3 * x_start + 3 * (1 - t) ** 2 * t * control_x1 + 3 * (
-                            1 - t) * t ** 2 * control_x2 + t ** 3 * x_end
-                y = (1 - t) ** 3 * y_start + 3 * (1 - t) ** 2 * t * control_y1 + 3 * (
-                            1 - t) * t ** 2 * control_y2 + t ** 3 * y_end
+                x = (1 - t) ** 3 * x_start + 3 * (1 - t) ** 2 * t * control_x1 + 3 * (1 - t) * t ** 2 * control_x2 + t ** 3 * x_end
+                y = (1 - t) ** 3 * y_start + 3 * (1 - t) ** 2 * t * control_y1 + 3 * (1 - t) * t ** 2 * control_y2 + t ** 3 * y_end
                 interpolated_x.append(x)
                 interpolated_y.append(y)
 
