@@ -4,7 +4,7 @@ from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication
 from PySide6.QtCore import QEasingCurve, Qt, Signal
 from src.preferences import debug
 from src.common import convert_snake_case
-from src.soudevent_editor.property.ui_curve import Ui_CurveWidget
+from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
 from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button
 
 import re
