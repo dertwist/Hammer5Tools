@@ -336,6 +336,10 @@ class DeleteButton(QToolButton):
         # self.instance.close()
         self.instance.closeEvent(self.event)
         # self.instance.deleteLater()
+class Button(QPushButton):
+    def __init__(self):
+        super().__init__()
+        self.setStyleSheet(qt_stylesheet_button)
 #==============================================================<  Tree widgets  >===========================================================
 
 class HierarchyItemModel(QTreeWidgetItem):

@@ -1,21 +1,13 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem
-from PySide6.QtCore import QEasingCurve, Qt
-from PySide6.QtGui import QPainterPath, QPen, QColor
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem
-from PySide6.QtWidgets import QGraphicsView, QGraphicsPathItem, QGraphicsScene
-from PySide6.QtGui import QPainterPath
-from PySide6.QtCore import QEasingCurve, QRectF
-from PySide6.QtGui import QPainterPath, QPen, QColor
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem
-from src.preferences import debug
-from PySide6.QtCore import QEasingCurve
-from PySide6.QtWidgets import QGraphicsView
-from PySide6.QtCore import Signal
-from PySide6.QtGui import QPainterPath
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame
+from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication
+from PySide6.QtCore import QEasingCurve, Qt, Signal
 from src.preferences import debug
 from src.common import convert_snake_case
 from src.soudevent_editor.property.ui_curve import Ui_CurveWidget
-from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton
+from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button
+
+import re
 
 #===============================================================<  Properties >============================================================
 
@@ -170,6 +162,90 @@ class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
         self.value = {self.value_class: value}
     def init_label_color(self):
         return "#d1494a"
+
+class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
+    def __init__(self, parent=None, label_text: str = None, value: list = None):
+        """
+        Vector3 Property. Have a button to paste the value form hammer editor.
+        """
+        super().__init__(parent)
+
+        self.value_class = label_text
+
+        # Init Vertical layout
+        self.init_vertical_layout()
+
+        # Init values
+        self.float_widget_instances = []
+        for float_value in value:
+            self.add_float_widget(float_value)
+
+        # init button
+        self.paste_button = Button()
+        self.paste_button.clicked.connect(self.paste_from_clipboard)
+        self.vertical_layout.addWidget(self.paste_button)
+        # Updating value
+        self.value_update()
+    def add_float_widget(self, value):
+        """Adding float widget instance using given name"""
+        float_value = 0
+        if isinstance(value, float):
+            float_value = value
+        float_widget_instance = FloatWidget(value=float_value, spacer_enable=False)
+        float_widget_instance.edited.connect(self.on_property_update)
+        float_widget_instance.setMaximumHeight(44)
+        float_widget_instance.setMinimumHeight(44)
+        self.vertical_layout.addWidget(float_widget_instance)
+        self.float_widget_instances.append(float_widget_instance)  # Append to the list
+
+    def init_vertical_layout(self):
+        """Init paste button. The paste button suppose to be used take position form transforms when you copy transforms to the clipboard from hammer editor"""
+        # Create a QFrame to hold the vertical layout
+        self.frame = QFrame(self)
+        self.frame.setFrameShape(QFrame.StyledPanel)  # Optional: Set the frame shape
+        self.frame.setFrameShadow(QFrame.Raised)      # Optional: Set the frame shadow
+
+        # Initialize the vertical layout
+        self.vertical_layout = QVBoxLayout(self.frame)
+
+        # Add the frame to the root layout
+        self.root_layout.addWidget(self.frame)
+
+    def init_root_layout(self):
+        """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
+        self.root_layout = QHBoxLayout()
+        self.setLayout(self.root_layout)
+
+    def paste_from_clipboard(self):
+        clipboard = QGuiApplication.clipboard()
+        clipboard_text = clipboard.text()
+        if clipboard_text.endswith('}'):
+            origin_list = re.search(r'origin = "(.*?)"', clipboard_text).group(1)
+            origin_list = origin_list.split()
+            for index in range(len(self.float_widget_instances)):
+                widget_instance: FloatWidget = self.float_widget_instances[index]
+                __single_axis = float(origin_list[index])
+                widget_instance.set_value(__single_axis)
+
+    def on_property_update(self):
+        """Send signal that user changed the property"""
+        self.value_update()
+        self.edited.emit()
+
+    def value_update(self):
+        """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
+        _value = []
+        for widget_instance in self.float_widget_instances:
+            __single_axis = widget_instance.value
+            _value.append(__single_axis)
+        self.value = {self.value_class: _value}
+
+    def init_label_color(self):
+        return "#73d1bf"
+    def set_widget_size(self):
+        """Set maximum height"""
+        self.setMaximumHeight(256)
+        self.setMinimumHeight(256)
 
 class SoundEventEditorPropertyCurve(QWidget):
     edited = Signal()
