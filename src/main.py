@@ -15,7 +15,7 @@ from minor_features.update_check import check_updates
 from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
 from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
-from soudevent_editor.main import SoundEventEditorMainWindow
+from soundevent_editor.main import SoundEventEditorMainWindow
 from minor_features.assettypes import AssetTypesModify
 
 # Variables
