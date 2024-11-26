@@ -1,7 +1,7 @@
 import ast, os, shutil
 
 from src.preferences import get_addon_name, get_cs2_path, debug
-from src.soudevent_editor.ui_main import Ui_MainWindow
+from src.soundevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QTreeWidgetItem, QMessageBox, QApplication
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
@@ -9,10 +9,10 @@ from PySide6.QtCore import Qt
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.widgets import HierarchyItemModel, ErrorInfo
 from src.preferences import settings
-from src.soudevent_editor.properties_window import SoundEventEditorPropertiesWindow
-from src.soudevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
+from src.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
+from src.soundevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
 from src.common import *
-from src.smartprop_editor.commands import DeleteTreeItemCommand
+from src.soundevent_editor.commands import DeleteTreeItemCommand
 
 class CopyDefaultSoundFolders:
     def __init__(self):
@@ -182,7 +182,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
                 # Delete
                 if event.matches(QKeySequence.Delete):
-                    self.undo_stack.push(DeleteTreeItemCommand(self.ui.hierarchy_widget, parent=None))
+                    self.undo_stack.push(DeleteTreeItemCommand(self.ui.hierarchy_widget))
 
                     return True
                 # Move Up

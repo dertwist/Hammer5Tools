@@ -1,10 +1,10 @@
 import ast
 
-from src.soudevent_editor.ui_properties_window import Ui_MainWindow
+from src.soundevent_editor.ui_properties_window import Ui_MainWindow
 from src.preferences import settings, debug
-from src.soudevent_editor.property.frame import SoundEventEditorPropertyFrame
+from src.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
 from src.popup_menu.popup_menu_main import PopupMenu
-from src.soudevent_editor.objects import *
+from src.soundevent_editor.objects import *
 from src.widgets import ErrorInfo
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QPlainTextEdit, QApplication
 from PySide6.QtGui import QKeySequence, QKeyEvent

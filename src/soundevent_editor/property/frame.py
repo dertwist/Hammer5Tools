@@ -3,7 +3,7 @@ import random
 
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication
 from PySide6.QtCore import Signal
-from src.soudevent_editor.property.ui_frame import Ui_Form
+from src.soundevent_editor.property.ui_frame import Ui_Form
 from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
 from src.common import convert_snake_case, JsonToKv3, Kv3ToJson
@@ -68,7 +68,7 @@ class SoundEventEditorPropertyFrame(QWidget):
                 debug(error)
 
         # Widgets import
-        from src.soudevent_editor.property.common import (
+        from src.soundevent_editor.property.common import (
             SoundEventEditorPropertyBase,
             SoundEventEditorPropertyFloat,
             SoundEventEditorPropertyInt,
