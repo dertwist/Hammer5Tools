@@ -120,3 +120,33 @@ qt_stylesheet_checkbox = """
     QCheckBox:pressed {
 
     }"""
+qt_stylesheet_button = """
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt "Segoe UI";
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }"""
