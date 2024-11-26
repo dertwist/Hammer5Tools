@@ -74,7 +74,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyInt,
             SoundEventEditorPropertyLegacy,
             SoundEventEditorPropertyBool,
-            SoundEventEditorPropertyCurve
+            SoundEventEditorPropertyCurve,
+            SoundEventEditorPropertyVector3
         )
 
         # Float (Only Positive)
@@ -149,6 +150,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value, labels=['Time', 'Volume'])
         # Combobox
         # Vector3
+        elif name == 'position':
+            self.property_instance = SoundEventEditorPropertyVector3(label_text=name, value=value)
         # Files
         else:
             self.property_instance = SoundEventEditorPropertyLegacy(label_text=name,value=value)
