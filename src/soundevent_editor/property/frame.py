@@ -1,13 +1,16 @@
 import ast
+import os.path
 import random
 
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication
 from PySide6.QtCore import Signal
+
+from src.soundevent_editor.property.common import SoundEventEditorPropertyList
 from src.soundevent_editor.property.ui_frame import Ui_Form
 from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
 from src.common import convert_snake_case, JsonToKv3, Kv3ToJson
-from src.preferences import debug
+from src.preferences import debug, get_addon_dir
 
 
 class SoundEventEditorPropertyFrame(QWidget):
@@ -213,5 +216,36 @@ class SoundEventEditorPropertyFrame(QWidget):
     mousePressEvent = PropertyMethods.mousePressEvent
     mouseMoveEvent = PropertyMethods.mouseMoveEvent
     dragEnterEvent = PropertyMethods.dragEnterEvent
-    dropEvent = PropertyMethods.dropEvent
+    def dropEvent(self, event):
+        if event.source() == self:
+            return
+
+        mime_data = event.mimeData()
+        if mime_data.hasText():
+            if event.source() != self:
+                source_index = self.widget_list.layout().indexOf(event.source())
+                target_index = self.widget_list.layout().indexOf(self)
+
+                widget: SoundEventEditorPropertyFrame = self.widget_list.layout().itemAt(target_index).widget()
+                widget_property = widget.ui.content.layout().itemAt(0).widget()
+                print(widget)
+                print(widget_property)
+                if isinstance(widget_property, SoundEventEditorPropertyList):
+                    urls = mime_data.urls()
+                    url_set = set(url.toString() for url in urls)
+                    for url in url_set:
+                        __value = url.replace("file:///", "")
+                        __value = os.path.relpath(__value, get_addon_dir())
+                        __value = __value.replace("\\", '/')
+                        widget_property.add_element(__value)
+                    print(url_set)
+
+                elif source_index != -1 and target_index != -1:
+                    if source_index < self.widget_list.layout().count():
+                        source_widget = self.widget_list.layout().takeAt(source_index).widget()
+                        if source_widget:
+                            self.widget_list.layout().insertWidget(target_index, source_widget)
+
+        event.accept()
+    # dropEvent = PropertyMethods.dropEvent
 
