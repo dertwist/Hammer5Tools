@@ -1,7 +1,7 @@
 import ast
 from operator import invert
 
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem, QTreeWidget
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem, QTreeWidget, QSpacerItem, QSizePolicy
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
 from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication
 from PySide6.QtCore import QEasingCurve, Qt, Signal
@@ -549,6 +549,9 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         self.vertical_layout = QVBoxLayout(self.frame)
         self.vertical_layout.setSpacing(0)
 
+        self.spacer = QSpacerItem(40, 2, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.vertical_layout.layout().addItem(self.spacer)
         # Add the frame to the root layout
         self.root_layout.addWidget(self.frame)
 
