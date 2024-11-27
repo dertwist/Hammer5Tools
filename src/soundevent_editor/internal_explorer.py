@@ -7,17 +7,13 @@ from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from src.preferences import get_cs2_path
 from src.common import SoundEventEditor_sounds_path, Decompiler_path, SoundEventEditor_path
 
-class SoundFileExplorer:
+class InternalSoundFileExplorer(QTreeWidget):
     def __init__(self):
-        self.app = QApplication([])
-        self.window = QWidget()
-        self.window.setWindowTitle("Sound Files Tree")
-        self.layout = QVBoxLayout(self.window)
-        self.tree_widget = QTreeWidget()
-        self.tree_widget.setHeaderLabels(["Category", "File"])
-        self.layout.addWidget(self.tree_widget)
-        self.tree_widget.itemClicked.connect(self.on_item_clicked)
+        super().__init__()
+        self.setHeaderLabels(["Folder", "File"])
+        self.itemClicked.connect(self.on_item_clicked)
         self.audio_player = None
+        self.load_vpk_files()
 
     def _play_audio_file(self, file_path):
         print(f'Playing audio {file_path}')
@@ -79,7 +75,7 @@ class SoundFileExplorer:
                     parent_item = None
                     for element in path_elements:
                         if parent_item is None:
-                            found_items = self.tree_widget.findItems(element, Qt.MatchExactly, 0)
+                            found_items = self.findItems(element, Qt.MatchExactly, 0)
                         else:
                             found_items = [child for child in (parent_item.child(i) for i in range(parent_item.childCount())) if child.text(0) == element]
 
@@ -88,21 +84,18 @@ class SoundFileExplorer:
                         else:
                             new_item = QTreeWidgetItem([element])
                             if parent_item is None:
-                                self.tree_widget.addTopLevelItem(new_item)
+                                self.addTopLevelItem(new_item)
                             else:
                                 parent_item.addChild(new_item)
                             parent_item = new_item
 
         except FileNotFoundError:
-            QMessageBox.critical(self.window, "Error", "VPK file not found.")
+            QMessageBox.critical(self, "Error", "VPK file not found.")
         except Exception as e:
-            QMessageBox.critical(self.window, "Error", f"Failed to load VPK file: {e}")
-
-    def run(self):
-        self.load_vpk_files()
-        self.window.show()
-        self.app.exec()
+            QMessageBox.critical(self, "Error", f"Failed to load VPK file: {e}")
 
 if __name__ == "__main__":
-    explorer = SoundFileExplorer()
-    explorer.run()
+    app = QApplication([])
+    explorer = InternalSoundFileExplorer()
+    explorer.show()
+    app.exec()
