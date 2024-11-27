@@ -206,9 +206,7 @@ class Explorer(QMainWindow):
         self.frame.setLayout(self.layout)
 
 
-        self.audio_player = QMediaPlayer(self)
-        self.audio_output = QAudioOutput(self)
-        self.audio_player.setAudioOutput(self.audio_output)
+
 
         # Connections
         self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
@@ -235,11 +233,19 @@ class Explorer(QMainWindow):
     def play_audio_file(self, file_path):
         debug(f"Playing {file_path}")
         if file_path.endswith(tuple(audio_extensions)):
-            if self.audio_player.isPlaying():
-                self.audio_player.stop()
-                self.audio_player.setSource(QUrl())
-            self.audio_player.setSource(QUrl.fromLocalFile(file_path))
-            self.audio_player.play()
+            try:
+                # if self.audio_player:
+                try:
+                    self.audio_player.deleteLater()
+                except:
+                    pass
+                self.audio_player = QMediaPlayer()
+                self.audio_output = QAudioOutput()
+                self.audio_player.setAudioOutput(self.audio_output)
+                self.audio_player.setSource(QUrl.fromLocalFile(file_path))
+                self.audio_player.play()
+            except Exception as e:
+                debug(f"Error playing audio: {e}")
 
     def eventFilter(self, source, event):
         if event.type() == QMouseEvent.MouseButtonPress:
