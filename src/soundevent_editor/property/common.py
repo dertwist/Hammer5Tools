@@ -1,6 +1,6 @@
 import ast
 
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem, QTreeWidget
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
 from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication
 from PySide6.QtCore import QEasingCurve, Qt, Signal
@@ -252,7 +252,7 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
         self.value = {self.value_class: _value}
 
     def init_label_color(self):
-        return "#73d1bf"
+        return "#7DDA58"
     def set_widget_size(self):
         """Set maximum height"""
         # height = 44 * 3 + 40
@@ -490,11 +490,12 @@ class SoundEventEditorPropertyCurve(QWidget):
         scene.clear()
         scene.addItem(curve_item)
 class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
-    def __init__(self, parent=None, label_text: str = None, value: list = None):
+    def __init__(self, parent=None, label_text: str = None, value: list = None, tree: QTreeWidget = None):
         """
         Vector3 Property. Have a button to paste the value form hammer editor.
         """
         super().__init__(parent, label_text, value)
+        self.tree = tree
 
         self.value_class = label_text
 
@@ -572,7 +573,7 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         self.value = {self.value_class: _value}
 
     def init_label_color(self):
-        return "#73d1bf"
+        return "#F6C273"
     def set_widget_size(self):
         """Set maximum height"""
         # height = 44 * 3 + 40
@@ -588,6 +589,19 @@ class SoundEventEditorPropertyFiles(SoundEventEditorPropertyList):
     def add_element(self, value: str = None):
         """Adding float widget instance using given name"""
         widget_instance = FileElement(value=value)
+        widget_instance.edited.connect(self.on_property_update)
+        self.vertical_layout.addWidget(widget_instance)
+        self.on_property_update()
+class SoundEventEditorPropertySoundEvent(SoundEventEditorPropertyList):
+    def __init__(self, parent=None, label_text: str = None, value: list = None, tree: QTreeWidget = None):
+        """
+        Files Property. Have a button to create an element in the list.
+        """
+        super().__init__(parent, label_text, value, tree)
+        self.tree = tree
+    def add_element(self, value: str = None):
+        """Adding float widget instance using given name"""
+        widget_instance = SoundEventElement(value=value, tree=self.tree)
         widget_instance.edited.connect(self.on_property_update)
         self.vertical_layout.addWidget(widget_instance)
         self.on_property_update()
@@ -755,3 +769,22 @@ class FileElement(ListElement):
         self.popup_menu = PopupMenu(elements, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
         self.popup_menu.show()
+class SoundEventElement(ListElement):
+    def __init__(self, value: str = None, tree: QTreeWidget = None):
+        super().__init__(value)
+        self.tree = tree
+
+    def call_search_popup_menu(self):
+        if self.tree is None:
+            pass
+        else:
+            elements = []
+            tree_root = self.tree.invisibleRootItem()
+            for index in range(tree_root.childCount()):
+                __tree_item = tree_root.child(index)
+                __name = __tree_item.text(0)
+                __element = {__name:__name}
+                elements.append(__element)
+            self.popup_menu = PopupMenu(elements, add_once=False)
+            self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
+            self.popup_menu.show()
