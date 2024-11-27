@@ -1,6 +1,8 @@
 import vpk
-
-pak1 = vpk.open(r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo\pak01_dir.vpk")
+import os
+from src.preferences import get_cs2_path
+path = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
+pak1 = vpk.open(path)
 
 for filepath in pak1:
     if 'vsnd_c' in filepath:
