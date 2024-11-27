@@ -2,21 +2,25 @@ import os
 import vpk
 import subprocess
 from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, QMessageBox
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt, QUrl, QMimeData
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from src.preferences import get_cs2_path
+from src.preferences import get_cs2_path, get_addon_dir, debug
 from src.common import SoundEventEditor_sounds_path, Decompiler_path, SoundEventEditor_path
+from src.property.methods import *
 
 class InternalSoundFileExplorer(QTreeWidget):
     def __init__(self):
         super().__init__()
-        self.setHeaderLabels(["Folder", "File"])
+        self.setHeaderHidden(True)  # Hide the header
+        self.setDragEnabled(True)   # Enable dragging
+        self.setAcceptDrops(True)   # Enable dropping
+        self.setDragDropMode(QTreeWidget.InternalMove)  # Set drag-and-drop mode
         self.itemClicked.connect(self.on_item_clicked)
         self.audio_player = None
         self.load_vpk_files()
 
     def _play_audio_file(self, file_path):
-        print(f'Playing audio {file_path}')
+        debug(f'Playing audio {file_path}')
         try:
             if self.audio_player is not None:
                 self.audio_player.deleteLater()
@@ -32,7 +36,7 @@ class InternalSoundFileExplorer(QTreeWidget):
         internal_audiopath = 'sounds\\' + (path.replace('vsnd', 'vsnd_c')).replace('/', '\\')
         local_audiopath = (os.path.join(SoundEventEditor_sounds_path, path.replace('vsnd', 'wav'))).replace('/', '\\')
         local_audiopath = os.path.abspath(local_audiopath)
-        print(f'local {local_audiopath}')
+        debug(f'local {local_audiopath}')
         if os.path.exists(local_audiopath):
             self._play_audio_file(local_audiopath)
         else:
@@ -49,16 +53,45 @@ class InternalSoundFileExplorer(QTreeWidget):
         ], check=True)
         return path_l
 
-    def on_item_clicked(self, item, column):
+    def assemble_path(self, item):
         path_elements = []
         current_item = item
         while current_item is not None:
             path_elements.insert(0, current_item.text(0))
             current_item = current_item.parent()
-        assembled_path = '/'.join(path_elements)
+        return '/'.join(path_elements)
+
+    def on_item_clicked(self, item, column):
+        assembled_path = self.assemble_path(item)
         if 'vsnd' in assembled_path:
-            print(f"Assembled Path: {assembled_path}")
+            debug(f"Assembled Path: {assembled_path}")
             self.play_audio_file(assembled_path)
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.LeftButton:
+            drag = QDrag(self)
+            mime_data = QMimeData()
+
+            # Assuming you want to get the path of the currently selected item
+            current_item = self.currentItem()
+            if current_item is not None:
+                path = self.assemble_path(current_item)
+                if 'vsnd' in path:
+                    path = "file:///" + get_addon_dir() + '/' + 'sounds/' + path
+                    path = path.replace('\\', '/')
+                    path = path.replace('vsnd', 'wav')
+
+                    # Create a QUrl object for the path
+                    url = QUrl(path)
+
+                    # Set the text and URLs for the mime data
+                    mime_data.setText(path)
+                    mime_data.setUrls([url])
+            drag.setMimeData(mime_data)
+            drag.exec()
+
+    def dragEnterEvent(self, event):
+        event.accept()
 
     def load_vpk_files(self):
         try:
