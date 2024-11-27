@@ -75,6 +75,9 @@ def get_cs2_path():
             return counter_strikke_2_path
         except:
             pass
+def get_addon_dir():
+    __path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
+    return str(__path)
 
 
 def get_steam_path():
