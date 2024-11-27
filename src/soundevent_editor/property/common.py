@@ -1,3 +1,5 @@
+import ast
+
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
 from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication
@@ -8,8 +10,9 @@ from src.preferences import debug, get_addon_dir
 from src.common import convert_snake_case
 from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
 from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button
+from src.soundevent_editor.common import vsnd_filepath_convert
 
-import re
+import re, os
 
 #===============================================================<  Properties >============================================================
 
@@ -576,6 +579,19 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         # self.setMaximumHeight(height)
         # self.setMinimumHeight(height)
 
+class SoundEventEditorPropertyFiles(SoundEventEditorPropertyList):
+    def __init__(self, parent=None, label_text: str = None, value: list = None):
+        """
+        Files Property. Have a button to create an element in the list.
+        """
+        super().__init__(parent, label_text, value)
+    def add_element(self, value: str = None):
+        """Adding float widget instance using given name"""
+        widget_instance = FileElement(value=value)
+        widget_instance.edited.connect(self.on_property_update)
+        self.vertical_layout.addWidget(widget_instance)
+        self.on_property_update()
+
 #==========================================================<  Properties Widgets  >=======================================================
 
 class CurveWidgetDatapoint(QWidget):
@@ -705,11 +721,10 @@ class ListElement(QWidget):
 
     def set_value(self, value: str = None):
         """Sets editline value"""
+        self.editline.setText(str(value))
 
     def call_search_popup_menu(self):
         elements = []
-        def addon_audio():
-            pass
         self.popup_menu = PopupMenu(elements, add_once=True)
         self.popup_menu.exec()
 
@@ -722,3 +737,21 @@ class ListElement(QWidget):
         self.value = None
         self.edited.emit()
         self.deleteLater()
+class FileElement(ListElement):
+    def __init__(self, value: str = None):
+        super().__init__(value)
+
+    def call_search_popup_menu(self):
+        elements = []
+        __sounds_path = os.path.join(get_addon_dir(), 'sounds')
+        for dirpath, dirnames, filenames in os.walk(__sounds_path):
+            __addon_path = get_addon_dir()
+            for filename in filenames:
+                __filepath = os.path.join(dirpath, filename)
+                __filepath = vsnd_filepath_convert(__filepath)
+
+                __element = {filename: __filepath}
+                elements.append(__element)
+        self.popup_menu = PopupMenu(elements, add_once=False)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
+        self.popup_menu.show()
