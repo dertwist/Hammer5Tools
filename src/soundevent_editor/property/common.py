@@ -1,4 +1,5 @@
 import ast
+from operator import invert
 
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem, QTreeWidget
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
@@ -513,7 +514,7 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
 
         # Populate items
         if isinstance(value, list):
-            for item in value:
+            for item in reversed(value):
                 self.add_element(item)
         else:
             self.add_element(value)
@@ -590,7 +591,7 @@ class SoundEventEditorPropertyFiles(SoundEventEditorPropertyList):
         """Adding float widget instance using given name"""
         widget_instance = FileElement(value=value)
         widget_instance.edited.connect(self.on_property_update)
-        self.vertical_layout.addWidget(widget_instance)
+        self.vertical_layout.insertWidget(0, widget_instance)
         self.on_property_update()
 class SoundEventEditorPropertySoundEvent(SoundEventEditorPropertyList):
     def __init__(self, parent=None, label_text: str = None, value: list = None, tree: QTreeWidget = None):
@@ -604,6 +605,7 @@ class SoundEventEditorPropertySoundEvent(SoundEventEditorPropertyList):
         widget_instance = SoundEventElement(value=value, tree=self.tree)
         widget_instance.edited.connect(self.on_property_update)
         self.vertical_layout.addWidget(widget_instance)
+        self.vertical_layout.insertWidget(0, widget_instance)
         self.on_property_update()
 
 #==========================================================<  Properties Widgets  >=======================================================
