@@ -13,6 +13,7 @@ from src.soundevent_editor.properties_window import SoundEventEditorPropertiesWi
 from src.soundevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
 from src.common import *
 from src.soundevent_editor.commands import DeleteTreeItemCommand
+from src.soundevent_editor.internal_explorer import InternalSoundFileExplorer
 
 class CopyDefaultSoundFolders:
     def __init__(self):
@@ -118,6 +119,9 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.ui.explorer_layout_widget)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
+        # Internal Explorer
+        self.internal_explorer = InternalSoundFileExplorer()
+        self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
     #==============================================================<  Actions  >============================================================
     def realtime_save(self):
         return self.ui.realtime_save_checkbox.isChecked()

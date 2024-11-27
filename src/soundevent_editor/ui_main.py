@@ -219,6 +219,13 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.addon_sounds, "")
         self.internal_sounds = QWidget()
         self.internal_sounds.setObjectName(u"internal_sounds")
+        self.verticalLayout_4 = QVBoxLayout(self.internal_sounds)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.internal_explorer_layout = QVBoxLayout()
+        self.internal_explorer_layout.setObjectName(u"internal_explorer_layout")
+
+        self.verticalLayout_4.addLayout(self.internal_explorer_layout)
+
         self.tabWidget.addTab(self.internal_sounds, "")
 
         self.verticalLayout_10.addWidget(self.tabWidget)
@@ -396,7 +403,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
