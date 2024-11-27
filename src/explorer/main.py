@@ -199,7 +199,6 @@ class Explorer(QMainWindow):
         self.addon = addon
         self.editor_name = editor_name
         self.tree_directory = tree_directory
-        self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
         self.select_last_opened_path()
 
         # Add all widgets to a frame
@@ -211,13 +210,8 @@ class Explorer(QMainWindow):
         self.audio_output = QAudioOutput(self)
         self.audio_player.setAudioOutput(self.audio_output)
 
-    def play_audio_file(self, file_path):
-        if file_path.endswith(tuple(audio_extensions)):
-            if self.audio_player.isPlaying():
-                self.audio_player.stop()
-            self.audio_player.setSource(QUrl.fromLocalFile(file_path))
-            self.audio_player.play()
-
+        # Connections
+        self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
 
 
     def select_last_opened_path(self):
@@ -238,6 +232,14 @@ class Explorer(QMainWindow):
         self.save_current_path(current_path)
         if not os.path.isdir(current_path):
             self.play_audio_file(current_path)
+    def play_audio_file(self, file_path):
+        debug(f"Playing {file_path}")
+        if file_path.endswith(tuple(audio_extensions)):
+            if self.audio_player.isPlaying():
+                self.audio_player.stop()
+                self.audio_player.setSource(QUrl())
+            self.audio_player.setSource(QUrl.fromLocalFile(file_path))
+            self.audio_player.play()
 
     def eventFilter(self, source, event):
         if event.type() == QMouseEvent.MouseButtonPress:
