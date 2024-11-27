@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
 from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication
 from PySide6.QtCore import QEasingCurve, Qt, Signal
 from src.preferences import debug
@@ -168,7 +168,7 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
         """
         Vector3 Property. Have a button to paste the value form hammer editor.
         """
-        super().__init__(parent)
+        super().__init__(parent, label_text, value)
 
         self.value_class = label_text
 
@@ -484,6 +484,89 @@ class SoundEventEditorPropertyCurve(QWidget):
         scene = widget.scene()
         scene.clear()
         scene.addItem(curve_item)
+class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
+    def __init__(self, parent=None, label_text: str = None, value: list = None):
+        """
+        Vector3 Property. Have a button to paste the value form hammer editor.
+        """
+        super().__init__(parent, label_text, value)
+
+        self.value_class = label_text
+
+        # Init Vertical layout
+        self.init_vertical_layout()
+
+        # Init values
+        self.float_widget_instances = []
+
+        # init button
+        self.init_button()
+
+
+        # Populate items
+        for item in value:
+            self.add_element(item)
+
+        # Updating value
+        self.value_update()
+    def add_element(self, value: str = None):
+        """Adding float widget instance using given name"""
+        widget_instance = ListElement(value=value)
+        widget_instance.edited.connect(self.on_property_update)
+        self.vertical_layout.addWidget(widget_instance)
+
+    def init_button(self):
+        self.button = Button()
+        self.button.set_text("Add")
+        self.button.set_icon_add()
+        self.button.clicked.connect(lambda :self.add_element())
+        self.vertical_layout.addWidget(self.button)
+
+    def init_vertical_layout(self):
+        """Init paste button. The paste button suppose to be used take position form transforms when you copy transforms to the clipboard from hammer editor"""
+        # Create a QFrame to hold the vertical layout
+        self.frame = QFrame(self)
+        self.frame.setObjectName("frame")
+        self.frame.setStyleSheet("""QFrame#frame {border: None;}""")
+        self.frame.setContentsMargins(0,0,0,0)
+        self.frame.setFrameShape(QFrame.StyledPanel)  # Optional: Set the frame shape
+        self.frame.setFrameShadow(QFrame.Raised)      # Optional: Set the frame shadow
+
+
+        # Initialize the vertical layout
+        self.vertical_layout = QVBoxLayout(self.frame)
+        self.vertical_layout.setSpacing(0)
+
+        # Add the frame to the root layout
+        self.root_layout.addWidget(self.frame)
+
+    def init_root_layout(self):
+        """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
+        self.root_layout = QHBoxLayout()
+        self.setLayout(self.root_layout)
+
+    def on_property_update(self):
+        """Send signal that user changed the property"""
+        self.value_update()
+        self.edited.emit()
+
+    def value_update(self):
+        """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
+        _value = []
+        for index in range(self.vertical_layout.count()):
+            __widget_instance = self.vertical_layout.layout().itemAt(index)
+            if isinstance(__widget_instance, ListElement):
+                __single_axis = __widget_instance.value
+                _value.append(__single_axis)
+        self.value = {self.value_class: _value}
+
+    def init_label_color(self):
+        return "#73d1bf"
+    def set_widget_size(self):
+        """Set maximum height"""
+        # height = 44 * 3 + 40
+        # self.setMaximumHeight(height)
+        # self.setMinimumHeight(height)
 
 #==========================================================<  Properties Widgets  >=======================================================
 
@@ -572,3 +655,54 @@ class CurveWidgetDatapoint(QWidget):
         for index in range(self.layout().count()):
             if index >= 2:
              self.layout().itemAt(index).widget().show()
+
+class ListElement(QWidget):
+    edited = Signal()
+    def __init__(self, value: str = None):
+        """A line of six float widgets (last 4 hidden by default)"""
+        super().__init__()
+        # Variables
+        self.value: list = []
+        if value is None:
+            value: str = "None"
+        # Init layout
+        self.layout_horizontal = QHBoxLayout()
+        self.setLayout(self.layout_horizontal)
+
+        # Init editline
+        self.editline = QLineEdit()
+        self.editline.setPlaceholderText("Type...")
+        if value == "None":
+            pass
+        else:
+            self.editline.setText(str(value))
+        self.editline.textChanged.connect(self.on_update)
+        self.layout().addWidget(self.editline)
+
+
+        # Init Search button
+        self.search_button = Button()
+        self.search_button.set_icon_search()
+        self.layout().addWidget(self.search_button)
+
+        # Init delete button
+        self.delete_button = DeleteButton(self)
+        self.layout().addWidget(self.delete_button)
+        self.on_update()
+
+        self.setContentsMargins(0,0,0,0)
+        self.setMinimumHeight(48)
+        self.setMaximumHeight(48)
+
+    def set_value(self, value: str = None):
+        """Sets editline value"""
+
+    def on_update(self):
+        self.value = self.get_value()
+        self.edited.emit()
+    def get_value(self):
+        return self.editline.text()
+    def closeEvent(self, event):
+        self.value = None
+        self.edited.emit()
+        self.deleteLater()
