@@ -11,6 +11,7 @@ from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
 from src.common import convert_snake_case, JsonToKv3, Kv3ToJson
 from src.preferences import debug, get_addon_dir
+from src.soundevent_editor.common import vsnd_filepath_convert
 
 
 class SoundEventEditorPropertyFrame(QWidget):
@@ -79,7 +80,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyBool,
             SoundEventEditorPropertyCurve,
             SoundEventEditorPropertyVector3,
-            SoundEventEditorPropertyList
+            SoundEventEditorPropertyList,
+            SoundEventEditorPropertyFiles
         )
 
         # Float (Only Positive)
@@ -158,7 +160,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyVector3(label_text=name, value=value)
         # List
         elif name == 'vsnd_files_track_01':
-            self.property_instance = SoundEventEditorPropertyList(label_text=name, value=value)
+            self.property_instance = SoundEventEditorPropertyFiles(label_text=name, value=value)
         # Legacy
         else:
             self.property_instance = SoundEventEditorPropertyLegacy(label_text=name,value=value)
@@ -228,17 +230,13 @@ class SoundEventEditorPropertyFrame(QWidget):
 
                 widget: SoundEventEditorPropertyFrame = self.widget_list.layout().itemAt(target_index).widget()
                 widget_property = widget.ui.content.layout().itemAt(0).widget()
-                print(widget)
-                print(widget_property)
                 if isinstance(widget_property, SoundEventEditorPropertyList):
                     urls = mime_data.urls()
                     url_set = set(url.toString() for url in urls)
                     for url in url_set:
                         __value = url.replace("file:///", "")
-                        __value = os.path.relpath(__value, get_addon_dir())
-                        __value = __value.replace("\\", '/')
+                        __value = vsnd_filepath_convert(__value)
                         widget_property.add_element(__value)
-                    print(url_set)
 
                 elif source_index != -1 and target_index != -1:
                     if source_index < self.widget_list.layout().count():
