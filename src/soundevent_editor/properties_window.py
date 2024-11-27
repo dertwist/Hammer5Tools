@@ -6,13 +6,13 @@ from src.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.soundevent_editor.objects import *
 from src.widgets import ErrorInfo
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QPlainTextEdit, QApplication
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QPlainTextEdit, QApplication, QTreeWidget
 from PySide6.QtGui import QKeySequence, QKeyEvent
 from PySide6.QtCore import Qt, Signal
 
 class SoundEventEditorPropertiesWindow(QMainWindow):
     edited = Signal()
-    def __init__(self, parent=None, value: str = None):
+    def __init__(self, parent=None, value: str = None, tree:QTreeWidget = None):
         """
         The properties window is supposed to store property frame instances in the layout.
         When any of the frames are edited, the value updates and
@@ -33,6 +33,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
         # Init value variable:
         self.value = self.load_value(value)
+
+        # Init variables
+        self.tree = tree
 
         # Init context menu
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -208,7 +211,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     #=============================================================<  Property  >==========================================================
     def create_property(self, key, value):
         """Create frame widget instance"""
-        widget_instance = SoundEventEditorPropertyFrame(_data={key: value}, widget_list=self.ui.properties_layout)
+        widget_instance = SoundEventEditorPropertyFrame(_data={key: value}, widget_list=self.ui.properties_layout, tree=self.tree)
         widget_instance.edited.connect(self.on_update)
         index = self.ui.properties_layout.count() - 1
         self.ui.properties_layout.insertWidget(index, widget_instance)
