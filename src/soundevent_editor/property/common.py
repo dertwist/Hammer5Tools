@@ -2,7 +2,9 @@ from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphi
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
 from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication
 from PySide6.QtCore import QEasingCurve, Qt, Signal
-from src.preferences import debug
+
+from src.popup_menu.popup_menu_main import PopupMenu
+from src.preferences import debug, get_addon_dir
 from src.common import convert_snake_case
 from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
 from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button
@@ -493,6 +495,8 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
 
         self.value_class = label_text
 
+        self.setAcceptDrops(True)
+
         # Init Vertical layout
         self.init_vertical_layout()
 
@@ -504,9 +508,11 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
 
 
         # Populate items
-        for item in value:
-            self.add_element(item)
-
+        if isinstance(value, list):
+            for item in value:
+                self.add_element(item)
+        else:
+            self.add_element(value)
         # Updating value
         self.value_update()
     def add_element(self, value: str = None):
@@ -514,6 +520,7 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         widget_instance = ListElement(value=value)
         widget_instance.edited.connect(self.on_property_update)
         self.vertical_layout.addWidget(widget_instance)
+        self.on_property_update()
 
     def init_button(self):
         self.button = Button()
@@ -554,10 +561,11 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
         _value = []
         for index in range(self.vertical_layout.count()):
-            __widget_instance = self.vertical_layout.layout().itemAt(index)
+            __widget_instance = self.vertical_layout.layout().itemAt(index).widget()
             if isinstance(__widget_instance, ListElement):
                 __single_axis = __widget_instance.value
-                _value.append(__single_axis)
+                if __single_axis != "" and __single_axis is not None:
+                    _value.append(__single_axis)
         self.value = {self.value_class: _value}
 
     def init_label_color(self):
@@ -683,6 +691,7 @@ class ListElement(QWidget):
         # Init Search button
         self.search_button = Button()
         self.search_button.set_icon_search()
+        self.search_button.clicked.connect(self.call_search_popup_menu)
         self.layout().addWidget(self.search_button)
 
         # Init delete button
@@ -696,6 +705,13 @@ class ListElement(QWidget):
 
     def set_value(self, value: str = None):
         """Sets editline value"""
+
+    def call_search_popup_menu(self):
+        elements = []
+        def addon_audio():
+            pass
+        self.popup_menu = PopupMenu(elements, add_once=True)
+        self.popup_menu.exec()
 
     def on_update(self):
         self.value = self.get_value()
