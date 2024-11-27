@@ -101,7 +101,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.dockWidget_4 = QDockWidget(MainWindow)
         self.dockWidget_4.setObjectName(u"dockWidget_4")
-        self.dockWidget_4.setMinimumSize(QSize(320, 161))
+        self.dockWidget_4.setMinimumSize(QSize(320, 189))
         self.dockWidget_4.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.dockWidget_4.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
         self.dockWidgetContents_2 = QWidget()
@@ -195,7 +195,7 @@ class Ui_MainWindow(object):
         MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_4)
         self.dockWidget_10 = QDockWidget(MainWindow)
         self.dockWidget_10.setObjectName(u"dockWidget_10")
-        self.dockWidget_10.setMinimumSize(QSize(320, 154))
+        self.dockWidget_10.setMinimumSize(QSize(320, 174))
         self.dockWidget_10.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.dockWidget_10.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
         self.explorer_layout_widget = QWidget()
@@ -221,10 +221,16 @@ class Ui_MainWindow(object):
         self.internal_sounds.setObjectName(u"internal_sounds")
         self.verticalLayout_4 = QVBoxLayout(self.internal_sounds)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalLayout_4.setContentsMargins(0, 0, 0, 7)
         self.internal_explorer_layout = QVBoxLayout()
         self.internal_explorer_layout.setObjectName(u"internal_explorer_layout")
 
         self.verticalLayout_4.addLayout(self.internal_explorer_layout)
+
+        self.internal_explorer_search_bar = QLineEdit(self.internal_sounds)
+        self.internal_explorer_search_bar.setObjectName(u"internal_explorer_search_bar")
+
+        self.verticalLayout_4.addWidget(self.internal_explorer_search_bar)
 
         self.tabWidget.addTab(self.internal_sounds, "")
 
@@ -436,6 +442,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(shortcut)
         self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.addon_sounds), QCoreApplication.translate("MainWindow", u"Addon", None))
+        self.internal_explorer_search_bar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.internal_sounds), QCoreApplication.translate("MainWindow", u"Internal", None))
 #if QT_CONFIG(tooltip)
         self.save_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Save soundevents_addon.vsndevts Ctrl + S</p></body></html>", None))
