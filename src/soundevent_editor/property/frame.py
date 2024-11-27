@@ -2,7 +2,7 @@ import ast
 import os.path
 import random
 
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication, QTreeWidget
 from PySide6.QtCore import Signal
 
 from src.soundevent_editor.property.common import SoundEventEditorPropertyList
@@ -17,7 +17,7 @@ from src.soundevent_editor.common import vsnd_filepath_convert
 class SoundEventEditorPropertyFrame(QWidget):
     """PropertyFrame suppose to collect properties and gives dict value"""
     edited = Signal()
-    def __init__(self, _data: dict = None, widget_list: QHBoxLayout = None):
+    def __init__(self, _data: dict = None, widget_list: QHBoxLayout = None, tree:QTreeWidget = None):
         """Data variable is _data:d can receive only dict value"""
         super().__init__()
 
@@ -33,6 +33,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.setAcceptDrops(True)
 
             # Variables
+            self.tree = tree
             self.value = dict()
             self.name = str(next(iter(_data)))
             self.widget_list = widget_list
@@ -81,7 +82,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyCurve,
             SoundEventEditorPropertyVector3,
             SoundEventEditorPropertyList,
-            SoundEventEditorPropertyFiles
+            SoundEventEditorPropertyFiles,
+            SoundEventEditorPropertySoundEvent
         )
 
         # Float (Only Positive)
@@ -95,10 +97,6 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
         elif name == 'retrigger_interval_max':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
-        elif name == 'randomize_position_min_radius':
-            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[-200, 200], only_positive=True, value=value)
-        elif name == 'randomize_position_max_radius':
-            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[-200, 200], only_positive=True, value=value)
         elif name == 'occlusion_intensity':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
         elif name == 'distance_effect_mix':
@@ -109,6 +107,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 1], only_positive=True, value=value)
         elif name == 'vsnd_duration':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
+        elif name == 'retrigger_radius':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 200], only_positive=True, value=value)
 
 
         # Float
@@ -120,6 +120,10 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=False, value=value)
         elif name == 'pitch_random_max':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=False, value=value)
+        elif name == 'randomize_position_min_radius':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[-200, 200], only_positive=False, value=value)
+        elif name == 'randomize_position_max_radius':
+            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[-200, 200], only_positive=False, value=value)
         # Int
 
         # Bool
@@ -161,6 +165,8 @@ class SoundEventEditorPropertyFrame(QWidget):
         # List
         elif name == 'vsnd_files_track_01':
             self.property_instance = SoundEventEditorPropertyFiles(label_text=name, value=value)
+        elif name == 'soundevent_01':
+            self.property_instance = SoundEventEditorPropertySoundEvent(label_text=name, value=value, tree=self.tree)
         # Legacy
         else:
             self.property_instance = SoundEventEditorPropertyLegacy(label_text=name,value=value)
