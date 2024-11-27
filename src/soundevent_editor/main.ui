@@ -340,6 +340,23 @@
         <attribute name="title">
          <string>Internal</string>
         </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="internal_explorer_layout"/>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>
