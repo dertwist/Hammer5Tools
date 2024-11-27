@@ -155,7 +155,7 @@ class SoundEventEditorMainWindow(QMainWindow):
     #=======================================================<  Properties Window  >=====================================================
 
     def PropertiesWindowInit(self):
-        self.PropertiesWindow = SoundEventEditorPropertiesWindow()
+        self.PropertiesWindow = SoundEventEditorPropertiesWindow(tree=self.ui.hierarchy_widget)
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
         self.PropertiesWindow.edited.connect(self.PropertiesWindowUpdate)
     def PropertiesWindowUpdate(self):
