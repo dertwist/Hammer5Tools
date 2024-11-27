@@ -81,7 +81,7 @@
    <property name="minimumSize">
     <size>
      <width>320</width>
-     <height>161</height>
+     <height>189</height>
     </size>
    </property>
    <property name="features">
@@ -277,7 +277,7 @@
    <property name="minimumSize">
     <size>
      <width>320</width>
-     <height>154</height>
+     <height>174</height>
     </size>
    </property>
    <property name="features">
@@ -309,7 +309,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="addon_sounds">
         <attribute name="title">
@@ -351,10 +351,17 @@
           <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>0</number>
+          <number>7</number>
          </property>
          <item>
           <layout class="QVBoxLayout" name="internal_explorer_layout"/>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="internal_explorer_search_bar">
+           <property name="placeholderText">
+            <string>Search...</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
