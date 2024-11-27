@@ -75,7 +75,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyLegacy,
             SoundEventEditorPropertyBool,
             SoundEventEditorPropertyCurve,
-            SoundEventEditorPropertyVector3
+            SoundEventEditorPropertyVector3,
+            SoundEventEditorPropertyList
         )
 
         # Float (Only Positive)
@@ -115,7 +116,7 @@ class SoundEventEditorPropertyFrame(QWidget):
         elif name == 'pitch_random_max':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=False, value=value)
         # Int
-        # Legacy
+
         # Bool
         elif name == 'enable_child_events':
             self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=value)
@@ -152,7 +153,10 @@ class SoundEventEditorPropertyFrame(QWidget):
         # Vector3
         elif name == 'position':
             self.property_instance = SoundEventEditorPropertyVector3(label_text=name, value=value)
-        # Files
+        # List
+        elif name == 'vsnd_files_track_01':
+            self.property_instance = SoundEventEditorPropertyList(label_text=name, value=value)
+        # Legacy
         else:
             self.property_instance = SoundEventEditorPropertyLegacy(label_text=name,value=value)
         self.property_instance.edited.connect(self.on_property_updated)
