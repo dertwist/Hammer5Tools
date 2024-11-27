@@ -2,6 +2,8 @@ import os.path
 import re
 from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox, QLineEdit, QTreeWidgetItem, QPushButton, QHBoxLayout
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtCore import QUrl
 from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
 from src.preferences import get_config_value, set_config_value, get_cs2_path, get_addon_name, debug
 from PySide6.QtCore import QModelIndex
@@ -205,6 +207,16 @@ class Explorer(QMainWindow):
         self.frame.setLayout(self.layout)
 
 
+        self.audio_player = QMediaPlayer(self)
+        self.audio_output = QAudioOutput(self)
+        self.audio_player.setAudioOutput(self.audio_output)
+
+    def play_audio_file(self, file_path):
+        if file_path.endswith(tuple(audio_extensions)):
+            if self.audio_player.isPlaying():
+                self.audio_player.stop()
+            self.audio_player.setSource(QUrl.fromLocalFile(file_path))
+            self.audio_player.play()
 
 
 
@@ -224,6 +236,8 @@ class Explorer(QMainWindow):
     def on_directory_changed(self, current, previous):
         current_path = self.model.filePath(current)
         self.save_current_path(current_path)
+        if not os.path.isdir(current_path):
+            self.play_audio_file(current_path)
 
     def eventFilter(self, source, event):
         if event.type() == QMouseEvent.MouseButtonPress:
