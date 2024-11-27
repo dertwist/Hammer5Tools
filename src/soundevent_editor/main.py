@@ -117,10 +117,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         else:
             os.makedirs(self.filepath_sounds)
         self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.ui.explorer_layout_widget)
+        self.mini_explorer.tree.setStyleSheet("""border:none""")
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
         # Internal Explorer
         self.internal_explorer = InternalSoundFileExplorer()
+        self.internal_explorer.setStyleSheet("""border:none""")
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
         self.ui.internal_explorer_search_bar.textChanged.connect(lambda text:self.search_hierarchy(text, self.internal_explorer.invisibleRootItem()))
     #==============================================================<  Actions  >============================================================
