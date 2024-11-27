@@ -10,9 +10,9 @@ addon_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_
 def vsnd_case_convert(__value):
     __value_root, _ = os.path.splitext(__value)
     __value = __value_root + ".vsnd"
-    __value.replace('\\', '/')
+    __value = __value.replace('\\', '/')
     return __value
 def vsnd_filepath_convert(__value):
     __value = vsnd_case_convert(os.path.relpath(__value, get_addon_dir()))
-    __value.replace('\\', '/')
+    __value = __value.replace('\\', '/')
     return __value
