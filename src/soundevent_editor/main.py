@@ -122,6 +122,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Internal Explorer
         self.internal_explorer = InternalSoundFileExplorer()
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
+        self.ui.internal_explorer_search_bar.textChanged.connect(lambda text:self.search_hierarchy(text, self.internal_explorer.invisibleRootItem()))
     #==============================================================<  Actions  >============================================================
     def realtime_save(self):
         return self.ui.realtime_save_checkbox.isChecked()
