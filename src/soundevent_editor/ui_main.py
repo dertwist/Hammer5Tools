@@ -221,16 +221,16 @@ class Ui_MainWindow(object):
         self.internal_sounds.setObjectName(u"internal_sounds")
         self.verticalLayout_4 = QVBoxLayout(self.internal_sounds)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalLayout_4.setContentsMargins(0, 0, 0, 7)
-        self.internal_explorer_layout = QVBoxLayout()
-        self.internal_explorer_layout.setObjectName(u"internal_explorer_layout")
-
-        self.verticalLayout_4.addLayout(self.internal_explorer_layout)
-
+        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.internal_explorer_search_bar = QLineEdit(self.internal_sounds)
         self.internal_explorer_search_bar.setObjectName(u"internal_explorer_search_bar")
 
         self.verticalLayout_4.addWidget(self.internal_explorer_search_bar)
+
+        self.internal_explorer_layout = QVBoxLayout()
+        self.internal_explorer_layout.setObjectName(u"internal_explorer_layout")
+
+        self.verticalLayout_4.addLayout(self.internal_explorer_layout)
 
         self.tabWidget.addTab(self.internal_sounds, "")
 
@@ -409,7 +409,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
