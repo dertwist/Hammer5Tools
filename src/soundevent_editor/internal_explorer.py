@@ -2,7 +2,7 @@ import os
 import vpk
 import subprocess
 from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, QMessageBox
-from PySide6.QtCore import Qt, QUrl, QMimeData
+from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from src.preferences import get_cs2_path, get_addon_dir, debug
 from src.common import SoundEventEditor_sounds_path, Decompiler_path, SoundEventEditor_path
@@ -33,25 +33,47 @@ class InternalSoundFileExplorer(QTreeWidget):
             print(f"Error playing audio: {e}")
 
     def play_audio_file(self, path):
-        internal_audiopath = 'sounds\\' + (path.replace('vsnd', 'vsnd_c')).replace('/', '\\')
-        local_audiopath = (os.path.join(SoundEventEditor_sounds_path, path.replace('vsnd', 'wav'))).replace('/', '\\')
+        internal_audiopath = os.path.join('sounds', path.replace('vsnd', 'vsnd_c')).replace('/', '\\')
+        local_audiopath = os.path.join(SoundEventEditor_sounds_path, path.replace('vsnd', 'wav')).replace('/', '\\')
         local_audiopath = os.path.abspath(local_audiopath)
-        debug(f'local {local_audiopath}')
+        debug(f'Local audio path: {local_audiopath}')
+
         if os.path.exists(local_audiopath):
             self._play_audio_file(local_audiopath)
         else:
-            self._play_audio_file(self.decompile_audio(internal_audiopath, local_audiopath))
+            self.decompile_audio(internal_audiopath, local_audiopath)
 
-    def decompile_audio(self, path, path_l):
+    def decompile_audio(self, internal_path, local_path):
         pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
-        subprocess.run([
-            Decompiler_path,
-            '-i', pak1,
-            '--output', SoundEventEditor_path,
-            '--vpk_filepath', path,
-            '-d'
-        ], check=True)
-        return path_l
+        process = QProcess(self)
+
+        process.finished.connect(lambda exit_code, exit_status: self.on_process_finished(exit_code, exit_status, process, local_path))
+        process.errorOccurred.connect(lambda error: self.on_process_error(error, process))
+
+        try:
+            process.start(
+                Decompiler_path,
+                [
+                    '-i', pak1,
+                    '--output', SoundEventEditor_path,
+                    '--vpk_filepath', internal_path,
+                    '-d'
+                ]
+            )
+        except Exception as e:
+            print(f"Failed to start decompilation process: {e}")
+
+        return local_path
+
+    def on_process_finished(self, exit_code, exit_status, process, path):
+        if exit_code != 0:
+            stderr = process.readAllStandardError().data().decode()
+            print(f"Error decompiling audio: {stderr}")
+        else:
+            self._play_audio_file(path)
+
+    def on_process_error(self, error, process):
+        print(f"Process error occurred: {error}")
 
     def assemble_path(self, item):
         path_elements = []
