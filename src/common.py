@@ -1,9 +1,19 @@
-from src.preferences import get_cs2_path
+# from src.preferences import get_cs2_path
+from src.minor_features.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
 import os
 import subprocess
 import threading
 import keyvalues3 as kv3
 import re, unicodedata, random, string
+#======================================================<  Copied from preferences.py file  >===================================================
+
+def get_cs2_path():
+    try:
+        counter_strikke_2_path = (get_counter_strike_path_from_registry()).replace("\\\\", "\\")
+        return counter_strikke_2_path
+    except:
+        pass
+
 
 #===============================================================<  Variables  >=============================================================
 editor_info = {
@@ -22,6 +32,7 @@ editor_info = {
     }
 app_dir = os.getcwd()
 SoundEventEditor_Preset_Path = os.path.join(app_dir, "SoundEventEditor", "Presets")
+Presets_Path = os.path.join(app_dir, "presets")
 SoundEventEditor_sounds_path = os.path.join(app_dir, "SoundEventEditor", 'sounds')
 SoundEventEditor_path = os.path.join(app_dir, "SoundEventEditor")
 Decompiler_path = os.path.join(app_dir, 'Decompiler', 'Decompiler.exe')

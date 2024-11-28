@@ -35,29 +35,29 @@ class Ui_preferences_dialog(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.tabWidget = QTabWidget(preferences_dialog)
         self.tabWidget.setObjectName(u"tabWidget")
-        self.tabWidget.setTabPosition(QTabWidget.North)
-        self.tabWidget.setTabShape(QTabWidget.Rounded)
+        self.tabWidget.setTabPosition(QTabWidget.TabPosition.North)
+        self.tabWidget.setTabShape(QTabWidget.TabShape.Rounded)
         self.tabWidget.setTabBarAutoHide(False)
         self.Paths = QWidget()
         self.Paths.setObjectName(u"Paths")
         self.verticalLayout_2 = QVBoxLayout(self.Paths)
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setSizeConstraint(QLayout.SetDefaultConstraint)
+        self.verticalLayout_2.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.frame_8 = QFrame(self.Paths)
         self.frame_8.setObjectName(u"frame_8")
         self.frame_8.setMaximumSize(QSize(16777215, 48))
         self.frame_8.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame_8.setFrameShape(QFrame.NoFrame)
-        self.frame_8.setFrameShadow(QFrame.Raised)
+        self.frame_8.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_8.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_8 = QHBoxLayout(self.frame_8)
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.frame_10 = QFrame(self.frame_8)
         self.frame_10.setObjectName(u"frame_10")
         self.frame_10.setStyleSheet(u"border:0px;")
-        self.frame_10.setFrameShape(QFrame.StyledPanel)
-        self.frame_10.setFrameShadow(QFrame.Raised)
+        self.frame_10.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_10.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_9 = QHBoxLayout(self.frame_10)
         self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
         self.horizontalLayout_9.setContentsMargins(0, 0, 0, 0)
@@ -71,7 +71,7 @@ class Ui_preferences_dialog(object):
 "        padding-left: 4px;\n"
 "        padding-right: 4px;\n"
 "        color: #E3E3E3;")
-        self.label_9.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.label_9.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
 
         self.horizontalLayout_9.addWidget(self.label_9)
 
@@ -113,7 +113,7 @@ class Ui_preferences_dialog(object):
 "        font: 580 9pt \"Segoe UI\";\n"
 "\n"
 "    }")
-        self.preferences_lineedit_steam_path.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.preferences_lineedit_steam_path.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
 
         self.horizontalLayout_8.addWidget(self.preferences_lineedit_steam_path)
 
@@ -124,8 +124,8 @@ class Ui_preferences_dialog(object):
         self.frame.setObjectName(u"frame")
         self.frame.setMaximumSize(QSize(16777215, 48))
         self.frame.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame.setFrameShape(QFrame.NoFrame)
-        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.frame)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.label_8 = QLabel(self.frame)
@@ -138,7 +138,7 @@ class Ui_preferences_dialog(object):
 "        padding-left: 4px;\n"
 "        padding-right: 4px;\n"
 "        color: #E3E3E3;")
-        self.label_8.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.label_8.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
 
         self.horizontalLayout_2.addWidget(self.label_8)
 
@@ -177,101 +177,26 @@ class Ui_preferences_dialog(object):
 "        font: 580 9pt \"Segoe UI\";\n"
 "\n"
 "    }")
-        self.preferences_lineedit_cs2_path.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.preferences_lineedit_cs2_path.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
 
         self.horizontalLayout_2.addWidget(self.preferences_lineedit_cs2_path)
 
 
         self.verticalLayout_2.addWidget(self.frame)
 
-        self.frame_4 = QFrame(self.Paths)
-        self.frame_4.setObjectName(u"frame_4")
-        self.frame_4.setMaximumSize(QSize(16777215, 48))
-        self.frame_4.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame_4.setFrameShape(QFrame.NoFrame)
-        self.frame_4.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_6 = QHBoxLayout(self.frame_4)
-        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
-        self.frame_5 = QFrame(self.frame_4)
-        self.frame_5.setObjectName(u"frame_5")
-        self.frame_5.setStyleSheet(u"border:0px;")
-        self.frame_5.setFrameShape(QFrame.StyledPanel)
-        self.frame_5.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout = QHBoxLayout(self.frame_5)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.label_6 = QLabel(self.frame_5)
-        self.label_6.setObjectName(u"label_6")
-        self.label_6.setMinimumSize(QSize(130, 0))
-        self.label_6.setMaximumSize(QSize(130, 16777215))
-        self.label_6.setStyleSheet(u"        font: 580 10pt \"Segoe UI\";\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;")
-        self.label_6.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
-
-        self.horizontalLayout.addWidget(self.label_6)
-
-
-        self.horizontalLayout_6.addWidget(self.frame_5)
-
-        self.preferences_lineedit_user_presets_path = QLineEdit(self.frame_4)
-        self.preferences_lineedit_user_presets_path.setObjectName(u"preferences_lineedit_user_presets_path")
-        self.preferences_lineedit_user_presets_path.setStyleSheet(u"    QLineEdit {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QLineEdit {\n"
-"\n"
-"        font: 580 10pt \"Segoe UI\";\n"
-"        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QLineEdit:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QLineEdit:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"\n"
-"    }")
-        self.preferences_lineedit_user_presets_path.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
-
-        self.horizontalLayout_6.addWidget(self.preferences_lineedit_user_presets_path)
-
-
-        self.verticalLayout_2.addWidget(self.frame_4)
-
         self.frame_3 = QFrame(self.Paths)
         self.frame_3.setObjectName(u"frame_3")
         self.frame_3.setMaximumSize(QSize(16777215, 48))
         self.frame_3.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame_3.setFrameShape(QFrame.NoFrame)
-        self.frame_3.setFrameShadow(QFrame.Raised)
+        self.frame_3.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_4 = QHBoxLayout(self.frame_3)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.frame_6 = QFrame(self.frame_3)
         self.frame_6.setObjectName(u"frame_6")
         self.frame_6.setStyleSheet(u"border:0px;")
-        self.frame_6.setFrameShape(QFrame.StyledPanel)
-        self.frame_6.setFrameShadow(QFrame.Raised)
+        self.frame_6.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_6.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_7 = QHBoxLayout(self.frame_6)
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
         self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
@@ -285,7 +210,7 @@ class Ui_preferences_dialog(object):
 "        padding-left: 4px;\n"
 "        padding-right: 4px;\n"
 "        color: #E3E3E3;")
-        self.label_7.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.label_7.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
 
         self.horizontalLayout_7.addWidget(self.label_7)
 
@@ -327,7 +252,7 @@ class Ui_preferences_dialog(object):
 "        font: 580 9pt \"Segoe UI\";\n"
 "\n"
 "    }")
-        self.preferences_lineedit_archive_path.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.preferences_lineedit_archive_path.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
 
         self.horizontalLayout_4.addWidget(self.preferences_lineedit_archive_path)
 
@@ -349,8 +274,8 @@ class Ui_preferences_dialog(object):
         self.frame_7.setObjectName(u"frame_7")
         self.frame_7.setEnabled(True)
         self.frame_7.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame_7.setFrameShape(QFrame.NoFrame)
-        self.frame_7.setFrameShadow(QFrame.Raised)
+        self.frame_7.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_7.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_5 = QHBoxLayout(self.frame_7)
         self.horizontalLayout_5.setSpacing(18)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
@@ -358,7 +283,7 @@ class Ui_preferences_dialog(object):
         self.checkBox_show_in_hammer_discord_status = QCheckBox(self.frame_7)
         self.checkBox_show_in_hammer_discord_status.setObjectName(u"checkBox_show_in_hammer_discord_status")
         self.checkBox_show_in_hammer_discord_status.setMinimumSize(QSize(96, 32))
-        self.checkBox_show_in_hammer_discord_status.setLayoutDirection(Qt.LeftToRight)
+        self.checkBox_show_in_hammer_discord_status.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.checkBox_show_in_hammer_discord_status.setStyleSheet(u"QCheckBox {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -430,8 +355,8 @@ class Ui_preferences_dialog(object):
 
         self.frame_13 = QFrame(self.Discord_status)
         self.frame_13.setObjectName(u"frame_13")
-        self.frame_13.setFrameShape(QFrame.NoFrame)
-        self.frame_13.setFrameShadow(QFrame.Raised)
+        self.frame_13.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_13.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_15 = QHBoxLayout(self.frame_13)
         self.horizontalLayout_15.setSpacing(0)
         self.horizontalLayout_15.setObjectName(u"horizontalLayout_15")
@@ -440,15 +365,15 @@ class Ui_preferences_dialog(object):
         self.frame_9.setObjectName(u"frame_9")
         self.frame_9.setMaximumSize(QSize(16777215, 48))
         self.frame_9.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame_9.setFrameShape(QFrame.NoFrame)
-        self.frame_9.setFrameShadow(QFrame.Raised)
+        self.frame_9.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_9.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_13 = QHBoxLayout(self.frame_9)
         self.horizontalLayout_13.setObjectName(u"horizontalLayout_13")
         self.frame_12 = QFrame(self.frame_9)
         self.frame_12.setObjectName(u"frame_12")
         self.frame_12.setStyleSheet(u"border:0px;")
-        self.frame_12.setFrameShape(QFrame.StyledPanel)
-        self.frame_12.setFrameShadow(QFrame.Raised)
+        self.frame_12.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_12.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_14 = QHBoxLayout(self.frame_12)
         self.horizontalLayout_14.setObjectName(u"horizontalLayout_14")
         self.horizontalLayout_14.setContentsMargins(0, 0, 0, 0)
@@ -465,7 +390,7 @@ class Ui_preferences_dialog(object):
 "        padding-left: 4px;\n"
 "        padding-right: 4px;\n"
 "        color: #E3E3E3;")
-        self.label_12.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.label_12.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
 
         self.horizontalLayout_13.addWidget(self.label_12)
 
@@ -504,7 +429,7 @@ class Ui_preferences_dialog(object):
 "        font: 580 9pt \"Segoe UI\";\n"
 "\n"
 "    }")
-        self.editline_custom_discord_status.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+        self.editline_custom_discord_status.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
 
         self.horizontalLayout_13.addWidget(self.editline_custom_discord_status)
 
@@ -516,8 +441,8 @@ class Ui_preferences_dialog(object):
 
         self.frame_14 = QFrame(self.Discord_status)
         self.frame_14.setObjectName(u"frame_14")
-        self.frame_14.setFrameShape(QFrame.NoFrame)
-        self.frame_14.setFrameShadow(QFrame.Raised)
+        self.frame_14.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_14.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_16 = QHBoxLayout(self.frame_14)
         self.horizontalLayout_16.setSpacing(0)
         self.horizontalLayout_16.setObjectName(u"horizontalLayout_16")
@@ -539,8 +464,8 @@ class Ui_preferences_dialog(object):
         self.frame_11 = QFrame(self.onter_preferences_tab)
         self.frame_11.setObjectName(u"frame_11")
         self.frame_11.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame_11.setFrameShape(QFrame.NoFrame)
-        self.frame_11.setFrameShadow(QFrame.Raised)
+        self.frame_11.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_11.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_10 = QHBoxLayout(self.frame_11)
         self.horizontalLayout_10.setSpacing(18)
         self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
@@ -590,7 +515,7 @@ class Ui_preferences_dialog(object):
         self.checkBox_start_with_system.setObjectName(u"checkBox_start_with_system")
         self.checkBox_start_with_system.setEnabled(True)
         self.checkBox_start_with_system.setMinimumSize(QSize(96, 32))
-        self.checkBox_start_with_system.setLayoutDirection(Qt.LeftToRight)
+        self.checkBox_start_with_system.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.checkBox_start_with_system.setStyleSheet(u"QCheckBox {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -627,7 +552,7 @@ class Ui_preferences_dialog(object):
         self.checkBox_close_to_tray.setObjectName(u"checkBox_close_to_tray")
         self.checkBox_close_to_tray.setEnabled(True)
         self.checkBox_close_to_tray.setMinimumSize(QSize(96, 32))
-        self.checkBox_close_to_tray.setLayoutDirection(Qt.LeftToRight)
+        self.checkBox_close_to_tray.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.checkBox_close_to_tray.setStyleSheet(u"QCheckBox {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -669,8 +594,8 @@ class Ui_preferences_dialog(object):
         self.frame_17 = QFrame(self.onter_preferences_tab)
         self.frame_17.setObjectName(u"frame_17")
         self.frame_17.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame_17.setFrameShape(QFrame.NoFrame)
-        self.frame_17.setFrameShadow(QFrame.Raised)
+        self.frame_17.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_17.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_18 = QHBoxLayout(self.frame_17)
         self.horizontalLayout_18.setSpacing(18)
         self.horizontalLayout_18.setObjectName(u"horizontalLayout_18")
@@ -679,7 +604,7 @@ class Ui_preferences_dialog(object):
         self.launch_addon_after_nosteamlogon_fix.setObjectName(u"launch_addon_after_nosteamlogon_fix")
         self.launch_addon_after_nosteamlogon_fix.setEnabled(True)
         self.launch_addon_after_nosteamlogon_fix.setMinimumSize(QSize(96, 32))
-        self.launch_addon_after_nosteamlogon_fix.setLayoutDirection(Qt.LeftToRight)
+        self.launch_addon_after_nosteamlogon_fix.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.launch_addon_after_nosteamlogon_fix.setStyleSheet(u"QCheckBox {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -757,7 +682,7 @@ class Ui_preferences_dialog(object):
         self.checkBox_debug_info.setObjectName(u"checkBox_debug_info")
         self.checkBox_debug_info.setEnabled(True)
         self.checkBox_debug_info.setMinimumSize(QSize(96, 32))
-        self.checkBox_debug_info.setLayoutDirection(Qt.LeftToRight)
+        self.checkBox_debug_info.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         self.checkBox_debug_info.setStyleSheet(u"QCheckBox {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -799,8 +724,8 @@ class Ui_preferences_dialog(object):
         self.frame_15 = QFrame(self.onter_preferences_tab)
         self.frame_15.setObjectName(u"frame_15")
         self.frame_15.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame_15.setFrameShape(QFrame.NoFrame)
-        self.frame_15.setFrameShadow(QFrame.Raised)
+        self.frame_15.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_15.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_17 = QHBoxLayout(self.frame_15)
         self.horizontalLayout_17.setSpacing(18)
         self.horizontalLayout_17.setObjectName(u"horizontalLayout_17")
@@ -863,16 +788,16 @@ class Ui_preferences_dialog(object):
         self.frame_2 = QFrame(preferences_dialog)
         self.frame_2.setObjectName(u"frame_2")
         self.frame_2.setMaximumSize(QSize(16777215, 48))
-        self.frame_2.setFrameShape(QFrame.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Raised)
+        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_3 = QHBoxLayout(self.frame_2)
         self.horizontalLayout_3.setSpacing(6)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.frame_16 = QFrame(self.frame_2)
         self.frame_16.setObjectName(u"frame_16")
-        self.frame_16.setFrameShape(QFrame.StyledPanel)
-        self.frame_16.setFrameShadow(QFrame.Raised)
+        self.frame_16.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_16.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_11 = QHBoxLayout(self.frame_16)
         self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
         self.horizontalLayout_11.setContentsMargins(0, 0, 0, 0)
@@ -1015,7 +940,7 @@ class Ui_preferences_dialog(object):
 
         self.retranslateUi(preferences_dialog)
 
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(preferences_dialog)
@@ -1025,7 +950,6 @@ class Ui_preferences_dialog(object):
         preferences_dialog.setWindowTitle(QCoreApplication.translate("preferences_dialog", u"Settings", None))
         self.label_9.setText(QCoreApplication.translate("preferences_dialog", u"Steam path:", None))
         self.label_8.setText(QCoreApplication.translate("preferences_dialog", u"Path to cs2:", None))
-        self.label_6.setText(QCoreApplication.translate("preferences_dialog", u"User presets path:", None))
         self.label_7.setText(QCoreApplication.translate("preferences_dialog", u"Archive path:", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Paths), QCoreApplication.translate("preferences_dialog", u"Paths", None))
         self.checkBox_show_in_hammer_discord_status.setText(QCoreApplication.translate("preferences_dialog", u"Show hammer status in Discord", None))

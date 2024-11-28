@@ -19,11 +19,11 @@ output_path = 'hammer5tools/hammer5tools.zip'
 
 files_to_archive = [file for file in os.listdir(folder_path) if file != 'hammer5tools.zip']
 
-with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_LZMA) as archive:
     for root, _, files in os.walk(folder_path):
         for file in files:
-            if file != 'hammer5tools.zip':  # Exclude 'hammer5tools.zip'
-                file_path = os.path.join(root, file)
+            file_path = os.path.join(root, file)
+            if file != 'hammer5tools.zip' and not '.wav' in file:
                 archive.write(file_path, os.path.relpath(file_path, folder_path))
 
 # Command 3 (commented out)
