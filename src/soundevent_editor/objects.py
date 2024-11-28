@@ -50,5 +50,6 @@ soundevent_editor_properties = [
     {'Distance Unfiltered Stereo Mapping Curve': {'distance_unfiltered_stereo_mapping_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [300.0, 0.0, 0.0, 0.0, 2.0, 3.0]]}},
     {'Time Volume Mapping Curve': {'time_volume_mapping_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [1.0, 1.0, 0.0, 0.0, 2.0, 3.0]]}},
 ]
-
+dsp_presets = []
+mixgroups = ['ArmsRace', 'Weapons', 'UI', 'voip', 'World', 'Music', 'BuyMusic', 'DuckingMusic', 'SelectedMusic', 'All', 'Footsteps', 'Foley', 'Physics', 'BulletImpacts', 'Explosions', 'ExplosionsDistant', 'Ambient', 'WeaponsDistant', 'Exceptions', 'Amb_Common', 'Aztec', 'Assault', 'Baggage', 'Bank', 'Boathouse', 'Canals', 'Cbble', 'Chateau', 'Compound', 'Coop', 'Dust', 'Dust2', 'Havana', 'House', 'Inferno', 'Italy', 'Lunacy', 'Militia', 'Mill', 'Mirage', 'Monastery', 'Nuke', 'Office', 'Overpass', 'Piranesi', 'Port', 'Prodigy', 'Shacks', 'Shoots', 'Train', 'Training', 'Vertigo', 'PlayerDamage', 'KillCard', 'PlayerVictim', 'Anubis', 'VO']
 soundevent_blank = {}
