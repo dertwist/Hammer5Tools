@@ -5,6 +5,7 @@ import random
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication, QTreeWidget
 from PySide6.QtCore import Signal
 
+from src.soundevent_editor.objects import mixgroups, dsp_presets
 from src.soundevent_editor.property.common import SoundEventEditorPropertyList
 from src.soundevent_editor.property.ui_frame import Ui_Form
 from src.widgets import FloatWidget
@@ -83,7 +84,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyVector3,
             SoundEventEditorPropertyList,
             SoundEventEditorPropertyFiles,
-            SoundEventEditorPropertySoundEvent
+            SoundEventEditorPropertySoundEvent,
+            SoundEventEditorPropertyCombobox
         )
 
         # Float (Only Positive)
@@ -159,6 +161,12 @@ class SoundEventEditorPropertyFrame(QWidget):
         elif name == 'time_volume_mapping_curve':
             self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value, labels=['Time', 'Volume'])
         # Combobox
+        elif name == 'base':
+            self.property_instance = SoundEventEditorPropertyBase(label_text=name, value=value, tree=self.tree)
+        elif name == 'mixgroup':
+            self.property_instance = SoundEventEditorPropertyCombobox(label_text=name, value=value, tree=self.tree, objects=mixgroups)
+        elif name == 'dsp_preset':
+            self.property_instance = SoundEventEditorPropertyCombobox(label_text=name, value=value, tree=self.tree, objects=dsp_presets)
         # Vector3
         elif name == 'position':
             self.property_instance = SoundEventEditorPropertyVector3(label_text=name, value=value)

@@ -1,5 +1,6 @@
 import ast
 from operator import invert
+from tkinter.ttk import Combobox
 
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem, QTreeWidget, QSpacerItem, QSizePolicy
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
@@ -610,7 +611,88 @@ class SoundEventEditorPropertySoundEvent(SoundEventEditorPropertyList):
         self.vertical_layout.addWidget(widget_instance)
         self.vertical_layout.insertWidget(0, widget_instance)
         self.on_property_update()
+class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
+    def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None, objects: list = None):
+        """
+        Combox property
 
+        value : str
+        """
+        super().__init__(parent, label_text, value)
+
+        self.tree: QTreeWidget = tree
+        self.objects = objects
+        # Init editline
+        self.editline = QLineEdit()
+        self.editline.setPlaceholderText("Type...")
+        if value == "None":
+            pass
+        else:
+            self.editline.setText(str(value))
+        self.editline.textChanged.connect(self.on_property_update)
+        self.layout().addWidget(self.editline)
+
+
+        # Init Search button
+        self.search_button = Button()
+        self.search_button.set_icon_search()
+        self.search_button.clicked.connect(self.call_search_popup_menu)
+        self.layout().addWidget(self.search_button)
+        self.on_property_update(value)
+
+        self.setContentsMargins(0,0,0,0)
+        self.setMinimumHeight(48)
+        self.setMaximumHeight(48)
+
+        self.value_class = label_text
+
+        # Updating value
+        self.value_update(value)
+    def set_value(self, value):
+        self.editline.setText(str(value))
+
+    def on_property_update(self, value):
+        """Send signal that user changed the property"""
+        self.value_update(value)
+        self.edited.emit()
+
+    def value_update(self, value):
+        """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
+        self.value = {self.value_class: value}
+    def init_label_color(self):
+        return "#F4A9F6"
+
+    def call_search_popup_menu(self):
+        elements = []
+        for item in self.objects:
+            __element = {item:item}
+            elements.append(__element)
+        self.popup_menu = PopupMenu(elements, add_once=False)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
+        self.popup_menu.show()
+
+class SoundEventEditorPropertyBase(SoundEventEditorPropertyCombobox):
+    def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None):
+        """
+        Combox property
+
+        value : str
+        """
+        super().__init__(parent, label_text, value, tree)
+    def call_search_popup_menu(self):
+        if self.tree is None:
+            pass
+        else:
+            elements = []
+            tree_root = self.tree.invisibleRootItem()
+            for index in range(tree_root.childCount()):
+                __tree_item = tree_root.child(index)
+                __name = __tree_item.text(0)
+                __element = {__name:__name}
+                elements.append(__element)
+            self.popup_menu = PopupMenu(elements, add_once=False)
+            self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
+            self.popup_menu.show()
 #==========================================================<  Properties Widgets  >=======================================================
 
 class CurveWidgetDatapoint(QWidget):
