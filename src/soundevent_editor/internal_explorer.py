@@ -11,10 +11,10 @@ from src.property.methods import *
 class InternalSoundFileExplorer(QTreeWidget):
     def __init__(self):
         super().__init__()
-        self.setHeaderHidden(True)  # Hide the header
-        self.setDragEnabled(True)   # Enable dragging
-        self.setAcceptDrops(True)   # Enable dropping
-        self.setDragDropMode(QTreeWidget.InternalMove)  # Set drag-and-drop mode
+        self.setHeaderHidden(True)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDragDropMode(QTreeWidget.InternalMove)
         self.itemClicked.connect(self.on_item_clicked)
         self.audio_player = None
         self.load_vpk_files()
