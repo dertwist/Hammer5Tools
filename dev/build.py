@@ -19,7 +19,7 @@ output_path = 'hammer5tools/hammer5tools.zip'
 
 files_to_archive = [file for file in os.listdir(folder_path) if file != 'hammer5tools.zip']
 
-with zipfile.ZipFile(output_path, 'w') as archive:
+with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
     for root, _, files in os.walk(folder_path):
         for file in files:
             if file != 'hammer5tools.zip':  # Exclude 'hammer5tools.zip'
