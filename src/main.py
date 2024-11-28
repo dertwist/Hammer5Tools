@@ -344,7 +344,6 @@ class Widget(QMainWindow):
             self.SoundEventEditorMainWindow.closeEvent(self.event)
         except:
             pass
-
         self.current_tab(True)
         QApplication.quit()
         QApplication.instance().quit()
