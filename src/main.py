@@ -184,7 +184,6 @@ class Widget(QMainWindow):
             event.ignore()
             self.hide()
             self.show_minimize_message_once()
-
         else:
             self.exit_application()
 
@@ -221,10 +220,6 @@ class Widget(QMainWindow):
                 self.LoadingEditorMainWindow.deleteLater()
         except Exception as e:
             print('Error while cleaning up Loading_editorMainWindow:', e)
-
-
-
-
 
         # Create a new instance of BatchCreatorMainWindow
         try:
