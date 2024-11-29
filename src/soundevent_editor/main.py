@@ -3,7 +3,7 @@ import ast, os, shutil
 from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soundevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QMessageBox, QApplication
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QMessageBox, QApplication, QTreeWidgetItem
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
 from PySide6.QtCore import Qt
 from src.popup_menu.popup_menu_main import PopupMenu
@@ -124,7 +124,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.internal_explorer = InternalSoundFileExplorer()
         self.internal_explorer.setStyleSheet("""border:none""")
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
-        self.ui.internal_explorer_search_bar.textChanged.connect(lambda text:self.search_hierarchy(text, self.internal_explorer.invisibleRootItem()))
+        self.ui.internal_explorer_search_bar.textChanged.connect(lambda text: self.search_hierarchy(text, self.internal_explorer.invisibleRootItem()))
     #==============================================================<  Actions  >============================================================
     def realtime_save(self):
         return self.ui.realtime_save_checkbox.isChecked()
@@ -299,7 +299,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.filter_tree_item(parent_item, filter_text.lower(), True)
 
     def filter_tree_item(self, item, filter_text, is_root=False):
-        if not isinstance(item, HierarchyItemModel):
+        if not isinstance(item, (HierarchyItemModel, QTreeWidgetItem)):
             return False
 
         # Check if the current item's text matches the filter
