@@ -3,7 +3,7 @@ import ast, os, shutil
 from src.preferences import get_addon_name, get_cs2_path, debug
 from src.soundevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QTreeWidgetItem, QMessageBox, QApplication
+from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QMessageBox, QApplication
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
 from PySide6.QtCore import Qt
 from src.popup_menu.popup_menu_main import PopupMenu
@@ -225,9 +225,7 @@ class SoundEventEditorMainWindow(QMainWindow):
     def new_soundevent(self, _data: dict = None):
         """Creates new soundevent using given data. Input dict"""
         __soundevent_name = "SoundEvent"
-        __soundevent = QTreeWidgetItem()
-        __soundevent.setText(0, __soundevent_name)
-        __soundevent.setText(1, str(_data))
+        __soundevent = HierarchyItemModel(_name=__soundevent_name, _data=_data)
         self.ui.hierarchy_widget.invisibleRootItem().addChild(__soundevent)
 
     def new_soundevent_blank(self):
@@ -262,14 +260,14 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     #================================================================<  Hierarchy  >=============================================================
 
-    def update_hierarchy_item(self, item: QTreeWidgetItem, _data: dict):
+    def update_hierarchy_item(self, item: HierarchyItemModel, _data: dict):
         """Sets the value to the data column and saves if in realtime mode."""
         item.setText(1, str(_data))
         debug(f'Updated hierarchy item {item.text(0)} with data: \n {_data}')
         if self.realtime_save():
             self.save_soundevents()
 
-    def on_changed_hierarchy_item(self, current_item: QTreeWidgetItem):
+    def on_changed_hierarchy_item(self, current_item: HierarchyItemModel):
         """Handles changes in the hierarchy item by updating the properties window."""
         if current_item is not None:
             self.PropertiesWindow.properties_groups_show()
@@ -292,7 +290,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.filter_tree_item(parent_item, filter_text.lower(), True)
 
     def filter_tree_item(self, item, filter_text, is_root=False):
-        if not isinstance(item, QTreeWidgetItem):
+        if not isinstance(item, HierarchyItemModel):
             return False
 
         # Check if the current item's text matches the filter

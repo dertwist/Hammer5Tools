@@ -10,8 +10,9 @@ from PySide6.QtCore import QEasingCurve, Qt, Signal
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.preferences import debug, get_addon_dir
 from src.common import convert_snake_case
+from src.smartprop_editor.objects import elements_list
 from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
-from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button, ComboboxDynamicItems
+from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button, ComboboxDynamicItems, Spacer
 from src.soundevent_editor.common import vsnd_filepath_convert
 
 import re, os
@@ -622,23 +623,30 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
 
         self.tree: QTreeWidget = tree
         self.objects = objects
-        # Init editline
-        self.editline = QLineEdit()
-        self.editline.setPlaceholderText("Type...")
+        # Init combobox
+        self.combobox = ComboboxDynamicItems()
+        self.combobox.items = self.objects
+        self.combobox.setMinimumWidth(256)
+        self.combobox.updateItems()
         if value == "None":
             pass
         else:
-            self.editline.setText(str(value))
-        self.editline.textChanged.connect(self.on_property_update)
-        self.layout().addWidget(self.editline)
+            self.combobox.setCurrentText(str(value))
+        self.combobox.currentTextChanged.connect(self.on_property_update)
+        self.layout().addWidget(self.combobox)
 
 
         # Init Search button
         self.search_button = Button()
         self.search_button.set_icon_search()
+        self.search_button.setMaximumWidth(32)
         self.search_button.clicked.connect(self.call_search_popup_menu)
         self.layout().addWidget(self.search_button)
         self.on_property_update(value)
+
+        # Init spacer
+        spacer = Spacer()
+        self.layout().addWidget(spacer)
 
         self.setContentsMargins(0,0,0,0)
         self.setMinimumHeight(48)
@@ -648,8 +656,13 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
 
         # Updating value
         self.value_update(value)
-    def set_value(self, value):
-        self.editline.setText(str(value))
+    def init_combobox(self):
+        pass
+    def set_value(self, value: str):
+        if value not in self.combobox.items:
+            self.combobox.items.append(value)
+            self.combobox.addItem(value)
+        self.combobox.setCurrentText(str(value))
 
     def on_property_update(self, value):
         """Send signal that user changed the property"""
@@ -672,24 +685,37 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
         self.popup_menu.show()
 
 class SoundEventEditorPropertyBase(SoundEventEditorPropertyCombobox):
-    def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None):
+    def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None, objects: list = None):
         """
         Combox property
 
         value : str
         """
-        super().__init__(parent, label_text, value, tree)
+        super().__init__(parent, label_text, value, tree, objects)
+        self.combobox.clicked.connect(self.update_soundevnets)
+        self.update_soundevnets()
+
+    def update_soundevnets(self):
+        self.combobox.items = self.get_soundenvets()
+        self.combobox.updateItems()
+
+    def get_soundenvets(self, elements_dict = False):
+        elements = []
+        tree_root = self.tree.invisibleRootItem()
+        for index in range(tree_root.childCount()):
+            __tree_item = tree_root.child(index)
+            __name = __tree_item.text(0)
+            if elements_dict:
+                __element = {__name: __name}
+            else:
+                __element = __name
+            elements.append(__element)
+        return elements
     def call_search_popup_menu(self):
         if self.tree is None:
             pass
         else:
-            elements = []
-            tree_root = self.tree.invisibleRootItem()
-            for index in range(tree_root.childCount()):
-                __tree_item = tree_root.child(index)
-                __name = __tree_item.text(0)
-                __element = {__name:__name}
-                elements.append(__element)
+            elements = self.get_soundenvets(elements_dict=True)
             self.popup_menu = PopupMenu(elements, add_once=False)
             self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
             self.popup_menu.show()
