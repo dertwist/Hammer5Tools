@@ -134,5 +134,3 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         print(Fore.RED + f"An error occurred: {e}")
-    finally:
-        input(Fore.CYAN + "Press Enter to exit...")
