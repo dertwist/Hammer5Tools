@@ -631,7 +631,6 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
         self.combobox.updateItems()
         self.combobox.currentTextChanged.connect(self.on_property_update)
         self.layout().addWidget(self.combobox)
-        print(value)
         self.set_value(value)
         # if value == "None":
         #     pass

@@ -151,7 +151,6 @@ class Widget(QMainWindow):
         addon = get_addon_name()
         self.ui.ComboBoxSelectAddon.clear()
         self.populate_addon_combobox()
-        print(addon)
         self.ui.ComboBoxSelectAddon.setCurrentText(addon)
 
         self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
