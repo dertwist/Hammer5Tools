@@ -15,7 +15,7 @@ soundevent_editor_properties = [
     {'Distance Effect Mix': {'distance_effect_mix': 0.0}},
     {'Reverb Wet': {'reverb_wet': 1.0}},
     {'Occlusion Frequency Scale': {'occlusion_frequency_scale ': 1.0}},
-    {'Vsnd Duration': {'vsnd_duration ': 10}},
+    {'Vsnd Duration': {'vsnd_duration': 10}},
 
 
     # Files
