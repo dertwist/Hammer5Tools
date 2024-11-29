@@ -50,6 +50,30 @@ soundevent_editor_properties = [
     {'Distance Unfiltered Stereo Mapping Curve': {'distance_unfiltered_stereo_mapping_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [300.0, 0.0, 0.0, 0.0, 2.0, 3.0]]}},
     {'Time Volume Mapping Curve': {'time_volume_mapping_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [1.0, 1.0, 0.0, 0.0, 2.0, 3.0]]}},
 ]
-dsp_presets = []
+dsp_presets = [
+    'reverb_2_crawlSpace',
+    'reverb_3_smallTunnels',
+    'reverb_4_smallCarpetRoom',
+    'reverb_5_smallRoom',
+    'reverb_6_largeRoom',
+    'reverb_7_mediumHall',
+    'reverb_8_mediumCarpetRoom',
+    'reverb_9_mediumChamber',
+    'reverb_10_warehouse',
+    'reverb_11_smallBright9',
+    'reverb_12_mediumBright',
+    'reverb_13_largeBright',
+    'reverb_14_brightHallway',
+    'reverb_15_largeCarpetRoom',
+    'reverb_16_carpetCorridor',
+    'reverb_17_smallConcrete',
+    'reverb_18_mediumConcrete',
+    'reverb_19_largeConcrete',
+    'reverb_20_outsideAlley',
+    'reverb_21_outsideStreet',
+    'reverb_22_outsideOpen',
+    'reverb_23_smallBathroom',
+    'reverb_24_largeBathroom'
+]
 mixgroups = ['ArmsRace', 'Weapons', 'UI', 'voip', 'World', 'Music', 'BuyMusic', 'DuckingMusic', 'SelectedMusic', 'All', 'Footsteps', 'Foley', 'Physics', 'BulletImpacts', 'Explosions', 'ExplosionsDistant', 'Ambient', 'WeaponsDistant', 'Exceptions', 'Amb_Common', 'Aztec', 'Assault', 'Baggage', 'Bank', 'Boathouse', 'Canals', 'Cbble', 'Chateau', 'Compound', 'Coop', 'Dust', 'Dust2', 'Havana', 'House', 'Inferno', 'Italy', 'Lunacy', 'Militia', 'Mill', 'Mirage', 'Monastery', 'Nuke', 'Office', 'Overpass', 'Piranesi', 'Port', 'Prodigy', 'Shacks', 'Shoots', 'Train', 'Training', 'Vertigo', 'PlayerDamage', 'KillCard', 'PlayerVictim', 'Anubis', 'VO']
 soundevent_blank = {}
