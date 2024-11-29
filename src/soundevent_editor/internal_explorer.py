@@ -1,12 +1,28 @@
+from src.property.methods import QDrag
 import os
 import vpk
-import subprocess
-from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, QMessageBox
-from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess
+from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QMessageBox
+from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess, QThread, Signal
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from src.preferences import get_cs2_path, get_addon_dir, debug
 from src.common import SoundEventEditor_sounds_path, Decompiler_path, SoundEventEditor_path
-from src.property.methods import *
+
+class VPKLoaderThread(QThread):
+    vpk_loaded = Signal(list)
+
+    def run(self):
+        try:
+            path = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
+            with vpk.open(path) as pak1:
+                folders = []
+                for filepath in pak1:
+                    if 'vsnd_c' in filepath and 'sounds' in filepath:
+                        filepath = filepath.replace('vsnd_c', 'vsnd')
+                        element = filepath.split('/')[1:]
+                        folders.append(element)
+                self.vpk_loaded.emit(folders)
+        except Exception as e:
+            self.vpk_loaded.emit([])
 
 class InternalSoundFileExplorer(QTreeWidget):
     def __init__(self):
@@ -17,7 +33,9 @@ class InternalSoundFileExplorer(QTreeWidget):
         self.setDragDropMode(QTreeWidget.InternalMove)
         self.itemClicked.connect(self.on_item_clicked)
         self.audio_player = None
-        self.load_vpk_files()
+        self.vpk_loader_thread = VPKLoaderThread()
+        self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
+        self.vpk_loader_thread.start()
 
     def _play_audio_file(self, file_path):
         debug(f'Playing audio {file_path}')
@@ -30,7 +48,7 @@ class InternalSoundFileExplorer(QTreeWidget):
             self.audio_player.setSource(QUrl.fromLocalFile(file_path))
             self.audio_player.play()
         except Exception as e:
-            print(f"Error playing audio: {e}")
+            pass
 
     def play_audio_file(self, path):
         internal_audiopath = os.path.join('sounds', path.replace('vsnd', 'vsnd_c')).replace('/', '\\')
@@ -61,19 +79,18 @@ class InternalSoundFileExplorer(QTreeWidget):
                 ]
             )
         except Exception as e:
-            print(f"Failed to start decompilation process: {e}")
+            pass
 
         return local_path
 
     def on_process_finished(self, exit_code, exit_status, process, path):
         if exit_code != 0:
             stderr = process.readAllStandardError().data().decode()
-            print(f"Error decompiling audio: {stderr}")
         else:
             self._play_audio_file(path)
 
     def on_process_error(self, error, process):
-        print(f"Process error occurred: {error}")
+        pass
 
     def assemble_path(self, item):
         path_elements = []
@@ -94,7 +111,6 @@ class InternalSoundFileExplorer(QTreeWidget):
             drag = QDrag(self)
             mime_data = QMimeData()
 
-            # Assuming you want to get the path of the currently selected item
             current_item = self.currentItem()
             if current_item is not None:
                 path = self.assemble_path(current_item)
@@ -103,10 +119,7 @@ class InternalSoundFileExplorer(QTreeWidget):
                     path = path.replace('\\', '/')
                     path = path.replace('vsnd', 'wav')
 
-                    # Create a QUrl object for the path
                     url = QUrl(path)
-
-                    # Set the text and URLs for the mime data
                     mime_data.setText(path)
                     mime_data.setUrls([url])
             drag.setMimeData(mime_data)
@@ -115,39 +128,37 @@ class InternalSoundFileExplorer(QTreeWidget):
     def dragEnterEvent(self, event):
         event.accept()
 
-    def load_vpk_files(self):
-        try:
-            path = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
-            with vpk.open(path) as pak1:
-                folders = []
-                for filepath in pak1:
-                    if 'vsnd_c' in filepath and 'sounds' in filepath:
-                        filepath = filepath.replace('vsnd_c', 'vsnd')
-                        element = filepath.split('/')[1:]
-                        folders.append(element)
+    def populate_tree(self, folders):
+        if not folders:
+            QMessageBox.critical(self, "Error", "Failed to load VPK file.")
+            return
 
-                for path_elements in folders:
-                    parent_item = None
-                    for element in path_elements:
-                        if parent_item is None:
-                            found_items = self.findItems(element, Qt.MatchExactly, 0)
-                        else:
-                            found_items = [child for child in (parent_item.child(i) for i in range(parent_item.childCount())) if child.text(0) == element]
+        self.setUpdatesEnabled(False)
 
-                        if found_items:
-                            parent_item = found_items[0]
-                        else:
-                            new_item = QTreeWidgetItem([element])
-                            if parent_item is None:
-                                self.addTopLevelItem(new_item)
-                            else:
-                                parent_item.addChild(new_item)
-                            parent_item = new_item
+        path_mapping = {}
 
-        except FileNotFoundError:
-            QMessageBox.critical(self, "Error", "VPK file not found.")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load VPK file: {e}")
+        for path_elements in folders:
+            parent_key = ""
+            parent_item = None
+
+            for element in path_elements:
+                current_key = f"{parent_key}/{element}" if parent_key else element
+
+                if current_key in path_mapping:
+                    parent_item = path_mapping[current_key]
+                else:
+                    new_item = QTreeWidgetItem([element])
+                    if parent_item is None:
+                        self.addTopLevelItem(new_item)
+                    else:
+                        parent_item.addChild(new_item)
+
+                    path_mapping[current_key] = new_item
+                    parent_item = new_item
+
+                parent_key = current_key
+
+        self.setUpdatesEnabled(True)
 
 if __name__ == "__main__":
     app = QApplication([])
