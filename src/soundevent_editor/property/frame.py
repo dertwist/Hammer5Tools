@@ -126,8 +126,6 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[-200, 200], only_positive=False, value=value)
         elif name == 'randomize_position_max_radius':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[-200, 200], only_positive=False, value=value)
-        elif name == 'vsnd_duration':
-            self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 15],only_positive=False, value=value)
         # Int
 
         # Bool
