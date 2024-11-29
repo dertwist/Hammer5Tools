@@ -162,7 +162,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value, labels=['Time', 'Volume'])
         # Combobox
         elif name == 'base':
-            self.property_instance = SoundEventEditorPropertyBase(label_text=name, value=value, tree=self.tree)
+            self.property_instance = SoundEventEditorPropertyBase(label_text=name, value=value, tree=self.tree, objects=[])
         elif name == 'mixgroup':
             self.property_instance = SoundEventEditorPropertyCombobox(label_text=name, value=value, tree=self.tree, objects=mixgroups)
         elif name == 'dsp_preset':
