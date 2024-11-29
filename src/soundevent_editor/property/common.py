@@ -240,6 +240,15 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
                 widget_instance: FloatWidget = self.float_widget_instances[index]
                 __single_axis = float(origin_list[index])
                 widget_instance.set_value(__single_axis)
+        if "setpos" in clipboard_text:
+            setpos_match = re.search(r'setpos\s+([\d\.\-]+)\s+([\d\.\-]+)\s+([\d\.\-]+)', clipboard_text)
+            if setpos_match:
+                setpos_values = [float(setpos_match.group(1)), float(setpos_match.group(2)),
+                                 float(setpos_match.group(3))]
+                for index, value in enumerate(setpos_values):
+                    if index < len(self.float_widget_instances):
+                        widget_instance: FloatWidget = self.float_widget_instances[index]
+                        widget_instance.set_value(value)
 
     def on_property_update(self):
         """Send signal that user changed the property"""
