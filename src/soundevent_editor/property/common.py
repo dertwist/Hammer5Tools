@@ -11,7 +11,7 @@ from src.popup_menu.popup_menu_main import PopupMenu
 from src.preferences import debug, get_addon_dir
 from src.common import convert_snake_case
 from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
-from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button
+from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button, ComboboxDynamicItems
 from src.soundevent_editor.common import vsnd_filepath_convert
 
 import re, os
