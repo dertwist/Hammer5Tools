@@ -5,7 +5,7 @@ import random
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication, QTreeWidget
 from PySide6.QtCore import Signal
 
-from src.soundevent_editor.objects import mixgroups, dsp_presets
+from src.soundevent_editor.objects import mixgroup_objects, dsp_preset_objects, type_objects
 from src.soundevent_editor.property.common import SoundEventEditorPropertyList
 from src.soundevent_editor.property.ui_frame import Ui_Form
 from src.widgets import FloatWidget
@@ -164,9 +164,11 @@ class SoundEventEditorPropertyFrame(QWidget):
         elif name == 'base':
             self.property_instance = SoundEventEditorPropertyBase(label_text=name, value=value, tree=self.tree, objects=[])
         elif name == 'mixgroup':
-            self.property_instance = SoundEventEditorPropertyCombobox(label_text=name, value=value, tree=self.tree, objects=mixgroups)
+            self.property_instance = SoundEventEditorPropertyCombobox(label_text=name, value=value, tree=self.tree, objects=mixgroup_objects)
         elif name == 'dsp_preset':
-            self.property_instance = SoundEventEditorPropertyCombobox(label_text=name, value=value, tree=self.tree, objects=dsp_presets)
+            self.property_instance = SoundEventEditorPropertyCombobox(label_text=name, value=value, tree=self.tree, objects=dsp_preset_objects)
+        elif name == 'type':
+            self.property_instance = SoundEventEditorPropertyCombobox(label_text=name, value=value, tree=self.tree, objects=type_objects)
         # Vector3
         elif name == 'position':
             self.property_instance = SoundEventEditorPropertyVector3(label_text=name, value=value)
