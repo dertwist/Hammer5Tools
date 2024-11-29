@@ -2,48 +2,79 @@ import zipfile
 import os
 import subprocess
 import time
+import argparse
 
-# Function to print elapsed time
 def print_elapsed_time(stage_name, start_time):
     elapsed_time = time.time() - start_time
     print(f"{stage_name} took {elapsed_time:.2f} seconds")
 
-# Record start time for the entire process
-overall_start_time = time.time()
+def kill_process(process_name):
+    subprocess.run(["taskkill", "/IM", process_name])
 
-# Stage 1: Kill the process
-stage_start_time = time.time()
-subprocess.run(["taskkill", "/IM", "Hammer5Tools.exe"])
-print_elapsed_time("Kill process", stage_start_time)
+def build_hammer5_tools():
+    subprocess.run([
+        'pyinstaller', '--name=Hammer5Tools', '--noconfirm', '--onefile', '--windowed',
+        '--optimize=2', '--icon=src/appicon.ico', '--add-data=src/appicon.ico:.',
+        '--add-data=src/images;images/', '--add-data=src/qt_styles;qt_styles/',
+        '--noupx', '--distpath=hammer5tools', '--exclude-module=PyQt5', 'src/main.py'
+    ])
 
-# Stage 2: Command 1
-stage_start_time = time.time()
-subprocess.run(['pyinstaller', '--name=Hammer5Tools', '--noconfirm', '--onefile', '--windowed', '--optimize=2', '--icon=src/appicon.ico', '--add-data=src/appicon.ico:.', '--add-data=src/images;images/', '--add-data=src/qt_styles;qt_styles/', '--noupx', '--distpath=hammer5tools', '--exclude-module=PyQt5', 'src/main.py'])
-print_elapsed_time("Command 1", stage_start_time)
+def build_updater():
+    subprocess.run([
+        'pyinstaller', '--name=Hammer5Tools_Updater', '--noconfirm', '--onefile',
+        '--optimize=2', '--icon=src/appicon.ico', '--noupx', '--distpath=hammer5tools',
+        '--exclude-module=PySide6', '--exclude-module=PyQt5', '--exclude-module=numpy',
+        '--exclude-module=PIL', '--exclude', 'matplotlib', '--exclude', 'pandas', 'src/updater.py'
+    ])
 
-# Stage 3: Command 2
-stage_start_time = time.time()
-subprocess.run(['pyinstaller', '--name=Hammer5Tools_Updater', '--noconfirm', '--onefile', '--optimize=2', '--icon=src/appicon.ico', '--noupx', '--distpath=hammer5tools', '--exclude-module=PySide6', '--exclude-module=PyQt5', '--exclude-module=numpy', '--exclude-module=PIL', '--exclude', 'matplotlib', '--exclude', 'pandas', 'src/updater.py'])
-print_elapsed_time("Command 2", stage_start_time)
+def archive_files(folder_path, output_path):
+    excluded_files = {'hammer5tools.zip'}
+    excluded_extensions = {'.wav', '.mp3'}
 
-# Stage 4: Archiving files
-stage_start_time = time.time()
-folder_path = 'hammer5tools'
-output_path = 'hammer5tools/hammer5tools.zip'
+    def should_exclude(file_name):
+        return file_name in excluded_files or any(file_name.endswith(ext) for ext in excluded_extensions)
 
-excluded_files = {'hammer5tools.zip'}
-excluded_extensions = {'.wav', '.mp3'}
-def should_exclude(file_name):
-    return file_name in excluded_files or any(file_name.endswith(ext) for ext in excluded_extensions)
+    with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_LZMA) as archive:
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                if should_exclude(file):
+                    continue
+                file_path = os.path.join(root, file)
+                archive.write(file_path, os.path.relpath(file_path, folder_path))
 
-with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_LZMA) as archive:
-    for root, _, files in os.walk(folder_path):
-        for file in files:
-            if should_exclude(file):
-                continue
-            file_path = os.path.join(root, file)
-            archive.write(file_path, os.path.relpath(file_path, folder_path))
-print_elapsed_time("Archiving files", stage_start_time)
+def main():
+    parser = argparse.ArgumentParser(description="Build and archive Hammer 5 Tools and Updater.")
+    parser.add_argument('--build-all', action='store_true', help="Build both Hammer 5 Tools and Updater.")
+    parser.add_argument('--build-hammer5', action='store_true', help="Build only Hammer 5 Tools.")
+    parser.add_argument('--build-updater', action='store_true', help="Build only Updater.")
+    parser.add_argument('--archive', action='store_true', help="Archive the build outputs.")
+    args = parser.parse_args()
 
-# Print total elapsed time
-print_elapsed_time("Overall process", overall_start_time)
+    overall_start_time = time.time()
+
+    # Kill the process
+    stage_start_time = time.time()
+    kill_process("Hammer5Tools.exe")
+    print_elapsed_time("Kill process", stage_start_time)
+
+    # Build components based on arguments
+    if args.build_all or args.build_hammer5:
+        stage_start_time = time.time()
+        build_hammer5_tools()
+        print_elapsed_time("Hammer 5 Tools Build", stage_start_time)
+
+    if args.build_all or args.build_updater:
+        stage_start_time = time.time()
+        build_updater()
+        print_elapsed_time("Updater Build", stage_start_time)
+
+    # Archive files if requested
+    if args.archive:
+        stage_start_time = time.time()
+        archive_files('hammer5tools', 'hammer5tools/hammer5tools.zip')
+        print_elapsed_time("Archiving files", stage_start_time)
+
+    print_elapsed_time("Overall process", overall_start_time)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Build All" type="CompoundRunConfigurationType">
+    <toRun name="Build App" type="PythonConfigurationType" />
+    <method v="2" />
+  </configuration>
+  <configuration default="false" name="Build Final" type="CompoundRunConfigurationType">
+    <toRun name="Build App" type="PythonConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>

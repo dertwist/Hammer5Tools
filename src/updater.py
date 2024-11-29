@@ -4,26 +4,27 @@ import psutil
 import requests
 import zipfile
 import io
+import tempfile
 from tqdm import tqdm
-import webbrowser
-from colorama import init, Fore, Style
+from colorama import init, Fore
+import subprocess
+import sys
 
 # Initialize colorama
 init(autoreset=True)
 
-version = 'v3.0.0'
-print(Fore.CYAN + f'Updater version: {version}')
-
-def kill_main_app():
-    processes = [process for process in psutil.process_iter() if process.name() == 'Hammer5Tools.exe']
+def kill_main_app(app_name='Hammer5Tools.exe'):
+    """Kills the specified main application if it's running."""
+    processes = [process for process in psutil.process_iter() if process.name() == app_name]
     if processes:
         for process in processes:
             process.kill()
-            print(Fore.GREEN + 'Hammer5Tools.exe process killed successfully.')
+            print(Fore.GREEN + f'{app_name} process killed successfully.')
     else:
-        print(Fore.YELLOW + 'Hammer5Tools.exe process not found.')
+        print(Fore.YELLOW + f'{app_name} process not found.')
 
-def download_and_extract(url, path):
+def download_and_extract(url, target_path):
+    """Downloads a zip file from the given URL and extracts it to the target path."""
     response = requests.get(url, stream=True)
     if response.status_code == 200:
         total_size = int(response.headers.get('content-length', 0))
@@ -35,97 +36,103 @@ def download_and_extract(url, path):
                 pbar.update(len(data))
 
         with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-            zip_ref.extractall(path)
-        print(Fore.GREEN + 'Download successful.')
+            zip_ref.extractall(target_path)
+        print(Fore.GREEN + 'Download and extraction successful.')
     else:
-        print(Fore.RED + 'Failed to download the update')
+        print(Fore.RED + f'Failed to download update. HTTP Status Code: {response.status_code}')
         return False
     return True
 
-def update_files(path, path_program):
-    success = True
-    folders = [os.path.join(path, 'presets'), os.path.join(path, 'hotkeys'), os.path.join(path, 'SoundEventEditor')]
-    new_elements = []
+def create_batch_script(update_path, program_path, updater_name):
+    """
+    Creates a batch script to handle the self-update.
+    The script:
+    1. Waits for the Python script to exit.
+    2. Deletes old files.
+    3. Moves updated files to their locations.
+    4. Restarts the updated updater.
+    """
+    batch_path = os.path.join(tempfile.gettempdir(), "self_update.bat")
+    with open(batch_path, 'w') as f:
+        f.write(f"""
+@echo off
+setlocal enabledelayedexpansion
 
-    for path_folder in folders:
-        try:
-            for path_item in os.listdir(path_folder):
-                full_path_item = os.path.join(path_folder, path_item)
-                new_elements.append(full_path_item)
-        except FileNotFoundError:
-            pass
+:: Wait for the Python updater to exit
+echo Waiting for Python updater to close...
+set RETRY_COUNT=10
+:WAIT
+timeout /t 1 >nul
+tasklist | find /i "{os.path.basename(sys.executable)}" >nul
+if not errorlevel 1 (
+    set /a RETRY_COUNT-=1
+    if !RETRY_COUNT! gtr 0 goto WAIT
+    echo Failed to wait for the updater to exit.
+    exit /b 1
+)
 
-    for item in new_elements:
-        rem_path = os.path.join(path_program, os.path.relpath(item, path))
-        try:
-            if os.path.isdir(rem_path):
-                shutil.rmtree(rem_path)
-            else:
-                os.remove(rem_path)
-            print(Fore.GREEN + f'Removed: {rem_path}')
-            shutil.move(item, rem_path)
-            print(Fore.GREEN + f'Moved: {item} to {rem_path}')
-        except Exception as e:
-            print(Fore.RED + f'Error with removing: {rem_path}, {e}')
-            success = False
+:: Perform the update
+echo Performing file updates...
 
-    try:
-        os.remove(os.path.join(path_program, 'Hammer5Tools.exe'))
-        print(Fore.GREEN + 'Hammer5Tools.exe Removed')
-    except Exception as e:
-        print(Fore.RED + f"An error occurred: {e}")
-        success = False
+:: Delete the old updater
+if exist "{os.path.join(program_path, updater_name)}" del "{os.path.join(program_path, updater_name)}"
 
-    try:
-        shutil.move(os.path.join(path, 'Hammer5Tools.exe'), os.path.join(path_program, 'Hammer5Tools.exe'))
-        print(Fore.GREEN + 'Hammer5Tools.exe Moved')
-    except Exception as e:
-        print(Fore.RED + f"An error occurred: {e}")
-        success = False
+:: Move new updater to the program path
+move "{os.path.join(update_path, updater_name)}" "{os.path.join(program_path, updater_name)}"
 
-    return success
+:: Move other updated files
+xcopy /E /Y /Q "{update_path}\\*" "{program_path}\\"
+
+:: Cleanup
+echo Cleaning up temporary files...
+rd /S /Q "{update_path}"
+
+:: Restart the updated application
+echo Restarting the application...
+start "" "{os.path.join(program_path, "Hammer5Tools")}"
+
+:: Delete the batch script
+del "%~f0"
+exit /b 0
+        """)
+    print(Fore.GREEN + f"Batch script created at {batch_path}.")
+    return batch_path
 
 def main():
+    """Main function to handle the update process."""
+    # Kill the main application if running
     kill_main_app()
 
-    def init_paths(dev=False):
-        if dev:
-            path = 'hammer5tools/DOWNLOAD_TMP'
-            path_program = os.path.normpath("D:/CG/Projects/Other/Hammer5Tools/hammer5tools")
-        else:
-            path = 'DOWNLOAD_TMP'
-            path_program = os.getcwd()
-        return path, path_program
+    # Initialize paths
+    dev_mode = False  # Set to True for testing or development
+    update_path = tempfile.mkdtemp(prefix="hammer5tools_update_")
+    program_path = os.getcwd() if not dev_mode else os.path.normpath("D:/CG/Projects/Other/Hammer5Tools/hammer5tools")
+    updater_name = "Hammer5Tools_Updater.exe"
 
-    path, path_program = init_paths(True)
+    # Update URL
+    update_url = 'https://github.com/dertwist/Hammer5Tools/releases/latest/download/Hammer5Tools.zip'
 
-    url = 'https://github.com/dertwist/Hammer5Tools/releases/latest/download/Hammer5Tools.zip'
-
-    if not download_and_extract(url, path):
+    # Download and extract the update
+    if not download_and_extract(update_url, update_path):
         return
 
-    with open(os.path.join(path, 'updater.cfg'), 'r') as file:
-        updater_version = file.read().strip()
+    # Create batch script to handle file operations
+    batch_script = create_batch_script(update_path, program_path, updater_name)
 
-    if updater_version > version:
-        print(Fore.YELLOW + 'A newer version of updater is available. Please update your program manually.')
-        webbrowser.open('https://github.com/dertwist/Hammer5Tools/releases/latest')
-        shutil.rmtree(path)
-        input('Press Enter to close updater...')
-        return
-
-    if os.path.exists(path):
-        success = update_files(path, path_program)
-        if success:
-            print(Fore.GREEN + "Successful update")
-            os.startfile(os.path.join(path_program, 'Hammer5Tools.exe'))
-        else:
-            print(Fore.RED + "Update was unsuccessful, try to update manually")
-            input('Press Enter to close updater...')
-        shutil.rmtree(path)
+    # Run the batch script and exit Python
+    try:
+        print(Fore.CYAN + "Launching batch script for update...")
+        subprocess.Popen(batch_script, shell=True)
+    except Exception as e:
+        print(Fore.RED + f"Failed to launch batch script: {e}")
+    finally:
+        print(Fore.CYAN + "Exiting Python script.")
+        sys.exit()
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         print(Fore.RED + f"An error occurred: {e}")
+    finally:
+        input(Fore.CYAN + "Press Enter to exit...")
