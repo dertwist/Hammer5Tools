@@ -4,6 +4,7 @@ from src.preferences import get_cs2_path, get_config_value, set_config_value, se
 from src.create_addon.ui_create_addon_dialog import Ui_Create_addon_Dialog
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtCore import QRegularExpression
+from src.common import Presets_Path
 
 # noinspection PyTypeChecker
 class Create_addon_Dialog(QDialog):
@@ -17,7 +18,7 @@ class Create_addon_Dialog(QDialog):
         validator = QRegularExpressionValidator(regex, self.ui.lineEdit_addon_name)
         self.ui.lineEdit_addon_name.setValidator(validator)
 
-        presets_path = get_config_value('PATHS', 'user_presets')
+        presets_path = Presets_Path
         if os.path.exists(presets_path) and os.path.isdir(presets_path):
             for folder_name in os.listdir(presets_path):
                 folder_path = os.path.join(presets_path, folder_name)
@@ -32,7 +33,7 @@ class Create_addon_Dialog(QDialog):
         set_config_value('PRESETS', 'preset_name', self.ui.presets_comobox.itemText(index))
     def create_addon(self):
         preset = get_config_value('PRESETS', 'preset_name')
-        presets_path = get_config_value('PATHS', 'user_presets')
+        presets_path = Presets_Path
         cs2_path = get_cs2_path()
         new_addon_name = self.ui.lineEdit_addon_name.text()
 
