@@ -130,7 +130,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             for item in __properties:
                 existing_items.add(item)
             if key not in existing_items:
-                print(existing_items)
                 self.create_property(key, data[key])
             else:
                 ErrorInfo(
