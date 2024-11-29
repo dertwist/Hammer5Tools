@@ -576,6 +576,8 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
                 __single_axis = __widget_instance.value
                 if __single_axis != "" and __single_axis is not None:
                     _value.append(__single_axis)
+        if _value == []:
+            _value = ""
         self.value = {self.value_class: _value}
 
     def init_label_color(self):

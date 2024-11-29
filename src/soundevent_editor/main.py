@@ -262,6 +262,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def update_hierarchy_item(self, item: HierarchyItemModel, _data: dict):
         """Sets the value to the data column and saves if in realtime mode."""
+        # Convert the dictionary to a string representation
         item.setText(1, str(_data))
         debug(f'Updated hierarchy item {item.text(0)} with data: \n {_data}')
         if self.realtime_save():
@@ -270,17 +271,25 @@ class SoundEventEditorMainWindow(QMainWindow):
     def on_changed_hierarchy_item(self, current_item: HierarchyItemModel):
         """Handles changes in the hierarchy item by updating the properties window."""
         if current_item is not None:
-            self.PropertiesWindow.properties_groups_show()
             self.PropertiesWindow.properties_clear()
+            self.PropertiesWindow.properties_groups_show()
 
             # Safely convert column text to dict value
             try:
-                data = ast.literal_eval(current_item.text(1))
-                self.PropertiesWindow.populate_properties(data)
+                data_text = current_item.text(1)
+                if data_text:
+                    data = ast.literal_eval(data_text)
+                    if isinstance(data, dict):
+                        self.PropertiesWindow.populate_properties(data)
+                    else:
+                        raise ValueError("Parsed data is not a dictionary.")
+                else:
+                    raise ValueError("No data found in the item.")
             except (ValueError, SyntaxError) as e:
                 debug(f"Error parsing item data: {e}")
                 QMessageBox.warning(self, "Data Error", "Failed to parse item data. Please check the format.")
         else:
+            self.PropertiesWindow.properties_clear()
             self.PropertiesWindow.properties_groups_hide()
 
 
