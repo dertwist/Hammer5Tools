@@ -215,11 +215,11 @@ class BoolWidget(QWidget):
 class ComboboxDynamicItems(QComboBox):
     clicked = Signal()
 
-    def __init__(self, parent=None, items=None):
+    def __init__(self, parent=None, items: list =None):
         """Combobox that updates it's items when user clicked on it"""
         super().__init__(parent)
         self.setStyleSheet('padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px;')
-        self.items = items
+        self.items = items if items is not None else []
 
     def updateItems(self):
         current = self.currentText()
