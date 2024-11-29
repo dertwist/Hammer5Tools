@@ -98,8 +98,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         if value is None:
             value = {}
 
-        debug(f"New Property given data, name: {name}, value: {value}")
-
         # Getting key and value from dict value (single dict value that contains only one key and value)
 
         # Check if value is a string and convert it to a dictionary if necessary
@@ -214,7 +212,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         widget_instance.edited.connect(self.on_update)
         index = self.ui.properties_layout.count() - 1
         self.ui.properties_layout.insertWidget(index, widget_instance)
-        self.on_update()
 
     def get_property_value(self, index):
         """Getting dict value from widget instance frame"""
@@ -229,14 +226,14 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Getting all values from frame widget which in layout"""
         _data: dict = {}
         for index in range(self.ui.properties_layout.count()):
-            _data.update(self.get_property_value(index))
+            if index is not None:
+                _data.update(self.get_property_value(index))
         return _data
 
     #==============================================================<  Updating  >===========================================================
     def on_update(self):
         """Updating dict value and send signal"""
         self.update_value()
-        debug(f"Some of widget instance were edited, Data: \n {self.value}")
         self.edited.emit()
     def update_value(self):
         _data = self.get_properties_value()
