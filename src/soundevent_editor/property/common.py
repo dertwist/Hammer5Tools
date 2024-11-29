@@ -622,18 +622,21 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
         super().__init__(parent, label_text, value)
 
         self.tree: QTreeWidget = tree
+        self.value_class = label_text
         self.objects = objects
         # Init combobox
         self.combobox = ComboboxDynamicItems()
         self.combobox.items = self.objects
         self.combobox.setMinimumWidth(256)
         self.combobox.updateItems()
-        if value == "None":
-            pass
-        else:
-            self.combobox.setCurrentText(str(value))
         self.combobox.currentTextChanged.connect(self.on_property_update)
         self.layout().addWidget(self.combobox)
+        print(value)
+        self.set_value(value)
+        # if value == "None":
+        #     pass
+        # else:
+        #     self.combobox.setCurrentText(str(value))
 
 
         # Init Search button
@@ -642,7 +645,7 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
         self.search_button.setMaximumWidth(32)
         self.search_button.clicked.connect(self.call_search_popup_menu)
         self.layout().addWidget(self.search_button)
-        self.on_property_update(value)
+        self.on_property_update()
 
         # Init spacer
         spacer = Spacer()
@@ -652,20 +655,18 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
         self.setMinimumHeight(48)
         self.setMaximumHeight(48)
 
-        self.value_class = label_text
-
-        # Updating value
-        self.value_update(value)
     def init_combobox(self):
         pass
     def set_value(self, value: str):
-        if value not in self.combobox.items:
-            self.combobox.items.append(value)
-            self.combobox.addItem(value)
-        self.combobox.setCurrentText(str(value))
+        if value != "None":
+            if value not in self.combobox.items:
+                self.combobox.items.append(value)
+                self.combobox.addItem(value)
+            self.combobox.setCurrentText(str(value))
 
-    def on_property_update(self, value):
+    def on_property_update(self):
         """Send signal that user changed the property"""
+        value = self.combobox.currentText()
         self.value_update(value)
         self.edited.emit()
 
