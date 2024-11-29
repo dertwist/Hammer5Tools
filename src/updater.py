@@ -7,7 +7,7 @@ import zipfile
 import io
 from tqdm import tqdm
 import webbrowser
-version = 'v2.0.0'
+version = 'v3.0.0'
 print(f'Updater version: {version}')
 
 
@@ -25,7 +25,11 @@ def kill_main_app():
 kill_main_app()
 
 path = 'DOWNLOAD_TMP'
-# path = 'hammer5tools/DOWNLOAD_TMP'
+path_program = os.getcwd()
+
+# Dev Check
+path = 'hammer5tools/DOWNLOAD_TMP'
+path_program = os.path.normpath("D:/CG/Projects/Other/Hammer5Tools/hammer5tools")
 # URL of the GitHub repository
 url = 'https://github.com/dertwist/Hammer5Tools/releases/latest/download/Hammer5Tools.zip'
 
@@ -72,34 +76,39 @@ if os.path.exists(path):
             print('Hammer5Tools.exe process killed successfully.')
 
     # collect new files
-    folders = [os.path.join(path, 'presets'),os.path.join(path, 'hotkeys'), os.path.join(path, 'smartprop_editor_templates'), os.path.join(path, 'soundevent_editor_presets')]
+    folders = [os.path.join(path, 'presets'),os.path.join(path, 'hotkeys'), os.path.join(path, 'SoundEventEditor')]
     new_elements = []
     for path_folder in folders:
-        for path_item in os.listdir(path_folder):
-            full_path_item = os.path.join(path_folder, path_item)
-            new_elements.append(full_path_item)
+        try:
+            for path_item in os.listdir(path_folder):
+                full_path_item = os.path.join(path_folder, path_item)
+                new_elements.append(full_path_item)
+        except:
+            pass
     # process
-    path_program = os.getcwd()
     for item in new_elements:
         print(path_program)
         rem_path = os.path.join(path_program, (os.path.relpath(item, path)))
-        if os.path.isdir(rem_path):
-            shutil.rmtree(rem_path)
-        else:
-            os.remove(rem_path)
-        print(f'\033[91mRemoved: {rem_path}\033[0m')
-        shutil.move(item, rem_path)
-        print(f'\033[92mMoved: {item} to {rem_path}\033[0m')
+        try:
+            if os.path.isdir(rem_path):
+                shutil.rmtree(rem_path)
+            else:
+                os.remove(rem_path)
+            print(f'\033[91mRemoved: {rem_path}\033[0m')
+            shutil.move(item, rem_path)
+            print(f'\033[92mMoved: {item} to {rem_path}\033[0m')
+        except:
+            print(f'\033[91m Error with removing: {rem_path}\033[0m')
     # app
     try:
-        os.remove(os.path.join('Hammer5Tools.exe'))
+        os.remove(os.path.join(path_program, 'Hammer5Tools.exe'))
         print('\033[92mHammer5Tools.exe Removed\033[0m')
     except Exception as e:
         print(f"An error occurred: {e}")
         success = False  # Set flag to False if an error occurs
 
     try:
-        shutil.move(os.path.join(path, 'Hammer5Tools.exe'), os.path.join(os.getcwd(), 'Hammer5Tools.exe'))
+        shutil.move(os.path.join(path, 'Hammer5Tools.exe'), os.path.join(path_program, 'Hammer5Tools.exe'))
         print('\033[92mHammer5Tools.exe Moved\033[0m')
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -107,7 +116,7 @@ if os.path.exists(path):
 
     if success:
         print("\033[92mSuccessful updated\033[0m")
-        os.startfile('Hammer5Tools.exe')
+        os.startfile(os.path.join(path_program, 'Hammer5Tools.exe'))
     else:
         print("\033[91mUpdate was unsuccessful, try to update manually\033[0m")
         input('Press Enter to close updater...')
