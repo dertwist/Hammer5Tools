@@ -146,7 +146,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             msg_box = QMessageBox()
             msg_box.setIcon(QMessageBox.Warning)
             msg_box.setText(
-                "There is no soundevents file. Will you create default? Attention: it would overwrite existing wav files in sounds folder, if it exists.")
+                "It seems there is no soundevents file available. Would you like to create a default one? Please note: this action may overwrite any existing WAV files in the sounds folder, if they are present.")
             msg_box.setWindowTitle("Warning")
             msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
