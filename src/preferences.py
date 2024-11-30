@@ -1,7 +1,3 @@
-# This Python file uses the following encoding: utf-8
-
-# if __name__ == "__main__":
-#     pass
 
 from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QSettings, Signal
@@ -60,25 +56,15 @@ def debug(value):
         print(value)
 
 
-# get preferences from registry, if it new user search path to cs2 and set it to registry
 def get_cs2_path():
-    try:
-        # get_registry_value(settings_path, settings_key, "Cs2Path")
-        counter_strikke_2_path = get_config_value('PATHS', 'Cs2')
-        if not counter_strikke_2_path:
-            raise ValueError("value cs2 not found or empty")
-        return counter_strikke_2_path
-    except:
-        try:
-            counter_strikke_2_path = (get_counter_strike_path_from_registry()).replace("\\\\", "\\")
-            set_config_value('PATHS', 'Cs2', counter_strikke_2_path)
-            return counter_strikke_2_path
-        except:
-            pass
-def get_addon_dir():
-    __path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
-    return str(__path)
+    cs2_path = get_config_value('PATHS', 'Cs2')
 
+    if cs2_path is None:
+        registry_path = get_counter_strike_path_from_registry()
+        if registry_path is not None:
+            cs2_path = registry_path.replace("\\\\", "\\")
+
+    return cs2_path
 
 def get_steam_path():
     try:
@@ -90,6 +76,17 @@ def get_steam_path():
         steam_path = get_steam_install_path()
         set_config_value('PATHS', 'steam', steam_path)
         return steam_path
+
+def get_addon_dir():
+    try:
+        cs2_path: object | str = get_cs2_path()
+        addon_name: object | str = get_addon_name()
+        if not addon_name:
+            raise ValueError("Addon name not found or empty in configuration.")
+        return os.path.join(cs2_path, 'content', 'csgo_addons', addon_name)
+    except Exception as e:
+        debug(f"Error retrieving addon directory: {e}")
+        raise
 
 
 def get_addon_name():
