@@ -1,16 +1,10 @@
-import ast
-from operator import invert
-from tkinter.ttk import Combobox
-
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem, QTreeWidget, QSpacerItem, QSizePolicy
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
 from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication
 from PySide6.QtCore import QEasingCurve, Qt, Signal
-
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.preferences import debug, get_addon_dir
 from src.common import convert_snake_case
-from src.smartprop_editor.objects import elements_list
 from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
 from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button, ComboboxDynamicItems, Spacer
 from src.soundevent_editor.common import vsnd_filepath_convert
@@ -878,12 +872,11 @@ class ListElement(QWidget):
 class FileElement(ListElement):
     def __init__(self, value: str = None):
         super().__init__(value)
-
     def call_search_popup_menu(self):
         elements = []
         __sounds_path = os.path.join(get_addon_dir(), 'sounds')
+        __addon_path = get_addon_dir()
         for dirpath, dirnames, filenames in os.walk(__sounds_path):
-            __addon_path = get_addon_dir()
             for filename in filenames:
                 __filepath = os.path.join(dirpath, filename)
                 __filepath = vsnd_filepath_convert(__filepath)
