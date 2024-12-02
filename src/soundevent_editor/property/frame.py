@@ -224,6 +224,7 @@ class SoundEventEditorPropertyFrame(QWidget):
 
 
     def show_child_action(self):
+        """Showing child widgets, resizes the layout to hide or show child"""
         if not self.ui.show_child.isChecked():
             self.ui.content.setMaximumHeight(0)
         else:
@@ -261,5 +262,4 @@ class SoundEventEditorPropertyFrame(QWidget):
                             self.widget_list.layout().insertWidget(target_index, source_widget)
 
         event.accept()
-    # dropEvent = PropertyMethods.dropEvent
 
