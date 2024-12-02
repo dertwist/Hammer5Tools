@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDockWidget,
-    QGridLayout, QHBoxLayout, QMainWindow, QPlainTextEdit,
-    QPushButton, QSizePolicy, QSpacerItem, QTabWidget,
-    QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QGridLayout,
+    QHBoxLayout, QMainWindow, QPlainTextEdit, QPushButton,
+    QSizePolicy, QSpacerItem, QTabWidget, QToolButton,
+    QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -242,39 +242,25 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.ComboBoxSelectAddon)
 
-        self.check_Box_NCM_Mode = QCheckBox(self.centralwidget)
-        self.check_Box_NCM_Mode.setObjectName(u"check_Box_NCM_Mode")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.check_Box_NCM_Mode.sizePolicy().hasHeightForWidth())
-        self.check_Box_NCM_Mode.setSizePolicy(sizePolicy)
-        self.check_Box_NCM_Mode.setMinimumSize(QSize(72, 0))
-        self.check_Box_NCM_Mode.setMaximumSize(QSize(72, 32))
-        font1 = QFont()
-        font1.setFamilies([u"Segoe UI"])
-        font1.setPointSize(7)
-        self.check_Box_NCM_Mode.setFont(font1)
-        self.check_Box_NCM_Mode.setIconSize(QSize(20, 20))
-        self.check_Box_NCM_Mode.setChecked(False)
-        self.check_Box_NCM_Mode.setAutoRepeat(False)
-        self.check_Box_NCM_Mode.setAutoExclusive(False)
-        self.check_Box_NCM_Mode.setTristate(False)
-
-        self.horizontalLayout_2.addWidget(self.check_Box_NCM_Mode)
-
         self.Launch_Addon_Button = QPushButton(self.centralwidget)
         self.Launch_Addon_Button.setObjectName(u"Launch_Addon_Button")
         self.Launch_Addon_Button.setEnabled(True)
         self.Launch_Addon_Button.setMinimumSize(QSize(128, 0))
         self.Launch_Addon_Button.setStyleSheet(u"padding: 5px;")
         icon14 = QIcon()
-        icon14.addFile(u":/icons/open_in_new_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon14.addFile(u":/icons/edit_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.Launch_Addon_Button.setIcon(icon14)
         self.Launch_Addon_Button.setIconSize(QSize(20, 20))
         self.Launch_Addon_Button.setCheckable(False)
 
         self.horizontalLayout_2.addWidget(self.Launch_Addon_Button)
+
+        self.launch_settings = QToolButton(self.centralwidget)
+        self.launch_settings.setObjectName(u"launch_settings")
+        self.launch_settings.setIcon(icon9)
+        self.launch_settings.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.launch_settings)
 
         self.horizontalSpacer = QSpacerItem(12, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
@@ -293,11 +279,11 @@ class Ui_MainWindow(object):
         self.open_addons_folder_downlist.addItem("")
         self.open_addons_folder_downlist.addItem("")
         self.open_addons_folder_downlist.setObjectName(u"open_addons_folder_downlist")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.open_addons_folder_downlist.sizePolicy().hasHeightForWidth())
-        self.open_addons_folder_downlist.setSizePolicy(sizePolicy1)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.open_addons_folder_downlist.sizePolicy().hasHeightForWidth())
+        self.open_addons_folder_downlist.setSizePolicy(sizePolicy)
         self.open_addons_folder_downlist.setMinimumSize(QSize(22, 0))
         self.open_addons_folder_downlist.setStyleSheet(u"")
 
@@ -308,7 +294,7 @@ class Ui_MainWindow(object):
         self.FixNoSteamLogon_Button.setMinimumSize(QSize(156, 0))
         self.FixNoSteamLogon_Button.setStyleSheet(u"padding: 5px;")
         icon16 = QIcon()
-        icon16.addFile(u":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon16.addFile(u":/icons/bolt_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.FixNoSteamLogon_Button.setIcon(icon16)
         self.FixNoSteamLogon_Button.setIconSize(QSize(20, 20))
 
@@ -410,22 +396,16 @@ class Ui_MainWindow(object):
         self.create_new_addon_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Create addon</span></p><p>Quick create an addon with custom presets.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.create_new_addon_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-        self.ComboBoxSelectAddon.setItemText(0, QCoreApplication.translate("MainWindow", u"asdasd", None))
+        self.ComboBoxSelectAddon.setItemText(0, QCoreApplication.translate("MainWindow", u"de_addon", None))
 
 #if QT_CONFIG(tooltip)
         self.ComboBoxSelectAddon.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">Addon selection</span></p><p>In the Addon selection, all tools apply changes to the addon selected in this section.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
-        self.check_Box_NCM_Mode.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">NCM (--nocustomermachine)</span> is a launch parameter that enable<span style=\" font-weight:700;\">s baking lightmaps with CPU</span></p><p>However, when CS2 is launched with this parameter, default assets will not be visible; only your own assets will appear.</p><p><img src=\":/images/tooltip/tooltip_ncm_01.png\" width=\"259\"/></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-#if QT_CONFIG(whatsthis)
-        self.check_Box_NCM_Mode.setWhatsThis(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><br/></p></body></html>", None))
-#endif // QT_CONFIG(whatsthis)
-        self.check_Box_NCM_Mode.setText(QCoreApplication.translate("MainWindow", u"NCM", None))
-#if QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Addon launch</span></p><p>Launches the current addon selected in the addon selection.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.Launch_Addon_Button.setText(QCoreApplication.translate("MainWindow", u"Launch Addon", None))
+        self.Launch_Addon_Button.setText(QCoreApplication.translate("MainWindow", u"Launch Hammer", None))
+        self.launch_settings.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.open_addons_folder_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Open Game/Content Addons folder</span></p><p><span style=\" font-size:9pt;\">Opens the game addons or content addons folder for the current addon selection. </span></p><p><span style=\" font-size:9pt;\">To choose the folder type to open, select a folder in the </span><span style=\" font-size:9pt; font-style:italic;\">Addon Folder Selection</span><span style=\" font-size:9pt;\">.</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
