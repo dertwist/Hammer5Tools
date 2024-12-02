@@ -17,6 +17,7 @@ from BatchCreator.BatchCreator_main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
 from minor_features.assettypes import AssetTypesModify
+from src.launch_options.main import LaunchOptionsDialog
 
 # Variables
 steam_path = get_steam_path()
@@ -72,6 +73,7 @@ class Widget(QMainWindow):
         self.populate_addon_combobox()
         self.setup_buttons()
         self.preferences_dialog = None
+        self.launch_options = None
         self.Create_addon_Dialog = None
         self.Delete_addon_Dialog = None
         self.current_tab(False)
@@ -169,9 +171,8 @@ class Widget(QMainWindow):
         self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
         self.ui.create_new_addon_button.clicked.connect(self.open_create_addon_dialog)
         self.ui.delete_addon_button.clicked.connect(self.delete_addon)
+        self.ui.launch_settings.clicked.connect(self.open_launch_options)
         self.ui.export_and_import_addon_button.clicked.connect(self.open_export_and_import_addon)
-        self.ui.check_Box_NCM_Mode.setChecked(get_config_bool('LAUNCH', 'ncm_mode'))
-        self.ui.check_Box_NCM_Mode.stateChanged.connect(self.handle_ncm_mode_checkbox)
         self.ui.open_addons_folder_button.clicked.connect(self.open_addons_folder)
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
         self.ui.bluesky_button.clicked.connect(self.open_bluesky)
@@ -264,6 +265,13 @@ class Widget(QMainWindow):
             self.preferences_dialog.show()
             self.preferences_dialog.finished.connect(self.preferences_dialog_closed)
             self.preferences_dialog.reset_window_signal.connect(self.reset_window)
+    def open_launch_options(self):
+        if self.launch_options is None:
+            self.launch_options = LaunchOptionsDialog()
+            self.launch_options.show()
+            self.launch_options.finished.connect(self.closed_launch_options)
+    def closed_launch_options(self):
+        self.launch_options = None
 
     def preferences_dialog_closed(self):
         self.preferences_dialog = None
@@ -288,9 +296,6 @@ class Widget(QMainWindow):
         self.thread = SteamNoLogoFixThreadClass()
         self.thread.start()
         self.thread.stop()
-
-    def handle_ncm_mode_checkbox(self):
-        set_config_bool('LAUNCH', 'ncm_mode', self.ui.check_Box_NCM_Mode.isChecked())
 
     def open_my_twitter(self):
         webbrowser.open("https://twitter.com/der_twist")
