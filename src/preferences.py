@@ -25,6 +25,7 @@ def set_config_bool(section, key, bool):
 
 def get_config_value(section, key):
     return settings.value(f"{section}/{key}")
+
 def get_config_bool(section, key):
     return settings.value(f"{section}/{key}", type=bool)
 
