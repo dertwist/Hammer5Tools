@@ -53,7 +53,6 @@ class InternalSoundFileExplorer(QTreeWidget):
     def play_audio_file(self, path):
         internal_audiopath = os.path.join('sounds', path.replace('vsnd', 'vsnd_c')).replace('/', '\\')
 
-        # Define paths for WAV and MP3 formats
         local_audiopath_wav = os.path.join(SoundEventEditor_sounds_path, path.replace('vsnd', 'wav')).replace('/', '\\')
         local_audiopath_mp3 = os.path.join(SoundEventEditor_sounds_path, path.replace('vsnd', 'mp3')).replace('/', '\\')
 
