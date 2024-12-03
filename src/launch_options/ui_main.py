@@ -24,7 +24,7 @@ class Ui_preferences_dialog(object):
     def setupUi(self, preferences_dialog):
         if not preferences_dialog.objectName():
             preferences_dialog.setObjectName(u"preferences_dialog")
-        preferences_dialog.resize(1300, 300)
+        preferences_dialog.resize(1056, 300)
         preferences_dialog.setMinimumSize(QSize(600, 300))
         preferences_dialog.setMaximumSize(QSize(1300, 1600))
         icon = QIcon()
