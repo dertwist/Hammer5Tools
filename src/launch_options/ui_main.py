@@ -24,9 +24,9 @@ class Ui_preferences_dialog(object):
     def setupUi(self, preferences_dialog):
         if not preferences_dialog.objectName():
             preferences_dialog.setObjectName(u"preferences_dialog")
-        preferences_dialog.resize(1056, 300)
-        preferences_dialog.setMinimumSize(QSize(600, 300))
-        preferences_dialog.setMaximumSize(QSize(1300, 1600))
+        preferences_dialog.resize(1056, 240)
+        preferences_dialog.setMinimumSize(QSize(600, 240))
+        preferences_dialog.setMaximumSize(QSize(1300, 240))
         icon = QIcon()
         icon.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         preferences_dialog.setWindowIcon(icon)
@@ -303,14 +303,6 @@ class Ui_preferences_dialog(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout_5)
 
-        self.info_lable = QLabel(preferences_dialog)
-        self.info_lable.setObjectName(u"info_lable")
-        self.info_lable.setMinimumSize(QSize(0, 20))
-        self.info_lable.setMaximumSize(QSize(16777215, 20))
-        self.info_lable.setStyleSheet(u"color: rgb(150, 150, 150);")
-
-        self.verticalLayout.addWidget(self.info_lable)
-
 
         self.retranslateUi(preferences_dialog)
 
@@ -330,6 +322,5 @@ class Ui_preferences_dialog(object):
         self.checkBox_steam.setText(QCoreApplication.translate("preferences_dialog", u"Steam", None))
         self.checkBox_show_retail.setText(QCoreApplication.translate("preferences_dialog", u"Retail", None))
         self.checkBox_no_insecure.setText(QCoreApplication.translate("preferences_dialog", u"No insecure", None))
-        self.info_lable.setText(QCoreApplication.translate("preferences_dialog", u"* Change applies immediately", None))
     # retranslateUi
 
