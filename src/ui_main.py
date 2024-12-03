@@ -242,6 +242,13 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.ComboBoxSelectAddon)
 
+        self.launch_settings = QToolButton(self.centralwidget)
+        self.launch_settings.setObjectName(u"launch_settings")
+        self.launch_settings.setIcon(icon9)
+        self.launch_settings.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.launch_settings)
+
         self.Launch_Addon_Button = QPushButton(self.centralwidget)
         self.Launch_Addon_Button.setObjectName(u"Launch_Addon_Button")
         self.Launch_Addon_Button.setEnabled(True)
@@ -254,13 +261,6 @@ class Ui_MainWindow(object):
         self.Launch_Addon_Button.setCheckable(False)
 
         self.horizontalLayout_2.addWidget(self.Launch_Addon_Button)
-
-        self.launch_settings = QToolButton(self.centralwidget)
-        self.launch_settings.setObjectName(u"launch_settings")
-        self.launch_settings.setIcon(icon9)
-        self.launch_settings.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.launch_settings)
 
         self.horizontalSpacer = QSpacerItem(12, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
@@ -401,11 +401,11 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.ComboBoxSelectAddon.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">Addon selection</span></p><p>In the Addon selection, all tools apply changes to the addon selected in this section.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
+        self.launch_settings.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Addon launch</span></p><p>Launches the current addon selected in the addon selection.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setText(QCoreApplication.translate("MainWindow", u"Launch Hammer", None))
-        self.launch_settings.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.open_addons_folder_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Open Game/Content Addons folder</span></p><p><span style=\" font-size:9pt;\">Opens the game addons or content addons folder for the current addon selection. </span></p><p><span style=\" font-size:9pt;\">To choose the folder type to open, select a folder in the </span><span style=\" font-size:9pt; font-style:italic;\">Addon Folder Selection</span><span style=\" font-size:9pt;\">.</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
