@@ -76,7 +76,13 @@ class Ui_MainWindow(object):
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.frame_9 = QFrame(self.centralwidget)
         self.frame_9.setObjectName(u"frame_9")
-        self.frame_9.setStyleSheet(u"")
+        self.frame_9.setStyleSheet(u"        QFrame#frame_9 {\n"
+"            border: 2px solid black; \n"
+"            border-color: rgba(80, 80, 80, 255);\n"
+"        }\n"
+"        QFrame#frame_9 QLabel {\n"
+"            border: 0px solid black; \n"
+"        }")
         self.frame_9.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_9.setFrameShadow(QFrame.Shadow.Raised)
         self.frame_9.setLineWidth(0)
@@ -103,7 +109,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 730, 702))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 725, 700))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -190,6 +196,45 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addWidget(self.tree_hierarchy_widget)
 
+        self.preset_manager_button = QPushButton(self.frame_2)
+        self.preset_manager_button.setObjectName(u"preset_manager_button")
+        self.preset_manager_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/schema_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.preset_manager_button.setIcon(icon7)
+        self.preset_manager_button.setIconSize(QSize(20, 20))
+
+        self.verticalLayout_3.addWidget(self.preset_manager_button)
+
 
         self.verticalLayout_8.addWidget(self.frame_2)
 
@@ -215,7 +260,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 280, 345))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 283, 327))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -270,9 +315,9 @@ class Ui_MainWindow(object):
 "    font: 580 9pt \"Segoe UI\";\n"
 "\n"
 "}")
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.paste_variable_button.setIcon(icon7)
+        icon8 = QIcon()
+        icon8.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.paste_variable_button.setIcon(icon8)
         self.paste_variable_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.paste_variable_button)
@@ -304,9 +349,9 @@ class Ui_MainWindow(object):
 "    font: 580 9pt \"Segoe UI\";\n"
 "\n"
 "}")
-        icon8 = QIcon()
-        icon8.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.add_new_variable_button.setIcon(icon8)
+        icon9 = QIcon()
+        icon9.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.add_new_variable_button.setIcon(icon9)
         self.add_new_variable_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.add_new_variable_button)
@@ -536,9 +581,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_button.setIcon(icon9)
+        icon10 = QIcon()
+        icon10.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_file_button.setIcon(icon10)
         self.open_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.open_file_button)
@@ -575,9 +620,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon10 = QIcon()
-        icon10.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_file_button.setIcon(icon10)
+        icon11 = QIcon()
+        icon11.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_file_button.setIcon(icon11)
         self.save_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.save_file_button)
@@ -614,7 +659,7 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.cerate_file_button.setIcon(icon8)
+        self.cerate_file_button.setIcon(icon9)
         self.cerate_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.cerate_file_button)
@@ -662,9 +707,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon11 = QIcon()
-        icon11.addFile(u":/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_as_file_button.setIcon(icon11)
+        icon12 = QIcon()
+        icon12.addFile(u":/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_as_file_button.setIcon(icon12)
         self.save_as_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.save_as_file_button)
@@ -701,9 +746,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon12 = QIcon()
-        icon12.addFile(u":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_as_button.setIcon(icon12)
+        icon13 = QIcon()
+        icon13.addFile(u":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_file_as_button.setIcon(icon13)
         self.open_file_as_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.open_file_as_button)
@@ -794,6 +839,10 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem.setText(3, QCoreApplication.translate("MainWindow", u"ID", None));
         ___qtreewidgetitem.setText(2, QCoreApplication.translate("MainWindow", u"Class", None));
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
+#if QT_CONFIG(tooltip)
+        self.preset_manager_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.preset_manager_button.setText(QCoreApplication.translate("MainWindow", u"Preset Manager", None))
         self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
         self.variables_scroll_area_searchbar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
 #if QT_CONFIG(tooltip)

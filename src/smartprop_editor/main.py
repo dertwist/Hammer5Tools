@@ -29,6 +29,7 @@ from src.common import Kv3ToJson, JsonToKv3
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
 from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
+from src.common import *
 
 global opened_file
 opened_file = None
@@ -64,17 +65,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         #Groups setup
         self.properties_groups_init()
 
-        # Apply setup
-        self.ui.frame_9.setStyleSheet("""
-        QFrame#frame_9 {
-            border: 2px solid black; 
-            border-color: rgba(80, 80, 80, 255);
-        }
-        QFrame#frame_9 QLabel {
-            border: 0px solid black; 
-        }
-        """)
-
         self.ui.tree_hierarchy_search_bar_widget.textChanged.connect(lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem()))
 
         # adding var classes to combobox
@@ -91,17 +81,33 @@ class SmartPropEditorMainWindow(QMainWindow):
         # else:
         #     os.makedirs(smartprops_folder)
 
-        self.tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
-        self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name='SmartProp_editor', parent=self.ui.explorer_layout_widget)
-        self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
+        self.init_explorer()
 
         self.buttons()
 
         self.undo_stack = QUndoStack(self)
 
 
-
-
+    def open_preset_manager(self):
+        """Creating another instance of this window without button preset manger and another path in the explorer"""
+        self.new_instance = SmartPropEditorMainWindow()
+        self.new_instance.mini_explorer.deleteLater()
+        self.new_instance.mini_explorer.frame.deleteLater()
+        tree_directory = SmartPropEditor_Preset_Path
+        self.new_instance.init_explorer(tree_directory, 'SmartPropEditorPresetManager')
+        self.new_instance.ui.preset_manager_button.deleteLater()
+        self.new_instance.show()
+    def init_explorer(self, dir: str = None, editor_name: str = None):
+        if dir is None:
+            self.tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
+        else:
+            self.tree_directory = dir
+        if editor_name is None:
+            editor_name = "SmartPropEditor"
+        else:
+            pass
+        self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name=editor_name, parent=self.ui.explorer_layout_widget)
+        self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
     def buttons(self):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
         self.ui.open_file_button.clicked.connect(lambda: self.open_file())
@@ -112,6 +118,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.cerate_file_button.clicked.connect(self.create_new_file)
         self.ui.paste_variable_button.clicked.connect(self.paste_variable)
         self.ui.realtime_save_checkbox.clicked.connect(self.realtime_save_action)
+        self.ui.preset_manager_button.clicked.connect(self.open_preset_manager)
 
     # ======================================[Properties groups]========================================
     def properties_groups_init(self):
