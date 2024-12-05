@@ -292,6 +292,128 @@ class SmartPropEditorMainWindow(QMainWindow):
 
 
     # ======================================[Tree Widget Hierarchy New Element]========================================
+
+    def add_preset(self):
+        presets = list()
+        for root, dirs, files in os.walk(SmartPropEditor_Preset_Path):
+            for file in files:
+                presets.append({file: os.path.join(root, file)})
+
+        self.popup_menu = PopupMenu(presets, add_once=False)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.load_preset(name, value))
+        self.popup_menu.show()
+    def load_preset(self, name: str = None, path:str = None):
+        name, extension = os.path.splitext(name)
+        with open(path, 'r') as file:
+            __data = file.read()
+        __data = Kv3ToJson(__data)
+        def populate_tree(data, parent = None):
+            if parent is None:
+                parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    if key == 'm_Children':
+                        if isinstance(value, list):
+                            for item in value:
+                                # Get keys
+                                item_class = item.get('_class')
+                                value_dict = item.copy()
+
+                                # Delete m_Children key
+                                value_dict.pop('m_Children', None)
+
+                                # Assign or get element id
+
+                                update_value_ElementID(value_dict)
+                                value_dict = update_child_ElementID_value(value_dict)
+
+                                # Add tree item
+                                child_item = HierarchyItemModel(
+                                    _name=value_dict.get('m_sLabel', get_label_id_from_value(value_dict)),
+                                    _data=str(value_dict), _class=get_clean_class_name(item_class),
+                                    _id=get_ElementID_key(value_dict))
+
+                                parent.addChild(child_item)
+                                populate_tree(item, child_item)
+            pass
+
+        def populate_choices(data):
+            if data == None:
+                print('No choices')
+                return False
+            else:
+                debug(f'Choices {data}')
+                for choice in data:
+                    name = choice['m_Name']
+                    default = choice.get('m_DefaultOption', None)
+                    options = choice.get('m_Options', None)
+                    choice = AddChoice(name=name, tree=self.ui.choices_tree_widget, default=default,
+                                       variables_scrollArea=self.ui.variables_scrollArea).item
+                    for option in options:
+                        option_item = AddOption(parent=choice, name=option['m_Name']).item
+                        variables = option['m_VariableValues']
+                        for variable in variables:
+                            AddVariable(parent=option_item, variables_scrollArea=self.ui.variables_scrollArea,
+                                        name=variable['m_TargetName'], type=variable.get('m_DataType', ''),
+                                        value=variable['m_Value'])
+        def populate_variables(data):
+            if isinstance(data, list):
+                for item in data:
+                    var_class = (item['_class']).replace(variable_prefix, '')
+                    var_name = item.get('m_VariableName', None)
+                    var_display_name = item.get('m_DisplayName', None)
+                    if var_display_name is None:
+                        var_display_name = item.get('m_ParameterName', None)
+                    var_visible_in_editor = bool(item.get('m_bExposeAsParameter', None))
+
+                    var_value = {
+                        'default': item.get('m_DefaultValue', None),
+                        'model': item.get('m_sModelName', None),
+                        'm_nElementID': item.get('m_nElementID', None)
+                    }
+                    if var_class == 'Float':
+                        var_value.update({
+                            'min': item.get('m_flParamaterMinValue', None),
+                            'max': item.get('m_flParamaterMaxValue', None)
+                        })
+                    elif var_class == 'Int':
+                        var_value.update({
+                            'min': item.get('m_nParamaterMinValue', None),
+                            'max': item.get('m_nParamaterMaxValue', None)
+                        })
+                    else:
+                        var_value.update({
+                            'min': None,
+                            'max': None
+                        })
+                    existing_variables = self.get_variables(layout= self.ui.variables_scrollArea,only_names=True)
+                    variable_exists = False
+
+                    for index, variable in existing_variables.items():
+                        name = variable[0]
+                        print(name, var_name)
+                        if name == var_name:
+                            variable_exists = True
+                            break
+
+
+                    if not variable_exists:
+                        self.add_variable(
+                            name=var_name,
+                            var_value=var_value,
+                            var_visible_in_editor=var_visible_in_editor,
+                            var_class=var_class,
+                            var_display_name=var_display_name
+                        )
+
+
+        if self.ui.tree_hierarchy_widget.currentItem() == None:
+            parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
+        else:
+            parent = self.ui.tree_hierarchy_widget.currentItem()
+        populate_tree(__data, parent)
+        populate_choices(__data.get('m_Choices', None))
+        populate_variables(__data.get('m_Variables'))
     def add_an_element(self):
         self.popup_menu = PopupMenu(elements_list, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
@@ -717,9 +839,12 @@ class SmartPropEditorMainWindow(QMainWindow):
     def open_hierarchy_menu(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
-        add_new_action = menu.addAction("Add new element")
+        add_new_action = menu.addAction("New element")
         add_new_action.triggered.connect(self.add_an_element)
         add_new_action.setShortcut(QKeySequence(QKeySequence("Ctrl+F")))
+
+        add_new_action = menu.addAction("New using preset")
+        add_new_action.triggered.connect(self.add_preset)
 
         menu.addSeparator()
 
