@@ -116,6 +116,19 @@ def main():
     if not download_and_extract(update_url, update_path):
         return
 
+    # Remove old preset
+    preset_hammer5tools = os.path.join(program_path, 'presets', 'hammer5tools')
+
+    try:
+        shutil.rmtree(preset_hammer5tools)
+        print(Fore.GREEN + f"Successfully removed preset: {preset_hammer5tools}")
+    except FileNotFoundError:
+        print(Fore.YELLOW + f"Preset not found: {preset_hammer5tools}")
+    except PermissionError:
+        print(Fore.RED + f"Permission denied while trying to remove preset: {preset_hammer5tools}")
+    except Exception as e:
+        print(Fore.RED + f"An error occurred while removing preset: {e}")
+
     # Create batch script to handle file operations
     batch_script = create_batch_script(update_path, program_path, updater_name)
 
