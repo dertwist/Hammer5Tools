@@ -285,7 +285,7 @@ class Explorer(QMainWindow):
         menu.addAction(open_folder_action)
 
         rename_action = QAction("Delete Folder", self)
-        rename_action.triggered.connect(lambda: self.rename_item(index))
+        rename_action.triggered.connect(lambda: self.delete_item(index))
         menu.addAction(rename_action)
 
         delete_action = QAction("Delete Folder", self)
