@@ -391,7 +391,6 @@ class SmartPropEditorMainWindow(QMainWindow):
 
                     for index, variable in existing_variables.items():
                         name = variable[0]
-                        print(name, var_name)
                         if name == var_name:
                             variable_exists = True
                             break
