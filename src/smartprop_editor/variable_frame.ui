@@ -238,7 +238,7 @@ QLineEdit::selection {
        <widget class="QLineEdit" name="variable_class">
         <property name="maximumSize">
          <size>
-          <width>140</width>
+          <width>130</width>
           <height>16777215</height>
          </size>
         </property>
