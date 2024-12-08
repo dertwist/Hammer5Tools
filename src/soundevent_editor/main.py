@@ -15,6 +15,7 @@ from src.soundevent_editor.preset_manager import SoundEventEditorPresetManagerWi
 from src.common import *
 from src.soundevent_editor.commands import DeleteTreeItemCommand
 from src.soundevent_editor.internal_explorer import InternalSoundFileExplorer
+from src.soundevent_editor.audio_player import AudioPlayer
 
 class CopyDefaultSoundFolders:
     def __init__(self):
@@ -133,16 +134,25 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.ui.internal_explorer_search_bar.textChanged.connect(lambda text: self.search_hierarchy(text, self.internal_explorer.invisibleRootItem()))
         self.internal_explorer.play_sound.connect(self.play_sound)
 
+        # Audio player init
+        self.add_player()
     #============================================================<  AudioPlayer  >==========================================================
+    def add_player(self):
+        self.audio_player_widget = AudioPlayer()
+        self.ui.explorer_layout_widget.addWidget(self.audio_player_widget)
     def play_sound(self, file_path):
-        if self.audio_player is not None:
-            self.audio_player.deleteLater()
-        self.audio_player = QMediaPlayer()
-        self.audio_output = QAudioOutput()
-        self.audio_player.setAudioOutput(self.audio_output)
-        self.audio_player.setSource(QUrl.fromLocalFile(file_path))
-        self.audio_player.play()
-    #==============================================================<  Actions  >============================================================
+        self.audio_player_widget.deleteLater()
+        self.add_player()
+        self.audio_player_widget.set_audiopath(file_path)
+        self.audio_player_widget.play_sound()
+    #     if self.audio_player is not None:
+    #         self.audio_player.deleteLater()
+    #     self.audio_player = QMediaPlayer()
+    #     self.audio_output = QAudioOutput()
+    #     self.audio_player.setAudioOutput(self.audio_output)
+    #     self.audio_player.setSource(QUrl.fromLocalFile(file_path))
+    #     self.audio_player.play()
+    # #==============================================================<  Actions  >============================================================
     def realtime_save(self):
         return self.ui.realtime_save_checkbox.isChecked()
     #============================================================<  SoundEvents  >==========================================================
