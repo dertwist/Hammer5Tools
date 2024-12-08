@@ -28,7 +28,7 @@ class PropertyVector3D(QWidget):
 
         # Variable
         self.variable_logic_switch = ComboboxVariables(layout=self.variables_scrollArea)
-        self.variable_logic_switch.setMinimumWidth(128)
+        self.variable_logic_switch.setMinimumWidth(256)
         self.variable_logic_switch.changed.connect(self.on_changed)
         self.ui.layout.insertWidget(2, self.variable_logic_switch)
 
@@ -40,7 +40,7 @@ class PropertyVector3D(QWidget):
         self.ui.layout_x.insertWidget(2, self.float_widget_x)
         # Variable
         self.variable_x = ComboboxVariables(layout=self.variables_scrollArea)
-        self.variable_x.setMinimumWidth(128)
+        self.variable_x.setMinimumWidth(256)
         layout = QHBoxLayout()
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         layout.setContentsMargins(0,0,0,0)
@@ -65,7 +65,7 @@ class PropertyVector3D(QWidget):
         self.ui.layout_y.insertWidget(2, self.float_widget_y)
         # Variable
         self.variable_y = ComboboxVariables(layout=self.variables_scrollArea)
-        self.variable_y.setMinimumWidth(128)
+        self.variable_y.setMinimumWidth(256)
         layout = QHBoxLayout()
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         layout.setContentsMargins(0,0,0,0)
@@ -90,7 +90,7 @@ class PropertyVector3D(QWidget):
         self.ui.layout_z.insertWidget(2, self.float_widget_z)
         # Variable
         self.variable_z = ComboboxVariables(layout=self.variables_scrollArea)
-        self.variable_z.setMinimumWidth(128)
+        self.variable_z.setMinimumWidth(196)
         layout = QHBoxLayout()
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         layout.setContentsMargins(0,0,0,0)
@@ -116,7 +116,6 @@ class PropertyVector3D(QWidget):
                     layout.setPlainText(str(value['m_Expression']))
                     combo.setCurrentIndex(2)
                 if 'm_SourceName' in value:
-                    print(value['m_SourceName'])
                     variable.updateItems()
                     variable.addItem(value['m_SourceName'])
                     variable.setCurrentText(value['m_SourceName'])
