@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>865</width>
+    <width>1190</width>
     <height>64</height>
    </rect>
   </property>
@@ -71,12 +71,12 @@
       <item>
        <widget class="QLabel" name="time">
         <property name="text">
-         <string>TextLabel</string>
+         <string>00:00 : 00:00</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QSlider" name="slider">
+       <widget class="QSlider" name="timeline_slider">
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
         </property>
@@ -181,14 +181,19 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="loop_button">
+       <widget class="QCheckBox" name="loop_checkbox">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>30</height>
+         </size>
+        </property>
         <property name="styleSheet">
          <string notr="true">
     /* QPushButton default and hover styles */
-    QPushButton {
+    QCheckBox {
 
-        font: 580 9pt &quot;Segoe UI&quot;;
-	
+        font: 580 10pt &quot;Segoe UI&quot;;
 
         border: 2px solid black;
         border-radius: 2px;
@@ -201,31 +206,27 @@
         color: #E3E3E3;
         background-color: #1C1C1C;
     }
-    QPushButton:hover {
+    QCheckBox:hover {
         background-color: #414956;
         color: white;
     }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
+    QCheckBox:pressed {
 
-    }</string>
+    }
+QCheckBox::indicator {
+    width: 20px;
+    height: 20px;
+}
+QCheckBox::indicator:unchecked {
+    image: url(://valve_common/icons/tools/common/control_no_loop.png);
+}
+
+QCheckBox::indicator:checked {
+    image: url(://valve_common/icons/tools/common/control_loop.png);
+}</string>
         </property>
         <property name="text">
          <string>Loop</string>
-        </property>
-        <property name="icon">
-         <iconset resource="../resources.qrc">
-          <normaloff>:/valve_common/icons/tools/common/control_no_loop.png</normaloff>:/valve_common/icons/tools/common/control_no_loop.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>20</width>
-          <height>20</height>
-         </size>
         </property>
        </widget>
       </item>
