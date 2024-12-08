@@ -26,7 +26,7 @@ stop_discord_thread = threading.Event()
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
 # Versions
-app_version = '3.1.0'
+app_version = '3.1.1'
 batchcreator_version = '1.2.2'
 soundevent_editor_version = '2.1.0'
 smartprop_editor_version = '1.0.0'

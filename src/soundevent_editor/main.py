@@ -5,7 +5,8 @@ from src.soundevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QMessageBox, QApplication, QTreeWidgetItem
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.widgets import HierarchyItemModel, ErrorInfo
 from src.preferences import settings
@@ -111,20 +112,36 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.ui.output_button.clicked.connect(self.open_soundevnets_file)
         self.ui.save_file_button.clicked.connect(self.save_soundevents)
 
+
+        # Creating Audioplayer for explorer
+        self.audio_player = None
+
         # Explorer
         if os.path.exists(self.filepath_sounds):
             pass
         else:
             os.makedirs(self.filepath_sounds)
-        self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.ui.explorer_layout_widget)
+        self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.ui.explorer_layout_widget, use_internal_player=True)
         self.mini_explorer.tree.setStyleSheet("""border:none""")
+        self.mini_explorer.play_sound.connect(self.play_sound)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
         # Internal Explorer
-        self.internal_explorer = InternalSoundFileExplorer()
+        self.internal_explorer = InternalSoundFileExplorer(self.audio_player)
         self.internal_explorer.setStyleSheet("""border:none""")
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
         self.ui.internal_explorer_search_bar.textChanged.connect(lambda text: self.search_hierarchy(text, self.internal_explorer.invisibleRootItem()))
+        self.internal_explorer.play_sound.connect(self.play_sound)
+
+    #============================================================<  AudioPlayer  >==========================================================
+    def play_sound(self, file_path):
+        if self.audio_player is not None:
+            self.audio_player.deleteLater()
+        self.audio_player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.audio_player.setAudioOutput(self.audio_output)
+        self.audio_player.setSource(QUrl.fromLocalFile(file_path))
+        self.audio_player.play()
     #==============================================================<  Actions  >============================================================
     def realtime_save(self):
         return self.ui.realtime_save_checkbox.isChecked()
