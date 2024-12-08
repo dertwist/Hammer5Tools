@@ -15,16 +15,16 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
-    QPushButton, QSizePolicy, QSlider, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout,
+    QLabel, QPushButton, QSizePolicy, QSlider,
+    QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(865, 64)
+        Form.resize(1190, 64)
         Form.setMinimumSize(QSize(512, 0))
         Form.setMaximumSize(QSize(16666, 64))
         self.verticalLayout = QVBoxLayout(Form)
@@ -44,11 +44,11 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.time)
 
-        self.slider = QSlider(self.content)
-        self.slider.setObjectName(u"slider")
-        self.slider.setOrientation(Qt.Orientation.Horizontal)
+        self.timeline_slider = QSlider(self.content)
+        self.timeline_slider.setObjectName(u"timeline_slider")
+        self.timeline_slider.setOrientation(Qt.Orientation.Horizontal)
 
-        self.horizontalLayout.addWidget(self.slider)
+        self.horizontalLayout.addWidget(self.timeline_slider)
 
         self.play_button = QPushButton(self.content)
         self.play_button.setObjectName(u"play_button")
@@ -128,14 +128,14 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.stop_button)
 
-        self.loop_button = QPushButton(self.content)
-        self.loop_button.setObjectName(u"loop_button")
-        self.loop_button.setStyleSheet(u"\n"
+        self.loop_checkbox = QCheckBox(self.content)
+        self.loop_checkbox.setObjectName(u"loop_checkbox")
+        self.loop_checkbox.setMaximumSize(QSize(16777215, 30))
+        self.loop_checkbox.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
+"    QCheckBox {\n"
 "\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
+"        font: 580 10pt \"Segoe UI\";\n"
 "\n"
 "        border: 2px solid black;\n"
 "        border-radius: 2px;\n"
@@ -148,24 +148,26 @@ class Ui_Form(object):
 "        color: #E3E3E3;\n"
 "        background-color: #1C1C1C;\n"
 "    }\n"
-"    QPushButton:hover {\n"
+"    QCheckBox:hover {\n"
 "        background-color: #414956;\n"
 "        color: white;\n"
 "    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
+"    QCheckBox:pressed {\n"
 "\n"
-"    }")
-        icon2 = QIcon()
-        icon2.addFile(u":/valve_common/icons/tools/common/control_no_loop.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.loop_button.setIcon(icon2)
-        self.loop_button.setIconSize(QSize(20, 20))
+"    }\n"
+"QCheckBox::indicator {\n"
+"    width: 20px;\n"
+"    height: 20px;\n"
+"}\n"
+"QCheckBox::indicator:unchecked {\n"
+"    image: url(://valve_common/icons/tools/common/control_no_loop.png);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(://valve_common/icons/tools/common/control_loop.png);\n"
+"}")
 
-        self.horizontalLayout.addWidget(self.loop_button)
+        self.horizontalLayout.addWidget(self.loop_checkbox)
 
 
         self.verticalLayout.addWidget(self.content)
@@ -178,9 +180,9 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
-        self.time.setText(QCoreApplication.translate("Form", u"TextLabel", None))
+        self.time.setText(QCoreApplication.translate("Form", u"00:00 : 00:00", None))
         self.play_button.setText(QCoreApplication.translate("Form", u"Play", None))
         self.stop_button.setText(QCoreApplication.translate("Form", u"Stop", None))
-        self.loop_button.setText(QCoreApplication.translate("Form", u"Loop", None))
+        self.loop_checkbox.setText(QCoreApplication.translate("Form", u"Loop", None))
     # retranslateUi
 
