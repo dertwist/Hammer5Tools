@@ -59,7 +59,7 @@ class AudioPlayer(QWidget):
         self.timer.stop()
 
     def toggle_loop(self, state):
-        self.loop_enabled = state == Qt.Checked
+        self.loop_enabled =  self.ui.loop_checkbox.isChecked()
         set_config_bool('SoundEventEditor', 'AudioPlayerLoop', self.ui.loop_checkbox.isChecked())
 
     def seek_position(self, position):
