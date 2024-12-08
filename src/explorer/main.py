@@ -3,7 +3,7 @@ import re
 from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox, QLineEdit, QTreeWidgetItem, QPushButton, QHBoxLayout
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QUrl, Signal
 from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
 from src.preferences import get_config_value, set_config_value, get_cs2_path, get_addon_name, debug
 from PySide6.QtCore import QModelIndex
@@ -150,7 +150,8 @@ class CustomFileSystemModel(QFileSystemModel):
 from PySide6.QtWidgets import QFrame
 
 class Explorer(QMainWindow):
-    def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None):
+    play_sound = Signal(str)
+    def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None, use_internal_player: bool = True):
         super().__init__(parent)
 
         self.model = CustomFileSystemModel()
@@ -164,6 +165,10 @@ class Explorer(QMainWindow):
         else:
             os.makedirs(tree_directory)
 
+        self.use_internal_player = use_internal_player
+
+        if not self.use_internal_player:
+            self.audio_player = None
 
         self.tree = QTreeView(self)
         self.tree.setModel(self.model)
@@ -195,6 +200,7 @@ class Explorer(QMainWindow):
         self.tree.customContextMenuRequested.connect(self.open_context_menu)
         self.tree.viewport().installEventFilter(self)
         self.tree.installEventFilter(self)
+
 
         self.addon = addon
         self.editor_name = editor_name
@@ -233,19 +239,19 @@ class Explorer(QMainWindow):
     def play_audio_file(self, file_path):
         debug(f"Playing {file_path}")
         if file_path.endswith(tuple(audio_extensions)):
-            try:
-                # if self.audio_player:
+            if self.use_internal_player:
+                self.play_sound.emit(file_path)
+            else:
                 try:
-                    self.audio_player.deleteLater()
-                except:
-                    pass
-                self.audio_player = QMediaPlayer()
-                self.audio_output = QAudioOutput()
-                self.audio_player.setAudioOutput(self.audio_output)
-                self.audio_player.setSource(QUrl.fromLocalFile(file_path))
-                self.audio_player.play()
-            except Exception as e:
-                debug(f"Error playing audio: {e}")
+                    if self.audio_player is not None:
+                        self.audio_player.deleteLater()
+                    self.audio_player = QMediaPlayer()
+                    self.audio_output = QAudioOutput()
+                    self.audio_player.setAudioOutput(self.audio_output)
+                    self.audio_player.setSource(QUrl.fromLocalFile(file_path))
+                    self.audio_player.play()
+                except Exception as e:
+                    debug(f"Error playing audio: {e}")
 
     def eventFilter(self, source, event):
         if event.type() == QMouseEvent.MouseButtonPress:
