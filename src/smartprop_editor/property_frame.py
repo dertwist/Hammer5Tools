@@ -285,6 +285,12 @@ class PropertyFrame(QWidget):
         elif prop_class == 'RandomRotation':
             classes = ['m_vRandomRotationMin', 'm_vRandomRotationMax']
             operator_adding_instances(classes)
+        elif prop_class == 'RandomOffset':
+            classes = ['m_vRandomPositionMin', 'm_vRandomPositionMax']
+            operator_adding_instances(classes)
+        elif prop_class == 'RandomScale':
+            classes = ['m_flRandomScaleMin', 'm_flRandomScaleMax']
+            operator_adding_instances(classes)
         elif prop_class == 'Scale':
             classes = ['m_flScale']
             operator_adding_instances(classes)
