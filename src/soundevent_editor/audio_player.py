@@ -17,22 +17,20 @@ class AudioPlayer(QWidget):
         self.audio_player.setAudioOutput(self.audio_output)
 
         self.duration = "00:00"
+        self.filepath = None
 
         self.init_ui()
         self.setup_connections()
-        self.filepath = None
 
         if file_path:
             self.set_audiopath(file_path)
 
     def init_ui(self):
-
         self.current_time_label = QLabel("00:00")
         self.total_time_label = QLabel("00:00")
 
-        self.loop_enabled = get_config_bool('SoundEventEditor', 'AudioPlayerLoop')
+        self.loop_enabled = get_config_bool('SoundEventEditor', 'AudioPlayerLoop', default=False)
         self.ui.loop_checkbox.setChecked(self.loop_enabled)
-
 
         self.timer = QTimer(self)
         self.timer.setInterval(1000)
@@ -52,8 +50,6 @@ class AudioPlayer(QWidget):
             self.audio_player.setSource(self.filepath)
             self.audio_player.play()
             self.timer.start()
-            self.update_time_labels()
-            self.duration = self.format_time(self.audio_player.duration())
 
     def set_audiopath(self, path):
         self.filepath = QUrl.fromLocalFile(path)
@@ -71,10 +67,12 @@ class AudioPlayer(QWidget):
 
     def update_position(self, position):
         self.ui.timeline_slider.setValue(position)
+        self.update_time_labels()
 
     def update_duration(self, duration):
         self.ui.timeline_slider.setRange(0, duration)
         self.duration = self.format_time(duration)
+        self.update_time_labels()
 
     def update_time_labels(self):
         current_time = self.audio_player.position()
