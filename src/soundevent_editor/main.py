@@ -139,7 +139,7 @@ class SoundEventEditorMainWindow(QMainWindow):
     #============================================================<  AudioPlayer  >==========================================================
     def add_player(self):
         self.audio_player_widget = AudioPlayer()
-        self.ui.explorer_layout_widget.addWidget(self.audio_player_widget)
+        self.ui.explorer_layout_widget.layout().insertWidget(1,self.audio_player_widget)
     def play_sound(self, file_path):
         self.audio_player_widget.deleteLater()
         self.add_player()
