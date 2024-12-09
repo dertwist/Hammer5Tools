@@ -75,7 +75,7 @@ class SoundEventEditorPropertyFrame(QWidget):
 
         # Widgets import
         from src.soundevent_editor.property.common import (
-            SoundEventEditorPropertyBase,
+            SoundEventEditorPropertyBaseSoundEvent,
             SoundEventEditorPropertyFloat,
             SoundEventEditorPropertyInt,
             SoundEventEditorPropertyLegacy,
@@ -85,7 +85,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyList,
             SoundEventEditorPropertyFiles,
             SoundEventEditorPropertySoundEvent,
-            SoundEventEditorPropertyCombobox
+            SoundEventEditorPropertyCombobox,
+            SoundEventEditorPropertyBaseLegacy
         )
 
         # Float (Only Positive)
@@ -162,7 +163,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value, labels=['Time', 'Volume'])
         # Combobox
         elif name == 'base':
-            self.property_instance = SoundEventEditorPropertyBase(label_text=name, value=value, tree=self.tree, objects=[])
+            self.property_instance = SoundEventEditorPropertyBaseLegacy(label_text=name, value=value, tree=self.tree, objects=[])
         elif name == 'mixgroup':
             self.property_instance = SoundEventEditorPropertyCombobox(label_text=name, value=value, tree=self.tree, objects=mixgroup_objects)
         elif name == 'dsp_preset':
