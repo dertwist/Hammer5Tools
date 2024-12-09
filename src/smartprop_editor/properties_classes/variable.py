@@ -1,9 +1,11 @@
 import re
-from smartprop_editor.properties_classes.ui_float import Ui_Widget
+
+from src.qt_styles.common import qt_stylesheet_smartprop_editor_frame
+from src.smartprop_editor.properties_classes.ui_float import Ui_Widget
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
-from widgets import ComboboxVariables, Spacer
-from preferences import debug
+from src.widgets import ComboboxVariables, Spacer, ComboboxVariablesWidget
+from src.preferences import debug
 
 
 class PropertyVariableOutput(QWidget):
@@ -38,34 +40,37 @@ class PropertyVariableOutput(QWidget):
 
 
         # Variable
-        self.variable = ComboboxVariables(layout=self.variables_scrollArea)
-        self.variable.setFixedWidth(128)  # Set a fixed width if needed
+        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea)
+        self.variable.setFixedWidth(128)
+        self.variable.setMaximumHeight(24)
+        self.variable.search_button.set_size(width=24, height=24)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
         layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.variable_frame = QWidget()
+        self.variable_frame.setMinimumHeight(32)
         self.variable_frame.setLayout(layout)
-        self.variable.changed.connect(self.on_changed)
+        self.variable.combobox.changed.connect(self.on_changed)
         self.ui.layout.insertWidget(2, self.variable_frame)
 
         if isinstance(value, dict):
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
-                self.variable.set_variable(value['m_SourceName'])
+                self.variable.combobox.set_variable(value['m_SourceName'])
                 debug(f'Loaded value in variable widget: dict {value['m_SourceName']}')
 
         elif isinstance(value, str):
-            self.variable.set_variable(value)
+            self.variable.combobox.set_variable(value)
             debug(f'Loaded value in variable widget: str {value}')
         else:
-            self.variable.set_variable(value)
+            self.variable.combobox.set_variable(str(value))
             debug(f'Loaded value in variable widget: None {value}')
         self.on_changed()
     def on_changed(self):
         self.change_value()
         self.edited.emit()
     def change_value(self):
-        self.value = {self.value_class: self.variable.get_variable()}
+        self.value = {self.value_class: self.variable.combobox.get_variable()}
         debug(f'Changed value in variable widget {self.value}')

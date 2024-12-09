@@ -150,3 +150,99 @@ qt_stylesheet_button = """
         margin-right: 2px;
 
     }"""
+# padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px
+qt_stylesheet_combobox = """
+    /* QPushButton default and hover styles */
+    QComboBox {
+
+        font: 580 9pt "Segoe UI";
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QComboBox:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QComboBox:pressed {
+
+    }
+    QComboBox:item {
+    font: 600 12pt "Segoe UI";
+    color: #E3E3E3;
+    padding-left: 5px;
+    background-color: #1C1C1C;
+    border-style: none;
+    }
+    
+    QComboBox::drop-down {
+        color: #E3E3E3;
+        padding: 2px;
+        background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
+        border-bottom: 0px solid black;
+        border-top: 0px solid black;
+        border-right: 0px;
+        border-left: 2px solid;
+        margin-left: 5px;
+        padding: 5px;
+        width: 7px;
+        border-color: rgba(80, 80, 80, 255);
+        background-color: #1C1C1C;
+    }
+    
+    
+    QComboBox QAbstractItemView {
+        border: 2px solid gray;
+        border-color: rgba(80, 80, 80, 255);
+        selection-background-color: #414956;
+        background-color: #1C1C1C;
+    }
+    
+    
+    QComboBox QAbstractItemView::item {
+        height: 16px; /* Set the height of each item */
+        padding: 4px; /* Add padding to each item */
+        padding-left: 5px;
+        padding-right: 5px;
+        color: #ff8a8a8a;
+        border-style: none;
+        border-bottom: 0.5px solid black;
+        border-color: rgba(255, 255, 255, 10);
+    }
+    
+    
+    QComboBox QAbstractItemView::item:selected {
+        height: 16px; /* Set the height of each item */
+        padding: 4px; /* Add padding to each item */
+        padding-left: 5px;
+        padding-right: 5px;
+        background-color: #414956;
+        color: white;
+        border: none; /* Remove border */
+        outline: none; /* Remove outline */
+    }
+"""
+qt_stylesheet_smartprop_editor_frame = """.QFrame {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+	border-top: 0px;
+    border-color: rgba(50, 50, 50, 255);
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+.QFrame::hover {
+}
+.QFrame::selected {
+    background-color: #414956;
+}"""

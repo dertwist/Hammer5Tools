@@ -65,13 +65,16 @@ class PropertyFloat(QWidget):
 
         # Variable setup
         self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['Int', 'Float'])
-        self.variable.setFixedWidth(256)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
         layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.variable_frame = QWidget()
         self.variable_frame.setLayout(layout)
+        self.variable.setFixedWidth(256)
+        self.variable.setMaximumHeight(24)
+        self.variable.search_button.set_size(width=24, height=24)
+        self.variable_frame.setMinimumHeight(32)
         self.variable.combobox.changed.connect(self.on_changed)
         self.ui.layout.insertWidget(2, self.variable_frame)
 
