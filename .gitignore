@@ -107,3 +107,5 @@ Hammer5Tools_Updater.spec
 /hotkeys/hammer/test.keybindings
 /Decompiler/
 /SoundEventEditor/
+/src/soundevent_editor/resource/parsing/soundevents.build/
+/src/soundevent_editor/resource/parsing/soundevents.dist/
