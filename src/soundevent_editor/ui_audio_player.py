@@ -89,45 +89,6 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.play_button)
 
-        self.stop_button = QPushButton(self.content)
-        self.stop_button.setObjectName(u"stop_button")
-        self.stop_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon1 = QIcon()
-        icon1.addFile(u":/valve_common/icons/tools/common/control_stop.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.stop_button.setIcon(icon1)
-        self.stop_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout.addWidget(self.stop_button)
-
         self.loop_checkbox = QCheckBox(self.content)
         self.loop_checkbox.setObjectName(u"loop_checkbox")
         self.loop_checkbox.setMaximumSize(QSize(16777215, 30))
@@ -182,7 +143,6 @@ class Ui_Form(object):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
         self.time.setText(QCoreApplication.translate("Form", u"00:00 : 00:00", None))
         self.play_button.setText(QCoreApplication.translate("Form", u"Play", None))
-        self.stop_button.setText(QCoreApplication.translate("Form", u"Stop", None))
         self.loop_checkbox.setText(QCoreApplication.translate("Form", u"Loop", None))
     # retranslateUi
 
