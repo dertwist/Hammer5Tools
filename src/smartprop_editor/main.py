@@ -31,9 +31,6 @@ from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
 from src.common import *
 
-global opened_file
-opened_file = None
-
 # Get cs2_path
 cs2_path = get_cs2_path()
 
@@ -44,6 +41,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.settings = settings
         self.realtime_save = False
+        self.opened_file = None
 
         self.ui.tree_hierarchy_widget.installEventFilter(self)
 
@@ -508,11 +506,10 @@ class SmartPropEditorMainWindow(QMainWindow):
     # ======================================[Explorer]========================================
 
     def explorer_status(self):
-        global opened_file
-        if opened_file == '':
+        if self.opened_file == '':
             self.ui.dockWidget_10.setWindowTitle('Explorer')
         else:
-            self.ui.dockWidget_10.setWindowTitle(f'Explorer: ({os.path.basename(opened_file)})')
+            self.ui.dockWidget_10.setWindowTitle(f'Explorer: ({os.path.basename(self.opened_file)})')
     def realtime_save_action(self):
         if self.ui.realtime_save_checkbox.isChecked():
             self.realtime_save = True
@@ -544,14 +541,13 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # ======================================[Open File]========================================
     def open_file(self, external=False):
-        global opened_file
         if external:
             filename, _ = QFileDialog.getOpenFileName(None, "Open File", os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()), "VSmart Files (*.vsmart);;All Files (*)")
         else:
             index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
             filename = self.mini_explorer.model.filePath(index)
 
-        opened_file = filename
+        self.opened_file = filename
 
         vsmart_instance = VsmartOpen(filename=filename, tree=self.ui.tree_hierarchy_widget, choices_tree=self.ui.choices_tree_widget, variables_scrollArea=self.ui.variables_scrollArea)
         variables = vsmart_instance.variables
@@ -598,12 +594,11 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # ======================================[Save File]========================================
     def save_file(self, external=False):
-        global opened_file
         if external:
             pass
         else:
-            if opened_file:
-                filename = opened_file
+            if self.opened_file:
+                filename = self.opened_file
                 external = False
             else:
                 filename = None
@@ -658,7 +653,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         var_data = save_variables()
         VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data, choices_tree=self.ui.choices_tree_widget)
-        opened_file = VsmartSaveInstance.filename
+        self.opened_file = VsmartSaveInstance.filename
 
     # ======================================[Choices Context Menu]========================================
     def open_MenuChoices(self, position):
