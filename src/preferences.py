@@ -107,8 +107,22 @@ def set_addon_name(addon_name_set):
     return set_config_value('LAUNCH', 'addon', addon_name_set)
 
 
+from PySide6.QtWidgets import QDialog
+from PySide6.QtCore import QSettings, Signal
+from src.ui_preferences import Ui_preferences_dialog
+import os
+import subprocess
+import winreg as reg
+from src.minor_features.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
+from src.minor_features.NCM_mode_setup_main import NCM_mode_setup
+from src.minor_features.update_check import check_updates
+from src.common import Presets_Path
+
+settings = QSettings(QSettings.IniFormat, QSettings.UserScope, "DerTwist\\Hammer5Tools", "settings")
+
 class PreferencesDialog(QDialog):
     reset_window_signal = Signal()
+
     def __init__(self, app_version, parent=None):
         super().__init__(parent)
         self.ui = Ui_preferences_dialog()
@@ -116,65 +130,62 @@ class PreferencesDialog(QDialog):
 
         self.app_version = app_version
 
+        # Populate UI with current preferences
+        self.populate_preferences()
 
+        # Connect signals to slots for immediate updates
+        self.connect_signals()
 
-        try:
-            # paths
-            self.ui.preferences_lineedit_cs2_path.setText(get_cs2_path())
-            self.ui.preferences_lineedit_steam_path.setText(get_steam_path())
-            self.ui.preferences_lineedit_archive_path.setText(get_config_value('PATHS', 'archive'))
-            # discord_status
-            self.ui.checkBox_show_in_hammer_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_status'))
-            self.ui.checkBox_hide_project_name_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_project_name'))
-            self.ui.editline_custom_discord_status.setText(get_config_value('DISCORD_STATUS', 'custom_status'))
-            # other
-            self.ui.launch_addon_after_nosteamlogon_fix.setChecked(get_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix'))
-            self.ui.checkBox_debug_info.setChecked(get_config_bool('OTHER', 'debug_info'))
-            #     APP
-            self.ui.checkBox_start_with_system.setChecked(get_config_bool('APP', 'start_with_system'))
-            self.ui.checkBox_close_to_tray.setChecked(settings.value("APP/minimize_to_tray", type=bool, defaultValue=True))
-        except:
-            pass
+        # Set version label
+        self.ui.version_label.setText(f"Version: {app_version}")
 
+    def populate_preferences(self):
+        # paths
+        self.ui.preferences_lineedit_cs2_path.setText(get_cs2_path())
+        self.ui.preferences_lineedit_steam_path.setText(get_steam_path())
+        self.ui.preferences_lineedit_archive_path.setText(get_config_value('PATHS', 'archive'))
+        # discord_status
+        self.ui.checkBox_show_in_hammer_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_status'))
+        self.ui.checkBox_hide_project_name_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_project_name'))
+        self.ui.editline_custom_discord_status.setText(get_config_value('DISCORD_STATUS', 'custom_status'))
+        # other
+        self.ui.launch_addon_after_nosteamlogon_fix.setChecked(get_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix'))
+        self.ui.checkBox_debug_info.setChecked(get_config_bool('OTHER', 'debug_info'))
+        # APP
+        self.ui.checkBox_start_with_system.setChecked(get_config_bool('APP', 'start_with_system'))
+        self.ui.checkBox_close_to_tray.setChecked(settings.value("APP/minimize_to_tray", type=bool, defaultValue=True))
+        # SmartProp Editor
+        self.ui.spe_display_id_with_variable_class.setChecked(get_config_bool('SmartPropEditor', 'display_id_with_variable_class', False))
 
+    def connect_signals(self):
+        # Connect UI elements to methods for immediate preference updates
+        self.ui.preferences_lineedit_cs2_path.textChanged.connect(lambda: set_config_value('PATHS', 'cs2', self.ui.preferences_lineedit_cs2_path.text()))
+        self.ui.preferences_lineedit_steam_path.textChanged.connect(lambda: set_config_value('PATHS', 'steam', self.ui.preferences_lineedit_steam_path.text()))
+        self.ui.preferences_lineedit_archive_path.textChanged.connect(lambda: set_config_value('PATHS', 'archive', self.ui.preferences_lineedit_archive_path.text()))
 
-        # buttons
-        self.ui.open_settings_folder_button.clicked.connect(self.open_settings_fodler)
-        self.ui.preferences_apply_button.clicked.connect(self.apply_preferences)
+        self.ui.checkBox_show_in_hammer_discord_status.toggled.connect(lambda: set_config_bool('DISCORD_STATUS', 'show_status', self.ui.checkBox_show_in_hammer_discord_status.isChecked()))
+        self.ui.checkBox_hide_project_name_discord_status.toggled.connect(lambda: set_config_bool('DISCORD_STATUS', 'show_project_name', self.ui.checkBox_hide_project_name_discord_status.isChecked()))
+        self.ui.editline_custom_discord_status.textChanged.connect(lambda: set_config_value('DISCORD_STATUS', 'custom_status', self.ui.editline_custom_discord_status.text()))
+
+        self.ui.launch_addon_after_nosteamlogon_fix.toggled.connect(lambda: set_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix', self.ui.launch_addon_after_nosteamlogon_fix.isChecked()))
+        self.ui.checkBox_debug_info.toggled.connect(lambda: set_config_bool('OTHER', 'debug_info', self.ui.checkBox_debug_info.isChecked()))
+
+        self.ui.checkBox_start_with_system.toggled.connect(lambda: self.start_with_system())
+        self.ui.checkBox_close_to_tray.toggled.connect(lambda: set_config_bool('APP', 'minimize_to_tray', self.ui.checkBox_close_to_tray.isChecked()))
+
+        self.ui.spe_display_id_with_variable_class.toggled.connect(lambda: set_config_bool('SmartPropEditor', 'display_id_with_variable_class', self.ui.spe_display_id_with_variable_class.isChecked()))
+
+        # Connect buttons to their respective methods
+        self.ui.open_settings_folder_button.clicked.connect(self.open_settings_folder)
         self.ui.setup_ncm_mode.clicked.connect(self.setup_ncm_mode)
         self.ui.open_presets_folder_button.clicked.connect(self.open_presets_folder)
         self.ui.check_update_button.clicked.connect(self.check_update)
         self.ui.reset_console_button.clicked.connect(self.reset_console)
-        # version
-        self.ui.version_label.setText(f"Version: {app_version}")
 
     def reset_console(self):
         self.reset_window_signal.emit()
-    def apply_preferences(self):
-        # paths
-        set_config_value('PATHS', 'cs2', self.ui.preferences_lineedit_cs2_path.text())
-        set_config_value('PATHS', 'steam', self.ui.preferences_lineedit_steam_path.text())
-        set_config_value('PATHS', 'archive', self.ui.preferences_lineedit_archive_path.text())
 
-        # discord_status
-        set_config_value('DISCORD_STATUS', 'show_status',str(self.ui.checkBox_show_in_hammer_discord_status.isChecked()))
-        set_config_value('DISCORD_STATUS', 'show_project_name',str(self.ui.checkBox_hide_project_name_discord_status.isChecked()))
-        set_config_value('DISCORD_STATUS', 'custom_status', self.ui.editline_custom_discord_status.text())
-
-        # other
-        set_config_value('OTHER', 'launch_addon_after_nosteamlogon_fix', str(self.ui.launch_addon_after_nosteamlogon_fix.isChecked()))
-        set_config_value('OTHER', 'debug_info',str(self.ui.checkBox_debug_info.isChecked()))
-
-
-
-
-        #APP
-        set_config_bool('APP', 'start_with_system', self.ui.checkBox_start_with_system.isChecked())
-        set_config_bool('APP', 'minimize_to_tray', self.ui.checkBox_close_to_tray.isChecked())
-        self.start_with_system()
-
-
-    def open_settings_fodler(self):
+    def open_settings_folder(self):
         cfg_path = get_config_value('PATHS', 'settings')
         subprocess.Popen("explorer " + cfg_path)
 
@@ -209,5 +220,6 @@ class PreferencesDialog(QDialog):
 
     def open_presets_folder(self):
         os.startfile(Presets_Path)
+
     def check_update(self):
         check_updates("https://github.com/dertwist/Hammer5Tools", self.app_version, False)

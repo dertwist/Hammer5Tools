@@ -782,6 +782,65 @@ class Ui_preferences_dialog(object):
         self.verticalLayout_4.addItem(self.verticalSpacer_3)
 
         self.tabWidget.addTab(self.onter_preferences_tab, "")
+        self.SmartPropEditor = QWidget()
+        self.SmartPropEditor.setObjectName(u"SmartPropEditor")
+        self.verticalLayout_5 = QVBoxLayout(self.SmartPropEditor)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.frame_18 = QFrame(self.SmartPropEditor)
+        self.frame_18.setObjectName(u"frame_18")
+        self.frame_18.setStyleSheet(u"background-color: #1C1C1C;")
+        self.frame_18.setFrameShape(QFrame.Shape.NoFrame)
+        self.frame_18.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_20 = QHBoxLayout(self.frame_18)
+        self.horizontalLayout_20.setSpacing(18)
+        self.horizontalLayout_20.setObjectName(u"horizontalLayout_20")
+        self.horizontalLayout_20.setContentsMargins(9, 9, 9, 9)
+        self.spe_display_id_with_variable_class = QCheckBox(self.frame_18)
+        self.spe_display_id_with_variable_class.setObjectName(u"spe_display_id_with_variable_class")
+        self.spe_display_id_with_variable_class.setEnabled(True)
+        self.spe_display_id_with_variable_class.setMinimumSize(QSize(96, 32))
+        self.spe_display_id_with_variable_class.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.spe_display_id_with_variable_class.setStyleSheet(u"QCheckBox {\n"
+"    font: 580 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"    padding-left: 4px;\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:unchecked {\n"
+"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"QCheckBox::indicator:checked {\n"
+"    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
+"}\n"
+"\n"
+"/* -------------------------- */\n"
+"\n"
+"\n"
+"QCheckBox:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.spe_display_id_with_variable_class.setTristate(False)
+
+        self.horizontalLayout_20.addWidget(self.spe_display_id_with_variable_class)
+
+
+        self.verticalLayout_5.addWidget(self.frame_18)
+
+        self.verticalSpacer_4 = QSpacerItem(20, 276, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.verticalLayout_5.addItem(self.verticalSpacer_4)
+
+        self.tabWidget.addTab(self.SmartPropEditor, "")
 
         self.verticalLayout.addWidget(self.tabWidget)
 
@@ -890,57 +949,13 @@ class Ui_preferences_dialog(object):
 
         self.horizontalLayout_3.addWidget(self.frame_16)
 
-        self.preferences_apply_button = QPushButton(self.frame_2)
-        self.preferences_apply_button.setObjectName(u"preferences_apply_button")
-        self.preferences_apply_button.setMinimumSize(QSize(0, 32))
-        self.preferences_apply_button.setStyleSheet(u"    QLabel {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 600 10pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/check_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.preferences_apply_button.setIcon(icon1)
-        self.preferences_apply_button.setIconSize(QSize(24, 24))
-
-        self.horizontalLayout_3.addWidget(self.preferences_apply_button)
-
 
         self.verticalLayout.addWidget(self.frame_2)
 
 
         self.retranslateUi(preferences_dialog)
 
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(3)
 
 
         QMetaObject.connectSlotsByName(preferences_dialog)
@@ -966,8 +981,9 @@ class Ui_preferences_dialog(object):
         self.check_update_button.setText(QCoreApplication.translate("preferences_dialog", u"Check Update", None))
         self.version_label.setText(QCoreApplication.translate("preferences_dialog", u"TextLabel", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.onter_preferences_tab), QCoreApplication.translate("preferences_dialog", u"Other", None))
+        self.spe_display_id_with_variable_class.setText(QCoreApplication.translate("preferences_dialog", u"Display ID with variable class", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.SmartPropEditor), QCoreApplication.translate("preferences_dialog", u"SmartProp Editor", None))
         self.open_presets_folder_button.setText(QCoreApplication.translate("preferences_dialog", u" Presets", None))
         self.open_settings_folder_button.setText(QCoreApplication.translate("preferences_dialog", u" Settings", None))
-        self.preferences_apply_button.setText(QCoreApplication.translate("preferences_dialog", u"Apply", None))
     # retranslateUi
 
