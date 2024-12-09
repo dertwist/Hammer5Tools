@@ -27,6 +27,25 @@ def build_updater():
         '--exclude-module=PIL', '--exclude', 'matplotlib', '--exclude', 'pandas', 'src/updater.py'
     ])
 
+
+# def build_hammer5_tools():
+#     subprocess.run([
+#         'python', '-m', 'nuitka', '--standalone', '--onefile', '--output-dir=hammer5tools',
+#         '--remove-output', '--include-data-file=src/appicon.ico=appicon.ico',
+#         '--include-data-dir=src/images=images', '--include-data-dir=src/qt_styles=qt_styles',
+#         '--disable-console', '--nofollow-import-to=PyQt5', 'src/main.py'
+#     ])
+#
+# def build_updater():
+#     subprocess.run([
+#         'python', '-m', 'nuitka', '--standalone', '--onefile', '--output-dir=hammer5tools',
+#         '--remove-output', '--include-data-file=src/appicon.ico=appicon.ico',
+#         '--nofollow-import-to=PySide6', '--nofollow-import-to=PyQt5',
+#         '--nofollow-import-to=numpy', '--nofollow-import-to=PIL',
+#         '--nofollow-import-to=matplotlib', '--nofollow-import-to=pandas',
+#         'src/updater.py'
+#     ])
+
 def archive_files(folder_path, output_path):
     excluded_files = {'hammer5tools.zip'}
     excluded_extensions = {'.wav', '.mp3'}

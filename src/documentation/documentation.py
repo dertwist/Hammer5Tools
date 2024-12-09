@@ -2,6 +2,7 @@ from src.documentation.ui_documentation_dialog import Ui_documentation_dialog
 from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
+from src.common import *
 class Documentation_Dialog(QDialog):
     def __init__(self, version, parent=None):
         super().__init__(parent)
@@ -13,7 +14,7 @@ class Documentation_Dialog(QDialog):
         self.ui.open_documentation_button.clicked.connect(self.open_documentation)
 
     def open_report_bug_link(self):
-        QDesktopServices.openUrl(QUrl("https://discord.gg/mMaub4jCBa"))
+        QDesktopServices.openUrl(QUrl(discord_feedback_channel))
 
     def open_request_a_new_feature(self):
         QDesktopServices.openUrl(QUrl("https://discord.gg/xygJgM7ZyP"))

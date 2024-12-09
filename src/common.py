@@ -30,6 +30,8 @@ editor_info = {
     }
     }
     }
+
+# Paths
 app_dir = os.getcwd()
 SoundEventEditor_Preset_Path = os.path.join(app_dir, "SoundEventEditor", "Presets")
 SmartPropEditor_Preset_Path = os.path.join(app_dir, "SmartPropEditor", "Presets")
@@ -38,6 +40,8 @@ SoundEventEditor_sounds_path = os.path.join(app_dir, "SoundEventEditor", 'sounds
 SoundEventEditor_path = os.path.join(app_dir, "SoundEventEditor")
 Decompiler_path = os.path.join(app_dir, 'Decompiler', 'Decompiler.exe')
 
+# web
+discord_feedback_channel = "https://discord.gg/mMaub4jCBa"
 #===========================================================<  generic functions  >=========================================================
 def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=False):
     """Compiling a file through game resourcecompiler
