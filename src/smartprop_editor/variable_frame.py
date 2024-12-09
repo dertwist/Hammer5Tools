@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
 from src.smartprop_editor.element_id import *
+from src.preferences import get_config_bool
 
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
@@ -39,7 +40,11 @@ class VariableFrame(QWidget):
         # ID
         update_value_ElementID(self.var_value)
         self.element_id = get_ElementID(self.var_value)
-        self.ui.id_display.setText(str(self.element_id))
+        if get_config_bool('SmartPropEditor', 'display_id_with_variable_class', default=False):
+            self.ui.id_display.setText(str(self.element_id))
+        else:
+            self.ui.id_display.deleteLater()
+            self.ui.id_display_label.deleteLater()
 
         self.ui.variable_name.setText(name)
         self.ui.varialbe_display_name.setText(var_display_name)
