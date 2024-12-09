@@ -689,7 +689,7 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
         self.popup_menu.show()
 
-class SoundEventEditorPropertyBase(SoundEventEditorPropertyCombobox):
+class SoundEventEditorPropertyBaseSoundEvent(SoundEventEditorPropertyCombobox):
     def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None, objects: list = None):
         """
         Combox property
@@ -811,6 +811,101 @@ class CurveWidgetDatapoint(QWidget):
         for index in range(self.layout().count()):
             if index >= 2:
              self.layout().itemAt(index).widget().show()
+
+class SoundEventEditorPropertyEditLine(SoundEventEditorPropertyBase):
+    def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None, objects: list = None):
+        """
+        Combox property
+
+        value : str
+        """
+        super().__init__(parent, label_text, value)
+
+        self.tree: QTreeWidget = tree
+        self.value_class = label_text
+        self.objects = objects
+        # Init combobox
+        self.combobox = QLineEdit()
+        self.combobox.setMinimumWidth(256)
+        self.combobox.textChanged.connect(self.on_property_update)
+        self.layout().addWidget(self.combobox)
+        self.set_value(value)
+        # if value == "None":
+        #     pass
+        # else:
+        #     self.combobox.setCurrentText(str(value))
+
+
+        # Init Search button
+        self.search_button = Button()
+        self.search_button.set_icon_search()
+        self.search_button.setMaximumWidth(32)
+        self.search_button.clicked.connect(self.call_search_popup_menu)
+        self.layout().addWidget(self.search_button)
+        self.on_property_update()
+
+        # Init spacer
+        spacer = Spacer()
+        self.layout().addWidget(spacer)
+
+        self.setContentsMargins(0,0,0,0)
+        self.setMinimumHeight(48)
+        self.setMaximumHeight(48)
+
+    def init_combobox(self):
+        pass
+    def set_value(self, value: str):
+        self.combobox.setText(str(value))
+
+    def on_property_update(self):
+        """Send signal that user changed the property"""
+        value = self.combobox.text()
+        self.value_update(value)
+        self.edited.emit()
+
+    def value_update(self, value):
+        """Gathering values and put them into dict value. Very specific, should be overwritten for each individual cause"""
+        self.value = {self.value_class: value}
+    def init_label_color(self):
+        return "#F4A9F6"
+
+    def call_search_popup_menu(self):
+        elements = []
+        for item in self.objects:
+            __element = {item:item}
+            elements.append(__element)
+        self.popup_menu = PopupMenu(elements, add_once=False)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
+        self.popup_menu.show()
+class SoundEventEditorPropertyBaseLegacy(SoundEventEditorPropertyEditLine):
+    def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None, objects: list = None):
+        """
+        Combox property
+
+        value : str
+        """
+        super().__init__(parent, label_text, value, tree, objects)
+
+    def get_soundenvets(self, elements_dict = False):
+        elements = []
+        tree_root = self.tree.invisibleRootItem()
+        for index in range(tree_root.childCount()):
+            __tree_item = tree_root.child(index)
+            __name = __tree_item.text(0)
+            if elements_dict:
+                __element = {__name: __name}
+            else:
+                __element = __name
+            elements.append(__element)
+        return elements
+    def call_search_popup_menu(self):
+        if self.tree is None:
+            pass
+        else:
+            elements = self.get_soundenvets(elements_dict=True)
+            self.popup_menu = PopupMenu(elements, add_once=False)
+            self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
+            self.popup_menu.show()
 
 class ListElement(QWidget):
     edited = Signal()
