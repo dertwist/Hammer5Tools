@@ -26,7 +26,7 @@ for root, _, files in os.walk(soundevents_folder):
             except UnicodeDecodeError as e:
                 print(f"Error decoding file: {file_path}. {e}")
 
-with open('soundevnets.py', 'w') as file:
+with open('items.py', 'w') as file:
     file.write("soundevents = " + str(soundevents))
 
 print_elapsed_time("Kill process", stage_start_time)
