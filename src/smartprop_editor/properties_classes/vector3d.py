@@ -5,7 +5,7 @@ from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
 from src.smartprop_editor.objects import expression_completer
-from src.widgets import FloatWidget, ComboboxVariables
+from src.widgets import FloatWidget, ComboboxVariables, ComboboxVariablesWidget
 
 
 class PropertyVector3D(QWidget):
