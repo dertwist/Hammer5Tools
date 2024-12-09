@@ -1,6 +1,6 @@
 from src.preferences import debug
 from src.smartprop_editor.ui_property_frame import Ui_Form
-
+import time
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
@@ -12,6 +12,18 @@ from PySide6.QtGui import QCursor, QAction
 
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.smartprop_editor.element_id import update_value_ElementID, get_ElementID_key
+
+from src.smartprop_editor.properties_classes.legacy import PropertyLegacy
+from src.smartprop_editor.properties_classes.vector3d import PropertyVector3D
+from src.smartprop_editor.properties_classes.float import PropertyFloat
+from src.smartprop_editor.properties_classes.bool import PropertyBool
+from src.smartprop_editor.properties_classes.combobox import PropertyCombobox
+from src.smartprop_editor.properties_classes.string import PropertyString
+from src.smartprop_editor.properties_classes.color import PropertyColor
+from src.smartprop_editor.properties_classes.comparison import PropertyComparison
+from src.smartprop_editor.properties_classes.filtersurface import PropertySurface
+from src.smartprop_editor.properties_classes.colormatch import PropertyColorMatch
+from src.smartprop_editor.properties_classes.variable import PropertyVariableOutput
 
 
 import ast
@@ -30,6 +42,8 @@ class PropertyFrame(QWidget):
             pass
         else:
             value = ast.literal_eval(value)
+
+
 
         self.name = value['_class']
         self.name = (value['_class'].split('_'))[1]
@@ -80,17 +94,7 @@ class PropertyFrame(QWidget):
             self.ui.delete_button.clicked.connect(self.delete_action)
 
         # For parsed stuff
-        from src.smartprop_editor.properties_classes.legacy import PropertyLegacy
-        from src.smartprop_editor.properties_classes.vector3d import PropertyVector3D
-        from src.smartprop_editor.properties_classes.float import PropertyFloat
-        from src.smartprop_editor.properties_classes.bool import PropertyBool
-        from src.smartprop_editor.properties_classes.combobox import PropertyCombobox
-        from src.smartprop_editor.properties_classes.string import PropertyString
-        from src.smartprop_editor.properties_classes.color import PropertyColor
-        from src.smartprop_editor.properties_classes.comparison import PropertyComparison
-        from src.smartprop_editor.properties_classes.filtersurface import PropertySurface
-        from src.smartprop_editor.properties_classes.colormatch import PropertyColorMatch
-        from src.smartprop_editor.properties_classes.variable import PropertyVariableOutput
+
 
 
         # only_variable_properties
@@ -354,7 +358,6 @@ class PropertyFrame(QWidget):
         self.ui.variable_display.setText(name)
 
     def get_variables(self, search_term=None):
-        self.variables_scrollArea
         data_out = []
         for i in range(self.variables_scrollArea.count()):
             widget = self.variables_scrollArea.itemAt(i).widget()
