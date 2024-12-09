@@ -6,7 +6,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QCursor, QIcon
 from PySide6.QtCore import QEvent, Qt, Signal, QSize
 from src.popup_menu.ui_popup_menu import Ui_PoPupMenu
-from src.widgets import ErrorInfo
 
 
 class PopupMenu(QDialog):
@@ -104,7 +103,7 @@ class PopupMenu(QDialog):
         try:
             webbrowser.open(full_url)
         except Exception as e:
-            ErrorInfo(f"Failed to open the URL: {e}").exec()
+            pass
 
     def clean_spaces(self, text: str) -> str:
         return text.replace(" ", "_")
