@@ -52,6 +52,8 @@ class Ui_Form(object):
 
         self.play_button = QPushButton(self.content)
         self.play_button.setObjectName(u"play_button")
+        self.play_button.setMinimumSize(QSize(72, 0))
+        self.play_button.setMaximumSize(QSize(72, 16777215))
         self.play_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
