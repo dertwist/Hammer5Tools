@@ -906,6 +906,8 @@ class SoundEventEditorPropertyBaseLegacy(SoundEventEditorPropertyEditLine):
             self.popup_menu = PopupMenu(elements, add_once=False)
             self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
             self.popup_menu.show()
+    def init_label_color(self):
+        return "#3833BA"
 
 class ListElement(QWidget):
     edited = Signal()
