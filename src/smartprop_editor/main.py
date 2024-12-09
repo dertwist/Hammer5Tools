@@ -701,11 +701,17 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # ======================================[Variables Actions]========================================
 
-    def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name):
+    def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name, index:int = None):
         variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class, var_visible_in_editor=var_visible_in_editor, var_display_name=var_display_name)
-        index = (self.ui.variables_scrollArea.count()) - 1
+        variable.duplicate.connect(self.duplicate_variable)
+        if index is None:
+            index = (self.ui.variables_scrollArea.count()) - 1
+        else:
+            index = index +1
         self.ui.variables_scrollArea.insertWidget(index, variable)
 
+    def duplicate_variable(self, __data, __index):
+        self.add_variable(__data[0], __data[1], __data[2], __data[3], __data[4], __index)
 
     def add_new_variable(self):
         name = 'new_var'
