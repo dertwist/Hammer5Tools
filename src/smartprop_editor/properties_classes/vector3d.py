@@ -30,7 +30,10 @@ class PropertyVector3D(QWidget):
         # Variable
         self.variable_logic_switch = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['Vector3D'])
         self.variable_logic_switch.setMinimumWidth(256)
+        self.variable_logic_switch.setMaximumHeight(24)
+        self.variable_logic_switch.search_button.set_size(width=24, height=24)
         self.variable_logic_switch.combobox.changed.connect(self.on_changed)
+        # self.variable_logic_switch.setMinimumHeight(32)
         self.ui.layout.insertWidget(2, self.variable_logic_switch)
 
         # Vector X Setup
@@ -42,6 +45,8 @@ class PropertyVector3D(QWidget):
         # Variable
         self.variable_x = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable_x.setMinimumWidth(256)
+        self.variable_x.setMaximumHeight(24)
+        self.variable_x.search_button.set_size(width=24, height=24)
         layout = QHBoxLayout()
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -49,6 +54,7 @@ class PropertyVector3D(QWidget):
         layout.addSpacerItem(spacer)
         self.variable_x_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
         self.variable_x_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.variable_x_frame.setMinimumHeight(32)
         self.variable_x.combobox.changed.connect(self.on_changed)
         self.ui.layout_x.insertWidget(3, self.variable_x_frame)
 
@@ -67,12 +73,15 @@ class PropertyVector3D(QWidget):
         # Variable
         self.variable_y = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable_y.setMinimumWidth(256)
+        self.variable_y.setMaximumHeight(24)
+        self.variable_y.search_button.set_size(width=24, height=24)
         layout = QHBoxLayout()
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable_y)
         layout.addSpacerItem(spacer)
         self.variable_y_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
+        self.variable_y_frame.setMinimumHeight(32)
         self.variable_y_frame.setLayout(layout)  # Set the layout to the QWidget
         self.variable_y.combobox.changed.connect(self.on_changed)
         self.ui.layout_y.insertWidget(3, self.variable_y_frame)
@@ -92,13 +101,16 @@ class PropertyVector3D(QWidget):
         # Variable
         self.variable_z = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable_z.setMinimumWidth(196)
+        self.variable_z.setMaximumHeight(24)
+        self.variable_z.search_button.set_size(width=24, height=24)
         layout = QHBoxLayout()
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable_z)
         layout.addSpacerItem(spacer)
-        self.variable_z_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
-        self.variable_z_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.variable_z_frame = QWidget()
+        self.variable_z_frame.setMinimumHeight(32)
+        self.variable_z_frame.setLayout(layout)
         self.variable_z.combobox.changed.connect(self.on_changed)
         self.ui.layout_z.insertWidget(3, self.variable_z_frame)
 

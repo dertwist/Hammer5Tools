@@ -219,7 +219,8 @@ class ComboboxDynamicItems(QComboBox):
     def __init__(self, parent=None, items: list =None, use_search:bool = False):
         """Combobox that updates it's items when user clicked on it"""
         super().__init__(parent)
-        self.setStyleSheet('padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px;')
+        # self.setStyleSheet('padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px;')
+        self.setStyleSheet(qt_stylesheet_combobox)
         self.items = items if items is not None else []
 
     def updateItems(self):
