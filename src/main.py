@@ -27,12 +27,6 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
 # Versions
 app_version = '3.2.0'
-batchcreator_version = '1.2.2'
-soundevent_editor_version = '2.1.0'
-smartprop_editor_version = '1.0.0'
-hotkey_editor_version = '1.1.0'
-loading_editor_version = '1.0.0'
-
 
 
 class Notification(QMessageBox):
@@ -82,12 +76,6 @@ class Widget(QMainWindow):
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except Exception as e:
             print(f"Error checking updates: {e}")
-
-        print(f'SmartProp Editor version: {smartprop_editor_version}')
-        print(f'Hotkey Editor version: {hotkey_editor_version}')
-        print(f"Soundevent Editor version: v{soundevent_editor_version}")
-        print(f"BatchCreator version: {batchcreator_version}")
-        print(f"Loading Editor version: {loading_editor_version}")
         try:
             AssetTypesModify()
         except Exception as e:
@@ -223,7 +211,7 @@ class Widget(QMainWindow):
 
         # Create a new instance of BatchCreatorMainWindow
         try:
-            self.BatchCreator_MainWindow = BatchCreatorMainWindow(batchcreator_version)
+            self.BatchCreator_MainWindow = BatchCreatorMainWindow()
 
             self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
         except Exception as e:

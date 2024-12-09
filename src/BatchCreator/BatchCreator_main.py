@@ -12,16 +12,14 @@ from src.BatchCreator.BatchCreator_process_dialog import BatchCreator_process_Di
 from src.explorer.main import Explorer
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence
 from PySide6.QtWidgets import QMessageBox
-from packaging import version
 cs2_path = get_cs2_path()
 
 process = {}
 class BatchCreatorMainWindow(QMainWindow):
-    def __init__(self, version, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
-        self.version = version
         self.current_file_path = None
 
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
@@ -98,7 +96,7 @@ class BatchCreatorMainWindow(QMainWindow):
             index = indexes[0]
             file_path = self.mini_explorer.model.filePath(index)
             base_name = os.path.basename(os.path.normpath(file_path))
-            print(f"Opened File: {base_name} version: {self.version}")
+            print(f"Opened File: {base_name}")
             self.current_file_path = file_path if not self.mini_explorer.model.isDir(index) else None
         else:
             self.ui.Status_Line_Qedit.clear()
@@ -130,7 +128,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
         file_path = os.path.join(path_clear, f"{file_name}.h5t_batch")
         print(file_path)
-        batch_creator_file_parser_initialize(self.version, file_path)
+        batch_creator_file_parser_initialize(file_path)
 
     def save_file(self):
         if self.current_file_path:
@@ -138,7 +136,7 @@ class BatchCreatorMainWindow(QMainWindow):
             extension = self.ui.extension_lineEdit.text()
             global process
             print(process)
-            batch_creator_file_parser_output(self.version, content, process, extension,  self.current_file_path)
+            batch_creator_file_parser_output(content, process, extension,  self.current_file_path)
         else:
             print("No file is currently opened to save.")
 
@@ -186,12 +184,6 @@ class BatchCreatorMainWindow(QMainWindow):
         try:
             global process
             version_file, content, extension, process = batch_creator_file_parser_parse(file_path)
-            print(file_path)
-            # Compare versions
-            if version.parse(self.version) > version.parse(version_file):
-                QMessageBox.information(self, "Attention",
-                                        f"The current version ({self.version}) is newer than the file version ({version_file}).")
-
             self.ui.kv3_QplainTextEdit.setPlainText(content)
             self.ui.extension_lineEdit.setText(extension)
             self.current_file_path = file_path
