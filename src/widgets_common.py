@@ -31,6 +31,17 @@ class Button(QPushButton):
     def __init__(self):
         super().__init__()
         self.setStyleSheet(qt_stylesheet_button)
+    def set_size(self, height:int = None, width:int = None):
+        if height is None:
+            pass
+        else:
+            self.setMaximumHeight(height)
+            self.setMinimumHeight(height)
+        if width is None:
+            pass
+        else:
+            self.setMinimumWidth(width)
+            self.setMaximumWidth(width)
     def set_icon(self, url):
         self.setIcon(QIcon(url))
     def set_text(self, text):
