@@ -24,14 +24,11 @@ def check_updates(repo_url, current_version, silent):
         latest_version = release_info['tag_name'].lstrip('v')  # Remove 'v' from the version
         release_notes = release_info['body']
 
-        print(f"GitHub version: {latest_version}")
-
         # Compare the current version with the latest version using packaging.version
         if version.parse(current_version) < version.parse(latest_version):
             print(f"A new version is available: {latest_version}. You are using version: {current_version}.")
             show_update_notification(latest_version, release_notes, owner, repo)
         else:
-            print("You are using the latest version.")
             if not silent:
                 show_update_check_result_notification(latest_version, release_notes, owner, repo)
     else:
