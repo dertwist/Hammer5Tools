@@ -2,7 +2,7 @@ from src.smartprop_editor.ui_variable_frame import Ui_Form
 
 
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from src.property.methods import PropertyMethods
 
 from PySide6.QtWidgets import QMenu, QApplication
@@ -11,6 +11,7 @@ from PySide6.QtGui import QCursor, QDrag,QAction
 from src.smartprop_editor.element_id import *
 
 class VariableFrame(QWidget):
+    duplicate = Signal(list, int)
     def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list):
         super().__init__()
         self.ui = Ui_Form()
@@ -160,8 +161,9 @@ class VariableFrame(QWidget):
     def show_context_menu(self):
         context_menu = QMenu()
         delete_action = QAction("Delete", context_menu)
-        copy_action = QAction("Copy", context_menu)  # Change 'Duplicate' to 'Copy'
-        context_menu.addActions([delete_action, copy_action])  # Replace 'duplicate_action' with 'copy_action'
+        copy_action = QAction("Copy", context_menu)
+        duplicate_action = QAction("Duplicate", context_menu)
+        context_menu.addActions([delete_action, copy_action, duplicate_action])
 
         action = context_menu.exec(QCursor.pos())
 
@@ -171,3 +173,7 @@ class VariableFrame(QWidget):
         elif action == copy_action:
             clipboard = QApplication.clipboard()
             clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.var_class};;{self.var_value};;{self.var_visible_in_editor};;{self.var_display_name}")
+        elif action == duplicate_action:
+            __data = [self.name, self.var_class, self.var_value, self.var_visible_in_editor, self.var_display_name]
+            __index = self.widget_list.indexOf(self)
+            self.duplicate.emit(__data, __index)
