@@ -5,7 +5,7 @@ from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
 from src.smartprop_editor.objects import expression_completer
-from src.widgets import FloatWidget, ComboboxVariables, ComboboxVariablesWidget
+from src.widgets import FloatWidget, ComboboxVariablesWidget
 
 
 class PropertyVector3D(QWidget):
@@ -25,11 +25,12 @@ class PropertyVector3D(QWidget):
         self.ui.property_class.setText(output)
         self.ui.logic_switch.currentIndexChanged.connect(self.on_changed)
 
+        filter_types = ['Int', 'Float']
 
         # Variable
-        self.variable_logic_switch = ComboboxVariables(layout=self.variables_scrollArea)
+        self.variable_logic_switch = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['Vector3D'])
         self.variable_logic_switch.setMinimumWidth(256)
-        self.variable_logic_switch.changed.connect(self.on_changed)
+        self.variable_logic_switch.combobox.changed.connect(self.on_changed)
         self.ui.layout.insertWidget(2, self.variable_logic_switch)
 
         # Vector X Setup
@@ -39,16 +40,16 @@ class PropertyVector3D(QWidget):
         self.float_widget_x.edited.connect(self.on_changed)
         self.ui.layout_x.insertWidget(2, self.float_widget_x)
         # Variable
-        self.variable_x = ComboboxVariables(layout=self.variables_scrollArea)
+        self.variable_x = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable_x.setMinimumWidth(256)
         layout = QHBoxLayout()
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable_x)
         layout.addSpacerItem(spacer)
         self.variable_x_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
         self.variable_x_frame.setLayout(layout)  # Set the layout to the QWidget
-        self.variable_x.changed.connect(self.on_changed)
+        self.variable_x.combobox.changed.connect(self.on_changed)
         self.ui.layout_x.insertWidget(3, self.variable_x_frame)
 
         # Expression
@@ -64,16 +65,16 @@ class PropertyVector3D(QWidget):
         self.float_widget_y.edited.connect(self.on_changed)
         self.ui.layout_y.insertWidget(2, self.float_widget_y)
         # Variable
-        self.variable_y = ComboboxVariables(layout=self.variables_scrollArea)
+        self.variable_y = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable_y.setMinimumWidth(256)
         layout = QHBoxLayout()
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable_y)
         layout.addSpacerItem(spacer)
         self.variable_y_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
         self.variable_y_frame.setLayout(layout)  # Set the layout to the QWidget
-        self.variable_y.changed.connect(self.on_changed)
+        self.variable_y.combobox.changed.connect(self.on_changed)
         self.ui.layout_y.insertWidget(3, self.variable_y_frame)
 
         # Expression
@@ -89,16 +90,16 @@ class PropertyVector3D(QWidget):
         self.float_widget_z.edited.connect(self.on_changed)
         self.ui.layout_z.insertWidget(2, self.float_widget_z)
         # Variable
-        self.variable_z = ComboboxVariables(layout=self.variables_scrollArea)
+        self.variable_z = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable_z.setMinimumWidth(196)
         layout = QHBoxLayout()
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable_z)
         layout.addSpacerItem(spacer)
         self.variable_z_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
         self.variable_z_frame.setLayout(layout)  # Set the layout to the QWidget
-        self.variable_z.changed.connect(self.on_changed)
+        self.variable_z.combobox.changed.connect(self.on_changed)
         self.ui.layout_z.insertWidget(3, self.variable_z_frame)
 
         # Expression
@@ -116,9 +117,9 @@ class PropertyVector3D(QWidget):
                     layout.setPlainText(str(value['m_Expression']))
                     combo.setCurrentIndex(2)
                 if 'm_SourceName' in value:
-                    variable.updateItems()
-                    variable.addItem(value['m_SourceName'])
-                    variable.setCurrentText(value['m_SourceName'])
+                    variable.combobox.updateItems()
+                    variable.combobox.addItem(value['m_SourceName'])
+                    variable.combobox.setCurrentText(value['m_SourceName'])
                     combo.setCurrentIndex(1)
             elif isinstance(value, int) or isinstance(value, float):
                 float_widget.SpinBox.setValue(value)
@@ -137,14 +138,13 @@ class PropertyVector3D(QWidget):
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(1)
                 self.var_value = value['m_SourceName']
-                self.variable_logic_switch.addItem(value['m_SourceName'])
-                self.variable_logic_switch.setCurrentText(value['m_SourceName'])
+                self.variable_logic_switch.combobox.addItem(value['m_SourceName'])
+                self.variable_logic_switch.combobox.setCurrentText(value['m_SourceName'])
         elif isinstance(value, list):
             self.ui.logic_switch.setCurrentIndex(2)
             add_value(self.text_line_x, value[0], self.ui.comboBox_x, self.variable_x, self.float_widget_x)
-            add_value(self.text_line_y, value[1], self.ui.comboBox_x, self.variable_x, self.float_widget_y)
-            add_value(self.text_line_z, value[2], self.ui.comboBox_x, self.variable_x, self.float_widget_z)
-
+            add_value(self.text_line_y, value[1], self.ui.comboBox_y, self.variable_y, self.float_widget_y)
+            add_value(self.text_line_z, value[2], self.ui.comboBox_z, self.variable_z, self.float_widget_z)
 
         self.on_changed()
 
@@ -187,6 +187,7 @@ class PropertyVector3D(QWidget):
             self.text_line_z.show()
             self.float_widget_z.hide()
             self.variable_z_frame.hide()
+
     def logic_switch(self):
         widget = self.ui.layout.itemAt(2).widget()
         if self.ui.logic_switch.currentIndex() == 0:
@@ -213,11 +214,12 @@ class PropertyVector3D(QWidget):
 
         self.change_value()
         self.edited.emit()
+
     def change_value(self):
         if self.ui.logic_switch.currentIndex() == 0:
             self.value = None
         elif self.ui.logic_switch.currentIndex() == 1:
-            value = self.variable_logic_switch.get_variable()
+            value = self.variable_logic_switch.combobox.get_variable()
             self.value = {self.value_class: {'m_SourceName': value}}
         elif self.ui.logic_switch.currentIndex() == 2:
             def handle_value(line, combo_box, variable, float_widget):
@@ -225,7 +227,7 @@ class PropertyVector3D(QWidget):
                 if index == 0:
                     value = float_widget.value
                 elif index == 1:
-                    value = {'m_SourceName': variable.get_variable()}
+                    value = {'m_SourceName': variable.combobox.get_variable()}
                 elif index == 2:
                     value = {'m_Expression': line.toPlainText()}
                 return value
