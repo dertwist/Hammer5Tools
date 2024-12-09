@@ -132,55 +132,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="stop_button">
-        <property name="styleSheet">
-         <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
-
-        font: 580 9pt &quot;Segoe UI&quot;;
-	
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QPushButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }</string>
-        </property>
-        <property name="text">
-         <string>Stop</string>
-        </property>
-        <property name="icon">
-         <iconset resource="../resources.qrc">
-          <normaloff>:/valve_common/icons/tools/common/control_stop.png</normaloff>:/valve_common/icons/tools/common/control_stop.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>20</width>
-          <height>20</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QCheckBox" name="loop_checkbox">
         <property name="maximumSize">
          <size>
