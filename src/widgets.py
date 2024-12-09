@@ -289,7 +289,7 @@ class ComboboxVariables(ComboboxDynamicItems):
             self.addItem(value)
             self.setCurrentText(value)
     def get_variable(self):
-        if self.currentIndex() == 0:
+        if self.currentText() == "None":
             return ''
         else:
             return self.currentText()
