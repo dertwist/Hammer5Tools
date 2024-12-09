@@ -1,5 +1,5 @@
 import re
-
+import  time
 from src.qt_styles.common import qt_stylesheet_smartprop_editor_frame
 from src.smartprop_editor.properties_classes.ui_float import Ui_Widget
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
@@ -41,7 +41,7 @@ class PropertyVariableOutput(QWidget):
 
         # Variable
         self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea)
-        self.variable.setFixedWidth(128)
+        # self.variable.setFixedWidth(256)
         self.variable.setMaximumHeight(24)
         self.variable.search_button.set_size(width=24, height=24)
         layout = QHBoxLayout()

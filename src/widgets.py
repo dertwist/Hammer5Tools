@@ -6,6 +6,7 @@ from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
 from qt_styles.common import *
+from src.common import discord_feedback_channel
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.widgets_common import *
 #============================================================<  Generic widgets  >==========================================================
@@ -42,7 +43,7 @@ class ErrorInfo(QMessageBox):
         report_button.clicked.connect(self.report_issue)
 
     def report_issue(self):
-        webbrowser.open("https://discord.gg/mMaub4jCBa")
+        webbrowser.open(discord_feedback_channel)
 
 def ExpetionErrorDialog(function, id):
     try:
