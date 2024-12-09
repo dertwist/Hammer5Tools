@@ -1,10 +1,10 @@
+from src.smartprop_editor.properties_classes.ui_bool import Ui_Widget
 import ast
 import re
-from smartprop_editor.properties_classes.ui_bool import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
-
+from src.widgets import FloatWidget, ComboboxVariablesWidget
 
 class PropertyBool(QWidget):
     edited = Signal()
@@ -27,8 +27,7 @@ class PropertyBool(QWidget):
         # EditLine
         self.text_line = CompletingPlainTextEdit()
         self.text_line.completion_tail = ''
-        self.text_line.OnlyFloat = True
-        self.text_line.setPlaceholderText('Variable name, float or expression')
+        self.text_line.setPlaceholderText('Expression')
         self.ui.layout.insertWidget(3, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)
 
@@ -36,6 +35,21 @@ class PropertyBool(QWidget):
 
         self.ui.logic_switch.setCurrentIndex(0)
         self.text_line.setPlainText('')
+
+        # Variable setup
+        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['Bool'])
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.variable)
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.variable_frame = QWidget()
+        self.variable_frame.setLayout(layout)
+        self.variable.setFixedWidth(256)
+        self.variable.setMaximumHeight(24)
+        self.variable.search_button.set_size(width=24, height=24)
+        self.variable_frame.setMinimumHeight(32)
+        self.variable.combobox.changed.connect(self.on_changed)
+        self.ui.layout.insertWidget(2, self.variable_frame)
 
         if isinstance(value, dict):
             if 'm_Expression' in value:
@@ -45,7 +59,7 @@ class PropertyBool(QWidget):
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
-                self.text_line.setPlainText(self.var_value)
+                self.variable.combobox.set_variable(self.var_value)
         elif isinstance(value, bool):
             self.ui.logic_switch.setCurrentIndex(1)
             self.ui.value.setChecked(value)
@@ -55,18 +69,26 @@ class PropertyBool(QWidget):
 
         self.on_changed()
 
-
-
-
     def logic_switch(self):
         if self.ui.logic_switch.currentIndex() == 0:
             self.text_line.hide()
             self.ui.value.hide()
+            if hasattr(self, 'variable_frame'):
+                self.variable_frame.hide()
         elif self.ui.logic_switch.currentIndex() == 1:
             self.text_line.hide()
             self.ui.value.show()
+            if hasattr(self, 'variable_frame'):
+                self.variable_frame.hide()
+        elif self.ui.logic_switch.currentIndex() == 2:
+            self.text_line.hide()
+            self.ui.value.hide()
+            if hasattr(self, 'variable_frame'):
+                self.variable_frame.show()
         else:
             self.text_line.show()
+            if hasattr(self, 'variable_frame'):
+                self.variable_frame.hide()
             self.ui.value.hide()
 
     def on_changed(self):
@@ -85,7 +107,7 @@ class PropertyBool(QWidget):
             self.value = {self.value_class: self.ui.value.isChecked()}
         # Variable
         elif self.ui.logic_switch.currentIndex() == 2:
-            value = self.text_line.toPlainText()
+            value = self.variable.combobox.get_variable()
             try:
                 value = ast.literal_eval(value)
             except:
@@ -101,7 +123,6 @@ class PropertyBool(QWidget):
             self.value = {self.value_class: {'m_Expression': str(value)}}
 
     def get_variables(self, search_term=None):
-        self.variables_scrollArea
         data_out = []
         for i in range(self.variables_scrollArea.count()):
             widget = self.variables_scrollArea.itemAt(i).widget()

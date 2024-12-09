@@ -1,6 +1,6 @@
 import ast
 
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal, Qt, QSize
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, QCheckBox, QVBoxLayout, QToolBox, QToolButton
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
@@ -31,17 +31,19 @@ class Button(QPushButton):
     def __init__(self):
         super().__init__()
         self.setStyleSheet(qt_stylesheet_button)
-    def set_size(self, height:int = None, width:int = None):
-        if height is None:
-            pass
-        else:
+
+    def set_size(self, height: int = None, width: int = None):
+        if height is not None:
             self.setMaximumHeight(height)
             self.setMinimumHeight(height)
-        if width is None:
-            pass
-        else:
+
+        if width is not None:
             self.setMinimumWidth(width)
             self.setMaximumWidth(width)
+
+        if height is not None and width is not None:
+            icon_size = min(height, width) * 0.6
+            self.setIconSize(QSize(icon_size, icon_size))
     def set_icon(self, url):
         self.setIcon(QIcon(url))
     def set_text(self, text):
