@@ -84,6 +84,18 @@
       </item>
       <item>
        <widget class="QPushButton" name="play_button">
+        <property name="minimumSize">
+         <size>
+          <width>72</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>72</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="styleSheet">
          <string notr="true">
     /* QPushButton default and hover styles */
