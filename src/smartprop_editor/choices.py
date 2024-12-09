@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QWidget, QLineEdit, QVBoxLayout, QSlider, QHBoxLayout, QCheckBox
 from PySide6.QtCore import Qt
-from src.widgets import ComboboxTreeChild, ComboboxDynamicItems, ComboboxVariables
+from src.widgets import ComboboxTreeChild, ComboboxDynamicItems, ComboboxVariables, ComboboxVariablesWidget
 from src.preferences import debug
 var_choice_identification_bool = ['boolean', 'bool']
 var_choice_identification_float = ['float']
@@ -49,11 +49,11 @@ class AddVariable():
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         parent.addChild(item)
         # Combobox var
-        combobox = ComboboxVariables(layout=variables_scrollArea, filter_types=['Float', 'MaterialGroup', 'Bool', 'Int','ScaleMode','PickMode', 'Model'])
-        combobox.setCurrentText(name)
-        combobox.addItem(name)
+        combobox = ComboboxVariablesWidget(layout=variables_scrollArea, filter_types=['Float', 'MaterialGroup', 'Bool', 'Int','ScaleMode','PickMode', 'Model'])
+        combobox.combobox.setCurrentText(name)
+        combobox.combobox.addItem(name)
 
-        combobox.changed.connect(lambda value_dict: self.variable_edit_line(value_dict, parent=item))
+        combobox.combobox.changed.connect(lambda value_dict: self.variable_edit_line(value_dict, parent=item))
         value_dict = {'name': name, 'class': type, 'm_default': value}
         self.variable_edit_line(value_dict, parent=item)
         parent.treeWidget().setItemWidget(item, 0, combobox)
