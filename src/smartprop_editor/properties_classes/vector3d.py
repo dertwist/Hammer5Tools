@@ -1,11 +1,11 @@
 import re
 
-from smartprop_editor.properties_classes.ui_vector3d import Ui_Widget
+from src.smartprop_editor.properties_classes.ui_vector3d import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
-from smartprop_editor.objects import expression_completer
-from widgets import FloatWidget, ComboboxVariables
+from src.smartprop_editor.objects import expression_completer
+from src.widgets import FloatWidget, ComboboxVariables
 
 
 class PropertyVector3D(QWidget):
