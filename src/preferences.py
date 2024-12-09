@@ -26,8 +26,17 @@ def set_config_bool(section, key, bool):
 def get_config_value(section, key):
     return settings.value(f"{section}/{key}")
 
-def get_config_bool(section, key):
-    return settings.value(f"{section}/{key}", type=bool)
+def get_config_bool(section, key, default:bool = None):
+    if default is None:
+        try:
+            return settings.value(f"{section}/{key}", type=bool)
+        except:
+            raise ValueError
+    else:
+        try:
+            return settings.value(f"{section}/{key}", type=bool)
+        except:
+            return default
 
 print()
 def default_settings():
