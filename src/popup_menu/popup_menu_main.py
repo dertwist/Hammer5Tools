@@ -1,12 +1,8 @@
-import sys
-import webbrowser
-from PySide6.QtWidgets import (
-    QApplication, QDialog, QWidget, QVBoxLayout, QScrollArea, QLabel, QToolButton, QHBoxLayout, QSpacerItem, QSizePolicy
-)
-from PySide6.QtGui import QCursor, QIcon
+from PySide6.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QScrollArea, QLabel, QToolButton, QHBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtGui import QCursor, QIcon, QKeyEvent
 from PySide6.QtCore import QEvent, Qt, Signal, QSize
 from src.popup_menu.ui_popup_menu import Ui_PoPupMenu
-
+import webbrowser
 
 class PopupMenu(QDialog):
     label_clicked = Signal(str)
@@ -33,6 +29,8 @@ class PopupMenu(QDialog):
         scroll_content.setLayout(self.scroll_layout)
         self.ui.scrollArea.setWidget(scroll_content)
         self.ui.lineEdit.setFocus()
+
+        self.current_selection_index = -1  # Initialize selection index
 
     def populate_properties(self, add_once):
         for item in self.properties:
@@ -73,6 +71,9 @@ class PopupMenu(QDialog):
             }
             QLabel:hover {
                 background-color: #414956;
+            }
+            QLabel:selected {
+                background-color: #2A2E38;
             }
         """
 
@@ -135,3 +136,69 @@ class PopupMenu(QDialog):
                         label.hide()
                         if element_layout.count() > 1:
                             element_layout.itemAt(1).widget().hide()
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key_Down:
+            self.navigate_selection(1)
+        elif event.key() == Qt.Key_Up:
+            self.navigate_selection(-1)
+        elif event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            self.activate_selection()
+
+    def navigate_selection(self, direction):
+        scroll_content = self.ui.scrollArea.widget()
+        if not scroll_content or not scroll_content.layout():
+            return
+
+        visible_labels = []
+        for i in range(scroll_content.layout().count()):
+            element_layout_item = scroll_content.layout().itemAt(i)
+            if element_layout_item:
+                element_layout = element_layout_item.layout()
+                if element_layout:
+                    widget_item = element_layout.itemAt(0)
+                    if widget_item:
+                        widget = widget_item.widget()
+                        if widget and widget.isVisible():
+                            visible_labels.append(widget)
+
+        if not visible_labels:
+            return
+
+        self.current_selection_index = (self.current_selection_index + direction) % len(visible_labels)
+
+        for i, label in enumerate(visible_labels):
+            if i == self.current_selection_index:
+                label.setStyleSheet(self.get_label_stylesheet() + "QLabel { background-color: #2A2E38; }")
+            else:
+                label.setStyleSheet(self.get_label_stylesheet())
+
+    def activate_selection(self):
+        scroll_content = self.ui.scrollArea.widget()
+        if not scroll_content or not scroll_content.layout():
+            return
+
+        visible_labels = []
+        for i in range(scroll_content.layout().count()):
+            element_layout_item = scroll_content.layout().itemAt(i)
+            if element_layout_item:
+                element_layout = element_layout_item.layout()
+                if element_layout:
+                    widget_item = element_layout.itemAt(0)
+                    if widget_item:
+                        widget = widget_item.widget()
+                        if widget and widget.isVisible():
+                            visible_labels.append(widget)
+
+        if visible_labels and 0 <= self.current_selection_index < len(visible_labels):
+            label = visible_labels[self.current_selection_index]
+            if label.mousePressEvent:
+                label.mousePressEvent(None)
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key_Down:
+            self.navigate_selection(1)
+        elif event.key() == Qt.Key_Up:
+            self.navigate_selection(-1)
+        elif event.key() in (Qt.Key_Return, Qt.Key_Enter, Qt.Key_Space):
+            self.activate_selection()
