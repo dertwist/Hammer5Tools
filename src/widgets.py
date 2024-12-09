@@ -6,7 +6,8 @@ from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
 from qt_styles.common import *
-
+from src.popup_menu.popup_menu_main import PopupMenu
+from src.widgets_common import *
 #============================================================<  Generic widgets  >==========================================================
 class Spacer(QWidget):
     def __init__(self):
@@ -215,7 +216,7 @@ class BoolWidget(QWidget):
 class ComboboxDynamicItems(QComboBox):
     clicked = Signal()
 
-    def __init__(self, parent=None, items: list =None):
+    def __init__(self, parent=None, items: list =None, use_search:bool = False):
         """Combobox that updates it's items when user clicked on it"""
         super().__init__(parent)
         self.setStyleSheet('padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px;')
@@ -264,7 +265,7 @@ class ComboboxVariables(ComboboxDynamicItems):
         self.addItems(self.items)
         if current in self.items:
             self.setCurrentText(current)
-        self.currentTextChanged.connect(self.changed_var)
+        self.currentTextChanged.connect(self.changed_var),
     def changed_var(self):
         if self.currentIndex() == 0:
             self.changed.emit({'name': None, 'class': None, 'm_default': None})
@@ -293,6 +294,29 @@ class ComboboxVariables(ComboboxDynamicItems):
             return ''
         else:
             return self.currentText()
+class ComboboxVariablesWidget(QWidget):
+    def __init__(self, parent=None, layout=None,filter_types=None):
+        """Combobox variables widget with search button"""
+        super().__init__(parent)
+
+        layout_widget = QHBoxLayout(self)
+        self.combobox = ComboboxVariables(layout, filter_types)
+        self.layout().addWidget(self.combobox)
+        self.search_button = Button()
+        self.search_button.set_icon_search()
+        self.search_button.clicked.connect(self.call_search_popup_menu)
+        self.layout().addWidget()
+    def get_variables(self):
+        elements = []
+        variables = self.combobox.get_variables()
+        for item in variables:
+            elements.append({item['name']: item['name']})
+        return elements
+    def call_search_popup_menu(self):
+        elements = self.get_variables()
+        self.popup_menu = PopupMenu(elements, add_once=False)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.combobox.set_variable(value))
+        self.popup_menu.show()
 class ComboboxTreeChild(ComboboxDynamicItems):
     """Shows a tree child as items """
     def __init__(self, parent=None, layout=QTreeWidget, root=QTreeWidgetItem):
@@ -316,42 +340,6 @@ class ComboboxTreeChild(ComboboxDynamicItems):
             data_out.append(child_item.text(0))
 
         return data_out
-#================================================================<  Buttons  >==============================================================
-
-class DeleteButton(QToolButton):
-    def __init__(self, instance: QWidget = None):
-        super().__init__()
-        if instance is None:
-            raise ValueError
-
-        self.instance = instance
-        self.clicked.connect(self.delete)
-        self.setIcon(QIcon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
-        # self.setMinimumHeight(24)
-        # self.setMinimumWidth(24)
-        # self.setMaximumWidth(24)
-        # self.setMaximumHeight(24)
-    def delete(self):
-        """Deleting Instance"""
-        # self.instance.close()
-        self.instance.closeEvent(self.event)
-        # self.instance.deleteLater()
-class Button(QPushButton):
-    def __init__(self):
-        super().__init__()
-        self.setStyleSheet(qt_stylesheet_button)
-    def set_icon(self, url):
-        self.setIcon(QIcon(url))
-    def set_text(self, text):
-        self.setText(text)
-    def set_icon_delete(self):
-        self.set_icon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
-    def set_icon_paste(self):
-        self.set_icon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
-    def set_icon_search(self):
-        self.set_icon(":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
-    def set_icon_add(self):
-        self.set_icon(":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
 #==============================================================<  Tree widgets  >===========================================================
 
 class HierarchyItemModel(QTreeWidgetItem):
