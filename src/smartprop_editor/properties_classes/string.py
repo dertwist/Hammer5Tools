@@ -1,10 +1,10 @@
 import re
-from smartprop_editor.properties_classes.ui_float import Ui_Widget
+from src.smartprop_editor.properties_classes.ui_float import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
-from smartprop_editor.objects import expression_completer
-from widgets import ComboboxVariables, Spacer
+from src.smartprop_editor.objects import expression_completer
+from src.widgets import ComboboxVariables, Spacer, ComboboxVariablesWidget
 
 
 class PropertyString(QWidget):
@@ -55,16 +55,15 @@ class PropertyString(QWidget):
         self.text_line.completion_tail = ''
 
         # Variable
-        self.variable = ComboboxVariables(layout=self.variables_scrollArea)
+        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['String','MaterialGroup', 'Model'])
         self.variable.setFixedWidth(256)
-        self.variable.filter_types = ['String','MaterialGroup', 'Model']
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
         layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.variable_frame = QWidget()
         self.variable_frame.setLayout(layout)
-        self.variable.changed.connect(self.on_changed)
+        self.variable.combobox.changed.connect(self.on_changed)
         self.ui.layout.insertWidget(2, self.variable_frame)
 
         if placeholder:
@@ -81,7 +80,7 @@ class PropertyString(QWidget):
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
-                self.variable.set_variable(value['m_SourceName'])
+                self.variable.combobox.set_variable(value['m_SourceName'])
         elif isinstance(value, str):
             self.ui.logic_switch.setCurrentIndex(1)
             self.text_line.setPlainText(value)
@@ -138,7 +137,7 @@ class PropertyString(QWidget):
             self.value = {self.value_class: value}
         # Variable
         elif self.ui.logic_switch.currentIndex() == 2:
-            value = self.variable.get_variable()
+            value = self.variable.combobox.get_variable()
             self.value = {self.value_class: {'m_SourceName': value}}
         # Expression
         elif self.ui.logic_switch.currentIndex() == 3:
@@ -146,7 +145,6 @@ class PropertyString(QWidget):
             self.value = {self.value_class: {'m_Expression': str(value)}}
 
     def get_variables(self, search_term=None):
-        self.variables_scrollArea
         data_out = []
         for i in range(self.variables_scrollArea.count()):
             widget = self.variables_scrollArea.itemAt(i).widget()
