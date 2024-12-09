@@ -295,23 +295,34 @@ class ComboboxVariables(ComboboxDynamicItems):
         else:
             return self.currentText()
 class ComboboxVariablesWidget(QWidget):
-    def __init__(self, parent=None, layout=None,filter_types=None):
+    def __init__(self, parent=None, layout=None, filter_types=None):
         """Combobox variables widget with search button"""
         super().__init__(parent)
 
         layout_widget = QHBoxLayout(self)
-        self.combobox = ComboboxVariables(layout, filter_types)
-        self.layout().addWidget(self.combobox)
+        layout_widget.setContentsMargins(0,0,0,0)
+        self.filter_types = filter_types
+        self.combobox = ComboboxVariables(parent=self, layout=layout, filter_types=filter_types)
+        layout_widget.addWidget(self.combobox)
+
         self.search_button = Button()
         self.search_button.set_icon_search()
+        self.search_button.set_size(width=32)
         self.search_button.clicked.connect(self.call_search_popup_menu)
-        self.layout().addWidget()
+        layout_widget.addWidget(self.search_button)
+
     def get_variables(self):
         elements = []
         variables = self.combobox.get_variables()
         for item in variables:
-            elements.append({item['name']: item['name']})
+            if self.filter_types is not None:
+                if item['class'] in self.filter_types:
+                    elements.append({item['name']: item['name']})
+            else:
+                elements.append({item['name']: item['name']})
+
         return elements
+
     def call_search_popup_menu(self):
         elements = self.get_variables()
         self.popup_menu = PopupMenu(elements, add_once=False)
