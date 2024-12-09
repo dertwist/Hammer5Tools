@@ -56,13 +56,13 @@ class InternalSoundFileExplorer(QTreeWidget):
         elif os.path.exists(local_audiopath_mp3):
             self._play_audio_file(local_audiopath_mp3)
         else:
-            self.decompile_audio(internal_audiopath, local_audiopath_wav)
+            self.decompile_audio(internal_audiopath, local_audiopath_wav, path)
 
-    def decompile_audio(self, internal_path, local_path):
+    def decompile_audio(self, internal_path, local_path, assembled_path):
         pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
         process = QProcess(self)
 
-        process.finished.connect(lambda exit_code, exit_status: self.on_process_finished(exit_code, exit_status, process, local_path))
+        process.finished.connect(lambda exit_code, exit_status: self.on_process_finished(exit_code, exit_status, process, local_path, assembled_path))
         process.errorOccurred.connect(lambda error: self.on_process_error(error, process))
 
         try:
@@ -78,13 +78,12 @@ class InternalSoundFileExplorer(QTreeWidget):
         except Exception as e:
             pass
 
-        return local_path
-
-    def on_process_finished(self, exit_code, exit_status, process, path):
+    def on_process_finished(self, exit_code, exit_status, process, path, assembled_path):
         if exit_code != 0:
             stderr = process.readAllStandardError().data().decode()
+            raise ValueError
         else:
-            self._play_audio_file(path)
+            self.play_audio_file(assembled_path)
 
     def on_process_error(self, error, process):
         pass
