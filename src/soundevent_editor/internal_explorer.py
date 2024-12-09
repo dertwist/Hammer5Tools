@@ -25,30 +25,22 @@ class VPKLoaderThread(QThread):
             self.vpk_loaded.emit([])
 
 class InternalSoundFileExplorer(QTreeWidget):
-    def __init__(self):
+    play_sound = Signal(str)
+    def __init__(self, audio_player:QMediaPlayer):
         super().__init__()
         self.setHeaderHidden(True)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setDragDropMode(QTreeWidget.InternalMove)
         self.itemClicked.connect(self.on_item_clicked)
-        self.audio_player = None
+        self.audio_player = audio_player
         self.vpk_loader_thread = VPKLoaderThread()
         self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
         self.vpk_loader_thread.start()
 
     def _play_audio_file(self, file_path):
         debug(f'Playing audio {file_path}')
-        try:
-            if self.audio_player is not None:
-                self.audio_player.deleteLater()
-            self.audio_player = QMediaPlayer()
-            self.audio_output = QAudioOutput()
-            self.audio_player.setAudioOutput(self.audio_output)
-            self.audio_player.setSource(QUrl.fromLocalFile(file_path))
-            self.audio_player.play()
-        except Exception as e:
-            pass
+        self.play_sound.emit(file_path)
 
     def play_audio_file(self, path):
         internal_audiopath = os.path.join('sounds', path.replace('vsnd', 'vsnd_c')).replace('/', '\\')
