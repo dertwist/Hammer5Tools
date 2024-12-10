@@ -42,6 +42,9 @@ Decompiler_path = os.path.join(app_dir, 'Decompiler', 'Decompiler.exe')
 
 # web
 discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
+
+# other
+default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0"
 #===========================================================<  generic functions  >=========================================================
 def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=False):
     """Compiling a file through game resourcecompiler
