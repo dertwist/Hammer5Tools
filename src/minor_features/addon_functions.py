@@ -5,6 +5,7 @@ from src.preferences import get_addon_name, get_cs2_path, get_config_bool, set_c
     set_config_value
 import os, subprocess, shutil, psutil
 from src.widgets import ErrorInfo, ExpetionErrorDialog
+from src.common import *
 
 def delete_addon(ui, cs2_path, get_addon_name):
     delete_paths = [
@@ -41,7 +42,7 @@ def __launch_addon():
     # get commands from settings, if not could find them, add defaults to the setitngs
     commands = get_config_value("LAUNCH", "commands")
     if not commands:
-        commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing  -noinsecru +install_dlc_workshoptools_cvar 1"
+        commands = default_commands
         set_config_value("LAUNCH", 'commands', commands)
     commands = assemble_commands(commands, addon_name)
     cs2_launch_commands = '"' + cs2_path + '"' r"\game\bin\win64\cs2.exe" + commands
