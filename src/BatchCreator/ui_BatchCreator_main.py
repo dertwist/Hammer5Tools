@@ -126,30 +126,6 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.verticalLayout.addWidget(self.frame_6)
 
-        self.frame_4 = QFrame(self.frame)
-        self.frame_4.setObjectName(u"frame_4")
-        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_3 = QHBoxLayout(self.frame_4)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-
-        self.verticalLayout.addWidget(self.frame_4)
-
-        self.frame_5 = QFrame(self.frame)
-        self.frame_5.setObjectName(u"frame_5")
-        self.frame_5.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_5.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_4 = QHBoxLayout(self.frame_5)
-        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.horizontalSpacer = QSpacerItem(8, 5, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
-
-        self.horizontalLayout_4.addItem(self.horizontalSpacer)
-
-
-        self.verticalLayout.addWidget(self.frame_5)
-
 
         self.horizontalLayout_7.addWidget(self.frame)
 
@@ -181,12 +157,13 @@ class Ui_BatchCreator_MainWindow(object):
         self.recent_files = QGroupBox(self.left_vertical_frame)
         self.recent_files.setObjectName(u"recent_files")
         self.recent_files.setCheckable(True)
+        self.recent_files.setChecked(False)
 
         self.verticalLayout_2.addWidget(self.recent_files)
 
         self.groupBox_2 = QGroupBox(self.left_vertical_frame)
         self.groupBox_2.setObjectName(u"groupBox_2")
-        self.groupBox_2.setMaximumSize(QSize(16777215, 64))
+        self.groupBox_2.setMaximumSize(QSize(16777215, 72))
         self.verticalLayout_5 = QVBoxLayout(self.groupBox_2)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
@@ -336,6 +313,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_5 = QHBoxLayout(self.frame_3)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
         self.process_options_button = QPushButton(self.frame_3)
         self.process_options_button.setObjectName(u"process_options_button")
         self.process_options_button.setMinimumSize(QSize(0, 18))
