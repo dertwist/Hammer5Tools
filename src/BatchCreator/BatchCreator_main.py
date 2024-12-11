@@ -4,6 +4,7 @@ from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySeq
 import os
 import configparser
 import json
+import ast  # Import the ast module
 from distutils.util import strtobool
 from src.BatchCreator.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 from src.BatchCreator.ui_BatchCreator_process_dialog import Ui_BatchCreator_process_Dialog
@@ -310,6 +311,8 @@ class BatchCreator_process_Dialog(QDialog):
             self.ui.output_folder.setText(f'Output folder: {self.process["custom_output"]}')
 
     def str_to_bool(self, value):
+        if isinstance(value, bool):
+            return value
         try:
             return bool(strtobool(value))
         except ValueError:
@@ -396,10 +399,13 @@ def batchcreator_process_all(current_path_file, process, preview):
             do_process(folder_path)
 
 def bool_from_str(process, value):
+    val = process[value]
+    if isinstance(val, bool):
+        return val
     try:
-        return bool(strtobool(process[value]))
+        return bool(strtobool(val))
     except ValueError:
-        return process[value]
+        return val
 
 def search_files(directory, algorithm, ignore_extensions, process):
     ignore_list = [item.strip() for item in process['ignore_list'].split(',')]
