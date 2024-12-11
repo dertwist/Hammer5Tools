@@ -29,14 +29,13 @@ class BatchCreatorMainWindow(QMainWindow):
         layout = self.ui.layout
         layout.addWidget(self.mini_explorer.frame)
         layout.setContentsMargins(0, 0, 0, 0)
-        self.ui.Status_Line_Qedit.setReadOnly(True)
+        self.relative_path = None
         self.setAcceptDrops(True)
         self.update_top_status_line()
 
 
         self.mini_explorer.tree.selectionModel().selectionChanged.connect(self.update_status_line)
-        self.ui.Copy_from_status_line_toolButton.clicked.connect(self.copy_status_line_to_clipboard)
-        self.ui.file_initialize_button.clicked.connect(self.file_initialize)
+        self.ui.create_file.clicked.connect(self.file_initialize)
         self.ui.save_button.clicked.connect(self.save_file)
         self.ui.open_button.clicked.connect(self.open_file)
         self.setup_drag_and_drop(self.ui.folder_path_template, "Folder path")
@@ -84,9 +83,9 @@ class BatchCreatorMainWindow(QMainWindow):
                 root_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
                 relative_path = os.path.relpath(file_path, root_directory)
                 relative_path = os.path.normpath(relative_path)
-                self.ui.Status_Line_Qedit.setPlainText(relative_path)
+                self.relative_path = (relative_path)
             else:
-                self.ui.Status_Line_Qedit.clear()
+                self.relative_path = None
         except:
             pass
 
@@ -99,7 +98,7 @@ class BatchCreatorMainWindow(QMainWindow):
             print(f"Opened File: {base_name}")
             self.current_file_path = file_path if not self.mini_explorer.model.isDir(index) else None
         else:
-            self.ui.Status_Line_Qedit.clear()
+            self.relative_path = None
             self.current_file_path = None
 
     def dragEnterEvent(self, event: QDragEnterEvent):
@@ -115,20 +114,27 @@ class BatchCreatorMainWindow(QMainWindow):
                 target_widget.setText(file_path)
 
     def file_initialize(self):
-        path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(),self.ui.Status_Line_Qedit.toPlainText())
-        file_name = os.path.basename(os.path.normpath(os.path.splitext(self.ui.Status_Line_Qedit.toPlainText())[0]))
+        if self.relative_path is None:
+            QMessageBox.warning(self, "Invalid Path", "No path selected. Please select a valid folder.")
+            return
+
+        path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), self.relative_path)
+        file_name = os.path.basename(os.path.normpath(os.path.splitext(self.relative_path)[0]))
         print(file_name + ' file name')
         path_clear = os.path.dirname(os.path.normpath(path))
         print(path_clear + ' path_clear')
+
         if file_name == '.':
             print("No path provided.")
-            QMessageBox.warning(self, "Invalid Path",
-                                "Select folder.")
+            QMessageBox.warning(self, "Invalid Path", "Select folder.")
             return
 
         file_path = os.path.join(path_clear, f"{file_name}.h5t_batch")
         print(file_path)
-        batch_creator_file_parser_initialize(file_path)
+
+        # Assuming you need to pass a version, you might want to define a default version or get it from somewhere
+        default_version = "1.0"  # Example version, replace with actual logic if needed
+        batch_creator_file_parser_initialize(default_version, file_path)
 
     def save_file(self):
         if self.current_file_path:
