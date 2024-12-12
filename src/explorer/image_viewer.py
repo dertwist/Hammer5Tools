@@ -1,7 +1,7 @@
 import sys
 import os
 from PySide6.QtCore import Qt, QSize, QThreadPool, QRunnable, QObject, Signal, QFileSystemWatcher, QPointF
-from PySide6.QtWidgets import QApplication, QMainWindow, QTreeView, QFileSystemModel, QSplitter, QLabel, QFrame, QScrollArea, QStackedLayout, QVBoxLayout, QWidget, QPushButton
+from PySide6.QtWidgets import QApplication, QMainWindow, QTreeView, QFileSystemModel, QSplitter, QLabel, QFrame, QScrollArea, QStackedLayout, QVBoxLayout, QWidget, QPushButton, QMenu
 from PySide6.QtGui import QPixmap, QIcon, QAction, QKeySequence
 
 import sys
@@ -141,56 +141,67 @@ class ThumbnailWorker(QRunnable):
 class ExplorerImageViewer(QMainWindow):
     def __init__(self, tree_directory=None):
         super().__init__()
-
-        # Main widget
         self.setWindowTitle("Explorer")
-        # self.setGeometry(100, 100, 1000, 600)
 
-        # Splitter to separate tree and image view
         splitter = QSplitter(self)
 
-        # Tree View for the folder structure and image thumbnails
         self.tree_view = QTreeView()
-        self.tree_view.setIconSize(QSize(64, 64))  # Set the icon size for large image thumbnails
+        self.tree_view.setIconSize(QSize(64, 64))
 
-        # File system model
-        self.file_model = QFileSystemModelWithThumbnails(self)  # Custom file model to display thumbnails
-        root_path = tree_directory if tree_directory else os.path.expanduser("~")  # Default to user's home directory
-        self.file_model.setRootPath(root_path)  # Set the root path for the file system
-        self.file_model.setNameFilters(["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tga"])  # Show only image files
+        self.file_model = QFileSystemModelWithThumbnails(self)
+        root_path = tree_directory if tree_directory else os.path.expanduser("~")
+        self.file_model.setRootPath(root_path)
+        self.file_model.setNameFilters(["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tga"])
         self.file_model.setNameFilterDisables(False)
 
-        # Set the file model to the tree view
         self.tree_view.setModel(self.file_model)
-        self.tree_view.setRootIndex(self.file_model.index(root_path))  # Set initial directory
+        self.tree_view.setRootIndex(self.file_model.index(root_path))
         self.tree_view.clicked.connect(self.on_item_click)
 
-        # Image display viewer for selected image
         self.image_viewer = AdvancedImageViewer()
 
-        # Add tree view and image display to the splitter
         splitter.addWidget(self.tree_view)
         splitter.addWidget(self.image_viewer)
 
-        # Set the central widget
         self.setCentralWidget(splitter)
 
-        # Tree view customization
-        self.tree_view.header().setDefaultSectionSize(120)  # Set the default section size for all columns
-        self.tree_view.header().resizeSection(0, 160)  # Adjust the size (400) for the first column
+        self.tree_view.header().setDefaultSectionSize(120)
+        self.tree_view.header().resizeSection(0, 160)
         self.tree_view.header().hideSection(1)
         self.tree_view.header().hideSection(2)
         self.tree_view.header().hideSection(3)
-        self.tree_explorer = self.tree_view
+
+        self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree_view.customContextMenuRequested.connect(self.openContextMenu)
 
     def on_item_click(self, index):
-        # Get the file path of the clicked item
         file_path = self.file_model.filePath(index)
-
-        # If the clicked item is a file (image), load it in the image viewer
         if not self.file_model.isDir(index):
             self.image_viewer.showImage(file_path)
             self.image_viewer.fitToWindow()
+
+    def openContextMenu(self, position):
+        index = self.tree_view.indexAt(position)
+        if not index.isValid():
+            return
+
+        menu = QMenu(self)
+        remove_action = QAction("Remove", self)
+        remove_action.triggered.connect(lambda: self.removeSelectedImage(index))
+        menu.addAction(remove_action)
+
+        menu.exec(self.tree_view.viewport().mapToGlobal(position))
+
+    def removeSelectedImage(self, index):
+        file_path = self.file_model.filePath(index)
+        if not self.file_model.isDir(index):
+            try:
+                os.remove(file_path)
+                self.file_model.remove(index)
+                self.image_viewer.image_label.clear()
+                self.setWindowTitle("Explorer")
+            except Exception as e:
+                print(f"Error removing file: {e}")
 
 
 class QFileSystemModelWithThumbnails(QFileSystemModel):
