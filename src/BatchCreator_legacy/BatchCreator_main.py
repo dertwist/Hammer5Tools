@@ -45,6 +45,9 @@ class BatchCreatorMainWindow(QMainWindow):
         save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
         save_shortcut.activated.connect(self.save_file)
 
+    def update_explorer_status(self, path):
+        self.ui.dockWidget.setWindowTitle(f"Explorer ({os.path.basename(path)})")
+
     def setup_drag_and_drop(self, widget, default_text):
         widget.setAcceptDrops(True)
         widget.dragEnterEvent = self.label_dragEnterEvent
@@ -164,6 +167,7 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.extension_lineEdit.setText(extension)
             self.current_file_path = file_path
             print(f"File opened from: {file_path}")
+            self.update_explorer_status(file_path)
         except Exception as e:
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
 

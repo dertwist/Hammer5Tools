@@ -8,6 +8,7 @@ import sys, webbrowser
 from qt_styles.common import *
 from src.common import discord_feedback_channel
 from src.popup_menu.popup_menu_main import PopupMenu
+from src.preferences import get_config_bool, set_config_bool
 from src.widgets_common import *
 #============================================================<  Generic widgets  >==========================================================
 class Spacer(QWidget):
@@ -353,6 +354,15 @@ class ComboboxTreeChild(ComboboxDynamicItems):
             data_out.append(child_item.text(0))
 
         return data_out
+
+
+#================================================================<  generic  >==============================================================
+
+
+
+
+
+
 #==============================================================<  Tree widgets  >===========================================================
 
 class HierarchyItemModel(QTreeWidgetItem):
