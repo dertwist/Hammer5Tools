@@ -114,6 +114,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             self.create_property(key, val)
         else:
             debug("Value is not a valid dictionary or is empty.")
+        self.on_update()
 
     def paste_property(self):
         """Creates new property from clipboard using new_property function"""
@@ -227,7 +228,10 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         _data: dict = {}
         for index in range(self.ui.properties_layout.count()):
             if index is not None:
-                _data.update(self.get_property_value(index))
+                try:
+                    _data.update(self.get_property_value(index))
+                except:
+                    pass
         return _data
 
     #==============================================================<  Updating  >===========================================================

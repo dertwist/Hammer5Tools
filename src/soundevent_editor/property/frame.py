@@ -219,6 +219,9 @@ class SoundEventEditorPropertyFrame(QWidget):
 
     def delete_action(self):
         """Set value to None, then send signal that updates value then delete self"""
+        for index in range(self.ui.content.layout().count()):
+            widget_instance = self.ui.content.layout().itemAt(index).widget()
+            widget_instance.deleteLater()
         self.value = None
         self.edited.emit()
         self.deleteLater()
