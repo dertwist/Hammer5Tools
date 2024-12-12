@@ -239,11 +239,13 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Updating dict value and send signal"""
         self.update_value()
         self.edited.emit()
+    def clean_comment(self, text):
+        return text.replace('"', "''")
     def update_value(self):
         _data = self.get_properties_value()
         comment = self.get_comment()
         if comment != "":
-            _data.update({'comment': comment})
+            _data.update({'comment': self.clean_comment(comment)})
         self.value = _data
     #============================================================<  Context menu  >=========================================================
     def open_context_menu(self, position):
