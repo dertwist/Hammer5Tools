@@ -574,6 +574,72 @@
                </widget>
               </item>
               <item>
+               <widget class="QPushButton" name="return_button">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>18</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 600 10pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 4px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+	
+
+    }
+QPushButton:disabled {
+color: gray;
+ background-color: #2C2C2C;
+}</string>
+                </property>
+                <property name="text">
+                 <string>Return</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resources.qrc">
+                  <normaloff>:/icons/undo_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/undo_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>20</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="checkable">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QPushButton" name="process_all_button">
                 <property name="minimumSize">
                  <size>
