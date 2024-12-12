@@ -19,6 +19,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.current_file_path = None
         self.process = {}
+        self.created_files = []  # List to track created files
 
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
         tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
@@ -39,6 +40,8 @@ class BatchCreatorMainWindow(QMainWindow):
         self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
         self.ui.process_all_button.clicked.connect(self.process_all)
         self.ui.process_options_button.clicked.connect(self.show_process_options)
+        self.ui.return_button.clicked.connect(self.return_files)  # Connect return button
+        self.ui.return_button.setEnabled(False)  # Initially disable the return button
 
         # Setup custom context menu actions
         self.folder_path_action = QAction("Insert Folder Path", self)
@@ -189,14 +192,28 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
         self.update_top_status_line()
 
-    def process_all(self):
-        self.save_file()
-        batchcreator_process_all(current_path_file=self.current_file_path, preview=False, process=self.process)
-
     def show_process_options(self):
         if not hasattr(self, 'process_dialog') or not self.process_dialog.isVisible():
             self.process_dialog = BatchCreatorProcessDialog(process=self.process, current_file_path=self.current_file_path)
             self.process_dialog.show()
+
+    def process_all(self):
+        self.save_file()
+        created_files = batchcreator_process_all(current_path_file=self.current_file_path, preview=False, process=self.process)
+        self.created_files.extend(created_files)  # Track created files
+        if created_files:
+            self.ui.return_button.setEnabled(True)  # Enable the return button after processing
+
+    def return_files(self):
+        # Remove created files
+        for file_path in self.created_files:
+            try:
+                os.remove(file_path)
+                print(f"Removed file: {file_path}")
+            except OSError as e:
+                print(f"Error removing file {file_path}: {e}")
+        self.created_files.clear()  # Clear the list after removal
+        self.ui.return_button.setEnabled(False)  # Disable the return button
 
     def _open_file_content(self, file_path):
         try:
@@ -418,6 +435,8 @@ def batchcreator_process_all(current_path_file, process, preview):
 
     files_r = search_files(folder_path, algorithm, ignore_extensions, process) if bool_from_str(process, 'load_from_the_folder') else process['custom_files']
 
+    created_files = []
+
     if preview:
         files_list_out = []
         if bool_from_str(process, 'load_from_the_folder'):
@@ -437,12 +456,15 @@ def batchcreator_process_all(current_path_file, process, preview):
                 with open(filename, 'w') as file:
                     file.write(content_out)
                 print(f'File {filename} created successfully.')
+                created_files.append(filename)  # Track the created file
 
         if bool_from_str(process, 'output_to_the_folder'):
             do_process(folder_path)
         else:
             folder_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), process['custom_output'])
             do_process(folder_path)
+
+    return created_files
 
 def bool_from_str(process, value):
     val = process[value]
