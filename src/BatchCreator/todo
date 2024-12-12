@@ -1,0 +1,10 @@
+# TODO Full rewrite the editor: future editor should be based on referencing method with replace of certain elements. User can just select
+fbx, vsmart, whatever then just type which lines should be replaced, then processed it. Also there should be a button that enabling config monitoring.
+When there is any change the program will automatically create all files with replacements.
+Also there needing to create last files. The process options should be not as dialog window, but as a part fo the main window editor
+The format should be k3 (json). the configuration file have format kv3, but in this file should be a key that notice which for which
+ editor this were created.
+ The structure of the future editor should be like that:
+======= main - consists connections, widgets, lines with
+======= common - consists functions, variables
+
