@@ -1,10 +1,10 @@
-from PySide6.QtWidgets import QMainWindow, QApplication, QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem
+from PySide6.QtWidgets import QMainWindow, QApplication, QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem, QMenu, QPlainTextEdit
 from PySide6.QtCore import Qt, QMimeData
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction
 import os
 import configparser
 import json
-import ast  # Import the ast module
+import ast
 from distutils.util import strtobool
 from src.BatchCreator_legacy.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 from src.BatchCreator_legacy.ui_BatchCreator_process_dialog import Ui_BatchCreator_process_Dialog
@@ -34,36 +34,75 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_top_status_line()
 
         self.mini_explorer.tree.selectionModel().selectionChanged.connect(self.update_status_line)
-        self.ui.create_file.clicked.connect(self.file_initialize)
+        self.ui.create_file.clicked.connect(self.initialize_file)
         self.ui.save_button.clicked.connect(self.save_file)
         self.ui.open_button.clicked.connect(self.open_file)
         self.setup_drag_and_drop(self.ui.folder_path_template, "Folder path")
         self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
         self.ui.process_all_button.clicked.connect(self.process_all)
-        self.ui.process_options_button.clicked.connect(self.process_options)
+        self.ui.process_options_button.clicked.connect(self.show_process_options)
+
+        # Setup custom context menu actions
+        self.folder_path_action = QAction("Insert Folder Path", self)
+        self.folder_path_action.triggered.connect(lambda: self.insert_placeholder("#$FOLDER_PATH$#"))
+
+        self.asset_name_action = QAction("Insert Asset Name", self)
+        self.asset_name_action.triggered.connect(lambda: self.insert_placeholder("#$ASSET_NAME$#"))
+        self.ui.kv3_QplainTextEdit.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.show_context_menu)
 
         save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
         save_shortcut.activated.connect(self.save_file)
+
+    def show_context_menu(self, position):
+        menu = self.ui.kv3_QplainTextEdit.createStandardContextMenu()
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #1C1C1C;
+                color: #E3E3E3; 
+                border: 1px solid #363639; 
+            }
+            QMenu::item:selected {
+                background-color: #414956;
+            }
+        """)
+        menu.addSeparator()
+        menu.addAction(self.folder_path_action)
+        menu.addAction(self.asset_name_action)
+        menu.exec(self.ui.kv3_QplainTextEdit.mapToGlobal(position))
+
+    def insert_placeholder(self, placeholder):
+        cursor = self.ui.kv3_QplainTextEdit.textCursor()
+        if cursor.hasSelection():
+            cursor.insertText(placeholder)
 
     def update_explorer_status(self, path):
         self.ui.dockWidget.setWindowTitle(f"Explorer ({os.path.basename(path)})")
 
     def setup_drag_and_drop(self, widget, default_text):
         widget.setAcceptDrops(True)
-        widget.dragEnterEvent = self.label_dragEnterEvent
-        widget.dropEvent = lambda event: self.label_dropEvent(event, widget)
-        widget.mousePressEvent = lambda event: self.label_mousePressEvent(event, default_text)
+        widget.dragEnterEvent = self.label_drag_enter_event
+        widget.dropEvent = lambda event: self.label_drop_event(event, widget)
+        widget.mousePressEvent = lambda event: self.label_mouse_press_event(event, default_text)
 
-    def label_dragEnterEvent(self, event: QDragEnterEvent):
+    def label_drag_enter_event(self, event: QDragEnterEvent):
         if event.mimeData().hasText():
             event.acceptProposedAction()
 
-    def label_dropEvent(self, event: QDropEvent, widget):
+    def label_drop_event(self, event: QDropEvent, widget):
         if event.mimeData().hasText():
-            widget.setText(event.mimeData().text())
+            new_text = event.mimeData().text()
+            text_edit = self.ui.kv3_QplainTextEdit
+
+            cursor = text_edit.textCursor()
+            if cursor.hasSelection():
+                cursor.insertText(new_text)
+            else:
+                cursor.insertText(new_text)
+
             event.acceptProposedAction()
 
-    def label_mousePressEvent(self, event, default_text):
+    def label_mouse_press_event(self, event, default_text):
         if event.button() == Qt.LeftButton:
             mimeData = QMimeData()
             mimeData.setText(f"#${default_text.upper().replace(' ', '_')}$#")
@@ -96,7 +135,7 @@ class BatchCreatorMainWindow(QMainWindow):
             self.relative_path = None
             self.current_file_path = None
 
-    def file_initialize(self):
+    def initialize_file(self):
         if self.relative_path is None:
             QMessageBox.warning(self, "Invalid Path", "No path selected. Please select a valid folder.")
             return
@@ -110,14 +149,14 @@ class BatchCreatorMainWindow(QMainWindow):
             return
 
         file_path = os.path.join(path_clear, f"{file_name}.h5t_batch")
-        default_version = "1.0"  # Example version, replace with actual logic if needed
+        default_version = "1.0"
         batch_creator_file_parser_initialize(default_version, file_path)
 
     def save_file(self):
         if self.current_file_path:
             content = self.ui.kv3_QplainTextEdit.toPlainText()
             extension = self.ui.extension_lineEdit.text()
-            version = "1.0"  # Replace with actual logic to determine the version if needed
+            version = "1.0"
             batch_creator_file_parser_output(version, content, self.process, extension, self.current_file_path)
         else:
             print("No file is currently opened to save.")
@@ -155,9 +194,9 @@ class BatchCreatorMainWindow(QMainWindow):
     def process_all(self):
         batchcreator_process_all(current_path_file=self.current_file_path, preview=False, process=self.process)
 
-    def process_options(self):
+    def show_process_options(self):
         if not hasattr(self, 'process_dialog') or not self.process_dialog.isVisible():
-            self.process_dialog = BatchCreator_process_Dialog(process=self.process, current_file_path=self.current_file_path)
+            self.process_dialog = BatchCreatorProcessDialog(process=self.process, current_file_path=self.current_file_path)
             self.process_dialog.show()
 
     def _open_file_content(self, file_path):
@@ -171,7 +210,7 @@ class BatchCreatorMainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
 
-class BatchCreator_process_Dialog(QDialog):
+class BatchCreatorProcessDialog(QDialog):
     def __init__(self, process, current_file_path, parent=None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_process_Dialog()
