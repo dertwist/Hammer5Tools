@@ -1,7 +1,7 @@
 import ast
 
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, QCheckBox, QVBoxLayout, QToolBox, QToolButton
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, QCheckBox, QVBoxLayout, QToolBox, QToolButton, QGroupBox, QButtonGroup
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
