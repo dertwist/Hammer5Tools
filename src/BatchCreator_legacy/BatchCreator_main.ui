@@ -252,19 +252,6 @@
          <layout class="QVBoxLayout" name="layout"/>
         </item>
         <item>
-         <widget class="QGroupBox" name="recent_files">
-          <property name="title">
-           <string>Recent files</string>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QGroupBox" name="groupBox_2">
           <property name="maximumSize">
            <size>

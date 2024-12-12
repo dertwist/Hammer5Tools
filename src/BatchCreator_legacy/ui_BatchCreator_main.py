@@ -154,13 +154,6 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.verticalLayout_2.addLayout(self.layout)
 
-        self.recent_files = QGroupBox(self.left_vertical_frame)
-        self.recent_files.setObjectName(u"recent_files")
-        self.recent_files.setCheckable(True)
-        self.recent_files.setChecked(False)
-
-        self.verticalLayout_2.addWidget(self.recent_files)
-
         self.groupBox_2 = QGroupBox(self.left_vertical_frame)
         self.groupBox_2.setObjectName(u"groupBox_2")
         self.groupBox_2.setMaximumSize(QSize(16777215, 72))
@@ -425,7 +418,6 @@ class Ui_BatchCreator_MainWindow(object):
         self.folder_path_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Folder path", None))
         self.assets_name_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Asset name", None))
         self.dockWidget.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Explorer", None))
-        self.recent_files.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Recent files", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"File", None))
         self.create_file.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Create", None))
         self.open_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Open", None))
