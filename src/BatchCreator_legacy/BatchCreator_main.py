@@ -6,10 +6,10 @@ import configparser
 import json
 import ast  # Import the ast module
 from distutils.util import strtobool
-from src.BatchCreator.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
-from src.BatchCreator.ui_BatchCreator_process_dialog import Ui_BatchCreator_process_Dialog
+from src.BatchCreator_legacy.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
+from src.BatchCreator_legacy.ui_BatchCreator_process_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path
-from src.BatchCreator.BatchCreator_custom_highlighter import CustomHighlighter
+from src.BatchCreator_legacy.BatchCreator_custom_highlighter import CustomHighlighter
 from src.explorer.main import Explorer
 
 cs2_path = get_cs2_path()
