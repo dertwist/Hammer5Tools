@@ -62,6 +62,19 @@
         </widget>
        </item>
        <item>
+        <widget class="QPlainTextEdit" name="kv3_QplainTextEdit_2">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="plainText">
+          <string/>
+         </property>
+         <property name="placeholderText">
+          <string>Content</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QFrame" name="frame_6">
          <property name="frameShape">
           <enum>QFrame::Shape::StyledPanel</enum>
@@ -250,19 +263,6 @@
         </property>
         <item>
          <layout class="QVBoxLayout" name="layout"/>
-        </item>
-        <item>
-         <widget class="QGroupBox" name="recent_files">
-          <property name="title">
-           <string>Recent files</string>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
         </item>
         <item>
          <widget class="QGroupBox" name="groupBox_2">
