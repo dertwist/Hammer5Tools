@@ -1,10 +1,8 @@
+import json
+import os
 from PySide6.QtWidgets import QMainWindow, QApplication, QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem, QMenu, QPlainTextEdit
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction
-import os
-import configparser
-import json
-import ast
 from distutils.util import strtobool
 from src.BatchCreator_legacy.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 from src.BatchCreator_legacy.ui_BatchCreator_process_dialog import Ui_BatchCreator_process_Dialog
@@ -192,6 +190,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_top_status_line()
 
     def process_all(self):
+        self.save_file()
         batchcreator_process_all(current_path_file=self.current_file_path, preview=False, process=self.process)
 
     def show_process_options(self):
@@ -271,7 +270,8 @@ class BatchCreatorProcessDialog(QDialog):
     def on_pressed_select_files_to_process_button(self):
         file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Files to Process", "", "All Files (*)")
         if file_paths:
-            self.process['custom_files'] = file_paths
+            base_names = [os.path.basename(file_path) for file_path in file_paths]
+            self.process['custom_files'] = base_names
             self.process_preview()
 
     def process_all(self):
@@ -335,7 +335,7 @@ class BatchCreatorProcessDialog(QDialog):
                 self.ui.Input_files_preview_scrollarea.addItem(list_item)
                 self.ui.Input_files_preview_scrollarea.setItemWidget(list_item, item_widget)
         else:
-            files_list = ast.literal_eval(self.process['custom_files'])
+            files_list = self.process['custom_files']
             for item in files_list:
                 label = QLabel(item)
                 list_item = QListWidgetItem()
@@ -361,47 +361,49 @@ class BatchCreatorProcessDialog(QDialog):
         except ValueError:
             return value
 
-def batch_creator_file_parser_parse(config_file):
-    config = configparser.ConfigParser()
+def batch_creator_file_parser_parse(file_path):
     try:
-        config.read(config_file)
-        version = config.get('APP', 'version', fallback=None)
-        content = json.loads(config.get('FILE', 'content', fallback=None))
-        process = {value: config.get('PROCESS', value, fallback=None) for value in ['ignore_list', 'custom_files', 'custom_output', 'load_from_the_folder', 'algorithm', 'output_to_the_folder', 'ignore_extensions']}
-        extension = config.get('FILE', 'extension', fallback=None)
-        return version, content, extension, process
-    except (configparser.Error, json.JSONDecodeError) as e:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            version = data.get('APP', {}).get('version')
+            content = data.get('FILE', {}).get('content')
+            extension = data.get('FILE', {}).get('extension')
+            process = data.get('PROCESS', {})
+            return version, content, extension, process
+    except (json.JSONDecodeError, FileNotFoundError) as e:
         print(f"An error occurred: {e}")
         return None, None, None, None
 
 def batch_creator_file_parser_output(version, content, process, extension, file_path):
-    config = configparser.ConfigParser()
-    config['APP'] = {'name': 'BatchCreator', 'version': version}
-    config['FILE'] = {'content': json.dumps(content), 'extension': extension}
-    config['PROCESS'] = {str(value): str(process[value]) for value in process}
+    data = {
+        'APP': {'name': 'BatchCreator', 'version': version},
+        'FILE': {'content': content, 'extension': extension},
+        'PROCESS': process
+    }
     try:
-        with open(file_path, 'w') as configfile:
-            config.write(configfile)
+        with open(file_path, 'w') as file:
+            json.dump(data, file, indent=4)
         print(f"File created at: {file_path}")
     except Exception as e:
         print(f"Failed to create file: {e}")
 
 def batch_creator_file_parser_initialize(version, file_path):
-    config = configparser.ConfigParser()
-    config['APP'] = {'name': 'BatchCreator', 'version': version}
-    config['FILE'] = {'content': json.dumps(''), 'extension': 'vmdl'}
-    config['PROCESS'] = {
-        'ignore_list': 'name.extension,name.extension,relative_path',
-        'custom_files': 'name.extension,name.extension',
-        'custom_output': 'relative_path',
-        'load_from_the_folder': 'True',
-        'algorithm': '0',
-        'output_to_the_folder': 'True',
-        'ignore_extensions': 'blend,vmdl,vmat'
+    data = {
+        'APP': {'name': 'BatchCreator', 'version': version},
+        'FILE': {'content': '', 'extension': 'vmdl'},
+        'PROCESS': {
+            'ignore_list': 'name.extension,name.extension,relative_path',
+            'custom_files': [],
+            'custom_output': 'relative_path',
+            'load_from_the_folder': 'True',
+            'algorithm': '0',
+            'output_to_the_folder': 'True',
+            'ignore_extensions': 'blend,vmdl,vmat'
+        }
     }
     try:
-        with open(file_path, 'w') as configfile:
-            config.write(configfile)
+        with open(file_path, 'w') as file:
+            json.dump(data, file, indent=4)
         print(f"File created at: {file_path}")
     except Exception as e:
         print(f"Failed to create file: {e}")
@@ -413,7 +415,8 @@ def batchcreator_process_all(current_path_file, process, preview):
     algorithm = int(process['algorithm'])
     extension = batch_creator_file_parser_parse(current_path_file)[2]
     ignore_extensions = [item for item in process['ignore_extensions'].split(',')]
-    files_r = search_files(folder_path, algorithm, ignore_extensions, process) if bool_from_str(process, 'load_from_the_folder') else ast.literal_eval(process['custom_files'])
+
+    files_r = search_files(folder_path, algorithm, ignore_extensions, process) if bool_from_str(process, 'load_from_the_folder') else process['custom_files']
 
     if preview:
         files_list_out = []
