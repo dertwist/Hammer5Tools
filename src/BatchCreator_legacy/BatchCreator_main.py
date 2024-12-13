@@ -194,7 +194,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def show_process_options(self):
         if not hasattr(self, 'process_dialog') or not self.process_dialog.isVisible():
-            self.process_dialog = BatchCreatorProcessDialog(process=self.process, current_file_path=self.current_file_path)
+            self.process_dialog = BatchCreatorProcessDialog(process=self.process, current_file_path=self.current_file_path, process_all=self.process_all)
             self.process_dialog.show()
 
     def process_all(self):
@@ -227,11 +227,12 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
 
 class BatchCreatorProcessDialog(QDialog):
-    def __init__(self, process, current_file_path, parent=None):
+    def __init__(self, process, current_file_path, parent=None, process_all = None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_process_Dialog()
         self.ui.setupUi(self)
         self.setModal(True)
+        self.process_all = process_all
         self.process = process
         self.current_file_path = current_file_path
 
@@ -290,9 +291,6 @@ class BatchCreatorProcessDialog(QDialog):
             base_names = [os.path.basename(file_path) for file_path in file_paths]
             self.process['custom_files'] = base_names
             self.process_preview()
-
-    def process_all(self):
-        batchcreator_process_all(self.current_file_path, preview=False, process=self.process)
 
     def process_preview(self):
         files = batchcreator_process_all(self.current_file_path, preview=True, process=self.process)
