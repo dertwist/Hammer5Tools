@@ -109,7 +109,10 @@ def set_addon_name(addon_name_set):
 
 from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QSettings, Signal
-from src.ui_preferences import Ui_preferences_dialog
+try:
+    from src.ui_preferences import Ui_preferences_dialog
+except:
+    pass
 import os
 import subprocess
 import winreg as reg

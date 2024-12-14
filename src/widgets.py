@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFr
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
-from qt_styles.common import *
+from src.qt_styles.common import *
 from src.common import discord_feedback_channel
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.preferences import get_config_bool, set_config_bool
