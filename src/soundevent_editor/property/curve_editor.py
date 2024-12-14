@@ -10,6 +10,7 @@ class CurveEditor(QWidget):
 
     def __init__(self, m_n1=0, m_n2=0, m_r1=2, m_r2=3):
         super().__init__()
+        self.setWindowTitle("Curve Editor")
         self.m_n1 = m_n1
         self.m_n2 = m_n2
         self.m_r1 = m_r1
@@ -27,7 +28,8 @@ class CurveEditor(QWidget):
         self.background = self.scene.addRect(
             self.scene.sceneRect(), brush=QBrush(QColor(30, 30, 30, 100))
         )
-        self.path = self.scene.addPath(QPainterPath(), QPen(Qt.green, 2))
+        # Set the curve color to gray
+        self.path = self.scene.addPath(QPainterPath(), QPen(QColor("gray"), 2))
         self._createParameterControls()
         self.drawSpline()
 
@@ -38,8 +40,12 @@ class CurveEditor(QWidget):
             self.scene.addLine(0, j, 800, j, QPen(QColor(100, 100, 100, 50), 1, Qt.DotLine))
 
     def _addAxes(self):
-        self.scene.addLine(0, 300, 800, 300, QPen(QColor(255, 255, 255, 150), 2))
-        self.scene.addLine(400, 0, 400, 600, QPen(QColor(255, 255, 255, 150), 2))
+        new_y_position = self.scene.height() * 0.75
+        darker_color = QColor(255, 255, 255, 50)
+
+        self.scene.addLine(0, new_y_position, 800, new_y_position, QPen(darker_color, 2))
+
+        self.scene.addLine(400, 0, 400, 600, QPen(darker_color, 2))
 
     def _createParameterControls(self):
         self.slider_layout = QHBoxLayout()
@@ -106,25 +112,34 @@ class CurveEditor(QWidget):
         a = np.array([800, 0])
         b = np.array([0, 300])
         D = b - a
-        x_values = np.linspace(b[0], a[0], 500)
+
+        x_values = np.linspace(a[0], b[0], 500)
         y_values = []
+
         m_n1 = self.m_n1 / 10.0
         m_n2 = self.m_n2 / 10.0
         m_r1 = self.m_r1 / 10.0
         m_r2 = self.m_r2 / 10.0
+
         for x in x_values:
             v = (x - a[0]) / D[0]
             v_c = np.clip(v, 0, 1)
+
             P1 = ((m_r2 + m_r1) * D[0] - (2 * D[1])) * v_c
             P2 = -m_r1 - (2 * m_r2)
             P3 = P1 + P2 * D[0] + D[1] * 3
             P4 = P3 * v_c + m_r2 * D[0]
+
             y = P4 * v_c + a[1]
             y_values.append(y)
-        curve_points = list(zip(x_values, y_values))
+
+        curve_points = list(zip(reversed(x_values), y_values))
+
+        y_offset = self.scene.height() * 0.25
+
         clipped_points = [
-            (x, y) for x, y in curve_points
-            if 0 <= x <= 800 and 0 <= y <= 600
+            (x, y + y_offset) for x, y in curve_points
+            if 0 <= x <= 800 and 0 <= y + y_offset <= 600
         ]
         return clipped_points
 
