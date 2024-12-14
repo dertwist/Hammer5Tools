@@ -5,28 +5,9 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFr
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
-from qt_styles.common import *
+from src.qt_styles.common import *
 
 #================================================================<  Buttons  >==============================================================
-
-class DeleteButton(QToolButton):
-    def __init__(self, instance: QWidget = None):
-        super().__init__()
-        if instance is None:
-            raise ValueError
-
-        self.instance = instance
-        self.clicked.connect(self.delete)
-        self.setIcon(QIcon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
-        # self.setMinimumHeight(24)
-        # self.setMinimumWidth(24)
-        # self.setMaximumWidth(24)
-        # self.setMaximumHeight(24)
-    def delete(self):
-        """Deleting Instance"""
-        # self.instance.close()
-        self.instance.closeEvent(self.event)
-        # self.instance.deleteLater()
 class Button(QPushButton):
     def __init__(self):
         super().__init__()
@@ -56,3 +37,21 @@ class Button(QPushButton):
         self.set_icon(":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
     def set_icon_add(self):
         self.set_icon(":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+    def set_icon_polyline(self):
+        self.set_icon(":/icons/polyline_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png")
+class DeleteButton(Button):
+    def __init__(self, instance: QWidget = None):
+        super().__init__()
+        if instance is None:
+            raise ValueError("Instance cannot be None")
+
+        self.instance = instance
+        self.clicked.connect(self.delete)
+        self.set_icon_delete()
+
+    def delete(self):
+        """Delete the associated instance."""
+        try:
+            self.instance.close()
+        except Exception as e:
+            print(f"Error deleting instance: {e}")
