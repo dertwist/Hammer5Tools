@@ -1,14 +1,15 @@
 import ast
 import re
-from smartprop_editor.properties_classes.ui_combobox import Ui_Widget
+from src.smartprop_editor.properties_classes.ui_combobox import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
+from src.widgets import ComboboxVariablesWidget
 
 
 class PropertyCombobox(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, items):
+    def __init__(self, value_class, value, variables_scrollArea, items, filter_types):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -28,6 +29,36 @@ class PropertyCombobox(QWidget):
         self.ui.value.addItems(items)
         self.ui.value.currentTextChanged.connect(self.on_changed)
 
+
+        # Spacer frame
+        spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.spacer = QWidget()
+        spacer_layout = QHBoxLayout()
+        spacer_layout.addSpacerItem(spacer_item)
+        spacer_layout.setContentsMargins(0, 0, 0, 0)
+        self.spacer.setLayout(spacer_layout)
+        self.spacer.setStyleSheet('border:None;')
+        self.spacer.setContentsMargins(0, 0, 0, 0)
+        self.ui.layout.addWidget(self.spacer)
+
+
+        # Variable setup
+        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.variable)
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.variable_frame = QWidget()
+        self.variable_frame.setLayout(layout)
+        self.variable.setFixedWidth(256)
+        self.variable.setMaximumHeight(24)
+        self.variable.search_button.set_size(width=24, height=24)
+        self.variable_frame.setMinimumHeight(32)
+        self.variable.combobox.changed.connect(self.on_changed)
+        self.ui.layout.insertWidget(2, self.variable_frame)
+
+
+
         # EditLine
         self.text_line = CompletingPlainTextEdit()
         self.text_line.completion_tail = ''
@@ -46,7 +77,7 @@ class PropertyCombobox(QWidget):
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
-                self.text_line.setPlainText(self.var_value)
+                self.variable.combobox.set_variable(str(self.var_value))
         elif isinstance(value, str):
             self.ui.logic_switch.setCurrentIndex(1)
             self.ui.value.setCurrentText(value)
@@ -58,14 +89,27 @@ class PropertyCombobox(QWidget):
 
     def logic_switch(self):
         if self.ui.logic_switch.currentIndex() == 0:
+            self.text_line.OnlyFloat = False
             self.text_line.hide()
             self.ui.value.hide()
+            self.variable_frame.hide()
+            self.spacer.show()
         elif self.ui.logic_switch.currentIndex() == 1:
             self.text_line.hide()
             self.ui.value.show()
-        else:
-            self.text_line.show()
+            self.variable_frame.hide()
+            self.spacer.hide()
+        elif self.ui.logic_switch.currentIndex() == 2:
+            self.text_line.hide()
             self.ui.value.hide()
+            self.variable_frame.show()
+            self.spacer.hide()
+        else:
+            self.text_line.OnlyFloat = False
+            self.text_line.show()
+            self.variable_frame.hide()
+            self.ui.value.hide()
+            self.spacer.hide()
 
     def on_changed(self):
         self.logic_switch()
@@ -82,12 +126,12 @@ class PropertyCombobox(QWidget):
             self.value = {self.value_class: self.ui.value.currentText()}
         # Variable
         elif self.ui.logic_switch.currentIndex() == 2:
-            value = self.text_line.toPlainText()
+            value = self.variable.combobox.get_variable()
             try:
                 value = ast.literal_eval(value)
             except:
                 pass
-            self.value = {self.value_class: {'m_SourceName': value}}
+            self.value = {self.value_class: {'m_SourceName': str(value)}}
         # Expression
         elif self.ui.logic_switch.currentIndex() == 3:
             value = self.text_line.toPlainText()
