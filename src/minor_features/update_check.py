@@ -60,6 +60,7 @@ def show_update_notification(latest_version, release_notes, owner, repo):
     layout.addLayout(button_layout)
     dialog.adjustSize()
     dialog.setMinimumWidth(700)
+    dialog.setMinimumHeight(400)  # Set a minimum height
     dialog.exec()
 
 def show_update_check_result_notification(latest_version, release_notes, owner, repo):
@@ -90,6 +91,7 @@ def show_update_check_result_notification(latest_version, release_notes, owner, 
     layout.addLayout(button_layout)
     dialog.adjustSize()
     dialog.setMinimumWidth(700)
+    dialog.setMinimumHeight(400)  # Set a minimum height
     dialog.exec()
 
 def show_install_dialog():
@@ -115,6 +117,7 @@ def show_install_dialog():
     layout.addLayout(button_layout)
     dialog.adjustSize()
     dialog.setMinimumWidth(700)
+    dialog.setMinimumHeight(200)  # Set a minimum height for the install dialog
     dialog.exec()
 
 def handle_installation(dialog):
