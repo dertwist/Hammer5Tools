@@ -357,16 +357,12 @@ def DiscordStatusMain_do():
         time.sleep(1)
 
 if __name__ == "__main__":
-
-
-    # Create a lock file to ensure single instance
     lock_file = open(LOCK_FILE, 'w')
     try:
         portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
     except portalocker.LockException:
-        # If the lock file is already locked, bring the existing instance to the foreground
         app = QApplication(sys.argv)
-        widget = Notification()  # Ensure to pass the parent if needed
+        widget = Notification()
         app.setStyleSheet(QT_Stylesheet_global)
         widget.show()
         sys.exit(app.exec())
