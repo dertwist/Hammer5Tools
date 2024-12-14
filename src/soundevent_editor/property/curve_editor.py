@@ -115,10 +115,10 @@ class CurveEditor(QWidget):
         for x in x_values:
             v = (x - a[0]) / D[0]
             v_c = np.clip(v, 0, 1)
-            P1 = ((m_n2 + m_r1) * D[0] - (2 * D[1])) * v_c
-            P2 = -m_r1 - (2 * m_n2)
+            P1 = ((m_r2 + m_r1) * D[0] - (2 * D[1])) * v_c
+            P2 = -m_r1 - (2 * m_r2)
             P3 = P1 + P2 * D[0] + D[1] * 3
-            P4 = P3 * v_c + m_n2 * D[0]
+            P4 = P3 * v_c + m_r2 * D[0]
             y = P4 * v_c + a[1]
             y_values.append(y)
         curve_points = list(zip(x_values, y_values))
