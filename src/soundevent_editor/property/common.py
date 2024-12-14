@@ -8,6 +8,7 @@ from src.common import convert_snake_case
 from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
 from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button, ComboboxDynamicItems, Spacer
 from src.soundevent_editor.common import vsnd_filepath_convert
+from src.soundevent_editor.property.curve_editor import CurveEditor
 
 import re, os
 
@@ -742,6 +743,7 @@ class CurveWidgetDatapoint(QWidget):
         # Init layout
         self.layout_horizontal = QHBoxLayout()
         self.setLayout(self.layout_horizontal)
+        self.curve_points = []
 
         for index in range(len(value)):
             if index == 0:
@@ -749,14 +751,31 @@ class CurveWidgetDatapoint(QWidget):
             elif index == 1:
                 self.create_widget_control(value[index], False, labels_color[1])
             else:
-                self.create_widget_control(value[index], True, '#FFFFFF')
+                self.curve_points.append(value[index])
 
-        # Init delete button
+        # Delete button
         self.delete_button = DeleteButton(self)
         self.layout().addWidget(self.delete_button)
+
+        # Curve button
+        self.edit_curve_button = Button()
+        self.edit_curve_button.set_icon_add()
+        self.edit_curve_button.clicked.connect(lambda : self.show_curve_editor(self.curve_points))
+        self.layout().addWidget(self.edit_curve_button)
+
+
         self.on_update()
+
+        # Fixed height of property
         self.setMinimumHeight(48)
         self.setMaximumHeight(48)
+    def show_curve_editor(self, values):
+        self.curve_editor = CurveEditor(values[0], values[1], values[2], values[3])
+        self.curve_editor.edited.connect(self.set_curvature_points)
+        self.curve_editor.show()
+    def set_curvature_points(self, values):
+        self.curve_points = values
+        self.on_update()
     def create_widget_control(self, value: float, hidden: bool, color: str):
         """Creating float widget with value and adding"""
         float_instance = FloatWidget(value=value, spacer_enable=False)
@@ -784,6 +803,8 @@ class CurveWidgetDatapoint(QWidget):
             if isinstance(widget, FloatWidget):
                 __value = widget.value
                 __data.append(__value)
+        for point in self.curve_points:
+            __data.append(point)
         debug(f'getting value widget control curve property, data: {__data}')
         return __data
     def closeEvent(self, event):
