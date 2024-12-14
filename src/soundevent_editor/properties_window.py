@@ -135,6 +135,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                     text='It seems a property with this name already exists in the sound event. Please remove the existing property to create a new one.').exec()
         except (ValueError, SyntaxError) as e:
             ErrorInfo("Error parsing clipboard content").exec()
+        self.on_update()
     #===============================================================<  Filter  >============================================================
 
     def eventFilter(self, source, event):
