@@ -249,11 +249,34 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     #=========================================================<  Hierarchy Actions  >=======================================================
 
-    def new_soundevent(self, _data: dict = None):
+    def new_soundevent(self, _data: dict = None, __soundevent_name: str = None):
         """Creates new soundevent using given data. Input dict"""
-        __soundevent_name = "SoundEvent"
+        if __soundevent_name is None:
+            __soundevent_name = "SoundEvent"
+        __soundevent_name = self.unique_soundevent_int(__soundevent_name)
         __soundevent = HierarchyItemModel(_name=__soundevent_name, _data=_data)
         self.ui.hierarchy_widget.invisibleRootItem().addChild(__soundevent)
+
+    def unique_soundevent_int(self, _name: str = None):
+        """Creating Unique name for new hierarchy element"""
+        if _name is None:
+            _name = "SoundEvent"
+
+        # Collect existing names
+        existing_names = set()
+        root = self.ui.hierarchy_widget.invisibleRootItem()
+        for i in range(root.childCount()):
+            item = root.child(i)
+            existing_names.add(item.text(0))
+
+        # Find a unique name with a numerical suffix
+        index = 0
+        unique_name = f"{_name}.{index:02d}"
+        while unique_name in existing_names:
+            index += 1
+            unique_name = f"{_name}.{index:02d}"
+
+        return unique_name
 
     def new_soundevent_blank(self):
         """Create empty soundevent using """
@@ -262,7 +285,9 @@ class SoundEventEditorMainWindow(QMainWindow):
         """Call popup menu with all presets that are in the folder"""
         # Load data form preset path
         __data = self.load_preset(__preset_url)
-        self.new_soundevent(__data)
+        # Get clean name of preset file
+        __name = os.path.splitext(os.path.basename(__preset_url))[0]
+        self.new_soundevent(__data, __name)
 
     #=========================================================<  Preset Popup menu  >=======================================================
 
