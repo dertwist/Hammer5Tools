@@ -1,5 +1,5 @@
 import requests, os, psutil
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QApplication, QHBoxLayout
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QApplication, QHBoxLayout, QSpacerItem, QSizePolicy
 import webbrowser
 from PySide6.QtCore import Qt
 from packaging import version
@@ -35,14 +35,14 @@ def show_update_notification(latest_version, release_notes, owner, repo):
 
     layout = QVBoxLayout(dialog)
 
-    # Convert markdown to HTML with support for images
-    formatted_release_notes = markdown2.markdown(release_notes, extras=["fenced-code-blocks", "tables", "images"])
+    formatted_release_notes = markdown2.markdown(release_notes, extras=["fenced-code-blocks", "tables", "images", "strike", "target-blank-links"])
     label = QLabel(f"<h2>New version available: {latest_version}</h2>\n\n"
                    f"Release notes:<br>{formatted_release_notes}")
     label.setTextFormat(Qt.RichText)
     layout.addWidget(label)
 
     button_layout = QHBoxLayout()
+    button_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
     download_button = QPushButton("Update")
     download_button.clicked.connect(lambda: show_install_dialog())
@@ -58,6 +58,8 @@ def show_update_notification(latest_version, release_notes, owner, repo):
     button_layout.addWidget(ok_button)
 
     layout.addLayout(button_layout)
+    dialog.adjustSize()
+    dialog.setMinimumWidth(700)
     dialog.exec()
 
 def show_update_check_result_notification(latest_version, release_notes, owner, repo):
@@ -67,14 +69,14 @@ def show_update_check_result_notification(latest_version, release_notes, owner, 
 
     layout = QVBoxLayout(dialog)
 
-    # Convert markdown to HTML with support for images
-    formatted_release_notes = markdown2.markdown(release_notes, extras=["fenced-code-blocks", "tables", "images"])
+    formatted_release_notes = markdown2.markdown(release_notes, extras=["fenced-code-blocks", "tables", "images", "strike", "target-blank-links"])
     label = QLabel(f"<h2>You have the latest version: {latest_version}</h2>\n\n"
                    f"Release notes:<br>{formatted_release_notes}")
     label.setTextFormat(Qt.RichText)
     layout.addWidget(label)
 
     button_layout = QHBoxLayout()
+    button_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
     change_log_button = QPushButton("ReleaseNotes")
     api_url = f"https://github.com/{owner}/{repo}/releases/latest"
@@ -86,12 +88,13 @@ def show_update_check_result_notification(latest_version, release_notes, owner, 
     button_layout.addWidget(ok_button)
 
     layout.addLayout(button_layout)
+    dialog.adjustSize()
+    dialog.setMinimumWidth(700)
     dialog.exec()
 
 def show_install_dialog():
     dialog = QDialog()
     dialog.setWindowTitle("Installation Confirmation")
-    dialog.setFixedWidth(400)
 
     layout = QVBoxLayout(dialog)
 
@@ -99,6 +102,7 @@ def show_install_dialog():
     layout.addWidget(label)
 
     button_layout = QHBoxLayout()
+    button_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
     yes_button = QPushButton("Yes")
     yes_button.clicked.connect(lambda: handle_installation(dialog))
@@ -109,6 +113,8 @@ def show_install_dialog():
     button_layout.addWidget(no_button)
 
     layout.addLayout(button_layout)
+    dialog.adjustSize()
+    dialog.setMinimumWidth(700)
     dialog.exec()
 
 def handle_installation(dialog):
