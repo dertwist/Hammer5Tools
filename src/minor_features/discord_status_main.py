@@ -40,34 +40,37 @@ def update_rpc(display_name, custom_display_text, elapsed_time):
 
 
 def update_discord_status():
-    substring = "Hammer - ["
-    global start_time
-    custom_display_text = get_config_value(DISCORD_STATUS, CUSTOM_STATUS_KEY)
-    hide_window_name = get_config_bool(DISCORD_STATUS, SHOW_PROJECT_NAME_KEY)
     try:
-        for proc in psutil.process_iter(['pid', 'name']):
-            if substring.lower() in proc.info['name'].lower():
-                display_name = "Hammer - Hidden Project" if hide_window_name else proc.info['name']
-                elapsed_time = time.time() - start_time
-                update_rpc(display_name, custom_display_text, elapsed_time)
-                return
+        substring = "Hammer - ["
+        global start_time
+        custom_display_text = get_config_value(DISCORD_STATUS, CUSTOM_STATUS_KEY)
+        hide_window_name = get_config_bool(DISCORD_STATUS, SHOW_PROJECT_NAME_KEY)
+        try:
+            for proc in psutil.process_iter(['pid', 'name']):
+                if substring.lower() in proc.info['name'].lower():
+                    display_name = "Hammer - Hidden Project" if hide_window_name else proc.info['name']
+                    elapsed_time = time.time() - start_time
+                    update_rpc(display_name, custom_display_text, elapsed_time)
+                    return
 
-        windows = gw.getAllTitles()
-        for window in windows:
-            if substring.lower() in window.lower():
-                display_name = "Hammer - Hidden Project" if hide_window_name else window
-                elapsed_time = time.time() - start_time
-                update_rpc(display_name, custom_display_text, elapsed_time)
-                return elapsed_time
+            windows = gw.getAllTitles()
+            for window in windows:
+                if substring.lower() in window.lower():
+                    display_name = "Hammer - Hidden Project" if hide_window_name else window
+                    elapsed_time = time.time() - start_time
+                    update_rpc(display_name, custom_display_text, elapsed_time)
+                    return elapsed_time
 
-        RPC.clear()
-        start_time = time.time()
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        if "The pipe was closed" in str(e):
-            logging.info("Attempting to reconnect...")
-            RPC.connect()
-            logging.info("Reconnected successfully")
+            RPC.clear()
+            start_time = time.time()
+        except Exception as e:
+            logging.error(f"An error occurred: {e}")
+            if "The pipe was closed" in str(e):
+                logging.info("Attempting to reconnect...")
+                RPC.connect()
+                logging.info("Reconnected successfully")
+    except:
+        pass
 
 def discord_status_clear():
     logging.info("Shutting down gracefully...")
