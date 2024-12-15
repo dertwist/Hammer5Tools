@@ -70,7 +70,7 @@ def get_ElementID(value):
     debug(f'get_ElementID {id}')
     return id
 
-def update_value_ElementID(value, force=False):
+def update_value_ElementID(value:dict, force=False):
     """Sets unique id for whole element. Input dict and output dict as well. Important for updating the value you don't need to assign new one"""
     global m_nElementID
     global m_nElementID_list
@@ -88,7 +88,7 @@ def update_value_ElementID(value, force=False):
     # debug(f'update_value_ElementID value {value}')
     debug(f'update_value_ElementID id {id}, type of the value {type(id)}')
     return value
-def get_ElementID_key(value):
+def get_ElementID_key(value:dict):
     """Get m_nElementID key from dict"""
     debug(f'get_ElementID_key {value.get('m_nElementID')}')
     return value.get('m_nElementID', set_ElementID(force=True))

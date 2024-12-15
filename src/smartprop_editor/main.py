@@ -321,9 +321,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                                 value_dict.pop('m_Children', None)
 
                                 # Assign or get element id
-
                                 update_value_ElementID(value_dict)
-                                value_dict = update_child_ElementID_value(value_dict)
+                                value_dict = update_child_ElementID_value(value_dict, force=True)
 
                                 # Add tree item
                                 child_item = HierarchyItemModel(
