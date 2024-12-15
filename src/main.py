@@ -378,14 +378,12 @@ if __name__ == "__main__":
     widget = Widget()
     widget.show()
 
-    try:
-        if get_config_bool('DISCORD_STATUS', 'show_status'):
-            from minor_features.discord_status_main import discord_status_clear, update_discord_status
-            widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
-            widget.discord_thread.start()
-        else:
-            print('Discord status updates are disabled.')
-    except:
-        "The status of the discord was not started"
+    if get_config_bool('DISCORD_STATUS', 'show_status'):
+        from minor_features.discord_status_main import discord_status_clear, update_discord_status
+        widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
+        widget.discord_thread.start()
+    else:
+        debug('Discord status updates are disabled.')
+
 
     sys.exit(app.exec())
