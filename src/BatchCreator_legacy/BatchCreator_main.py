@@ -231,7 +231,7 @@ class BatchCreatorProcessDialog(QDialog):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_process_Dialog()
         self.ui.setupUi(self)
-        self.setModal(True)
+        self.setModal(False)
         self.process_all = process_all
         self.process = process
         self.current_file_path = current_file_path
