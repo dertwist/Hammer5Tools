@@ -59,8 +59,8 @@ def show_update_notification(latest_version, release_notes, owner, repo):
 
     layout.addLayout(button_layout)
     dialog.adjustSize()
-    dialog.setMinimumWidth(700)
-    dialog.setMinimumHeight(400)  # Set a minimum height
+    dialog.setMinimumWidth(300)
+    dialog.setMinimumHeight(200)  # Set a minimum height
     dialog.exec()
 
 def show_update_check_result_notification(latest_version, release_notes, owner, repo):
@@ -74,6 +74,7 @@ def show_update_check_result_notification(latest_version, release_notes, owner, 
     label = QLabel(f"<h2>You have the latest version: {latest_version}</h2>\n\n"
                    f"Release notes:<br>{formatted_release_notes}")
     label.setTextFormat(Qt.RichText)
+    label.setWordWrap(True)
     layout.addWidget(label)
 
     button_layout = QHBoxLayout()
@@ -90,8 +91,9 @@ def show_update_check_result_notification(latest_version, release_notes, owner, 
 
     layout.addLayout(button_layout)
     dialog.adjustSize()
-    dialog.setMinimumWidth(700)
-    dialog.setMinimumHeight(400)  # Set a minimum height
+    dialog.setMinimumWidth(300)
+    dialog.setMinimumHeight(200)
+    dialog.setMaximumWidth(1000)
     dialog.exec()
 
 def show_install_dialog():
