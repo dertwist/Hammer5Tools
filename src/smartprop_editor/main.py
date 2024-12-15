@@ -300,11 +300,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu = PopupMenu(presets, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.load_preset(name, value))
         self.popup_menu.show()
-    def load_preset(self, name: str = None, path:str = None):
-        name, extension = os.path.splitext(name)
-        with open(path, 'r') as file:
-            __data = file.read()
-        __data = Kv3ToJson(__data)
+
+    def file_deserialization(self, __data:dict):
         def populate_tree(data, parent = None):
             if parent is None:
                 parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
@@ -410,6 +407,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         populate_tree(__data, parent)
         populate_choices(__data.get('m_Choices', None))
         populate_variables(__data.get('m_Variables'))
+    def load_preset(self, name: str = None, path:str = None):
+        with open(path, 'r') as file:
+            __data = file.read()
+        __data = Kv3ToJson(__data)
+        self.file_deserialization(__data)
     def add_an_element(self):
         self.popup_menu = PopupMenu(elements_list, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
@@ -945,33 +947,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             data_input = QApplication.clipboard().text()
         try:
             input = Kv3ToJson(self.fix_format(data_input))
-            if 'm_Children' in input:
-                for key in input['m_Children']:
-                    tree_item = self.deserialize_hierarchy_item(key)
-                    try:
-                        tree_item.setText(0, unique_counter_name(tree_item, tree))
-                    except:
-                        pass
-                    try:
-                        if paste_to_parent:
-                            tree.currentItem().parent().addChild(tree_item)
-                        else:
-                            tree.currentItem().addChild(tree_item)
-                    except:
-                        tree.invisibleRootItem().addChild(tree_item)
-            else:
-                tree_item = self.deserialize_hierarchy_item(input)
-                try:
-                    tree_item.setText(0, unique_counter_name(tree_item, tree))
-                except:
-                    pass
-                try:
-                    if paste_to_parent:
-                        tree.currentItem().parent().addChild(tree_item)
-                    else:
-                        tree.currentItem().addChild(tree_item)
-                except:
-                    tree.invisibleRootItem().addChild(tree_item)
+            self.file_deserialization(input)
         except Exception as error:
             error_message = str(error)
             error_dialog = ErrorInfo(text="Wrong format of the pasting content", details=error_message)
