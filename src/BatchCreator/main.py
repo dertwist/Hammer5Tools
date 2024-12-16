@@ -3,13 +3,13 @@ import os
 from PySide6.QtWidgets import QMainWindow, QApplication, QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem, QMenu, QPlainTextEdit
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction, QTextCursor
-from src.BatchCreator_legacy.ui_main import Ui_BatchCreator_MainWindow
-from src.BatchCreator_legacy.ui_dialog import Ui_BatchCreator_process_Dialog
+from src.BatchCreator.ui_main import Ui_BatchCreator_MainWindow
+from src.BatchCreator.ui_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path
-from src.BatchCreator_legacy.highlighter import CustomHighlighter
+from src.BatchCreator.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
 from src.qt_styles.common import qt_stylesheet_button, qt_stylesheet_checkbox
-from src.BatchCreator_legacy.objects import default_file
+from src.BatchCreator.objects import default_file
 
 cs2_path = get_cs2_path()
 
