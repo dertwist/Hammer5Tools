@@ -1,6 +1,6 @@
 from src.preferences import get_addon_name, get_cs2_path
 import os
-from src.BatchCreator.common import *
+from src.batch_creator.common import *
 
 def perform_batch_processing(__filepath, process, preview):
     base_directory = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
