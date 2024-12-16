@@ -11,3 +11,4 @@ py3nvml
 vpk
 tqdm
 colorama
+pygetwindow
