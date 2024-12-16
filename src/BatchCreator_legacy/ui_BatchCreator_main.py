@@ -83,18 +83,17 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
         self.folder_path_template = QLabel(self.groupBox_3)
         self.folder_path_template.setObjectName(u"folder_path_template")
-        self.folder_path_template.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QLabel {\n"
+        self.folder_path_template.setStyleSheet(u"    QLabel {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
-"        padding-top: 4px;\n"
-"        padding-bottom:4px;\n"
+"        height:26px;\n"
+"        padding-top: 5px;\n"
+"        padding-bottom:5px;\n"
 "        padding-left: 4px;\n"
 "        padding-right: 4px;\n"
 "        color: #E3E3E3;\n"
@@ -103,6 +102,14 @@ class Ui_BatchCreator_MainWindow(object):
 "    QLabel:hover {\n"
 "        background-color: #414956;\n"
 "        color: white;\n"
+"    }\n"
+"    QLabel:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
 "    }")
         self.folder_path_template.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -110,18 +117,17 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.assets_name_template = QLabel(self.groupBox_3)
         self.assets_name_template.setObjectName(u"assets_name_template")
-        self.assets_name_template.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QLabel {\n"
+        self.assets_name_template.setStyleSheet(u"    QLabel {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
-"        padding-top: 4px;\n"
-"        padding-bottom:4px;\n"
+"        height:26px;\n"
+"        padding-top: 5px;\n"
+"        padding-bottom:5px;\n"
 "        padding-left: 4px;\n"
 "        padding-right: 4px;\n"
 "        color: #E3E3E3;\n"
@@ -130,6 +136,14 @@ class Ui_BatchCreator_MainWindow(object):
 "    QLabel:hover {\n"
 "        background-color: #414956;\n"
 "        color: white;\n"
+"    }\n"
+"    QLabel:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
 "    }")
         self.assets_name_template.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -193,15 +207,13 @@ class Ui_BatchCreator_MainWindow(object):
         self.open_button = QPushButton(self.frame_2)
         self.open_button.setObjectName(u"open_button")
         self.open_button.setMinimumSize(QSize(0, 18))
-        self.open_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
+        self.open_button.setStyleSheet(u"    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -233,15 +245,13 @@ class Ui_BatchCreator_MainWindow(object):
         self.save_button = QPushButton(self.frame_2)
         self.save_button.setObjectName(u"save_button")
         self.save_button.setMinimumSize(QSize(0, 18))
-        self.save_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
+        self.save_button.setStyleSheet(u"    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -273,15 +283,13 @@ class Ui_BatchCreator_MainWindow(object):
         self.create_file = QPushButton(self.frame_2)
         self.create_file.setObjectName(u"create_file")
         self.create_file.setMinimumSize(QSize(0, 18))
-        self.create_file.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
+        self.create_file.setStyleSheet(u"    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -332,15 +340,13 @@ class Ui_BatchCreator_MainWindow(object):
         self.process_options_button = QPushButton(self.frame_3)
         self.process_options_button.setObjectName(u"process_options_button")
         self.process_options_button.setMinimumSize(QSize(0, 18))
-        self.process_options_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
+        self.process_options_button.setStyleSheet(u"    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -373,15 +379,13 @@ class Ui_BatchCreator_MainWindow(object):
         self.return_button.setObjectName(u"return_button")
         self.return_button.setEnabled(False)
         self.return_button.setMinimumSize(QSize(0, 18))
-        self.return_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
+        self.return_button.setStyleSheet(u"    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"
@@ -401,7 +405,6 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin: 1 px;\n"
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
-"	\n"
 "\n"
 "    }\n"
 "QPushButton:disabled {\n"
@@ -419,15 +422,13 @@ class Ui_BatchCreator_MainWindow(object):
         self.process_all_button = QPushButton(self.frame_3)
         self.process_all_button.setObjectName(u"process_all_button")
         self.process_all_button.setMinimumSize(QSize(0, 18))
-        self.process_all_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
+        self.process_all_button.setStyleSheet(u"    QPushButton {\n"
 "\n"
-"        font: 600 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
 "\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
 "        height:22px;\n"
 "        padding-top: 2px;\n"

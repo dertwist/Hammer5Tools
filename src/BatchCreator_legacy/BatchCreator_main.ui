@@ -138,18 +138,17 @@
                 <item>
                  <widget class="QLabel" name="folder_path_template">
                   <property name="styleSheet">
-                   <string notr="true">
-    /* QPushButton default and hover styles */
-    QLabel {
+                   <string notr="true">    QLabel {
 
-        font: 600 10pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 	
 
         border: 2px solid black;
-        border-radius: 4px;
+        border-radius: 2px;
         border-color: rgba(80, 80, 80, 255);
-        padding-top: 4px;
-        padding-bottom:4px;
+        height:26px;
+        padding-top: 5px;
+        padding-bottom:5px;
         padding-left: 4px;
         padding-right: 4px;
         color: #E3E3E3;
@@ -158,6 +157,14 @@
     QLabel:hover {
         background-color: #414956;
         color: white;
+    }
+    QLabel:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
     }</string>
                   </property>
                   <property name="text">
@@ -171,18 +178,17 @@
                 <item>
                  <widget class="QLabel" name="assets_name_template">
                   <property name="styleSheet">
-                   <string notr="true">
-    /* QPushButton default and hover styles */
-    QLabel {
+                   <string notr="true">    QLabel {
 
-        font: 600 10pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 	
 
         border: 2px solid black;
-        border-radius: 4px;
+        border-radius: 2px;
         border-color: rgba(80, 80, 80, 255);
-        padding-top: 4px;
-        padding-bottom:4px;
+        height:26px;
+        padding-top: 5px;
+        padding-bottom:5px;
         padding-left: 4px;
         padding-right: 4px;
         color: #E3E3E3;
@@ -191,6 +197,14 @@
     QLabel:hover {
         background-color: #414956;
         color: white;
+    }
+    QLabel:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
     }</string>
                   </property>
                   <property name="text">
@@ -354,15 +368,13 @@
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
+                 <string notr="true">    QPushButton {
 
-        font: 600 10pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 	
 
         border: 2px solid black;
-        border-radius: 4px;
+        border-radius: 2px;
         border-color: rgba(80, 80, 80, 255);
         height:22px;
         padding-top: 2px;
@@ -409,15 +421,13 @@
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
+                 <string notr="true">    QPushButton {
 
-        font: 600 10pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 	
 
         border: 2px solid black;
-        border-radius: 4px;
+        border-radius: 2px;
         border-color: rgba(80, 80, 80, 255);
         height:22px;
         padding-top: 2px;
@@ -464,15 +474,13 @@
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
+                 <string notr="true">    QPushButton {
 
-        font: 600 10pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 	
 
         border: 2px solid black;
-        border-radius: 4px;
+        border-radius: 2px;
         border-color: rgba(80, 80, 80, 255);
         height:22px;
         padding-top: 2px;
@@ -570,15 +578,13 @@
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
+                 <string notr="true">    QPushButton {
 
-        font: 600 10pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 	
 
         border: 2px solid black;
-        border-radius: 4px;
+        border-radius: 2px;
         border-color: rgba(80, 80, 80, 255);
         height:22px;
         padding-top: 2px;
@@ -628,15 +634,13 @@
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
+                 <string notr="true">    QPushButton {
 
-        font: 600 10pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 	
 
         border: 2px solid black;
-        border-radius: 4px;
+        border-radius: 2px;
         border-color: rgba(80, 80, 80, 255);
         height:22px;
         padding-top: 2px;
@@ -656,7 +660,6 @@
         margin: 1 px;
         margin-left: 2px;
         margin-right: 2px;
-	
 
     }
 QPushButton:disabled {
@@ -691,15 +694,13 @@ color: gray;
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">
-    /* QPushButton default and hover styles */
-    QPushButton {
+                 <string notr="true">    QPushButton {
 
-        font: 600 10pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 	
 
         border: 2px solid black;
-        border-radius: 4px;
+        border-radius: 2px;
         border-color: rgba(80, 80, 80, 255);
         height:22px;
         padding-top: 2px;

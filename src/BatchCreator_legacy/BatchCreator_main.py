@@ -3,15 +3,13 @@ import os
 from PySide6.QtWidgets import QMainWindow, QApplication, QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem, QMenu, QPlainTextEdit
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction, QTextCursor
-from distutils.util import strtobool
-from select import select
-
 from src.BatchCreator_legacy.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 from src.BatchCreator_legacy.ui_BatchCreator_process_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path
 from src.BatchCreator_legacy.BatchCreator_custom_highlighter import CustomHighlighter
 from src.explorer.main import Explorer
-from src.qt_styles.common import qt_stylesheet_button
+from src.qt_styles.common import qt_stylesheet_button, qt_stylesheet_checkbox
+from src.BatchCreator_legacy.objects import default_file
 
 cs2_path = get_cs2_path()
 
@@ -22,7 +20,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.current_file_path = None
         self.process = {}
-        self.created_files = []  # List to track created files
+        self.created_files = []
 
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
         tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
@@ -43,10 +41,9 @@ class BatchCreatorMainWindow(QMainWindow):
         self.setup_drag_and_drop(self.ui.assets_name_template, "Asset name")
         self.ui.process_all_button.clicked.connect(self.process_all)
         self.ui.process_options_button.clicked.connect(self.show_process_options)
-        self.ui.return_button.clicked.connect(self.return_files)  # Connect return button
-        self.ui.return_button.setEnabled(False)  # Initially disable the return button
+        self.ui.return_button.clicked.connect(self.return_files)
+        self.ui.return_button.setEnabled(False)
 
-        # Setup custom context menu actions
         self.folder_path_action = QAction("Insert Folder Path", self)
         self.folder_path_action.triggered.connect(lambda: self.insert_placeholder("#$FOLDER_PATH$#"))
 
@@ -54,7 +51,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.asset_name_action.triggered.connect(lambda: self.insert_placeholder("#$ASSET_NAME$#"))
         self.ui.kv3_QplainTextEdit.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.show_context_menu)
-        self.ui.kv3_QplainTextEdit.dropEvent = lambda event: self.dropEvent_kv3_plain_text(event)
+        self.ui.kv3_QplainTextEdit.dropEvent = self.dropEvent_kv3_plain_text
 
         save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
         save_shortcut.activated.connect(self.save_file)
@@ -67,21 +64,21 @@ class BatchCreatorMainWindow(QMainWindow):
 
         mime_data = event.mimeData()
         if mime_data.hasText():
-            if event.source() != self:
-                urls = mime_data.urls()
-                url_set = set(url.toLocalFile() for url in urls)
-                for file_path in url_set:
-                    if os.path.isfile(file_path):
+            urls = mime_data.urls()
+            for url in urls:
+                file_path = url.toLocalFile()
+                if os.path.isfile(file_path):
+                    try:
                         with open(file_path, 'r') as file:
-                            __data = file.read()
-
+                            data = file.read()
                         text_edit = self.ui.kv3_QplainTextEdit
                         cursor = text_edit.textCursor()
                         cursor.select(QTextCursor.Document)
-                        cursor.insertText(__data)
+                        cursor.insertText(data)
+                    except Exception as e:
+                        QMessageBox.critical(self, "File Read Error", f"An error occurred while reading the file: {e}")
 
         event.accept()
-
 
     def show_context_menu(self, position):
         menu = self.ui.kv3_QplainTextEdit.createStandardContextMenu()
@@ -102,8 +99,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def insert_placeholder(self, placeholder):
         cursor = self.ui.kv3_QplainTextEdit.textCursor()
-        if cursor.hasSelection():
-            cursor.insertText(placeholder)
+        cursor.insertText(placeholder)
 
     def update_editor_status(self):
         if self.current_file_path is not None:
@@ -133,13 +129,8 @@ class BatchCreatorMainWindow(QMainWindow):
         if event.mimeData().hasText():
             new_text = event.mimeData().text()
             text_edit = self.ui.kv3_QplainTextEdit
-
             cursor = text_edit.textCursor()
-            if cursor.hasSelection():
-                cursor.insertText(new_text)
-            else:
-                cursor.insertText(new_text)
-
+            cursor.insertText(new_text)
             event.acceptProposedAction()
 
     def label_mouse_press_event(self, event, default_text):
@@ -189,15 +180,13 @@ class BatchCreatorMainWindow(QMainWindow):
             return
 
         file_path = os.path.join(path_clear, f"{file_name}.h5t_batch")
-        default_version = "1.0"
-        batch_creator_file_parser_initialize(default_version, file_path)
+        batch_creator_file_parser_initialize(file_path)
 
     def save_file(self):
         if self.current_file_path:
             content = self.ui.kv3_QplainTextEdit.toPlainText()
             extension = self.ui.extension_lineEdit.text()
-            version = "1.0"
-            batch_creator_file_parser_output(version, content, self.process, extension, self.current_file_path)
+            batch_creator_file_parser_output(content, self.process, extension, self.current_file_path)
         else:
             print("No file is currently opened to save.")
 
@@ -239,24 +228,23 @@ class BatchCreatorMainWindow(QMainWindow):
     def process_all(self):
         self.save_file()
         created_files = batchcreator_process_all(current_path_file=self.current_file_path, preview=False, process=self.process)
-        self.created_files.extend(created_files)  # Track created files
+        self.created_files.extend(created_files)
         if created_files:
-            self.ui.return_button.setEnabled(True)  # Enable the return button after processing
+            self.ui.return_button.setEnabled(True)
 
     def return_files(self):
-        # Remove created files
         for file_path in self.created_files:
             try:
                 os.remove(file_path)
                 print(f"Removed file: {file_path}")
             except OSError as e:
                 print(f"Error removing file {file_path}: {e}")
-        self.created_files.clear()  # Clear the list after removal
-        self.ui.return_button.setEnabled(False)  # Disable the return button
+        self.created_files.clear()
+        self.ui.return_button.setEnabled(False)
 
     def _open_file_content(self, file_path):
         try:
-            version_file, content, extension, self.process = batch_creator_file_parser_parse(file_path)
+            content, extension, self.process = batch_creator_file_parser_parse(file_path)
             self.ui.kv3_QplainTextEdit.setPlainText(content)
             self.ui.extension_lineEdit.setText(extension)
             self.current_file_path = file_path
@@ -266,7 +254,7 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
 
 class BatchCreatorProcessDialog(QDialog):
-    def __init__(self, process, current_file_path, parent=None, process_all = None):
+    def __init__(self, process, current_file_path, parent=None, process_all=None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_process_Dialog()
         self.ui.setupUi(self)
@@ -278,8 +266,8 @@ class BatchCreatorProcessDialog(QDialog):
         try:
             self.ui.algorithm_select_comboBox.setCurrentIndex(int(process['algorithm']))
             self.ui.algorithm_select_comboBox.currentIndexChanged.connect(self.on_algorithm_index_changed)
-            self.ui.load_from_the_folder_checkBox.setChecked(self.str_to_bool(process['load_from_the_folder']))
-            self.ui.output_to_the_folder_checkBox.setChecked(self.str_to_bool(process['output_to_the_folder']))
+            self.ui.load_from_the_folder_checkBox.setChecked(process['load_from_the_folder'])
+            self.ui.output_to_the_folder_checkBox.setChecked(process['output_to_the_folder'])
 
             self.ui.load_from_the_folder_checkBox.stateChanged.connect(self.on_load_from_folder_changed)
             self.ui.output_to_the_folder_checkBox.stateChanged.connect(self.on_output_to_folder_changed)
@@ -336,7 +324,7 @@ class BatchCreatorProcessDialog(QDialog):
         self.ui.Input_files_preview_scrollarea.clear()
         self.ui.output_files_preview_scrollarea.clear()
 
-        if self.str_to_bool(self.process['load_from_the_folder']):
+        if self.process['load_from_the_folder']:
             for index, item in enumerate(files[1]):
                 label = QLabel(item)
                 remove_button = QPushButton('Ignore')
@@ -378,35 +366,26 @@ class BatchCreatorProcessDialog(QDialog):
             label = QLabel(item + f".{files[2]}")
             self.ui.output_files_preview_scrollarea.addItem(label.text())
 
-        if self.str_to_bool(self.process['output_to_the_folder']):
+        if self.process['output_to_the_folder']:
             self.ui.output_folder.setText(f'Output folder: {os.path.relpath(files[3], os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name()))}')
         else:
             self.ui.output_folder.setText(f'Output folder: {self.process["custom_output"]}')
 
-    def str_to_bool(self, value):
-        if isinstance(value, bool):
-            return value
-        try:
-            return bool(strtobool(value))
-        except ValueError:
-            return value
 
 def batch_creator_file_parser_parse(file_path):
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
-            version = data.get('APP', {}).get('version')
             content = data.get('FILE', {}).get('content')
             extension = data.get('FILE', {}).get('extension')
             process = data.get('PROCESS', {})
-            return version, content, extension, process
+            return content, extension, process
     except (json.JSONDecodeError, FileNotFoundError) as e:
         print(f"An error occurred: {e}")
-        return None, None, None, None
+        return None, None, None
 
-def batch_creator_file_parser_output(version, content, process, extension, file_path):
+def batch_creator_file_parser_output(content, process, extension, file_path):
     data = {
-        'APP': {'name': 'BatchCreator', 'version': version},
         'FILE': {'content': content, 'extension': extension},
         'PROCESS': process
     }
@@ -416,8 +395,8 @@ def batch_creator_file_parser_output(version, content, process, extension, file_
         print(f"File created at: {file_path}")
     except Exception as e:
         print(f"Failed to create file: {e}")
-from src.BatchCreator_legacy.objects import *
-def batch_creator_file_parser_initialize(version, file_path):
+
+def batch_creator_file_parser_initialize(file_path):
     data = default_file
     try:
         with open(file_path, 'w') as file:
@@ -431,16 +410,16 @@ def batchcreator_process_all(current_path_file, process, preview):
     prefix_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
     folder_path_relative = os.path.relpath(folder_path, prefix_path).replace('\\', '/')
     algorithm = int(process['algorithm'])
-    extension = batch_creator_file_parser_parse(current_path_file)[2]
+    extension = batch_creator_file_parser_parse(current_path_file)[1]
     ignore_extensions = [item for item in process['ignore_extensions'].split(',')]
 
-    files_r = search_files(folder_path, algorithm, ignore_extensions, process) if bool_from_str(process, 'load_from_the_folder') else process['custom_files']
+    files_r = search_files(folder_path, algorithm, ignore_extensions, process) if process['load_from_the_folder'] else process['custom_files']
 
     created_files = []
 
     if preview:
         files_list_out = []
-        if bool_from_str(process, 'load_from_the_folder'):
+        if process['load_from_the_folder']:
             for root, dirs, files in os.walk(folder_path):
                 for file in files:
                     if file not in process['ignore_list'] and not any(file.endswith(ext) for ext in ignore_extensions):
@@ -450,32 +429,22 @@ def batchcreator_process_all(current_path_file, process, preview):
             return files_r, None, extension, folder_path
     else:
         def do_process(path):
-            content = batch_creator_file_parser_parse(current_path_file)[1]
+            content = batch_creator_file_parser_parse(current_path_file)[0]
             for item in files_r:
                 content_out = content.replace("#$FOLDER_PATH$#", folder_path_relative).replace("#$ASSET_NAME$#", item)
                 filename = os.path.join(path, item) + f".{extension}"
                 with open(filename, 'w') as file:
                     file.write(content_out)
                 print(f'File {filename} created successfully.')
-                created_files.append(filename)  # Track the created file
+                created_files.append(filename)
 
-        if bool_from_str(process, 'output_to_the_folder'):
+        if process['output_to_the_folder']:
             do_process(folder_path)
         else:
             folder_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), process['custom_output'])
             do_process(folder_path)
 
     return created_files
-
-
-def bool_from_str(process, value):
-    val = process[value]
-    if isinstance(val, bool):
-        return val
-    try:
-        return bool(strtobool(val))
-    except ValueError:
-        return val
 
 def search_files(directory, algorithm, ignore_extensions, process):
     ignore_list = [item.strip() for item in process['ignore_list'].split(',')]
