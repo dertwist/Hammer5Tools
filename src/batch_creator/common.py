@@ -1,5 +1,5 @@
 import json
-from src.BatchCreator.objects import *
+from src.batch_creator.objects import *
 
 def parse_batch_file(file_path):
     try:
