@@ -7,15 +7,15 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction, QTextCursor
-from src.BatchCreator.ui_main import Ui_BatchCreator_MainWindow
-from src.BatchCreator.ui_dialog import Ui_BatchCreator_process_Dialog
+from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
+from src.batch_creator.ui_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path
-from src.BatchCreator.highlighter import CustomHighlighter
+from src.batch_creator.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
 from src.qt_styles.common import qt_stylesheet_button, qt_stylesheet_checkbox
-from src.BatchCreator.objects import default_file
-from src.BatchCreator.dialog import BatchCreatorProcessDialog
-from src.BatchCreator.process import *
+from src.batch_creator.objects import default_file
+from src.batch_creator.dialog import BatchCreatorProcessDialog
+from src.batch_creator.process import *
 
 
 class BatchCreatorMainWindow(QMainWindow):
