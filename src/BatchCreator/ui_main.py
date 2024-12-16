@@ -18,7 +18,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDockWidget, QFrame,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit,
     QMainWindow, QPlainTextEdit, QPushButton, QSizePolicy,
-    QSpacerItem, QVBoxLayout, QWidget)
+    QSpacerItem, QSplitter, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_BatchCreator_MainWindow(object):
@@ -40,11 +40,6 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout = QVBoxLayout(self.frame)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.label = QLabel(self.frame)
-        self.label.setObjectName(u"label")
-
-        self.verticalLayout.addWidget(self.label)
-
         self.frame_4 = QFrame(self.frame)
         self.frame_4.setObjectName(u"frame_4")
         self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
@@ -53,6 +48,11 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout_7.setSpacing(0)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
         self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
+        self.label = QLabel(self.frame_4)
+        self.label.setObjectName(u"label")
+
+        self.verticalLayout_7.addWidget(self.label)
+
         self.label_editor_placeholder = QLabel(self.frame_4)
         self.label_editor_placeholder.setObjectName(u"label_editor_placeholder")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
@@ -64,100 +64,33 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.verticalLayout_7.addWidget(self.label_editor_placeholder)
 
-        self.frame_6 = QFrame(self.frame_4)
-        self.frame_6.setObjectName(u"frame_6")
-        self.frame_6.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_6.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_2 = QHBoxLayout(self.frame_6)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.kv3_QplainTextEdit = QPlainTextEdit(self.frame_6)
+        self.editor_widgets = QFrame(self.frame_4)
+        self.editor_widgets.setObjectName(u"editor_widgets")
+        self.editor_widgets.setFrameShape(QFrame.Shape.StyledPanel)
+        self.editor_widgets.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_6 = QVBoxLayout(self.editor_widgets)
+        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.splitter = QSplitter(self.editor_widgets)
+        self.splitter.setObjectName(u"splitter")
+        self.splitter.setOrientation(Qt.Orientation.Vertical)
+        self.kv3_QplainTextEdit = QPlainTextEdit(self.splitter)
         self.kv3_QplainTextEdit.setObjectName(u"kv3_QplainTextEdit")
         self.kv3_QplainTextEdit.setStyleSheet(u"")
-
-        self.horizontalLayout_2.addWidget(self.kv3_QplainTextEdit)
-
-        self.groupBox_3 = QGroupBox(self.frame_6)
-        self.groupBox_3.setObjectName(u"groupBox_3")
-        self.groupBox_3.setMinimumSize(QSize(128, 0))
-        self.verticalLayout_6 = QVBoxLayout(self.groupBox_3)
-        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.folder_path_template = QLabel(self.groupBox_3)
-        self.folder_path_template.setObjectName(u"folder_path_template")
-        self.folder_path_template.setStyleSheet(u"    QLabel {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:26px;\n"
-"        padding-top: 5px;\n"
-"        padding-bottom:5px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QLabel:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QLabel:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        self.folder_path_template.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.verticalLayout_6.addWidget(self.folder_path_template)
-
-        self.assets_name_template = QLabel(self.groupBox_3)
-        self.assets_name_template.setObjectName(u"assets_name_template")
-        self.assets_name_template.setStyleSheet(u"    QLabel {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:26px;\n"
-"        padding-top: 5px;\n"
-"        padding-bottom:5px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QLabel:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QLabel:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        self.assets_name_template.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.verticalLayout_6.addWidget(self.assets_name_template)
-
+        self.splitter.addWidget(self.kv3_QplainTextEdit)
+        self.groupBox = QGroupBox(self.splitter)
+        self.groupBox.setObjectName(u"groupBox")
+        self.verticalLayout_11 = QVBoxLayout(self.groupBox)
+        self.verticalLayout_11.setObjectName(u"verticalLayout_11")
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.verticalLayout_6.addItem(self.verticalSpacer)
+        self.verticalLayout_11.addItem(self.verticalSpacer)
+
+        self.splitter.addWidget(self.groupBox)
+
+        self.verticalLayout_6.addWidget(self.splitter)
 
 
-        self.horizontalLayout_2.addWidget(self.groupBox_3)
-
-
-        self.verticalLayout_7.addWidget(self.frame_6)
+        self.verticalLayout_7.addWidget(self.editor_widgets)
 
 
         self.verticalLayout.addWidget(self.frame_4)
@@ -611,9 +544,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.label_editor_placeholder.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Please, open a file for editing", None))
         self.kv3_QplainTextEdit.setPlainText("")
         self.kv3_QplainTextEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Content", None))
-        self.groupBox_3.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Variables", None))
-        self.folder_path_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Folder path", None))
-        self.assets_name_template.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Asset name", None))
+        self.groupBox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"GroupBox", None))
         self.dockWidget.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Explorer", None))
         self.file_groupbox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"File", None))
         self.open_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Open", None))
