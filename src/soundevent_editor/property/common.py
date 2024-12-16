@@ -33,6 +33,24 @@ class SoundEventEditorPropertyBase(QWidget):
         self.init_label(label_text)
         # self.on_property_update()
 
+        self.setStyleSheet(""".QFrame {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+	border-top: 0px;
+    border-color: rgba(50, 50, 50, 255);
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+.QFrame::hover {
+}
+.QFrame::selected {
+    background-color: #414956;
+}""")
+
     def init_root_layout(self):
         """Adding a root layout in which should be placed all widgets that would be in this class and from encapsulation. Not recommended to overwrite this function"""
         self.root_layout = QHBoxLayout()
