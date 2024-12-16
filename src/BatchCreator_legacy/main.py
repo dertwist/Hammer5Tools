@@ -3,10 +3,10 @@ import os
 from PySide6.QtWidgets import QMainWindow, QApplication, QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem, QMenu, QPlainTextEdit
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction, QTextCursor
-from src.BatchCreator_legacy.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
-from src.BatchCreator_legacy.ui_BatchCreator_process_dialog import Ui_BatchCreator_process_Dialog
+from src.BatchCreator_legacy.ui_main import Ui_BatchCreator_MainWindow
+from src.BatchCreator_legacy.ui_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path
-from src.BatchCreator_legacy.BatchCreator_custom_highlighter import CustomHighlighter
+from src.BatchCreator_legacy.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
 from src.qt_styles.common import qt_stylesheet_button, qt_stylesheet_checkbox
 from src.BatchCreator_legacy.objects import default_file
@@ -19,6 +19,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
         self.current_file_path = None
+        self.opened_file = None
         self.process = {}
         self.created_files = []
 
@@ -102,7 +103,7 @@ class BatchCreatorMainWindow(QMainWindow):
         cursor.insertText(placeholder)
 
     def update_editor_status(self):
-        if self.current_file_path is not None:
+        if self.opened_file is not None:
             self.ui.groupBox_3.show()
             self.ui.kv3_QplainTextEdit.show()
             self.ui.label_editor_placeholder.hide()
@@ -111,8 +112,11 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.kv3_QplainTextEdit.hide()
             self.ui.label_editor_placeholder.show()
 
-    def update_explorer_status(self, path):
-        self.ui.dockWidget.setWindowTitle(f"Explorer ({os.path.basename(path)})")
+    def update_explorer_status(self):
+        if self.opened_file is None:
+            self.ui.dockWidget.setWindowTitle(f"Explorer")
+        else:
+            self.ui.dockWidget.setWindowTitle(f"Explorer ({os.path.basename(self.opened_file)})")
         self.update_editor_status()
 
     def setup_drag_and_drop(self, widget, default_text):
@@ -195,6 +199,7 @@ class BatchCreatorMainWindow(QMainWindow):
         if indexes:
             index = indexes[0]
             file_path = self.mini_explorer.model.filePath(index)
+            self.current_file_path = file_path
             if not self.mini_explorer.model.isDir(index):
                 if os.path.splitext(file_path)[1] != ".h5t_batch":
                     msg_box = QMessageBox(self)
@@ -248,8 +253,9 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.kv3_QplainTextEdit.setPlainText(content)
             self.ui.extension_lineEdit.setText(extension)
             self.current_file_path = file_path
+            self.opened_file = file_path
             print(f"File opened from: {file_path}")
-            self.update_explorer_status(file_path)
+            self.update_explorer_status()
         except Exception as e:
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
 
