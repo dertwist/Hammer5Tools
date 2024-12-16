@@ -55,6 +55,8 @@ class BatchCreatorMainWindow(QMainWindow):
         save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
         save_shortcut.activated.connect(self.save_file)
 
+        self.update_editor_status()
+
     def show_context_menu(self, position):
         menu = self.ui.kv3_QplainTextEdit.createStandardContextMenu()
         menu.setStyleSheet("""
@@ -77,8 +79,19 @@ class BatchCreatorMainWindow(QMainWindow):
         if cursor.hasSelection():
             cursor.insertText(placeholder)
 
+    def update_editor_status(self):
+        if self.current_file_path is not None:
+            self.ui.groupBox_3.show()
+            self.ui.kv3_QplainTextEdit.show()
+            self.ui.label_editor_placeholder.hide()
+        else:
+            self.ui.groupBox_3.hide()
+            self.ui.kv3_QplainTextEdit.hide()
+            self.ui.label_editor_placeholder.show()
+
     def update_explorer_status(self, path):
         self.ui.dockWidget.setWindowTitle(f"Explorer ({os.path.basename(path)})")
+        self.update_editor_status()
 
     def setup_drag_and_drop(self, widget, default_text):
         widget.setAcceptDrops(True)
