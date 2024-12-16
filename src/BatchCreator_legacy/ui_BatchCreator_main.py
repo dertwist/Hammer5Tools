@@ -45,7 +45,26 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.verticalLayout.addWidget(self.label)
 
-        self.frame_6 = QFrame(self.frame)
+        self.frame_4 = QFrame(self.frame)
+        self.frame_4.setObjectName(u"frame_4")
+        self.frame_4.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_4.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_7 = QVBoxLayout(self.frame_4)
+        self.verticalLayout_7.setSpacing(0)
+        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
+        self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
+        self.label_editor_placeholder = QLabel(self.frame_4)
+        self.label_editor_placeholder.setObjectName(u"label_editor_placeholder")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_editor_placeholder.sizePolicy().hasHeightForWidth())
+        self.label_editor_placeholder.setSizePolicy(sizePolicy)
+        self.label_editor_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.verticalLayout_7.addWidget(self.label_editor_placeholder)
+
+        self.frame_6 = QFrame(self.frame_4)
         self.frame_6.setObjectName(u"frame_6")
         self.frame_6.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_6.setFrameShadow(QFrame.Shadow.Raised)
@@ -124,7 +143,10 @@ class Ui_BatchCreator_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.groupBox_3)
 
 
-        self.verticalLayout.addWidget(self.frame_6)
+        self.verticalLayout_7.addWidget(self.frame_6)
+
+
+        self.verticalLayout.addWidget(self.frame_4)
 
 
         self.horizontalLayout_7.addWidget(self.frame)
@@ -459,6 +481,7 @@ class Ui_BatchCreator_MainWindow(object):
     def retranslateUi(self, BatchCreator_MainWindow):
         BatchCreator_MainWindow.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"MainWindow", None))
         self.label.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Editor", None))
+        self.label_editor_placeholder.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Please, open a file for editing", None))
         self.kv3_QplainTextEdit.setPlainText("")
         self.kv3_QplainTextEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Content", None))
         self.groupBox_3.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Variables", None))
