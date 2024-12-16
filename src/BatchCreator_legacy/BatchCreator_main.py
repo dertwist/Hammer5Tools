@@ -2,8 +2,10 @@ import json
 import os
 from PySide6.QtWidgets import QMainWindow, QApplication, QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem, QMenu, QPlainTextEdit
 from PySide6.QtCore import Qt, QMimeData
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction, QTextCursor
 from distutils.util import strtobool
+from select import select
+
 from src.BatchCreator_legacy.ui_BatchCreator_main import Ui_BatchCreator_MainWindow
 from src.BatchCreator_legacy.ui_BatchCreator_process_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path
@@ -51,11 +53,34 @@ class BatchCreatorMainWindow(QMainWindow):
         self.asset_name_action.triggered.connect(lambda: self.insert_placeholder("#$ASSET_NAME$#"))
         self.ui.kv3_QplainTextEdit.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.show_context_menu)
+        self.ui.kv3_QplainTextEdit.dropEvent = lambda event: self.dropEvent_kv3_plain_text(event)
 
         save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
         save_shortcut.activated.connect(self.save_file)
 
         self.update_editor_status()
+
+    def dropEvent_kv3_plain_text(self, event):
+        if event.source() == self:
+            return
+
+        mime_data = event.mimeData()
+        if mime_data.hasText():
+            if event.source() != self:
+                urls = mime_data.urls()
+                url_set = set(url.toLocalFile() for url in urls)
+                for file_path in url_set:
+                    if os.path.isfile(file_path):
+                        with open(file_path, 'r') as file:
+                            __data = file.read()
+
+                        text_edit = self.ui.kv3_QplainTextEdit
+                        cursor = text_edit.textCursor()
+                        cursor.select(QTextCursor.Document)
+                        cursor.insertText(__data)
+
+        event.accept()
+
 
     def show_context_menu(self, position):
         menu = self.ui.kv3_QplainTextEdit.createStandardContextMenu()
@@ -476,6 +501,7 @@ def batchcreator_process_all(current_path_file, process, preview):
             do_process(folder_path)
 
     return created_files
+
 
 def bool_from_str(process, value):
     val = process[value]
