@@ -11,6 +11,7 @@ from src.BatchCreator_legacy.ui_BatchCreator_process_dialog import Ui_BatchCreat
 from src.preferences import get_addon_name, get_cs2_path
 from src.BatchCreator_legacy.BatchCreator_custom_highlighter import CustomHighlighter
 from src.explorer.main import Explorer
+from src.qt_styles.common import qt_stylesheet_button
 
 cs2_path = get_cs2_path()
 
@@ -339,31 +340,7 @@ class BatchCreatorProcessDialog(QDialog):
             for index, item in enumerate(files[1]):
                 label = QLabel(item)
                 remove_button = QPushButton('Ignore')
-                remove_button.setStyleSheet("""
-                    QPushButton {
-                        font: 700 8pt "Segoe UI";
-                        border: 2px solid black;
-                        border-radius: 4px;
-                        border-color: rgba(80, 80, 80, 255);
-                        height: 16px;
-                        padding-top: 2px;
-                        padding-bottom: 2px;
-                        padding-left: 4px;
-                        padding-right: 4px;
-                        color: #c4c4c4;
-                        background-color: #1C1C1C;
-                    }
-                    QPushButton:hover {
-                        background-color: #414956;
-                        color: white;
-                    }
-                    QPushButton:pressed {
-                        background-color: #2d323b;
-                        margin: 1px;
-                        margin-left: 2px;
-                        margin-right: 2px;
-                    }
-                """)
+                remove_button.setStyleSheet(qt_stylesheet_button)
 
                 def ignore_item(item):
                     scroll_position = self.ui.Input_files_preview_scrollarea.verticalScrollBar().value()
@@ -439,21 +416,9 @@ def batch_creator_file_parser_output(version, content, process, extension, file_
         print(f"File created at: {file_path}")
     except Exception as e:
         print(f"Failed to create file: {e}")
-
+from src.BatchCreator_legacy.objects import *
 def batch_creator_file_parser_initialize(version, file_path):
-    data = {
-        'APP': {'name': 'BatchCreator', 'version': version},
-        'FILE': {'content': '', 'extension': 'vmdl'},
-        'PROCESS': {
-            'ignore_list': 'name.extension,name.extension,relative_path',
-            'custom_files': [],
-            'custom_output': 'relative_path',
-            'load_from_the_folder': 'True',
-            'algorithm': '0',
-            'output_to_the_folder': 'True',
-            'ignore_extensions': 'blend,vmdl,vmat'
-        }
-    }
+    data = default_file
     try:
         with open(file_path, 'w') as file:
             json.dump(data, file, indent=4)
