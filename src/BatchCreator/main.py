@@ -79,18 +79,6 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.show_custom_context_menu)
         self.ui.kv3_QplainTextEdit.dropEvent = self.handle_plain_text_drop
 
-        self.setup_drag_and_drop_labels()
-
-    def setup_drag_and_drop_labels(self):
-        self.setup_drag_drop_label(self.ui.folder_path_template, "Folder path")
-        self.setup_drag_drop_label(self.ui.assets_name_template, "Asset name")
-
-    def setup_drag_drop_label(self, label_widget, placeholder_type):
-        label_widget.setAcceptDrops(True)
-        label_widget.dragEnterEvent = self.handle_drag_enter
-        label_widget.dropEvent = lambda event: self.handle_label_drop(event, label_widget)
-        label_widget.mousePressEvent = lambda event: self.handle_label_mouse_press(event, placeholder_type)
-
     def handle_drag_enter(self, event: QDragEnterEvent):
         if event.mimeData().hasText():
             event.acceptProposedAction()
@@ -160,12 +148,14 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def update_editor_visibility(self):
         if self.opened_file is not None:
-            self.ui.groupBox_3.show()
-            self.ui.kv3_QplainTextEdit.show()
+            self.ui.editor_widgets.show()
+            self.ui.referencing_groupbox.show()
+            self.ui.process_groupbox.show()
             self.ui.label_editor_placeholder.hide()
         else:
-            self.ui.groupBox_3.hide()
-            self.ui.kv3_QplainTextEdit.hide()
+            self.ui.editor_widgets.hide()
+            self.ui.referencing_groupbox.hide()
+            self.ui.process_groupbox.hide()
             self.ui.label_editor_placeholder.show()
 
     def update_explorer_title(self):
