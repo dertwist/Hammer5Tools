@@ -48,17 +48,17 @@ def build_updater():
 
 def archive_files(folder_path, output_path):
     excluded_files = {'hammer5tools.zip'}
-    excluded_extensions = {'.wav', '.mp3'}
+    excluded_paths = ['SoundEvent/sounds']
 
     def should_exclude(file_name):
-        return file_name in excluded_files or any(file_name.endswith(ext) for ext in excluded_extensions)
+        return file_name in excluded_files or any(excluded_path in file_path for excluded_path in excluded_paths)
 
     with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_LZMA) as archive:
         for root, _, files in os.walk(folder_path):
             for file in files:
-                if should_exclude(file):
-                    continue
                 file_path = os.path.join(root, file)
+                if should_exclude(file, file_path):
+                    continue
                 archive.write(file_path, os.path.relpath(file_path, folder_path))
 
 def main():
