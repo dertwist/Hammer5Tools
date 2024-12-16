@@ -2,12 +2,12 @@ from src.preferences import get_addon_name, get_cs2_path
 import os
 from src.BatchCreator.common import *
 
-def perform_batch_processing(current_path_file, process, preview):
+def perform_batch_processing(__filepath, process, preview):
     base_directory = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
-    batch_directory = os.path.splitext(current_path_file)[0]
+    batch_directory = os.path.splitext(__filepath)[0]
     relative_batch_path = os.path.relpath(batch_directory, base_directory).replace('\\', '/')
     algorithm = int(process.get('algorithm', 0))
-    file_extension = get_file_extension(current_path_file)
+    file_extension = get_file_extension(__filepath)
     ignore_extensions = [ext.strip() for ext in process.get('ignore_extensions', '').split(',')]
 
     files_to_process = search_files(batch_directory, algorithm, ignore_extensions, process) if process.get('load_from_the_folder') else process.get('custom_files', [])
@@ -24,7 +24,7 @@ def perform_batch_processing(current_path_file, process, preview):
             get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), process.get('custom_output', '')
         )
         for file_name in files_to_process:
-            content_template, _, _ = parse_batch_file(current_path_file)
+            content_template, _, _ = parse_batch_file(__filepath)
             if content_template is None:
                 continue
             processed_content = content_template.replace("#$FOLDER_PATH$#", relative_batch_path).replace("#$ASSET_NAME$#", file_name)
