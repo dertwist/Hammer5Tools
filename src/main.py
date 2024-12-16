@@ -13,7 +13,7 @@ from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
 from minor_features.addon_functions import delete_addon, launch_addon
 from minor_features.update_check import check_updates
 from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
-from BatchCreator_legacy.main import BatchCreatorMainWindow
+from BatchCreator.main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
 from minor_features.assettypes import AssetTypesModify
@@ -26,7 +26,7 @@ stop_discord_thread = threading.Event()
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
 # Versions
-app_version = '3.4.1'
+app_version = '3.5.0'
 
 
 class Notification(QMessageBox):
