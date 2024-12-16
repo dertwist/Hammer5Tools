@@ -62,117 +62,160 @@
         </widget>
        </item>
        <item>
-        <widget class="QFrame" name="frame_6">
+        <widget class="QFrame" name="frame_4">
          <property name="frameShape">
           <enum>QFrame::Shape::StyledPanel</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Shadow::Raised</enum>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <layout class="QVBoxLayout" name="verticalLayout_7">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
           <item>
-           <widget class="QPlainTextEdit" name="kv3_QplainTextEdit">
-            <property name="styleSheet">
-             <string notr="true"/>
+           <widget class="QLabel" name="label_editor_placeholder">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
-            <property name="plainText">
-             <string/>
+            <property name="text">
+             <string>Please, open a file for editing</string>
             </property>
-            <property name="placeholderText">
-             <string>Content</string>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QGroupBox" name="groupBox_3">
-            <property name="minimumSize">
-             <size>
-              <width>128</width>
-              <height>0</height>
-             </size>
+           <widget class="QFrame" name="frame_6">
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
             </property>
-            <property name="title">
-             <string>Variables</string>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
             </property>
-            <layout class="QVBoxLayout" name="verticalLayout_6">
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
              <item>
-              <widget class="QLabel" name="folder_path_template">
+              <widget class="QPlainTextEdit" name="kv3_QplainTextEdit">
                <property name="styleSheet">
-                <string notr="true">
-    /* QPushButton default and hover styles */
-    QLabel {
-
-        font: 600 10pt &quot;Segoe UI&quot;;
-	
-
-        border: 2px solid black;
-        border-radius: 4px;
-        border-color: rgba(80, 80, 80, 255);
-        padding-top: 4px;
-        padding-bottom:4px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QLabel:hover {
-        background-color: #414956;
-        color: white;
-    }</string>
+                <string notr="true"/>
                </property>
-               <property name="text">
-                <string>Folder path</string>
+               <property name="plainText">
+                <string/>
                </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
+               <property name="placeholderText">
+                <string>Content</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="assets_name_template">
-               <property name="styleSheet">
-                <string notr="true">
-    /* QPushButton default and hover styles */
-    QLabel {
-
-        font: 600 10pt &quot;Segoe UI&quot;;
-	
-
-        border: 2px solid black;
-        border-radius: 4px;
-        border-color: rgba(80, 80, 80, 255);
-        padding-top: 4px;
-        padding-bottom:4px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QLabel:hover {
-        background-color: #414956;
-        color: white;
-    }</string>
-               </property>
-               <property name="text">
-                <string>Asset name</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="verticalSpacer">
-               <property name="orientation">
-                <enum>Qt::Orientation::Vertical</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
+              <widget class="QGroupBox" name="groupBox_3">
+               <property name="minimumSize">
                 <size>
-                 <width>20</width>
-                 <height>40</height>
+                 <width>128</width>
+                 <height>0</height>
                 </size>
                </property>
-              </spacer>
+               <property name="title">
+                <string>Variables</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_6">
+                <item>
+                 <widget class="QLabel" name="folder_path_template">
+                  <property name="styleSheet">
+                   <string notr="true">
+    /* QPushButton default and hover styles */
+    QLabel {
+
+        font: 600 10pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 4px;
+        border-color: rgba(80, 80, 80, 255);
+        padding-top: 4px;
+        padding-bottom:4px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QLabel:hover {
+        background-color: #414956;
+        color: white;
+    }</string>
+                  </property>
+                  <property name="text">
+                   <string>Folder path</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignmentFlag::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="assets_name_template">
+                  <property name="styleSheet">
+                   <string notr="true">
+    /* QPushButton default and hover styles */
+    QLabel {
+
+        font: 600 10pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 4px;
+        border-color: rgba(80, 80, 80, 255);
+        padding-top: 4px;
+        padding-bottom:4px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QLabel:hover {
+        background-color: #414956;
+        color: white;
+    }</string>
+                  </property>
+                  <property name="text">
+                   <string>Asset name</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignmentFlag::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="verticalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Orientation::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </widget>
              </item>
             </layout>
            </widget>
