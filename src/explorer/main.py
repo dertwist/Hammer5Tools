@@ -16,7 +16,7 @@ file_icons = {
     '.vdata': '://icons/assettypes/vdata_sm.png',
     '.vmat': '://icons/assettypes/material_sm.png',
     '.vmap': '://icons/assettypes/map_sm.png',
-    '.h5t_batch': '://icons/assettypes/vcompmat_sm.png',
+    '.hbat': '://icons/assettypes/vcompmat_sm.png',
     '.vtex': '://icons/assettypes/texture_sm.png',
     '.vmdl': '://icons/assettypes/model_sm.png'
 }
