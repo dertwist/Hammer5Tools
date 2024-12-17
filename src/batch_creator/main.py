@@ -20,7 +20,8 @@ class BatchCreatorMainWindow(QMainWindow):
         self.current_file = None
         self.process_data = default_file['process'].copy()
         self.created_files = []
-        self.monitoring_running_state = False
+        # This variable will be inverted because of toggle_monitoring function
+        self.monitoring_running_state = True
 
         self.cs2_path = get_cs2_path()
         self.addon_name = get_addon_name()
@@ -36,6 +37,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.init_editor_context_menu()
         self.update_editor_visibility()
+        self.toggle_monitoring()
 
         self.connect_signals()
 
@@ -264,8 +266,17 @@ class BatchCreatorMainWindow(QMainWindow):
         self.created_files.clear()
         self.ui.return_button.setEnabled(False)
 
+
     def toggle_monitoring(self):
         """Toggle the monitoring state."""
         self.monitoring_running_state = not self.monitoring_running_state
-        icon_path = ":/valve_common/icons/tools/common/control_stop.png" if self.monitoring_running_state else ":/valve_common/icons/tools/common/control_play.png"
+
+        if self.monitoring_running_state:
+            icon_path = ":/valve_common/icons/tools/common/control_stop.png"
+            button_text = "Stop Monitoring"
+        else:
+            icon_path = ":/valve_common/icons/tools/common/control_play.png"
+            button_text = "Start Monitoring"
+
         self.ui.monitoring_start_toggle_button.setIcon(QIcon(icon_path))
+        self.ui.monitoring_start_toggle_button.setText(button_text)
