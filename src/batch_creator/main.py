@@ -25,7 +25,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         self.current_file = None
-        self.process_data = {}
+        self.process_data = default_file['process'].copy()
         self.created_files = []
 
         self.cs2_path = get_cs2_path()
@@ -203,15 +203,15 @@ class BatchCreatorMainWindow(QMainWindow):
     def save_file(self):
         if self.current_file:
             content = self.ui.kv3_QplainTextEdit.toPlainText()
-            extension = self.ui.extension_lineEdit.text()
-            self.write_batch_file(self.current_file, content, self.process_data, extension)
+            self.process_data['extension'] = self.ui.extension_lineEdit.text()
+            self.write_file(self.current_file, content, self.process_data)
         else:
             print("No file is currently opened to save.")
 
-    def write_batch_file(self, file_path, content, process, extension):
+    def write_file(self, file_path, content, process):
         data = {
-            'FILE': {'content': content, 'extension': extension},
-            'PROCESS': process
+            'file': {'content': content},
+            'process': process
         }
         try:
             with open(file_path, 'w') as file:
@@ -255,14 +255,12 @@ class BatchCreatorMainWindow(QMainWindow):
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
-                content = data.get('FILE', {}).get('content', '')
-                extension = data.get('FILE', {}).get('extension', '')
-                self.process_data = data.get('PROCESS', {})
-
-            self.ui.kv3_QplainTextEdit.setPlainText(content)
-            self.ui.extension_lineEdit.setText(extension)
-            self.update_explorer_title()
-            print(f"File opened from: {file_path}")
+                content = data.get('file', {}).get('content', '')
+                self.process_data = data.get('process', {})
+                self.ui.kv3_QplainTextEdit.setPlainText(content)
+                self.ui.extension_lineEdit.setText(self.process_data.get('extension', default_file['process']['extension']))
+                self.update_explorer_title()
+                print(f"File opened from: {file_path}")
         except Exception as e:
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
 
