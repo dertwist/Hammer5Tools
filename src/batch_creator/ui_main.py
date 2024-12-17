@@ -434,10 +434,10 @@ class Ui_BatchCreator_MainWindow(object):
         self.horizontalLayout_9 = QHBoxLayout(self.frame_8)
         self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
         self.horizontalLayout_9.setContentsMargins(0, 0, 0, 0)
-        self.process_options_button_4 = QPushButton(self.frame_8)
-        self.process_options_button_4.setObjectName(u"process_options_button_4")
-        self.process_options_button_4.setMinimumSize(QSize(0, 18))
-        self.process_options_button_4.setStyleSheet(u"    QPushButton {\n"
+        self.select_reference_button = QPushButton(self.frame_8)
+        self.select_reference_button.setObjectName(u"select_reference_button")
+        self.select_reference_button.setMinimumSize(QSize(0, 18))
+        self.select_reference_button.setStyleSheet(u"    QPushButton {\n"
 "\n"
 "        font: 580 9pt \"Segoe UI\";\n"
 "	\n"
@@ -471,15 +471,15 @@ class Ui_BatchCreator_MainWindow(object):
 "}")
         icon6 = QIcon()
         icon6.addFile(u":/icons/file_present_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.process_options_button_4.setIcon(icon6)
-        self.process_options_button_4.setIconSize(QSize(20, 20))
+        self.select_reference_button.setIcon(icon6)
+        self.select_reference_button.setIconSize(QSize(20, 20))
 
-        self.horizontalLayout_9.addWidget(self.process_options_button_4)
+        self.horizontalLayout_9.addWidget(self.select_reference_button)
 
-        self.lineEdit = QLineEdit(self.frame_8)
-        self.lineEdit.setObjectName(u"lineEdit")
+        self.reference_editline = QLineEdit(self.frame_8)
+        self.reference_editline.setObjectName(u"reference_editline")
 
-        self.horizontalLayout_9.addWidget(self.lineEdit)
+        self.horizontalLayout_9.addWidget(self.reference_editline)
 
 
         self.verticalLayout_10.addWidget(self.frame_8)
@@ -491,9 +491,51 @@ class Ui_BatchCreator_MainWindow(object):
         self.horizontalLayout_3 = QHBoxLayout(self.frame_9)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.checkBox = QCheckBox(self.frame_9)
-        self.checkBox.setObjectName(u"checkBox")
-        self.checkBox.setStyleSheet(u"QCheckBox {\n"
+        self.reference_reload_button = QPushButton(self.frame_9)
+        self.reference_reload_button.setObjectName(u"reference_reload_button")
+        self.reference_reload_button.setMinimumSize(QSize(0, 18))
+        self.reference_reload_button.setStyleSheet(u"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.reference_reload_button.setIcon(icon7)
+        self.reference_reload_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_3.addWidget(self.reference_reload_button)
+
+        self.reference_realtime_reload_checkBox = QCheckBox(self.frame_9)
+        self.reference_realtime_reload_checkBox.setObjectName(u"reference_realtime_reload_checkBox")
+        self.reference_realtime_reload_checkBox.setStyleSheet(u"QCheckBox {\n"
 "\n"
 "        font: 580 10pt \"Segoe UI\";\n"
 "\n"
@@ -521,12 +563,12 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
 
-        self.horizontalLayout_3.addWidget(self.checkBox)
+        self.horizontalLayout_3.addWidget(self.reference_realtime_reload_checkBox)
 
-        self.checkBox_2 = QCheckBox(self.frame_9)
-        self.checkBox_2.setObjectName(u"checkBox_2")
-        self.checkBox_2.setEnabled(True)
-        self.checkBox_2.setStyleSheet(u"QCheckBox {\n"
+        self.realtime_process = QCheckBox(self.frame_9)
+        self.realtime_process.setObjectName(u"realtime_process")
+        self.realtime_process.setEnabled(True)
+        self.realtime_process.setStyleSheet(u"QCheckBox {\n"
 "\n"
 "        font: 580 10pt \"Segoe UI\";\n"
 "\n"
@@ -554,7 +596,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
 
-        self.horizontalLayout_3.addWidget(self.checkBox_2)
+        self.horizontalLayout_3.addWidget(self.realtime_process)
 
 
         self.verticalLayout_10.addWidget(self.frame_9)
@@ -583,16 +625,47 @@ class Ui_BatchCreator_MainWindow(object):
         self.dockWidget.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Explorer", None))
         self.file_groupbox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"File", None))
         self.open_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Open", None))
+#if QT_CONFIG(tooltip)
+        self.save_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Sacing curent file (Ctrl + S)</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.save_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Save", None))
+#if QT_CONFIG(shortcut)
+        self.save_button.setShortcut(QCoreApplication.translate("BatchCreator_MainWindow", u"Ctrl+S", None))
+#endif // QT_CONFIG(shortcut)
+#if QT_CONFIG(tooltip)
+        self.create_file.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Creaating new file according to selected folder.</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.create_file.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Create", None))
         self.process_groupbox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Process", None))
+#if QT_CONFIG(tooltip)
+        self.process_options_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Opens a window with process options</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.process_options_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Options", None))
+#if QT_CONFIG(tooltip)
+        self.return_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Deletes file that were generated by process. Expection is reference</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.return_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Return", None))
+#if QT_CONFIG(tooltip)
+        self.process_all_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Generates files depending on the process options.</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.process_all_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Process", None))
         self.extension_lineEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"File extension (vmdl, vmat etc).", None))
         self.referencing_groupbox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Referencing", None))
-        self.process_options_button_4.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Select", None))
-        self.checkBox.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Realtime", None))
-        self.checkBox_2.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Realtime process", None))
+#if QT_CONFIG(tooltip)
+        self.select_reference_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Select reference file, the reference file loads in the content field. To reload referenced file click Reload button.</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.select_reference_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Select", None))
+#if QT_CONFIG(tooltip)
+        self.reference_reload_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Reloads referenced file content</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.reference_reload_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Reload", None))
+#if QT_CONFIG(tooltip)
+        self.reference_realtime_reload_checkBox.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Always releads referenced file</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.reference_realtime_reload_checkBox.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Realtime reload", None))
+#if QT_CONFIG(tooltip)
+        self.realtime_process.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>After anychanges in the editor or in referenced file process action will start.</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.realtime_process.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Realtime process", None))
     # retranslateUi
 

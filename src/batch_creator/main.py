@@ -15,7 +15,7 @@ from src.explorer.main import Explorer
 from src.qt_styles.common import qt_stylesheet_button, qt_stylesheet_checkbox
 from src.batch_creator.objects import default_file
 from src.batch_creator.dialog import BatchCreatorProcessDialog
-from src.batch_creator.process import *
+from src.batch_creator.process import perform_batch_processing
 
 
 class BatchCreatorMainWindow(QMainWindow):
@@ -24,8 +24,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
 
-        self.current_file_path = None
-        self.opened_file = None
+        self.current_file = None
         self.process_data = {}
         self.created_files = []
 
@@ -142,7 +141,7 @@ class BatchCreatorMainWindow(QMainWindow):
         event.accept()
 
     def update_editor_visibility(self):
-        if self.opened_file is not None:
+        if self.current_file is not None:
             self.ui.editor_widgets.show()
             self.ui.referencing_groupbox.setDisabled(False)
             self.ui.process_groupbox.setDisabled(False)
@@ -154,8 +153,8 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.label_editor_placeholder.show()
 
     def update_explorer_title(self):
-        if self.opened_file:
-            folder_name = os.path.basename(self.opened_file)
+        if self.current_file:
+            folder_name = os.path.basename(self.current_file)
             self.ui.dockWidget.setWindowTitle(f"Explorer ({folder_name})")
         else:
             self.ui.dockWidget.setWindowTitle("Explorer")
@@ -181,10 +180,10 @@ class BatchCreatorMainWindow(QMainWindow):
             file_path = self.explorer.model.filePath(index)
             base_name = os.path.basename(os.path.normpath(file_path))
             print(f"Opened File: {base_name}")
-            self.current_file_path = file_path if not self.explorer.model.isDir(index) else None
+            self.current_file = file_path if not self.explorer.model.isDir(index) else None
         else:
             self.relative_path = None
-            self.current_file_path = None
+            self.current_file = None
         self.update_explorer_title()
 
     def initialize_file(self):
@@ -213,10 +212,10 @@ class BatchCreatorMainWindow(QMainWindow):
             print(f"Failed to create batch file: {e}")
 
     def save_file(self):
-        if self.current_file_path:
+        if self.current_file:
             content = self.ui.kv3_QplainTextEdit.toPlainText()
             extension = self.ui.extension_lineEdit.text()
-            self.write_batch_file(self.current_file_path, content, self.process_data, extension)
+            self.write_batch_file(self.current_file, content, self.process_data, extension)
         else:
             print("No file is currently opened to save.")
 
@@ -237,7 +236,7 @@ class BatchCreatorMainWindow(QMainWindow):
         if indexes:
             index = indexes[0]
             file_path = self.explorer.model.filePath(index)
-            self.current_file_path = file_path
+            self.current_file = file_path
             if not self.explorer.model.isDir(index):
                 if os.path.splitext(file_path)[1] != ".hbat":
                     msg_box = QMessageBox(self)
@@ -273,7 +272,6 @@ class BatchCreatorMainWindow(QMainWindow):
 
             self.ui.kv3_QplainTextEdit.setPlainText(content)
             self.ui.extension_lineEdit.setText(extension)
-            self.opened_file = file_path
             self.update_explorer_title()
             print(f"File opened from: {file_path}")
         except Exception as e:
@@ -283,7 +281,7 @@ class BatchCreatorMainWindow(QMainWindow):
         if not hasattr(self, 'process_dialog') or not self.process_dialog.isVisible():
             self.process_dialog = BatchCreatorProcessDialog(
                 process=self.process_data,
-                current_file_path=self.current_file_path,
+                current_file=self.current_file,
                 parent=self,
                 process_all=self.process_all_files
             )
@@ -291,8 +289,8 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def process_all_files(self):
         self.save_file()
-        created_files = self.perform_batch_processing(
-            current_path_file=self.current_file_path,
+        created_files = perform_batch_processing(
+            file_path=self.current_file,
             process=self.process_data,
             preview=False
         )
@@ -300,80 +298,13 @@ class BatchCreatorMainWindow(QMainWindow):
         if created_files:
             self.ui.return_button.setEnabled(True)
 
-    def perform_batch_processing(self, current_path_file, process, preview):
-        batch_directory = os.path.splitext(current_path_file)[0]
-        base_directory = os.path.join(self.cs2_path, 'content', 'csgo_addons', self.addon_name)
-        relative_directory = os.path.relpath(batch_directory, base_directory).replace('\\', '/')
-        algorithm = int(process.get('algorithm', 0))
-        file_extension = self.get_file_extension(current_path_file)
-        ignore_extensions = [ext.strip() for ext in process.get('ignore_extensions', '').split(',')]
-
-        files_to_process = self.search_files(batch_directory, algorithm, ignore_extensions, process) if process.get('load_from_the_folder') else process.get('custom_files', [])
-        created_files = []
-
-        if preview:
-            return self.preview_processing_files(files_to_process, batch_directory, base_directory, file_extension, process)
-        else:
-            output_directory = batch_directory if process.get('output_to_the_folder') else os.path.join(
-                self.cs2_path, 'content', 'csgo_addons', self.addon_name, process.get('custom_output', '')
-            )
-            self.execute_file_creation(files_to_process, output_directory, relative_directory, file_extension, created_files)
-            return created_files
-
-    def get_file_extension(self, file_path):
-        try:
-            with open(file_path, 'r') as file:
-                data = json.load(file)
-                return data.get('FILE', {}).get('extension', 'vmdl')
-        except (json.JSONDecodeError, FileNotFoundError):
-            return 'vmdl'
-
-    def execute_file_creation(self, files, output_path, relative_path, extension, created_files):
-        try:
-            with open(self.current_file_path, 'r') as file:
-                data = json.load(file)
-                content_template = data.get('FILE', {}).get('content', '')
-        except Exception as e:
-            QMessageBox.critical(self, "Processing Error", f"Error reading batch file: {e}")
-            return
-
-        for file_name in files:
-            processed_content = content_template.replace("#$FOLDER_PATH$#", relative_path).replace("#$ASSET_NAME$#", file_name)
-            output_file_path = os.path.join(output_path, f"{file_name}.{extension}")
-            try:
-                with open(output_file_path, 'w') as output_file:
-                    output_file.write(processed_content)
-                print(f'File created: {output_file_path}')
-                created_files.append(output_file_path)
-            except Exception as e:
-                print(f"Failed to create file {output_file_path}: {e}")
-
-    def preview_processing_files(self, files, batch_directory, base_directory, extension, process):
-        if process.get('load_from_the_folder'):
-            files_list_out = []
-            for root, dirs, files_in_dir in os.walk(batch_directory):
-                for file in files_in_dir:
-                    if file not in process.get('ignore_list', []) and not any(file.endswith(ext) for ext in process.get('ignore_extensions', '').split(',')):
-                        files_list_out.append(file)
-            return files, files_list_out, extension, batch_directory
-        else:
-            return files, None, extension, batch_directory
-
-    def search_files(self, directory, algorithm, ignore_extensions, process):
-        ignore_list = [item.strip() for item in process.get('ignore_list', '').split(',')]
-        files_found = []
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                if file not in ignore_list and not any(file.endswith(ext) for ext in ignore_extensions):
-                    base_name, _ = os.path.splitext(file)
-                    files_found.append(base_name)
-
-        if algorithm == 0:
-            return extract_base_names(files_found)
-        elif algorithm == 1:
-            return extract_base_names_underscore(files_found)
-        else:
-            return []
+    def get_update_previews_files(self):
+        processed_files = perform_batch_processing(
+            file_path=self.current_file,
+            process=self.process_data,
+            preview=True
+        )
+        return processed_files
 
     def revert_created_files(self):
         for file_path in self.created_files:
@@ -384,5 +315,3 @@ class BatchCreatorMainWindow(QMainWindow):
                 print(f"Error removing file {file_path}: {e}")
         self.created_files.clear()
         self.ui.return_button.setEnabled(False)
-
-
