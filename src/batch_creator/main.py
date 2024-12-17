@@ -1,8 +1,12 @@
 import json
 import os
+
+from PyQt5.QtWidgets import QVBoxLayout
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDropEvent, QTextCursor, QAction, QIcon
+from pyexpat import native_encoding
+
 from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
 from src.preferences import get_addon_name, get_cs2_path
 from src.batch_creator.highlighter import CustomHighlighter
@@ -10,6 +14,8 @@ from src.explorer.main import Explorer
 from src.batch_creator.objects import default_file
 from src.batch_creator.dialog import BatchCreatorProcessDialog
 from src.batch_creator.process import perform_batch_processing
+from src.batch_creator.property.frame import PropertyFrame
+from src.batch_creator.property.objects import *
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -36,6 +42,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.setAcceptDrops(True)
 
         self.init_editor_context_menu()
+        self.init_replacements_editor()
         self.update_editor_visibility()
         self.toggle_monitoring()
 
@@ -52,6 +59,14 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.monitoring_start_toggle_button.clicked.connect(self.toggle_monitoring)
         self.ui.return_button.setEnabled(False)
 
+    # Replacements editor
+    def init_replacements_editor(self):
+        self.ui.new_replacement_button.clicked.connect(self.new_replacement)
+        self.replacements_layout = self.ui.verticalLayout_11
+
+    def new_replacement(self):
+        new_instance = PropertyFrame(widget_list=self.replacements_layout, _data=default_replacement)
+        self.replacements_layout.insertWidget(0, new_instance)
 
     # Editor functions
 
