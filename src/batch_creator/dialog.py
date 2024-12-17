@@ -1,29 +1,24 @@
-import json
 import os
 from PySide6.QtWidgets import (
-    QMainWindow, QApplication, QDialog, QFileDialog, QMessageBox,
-    QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem,
-    QMenu, QPlainTextEdit
+    QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem
 )
-from PySide6.QtCore import Qt, QMimeData
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction, QTextCursor
-from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
 from src.batch_creator.ui_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path
-from src.batch_creator.highlighter import CustomHighlighter
-from src.explorer.main import Explorer
-from src.qt_styles.common import qt_stylesheet_button, qt_stylesheet_checkbox
-from src.batch_creator.objects import default_file
+from src.qt_styles.common import qt_stylesheet_button
+from src.batch_creator.process import perform_batch_processing
+
 
 class BatchCreatorProcessDialog(QDialog):
-    def __init__(self, process, current_file_path, parent=None, process_all=None):
+    def __init__(self, process, current_file, parent=None, process_all=None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_process_Dialog()
         self.ui.setupUi(self)
         self.setModal(False)
 
         self.process_data = process
-        self.current_file_path = current_file_path
+        self.current_file = current_file
         self.process_all = process_all
         self.parent_window = parent
 
@@ -72,9 +67,7 @@ class BatchCreatorProcessDialog(QDialog):
         self.update_previews()
 
     def select_files_to_process(self):
-        file_paths, _ = QFileDialog.getOpenFileNames(
-            self, "Select Files to Process", "", "All Files (*)"
-        )
+        file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Files to Process", "", "All Files (*)")
         if file_paths:
             base_names = [os.path.basename(file_path) for file_path in file_paths]
             self.process_data['custom_files'] = base_names
@@ -82,24 +75,22 @@ class BatchCreatorProcessDialog(QDialog):
 
     def choose_output_directory(self):
         default_output = os.path.join(self.parent_window.cs2_path, 'content', 'csgo_addons', self.parent_window.addon_name)
-        selected_directory = QFileDialog.getExistingDirectory(
-            self, "Select Output Directory", default_output, options=QFileDialog.ShowDirsOnly
-        )
+        selected_directory = QFileDialog.getExistingDirectory(self, "Select Output Directory", default_output, options=QFileDialog.ShowDirsOnly)
         if selected_directory:
             self.process_data['custom_output'] = os.path.relpath(selected_directory, default_output)
             self.update_previews()
 
     def process_all_files(self):
         self.parent_window.perform_batch_processing(
-            current_path_file=self.current_file_path,
+            current_path_file=self.current_file,
             process=self.process_data,
             preview=False
         )
         self.close()
 
     def update_previews(self):
-        processed_files = self.parent_window.perform_batch_processing(
-            current_path_file=self.current_file_path,
+        processed_files = perform_batch_processing(
+            file_path=self.current_file,
             process=self.process_data,
             preview=True
         )
@@ -138,7 +129,10 @@ class BatchCreatorProcessDialog(QDialog):
         remove_button.setMaximumWidth(64)
 
         def ignore_file():
-            self.process_data['ignore_list'] += f",{file_name}"
+            current_ignore_list = self.process_data.get('ignore_list', '')
+            updated_ignore_list = f"{current_ignore_list},{file_name}".strip(',')
+            self.process_data['ignore_list'] = updated_ignore_list
+            self.ui.ignore_files_lineEdit.setText(updated_ignore_list)
             self.update_previews()
 
         remove_button.clicked.connect(ignore_file)
