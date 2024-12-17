@@ -50,15 +50,13 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.layout.setContentsMargins(0, 0, 0, 0)
         self.relative_path = None
         self.setAcceptDrops(True)
-        self.update_top_status_line()
 
         self.initialize_connections()
         self.initialize_context_menu()
         self.update_editor_visibility()
 
     def initialize_connections(self):
-        self.explorer.tree.selectionModel().selectionChanged.connect(self.update_status_line)
-        self.ui.create_file.clicked.connect(self.initialize_file)
+        self.ui.create_file.clicked.connect(self.create_file)
         self.ui.save_button.clicked.connect(self.save_file)
         self.ui.open_button.clicked.connect(self.open_file)
         self.ui.process_all_button.clicked.connect(self.process_all_files)
@@ -160,44 +158,35 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.dockWidget.setWindowTitle("Explorer")
         self.update_editor_visibility()
 
-    def update_status_line(self):
-        try:
-            index = self.explorer.tree.selectionModel().selectedIndexes()[0]
-            if self.explorer.model.isDir(index):
-                file_path = self.explorer.model.filePath(index)
-                root_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
-                relative_path = os.path.relpath(file_path, root_directory)
-                self.relative_path = os.path.normpath(relative_path)
-            else:
-                self.relative_path = None
-        except IndexError:
-            self.relative_path = None
+    def get_relative_path(self, file_path):
+        root_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
+        relative_path = os.path.relpath(file_path, root_directory)
+        return relative_path
 
-    def update_top_status_line(self):
-        indexes = self.explorer.tree.selectionModel().selectedIndexes()
-        if indexes:
-            index = indexes[0]
-            file_path = self.explorer.model.filePath(index)
-            base_name = os.path.basename(os.path.normpath(file_path))
-            print(f"Opened File: {base_name}")
-            self.current_file = file_path if not self.explorer.model.isDir(index) else None
-        else:
-            self.relative_path = None
-            self.current_file = None
-        self.update_explorer_title()
+    def create_file(self):
+        index = self.explorer.tree.currentIndex()
+        if not index.isValid():
+            QMessageBox.warning(self, "Invalid Path", "Select a valid folder.")
+            return
 
-    def initialize_file(self):
-        if self.relative_path is None:
-            QMessageBox.warning(self, "Invalid Path", "No path selected. Please select a valid folder.")
+        model = self.explorer.tree.model()
+        file_path = model.filePath(index)
+
+        if not model.isDir(index):
+            QMessageBox.warning(self, "Invalid Selection", "Please select a folder.")
             return
 
         base_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
-        selected_path = os.path.join(base_directory, self.relative_path)
-        file_name = os.path.basename(os.path.splitext(self.relative_path)[0])
-        directory_path = os.path.dirname(os.path.normpath(selected_path))
+        selected_path = os.path.join(base_directory, file_path)
+        file_name = os.path.splitext(os.path.basename(file_path))[0]
 
-        if file_name == '.':
+        if not file_name:
             QMessageBox.warning(self, "Invalid Path", "Select a valid folder.")
+            return
+
+        directory_path = os.path.dirname(os.path.normpath(selected_path))
+        if not os.path.exists(directory_path):
+            QMessageBox.warning(self, "Invalid Path", "The directory does not exist.")
             return
 
         batch_file_path = os.path.join(directory_path, f"{file_name}.hbat")
@@ -248,21 +237,21 @@ class BatchCreatorMainWindow(QMainWindow):
                     response = msg_box.exec()
 
                     if response == 2:
-                        self.display_file_content(file_path)
-                        self.update_top_status_line()
+                        self.load_file(file_path)
                     else:
                         return
                 try:
-                    self.display_file_content(file_path)
+                    self.load_file(file_path)
                 except Exception as e:
                     QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
             else:
                 QMessageBox.information(self, "Folder Selected", "You have selected a folder. Please select a file to open.")
         else:
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
-        self.update_top_status_line()
+        self.update_explorer_title()
+        self.update_editor_visibility()
 
-    def display_file_content(self, file_path):
+    def load_file(self, file_path):
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
