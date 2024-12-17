@@ -55,7 +55,6 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.initialize_connections()
         self.initialize_context_menu()
-        self.initialize_shortcuts()
         self.update_editor_visibility()
 
     def initialize_connections(self):
@@ -98,10 +97,6 @@ class BatchCreatorMainWindow(QMainWindow):
             drag = QDrag(self)
             drag.setMimeData(mime_data)
             drag.exec(Qt.MoveAction)
-
-    def initialize_shortcuts(self):
-        save_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
-        save_shortcut.activated.connect(self.save_file)
 
     def show_custom_context_menu(self, position):
         menu = self.ui.kv3_QplainTextEdit.createStandardContextMenu()
@@ -206,7 +201,7 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.warning(self, "Invalid Path", "Select a valid folder.")
             return
 
-        batch_file_path = os.path.join(directory_path, f"{file_name}.h5t_batch")
+        batch_file_path = os.path.join(directory_path, f"{file_name}.hbat")
         self.create_batch_file(batch_file_path)
 
     def create_batch_file(self, file_path):
@@ -244,11 +239,11 @@ class BatchCreatorMainWindow(QMainWindow):
             file_path = self.explorer.model.filePath(index)
             self.current_file_path = file_path
             if not self.explorer.model.isDir(index):
-                if os.path.splitext(file_path)[1] != ".h5t_batch":
+                if os.path.splitext(file_path)[1] != ".hbat":
                     msg_box = QMessageBox(self)
                     msg_box.setIcon(QMessageBox.Warning)
                     msg_box.setWindowTitle("Invalid File Extension")
-                    msg_box.setText("Please select a file with the .h5t_batch extension.")
+                    msg_box.setText("Please select a file with the .hbat extension.")
                     msg_box.addButton("Open Anyway", QMessageBox.AcceptRole)
                     msg_box.addButton("Cancel", QMessageBox.RejectRole)
                     response = msg_box.exec()
@@ -374,17 +369,11 @@ class BatchCreatorMainWindow(QMainWindow):
                     files_found.append(base_name)
 
         if algorithm == 0:
-            return self.extract_base_names(files_found)
+            return extract_base_names(files_found)
         elif algorithm == 1:
-            return self.extract_base_names_underscore(files_found)
+            return extract_base_names_underscore(files_found)
         else:
             return []
-
-    def extract_base_names(self, names):
-        return set(name.split('_')[0] for name in names)
-
-    def extract_base_names_underscore(self, names):
-        return set(name.rsplit('_', 1)[0] if '_' in name else name for name in names)
 
     def revert_created_files(self):
         for file_path in self.created_files:
