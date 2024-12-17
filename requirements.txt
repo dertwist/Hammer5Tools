@@ -13,3 +13,4 @@ tqdm
 colorama
 pygetwindow
 watchdog
+json-stream
