@@ -81,12 +81,7 @@ class BatchCreatorProcessDialog(QDialog):
             self.update_previews()
 
     def process_all_files(self):
-        self.parent_window.perform_batch_processing(
-            current_path_file=self.current_file,
-            process=self.process_data,
-            preview=False
-        )
-        self.close()
+        self.process_all()
 
     def update_previews(self):
         processed_files = perform_batch_processing(
