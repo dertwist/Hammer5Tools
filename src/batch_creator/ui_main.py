@@ -609,6 +609,72 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.dockWidget.setWidget(self.dockWidgetContents)
         BatchCreator_MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget)
+        self.dockWidget_2 = QDockWidget(BatchCreator_MainWindow)
+        self.dockWidget_2.setObjectName(u"dockWidget_2")
+        self.dockWidget_2.setMinimumSize(QSize(354, 200))
+        self.dockWidget_2.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.dockWidgetContents_2 = QWidget()
+        self.dockWidgetContents_2.setObjectName(u"dockWidgetContents_2")
+        self.verticalLayout_8 = QVBoxLayout(self.dockWidgetContents_2)
+        self.verticalLayout_8.setObjectName(u"verticalLayout_8")
+        self.verticalLayout_8.setContentsMargins(0, 0, 0, -1)
+        self.monitoring_content = QVBoxLayout()
+        self.monitoring_content.setObjectName(u"monitoring_content")
+        self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.monitoring_content.addItem(self.verticalSpacer_2)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.monitoring_content.addItem(self.horizontalSpacer)
+
+
+        self.verticalLayout_8.addLayout(self.monitoring_content)
+
+        self.monitoring_start_toggle_button = QPushButton(self.dockWidgetContents_2)
+        self.monitoring_start_toggle_button.setObjectName(u"monitoring_start_toggle_button")
+        self.monitoring_start_toggle_button.setMinimumSize(QSize(0, 18))
+        self.monitoring_start_toggle_button.setStyleSheet(u"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
+        icon8 = QIcon()
+        icon8.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.monitoring_start_toggle_button.setIcon(icon8)
+        self.monitoring_start_toggle_button.setIconSize(QSize(20, 20))
+
+        self.verticalLayout_8.addWidget(self.monitoring_start_toggle_button)
+
+        self.dockWidget_2.setWidget(self.dockWidgetContents_2)
+        BatchCreator_MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_2)
 
         self.retranslateUi(BatchCreator_MainWindow)
 
@@ -667,5 +733,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.realtime_process.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>After anychanges in the editor or in referenced file process action will start.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.realtime_process.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Realtime process", None))
+        self.dockWidget_2.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Monitoring", None))
+        self.monitoring_start_toggle_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Start", None))
     # retranslateUi
 
