@@ -1,10 +1,8 @@
 import json
 import os
-from PySide6.QtWidgets import (
-    QMainWindow, QApplication, QMessageBox, QPlainTextEdit
-)
+from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import Qt, QMimeData
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QTextCursor,QAction
+from PySide6.QtGui import QDropEvent, QTextCursor, QAction, QIcon
 from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
 from src.preferences import get_addon_name, get_cs2_path
 from src.batch_creator.highlighter import CustomHighlighter
@@ -12,7 +10,6 @@ from src.explorer.main import Explorer
 from src.batch_creator.objects import default_file
 from src.batch_creator.dialog import BatchCreatorProcessDialog
 from src.batch_creator.process import perform_batch_processing
-
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -23,42 +20,41 @@ class BatchCreatorMainWindow(QMainWindow):
         self.current_file = None
         self.process_data = default_file['process'].copy()
         self.created_files = []
+        self.monitoring_running_state = False
 
         self.cs2_path = get_cs2_path()
         self.addon_name = get_addon_name()
 
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
 
-        explorer_directory = os.path.join(
-            self.cs2_path,
-            "content",
-            "csgo_addons",
-            self.addon_name
-        )
-        self.explorer = Explorer(
-            parent=self.ui.left_vertical_frame,
-            tree_directory=explorer_directory,
-            addon=self.addon_name,
-            editor_name='BatchCreator'
-        )
+        explorer_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
+        self.explorer = Explorer(parent=self.ui.left_vertical_frame, tree_directory=explorer_directory, addon=self.addon_name, editor_name='BatchCreator')
 
         self.ui.layout.addWidget(self.explorer.frame)
         self.ui.layout.setContentsMargins(0, 0, 0, 0)
-        self.relative_path = None
         self.setAcceptDrops(True)
 
-        self.init_context_menu()
+        self.init_editor_context_menu()
         self.update_editor_visibility()
 
+        self.connect_signals()
+
+    def connect_signals(self):
+        """Connect UI signals to their respective slots."""
         self.ui.create_file.clicked.connect(self.create_file)
         self.ui.save_button.clicked.connect(self.save_file)
         self.ui.open_button.clicked.connect(self.open_file)
         self.ui.process_all_button.clicked.connect(self.process_all_files)
         self.ui.process_options_button.clicked.connect(self.show_process_options)
         self.ui.return_button.clicked.connect(self.revert_created_files)
+        self.ui.monitoring_start_toggle_button.clicked.connect(self.toggle_monitoring)
         self.ui.return_button.setEnabled(False)
 
-    def init_context_menu(self):
+
+    # Editor functions
+
+    def init_editor_context_menu(self):
+        """Initialize context menu for the editor."""
         self.folder_path_action = QAction("Insert Folder Path", self)
         self.folder_path_action.triggered.connect(lambda: self.insert_placeholder("#$FOLDER_PATH$#"))
 
@@ -69,27 +65,8 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.show_custom_context_menu)
         self.ui.kv3_QplainTextEdit.dropEvent = self.handle_plain_text_drop
 
-    def handle_drag_enter(self, event: QDragEnterEvent):
-        if event.mimeData().hasText():
-            event.acceptProposedAction()
-
-    def handle_label_drop(self, event: QDropEvent, label_widget):
-        if event.mimeData().hasText():
-            inserted_text = event.mimeData().text()
-            cursor = self.ui.kv3_QplainTextEdit.textCursor()
-            cursor.insertText(inserted_text)
-            event.acceptProposedAction()
-
-    def handle_label_mouse_press(self, event, placeholder_type):
-        if event.button() == Qt.LeftButton:
-            placeholder = f"#${placeholder_type.upper().replace(' ', '_')}$#"
-            mime_data = QMimeData()
-            mime_data.setText(placeholder)
-            drag = QDrag(self)
-            drag.setMimeData(mime_data)
-            drag.exec(Qt.MoveAction)
-
     def show_custom_context_menu(self, position):
+        """Display custom context menu at the given position."""
         menu = self.ui.kv3_QplainTextEdit.createStandardContextMenu()
         menu.setStyleSheet("""
             QMenu {
@@ -107,10 +84,12 @@ class BatchCreatorMainWindow(QMainWindow):
         menu.exec(self.ui.kv3_QplainTextEdit.mapToGlobal(position))
 
     def insert_placeholder(self, placeholder):
+        """Insert a placeholder text into the editor."""
         cursor = self.ui.kv3_QplainTextEdit.textCursor()
         cursor.insertText(placeholder)
 
     def handle_plain_text_drop(self, event: QDropEvent):
+        """Handle file drop into the editor."""
         if event.source() == self:
             return
 
@@ -125,18 +104,17 @@ class BatchCreatorMainWindow(QMainWindow):
         event.accept()
 
     def load_file_content(self, file_path):
+        """Load content from a file into the editor."""
         try:
             with open(file_path, 'r') as file:
                 data = file.read()
-            text_edit = self.ui.kv3_QplainTextEdit
-            cursor = text_edit.textCursor()
-            cursor.select(QTextCursor.Document)
-            cursor.insertText(data)
+            self.ui.kv3_QplainTextEdit.setPlainText(data)
         except Exception as e:
             QMessageBox.critical(self, "File Read Error", f"An error occurred while reading the file: {e}")
 
     def update_editor_visibility(self):
-        if self.current_file is not None:
+        """Update the visibility of editor-related widgets based on the current file state."""
+        if self.current_file:
             self.ui.editor_widgets.show()
             self.ui.referencing_groupbox.setDisabled(False)
             self.ui.process_groupbox.setDisabled(False)
@@ -148,6 +126,7 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.label_editor_placeholder.show()
 
     def update_explorer_title(self):
+        """Update the title of the explorer based on the current file."""
         if self.current_file:
             folder_name = os.path.basename(self.current_file)
             self.ui.dockWidget.setWindowTitle(f"Explorer ({folder_name})")
@@ -156,10 +135,15 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_editor_visibility()
 
     def get_relative_path(self, file_path):
+        """Get the path relative to the addon folder."""
         root_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
         return os.path.relpath(file_path, root_directory)
 
+    # File creations functions
+
+
     def create_file(self):
+        """Create a new file in the selected folder."""
         index = self.explorer.tree.currentIndex()
         if not index.isValid():
             QMessageBox.warning(self, "Invalid Path", "Select a valid folder.")
@@ -189,6 +173,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.write_json_file(batch_file_path, default_file)
 
     def write_json_file(self, file_path, data):
+        """Write data to a JSON file."""
         try:
             with open(file_path, 'w') as file:
                 json.dump(data, file, indent=4)
@@ -197,21 +182,21 @@ class BatchCreatorMainWindow(QMainWindow):
             print(f"Failed to create file: {e}")
 
     def save_file(self):
+        """Save the current file."""
         if self.current_file:
             content = self.ui.kv3_QplainTextEdit.toPlainText()
             self.process_data['extension'] = self.ui.extension_lineEdit.text()
-            self.write_file(self.current_file, content, self.process_data)
+            data = {
+                'file': {'content': content},
+                'process': self.process_data
+            }
+            self.write_json_file(self.current_file, data)
         else:
             print("No file is currently opened to save.")
-
-    def write_file(self, file_path, content, process):
-        data = {
-            'file': {'content': content},
-            'process': process
-        }
-        self.write_json_file(file_path, data)
+    # Open file functions
 
     def open_file(self):
+        """Open a file selected in the explorer."""
         indexes = self.explorer.tree.selectionModel().selectedIndexes()
         if indexes:
             index = indexes[0]
@@ -230,6 +215,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_editor_visibility()
 
     def confirm_open_anyway(self):
+        """Confirm opening a file with an unsupported extension."""
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Warning)
         msg_box.setWindowTitle("Invalid File Extension")
@@ -240,6 +226,7 @@ class BatchCreatorMainWindow(QMainWindow):
         return response == QMessageBox.AcceptRole
 
     def load_file(self, file_path):
+        """Load a file's content into the editor."""
         try:
             with open(file_path, 'r') as file:
                 data = json.load(file)
@@ -253,27 +240,21 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
 
     def show_process_options(self):
+        """Show the process options dialog."""
         if not hasattr(self, 'process_dialog') or not self.process_dialog.isVisible():
-            self.process_dialog = BatchCreatorProcessDialog(
-                process=self.process_data,
-                current_file=self.current_file,
-                parent=self,
-                process_all=self.process_all_files
-            )
+            self.process_dialog = BatchCreatorProcessDialog(process=self.process_data, current_file=self.current_file, parent=self, process_all=self.process_all_files)
             self.process_dialog.show()
 
     def process_all_files(self):
+        """Process all files based on the current settings."""
         self.save_file()
-        created_files = perform_batch_processing(
-            file_path=self.current_file,
-            process=self.process_data,
-            preview=False
-        )
+        created_files = perform_batch_processing(file_path=self.current_file, process=self.process_data, preview=False)
         self.created_files.extend(created_files)
         if created_files:
             self.ui.return_button.setEnabled(True)
 
     def revert_created_files(self):
+        """Delete all files created during processing."""
         for file_path in self.created_files:
             try:
                 os.remove(file_path)
@@ -282,3 +263,9 @@ class BatchCreatorMainWindow(QMainWindow):
                 print(f"Error removing file {file_path}: {e}")
         self.created_files.clear()
         self.ui.return_button.setEnabled(False)
+
+    def toggle_monitoring(self):
+        """Toggle the monitoring state."""
+        self.monitoring_running_state = not self.monitoring_running_state
+        icon_path = ":/valve_common/icons/tools/common/control_stop.png" if self.monitoring_running_state else ":/valve_common/icons/tools/common/control_play.png"
+        self.ui.monitoring_start_toggle_button.setIcon(QIcon(icon_path))
