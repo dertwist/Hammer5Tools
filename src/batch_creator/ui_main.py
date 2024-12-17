@@ -81,7 +81,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.groupBox.setObjectName(u"groupBox")
         self.verticalLayout_11 = QVBoxLayout(self.groupBox)
         self.verticalLayout_11.setObjectName(u"verticalLayout_11")
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalSpacer = QSpacerItem(20, 21, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayout_11.addItem(self.verticalSpacer)
 
@@ -167,7 +167,11 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
 "\n"
-"    }")
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
         icon = QIcon()
         icon.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.open_button.setIcon(icon)
@@ -205,7 +209,11 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
 "\n"
-"    }")
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
         icon1 = QIcon()
         icon1.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.save_button.setIcon(icon1)
@@ -243,7 +251,11 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
 "\n"
-"    }")
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
         icon2 = QIcon()
         icon2.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.create_file.setIcon(icon2)
@@ -300,7 +312,11 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
 "\n"
-"    }")
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
         icon3 = QIcon()
         icon3.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.process_options_button.setIcon(icon3)
@@ -382,7 +398,11 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
 "\n"
-"    }")
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
         icon5 = QIcon()
         icon5.addFile(u":/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.process_all_button.setIcon(icon5)
@@ -444,7 +464,11 @@ class Ui_BatchCreator_MainWindow(object):
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
 "\n"
-"    }")
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
         icon6 = QIcon()
         icon6.addFile(u":/icons/file_present_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.process_options_button_4.setIcon(icon6)
@@ -490,12 +514,18 @@ class Ui_BatchCreator_MainWindow(object):
 "    }\n"
 "    QCheckBox:pressed {\n"
 "\n"
-"    }")
+"    }\n"
+"\n"
+"QCheckBox:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
 
         self.horizontalLayout_3.addWidget(self.checkBox)
 
         self.checkBox_2 = QCheckBox(self.frame_9)
         self.checkBox_2.setObjectName(u"checkBox_2")
+        self.checkBox_2.setEnabled(True)
         self.checkBox_2.setStyleSheet(u"QCheckBox {\n"
 "\n"
 "        font: 580 10pt \"Segoe UI\";\n"
@@ -517,7 +547,12 @@ class Ui_BatchCreator_MainWindow(object):
 "    }\n"
 "    QCheckBox:pressed {\n"
 "\n"
-"    }")
+"    }\n"
+"\n"
+"QCheckBox:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
 
         self.horizontalLayout_3.addWidget(self.checkBox_2)
 
@@ -544,7 +579,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.label_editor_placeholder.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Please, open a file for editing", None))
         self.kv3_QplainTextEdit.setPlainText("")
         self.kv3_QplainTextEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Content", None))
-        self.groupBox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"GroupBox", None))
+        self.groupBox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Replacements", None))
         self.dockWidget.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Explorer", None))
         self.file_groupbox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"File", None))
         self.open_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Open", None))

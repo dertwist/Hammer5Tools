@@ -312,7 +312,11 @@
         margin-left: 2px;
         margin-right: 2px;
 
-    }</string>
+    }
+QPushButton:disabled {
+color: gray;
+ background-color: #2C2C2C;
+}</string>
                 </property>
                 <property name="text">
                  <string>Open</string>
@@ -365,7 +369,11 @@
         margin-left: 2px;
         margin-right: 2px;
 
-    }</string>
+    }
+QPushButton:disabled {
+color: gray;
+ background-color: #2C2C2C;
+}</string>
                 </property>
                 <property name="text">
                  <string>Save</string>
@@ -418,7 +426,11 @@
         margin-left: 2px;
         margin-right: 2px;
 
-    }</string>
+    }
+QPushButton:disabled {
+color: gray;
+ background-color: #2C2C2C;
+}</string>
                 </property>
                 <property name="text">
                  <string>Create</string>
@@ -522,7 +534,11 @@
         margin-left: 2px;
         margin-right: 2px;
 
-    }</string>
+    }
+QPushButton:disabled {
+color: gray;
+ background-color: #2C2C2C;
+}</string>
                 </property>
                 <property name="text">
                  <string>Options</string>
@@ -638,7 +654,11 @@ color: gray;
         margin-left: 2px;
         margin-right: 2px;
 
-    }</string>
+    }
+QPushButton:disabled {
+color: gray;
+ background-color: #2C2C2C;
+}</string>
                 </property>
                 <property name="text">
                  <string>Process</string>
@@ -749,7 +769,11 @@ color: gray;
         margin-left: 2px;
         margin-right: 2px;
 
-    }</string>
+    }
+QPushButton:disabled {
+color: gray;
+ background-color: #2C2C2C;
+}</string>
                 </property>
                 <property name="text">
                  <string>Select</string>
@@ -817,7 +841,12 @@ color: gray;
     }
     QCheckBox:pressed {
 
-    }</string>
+    }
+
+QCheckBox:disabled {
+color: gray;
+ background-color: #2C2C2C;
+}</string>
                 </property>
                 <property name="text">
                  <string>Realtime</string>
@@ -826,6 +855,9 @@ color: gray;
               </item>
               <item>
                <widget class="QCheckBox" name="checkBox_2">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="styleSheet">
                  <string notr="true">QCheckBox {
 
@@ -848,7 +880,12 @@ color: gray;
     }
     QCheckBox:pressed {
 
-    }</string>
+    }
+
+QCheckBox:disabled {
+color: gray;
+ background-color: #2C2C2C;
+}</string>
                 </property>
                 <property name="text">
                  <string>Realtime process</string>
