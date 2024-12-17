@@ -33,7 +33,6 @@ class PropertyMethods:
 
     @staticmethod
     def dropEvent(self, event):
-        print(event)
         if event.source() == self:
             return
 

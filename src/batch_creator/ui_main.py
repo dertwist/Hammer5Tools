@@ -17,8 +17,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDockWidget, QFrame,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QMainWindow, QPlainTextEdit, QPushButton, QSizePolicy,
-    QSpacerItem, QSplitter, QVBoxLayout, QWidget)
+    QMainWindow, QPlainTextEdit, QPushButton, QScrollArea,
+    QSizePolicy, QSpacerItem, QSplitter, QVBoxLayout,
+    QWidget)
 import resources_rc
 
 class Ui_BatchCreator_MainWindow(object):
@@ -29,10 +30,10 @@ class Ui_BatchCreator_MainWindow(object):
         BatchCreator_MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
         self.centralwidget = QWidget(BatchCreator_MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.horizontalLayout_7 = QHBoxLayout(self.centralwidget)
-        self.horizontalLayout_7.setSpacing(0)
-        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
-        self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_9 = QVBoxLayout(self.centralwidget)
+        self.verticalLayout_9.setSpacing(0)
+        self.verticalLayout_9.setObjectName(u"verticalLayout_9")
+        self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
         self.frame = QFrame(self.centralwidget)
         self.frame.setObjectName(u"frame")
         self.frame.setFrameShape(QFrame.Shape.StyledPanel)
@@ -66,10 +67,11 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.editor_widgets = QFrame(self.frame_4)
         self.editor_widgets.setObjectName(u"editor_widgets")
-        self.editor_widgets.setFrameShape(QFrame.Shape.StyledPanel)
+        self.editor_widgets.setFrameShape(QFrame.Shape.NoFrame)
         self.editor_widgets.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_6 = QVBoxLayout(self.editor_widgets)
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
         self.splitter = QSplitter(self.editor_widgets)
         self.splitter.setObjectName(u"splitter")
         self.splitter.setOrientation(Qt.Orientation.Vertical)
@@ -77,15 +79,89 @@ class Ui_BatchCreator_MainWindow(object):
         self.kv3_QplainTextEdit.setObjectName(u"kv3_QplainTextEdit")
         self.kv3_QplainTextEdit.setStyleSheet(u"")
         self.splitter.addWidget(self.kv3_QplainTextEdit)
-        self.groupBox = QGroupBox(self.splitter)
-        self.groupBox.setObjectName(u"groupBox")
-        self.verticalLayout_11 = QVBoxLayout(self.groupBox)
+        self.frame_5 = QFrame(self.splitter)
+        self.frame_5.setObjectName(u"frame_5")
+        self.frame_5.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_5.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_12 = QVBoxLayout(self.frame_5)
+        self.verticalLayout_12.setObjectName(u"verticalLayout_12")
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(-1, 0, -1, -1)
+        self.label_2 = QLabel(self.frame_5)
+        self.label_2.setObjectName(u"label_2")
+
+        self.horizontalLayout_2.addWidget(self.label_2)
+
+        self.new_replacement_button = QPushButton(self.frame_5)
+        self.new_replacement_button.setObjectName(u"new_replacement_button")
+        self.new_replacement_button.setMinimumSize(QSize(0, 32))
+        self.new_replacement_button.setMaximumSize(QSize(128, 16777215))
+        self.new_replacement_button.setStyleSheet(u"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
+        icon = QIcon()
+        icon.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.new_replacement_button.setIcon(icon)
+        self.new_replacement_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.new_replacement_button)
+
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_2.addItem(self.horizontalSpacer_2)
+
+
+        self.verticalLayout_12.addLayout(self.horizontalLayout_2)
+
+        self.scrollArea = QScrollArea(self.frame_5)
+        self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setMinimumSize(QSize(0, 128))
+        self.scrollArea.setWidgetResizable(True)
+        self.replacements_layout = QWidget()
+        self.replacements_layout.setObjectName(u"replacements_layout")
+        self.replacements_layout.setGeometry(QRect(0, 0, 346, 126))
+        self.verticalLayout_11 = QVBoxLayout(self.replacements_layout)
         self.verticalLayout_11.setObjectName(u"verticalLayout_11")
-        self.verticalSpacer = QSpacerItem(20, 21, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayout_11.addItem(self.verticalSpacer)
 
-        self.splitter.addWidget(self.groupBox)
+        self.scrollArea.setWidget(self.replacements_layout)
+
+        self.verticalLayout_12.addWidget(self.scrollArea)
+
+        self.splitter.addWidget(self.frame_5)
 
         self.verticalLayout_6.addWidget(self.splitter)
 
@@ -96,7 +172,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout.addWidget(self.frame_4)
 
 
-        self.horizontalLayout_7.addWidget(self.frame)
+        self.verticalLayout_9.addWidget(self.frame)
 
         BatchCreator_MainWindow.setCentralWidget(self.centralwidget)
         self.dockWidget = QDockWidget(BatchCreator_MainWindow)
@@ -172,9 +248,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon = QIcon()
-        icon.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_button.setIcon(icon)
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_button.setIcon(icon1)
         self.open_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.open_button)
@@ -214,9 +290,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_button.setIcon(icon1)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_button.setIcon(icon2)
         self.save_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.save_button)
@@ -256,9 +332,7 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.create_file.setIcon(icon2)
+        self.create_file.setIcon(icon)
         self.create_file.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.create_file)
@@ -687,7 +761,11 @@ class Ui_BatchCreator_MainWindow(object):
         self.label_editor_placeholder.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Please, open a file for editing", None))
         self.kv3_QplainTextEdit.setPlainText("")
         self.kv3_QplainTextEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Content", None))
-        self.groupBox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Replacements", None))
+        self.label_2.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Replacements", None))
+#if QT_CONFIG(tooltip)
+        self.new_replacement_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Creates a new replacement</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.new_replacement_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"New", None))
         self.dockWidget.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Explorer", None))
         self.file_groupbox.setTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"File", None))
         self.open_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Open", None))
