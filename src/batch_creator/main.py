@@ -149,13 +149,13 @@ class BatchCreatorMainWindow(QMainWindow):
     def update_editor_visibility(self):
         if self.opened_file is not None:
             self.ui.editor_widgets.show()
-            self.ui.referencing_groupbox.show()
-            self.ui.process_groupbox.show()
+            self.ui.referencing_groupbox.setDisabled(False)
+            self.ui.process_groupbox.setDisabled(False)
             self.ui.label_editor_placeholder.hide()
         else:
             self.ui.editor_widgets.hide()
-            self.ui.referencing_groupbox.hide()
-            self.ui.process_groupbox.hide()
+            self.ui.referencing_groupbox.setDisabled(True)
+            self.ui.process_groupbox.setDisabled(True)
             self.ui.label_editor_placeholder.show()
 
     def update_explorer_title(self):
