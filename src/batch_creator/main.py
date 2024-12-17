@@ -51,11 +51,9 @@ class BatchCreatorMainWindow(QMainWindow):
         self.relative_path = None
         self.setAcceptDrops(True)
 
-        self.initialize_connections()
-        self.initialize_context_menu()
+        self.init_context_menu()
         self.update_editor_visibility()
 
-    def initialize_connections(self):
         self.ui.create_file.clicked.connect(self.create_file)
         self.ui.save_button.clicked.connect(self.save_file)
         self.ui.open_button.clicked.connect(self.open_file)
@@ -64,7 +62,8 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.return_button.clicked.connect(self.revert_created_files)
         self.ui.return_button.setEnabled(False)
 
-    def initialize_context_menu(self):
+
+    def init_context_menu(self):
         self.folder_path_action = QAction("Insert Folder Path", self)
         self.folder_path_action.triggered.connect(lambda: self.insert_placeholder("#$FOLDER_PATH$#"))
 
@@ -190,13 +189,9 @@ class BatchCreatorMainWindow(QMainWindow):
             return
 
         batch_file_path = os.path.join(directory_path, f"{file_name}.hbat")
-        self.create_batch_file(batch_file_path)
-
-    def create_batch_file(self, file_path):
         try:
-            with open(file_path, 'w') as file:
+            with open(batch_file_path, 'w') as file:
                 json.dump(default_file, file, indent=4)
-            print(f"Batch file created at: {file_path}")
         except Exception as e:
             print(f"Failed to create batch file: {e}")
 
