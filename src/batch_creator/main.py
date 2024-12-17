@@ -1,18 +1,14 @@
 import json
 import os
 from PySide6.QtWidgets import (
-    QMainWindow, QApplication, QDialog, QFileDialog, QMessageBox,
-    QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem,
-    QMenu, QPlainTextEdit
+    QMainWindow, QApplication, QMessageBox, QPlainTextEdit
 )
 from PySide6.QtCore import Qt, QMimeData
-from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QShortcut, QKeySequence, QAction, QTextCursor
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag, QTextCursor,QAction
 from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
-from src.batch_creator.ui_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path
 from src.batch_creator.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
-from src.qt_styles.common import qt_stylesheet_button, qt_stylesheet_checkbox
 from src.batch_creator.objects import default_file
 from src.batch_creator.dialog import BatchCreatorProcessDialog
 from src.batch_creator.process import perform_batch_processing
@@ -61,7 +57,6 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.process_options_button.clicked.connect(self.show_process_options)
         self.ui.return_button.clicked.connect(self.revert_created_files)
         self.ui.return_button.setEnabled(False)
-
 
     def init_context_menu(self):
         self.folder_path_action = QAction("Insert Folder Path", self)
@@ -125,17 +120,20 @@ class BatchCreatorMainWindow(QMainWindow):
             for url in urls:
                 file_path = url.toLocalFile()
                 if os.path.isfile(file_path):
-                    try:
-                        with open(file_path, 'r') as file:
-                            data = file.read()
-                        text_edit = self.ui.kv3_QplainTextEdit
-                        cursor = text_edit.textCursor()
-                        cursor.select(QTextCursor.Document)
-                        cursor.insertText(data)
-                    except Exception as e:
-                        QMessageBox.critical(self, "File Read Error", f"An error occurred while reading the file: {e}")
+                    self.load_file_content(file_path)
 
         event.accept()
+
+    def load_file_content(self, file_path):
+        try:
+            with open(file_path, 'r') as file:
+                data = file.read()
+            text_edit = self.ui.kv3_QplainTextEdit
+            cursor = text_edit.textCursor()
+            cursor.select(QTextCursor.Document)
+            cursor.insertText(data)
+        except Exception as e:
+            QMessageBox.critical(self, "File Read Error", f"An error occurred while reading the file: {e}")
 
     def update_editor_visibility(self):
         if self.current_file is not None:
@@ -159,8 +157,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def get_relative_path(self, file_path):
         root_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
-        relative_path = os.path.relpath(file_path, root_directory)
-        return relative_path
+        return os.path.relpath(file_path, root_directory)
 
     def create_file(self):
         index = self.explorer.tree.currentIndex()
@@ -189,11 +186,15 @@ class BatchCreatorMainWindow(QMainWindow):
             return
 
         batch_file_path = os.path.join(directory_path, f"{file_name}.hbat")
+        self.write_json_file(batch_file_path, default_file)
+
+    def write_json_file(self, file_path, data):
         try:
-            with open(batch_file_path, 'w') as file:
-                json.dump(default_file, file, indent=4)
+            with open(file_path, 'w') as file:
+                json.dump(data, file, indent=4)
+            print(f"File created: {file_path}")
         except Exception as e:
-            print(f"Failed to create batch file: {e}")
+            print(f"Failed to create file: {e}")
 
     def save_file(self):
         if self.current_file:
@@ -208,12 +209,7 @@ class BatchCreatorMainWindow(QMainWindow):
             'file': {'content': content},
             'process': process
         }
-        try:
-            with open(file_path, 'w') as file:
-                json.dump(data, file, indent=4)
-            print(f"File saved at: {file_path}")
-        except Exception as e:
-            print(f"Failed to save file: {e}")
+        self.write_json_file(file_path, data)
 
     def open_file(self):
         indexes = self.explorer.tree.selectionModel().selectedIndexes()
@@ -223,28 +219,25 @@ class BatchCreatorMainWindow(QMainWindow):
             self.current_file = file_path
             if not self.explorer.model.isDir(index):
                 if os.path.splitext(file_path)[1] != ".hbat":
-                    msg_box = QMessageBox(self)
-                    msg_box.setIcon(QMessageBox.Warning)
-                    msg_box.setWindowTitle("Invalid File Extension")
-                    msg_box.setText("Please select a file with the .hbat extension.")
-                    msg_box.addButton("Open Anyway", QMessageBox.AcceptRole)
-                    msg_box.addButton("Cancel", QMessageBox.RejectRole)
-                    response = msg_box.exec()
-
-                    if response == 2:
-                        self.load_file(file_path)
-                    else:
+                    if not self.confirm_open_anyway():
                         return
-                try:
-                    self.load_file(file_path)
-                except Exception as e:
-                    QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
+                self.load_file(file_path)
             else:
                 QMessageBox.information(self, "Folder Selected", "You have selected a folder. Please select a file to open.")
         else:
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
         self.update_explorer_title()
         self.update_editor_visibility()
+
+    def confirm_open_anyway(self):
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Warning)
+        msg_box.setWindowTitle("Invalid File Extension")
+        msg_box.setText("Please select a file with the .hbat extension.")
+        msg_box.addButton("Open Anyway", QMessageBox.AcceptRole)
+        msg_box.addButton("Cancel", QMessageBox.RejectRole)
+        response = msg_box.exec()
+        return response == QMessageBox.AcceptRole
 
     def load_file(self, file_path):
         try:
@@ -279,14 +272,6 @@ class BatchCreatorMainWindow(QMainWindow):
         self.created_files.extend(created_files)
         if created_files:
             self.ui.return_button.setEnabled(True)
-
-    def get_update_previews_files(self):
-        processed_files = perform_batch_processing(
-            file_path=self.current_file,
-            process=self.process_data,
-            preview=True
-        )
-        return processed_files
 
     def revert_created_files(self):
         for file_path in self.created_files:
