@@ -12,3 +12,4 @@ vpk
 tqdm
 colorama
 pygetwindow
+watchdog
