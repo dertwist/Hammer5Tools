@@ -43,6 +43,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.ui.kv3_QplainTextEdit.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.context_menu.show)
+        self.ui.kv3_QplainTextEdit.dropEvent = self.handle_plain_text_drop
         self.init_replacements_editor()
         self.update_editor_visibility()
         self.toggle_monitoring()
@@ -70,6 +71,30 @@ class BatchCreatorMainWindow(QMainWindow):
         self.replacements_layout.insertWidget(0, new_instance)
 
     # Editor functions
+
+    def handle_plain_text_drop(self, event: QDropEvent):
+        """Handle file drop into the editor."""
+        if event.source() == self:
+            return
+
+        mime_data = event.mimeData()
+        if mime_data.hasText():
+            urls = mime_data.urls()
+            for url in urls:
+                file_path = url.toLocalFile()
+                if os.path.isfile(file_path):
+                    self.load_file_content(file_path)
+
+        event.accept()
+
+    def load_file_content(self, file_path):
+        """Load content from a file into the editor."""
+        try:
+            with open(file_path, 'r') as file:
+                data = file.read()
+            self.ui.kv3_QplainTextEdit.setPlainText(data)
+        except Exception as e:
+            QMessageBox.critical(self, "File Read Error", f"An error occurred while reading the file: {e}")
 
     def update_editor_visibility(self):
         """Update the visibility of editor-related widgets based on the current file state."""

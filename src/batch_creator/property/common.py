@@ -1,11 +1,16 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem, QTreeWidget, QSpacerItem, QSizePolicy
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
+from PySide6.QtWidgets import QPlainTextEdit
+from PySide6.QtGui import QTextOption
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication, QPainter
 from PySide6.QtCore import QEasingCurve, Qt, Signal, QLineF, QRectF
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.preferences import debug, get_addon_dir
 from src.common import convert_snake_case
 from src.batch_creator.context_menu import ReplacementsContextMenu
+from src.batch_creator.highlighter import CustomHighlighter
+from src.qt_styles.common import *
 try:
     from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
 except:
@@ -85,12 +90,17 @@ class PropertyReplacement(PropertyBase):
         self.tree: QTreeWidget = tree
         self.value_class = label_text
         self.objects = objects
+
         # Init source line
-        self.source_line = QLineEdit()
+        self.source_line = QPlainTextEdit()
         self.source_line.setMinimumWidth(64)
         self.source_line.textChanged.connect(self.on_property_update)
         self.layout().addWidget(self.source_line)
-        self.set_value(value[0])
+        self.set_value(value[0], self.source_line)
+
+        self.source_line.setWordWrapMode(QTextOption.NoWrap)
+        self.source_line.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.source_line.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
 
         # Init Search button
@@ -101,11 +111,15 @@ class PropertyReplacement(PropertyBase):
         self.layout().addWidget(self.search_button)
 
         # Init dist line
-        self.destination_line = QLineEdit()
+        self.destination_line = QPlainTextEdit()
         self.destination_line.setMinimumWidth(64)
         self.destination_line.textChanged.connect(self.on_property_update)
         self.layout().addWidget(self.destination_line)
-        self.set_value(value[1])
+        self.set_value(value[1], self.destination_line)
+
+        self.destination_line.setWordWrapMode(QTextOption.NoWrap)
+        self.destination_line.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.destination_line.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self.setContentsMargins(0,0,0,0)
         self.setMinimumHeight(48)
@@ -120,12 +134,17 @@ class PropertyReplacement(PropertyBase):
         self.destination_line.setContextMenuPolicy(Qt.CustomContextMenu)
         self.destination_line.customContextMenuRequested.connect(self.context_menu.show)
 
-    def set_value(self, value: str):
-        self.source_line.setText(str(value))
+        # Highlighting
+        self.highlighter_source = CustomHighlighter(self.source_line.document())
+        self.highlighter_destination = CustomHighlighter(self.destination_line.document())
+        self.source_line.setStyleSheet(qt_stylesheet_plain_text_batch_inline)
+        self.destination_line.setStyleSheet(qt_stylesheet_plain_text_batch_inline)
+    def set_value(self, value: str, widget):
+        widget.setPlainText(str(value))
 
     def on_property_update(self):
         """Send signal that user changed the property"""
-        value = [self.source_line.text(), self.destination_line.text()]
+        value = [self.source_line.toPlainText(), self.destination_line.toPlainText()]
         self.value_update(value)
         self.edited.emit()
 
