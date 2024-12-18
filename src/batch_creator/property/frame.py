@@ -146,10 +146,8 @@ class PropertyFrame(QWidget):
 
                 widget: PropertyFrame = self.widget_list.layout().itemAt(target_index).widget()
                 widget_property = widget.ui.content.layout().itemAt(0).widget()
-                if isinstance(widget_property, SoundEventEditorPropertyList):
-                    pass
 
-                elif source_index != -1 and target_index != -1:
+                if source_index != -1 and target_index != -1:
                     if source_index < self.widget_list.layout().count():
                         source_widget = self.widget_list.layout().takeAt(source_index).widget()
                         if source_widget:

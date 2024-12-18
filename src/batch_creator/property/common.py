@@ -5,6 +5,7 @@ from PySide6.QtCore import QEasingCurve, Qt, Signal, QLineF, QRectF
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.preferences import debug, get_addon_dir
 from src.common import convert_snake_case
+from src.batch_creator.context_menu import ReplacementsContextMenu
 try:
     from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
 except:
@@ -28,7 +29,7 @@ class PropertyBase(QWidget):
         # Init
         self.set_widget_size()
         self.init_root_layout()
-        self.init_label(label_text)
+        # self.init_label(label_text)
         # self.on_property_update()
 
         self.setStyleSheet(""".QFrame {
@@ -73,7 +74,7 @@ class PropertyBase(QWidget):
         self.setMinimumHeight(44)
 
 class PropertyReplacement(PropertyBase):
-    def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None, objects: list = None):
+    def __init__(self, parent=None, label_text: str = None, value: list = None, tree: QTreeWidget = None, objects: list = None):
         """
         Combox property
 
@@ -84,42 +85,47 @@ class PropertyReplacement(PropertyBase):
         self.tree: QTreeWidget = tree
         self.value_class = label_text
         self.objects = objects
-        # Init combobox
-        self.combobox = QLineEdit()
-        self.combobox.setMinimumWidth(256)
-        self.combobox.textChanged.connect(self.on_property_update)
-        self.layout().addWidget(self.combobox)
-        self.set_value(value)
-        # if value == "None":
-        #     pass
-        # else:
-        #     self.combobox.setCurrentText(str(value))
+        # Init source line
+        self.source_line = QLineEdit()
+        self.source_line.setMinimumWidth(64)
+        self.source_line.textChanged.connect(self.on_property_update)
+        self.layout().addWidget(self.source_line)
+        self.set_value(value[0])
 
 
         # Init Search button
         self.search_button = Button()
-        self.search_button.set_icon_search()
-        self.search_button.setMaximumWidth(32)
-        self.search_button.clicked.connect(self.call_search_popup_menu)
+        self.search_button.set_icon(":/icons/arrow_forward_ios_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.search_button.set_size(24,24)
+        self.search_button.setEnabled(False)
         self.layout().addWidget(self.search_button)
-        self.on_property_update()
 
-        # Init spacer
-        spacer = Spacer()
-        self.layout().addWidget(spacer)
+        # Init dist line
+        self.destination_line = QLineEdit()
+        self.destination_line.setMinimumWidth(64)
+        self.destination_line.textChanged.connect(self.on_property_update)
+        self.layout().addWidget(self.destination_line)
+        self.set_value(value[1])
 
         self.setContentsMargins(0,0,0,0)
         self.setMinimumHeight(48)
         self.setMaximumHeight(48)
 
-    def init_combobox(self):
-        pass
+        self.on_property_update()
+
+        # Context menu
+
+        self.context_menu = ReplacementsContextMenu(self, self.destination_line)
+
+        self.destination_line.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.destination_line.customContextMenuRequested.connect(self.context_menu.show)
+
     def set_value(self, value: str):
-        self.combobox.setText(str(value))
+        self.source_line.setText(str(value))
 
     def on_property_update(self):
         """Send signal that user changed the property"""
-        value = self.combobox.text()
+        value = [self.source_line.text(), self.destination_line.text()]
         self.value_update(value)
         self.edited.emit()
 
@@ -128,12 +134,3 @@ class PropertyReplacement(PropertyBase):
         self.value = {self.value_class: value}
     def init_label_color(self):
         return "#F4A9F6"
-
-    def call_search_popup_menu(self):
-        elements = []
-        for item in self.objects:
-            __element = {item:item}
-            elements.append(__element)
-        self.popup_menu = PopupMenu(elements, add_once=False)
-        self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
-        self.popup_menu.show()
