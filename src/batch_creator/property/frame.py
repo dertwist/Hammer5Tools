@@ -48,6 +48,9 @@ class PropertyFrame(QWidget):
             # Update data
             self.on_property_updated()
 
+            # TODO add support of copy and paste functions
+            self.ui.copy_button.hide()
+
     def init_connections(self):
         """Adding connections to the buttons"""
         self.ui.show_child.clicked.connect(self.show_child_action)
