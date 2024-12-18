@@ -61,13 +61,15 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def init_replacements_editor(self):
         self.ui.new_replacement_button.clicked.connect(lambda :self.new_replacement())
-        self.replacements_layout = self.ui.verticalLayout_11
+        self.replacements_layout = self.ui.replacements_layout.layout()
 
     def new_replacement(self, __data: dict = None):
         if __data is None:
             __data = default_replacement
         widget_instance = PropertyFrame(widget_list=self.replacements_layout, _data=__data)
         index = self.replacements_layout.count() - 1
+        if index == -1:
+            index = 0
         self.replacements_layout.insertWidget(index, widget_instance)
 
     def populate_replacements(self, replacements: dict = None):
@@ -100,9 +102,11 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def clear_replacements(self):
         """Delete all PropertyFrame widgets in ui.replacements_layout."""
-        while self.replacements_layout.count():
-            widget = self.replacements_layout.takeAt(0).widget()
+        for i in reversed(range(self.replacements_layout.count())):
+            item = self.replacements_layout.itemAt(i)
+            widget = item.widget()
             if widget and isinstance(widget, PropertyFrame):
+                widget.setParent(None)
                 widget.deleteLater()
 
     def handle_plain_text_drop(self, event: QDropEvent):

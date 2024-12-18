@@ -26,7 +26,7 @@ class Ui_BatchCreator_MainWindow(object):
     def setupUi(self, BatchCreator_MainWindow):
         if not BatchCreator_MainWindow.objectName():
             BatchCreator_MainWindow.setObjectName(u"BatchCreator_MainWindow")
-        BatchCreator_MainWindow.resize(1088, 612)
+        BatchCreator_MainWindow.resize(1271, 707)
         BatchCreator_MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
         self.centralwidget = QWidget(BatchCreator_MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -85,6 +85,110 @@ class Ui_BatchCreator_MainWindow(object):
         self.frame_5.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_12 = QVBoxLayout(self.frame_5)
         self.verticalLayout_12.setObjectName(u"verticalLayout_12")
+        self.frame_6 = QFrame(self.frame_5)
+        self.frame_6.setObjectName(u"frame_6")
+        self.frame_6.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_6.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_4 = QHBoxLayout(self.frame_6)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.viewport_searchbar = QLineEdit(self.frame_6)
+        self.viewport_searchbar.setObjectName(u"viewport_searchbar")
+
+        self.horizontalLayout_4.addWidget(self.viewport_searchbar)
+
+        self.viewport_search_label = QLabel(self.frame_6)
+        self.viewport_search_label.setObjectName(u"viewport_search_label")
+
+        self.horizontalLayout_4.addWidget(self.viewport_search_label)
+
+        self.viewport_search_previous_button = QPushButton(self.frame_6)
+        self.viewport_search_previous_button.setObjectName(u"viewport_search_previous_button")
+        self.viewport_search_previous_button.setMinimumSize(QSize(0, 18))
+        self.viewport_search_previous_button.setStyleSheet(u"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
+        icon = QIcon()
+        icon.addFile(u":/icons/arrow_back_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.viewport_search_previous_button.setIcon(icon)
+        self.viewport_search_previous_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_4.addWidget(self.viewport_search_previous_button)
+
+        self.viewport_search_next_button = QPushButton(self.frame_6)
+        self.viewport_search_next_button.setObjectName(u"viewport_search_next_button")
+        self.viewport_search_next_button.setMinimumSize(QSize(0, 18))
+        self.viewport_search_next_button.setStyleSheet(u"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/arrow_forward_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.viewport_search_next_button.setIcon(icon1)
+        self.viewport_search_next_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_4.addWidget(self.viewport_search_next_button)
+
+
+        self.verticalLayout_12.addWidget(self.frame_6)
+
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(-1, 0, -1, -1)
@@ -129,9 +233,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon = QIcon()
-        icon.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.new_replacement_button.setIcon(icon)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.new_replacement_button.setIcon(icon2)
         self.new_replacement_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.new_replacement_button)
@@ -143,13 +247,13 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.verticalLayout_12.addLayout(self.horizontalLayout_2)
 
-        self.scrollArea = QScrollArea(self.frame_5)
-        self.scrollArea.setObjectName(u"scrollArea")
-        self.scrollArea.setMinimumSize(QSize(0, 128))
-        self.scrollArea.setWidgetResizable(True)
+        self.replacements_scrollarea = QScrollArea(self.frame_5)
+        self.replacements_scrollarea.setObjectName(u"replacements_scrollarea")
+        self.replacements_scrollarea.setMinimumSize(QSize(0, 128))
+        self.replacements_scrollarea.setWidgetResizable(True)
         self.replacements_layout = QWidget()
         self.replacements_layout.setObjectName(u"replacements_layout")
-        self.replacements_layout.setGeometry(QRect(0, 0, 346, 126))
+        self.replacements_layout.setGeometry(QRect(0, 0, 535, 126))
         self.verticalLayout_11 = QVBoxLayout(self.replacements_layout)
         self.verticalLayout_11.setObjectName(u"verticalLayout_11")
         self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
@@ -157,9 +261,9 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.verticalLayout_11.addItem(self.verticalSpacer)
 
-        self.scrollArea.setWidget(self.replacements_layout)
+        self.replacements_scrollarea.setWidget(self.replacements_layout)
 
-        self.verticalLayout_12.addWidget(self.scrollArea)
+        self.verticalLayout_12.addWidget(self.replacements_scrollarea)
 
         self.splitter.addWidget(self.frame_5)
 
@@ -248,9 +352,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_button.setIcon(icon1)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_button.setIcon(icon3)
         self.open_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.open_button)
@@ -290,9 +394,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_button.setIcon(icon2)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_button.setIcon(icon4)
         self.save_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.save_button)
@@ -332,7 +436,7 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        self.create_file.setIcon(icon)
+        self.create_file.setIcon(icon2)
         self.create_file.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.create_file)
@@ -391,9 +495,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.process_options_button.setIcon(icon3)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.process_options_button.setIcon(icon5)
         self.process_options_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_5.addWidget(self.process_options_button)
@@ -434,9 +538,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/undo_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.return_button.setIcon(icon4)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/undo_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.return_button.setIcon(icon6)
         self.return_button.setIconSize(QSize(20, 20))
         self.return_button.setCheckable(False)
 
@@ -477,9 +581,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.process_all_button.setIcon(icon5)
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.process_all_button.setIcon(icon7)
         self.process_all_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_5.addWidget(self.process_all_button)
@@ -543,9 +647,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon6 = QIcon()
-        icon6.addFile(u":/icons/file_present_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.select_reference_button.setIcon(icon6)
+        icon8 = QIcon()
+        icon8.addFile(u":/icons/file_present_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.select_reference_button.setIcon(icon8)
         self.select_reference_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_9.addWidget(self.select_reference_button)
@@ -600,9 +704,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.reference_reload_button.setIcon(icon7)
+        icon9 = QIcon()
+        icon9.addFile(u":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.reference_reload_button.setIcon(icon9)
         self.reference_reload_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.reference_reload_button)
@@ -694,16 +798,29 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout_8.setContentsMargins(0, 0, 0, -1)
         self.monitoring_content = QVBoxLayout()
         self.monitoring_content.setObjectName(u"monitoring_content")
-        self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.scrollArea_2 = QScrollArea(self.dockWidgetContents_2)
+        self.scrollArea_2.setObjectName(u"scrollArea_2")
+        self.scrollArea_2.setWidgetResizable(True)
+        self.monitoring_files_layout = QWidget()
+        self.monitoring_files_layout.setObjectName(u"monitoring_files_layout")
+        self.monitoring_files_layout.setGeometry(QRect(0, 0, 350, 606))
+        self.verticalLayout_13 = QVBoxLayout(self.monitoring_files_layout)
+        self.verticalLayout_13.setObjectName(u"verticalLayout_13")
+        self.verticalSpacer_2 = QSpacerItem(20, 585, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.monitoring_content.addItem(self.verticalSpacer_2)
+        self.verticalLayout_13.addItem(self.verticalSpacer_2)
 
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.scrollArea_2.setWidget(self.monitoring_files_layout)
 
-        self.monitoring_content.addItem(self.horizontalSpacer)
+        self.monitoring_content.addWidget(self.scrollArea_2)
 
 
         self.verticalLayout_8.addLayout(self.monitoring_content)
+
+        self.monitoring_searchbar = QLineEdit(self.dockWidgetContents_2)
+        self.monitoring_searchbar.setObjectName(u"monitoring_searchbar")
+
+        self.verticalLayout_8.addWidget(self.monitoring_searchbar)
 
         self.monitoring_start_toggle_button = QPushButton(self.dockWidgetContents_2)
         self.monitoring_start_toggle_button.setObjectName(u"monitoring_start_toggle_button")
@@ -740,9 +857,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon8 = QIcon()
-        icon8.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.monitoring_start_toggle_button.setIcon(icon8)
+        icon10 = QIcon()
+        icon10.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.monitoring_start_toggle_button.setIcon(icon10)
         self.monitoring_start_toggle_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_8.addWidget(self.monitoring_start_toggle_button)
@@ -761,6 +878,10 @@ class Ui_BatchCreator_MainWindow(object):
         self.label_editor_placeholder.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Please, open a file for editing", None))
         self.kv3_QplainTextEdit.setPlainText("")
         self.kv3_QplainTextEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Content", None))
+        self.viewport_searchbar.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Search in viewport...", None))
+        self.viewport_search_label.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Found: 000", None))
+        self.viewport_search_previous_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Previous", None))
+        self.viewport_search_next_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Next", None))
         self.label_2.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Replacements", None))
 #if QT_CONFIG(tooltip)
         self.new_replacement_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Creates a new replacement</p></body></html>", None))
@@ -812,6 +933,7 @@ class Ui_BatchCreator_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.realtime_process.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Realtime process", None))
         self.dockWidget_2.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Monitoring", None))
+        self.monitoring_searchbar.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Filter files...", None))
         self.monitoring_start_toggle_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Start", None))
     # retranslateUi
 
