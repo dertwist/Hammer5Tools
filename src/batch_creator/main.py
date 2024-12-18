@@ -81,7 +81,7 @@ class MonitoringFileWatcher(QListWidget):
             self.watcher_thread.stop()
         event.accept()
 
-
+#TODO remove toggle play button.
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)

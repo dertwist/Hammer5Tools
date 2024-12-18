@@ -1115,7 +1115,11 @@ color: gray;
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="reference_editline"/>
+               <widget class="QLineEdit" name="reference_editline">
+                <property name="placeholderText">
+                 <string>Path to vmat, vmdl, vmsart</string>
+                </property>
+               </widget>
               </item>
              </layout>
             </widget>
