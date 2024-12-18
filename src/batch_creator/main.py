@@ -1,11 +1,9 @@
 import json
 import os
 
-from PyQt5.QtWidgets import QVBoxLayout
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDropEvent, QTextCursor, QAction, QIcon
-from pyexpat import native_encoding
 
 from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
 from src.preferences import get_addon_name, get_cs2_path
@@ -16,6 +14,7 @@ from src.batch_creator.dialog import BatchCreatorProcessDialog
 from src.batch_creator.process import perform_batch_processing
 from src.batch_creator.property.frame import PropertyFrame
 from src.batch_creator.property.objects import *
+from src.batch_creator.context_menu import ReplacementsContextMenu
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -26,7 +25,6 @@ class BatchCreatorMainWindow(QMainWindow):
         self.current_file = None
         self.process_data = default_file['process'].copy()
         self.created_files = []
-        # This variable will be inverted because of toggle_monitoring function
         self.monitoring_running_state = True
 
         self.cs2_path = get_cs2_path()
@@ -41,7 +39,10 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.layout.setContentsMargins(0, 0, 0, 0)
         self.setAcceptDrops(True)
 
-        self.init_editor_context_menu()
+        self.context_menu = ReplacementsContextMenu(self, self.ui.kv3_QplainTextEdit)
+
+        self.ui.kv3_QplainTextEdit.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.context_menu.show)
         self.init_replacements_editor()
         self.update_editor_visibility()
         self.toggle_monitoring()
@@ -69,65 +70,6 @@ class BatchCreatorMainWindow(QMainWindow):
         self.replacements_layout.insertWidget(0, new_instance)
 
     # Editor functions
-
-    def init_editor_context_menu(self):
-        """Initialize context menu for the editor."""
-        self.folder_path_action = QAction("Insert Folder Path", self)
-        self.folder_path_action.triggered.connect(lambda: self.insert_placeholder("#$FOLDER_PATH$#"))
-
-        self.asset_name_action = QAction("Insert Asset Name", self)
-        self.asset_name_action.triggered.connect(lambda: self.insert_placeholder("#$ASSET_NAME$#"))
-
-        self.ui.kv3_QplainTextEdit.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.show_custom_context_menu)
-        self.ui.kv3_QplainTextEdit.dropEvent = self.handle_plain_text_drop
-
-    def show_custom_context_menu(self, position):
-        """Display custom context menu at the given position."""
-        menu = self.ui.kv3_QplainTextEdit.createStandardContextMenu()
-        menu.setStyleSheet("""
-            QMenu {
-                background-color: #1C1C1C;
-                color: #E3E3E3; 
-                border: 1px solid #363639; 
-            }
-            QMenu::item:selected {
-                background-color: #414956;
-            }
-        """)
-        menu.addSeparator()
-        menu.addAction(self.folder_path_action)
-        menu.addAction(self.asset_name_action)
-        menu.exec(self.ui.kv3_QplainTextEdit.mapToGlobal(position))
-
-    def insert_placeholder(self, placeholder):
-        """Insert a placeholder text into the editor."""
-        cursor = self.ui.kv3_QplainTextEdit.textCursor()
-        cursor.insertText(placeholder)
-
-    def handle_plain_text_drop(self, event: QDropEvent):
-        """Handle file drop into the editor."""
-        if event.source() == self:
-            return
-
-        mime_data = event.mimeData()
-        if mime_data.hasText():
-            urls = mime_data.urls()
-            for url in urls:
-                file_path = url.toLocalFile()
-                if os.path.isfile(file_path):
-                    self.load_file_content(file_path)
-
-        event.accept()
-
-    def load_file_content(self, file_path):
-        """Load content from a file into the editor."""
-        try:
-            with open(file_path, 'r') as file:
-                data = file.read()
-            self.ui.kv3_QplainTextEdit.setPlainText(data)
-        except Exception as e:
-            QMessageBox.critical(self, "File Read Error", f"An error occurred while reading the file: {e}")
 
     def update_editor_visibility(self):
         """Update the visibility of editor-related widgets based on the current file state."""
@@ -157,7 +99,6 @@ class BatchCreatorMainWindow(QMainWindow):
         return os.path.relpath(file_path, root_directory)
 
     # File creations functions
-
 
     def create_file(self):
         """Create a new file in the selected folder."""
@@ -210,6 +151,7 @@ class BatchCreatorMainWindow(QMainWindow):
             self.write_json_file(self.current_file, data)
         else:
             print("No file is currently opened to save.")
+
     # Open file functions
 
     def open_file(self):
@@ -280,7 +222,6 @@ class BatchCreatorMainWindow(QMainWindow):
                 print(f"Error removing file {file_path}: {e}")
         self.created_files.clear()
         self.ui.return_button.setEnabled(False)
-
 
     def toggle_monitoring(self):
         """Toggle the monitoring state."""
