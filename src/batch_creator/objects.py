@@ -2,6 +2,7 @@ default_file = {
         'file': {'content': ''},
         'process': {
             'extension': 'vmdl',
+            'reference': '',
             'ignore_list': '',
             'custom_files': [],
             'custom_output': 'relative_path',

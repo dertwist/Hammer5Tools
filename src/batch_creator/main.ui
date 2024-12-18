@@ -133,6 +133,12 @@
                <property name="orientation">
                 <enum>Qt::Orientation::Vertical</enum>
                </property>
+               <property name="opaqueResize">
+                <bool>true</bool>
+               </property>
+               <property name="childrenCollapsible">
+                <bool>false</bool>
+               </property>
                <widget class="QPlainTextEdit" name="kv3_QplainTextEdit">
                 <property name="styleSheet">
                  <string notr="true"/>
@@ -413,7 +419,7 @@ color: gray;
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>535</width>
+                      <width>612</width>
                       <height>126</height>
                      </rect>
                     </property>
@@ -1145,147 +1151,6 @@ color: gray;
               <property name="bottomMargin">
                <number>0</number>
               </property>
-              <item>
-               <widget class="QPushButton" name="reference_reload_button">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reloads referenced file content&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">    QPushButton {
-
-        font: 580 9pt &quot;Segoe UI&quot;;
-	
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QPushButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }
-QPushButton:disabled {
-color: gray;
- background-color: #2C2C2C;
-}</string>
-                </property>
-                <property name="text">
-                 <string>Reload</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resources.qrc">
-                  <normaloff>:/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>20</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="reference_realtime_reload_checkBox">
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Always releads referenced file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QCheckBox {
-
-        font: 580 10pt &quot;Segoe UI&quot;;
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QCheckBox:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QCheckBox:pressed {
-
-    }
-
-QCheckBox:disabled {
-color: gray;
- background-color: #2C2C2C;
-}</string>
-                </property>
-                <property name="text">
-                 <string>Realtime reload</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="realtime_process">
-                <property name="enabled">
-                 <bool>true</bool>
-                </property>
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;After anychanges in the editor or in referenced file process action will start.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QCheckBox {
-
-        font: 580 10pt &quot;Segoe UI&quot;;
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QCheckBox:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QCheckBox:pressed {
-
-    }
-
-QCheckBox:disabled {
-color: gray;
- background-color: #2C2C2C;
-}</string>
-                </property>
-                <property name="text">
-                 <string>Realtime process</string>
-                </property>
-               </widget>
-              </item>
              </layout>
             </widget>
            </item>
