@@ -129,9 +129,9 @@ class PropertyVector3D(QWidget):
                     layout.setPlainText(str(value['m_Expression']))
                     combo.setCurrentIndex(2)
                 if 'm_SourceName' in value:
-                    variable.combobox.updateItems()
-                    variable.combobox.addItem(value['m_SourceName'])
-                    variable.combobox.setCurrentText(value['m_SourceName'])
+                    variable.source_line.updateItems()
+                    variable.source_line.addItem(value['m_SourceName'])
+                    variable.source_line.setCurrentText(value['m_SourceName'])
                     combo.setCurrentIndex(1)
             elif isinstance(value, int) or isinstance(value, float):
                 float_widget.SpinBox.setValue(value)
@@ -239,7 +239,7 @@ class PropertyVector3D(QWidget):
                 if index == 0:
                     value = float_widget.value
                 elif index == 1:
-                    value = {'m_SourceName': variable.combobox.get_variable()}
+                    value = {'m_SourceName': variable.source_line.get_variable()}
                 elif index == 2:
                     value = {'m_Expression': line.toPlainText()}
                 return value
