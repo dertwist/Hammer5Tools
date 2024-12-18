@@ -94,7 +94,6 @@ class PropertyReplacement(PropertyBase):
         # Init source line
         self.source_line = QPlainTextEdit()
         self.source_line.setMinimumWidth(64)
-        self.source_line.textChanged.connect(self.on_property_update)
         self.layout().addWidget(self.source_line)
         self.set_value(value[0], self.source_line)
 
@@ -103,7 +102,7 @@ class PropertyReplacement(PropertyBase):
         self.source_line.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
 
-        # Init Search button
+        # Init arrow button
         self.search_button = Button()
         self.search_button.set_icon(":/icons/arrow_forward_ios_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
         self.search_button.set_size(24,24)
@@ -113,7 +112,6 @@ class PropertyReplacement(PropertyBase):
         # Init dist line
         self.destination_line = QPlainTextEdit()
         self.destination_line.setMinimumWidth(64)
-        self.destination_line.textChanged.connect(self.on_property_update)
         self.layout().addWidget(self.destination_line)
         self.set_value(value[1], self.destination_line)
 
@@ -124,8 +122,6 @@ class PropertyReplacement(PropertyBase):
         self.setContentsMargins(0,0,0,0)
         self.setMinimumHeight(48)
         self.setMaximumHeight(48)
-
-        self.on_property_update()
 
         # Context menu
 
@@ -139,6 +135,12 @@ class PropertyReplacement(PropertyBase):
         self.highlighter_destination = CustomHighlighter(self.destination_line.document())
         self.source_line.setStyleSheet(qt_stylesheet_plain_text_batch_inline)
         self.destination_line.setStyleSheet(qt_stylesheet_plain_text_batch_inline)
+
+        # connections for updating on changes
+        self.source_line.textChanged.connect(self.on_property_update)
+        self.destination_line.textChanged.connect(self.on_property_update)
+
+        self.on_property_update()
     def set_value(self, value: str, widget):
         widget.setPlainText(str(value))
 
