@@ -206,6 +206,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def open_file(self):
         """Open a file selected in the explorer."""
+        self.clear_replacements()
         indexes = self.explorer.tree.selectionModel().selectedIndexes()
         if indexes:
             index = indexes[0]
