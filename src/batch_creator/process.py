@@ -1,12 +1,11 @@
 import os
 import json
-
 from src.batch_creator.objects import default_file
 from src.preferences import get_addon_name, get_cs2_path
 from src.batch_creator.common import extract_base_names, extract_base_names_underscore
 from PySide6.QtWidgets import QMessageBox
 
-def perform_batch_processing(file_path, process, preview):
+def perform_batch_processing(file_path, process, preview, replacements):
     base_directory = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
     batch_directory = os.path.splitext(file_path)[0]
     relative_batch_path = os.path.relpath(batch_directory, base_directory).replace('\\', '/')
@@ -23,10 +22,10 @@ def perform_batch_processing(file_path, process, preview):
         output_directory = batch_directory if process.get('output_to_the_folder') else os.path.join(
             get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), process.get('custom_output', '')
         )
-        execute_file_creation(files_to_process, output_directory, relative_batch_path, file_extension, created_files, file_path)
+        execute_file_creation(files_to_process, output_directory, relative_batch_path, file_extension, created_files, file_path, replacements)
         return created_files
 
-def execute_file_creation(files, output_path, relative_path, extension, created_files, template_file):
+def execute_file_creation(files, output_path, relative_path, extension, created_files, template_file, replacements):
     try:
         with open(template_file, 'r') as file:
             data = json.load(file)
@@ -36,11 +35,17 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
         return
 
     for file_name in files:
-        processed_content = content_template.replace("#$FOLDER_PATH$#", relative_path).replace("#$ASSET_NAME$#", file_name)
+        __data_replacements = content_template
+        if replacements:
+            for key, replacement in replacements.items():
+                old, new = replacement.get('replacement', ['', ''])
+                __data_replacements = __data_replacements.replace(old, new)
+
+        __data = __data_replacements.replace("#$FOLDER_PATH$#", relative_path).replace("#$ASSET_NAME$#", file_name)
         output_file_path = os.path.join(output_path, f"{file_name}.{extension}")
         try:
             with open(output_file_path, 'w') as output_file:
-                output_file.write(processed_content)
+                output_file.write(__data)
             print(f'File created: {output_file_path}')
             created_files.append(output_file_path)
         except Exception as e:

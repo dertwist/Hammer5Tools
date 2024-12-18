@@ -252,13 +252,13 @@ class BatchCreatorMainWindow(QMainWindow):
     def show_process_options(self):
         """Show the process options dialog."""
         if not hasattr(self, 'process_dialog') or not self.process_dialog.isVisible():
-            self.process_dialog = BatchCreatorProcessDialog(process=self.process_data, current_file=self.current_file, parent=self, process_all=self.process_all_files)
+            self.process_dialog = BatchCreatorProcessDialog(process=self.process_data, current_file=self.current_file, parent=self, process_all=self.process_all_files, collect_replacements=self.collect_replacements)
             self.process_dialog.show()
 
     def process_all_files(self):
         """Process all files based on the current settings."""
         self.save_file()
-        created_files = perform_batch_processing(file_path=self.current_file, process=self.process_data, preview=False)
+        created_files = perform_batch_processing(file_path=self.current_file, process=self.process_data, preview=False, replacements=self.collect_replacements())
         self.created_files.extend(created_files)
         if created_files:
             self.ui.return_button.setEnabled(True)
