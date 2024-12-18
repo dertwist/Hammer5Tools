@@ -14,6 +14,73 @@ from src.batch_creator.property.frame import PropertyFrame
 from src.batch_creator.property.objects import default_replacement, default_replacements
 from src.batch_creator.context_menu import ReplacementsContextMenu
 from src.preferences import get_config_value, set_config_value
+from src.batch_creator.monitor import *
+
+
+class MonitoringFileWatcher(QListWidget):
+    def __init__(self, root_path):
+        super().__init__()
+        self.searcher_thread = None
+        self.watcher_thread = None
+        self.file_widgets = {}
+        # self.setAlternatingRowColors(True)
+
+        self.set_root_path(root_path)
+
+    def set_root_path(self, root_path):
+        if not root_path or not os.path.isdir(root_path):
+            return
+        if self.searcher_thread:
+            self.searcher_thread.stop()
+        self.searcher_thread = FileSearcherThread(root_path)
+        self.searcher_thread.paths_found.connect(self.on_paths_found)
+        self.searcher_thread.start()
+
+    def on_paths_found(self, paths):
+        set_paths = set(paths)
+        current_file_paths = set(self.file_widgets.keys())
+
+        # Remove widgets for files that no longer exist
+        for path in current_file_paths - set_paths:
+            self.remove_file_widget(path)
+
+        # Add widgets for new files
+        for path in set_paths - current_file_paths:
+            self.add_file_widget(path)
+
+        # Update the watcher thread with the new paths
+        if self.watcher_thread:
+            self.watcher_thread.stop()
+        sorted_paths = sorted(set_paths)
+        self.watcher_thread = FileWatcherThread(sorted_paths)
+        self.watcher_thread.file_modified.connect(self.on_file_modified)
+        self.watcher_thread.start()
+
+    def add_file_widget(self, path):
+        item = QListWidgetItem(self)
+        widget = FileItemWidget(path)
+        item.setSizeHint(widget.sizeHint())
+        self.addItem(item)
+        self.setItemWidget(item, widget)
+        self.file_widgets[path] = (item, widget)
+
+    def remove_file_widget(self, path):
+        item, _ = self.file_widgets.pop(path)
+        row = self.row(item)
+        self.takeItem(row)
+
+    def on_file_modified(self, path):
+        if path in self.file_widgets:
+            _, widget = self.file_widgets[path]
+            widget.mark_modified()
+
+    def closeEvent(self, event):
+        if self.searcher_thread:
+            self.searcher_thread.stop()
+        if self.watcher_thread:
+            self.watcher_thread.stop()
+        event.accept()
+
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -46,6 +113,9 @@ class BatchCreatorMainWindow(QMainWindow):
         self.init_replacements_editor()
         self.update_editor_visibility()
         self.toggle_monitoring()
+
+        self.monitoring_list = MonitoringFileWatcher(explorer_directory)
+        self.ui.monitoring_content.addWidget(self.monitoring_list)
 
         self.load_splitter_position()
         self.connect_signals()

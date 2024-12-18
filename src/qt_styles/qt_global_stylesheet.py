@@ -731,7 +731,6 @@ QWidget:item:selected {
     color: white;
     border: 0px;
 }
-
 /* ========================================================== */
 
 QMenu {
