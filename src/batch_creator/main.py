@@ -196,9 +196,9 @@ class BatchCreatorMainWindow(QMainWindow):
             content = self.ui.kv3_QplainTextEdit.toPlainText()
             self.process_data['extension'] = self.ui.extension_lineEdit.text()
             data = {
-                'file': {'content': content},
                 'process': self.process_data,
-                'replacements': self.collect_replacements()
+                'replacements': self.collect_replacements(),
+                'file': {'content': content}
             }
             self.write_json_file(self.current_file, data)
         else:
