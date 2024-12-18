@@ -72,7 +72,7 @@ class PropertyBase(QWidget):
         self.setMaximumHeight(44)
         self.setMinimumHeight(44)
 
-class PropertyEditLine(PropertyBase):
+class PropertyReplacement(PropertyBase):
     def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None, objects: list = None):
         """
         Combox property

@@ -5,7 +5,7 @@ import random
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication, QTreeWidget
 from PySide6.QtCore import Signal
 
-from src.batch_creator.property.common import PropertyEditLine
+from src.batch_creator.property.common import PropertyReplacement
 from src.batch_creator.property.ui_frame import Ui_Form
 from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
@@ -71,12 +71,11 @@ class PropertyFrame(QWidget):
             except Exception as error:
                 debug(error)
 
-        # Float (Only Positive)
         if name == 'volume':
-            self.property_instance = PropertyEditLine(label_text=name, value=value)
+            pass
         # Legacy
         else:
-            self.property_instance = PropertyEditLine(label_text=name,value=value)
+            self.property_instance = PropertyReplacement(label_text=name,value=value)
         self.property_instance.edited.connect(self.on_property_updated)
         self.ui.content.layout().addWidget(self.property_instance)
     def on_property_updated(self):
