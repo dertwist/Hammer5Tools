@@ -15,11 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QDockWidget, QFrame,
-    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QMainWindow, QPlainTextEdit, QPushButton, QScrollArea,
-    QSizePolicy, QSpacerItem, QSplitter, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QDockWidget, QFrame, QGroupBox,
+    QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+    QPlainTextEdit, QPushButton, QScrollArea, QSizePolicy,
+    QSpacerItem, QSplitter, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_BatchCreator_MainWindow(object):
@@ -76,6 +75,8 @@ class Ui_BatchCreator_MainWindow(object):
         self.splitter.setObjectName(u"splitter")
         self.splitter.setBaseSize(QSize(0, 0))
         self.splitter.setOrientation(Qt.Orientation.Vertical)
+        self.splitter.setOpaqueResize(True)
+        self.splitter.setChildrenCollapsible(False)
         self.kv3_QplainTextEdit = QPlainTextEdit(self.splitter)
         self.kv3_QplainTextEdit.setObjectName(u"kv3_QplainTextEdit")
         self.kv3_QplainTextEdit.setStyleSheet(u"")
@@ -254,7 +255,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.replacements_scrollarea.setWidgetResizable(True)
         self.replacements_layout = QWidget()
         self.replacements_layout.setObjectName(u"replacements_layout")
-        self.replacements_layout.setGeometry(QRect(0, 0, 535, 126))
+        self.replacements_layout.setGeometry(QRect(0, 0, 612, 126))
         self.verticalLayout_11 = QVBoxLayout(self.replacements_layout)
         self.verticalLayout_11.setObjectName(u"verticalLayout_11")
         self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
@@ -670,113 +671,6 @@ class Ui_BatchCreator_MainWindow(object):
         self.horizontalLayout_3 = QHBoxLayout(self.frame_9)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.reference_reload_button = QPushButton(self.frame_9)
-        self.reference_reload_button.setObjectName(u"reference_reload_button")
-        self.reference_reload_button.setMinimumSize(QSize(0, 18))
-        self.reference_reload_button.setStyleSheet(u"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }\n"
-"QPushButton:disabled {\n"
-"color: gray;\n"
-" background-color: #2C2C2C;\n"
-"}")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.reference_reload_button.setIcon(icon9)
-        self.reference_reload_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_3.addWidget(self.reference_reload_button)
-
-        self.reference_realtime_reload_checkBox = QCheckBox(self.frame_9)
-        self.reference_realtime_reload_checkBox.setObjectName(u"reference_realtime_reload_checkBox")
-        self.reference_realtime_reload_checkBox.setStyleSheet(u"QCheckBox {\n"
-"\n"
-"        font: 580 10pt \"Segoe UI\";\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QCheckBox:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QCheckBox:pressed {\n"
-"\n"
-"    }\n"
-"\n"
-"QCheckBox:disabled {\n"
-"color: gray;\n"
-" background-color: #2C2C2C;\n"
-"}")
-
-        self.horizontalLayout_3.addWidget(self.reference_realtime_reload_checkBox)
-
-        self.realtime_process = QCheckBox(self.frame_9)
-        self.realtime_process.setObjectName(u"realtime_process")
-        self.realtime_process.setEnabled(True)
-        self.realtime_process.setStyleSheet(u"QCheckBox {\n"
-"\n"
-"        font: 580 10pt \"Segoe UI\";\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QCheckBox:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QCheckBox:pressed {\n"
-"\n"
-"    }\n"
-"\n"
-"QCheckBox:disabled {\n"
-"color: gray;\n"
-" background-color: #2C2C2C;\n"
-"}")
-
-        self.horizontalLayout_3.addWidget(self.realtime_process)
-
 
         self.verticalLayout_10.addWidget(self.frame_9)
 
@@ -842,9 +736,9 @@ class Ui_BatchCreator_MainWindow(object):
 "color: gray;\n"
 " background-color: #2C2C2C;\n"
 "}")
-        icon10 = QIcon()
-        icon10.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.monitoring_start_toggle_button.setIcon(icon10)
+        icon9 = QIcon()
+        icon9.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.monitoring_start_toggle_button.setIcon(icon9)
         self.monitoring_start_toggle_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_8.addWidget(self.monitoring_start_toggle_button)
@@ -906,18 +800,6 @@ class Ui_BatchCreator_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.select_reference_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Select", None))
         self.reference_editline.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Path to vmat, vmdl, vmsart", None))
-#if QT_CONFIG(tooltip)
-        self.reference_reload_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Reloads referenced file content</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.reference_reload_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Reload", None))
-#if QT_CONFIG(tooltip)
-        self.reference_realtime_reload_checkBox.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Always releads referenced file</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.reference_realtime_reload_checkBox.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Realtime reload", None))
-#if QT_CONFIG(tooltip)
-        self.realtime_process.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>After anychanges in the editor or in referenced file process action will start.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.realtime_process.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Realtime process", None))
         self.dockWidget_2.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Monitoring", None))
         self.monitoring_searchbar.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Filter files...", None))
         self.monitoring_start_toggle_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Start", None))
