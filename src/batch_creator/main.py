@@ -1,19 +1,17 @@
 import json
 import os
-
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import Qt, QMimeData
-from PySide6.QtGui import QDropEvent, QTextCursor, QAction, QIcon
-
+from PySide6.QtGui import QDropEvent, QAction, QIcon
 from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
-from src.preferences import get_addon_name, get_cs2_path
+from src.preferences import get_addon_name, get_cs2_path, debug
 from src.batch_creator.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
 from src.batch_creator.objects import default_file
 from src.batch_creator.dialog import BatchCreatorProcessDialog
 from src.batch_creator.process import perform_batch_processing
 from src.batch_creator.property.frame import PropertyFrame
-from src.batch_creator.property.objects import *
+from src.batch_creator.property.objects import default_replacement, default_replacements
 from src.batch_creator.context_menu import ReplacementsContextMenu
 
 class BatchCreatorMainWindow(QMainWindow):
@@ -61,30 +59,60 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.monitoring_start_toggle_button.clicked.connect(self.toggle_monitoring)
         self.ui.return_button.setEnabled(False)
 
-    # Replacements editor
     def init_replacements_editor(self):
-        self.ui.new_replacement_button.clicked.connect(self.new_replacement)
+        self.ui.new_replacement_button.clicked.connect(lambda :self.new_replacement())
         self.replacements_layout = self.ui.verticalLayout_11
 
-    def new_replacement(self):
-        new_instance = PropertyFrame(widget_list=self.replacements_layout, _data=default_replacement)
-        self.replacements_layout.insertWidget(0, new_instance)
+    def new_replacement(self, __data: dict = None):
+        if __data is None:
+            __data = default_replacement
+        widget_instance = PropertyFrame(widget_list=self.replacements_layout, _data=__data)
+        index = self.replacements_layout.count() - 1
+        self.replacements_layout.insertWidget(index, widget_instance)
 
-    # Editor functions
+    def populate_replacements(self, replacements: dict = None):
+        """Create replacements from dict input."""
+        if replacements is None:
+            replacements = {}
+        else:
+            for key, value in replacements.items():
+                self.new_replacement(value)
+
+    def collect_replacements(self):
+        """Collect replacements into a dictionary."""
+        _data = {}
+        for index in range(self.replacements_layout.count()):
+            widget = self.replacements_layout.itemAt(index).widget()
+            if isinstance(widget, PropertyFrame):
+                value = widget.value
+                value = {index: value}
+                _data.update(value)
+        return _data
+
+    def get_property_value(self, index):
+        """Get dictionary value from widget instance frame."""
+        widget_instance = self.replacements_layout.itemAt(index).widget()
+        if isinstance(widget_instance, PropertyFrame):
+            value = widget_instance.value
+            debug(f"Getting PropertyFrame Value: \n {value}")
+            return value
+        return {}
+
+    def clear_replacements(self):
+        """Delete all PropertyFrame widgets in ui.replacements_layout."""
+        while self.replacements_layout.count():
+            widget = self.replacements_layout.takeAt(0).widget()
+            if widget and isinstance(widget, PropertyFrame):
+                widget.deleteLater()
 
     def handle_plain_text_drop(self, event: QDropEvent):
         """Handle file drop into the editor."""
-        if event.source() == self:
-            return
-
         mime_data = event.mimeData()
-        if mime_data.hasText():
-            urls = mime_data.urls()
-            for url in urls:
+        if mime_data.hasUrls():
+            for url in mime_data.urls():
                 file_path = url.toLocalFile()
                 if os.path.isfile(file_path):
                     self.load_file_content(file_path)
-
         event.accept()
 
     def load_file_content(self, file_path):
@@ -122,8 +150,6 @@ class BatchCreatorMainWindow(QMainWindow):
         """Get the path relative to the addon folder."""
         root_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
         return os.path.relpath(file_path, root_directory)
-
-    # File creations functions
 
     def create_file(self):
         """Create a new file in the selected folder."""
@@ -171,13 +197,12 @@ class BatchCreatorMainWindow(QMainWindow):
             self.process_data['extension'] = self.ui.extension_lineEdit.text()
             data = {
                 'file': {'content': content},
-                'process': self.process_data
+                'process': self.process_data,
+                'replacements': self.collect_replacements()
             }
             self.write_json_file(self.current_file, data)
         else:
             print("No file is currently opened to save.")
-
-    # Open file functions
 
     def open_file(self):
         """Open a file selected in the explorer."""
@@ -218,6 +243,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 self.process_data = data.get('process', {})
                 self.ui.kv3_QplainTextEdit.setPlainText(content)
                 self.ui.extension_lineEdit.setText(self.process_data.get('extension', default_file['process']['extension']))
+                self.populate_replacements(data.get('replacements', default_replacements))
                 self.update_explorer_title()
                 print(f"File opened from: {file_path}")
         except Exception as e:
