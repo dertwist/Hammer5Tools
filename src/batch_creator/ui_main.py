@@ -879,7 +879,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.kv3_QplainTextEdit.setPlainText("")
         self.kv3_QplainTextEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Content", None))
         self.viewport_searchbar.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Search in viewport...", None))
-        self.viewport_search_label.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Found: 000", None))
+        self.viewport_search_label.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Found: 0", None))
         self.viewport_search_previous_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Previous", None))
         self.viewport_search_next_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Next", None))
         self.label_2.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Replacements", None))
