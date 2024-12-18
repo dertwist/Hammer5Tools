@@ -11,7 +11,7 @@ from src.batch_creator.process import perform_batch_processing
 
 
 class BatchCreatorProcessDialog(QDialog):
-    def __init__(self, process, current_file, parent=None, process_all=None):
+    def __init__(self, process, current_file, parent=None, process_all=None, collect_replacements = None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_process_Dialog()
         self.ui.setupUi(self)
@@ -21,6 +21,7 @@ class BatchCreatorProcessDialog(QDialog):
         self.current_file = current_file
         self.process_all = process_all
         self.parent_window = parent
+        self.collect_replacements = collect_replacements
 
         self.initialize_ui()
         self.connect_signals()
@@ -87,7 +88,8 @@ class BatchCreatorProcessDialog(QDialog):
         processed_files = perform_batch_processing(
             file_path=self.current_file,
             process=self.process_data,
-            preview=True
+            preview=True,
+            replacements=self.collect_replacements()
         )
 
         input_preview = self.ui.Input_files_preview_scrollarea
