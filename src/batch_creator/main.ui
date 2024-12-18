@@ -177,7 +177,7 @@
                     <item>
                      <widget class="QLabel" name="viewport_search_label">
                       <property name="text">
-                       <string>Found: 000</string>
+                       <string>Found: 0</string>
                       </property>
                      </widget>
                     </item>

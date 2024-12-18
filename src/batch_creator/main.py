@@ -13,6 +13,7 @@ from src.batch_creator.process import perform_batch_processing
 from src.batch_creator.property.frame import PropertyFrame
 from src.batch_creator.property.objects import default_replacement, default_replacements
 from src.batch_creator.context_menu import ReplacementsContextMenu
+from src.preferences import get_config_value, set_config_value
 
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -46,6 +47,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_editor_visibility()
         self.toggle_monitoring()
 
+        self.load_splitter_position()
         self.connect_signals()
 
     def connect_signals(self):
@@ -61,6 +63,25 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.viewport_searchbar.textChanged.connect(self.perform_search)
         self.ui.viewport_search_previous_button.clicked.connect(self.search_previous)
         self.ui.viewport_search_next_button.clicked.connect(self.search_next)
+        self.ui.splitter.splitterMoved.connect(self.save_splitter_position)
+
+    def save_splitter_position(self):
+        """Save the splitter position to settings."""
+        set_config_value('BatchCreator', 'splitterSizes', self.ui.splitter.sizes())
+
+    def load_splitter_position(self):
+        """Load the splitter position from settings."""
+        sizes = get_config_value("BatchCreator", 'splitterSizes')
+        if sizes:
+            sizes = [int(size) for size in sizes]
+        else:
+            sizes = [448, 220]
+        self.ui.splitter.setSizes(sizes)
+
+    def closeEvent(self, event):
+        """Override close event to save splitter position."""
+        self.save_splitter_position()
+        super().closeEvent(event)
 
     #============================================================<  Replacements  >=========================================================
     def init_replacements_editor(self):
