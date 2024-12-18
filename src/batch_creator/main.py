@@ -2,7 +2,7 @@ import json
 import os
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 from PySide6.QtCore import Qt, QMimeData
-from PySide6.QtGui import QDropEvent, QAction, QIcon
+from PySide6.QtGui import QDropEvent, QAction, QIcon, QTextCharFormat, QTextCursor
 from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
 from src.preferences import get_addon_name, get_cs2_path, debug
 from src.batch_creator.highlighter import CustomHighlighter
@@ -24,11 +24,11 @@ class BatchCreatorMainWindow(QMainWindow):
         self.process_data = default_file['process'].copy()
         self.created_files = []
         self.monitoring_running_state = True
+        self.search_results = []
+        self.current_search_index = -1
 
         self.cs2_path = get_cs2_path()
         self.addon_name = get_addon_name()
-
-        self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
 
         explorer_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
         self.explorer = Explorer(parent=self.ui.left_vertical_frame, tree_directory=explorer_directory, addon=self.addon_name, editor_name='BatchCreator')
@@ -58,7 +58,11 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.return_button.clicked.connect(self.revert_created_files)
         self.ui.monitoring_start_toggle_button.clicked.connect(self.toggle_monitoring)
         self.ui.return_button.setEnabled(False)
+        self.ui.viewport_searchbar.textChanged.connect(self.perform_search)
+        self.ui.viewport_search_previous_button.clicked.connect(self.search_previous)
+        self.ui.viewport_search_next_button.clicked.connect(self.search_next)
 
+    #============================================================<  Replacements  >=========================================================
     def init_replacements_editor(self):
         self.ui.new_replacement_button.clicked.connect(lambda :self.new_replacement())
         self.replacements_layout = self.ui.replacements_layout.layout()
@@ -109,6 +113,8 @@ class BatchCreatorMainWindow(QMainWindow):
                 widget.setParent(None)
                 widget.deleteLater()
 
+    #==============================================================<  Viewport  >===========================================================
+
     def handle_plain_text_drop(self, event: QDropEvent):
         """Handle file drop into the editor."""
         mime_data = event.mimeData()
@@ -122,11 +128,72 @@ class BatchCreatorMainWindow(QMainWindow):
     def load_file_content(self, file_path):
         """Load content from a file into the editor."""
         try:
+            self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
             with open(file_path, 'r') as file:
                 data = file.read()
             self.ui.kv3_QplainTextEdit.setPlainText(data)
         except Exception as e:
             QMessageBox.critical(self, "File Read Error", f"An error occurred while reading the file: {e}")
+
+    def perform_search(self):
+        """Perform search in kv3_QplainTextEdit."""
+        search_term = self.ui.viewport_searchbar.text()
+        self.search_results.clear()
+        self.current_search_index = -1
+
+        if search_term:
+            cursor = self.ui.kv3_QplainTextEdit.textCursor()
+            document = self.ui.kv3_QplainTextEdit.document()
+            cursor.beginEditBlock()
+
+            # Reset formatting only for the search term
+            fmt = QTextCharFormat()
+            cursor.setPosition(0)
+            while not cursor.isNull() and not cursor.atEnd():
+                cursor = document.find(search_term, cursor)
+                if not cursor.isNull():
+                    self.search_results.append(cursor.selectionStart())
+                    cursor.mergeCharFormat(fmt)
+
+            # Highlight all occurrences
+            highlight_format = QTextCharFormat()
+            highlight_format.setBackground(Qt.yellow)  # Example highlight color
+            for position in self.search_results:
+                cursor.setPosition(position)
+                cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor, len(search_term))
+                cursor.mergeCharFormat(highlight_format)
+
+            cursor.endEditBlock()
+
+        # Update the search label
+        self.update_search_label()
+
+    def update_search_label(self):
+        """Update the search results label."""
+        total_matches = len(self.search_results)
+        self.ui.viewport_search_label.setText(f"Found: {total_matches}")
+
+    def search_next(self):
+        """Navigate to the next search result."""
+        if self.search_results:
+            self.current_search_index = (self.current_search_index + 1) % len(self.search_results)
+            self.highlight_current_search_result()
+
+    def search_previous(self):
+        """Navigate to the previous search result."""
+        if self.search_results:
+            self.current_search_index = (self.current_search_index - 1) % len(self.search_results)
+            self.highlight_current_search_result()
+
+    def highlight_current_search_result(self):
+        """Highlight the current search result."""
+        if self.search_results:
+            cursor = self.ui.kv3_QplainTextEdit.textCursor()
+            cursor.setPosition(self.search_results[self.current_search_index])
+            cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.KeepAnchor,
+                                len(self.ui.viewport_searchbar.text()))
+            self.ui.kv3_QplainTextEdit.setTextCursor(cursor)
+            self.ui.kv3_QplainTextEdit.ensureCursorVisible()
 
     def update_editor_visibility(self):
         """Update the visibility of editor-related widgets based on the current file state."""
@@ -140,6 +207,8 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.referencing_groupbox.setDisabled(True)
             self.ui.process_groupbox.setDisabled(True)
             self.ui.label_editor_placeholder.show()
+
+    #==============================================================<  Explorer  >===========================================================
 
     def update_explorer_title(self):
         """Update the title of the explorer based on the current file."""
@@ -211,6 +280,7 @@ class BatchCreatorMainWindow(QMainWindow):
     def open_file(self):
         """Open a file selected in the explorer."""
         self.clear_replacements()
+        self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
         indexes = self.explorer.tree.selectionModel().selectedIndexes()
         if indexes:
             index = indexes[0]
