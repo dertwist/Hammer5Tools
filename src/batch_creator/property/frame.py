@@ -38,6 +38,9 @@ class PropertyFrame(QWidget):
             self.widget_list = widget_list
             self._height = 24
 
+            self.setMinimumHeight(72)
+            self.setMaximumHeight(72)
+
             # Populate
             self.populate_properties(data=_data)
 

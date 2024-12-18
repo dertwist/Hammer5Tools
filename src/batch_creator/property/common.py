@@ -96,6 +96,7 @@ class PropertyReplacement(PropertyBase):
         self.source_line.setMinimumWidth(64)
         self.layout().addWidget(self.source_line)
         self.set_value(value[0], self.source_line)
+        self.source_line.setPlaceholderText('Source')
 
         self.source_line.setWordWrapMode(QTextOption.NoWrap)
         self.source_line.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -114,6 +115,7 @@ class PropertyReplacement(PropertyBase):
         self.destination_line.setMinimumWidth(64)
         self.layout().addWidget(self.destination_line)
         self.set_value(value[1], self.destination_line)
+        self.destination_line.setPlaceholderText('Destination')
 
         self.destination_line.setWordWrapMode(QTextOption.NoWrap)
         self.destination_line.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
