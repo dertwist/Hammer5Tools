@@ -2,7 +2,6 @@ import os
 import json
 from src.batch_creator.objects import default_file
 from src.preferences import get_addon_name, get_cs2_path
-from src.batch_creator.common import extract_base_names, extract_base_names_underscore
 from PySide6.QtWidgets import QMessageBox
 
 def perform_batch_processing(file_path, process, preview, replacements):
@@ -64,6 +63,13 @@ def preview_processing_files(files, batch_directory, base_directory, extension, 
         return files, files_list_out, extension, batch_directory
     else:
         return files, None, extension, batch_directory
+
+def extract_base_names(names):
+    # return set(name.split('_')[0] for name in names)
+    return set(os.path.basename(name) for name in names)
+
+def extract_base_names_underscore(names):
+    return set(name.rsplit('_', 1)[0] if '_' in name else name for name in names)
 
 def search_files(directory, algorithm, ignore_extensions, process):
     ignore_list = [item.strip() for item in process.get('ignore_list', '').split(',')]
