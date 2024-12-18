@@ -246,3 +246,46 @@ qt_stylesheet_smartprop_editor_frame = """.QFrame {
 .QFrame::selected {
     background-color: #414956;
 }"""
+
+qt_stylesheet_plain_text_batch_inline = """QPlainTextEdit {
+
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding: 0px;  /* Remove padding */
+    padding-left: 0px;  /* Remove left padding */
+    padding-right: 0px;  /* Remove right padding */
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+
+
+QPlainTextEdit{
+
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding: 0px;  /* Remove padding */
+    padding-left: 0px;  /* Remove left padding */
+    padding-right: 0px;  /* Remove right padding */
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+/* QPlainTextEdit:hover {
+    background-color: #414956;
+    color: white;
+} */
+
+QPlainTextEdit:pressed {
+    background-color: red;
+    background-color: #1C1C1C;
+    margin: 0px;  /* Remove margin */
+    margin-left: 0px;  /* Remove left margin */
+    margin-right: 0px;  /* Remove right margin */
+}"""
