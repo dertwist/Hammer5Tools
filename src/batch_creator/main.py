@@ -1,6 +1,6 @@
 import json
 import os
-from PySide6.QtWidgets import QMainWindow, QMessageBox
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDropEvent, QAction, QIcon, QTextCharFormat, QTextCursor
 from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
@@ -15,6 +15,7 @@ from src.batch_creator.property.objects import default_replacement, default_repl
 from src.batch_creator.context_menu import ReplacementsContextMenu
 from src.preferences import get_config_value, set_config_value
 from src.batch_creator.monitor import *
+from src.widgets import ErrorInfo
 
 
 class MonitoringFileWatcher(QListWidget):
@@ -95,17 +96,22 @@ class BatchCreatorMainWindow(QMainWindow):
         self.search_results = []
         self.current_search_index = -1
 
-        self.cs2_path = get_cs2_path()
         self.addon_name = get_addon_name()
+        self.cs2_path = get_cs2_path()
+        self.explorer_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
 
-        explorer_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
-        self.explorer = Explorer(parent=self.ui.left_vertical_frame, tree_directory=explorer_directory, addon=self.addon_name, editor_name='BatchCreator')
+
+        self.explorer = Explorer(parent=self.ui.left_vertical_frame, tree_directory=self.explorer_directory, addon=self.addon_name, editor_name='BatchCreator')
 
         self.ui.layout.addWidget(self.explorer.frame)
         self.ui.layout.setContentsMargins(0, 0, 0, 0)
         self.setAcceptDrops(True)
 
         self.context_menu = ReplacementsContextMenu(self, self.ui.kv3_QplainTextEdit)
+
+        self.ui.select_reference_button.clicked.connect(self.select_reference)
+        self.ui.reference_editline.setAcceptDrops(True)
+        self.ui.reference_editline.dropEvent = self.handle_drag_and_drop_reference
 
         self.ui.kv3_QplainTextEdit.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.context_menu.show)
@@ -114,7 +120,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_editor_visibility()
         self.toggle_monitoring()
 
-        self.monitoring_list = MonitoringFileWatcher(explorer_directory)
+        self.monitoring_list = MonitoringFileWatcher(self.explorer_directory)
         self.ui.monitoring_content.addWidget(self.monitoring_list)
 
         self.load_splitter_position()
@@ -153,6 +159,33 @@ class BatchCreatorMainWindow(QMainWindow):
         self.save_splitter_position()
         super().closeEvent(event)
 
+    #============================================================<  Referencing  >==========================================================
+    def select_reference(self):
+        file_dialog = QFileDialog(self)
+        file_dialog.setWindowTitle("Select Reference File")
+        file_dialog.setFileMode(QFileDialog.ExistingFile)
+        file_dialog.setDirectory(self.explorer_directory)
+        if file_dialog.exec():
+            selected_files = file_dialog.selectedFiles()
+            if selected_files:
+                selected_file = selected_files[0]
+                self.set_reference(selected_file)
+    def set_reference(self, ref):
+        try:
+            ref = os.path.relpath(ref, self.explorer_directory)
+            self.ui.reference_editline.setText(str(ref))
+        except:
+            ErrorInfo("Select a file in the addon folder").exec_()
+
+    def handle_drag_and_drop_reference(self, event: QDropEvent):
+        """Handle file drop into the editor."""
+        mime_data = event.mimeData()
+        if mime_data.hasUrls():
+            for url in mime_data.urls():
+                file_path = url.toLocalFile()
+                if os.path.isfile(file_path):
+                    self.set_reference(file_path)
+        event.accept()
     #============================================================<  Replacements  >=========================================================
     def init_replacements_editor(self):
         self.ui.new_replacement_button.clicked.connect(lambda :self.new_replacement())
