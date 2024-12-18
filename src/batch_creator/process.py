@@ -39,7 +39,10 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
         if replacements:
             for key, replacement in replacements.items():
                 old, new = replacement.get('replacement', ['', ''])
-                __data_replacements = __data_replacements.replace(old, new)
+                if old == "":
+                    pass
+                else:
+                    __data_replacements = __data_replacements.replace(old, new)
 
         __data = __data_replacements.replace("#$FOLDER_PATH$#", relative_path).replace("#$ASSET_NAME$#", file_name)
         output_file_path = os.path.join(output_path, f"{file_name}.{extension}")
