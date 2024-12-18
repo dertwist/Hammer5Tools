@@ -74,6 +74,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
         self.splitter = QSplitter(self.editor_widgets)
         self.splitter.setObjectName(u"splitter")
+        self.splitter.setBaseSize(QSize(0, 0))
         self.splitter.setOrientation(Qt.Orientation.Vertical)
         self.kv3_QplainTextEdit = QPlainTextEdit(self.splitter)
         self.kv3_QplainTextEdit.setObjectName(u"kv3_QplainTextEdit")
@@ -798,22 +799,6 @@ class Ui_BatchCreator_MainWindow(object):
         self.verticalLayout_8.setContentsMargins(0, 0, 0, -1)
         self.monitoring_content = QVBoxLayout()
         self.monitoring_content.setObjectName(u"monitoring_content")
-        self.scrollArea_2 = QScrollArea(self.dockWidgetContents_2)
-        self.scrollArea_2.setObjectName(u"scrollArea_2")
-        self.scrollArea_2.setWidgetResizable(True)
-        self.monitoring_files_layout = QWidget()
-        self.monitoring_files_layout.setObjectName(u"monitoring_files_layout")
-        self.monitoring_files_layout.setGeometry(QRect(0, 0, 350, 606))
-        self.verticalLayout_13 = QVBoxLayout(self.monitoring_files_layout)
-        self.verticalLayout_13.setObjectName(u"verticalLayout_13")
-        self.verticalSpacer_2 = QSpacerItem(20, 585, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.verticalLayout_13.addItem(self.verticalSpacer_2)
-
-        self.scrollArea_2.setWidget(self.monitoring_files_layout)
-
-        self.monitoring_content.addWidget(self.scrollArea_2)
-
 
         self.verticalLayout_8.addLayout(self.monitoring_content)
 

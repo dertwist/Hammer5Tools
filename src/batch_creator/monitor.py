@@ -6,6 +6,21 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal, QObject, QThread, Qt
 
+from PySide6.QtWidgets import (
+    QWidget, QLabel, QPushButton, QHBoxLayout
+)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
+import os
+
+from PySide6.QtWidgets import (
+    QWidget, QLabel, QPushButton, QHBoxLayout
+)
+from PySide6.QtCore import Signal, QSize
+from PySide6.QtGui import QIcon
+import os
+
+
 class FileSearcherThread(QThread):
     paths_found = Signal(set)
 
@@ -69,34 +84,99 @@ class FileWatcherThread(QThread):
         self.wait()
 
 class FileItemWidget(QWidget):
+    open = Signal(str)
+    realtime_toggle = Signal(str)
+    modified = Signal(str)
+
     def __init__(self, file_path, parent=None):
         super().__init__(parent)
         self.file_path = file_path
+        self.is_playing = True
+        self.setStyleSheet("""
+QWidget {
+    background-color: None;
+    outline: none;
+}
+
+QWidget:item {
+    background-color: None;
+    alternate-background-color: #2C2C2C;
+    color: #E3E3E3;
+}
+
+QWidget:item:hover {
+    background-color: None;
+    color: white;
+}
+
+QWidget:item:selected {
+    background-color: None;
+    color: white;
+    border: 0px;
+}
+""")
         self.init_ui()
 
     def init_ui(self):
         layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         self.label = QLabel(os.path.basename(self.file_path))
-        self.button1 = QPushButton("Action 1")
-        self.button2 = QPushButton("Action 2")
+        self.label.setContentsMargins(0, 0, 0, 0)
+
+        self.button1_realtime_toggle = QPushButton()
+        self.button2_open = QPushButton()
+
+        self.button1_realtime_toggle.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
+        self.button2_open.setIcon(QIcon(":/valve_common/icons/tools/common/edit.png"))
+
+        button_size = QSize(24, 24)
+        self.button1_realtime_toggle.setFixedSize(button_size)
+        self.button2_open.setFixedSize(button_size)
+
+        icon_size = QSize(16, 16)
+        self.button1_realtime_toggle.setIconSize(icon_size)
+        self.button2_open.setIconSize(icon_size)
+
+        button_stylesheet = """
+            QPushButton {
+                border: none;
+                background: none;
+            }
+            QPushButton:hover {
+                background-color: None;
+            }
+            QPushButton:pressed {
+                background-color: None;
+                margin: 0px;
+            }
+        """
+        self.button1_realtime_toggle.setStyleSheet(button_stylesheet)
+        self.button2_open.setStyleSheet(button_stylesheet)
 
         layout.addWidget(self.label)
-        layout.addWidget(self.button1)
-        layout.addWidget(self.button2)
+        layout.addWidget(self.button1_realtime_toggle)
+        layout.addWidget(self.button2_open)
 
         self.setLayout(layout)
+        self.setContentsMargins(0, 2, 0, 2)
 
-        # Connect buttons to their actions
-        self.button1.clicked.connect(self.action1)
-        self.button2.clicked.connect(self.action2)
+        self.button1_realtime_toggle.clicked.connect(self.action1)
+        self.button2_open.clicked.connect(self.action2)
 
     def action1(self):
-        # Implement action 1
+        if self.is_playing:
+            self.button1_realtime_toggle.setIcon(QIcon(":/valve_common/icons/tools/common/control_record.png"))
+        else:
+            self.button1_realtime_toggle.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
+        self.is_playing = not self.is_playing
+        self.realtime_toggle.emit(self.file_path)
         print(f"Action 1 triggered for {self.file_path}")
 
     def action2(self):
-        # Implement action 2
-        print(f"Action 2 triggered for {self.file_path}")
+        self.open.emit(self.file_path)
+        print(f"Opened {self.file_path}")
 
     def mark_modified(self):
         self.label.setText(f"{os.path.basename(self.file_path)} [Modified]")
