@@ -3,12 +3,17 @@
 import os
 import json
 from PySide6.QtWidgets import (
-    QListWidget, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout
+    QListWidget, QListWidgetItem, QWidget, QLabel, QPushButton, QHBoxLayout, QMenu
 )
 from PySide6.QtCore import Signal, QSize, QFileSystemWatcher
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QAction
 from src.preferences import get_addon_dir
 from src.batch_creator.process import StartProcess
+import os
+from PySide6.QtCore import Signal, QSize
+from PySide6.QtGui import QIcon
+from src.preferences import get_addon_dir, debug
+from src.qt_styles.common import *
 
 def read_reference_from_file(config_path):
     try:
@@ -34,13 +39,21 @@ class FileItemWidget(QWidget):
     def setup_ui(self):
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-
-        self.label = QLabel(os.path.basename(self.file_path))
+        relative_path = os.path.relpath(self.file_path, get_addon_dir())
+        path_parts = relative_path.split(os.sep)
+        if len(path_parts) >= 2:
+            text = os.sep.join(path_parts[-2:])
+        else:
+            text = relative_path
+        self.label = QLabel(text)
+        self.setToolTip(self.file_path)
         self.play_button = QPushButton()
         self.open_button = QPushButton()
 
         self.play_button.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
         self.open_button.setIcon(QIcon(":/valve_common/icons/tools/common/edit.png"))
+        self.play_button.setStyleSheet(qt_stylesheet_button)
+        self.open_button.setStyleSheet(qt_stylesheet_button)
 
         button_size = QSize(24, 24)
         self.play_button.setFixedSize(button_size)
@@ -61,8 +74,16 @@ class FileItemWidget(QWidget):
     def open_file(self):
         self.open_requested.emit(self.file_path)
 
-    def mark_modified(self):
-        self.label.setText(f"{os.path.basename(self.file_path)} [Modified]")
+    def contextMenuEvent(self, event):
+        menu = QMenu(self)
+        open_folder_action = QAction("Open Folder", self)
+        open_folder_action.triggered.connect(self.open_folder)
+        menu.addAction(open_folder_action)
+        menu.exec(event.globalPos())
+
+    def open_folder(self):
+        folder_path = os.path.dirname(self.file_path)
+        os.startfile(folder_path)
 
 class MonitoringFileWatcher(QListWidget):
     open_file = Signal(str)
@@ -76,6 +97,7 @@ class MonitoringFileWatcher(QListWidget):
         self.reference_configs = {}
         self.process_threads = {}
         self.initialize_watcher()
+        self.setStyleSheet(qt_stylesheet_widgetlist)
 
     def initialize_watcher(self):
         if not self.root_path or not os.path.isdir(self.root_path):
@@ -170,7 +192,6 @@ class MonitoringFileWatcher(QListWidget):
                 # Config file changed
                 self.update_reference(path)
                 _, widget = self.file_widgets[path]
-                widget.mark_modified()
                 self.stop_processing(path)
                 self.start_processing(path)
             elif path in self.reference_configs:
@@ -178,8 +199,6 @@ class MonitoringFileWatcher(QListWidget):
                 configs = self.reference_configs[path]
                 for config_path in configs:
                     _, widget = self.file_widgets.get(config_path, (None, None))
-                    if widget:
-                        widget.mark_modified()
                     self.stop_processing(config_path)
                     self.start_processing(config_path)
         else:
@@ -190,8 +209,6 @@ class MonitoringFileWatcher(QListWidget):
                 for config_path in configs:
                     self.config_references.pop(config_path, None)
                     _, widget = self.file_widgets.get(config_path, (None, None))
-                    if widget:
-                        widget.mark_modified()
                     self.stop_processing(config_path)
                 if path in self.file_system_watcher.files():
                     self.file_system_watcher.removePath(path)
@@ -215,7 +232,7 @@ class MonitoringFileWatcher(QListWidget):
 
     def on_process_finished(self, config_path):
         self.process_threads.pop(config_path, None)
-        print(f"Finished processing {config_path}")
+        debug(f"Finished processing {config_path}")
 
     def closeEvent(self, event):
         self.file_system_watcher.directoryChanged.disconnect(self.on_directory_changed)
