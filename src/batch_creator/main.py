@@ -13,7 +13,7 @@ from src.batch_creator.process import perform_batch_processing
 from src.batch_creator.property.frame import PropertyFrame
 from src.batch_creator.property.objects import default_replacement, default_replacements
 from src.batch_creator.context_menu import ReplacementsContextMenu
-from src.preferences import get_config_value, set_config_value
+from src.preferences import get_config_value, set_config_value, debug
 from src.batch_creator.monitor import *
 from src.widgets import ErrorInfo
 
@@ -93,6 +93,19 @@ class BatchCreatorMainWindow(QMainWindow):
         self.load_splitter_position()
         self.connect_signals()
 
+        self.ui.monitor_searchbar.textChanged.connect(self.filter_monitoring_list)
+
+
+    def filter_monitoring_list(self):
+        """Filter the monitoring list based on the search bar input."""
+        search_term = self.ui.monitor_searchbar.text().lower()
+        for index in range(self.monitoring_list.count()):
+            item = self.monitoring_list.item(index)
+            widget = self.monitoring_list.itemWidget(item)
+            if widget:
+                file_name = os.path.basename(widget.file_path).lower()
+                # Show or hide the item based on whether it matches the search term
+                item.setHidden(search_term not in file_name)
     def connect_signals(self):
         """Connect UI signals to their respective slots."""
         self.ui.create_file.clicked.connect(self.create_file)
@@ -369,7 +382,7 @@ class BatchCreatorMainWindow(QMainWindow):
         try:
             with open(file_path, 'w') as file:
                 json.dump(data, file, indent=4)
-            print(f"File created: {file_path}")
+            debug(f"File created: {file_path}")
         except Exception as e:
             print(f"Failed to create file: {e}")
 
@@ -386,7 +399,7 @@ class BatchCreatorMainWindow(QMainWindow):
             }
             self.write_json_file(self.current_file, data)
         else:
-            print("No file is currently opened to save.")
+            debug("No file is currently opened to save.")
 
     def open_file(self):
         """Open a file selected in the explorer."""
@@ -394,7 +407,6 @@ class BatchCreatorMainWindow(QMainWindow):
         if indexes:
             index = indexes[0]
             file_path = self.explorer.model.filePath(index)
-            self.current_file = file_path
             if not self.explorer.model.isDir(index):
                 if os.path.splitext(file_path)[1] != ".hbat":
                     if not self.confirm_open_anyway():
@@ -419,6 +431,7 @@ class BatchCreatorMainWindow(QMainWindow):
     def load_file(self, file_path):
         """Load a file's content into the editor."""
         try:
+            self.current_file = file_path
             self.clear_replacements()
             self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
             self.ui.reference_editline.clear()
@@ -431,7 +444,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 self.ui.extension_lineEdit.setText(self.process_data.get('extension', default_file['process']['extension']))
                 self.populate_replacements(data.get('replacements', default_replacements))
                 self.update_explorer_title()
-                print(f"File opened from: {file_path}")
+                debug(f"File opened from: {file_path}")
         except Exception as e:
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
             raise ValueError
@@ -457,7 +470,7 @@ class BatchCreatorMainWindow(QMainWindow):
         for file_path in self.created_files:
             try:
                 os.remove(file_path)
-                print(f"Removed file: {file_path}")
+                debug(f"Removed file: {file_path}")
             except OSError as e:
                 print(f"Error removing file {file_path}: {e}")
         self.created_files.clear()

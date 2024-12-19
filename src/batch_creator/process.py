@@ -3,7 +3,7 @@
 import os
 import json
 from src.batch_creator.objects import default_file
-from src.preferences import get_addon_name, get_cs2_path, get_addon_dir
+from src.preferences import get_addon_name, get_cs2_path, get_addon_dir, debug
 from PySide6.QtWidgets import QMessageBox
 from pathlib import Path
 from PySide6.QtCore import Signal, QThread
@@ -85,7 +85,6 @@ def perform_batch_processing(file_path, process, preview, replacements, content_
 
 def execute_file_creation(files, output_path, relative_path, extension, created_files, replacements, reference, content_template):
     if content_template is None:
-        QMessageBox.critical(None, "Processing Error", "No content template provided.")
         return
 
     for file_name in files:
@@ -109,12 +108,12 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
                 os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
                 with open(output_file_path, 'w') as output_file:
                     output_file.write(__data)
-                print(f'File created: {output_file_path}')
+                debug(f'File created: {output_file_path}')
                 created_files.append(output_file_path)
             except Exception as e:
                 print(f"Failed to create file {output_file_path} \n {e}")
         else:
-            print(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
+            debug(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
 
 def preview_processing_files(files, batch_directory, base_directory, extension, process):
     if process.get('load_from_the_folder'):
