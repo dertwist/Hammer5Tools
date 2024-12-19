@@ -156,7 +156,6 @@ class MonitoringFileWatcher(QListWidget):
             process_thread.stop()
         event.accept()
 
-#TODO remove toggle play button.
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -195,7 +194,6 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.kv3_QplainTextEdit.dropEvent = self.handle_plain_text_drop
         self.init_replacements_editor()
         self.update_editor_visibility()
-        self.toggle_monitoring()
 
         self.monitoring_list = MonitoringFileWatcher(self.explorer_directory)
         self.ui.monitoring_content.addWidget(self.monitoring_list)
@@ -211,7 +209,6 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.process_all_button.clicked.connect(self.process_all_files)
         self.ui.process_options_button.clicked.connect(self.show_process_options)
         self.ui.return_button.clicked.connect(self.revert_created_files)
-        self.ui.monitoring_start_toggle_button.clicked.connect(self.toggle_monitoring)
         self.ui.return_button.setEnabled(False)
         self.ui.viewport_searchbar.textChanged.connect(self.perform_search)
         self.ui.viewport_search_previous_button.clicked.connect(self.search_previous)
@@ -573,17 +570,3 @@ class BatchCreatorMainWindow(QMainWindow):
                 print(f"Error removing file {file_path}: {e}")
         self.created_files.clear()
         self.ui.return_button.setEnabled(False)
-
-    def toggle_monitoring(self):
-        """Toggle the monitoring state."""
-        self.monitoring_running_state = not self.monitoring_running_state
-
-        if self.monitoring_running_state:
-            icon_path = ":/valve_common/icons/tools/common/control_stop.png"
-            button_text = "Stop Monitoring"
-        else:
-            icon_path = ":/valve_common/icons/tools/common/control_play.png"
-            button_text = "Start Monitoring"
-
-        self.ui.monitoring_start_toggle_button.setIcon(QIcon(icon_path))
-        self.ui.monitoring_start_toggle_button.setText(button_text)
