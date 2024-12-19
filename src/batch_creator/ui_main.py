@@ -255,7 +255,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.replacements_scrollarea.setWidgetResizable(True)
         self.replacements_layout = QWidget()
         self.replacements_layout.setObjectName(u"replacements_layout")
-        self.replacements_layout.setGeometry(QRect(0, 0, 612, 126))
+        self.replacements_layout.setGeometry(QRect(0, 0, 640, 126))
         self.verticalLayout_11 = QVBoxLayout(self.replacements_layout)
         self.verticalLayout_11.setObjectName(u"verticalLayout_11")
         self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
@@ -656,11 +656,6 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.horizontalLayout_9.addWidget(self.select_reference_button)
 
-        self.reference_editline = QLineEdit(self.frame_8)
-        self.reference_editline.setObjectName(u"reference_editline")
-
-        self.horizontalLayout_9.addWidget(self.reference_editline)
-
 
         self.verticalLayout_10.addWidget(self.frame_8)
 
@@ -799,7 +794,6 @@ class Ui_BatchCreator_MainWindow(object):
         self.select_reference_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Select reference file, the reference file loads in the content field. To reload referenced file click Reload button.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.select_reference_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Select", None))
-        self.reference_editline.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Path to vmat, vmdl, vmsart", None))
         self.dockWidget_2.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Monitoring", None))
         self.monitoring_searchbar.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Filter files...", None))
         self.monitoring_start_toggle_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Start", None))
