@@ -1167,7 +1167,7 @@ color: gray;
     <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
-    <string>Config list</string>
+    <string>Config Inspector</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -1185,6 +1185,13 @@ color: gray;
      </property>
      <item>
       <layout class="QVBoxLayout" name="monitoring_content"/>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="monitor_searchbar">
+       <property name="placeholderText">
+        <string>Filter...</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
