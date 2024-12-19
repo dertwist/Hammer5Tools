@@ -36,6 +36,7 @@ class StartProcess(QThread):
         super().__init__(parent)
         self.filepath = filepath
         self.stop_thread = False
+
     def update_reference_content(self, reference):
         reference_path = os.path.join(get_addon_dir(), reference)
         with open(reference_path, 'r') as file:
@@ -43,12 +44,15 @@ class StartProcess(QThread):
         return __data
 
     def load_file(self, filepath):
-        __data = json.load(filepath)
-        process = __data['process']
-        replacements = __data['replacements']
+        # Open the file and pass the file object to json.load()
+        with open(filepath, 'r') as file:
+            __data = json.load(file)
+        process = __data.get('process', {})
+        replacements = __data.get('replacements', {})
         return process, replacements
+
     def save_file(self, filepath, process, replacements, content):
-        __data = {'process':process, 'replacements':replacements, 'file':content}
+        __data = {'process': process, 'replacements': replacements, 'file': {'content':content}}
         with open(filepath, 'w') as file:
             json.dump(__data, file, indent=4)
 
@@ -68,6 +72,7 @@ class StartProcess(QThread):
             if self.stop_thread:
                 return
 
+            # Perform batch processing
             perform_batch_processing(self.filepath, process, False, replacements)
 
             # Emit the finished signal when done
