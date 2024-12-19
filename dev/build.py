@@ -81,7 +81,7 @@ def create_installer(folder_path, output_exe):
     archive_name = 'application.zip'
 
     # Excluded files and paths
-    excluded_files = {'hammer5tools.7z', 'hammer5tools.zip', 'Hammer5ToolsInstaller.exe'}
+    excluded_files = {'hammer5tools.7z', 'hammer5tools.zip', 'hammer5tools_setup.exe'}
     excluded_paths = ['SoundEventEditor\\sounds']
 
     # Archive the application files
@@ -94,7 +94,7 @@ def create_installer(folder_path, output_exe):
     # Base64 encode the zip data
     encoded_zip_data = base64.b64encode(zip_data).decode('utf-8')
 
-    # Installer script content with fixes
+    # Installer script content with simplified closing logic
     installer_script = f"""
 import sys
 import os
@@ -155,25 +155,9 @@ def main():
                 if os.path.exists(exe_path):
                     if messagebox.askyesno('Launch Application', 'Do you want to launch Hammer 5 Tools now?'):
                         # Launch the application without console window
-                        process = subprocess.Popen([exe_path], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-                        # Wait for the application window to appear
-                        window_title = 'Hammer 5 Tools'
-                        timeout = 10  # seconds
-                        while True:
-                            hwnd = ctypes.windll.user32.FindWindowW(None, window_title)
-                            if hwnd != 0 or timeout <= 0:
-                                break
-                            time.sleep(0.5)
-                            timeout -= 0.5
-
-                        if hwnd != 0:
-                            root.destroy()  # Close installer only if the application window is found
-                        else:
-                            messagebox.showwarning('Warning', 'Hammer 5 Tools did not start within timeout.')
-                            install_button.config(state='normal')  # Re-enable the button
-                    else:
-                        root.destroy()
+                        subprocess.Popen([exe_path], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    # Close the installer
+                    root.destroy()
                 else:
                     messagebox.showwarning('Warning', 'Executable not found after installation.')
                     install_button.config(state='normal')
@@ -311,7 +295,7 @@ if __name__ == '__main__':
         # Use PyInstaller to create a self-contained executable installer
         subprocess.run([
             'pyinstaller', '--onefile', '--windowed', '--noconfirm',
-            '--name', 'Hammer5ToolsInstaller',
+            '--name', 'hammer5tools_setup',
             '--icon', 'src/appicon.ico',
             '--add-data', 'src/appicon.ico;.',
             '--hidden-import', 'win32com',
@@ -370,12 +354,12 @@ def main():
     # Determine output paths
     output_folder = 'hammer5tools'
     zip_output_path = os.path.join(output_folder, 'hammer5tools.zip')
-    installer_output_path = os.path.join(output_folder, 'Hammer5ToolsInstaller.exe')
+    installer_output_path = os.path.join(output_folder, 'hammer5tools_setup.exe')
 
     # Archive files if requested
     if args.archive:
         stage_start_time = time.time()
-        excluded_files = {'hammer5tools.7z', 'Hammer5ToolsInstaller.exe', 'hammer5tools.zip'}
+        excluded_files = {'hammer5tools.7z', 'hammer5tools_setup.exe', 'hammer5tools.zip'}
         excluded_paths = ['SoundEventEditor\\sounds']
         archive_files(output_folder, zip_output_path, excluded_files, excluded_paths)
         print_elapsed_time("Archiving files", stage_start_time)
