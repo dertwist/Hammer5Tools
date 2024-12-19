@@ -87,6 +87,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_editor_visibility()
 
         self.monitoring_list = MonitoringFileWatcher(self.explorer_directory)
+        self.monitoring_list.open_file.connect(self.load_file)
         self.ui.monitoring_content.addWidget(self.monitoring_list)
 
         self.load_splitter_position()
@@ -389,9 +390,6 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def open_file(self):
         """Open a file selected in the explorer."""
-        self.clear_replacements()
-        self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
-        self.ui.reference_editline.clear()
         indexes = self.explorer.tree.selectionModel().selectedIndexes()
         if indexes:
             index = indexes[0]
@@ -406,8 +404,6 @@ class BatchCreatorMainWindow(QMainWindow):
                 QMessageBox.information(self, "Folder Selected", "You have selected a folder. Please select a file to open.")
         else:
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
-        self.update_explorer_title()
-        self.update_editor_visibility()
 
     def confirm_open_anyway(self):
         """Confirm opening a file with an unsupported extension."""
@@ -423,6 +419,9 @@ class BatchCreatorMainWindow(QMainWindow):
     def load_file(self, file_path):
         """Load a file's content into the editor."""
         try:
+            self.clear_replacements()
+            self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
+            self.ui.reference_editline.clear()
             with open(file_path, 'r') as file:
                 data = json.load(file)
                 content = data.get('file', {}).get('content', '')
@@ -436,6 +435,8 @@ class BatchCreatorMainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
             raise ValueError
+        self.update_editor_visibility()
+        self.update_explorer_title()
 
     def show_process_options(self):
         """Show the process options dialog."""
