@@ -1167,7 +1167,7 @@ color: gray;
     <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
-    <string>Hotload</string>
+    <string>Config list</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
