@@ -46,7 +46,6 @@ class DragDropLineEdit(QLineEdit):
         else:
             event.ignore()
 
-
 class BatchCreatorMainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -212,7 +211,9 @@ class BatchCreatorMainWindow(QMainWindow):
                 file_path = url.toLocalFile()
                 if os.path.isfile(file_path):
                     self.set_reference(file_path)
-        event.accept()
+            event.accept()
+        else:
+            event.ignore()
 
     def load_reference(self):
         """Load the reference file content into the editor."""
@@ -245,9 +246,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
     def populate_replacements(self, replacements: dict = None):
         """Create replacements from dict input."""
-        if replacements is None:
-            replacements = {}
-        else:
+        if replacements:
             for key, value in replacements.items():
                 self.new_replacement(value)
 
@@ -290,7 +289,9 @@ class BatchCreatorMainWindow(QMainWindow):
                 file_path = url.toLocalFile()
                 if os.path.isfile(file_path):
                     self.load_file_content(file_path)
-        event.accept()
+            event.accept()
+        else:
+            event.ignore()
 
     def load_file_content(self, file_path):
         """Load content from a file into the editor."""
@@ -413,7 +414,7 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.warning(self, "Invalid Path", "Select a valid folder.")
             return
 
-        directory_path = os.path.dirname(os.path.normpath(selected_path))
+        directory_path = os.path.normpath(selected_path)
         if not os.path.exists(directory_path):
             QMessageBox.warning(self, "Invalid Path", "The directory does not exist.")
             return
@@ -424,6 +425,7 @@ class BatchCreatorMainWindow(QMainWindow):
     def write_json_file(self, file_path, data):
         """Write data to a JSON file."""
         try:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, 'w') as file:
                 json.dump(data, file, indent=4)
             debug(f"File created: {file_path}")
@@ -504,7 +506,8 @@ class BatchCreatorMainWindow(QMainWindow):
                 current_file=self.current_file,
                 parent=self,
                 process_all=self.process_all_files,
-                collect_replacements=self.collect_replacements
+                collect_replacements=self.collect_replacements,
+                viewport = self.ui.kv3_QplainTextEdit
             )
             self.process_dialog.show()
 
@@ -515,23 +518,31 @@ class BatchCreatorMainWindow(QMainWindow):
             file_path=self.current_file,
             process=self.process_data,
             preview=False,
-            replacements=self.collect_replacements()
+            replacements=self.collect_replacements(),
+            content_template=self.ui.kv3_QplainTextEdit.toPlainText()
         )
-        self.created_files.extend(created_files)
-        if self.created_files:
+        if created_files:
+            self.created_files.extend(created_files)
             self.ui.return_button.setEnabled(True)
+            debug(f"Created files: {created_files}")
+        else:
+            debug("No files were created during processing.")
 
     def revert_created_files(self):
         """Delete all files created during processing."""
-        print(f"Attempting to revert files: {self.created_files}")  # Debug statement
-        for file_path in self.created_files:
-            if os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                    debug(f"Removed file: {file_path}")
-                except Exception as e:
-                    print(f"Error removing file {file_path}: {e}")
-            else:
-                print(f"File does not exist: {file_path}")
-        self.created_files.clear()
-        self.ui.return_button.setEnabled(False)
+        if self.created_files:
+            debug(f"Reverting files: {self.created_files}")
+            for file_path in self.created_files:
+                if os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                        debug(f"Removed file: {file_path}")
+                    except Exception as e:
+                        print(f"Error removing file {file_path}: {e}")
+                else:
+                    print(f"File does not exist: {file_path}")
+            self.created_files.clear()
+            self.ui.return_button.setEnabled(False)
+            debug("All created files have been reverted.")
+        else:
+            debug("No files to revert.")
