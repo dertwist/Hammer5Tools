@@ -19,12 +19,23 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, QSize
 from PySide6.QtGui import QIcon
 import os
+import json_stream
+from src.preferences import get_addon_dir
+from src.batch_creator.process import *
+
+def read_stream(file_path):
+    with open(file_path, 'r') as file:
+        data = json_stream.load(file)
+        for key, value in data.items():
+            if key == 'process':
+                reference = value.get('reference', '')
+                return reference
 
 
 class FileSearcherThread(QThread):
     paths_found = Signal(set)
 
-    def __init__(self, root_path, extension='.vmat', parent=None):
+    def __init__(self, root_path, extension='.hbat', parent=None):
         super().__init__(parent)
         self.root_path = root_path
         self.extension = extension
@@ -68,6 +79,13 @@ class FileWatcherThread(QThread):
                     if new_mtime != self.watched_mtimes.get(path):
                         self.watched_mtimes[path] = new_mtime
                         self.file_modified.emit(path)
+                        reference = read_stream(path)
+                        if reference != '':
+                            # if there is reference in the file, so there will start a thread with reference file monitoring. If there any cahnges in file, start process.
+                            print(f'Found reference {reference}')
+                            reference_path = os.path.join(get_addon_dir(), reference)
+                            self.start_process = StartProcess(path)
+                            print(reference_path)
                 else:
                     self.paths.remove(path)
                     self.file_modified.emit(path)
