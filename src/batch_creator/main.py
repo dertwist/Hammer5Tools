@@ -1,10 +1,10 @@
 import json
 import os
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QLineEdit
-from PySide6.QtCore import Qt, QMimeData
+from PySide6.QtCore import Qt, QMimeData, QFileSystemWatcher, Signal
 from PySide6.QtGui import QDropEvent, QAction, QIcon, QTextCharFormat, QTextCursor
 from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
-from src.preferences import get_addon_name, get_cs2_path, debug
+from src.preferences import get_addon_name, get_cs2_path, get_addon_dir, debug
 from src.batch_creator.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
 from src.batch_creator.objects import default_file
@@ -13,8 +13,8 @@ from src.batch_creator.process import perform_batch_processing
 from src.batch_creator.property.frame import PropertyFrame
 from src.batch_creator.property.objects import default_replacement, default_replacements
 from src.batch_creator.context_menu import ReplacementsContextMenu
-from src.preferences import get_config_value, set_config_value, debug
-from src.batch_creator.monitor import *
+from src.preferences import get_config_value, set_config_value
+from src.batch_creator.monitor import MonitoringFileWatcher
 from src.widgets import ErrorInfo
 
 class DragDropLineEdit(QLineEdit):
@@ -65,16 +65,18 @@ class BatchCreatorMainWindow(QMainWindow):
         self.explorer_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
         self.replace_reference_editline()
 
-
-        self.explorer = Explorer(parent=self.ui.left_vertical_frame, tree_directory=self.explorer_directory, addon=self.addon_name, editor_name='BatchCreator')
+        self.explorer = Explorer(
+            parent=self.ui.left_vertical_frame,
+            tree_directory=self.explorer_directory,
+            addon=self.addon_name,
+            editor_name='BatchCreator'
+        )
 
         self.ui.layout.addWidget(self.explorer.frame)
         self.ui.layout.setContentsMargins(0, 0, 0, 0)
         self.setAcceptDrops(True)
 
         self.context_menu = ReplacementsContextMenu(self, self.ui.kv3_QplainTextEdit)
-
-
 
         # Connect signals
         self.ui.select_reference_button.clicked.connect(self.select_reference)
@@ -95,6 +97,9 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.ui.monitor_searchbar.textChanged.connect(self.filter_monitoring_list)
 
+        # Initialize QFileSystemWatcher for the reference file
+        self.reference_watcher = QFileSystemWatcher(self)
+        self.reference_watcher.fileChanged.connect(self.on_reference_file_changed)
 
     def filter_monitoring_list(self):
         """Filter the monitoring list based on the search bar input."""
@@ -106,6 +111,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 file_name = os.path.basename(widget.file_path).lower()
                 # Show or hide the item based on whether it matches the search term
                 item.setHidden(search_term not in file_name)
+
     def connect_signals(self):
         """Connect UI signals to their respective slots."""
         self.ui.create_file.clicked.connect(self.create_file)
@@ -138,11 +144,10 @@ class BatchCreatorMainWindow(QMainWindow):
         self.save_splitter_position()
         super().closeEvent(event)
 
-    #============================================================<  Referencing  >==========================================================
+    # ============================================================<  Referencing  >==========================================================
 
     def replace_reference_editline(self):
         parent_layout = self.ui.frame_8.layout()
-
 
         # Create new DragDropLineEdit
         self.ui.reference_editline = DragDropLineEdit()
@@ -150,6 +155,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
         # Add the new widget to the layout
         parent_layout.insertWidget(1, self.ui.reference_editline)
+
     def select_reference(self):
         file_dialog = QFileDialog(self)
         file_dialog.setWindowTitle("Select Reference File")
@@ -160,13 +166,43 @@ class BatchCreatorMainWindow(QMainWindow):
             if selected_files:
                 selected_file = selected_files[0]
                 self.set_reference(selected_file)
+
     def set_reference(self, ref):
         try:
             ref = os.path.relpath(ref, self.explorer_directory)
             self.ui.reference_editline.setText(str(ref))
-        except:
+        except Exception as e:
             ErrorInfo("Select a file in the addon folder").exec_()
         self.load_reference()
+        self.update_reference_watcher()
+
+    def update_reference_watcher(self):
+        """Update the watcher to monitor the current reference file."""
+        # Remove existing watched files
+        for path in self.reference_watcher.files():
+            self.reference_watcher.removePath(path)
+
+        # Get the full path of the reference file
+        reference = self.ui.reference_editline.text()
+        reference_path = os.path.join(get_addon_dir(), reference)
+
+        # Add the new reference file to be watched
+        if os.path.exists(reference_path):
+            self.reference_watcher.addPath(reference_path)
+            debug(f"Started watching reference file: {reference_path}")
+        else:
+            debug(f"Reference file does not exist: {reference_path}")
+
+    def on_reference_file_changed(self, path):
+        """Reload the reference content when the file changes."""
+        if os.path.exists(path):
+            # Reload the reference content
+            self.load_reference()
+            debug(f"Reference file changed and reloaded: {path}")
+        else:
+            # Remove the path if the file no longer exists
+            self.reference_watcher.removePath(path)
+            QMessageBox.warning(self, "Reference File Deleted", f"The reference file '{path}' was deleted.")
 
     def handle_drag_and_drop_reference(self, event: QDropEvent):
         """Handle file drop into the editor."""
@@ -177,17 +213,25 @@ class BatchCreatorMainWindow(QMainWindow):
                 if os.path.isfile(file_path):
                     self.set_reference(file_path)
         event.accept()
+
     def load_reference(self):
+        """Load the reference file content into the editor."""
         reference = self.ui.reference_editline.text()
         reference_path = os.path.join(get_addon_dir(), reference)
-        with open(reference_path, 'r') as file:
-            __data = file.read()
-        self.ui.kv3_QplainTextEdit.clear()
-        self.ui.kv3_QplainTextEdit.setPlainText(str(__data))
-        self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
-    #============================================================<  Replacements  >=========================================================
+        try:
+            with open(reference_path, 'r') as file:
+                data = file.read()
+            self.ui.kv3_QplainTextEdit.setPlainText(data)
+            self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
+            debug(f"Loaded reference file: {reference_path}")
+        except Exception as e:
+            debug(f"Failed to load reference file: {e}")
+            QMessageBox.critical(self, "Load Reference Error", f"An error occurred while loading the reference file: {e}")
+
+    # ============================================================<  Replacements  >=========================================================
+
     def init_replacements_editor(self):
-        self.ui.new_replacement_button.clicked.connect(lambda :self.new_replacement())
+        self.ui.new_replacement_button.clicked.connect(lambda: self.new_replacement())
         self.replacements_layout = self.ui.replacements_layout.layout()
 
     def new_replacement(self, __data: dict = None):
@@ -236,7 +280,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 widget.setParent(None)
                 widget.deleteLater()
 
-    #==============================================================<  Viewport  >===========================================================
+    # =============================================================<  Viewport  >===========================================================
 
     def handle_plain_text_drop(self, event: QDropEvent):
         """Handle file drop into the editor."""
@@ -331,7 +375,7 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.process_groupbox.setDisabled(True)
             self.ui.label_editor_placeholder.show()
 
-    #==============================================================<  Explorer  >===========================================================
+    # =============================================================<  Explorer  >===========================================================
 
     def update_explorer_title(self):
         """Update the title of the explorer based on the current file."""
@@ -450,28 +494,44 @@ class BatchCreatorMainWindow(QMainWindow):
             raise ValueError
         self.update_editor_visibility()
         self.update_explorer_title()
+        self.update_reference_watcher()
 
     def show_process_options(self):
         """Show the process options dialog."""
         if not hasattr(self, 'process_dialog') or not self.process_dialog.isVisible():
-            self.process_dialog = BatchCreatorProcessDialog(process=self.process_data, current_file=self.current_file, parent=self, process_all=self.process_all_files, collect_replacements=self.collect_replacements)
+            self.process_dialog = BatchCreatorProcessDialog(
+                process=self.process_data,
+                current_file=self.current_file,
+                parent=self,
+                process_all=self.process_all_files,
+                collect_replacements=self.collect_replacements
+            )
             self.process_dialog.show()
 
     def process_all_files(self):
         """Process all files based on the current settings."""
         self.save_file()
-        created_files = perform_batch_processing(file_path=self.current_file, process=self.process_data, preview=False, replacements=self.collect_replacements())
+        created_files = perform_batch_processing(
+            file_path=self.current_file,
+            process=self.process_data,
+            preview=False,
+            replacements=self.collect_replacements()
+        )
         self.created_files.extend(created_files)
-        if created_files:
+        if self.created_files:
             self.ui.return_button.setEnabled(True)
 
     def revert_created_files(self):
         """Delete all files created during processing."""
+        print(f"Attempting to revert files: {self.created_files}")  # Debug statement
         for file_path in self.created_files:
-            try:
-                os.remove(file_path)
-                debug(f"Removed file: {file_path}")
-            except OSError as e:
-                print(f"Error removing file {file_path}: {e}")
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    debug(f"Removed file: {file_path}")
+                except Exception as e:
+                    print(f"Error removing file {file_path}: {e}")
+            else:
+                print(f"File does not exist: {file_path}")
         self.created_files.clear()
         self.ui.return_button.setEnabled(False)
