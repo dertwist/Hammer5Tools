@@ -1167,7 +1167,7 @@ color: gray;
     <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
-    <string>Monitoring</string>
+    <string>Hotload</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -1185,70 +1185,6 @@ color: gray;
      </property>
      <item>
       <layout class="QVBoxLayout" name="monitoring_content"/>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="monitoring_searchbar">
-       <property name="placeholderText">
-        <string>Filter files...</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="monitoring_start_toggle_button">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>18</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">    QPushButton {
-
-        font: 580 9pt &quot;Segoe UI&quot;;
-	
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QPushButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }
-QPushButton:disabled {
-color: gray;
- background-color: #2C2C2C;
-}</string>
-       </property>
-       <property name="text">
-        <string>Start</string>
-       </property>
-       <property name="icon">
-        <iconset resource="../resources.qrc">
-         <normaloff>:/valve_common/icons/tools/common/control_play.png</normaloff>:/valve_common/icons/tools/common/control_play.png</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>20</width>
-         <height>20</height>
-        </size>
-       </property>
-      </widget>
      </item>
     </layout>
    </widget>
