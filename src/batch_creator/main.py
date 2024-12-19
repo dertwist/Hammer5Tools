@@ -414,7 +414,8 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.warning(self, "Invalid Path", "Select a valid folder.")
             return
 
-        directory_path = os.path.normpath(selected_path)
+
+        directory_path = os.path.dirname(os.path.normpath(selected_path))
         if not os.path.exists(directory_path):
             QMessageBox.warning(self, "Invalid Path", "The directory does not exist.")
             return
