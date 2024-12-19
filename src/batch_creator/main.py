@@ -17,6 +17,35 @@ from src.preferences import get_config_value, set_config_value
 from src.batch_creator.monitor import *
 from src.widgets import ErrorInfo
 
+class DragDropLineEdit(QLineEdit):
+    fileDropped = Signal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.setPlaceholderText('Path to vmdl, vmat, vsmart')
+
+    def dragEnterEvent(self, event):
+        mime_data = event.mimeData()
+        if mime_data.hasUrls():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        mime_data = event.mimeData()
+        if mime_data.hasUrls():
+            for url in mime_data.urls():
+                file_path = url.toLocalFile()
+                if os.path.isfile(file_path):
+                    self.fileDropped.emit(file_path)
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
 
 class MonitoringFileWatcher(QListWidget):
     def __init__(self, root_path):
@@ -109,9 +138,11 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.context_menu = ReplacementsContextMenu(self, self.ui.kv3_QplainTextEdit)
 
+        self.replace_reference_editline()
+
+        # Connect signals
         self.ui.select_reference_button.clicked.connect(self.select_reference)
-        self.ui.reference_editline.setAcceptDrops(True)
-        self.ui.reference_editline.dropEvent = self.handle_drag_and_drop_reference
+        self.ui.reference_editline.fileDropped.connect(self.set_reference)
 
         self.ui.kv3_QplainTextEdit.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.kv3_QplainTextEdit.customContextMenuRequested.connect(self.context_menu.show)
@@ -160,6 +191,20 @@ class BatchCreatorMainWindow(QMainWindow):
         super().closeEvent(event)
 
     #============================================================<  Referencing  >==========================================================
+
+    def replace_reference_editline(self):
+        parent_layout = self.ui.reference_editline.parent().layout()
+        index = parent_layout.indexOf(self.ui.reference_editline)
+
+        # Remove the old widget
+        self.ui.reference_editline.deleteLater()
+
+        # Create new DragDropLineEdit
+        self.ui.reference_editline = DragDropLineEdit()
+        self.ui.reference_editline.setObjectName("reference_editline")
+
+        # Add the new widget to the layout
+        parent_layout.insertWidget(index, self.ui.reference_editline)
     def select_reference(self):
         file_dialog = QFileDialog(self)
         file_dialog.setWindowTitle("Select Reference File")
