@@ -24,12 +24,11 @@ def read_reference_from_file(config_path):
 
 class FileItemWidget(QWidget):
     open_requested = Signal(str)
-    toggle_realtime = Signal(str, bool)
+    process_requested = Signal(str)
 
     def __init__(self, file_path):
         super().__init__()
         self.file_path = file_path
-        self.is_active = True
         self.setup_ui()
 
     def setup_ui(self):
@@ -37,30 +36,27 @@ class FileItemWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.label = QLabel(os.path.basename(self.file_path))
-        self.play_pause_button = QPushButton()
+        self.play_button = QPushButton()
         self.open_button = QPushButton()
 
-        self.play_pause_button.setIcon(QIcon(":/valve_common/icons/tools/common/control_pause.png"))
+        self.play_button.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
         self.open_button.setIcon(QIcon(":/valve_common/icons/tools/common/edit.png"))
 
         button_size = QSize(24, 24)
-        self.play_pause_button.setFixedSize(button_size)
+        self.play_button.setFixedSize(button_size)
         self.open_button.setFixedSize(button_size)
 
         layout.addWidget(self.label)
-        layout.addWidget(self.play_pause_button)
+        layout.addWidget(self.play_button)
         layout.addWidget(self.open_button)
 
         self.setLayout(layout)
 
-        self.play_pause_button.clicked.connect(self.toggle)
+        self.play_button.clicked.connect(self.start_process)
         self.open_button.clicked.connect(self.open_file)
 
-    def toggle(self):
-        self.is_active = not self.is_active
-        icon = QIcon(":/valve_common/icons/tools/common/control_play.png") if not self.is_active else QIcon(":/valve_common/icons/tools/common/control_pause.png")
-        self.play_pause_button.setIcon(icon)
-        self.toggle_realtime.emit(self.file_path, self.is_active)
+    def start_process(self):
+        self.process_requested.emit(self.file_path)
 
     def open_file(self):
         self.open_requested.emit(self.file_path)
@@ -69,6 +65,8 @@ class FileItemWidget(QWidget):
         self.label.setText(f"{os.path.basename(self.file_path)} [Modified]")
 
 class MonitoringFileWatcher(QListWidget):
+    open_file = Signal(str)
+
     def __init__(self, root_path):
         super().__init__()
         self.root_path = root_path
@@ -77,7 +75,6 @@ class MonitoringFileWatcher(QListWidget):
         self.config_references = {}
         self.reference_configs = {}
         self.process_threads = {}
-        self.active_files = set()
         self.initialize_watcher()
 
     def initialize_watcher(self):
@@ -119,10 +116,9 @@ class MonitoringFileWatcher(QListWidget):
         self.addItem(item)
         self.setItemWidget(item, widget)
         self.file_widgets[path] = (item, widget)
-        self.active_files.add(path)
 
-        widget.open_requested.connect(self.open_file)
-        widget.toggle_realtime.connect(self.set_file_active)
+        widget.open_requested.connect(self.open_file.emit)
+        widget.process_requested.connect(self.start_processing)
 
         self.update_reference(path)
         self.file_system_watcher.addPath(path)
@@ -135,7 +131,6 @@ class MonitoringFileWatcher(QListWidget):
         if item:
             self.takeItem(self.row(item))
         self.untrack_reference(path)
-        self.active_files.discard(path)
 
     def update_reference(self, config_path):
         reference_path = read_reference_from_file(config_path)
@@ -177,8 +172,7 @@ class MonitoringFileWatcher(QListWidget):
                 _, widget = self.file_widgets[path]
                 widget.mark_modified()
                 self.stop_processing(path)
-                if self.active_files:
-                    self.start_processing(path)
+                self.start_processing(path)
             elif path in self.reference_configs:
                 # Reference file changed
                 configs = self.reference_configs[path]
@@ -187,8 +181,7 @@ class MonitoringFileWatcher(QListWidget):
                     if widget:
                         widget.mark_modified()
                     self.stop_processing(config_path)
-                    if self.active_files:
-                        self.start_processing(config_path)
+                    self.start_processing(config_path)
         else:
             if path in self.file_widgets:
                 self.remove_file_widget(path)
@@ -204,7 +197,9 @@ class MonitoringFileWatcher(QListWidget):
                     self.file_system_watcher.removePath(path)
 
     def start_processing(self, config_path):
+        # Start processing in a separate thread
         if config_path in self.process_threads:
+            # If already processing, do nothing
             return
         process_thread = StartProcess(config_path)
         process_thread.finished.connect(lambda: self.on_process_finished(config_path))
@@ -221,18 +216,6 @@ class MonitoringFileWatcher(QListWidget):
     def on_process_finished(self, config_path):
         self.process_threads.pop(config_path, None)
         print(f"Finished processing {config_path}")
-
-    def set_file_active(self, file_path, is_active):
-        if is_active:
-            self.active_files.add(file_path)
-            self.start_processing(file_path)
-        else:
-            self.active_files.discard(file_path)
-            self.stop_processing(file_path)
-
-    def open_file(self, file_path):
-        print(f"Open file requested: {file_path}")
-        # Implement the logic to open the file in the editor
 
     def closeEvent(self, event):
         self.file_system_watcher.directoryChanged.disconnect(self.on_directory_changed)
