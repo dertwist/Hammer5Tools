@@ -46,15 +46,15 @@ class DragDropLineEdit(QLineEdit):
         else:
             event.ignore()
 
-
 class MonitoringFileWatcher(QListWidget):
     def __init__(self, root_path):
         super().__init__()
+        self.root_path = root_path
         self.searcher_thread = None
         self.watcher_thread = None
+        self.reference_watchers = {}
+        self.process_threads = {}
         self.file_widgets = {}
-        # self.setAlternatingRowColors(True)
-
         self.set_root_path(root_path)
 
     def set_root_path(self, root_path):
@@ -84,6 +84,7 @@ class MonitoringFileWatcher(QListWidget):
         sorted_paths = sorted(set_paths)
         self.watcher_thread = FileWatcherThread(sorted_paths)
         self.watcher_thread.file_modified.connect(self.on_file_modified)
+        self.watcher_thread.reference_found.connect(self.on_reference_found)
         self.watcher_thread.start()
 
     def add_file_widget(self, path):
@@ -104,11 +105,55 @@ class MonitoringFileWatcher(QListWidget):
             _, widget = self.file_widgets[path]
             widget.mark_modified()
 
+    def on_reference_found(self, original_path, reference_path):
+        print(f'Found reference in {original_path}, monitoring {reference_path}')
+
+        # Ensure only one watcher per reference file
+        if reference_path in self.reference_watchers:
+            watcher = self.reference_watchers[reference_path]
+            watcher.stop()
+            watcher.wait()
+            del self.reference_watchers[reference_path]
+
+        # Start monitoring the reference file
+        watcher = ReferenceWatcherThread(reference_path)
+        watcher.file_modified.connect(lambda path, orig=original_path: self.on_reference_modified(path, orig))
+        watcher.start()
+        self.reference_watchers[reference_path] = watcher
+
+    def on_reference_modified(self, reference_path, original_path):
+        print(f'Reference file {reference_path} modified, processing {original_path}')
+
+        # Stop existing process thread if running
+        if original_path in self.process_threads:
+            thread = self.process_threads[original_path]
+            if thread.isRunning():
+                thread.stop()
+                thread.wait()
+            del self.process_threads[original_path]
+
+        # Start processing in a new thread
+        process_thread = StartProcess(original_path)
+        process_thread.finished.connect(lambda: self.on_process_finished(original_path))
+        process_thread.start()
+        self.process_threads[original_path] = process_thread
+
+    def on_process_finished(self, original_path):
+        print(f'Processing of {original_path} finished.')
+        # Remove the process thread from the dictionary
+        if original_path in self.process_threads:
+            del self.process_threads[original_path]
+
     def closeEvent(self, event):
+        # Stop all threads when closing
         if self.searcher_thread:
             self.searcher_thread.stop()
         if self.watcher_thread:
             self.watcher_thread.stop()
+        for watcher in self.reference_watchers.values():
+            watcher.stop()
+        for process_thread in self.process_threads.values():
+            process_thread.stop()
         event.accept()
 
 #TODO remove toggle play button.
@@ -502,6 +547,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 print(f"File opened from: {file_path}")
         except Exception as e:
             QMessageBox.critical(self, "File Open Error", f"An error occurred while opening the file: {e}")
+            raise ValueError
 
     def show_process_options(self):
         """Show the process options dialog."""
