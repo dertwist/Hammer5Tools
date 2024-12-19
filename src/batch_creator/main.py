@@ -1,6 +1,6 @@
 import json
 import os
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QLineEdit
 from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QDropEvent, QAction, QIcon, QTextCharFormat, QTextCursor
 from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
@@ -82,7 +82,7 @@ class MonitoringFileWatcher(QListWidget):
         if self.watcher_thread:
             self.watcher_thread.stop()
         sorted_paths = sorted(set_paths)
-        self.watcher_thread = FileWatcherThread(sorted_paths)
+        self.watcher_thread = ReferencesWatcherThread(sorted_paths)
         self.watcher_thread.file_modified.connect(self.on_file_modified)
         self.watcher_thread.reference_found.connect(self.on_reference_found)
         self.watcher_thread.start()
