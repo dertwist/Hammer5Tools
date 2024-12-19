@@ -691,53 +691,6 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.verticalLayout_8.addLayout(self.monitoring_content)
 
-        self.monitoring_searchbar = QLineEdit(self.dockWidgetContents_2)
-        self.monitoring_searchbar.setObjectName(u"monitoring_searchbar")
-
-        self.verticalLayout_8.addWidget(self.monitoring_searchbar)
-
-        self.monitoring_start_toggle_button = QPushButton(self.dockWidgetContents_2)
-        self.monitoring_start_toggle_button.setObjectName(u"monitoring_start_toggle_button")
-        self.monitoring_start_toggle_button.setMinimumSize(QSize(0, 18))
-        self.monitoring_start_toggle_button.setStyleSheet(u"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }\n"
-"QPushButton:disabled {\n"
-"color: gray;\n"
-" background-color: #2C2C2C;\n"
-"}")
-        icon9 = QIcon()
-        icon9.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.monitoring_start_toggle_button.setIcon(icon9)
-        self.monitoring_start_toggle_button.setIconSize(QSize(20, 20))
-
-        self.verticalLayout_8.addWidget(self.monitoring_start_toggle_button)
-
         self.dockWidget_2.setWidget(self.dockWidgetContents_2)
         BatchCreator_MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_2)
 
@@ -794,8 +747,6 @@ class Ui_BatchCreator_MainWindow(object):
         self.select_reference_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Select reference file, the reference file loads in the content field. To reload referenced file click Reload button.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.select_reference_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Select", None))
-        self.dockWidget_2.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Monitoring", None))
-        self.monitoring_searchbar.setPlaceholderText(QCoreApplication.translate("BatchCreator_MainWindow", u"Filter files...", None))
-        self.monitoring_start_toggle_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Start", None))
+        self.dockWidget_2.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Hotload", None))
     # retranslateUi
 
