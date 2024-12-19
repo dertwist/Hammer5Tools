@@ -4,24 +4,11 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget,
     QPushButton, QLineEdit, QListWidget, QListWidgetItem, QLabel, QHBoxLayout
 )
-from PySide6.QtCore import Signal, QObject, QThread, Qt
-
-from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, QHBoxLayout
-)
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Signal, QObject, QThread, Qt, QSize
 from PySide6.QtGui import QIcon
-import os
-
-from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, QHBoxLayout
-)
-from PySide6.QtCore import Signal, QSize
-from PySide6.QtGui import QIcon
-import os
 import json_stream
 from src.preferences import get_addon_dir
-from src.batch_creator.process import *
+from src.batch_creator.process import StartProcess
 
 def read_stream(file_path):
     with open(file_path, 'r') as file:
@@ -30,7 +17,7 @@ def read_stream(file_path):
             if key == 'process':
                 reference = value.get('reference', '')
                 return reference
-
+    return ''
 
 class FileSearcherThread(QThread):
     paths_found = Signal(set)
@@ -61,6 +48,7 @@ class FileSearcherThread(QThread):
 
 class FileWatcherThread(QThread):
     file_modified = Signal(str)
+    reference_found = Signal(str, str)
 
     def __init__(self, paths, parent=None):
         super().__init__(parent)
@@ -76,26 +64,51 @@ class FileWatcherThread(QThread):
             for path in list(self.paths):
                 if os.path.exists(path):
                     new_mtime = os.path.getmtime(path)
-                    if new_mtime != self.watched_mtimes.get(path):
+                    if new_mtime != self.watched_mtimes.get(path, 0):
                         self.watched_mtimes[path] = new_mtime
                         self.file_modified.emit(path)
+
+                        # Check for a reference in the modified file
                         reference = read_stream(path)
-                        if reference != '':
-                            # if there is reference in the file, so there will start a thread with reference file monitoring. If there any cahnges in file, start process.
-                            print(f'Found reference {reference}')
+                        if reference:
                             reference_path = os.path.join(get_addon_dir(), reference)
-                            self.start_process = StartProcess(path)
-                            print(reference_path)
+                            print('reference path')
+                            self.reference_found.emit(path, reference_path)
                 else:
                     self.paths.remove(path)
                     self.file_modified.emit(path)
             self.msleep(500)
 
-    def update_paths(self, paths):
-        self.paths = paths
-        for path in paths:
-            if os.path.exists(path):
-                self.watched_mtimes[path] = os.path.getmtime(path)
+    def stop(self):
+        self.stop_thread = True
+        self.wait()
+
+class ReferenceWatcherThread(QThread):
+    file_modified = Signal(str)
+
+    def __init__(self, reference_path, parent=None):
+        super().__init__(parent)
+        self.reference_path = reference_path
+        self.stop_thread = False
+        self.last_mtime = None
+
+    def run(self):
+        if os.path.exists(self.reference_path):
+            self.last_mtime = os.path.getmtime(self.reference_path)
+        else:
+            self.last_mtime = 0
+
+        while not self.stop_thread:
+            if os.path.exists(self.reference_path):
+                new_mtime = os.path.getmtime(self.reference_path)
+                if new_mtime != self.last_mtime:
+                    self.last_mtime = new_mtime
+                    self.file_modified.emit(self.reference_path)
+            else:
+                # The reference file has been deleted
+                self.file_modified.emit(self.reference_path)
+                self.stop_thread = True
+            self.msleep(500)
 
     def stop(self):
         self.stop_thread = True
@@ -190,7 +203,7 @@ QWidget:item:selected {
             self.button1_realtime_toggle.setIcon(QIcon(":/valve_common/icons/tools/common/control_play.png"))
         self.is_playing = not self.is_playing
         self.realtime_toggle.emit(self.file_path)
-        print(f"Action 1 triggered for {self.file_path}")
+        print(f"Realtime toggle for {self.file_path}")
 
     def action2(self):
         self.open.emit(self.file_path)
