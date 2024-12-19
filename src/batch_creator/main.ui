@@ -419,7 +419,7 @@ color: gray;
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>612</width>
+                      <width>640</width>
                       <height>126</height>
                      </rect>
                     </property>
@@ -1117,13 +1117,6 @@ color: gray;
                   <width>20</width>
                   <height>20</height>
                  </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="reference_editline">
-                <property name="placeholderText">
-                 <string>Path to vmat, vmdl, vmsart</string>
                 </property>
                </widget>
               </item>
