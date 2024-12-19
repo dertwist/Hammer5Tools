@@ -1,33 +1,12 @@
+# src/batch_creator/process.py
+
 import os
 import json
 from src.batch_creator.objects import default_file
-from src.preferences import get_addon_name, get_cs2_path
+from src.preferences import get_addon_name, get_cs2_path, get_addon_dir
 from PySide6.QtWidgets import QMessageBox
-import os
 from pathlib import Path
-import sys
-import os
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QWidget,
-    QPushButton, QLineEdit, QListWidget, QListWidgetItem, QLabel, QHBoxLayout
-)
-from PySide6.QtCore import Signal, QObject, QThread, Qt
-
-from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, QHBoxLayout
-)
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon
-import os
-
-from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, QHBoxLayout
-)
-from PySide6.QtCore import Signal, QSize
-from PySide6.QtGui import QIcon
-import os
-import json_stream
-from src.preferences import get_addon_dir
+from PySide6.QtCore import Signal, QThread
 
 class StartProcess(QThread):
     finished = Signal()
@@ -49,12 +28,8 @@ class StartProcess(QThread):
             __data = json.load(file)
         process = __data.get('process', {})
         replacements = __data.get('replacements', {})
-        return process, replacements
-
-    def save_file(self, filepath, process, replacements, content):
-        __data = {'process': process, 'replacements': replacements, 'file': {'content':content}}
-        with open(filepath, 'w') as file:
-            json.dump(__data, file, indent=4)
+        content = __data.get('file', {}).get('content', '')
+        return process, replacements, content
 
     def run(self):
         try:
@@ -62,18 +37,18 @@ class StartProcess(QThread):
                 return
 
             # Load and process the file
-            process, replacements = self.load_file(self.filepath)
+            process, replacements, content = self.load_file(self.filepath)
             reference = process.get('reference')
 
             if reference:
                 content = self.update_reference_content(reference)
-                self.save_file(self.filepath, process, replacements, content)
+                # Avoid modifying the config file to prevent infinite loop
 
             if self.stop_thread:
                 return
 
             # Perform batch processing
-            perform_batch_processing(self.filepath, process, False, replacements)
+            perform_batch_processing(self.filepath, process, False, replacements, content)
 
             # Emit the finished signal when done
             self.finished.emit()
@@ -86,7 +61,7 @@ class StartProcess(QThread):
         self.quit()
         self.wait()
 
-def perform_batch_processing(file_path, process, preview, replacements):
+def perform_batch_processing(file_path, process, preview, replacements, content_template=None):
     base_directory = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
     batch_directory = os.path.splitext(file_path)[0]
     relative_batch_path = os.path.relpath(batch_directory, base_directory).replace('\\', '/')
@@ -94,7 +69,7 @@ def perform_batch_processing(file_path, process, preview, replacements):
     file_extension = process.get('extension', default_file['process']['extension'])
     ignore_extensions = [ext.strip() for ext in process.get('ignore_extensions', '').split(',')]
     reference = process.get('reference', False)
-    reference = os.path.join(get_addon_dir(), reference)
+    reference = os.path.join(get_addon_dir(), reference) if reference else None
 
     files_to_process = search_files(batch_directory, algorithm, ignore_extensions, process) if process.get('load_from_the_folder') else process.get('custom_files', [])
     created_files = []
@@ -105,16 +80,12 @@ def perform_batch_processing(file_path, process, preview, replacements):
         output_directory = batch_directory if process.get('output_to_the_folder') else os.path.join(
             get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), process.get('custom_output', '')
         )
-        execute_file_creation(files_to_process, output_directory, relative_batch_path, file_extension, created_files, file_path, replacements, reference)
+        execute_file_creation(files_to_process, output_directory, relative_batch_path, file_extension, created_files, replacements, reference, content_template)
         return created_files
 
-def execute_file_creation(files, output_path, relative_path, extension, created_files, template_file, replacements, reference):
-    try:
-        with open(template_file, 'r') as file:
-            data = json.load(file)
-            content_template = data.get('file', {}).get('content', '')
-    except Exception as e:
-        QMessageBox.critical(None, "Processing Error", f"Error reading batch file: {e}")
+def execute_file_creation(files, output_path, relative_path, extension, created_files, replacements, reference, content_template):
+    if content_template is None:
+        QMessageBox.critical(None, "Processing Error", "No content template provided.")
         return
 
     for file_name in files:
@@ -130,17 +101,20 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
         __data = __data_replacements.replace("#$FOLDER_PATH$#", relative_path).replace("#$ASSET_NAME$#", file_name)
         output_file_path = os.path.join(output_path, f"{file_name}.{extension}")
 
-        output_path = Path(output_file_path).resolve()
-        reference_path = Path(reference).resolve()
+        output_path_resolved = Path(output_file_path).resolve()
+        reference_path_resolved = Path(reference).resolve() if reference else None
 
-        if output_path != reference_path:
+        if output_path_resolved != reference_path_resolved:
             try:
+                os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
                 with open(output_file_path, 'w') as output_file:
                     output_file.write(__data)
                 print(f'File created: {output_file_path}')
                 created_files.append(output_file_path)
             except Exception as e:
                 print(f"Failed to create file {output_file_path} \n {e}")
+        else:
+            print(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
 
 def preview_processing_files(files, batch_directory, base_directory, extension, process):
     if process.get('load_from_the_folder'):
@@ -154,7 +128,6 @@ def preview_processing_files(files, batch_directory, base_directory, extension, 
         return files, None, extension, batch_directory
 
 def extract_base_names(names):
-    # return set(name.split('_')[0] for name in names)
     return set(os.path.basename(name) for name in names)
 
 def extract_base_names_underscore(names):
