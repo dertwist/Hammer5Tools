@@ -747,6 +747,6 @@ class Ui_BatchCreator_MainWindow(object):
         self.select_reference_button.setToolTip(QCoreApplication.translate("BatchCreator_MainWindow", u"<html><head/><body><p>Select reference file, the reference file loads in the content field. To reload referenced file click Reload button.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.select_reference_button.setText(QCoreApplication.translate("BatchCreator_MainWindow", u"Select", None))
-        self.dockWidget_2.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Hotload", None))
+        self.dockWidget_2.setWindowTitle(QCoreApplication.translate("BatchCreator_MainWindow", u"Config list", None))
     # retranslateUi
 
