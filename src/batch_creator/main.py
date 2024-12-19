@@ -219,6 +219,7 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.reference_editline.setText(str(ref))
         except:
             ErrorInfo("Select a file in the addon folder").exec_()
+        self.load_reference()
 
     def handle_drag_and_drop_reference(self, event: QDropEvent):
         """Handle file drop into the editor."""
@@ -229,6 +230,14 @@ class BatchCreatorMainWindow(QMainWindow):
                 if os.path.isfile(file_path):
                     self.set_reference(file_path)
         event.accept()
+    def load_reference(self):
+        reference = self.ui.reference_editline.text()
+        reference_path = os.path.join(get_addon_dir(), reference)
+        with open(reference_path, 'r') as file:
+            __data = file.read()
+        self.ui.kv3_QplainTextEdit.clear()
+        self.ui.kv3_QplainTextEdit.setPlainText(str(__data))
+        self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
     #============================================================<  Replacements  >=========================================================
     def init_replacements_editor(self):
         self.ui.new_replacement_button.clicked.connect(lambda :self.new_replacement())
@@ -435,6 +444,7 @@ class BatchCreatorMainWindow(QMainWindow):
         if self.current_file:
             content = self.ui.kv3_QplainTextEdit.toPlainText()
             self.process_data['extension'] = self.ui.extension_lineEdit.text()
+            self.process_data['reference'] = self.ui.reference_editline.text()
             data = {
                 'process': self.process_data,
                 'replacements': self.collect_replacements(),
@@ -448,6 +458,7 @@ class BatchCreatorMainWindow(QMainWindow):
         """Open a file selected in the explorer."""
         self.clear_replacements()
         self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
+        self.ui.reference_editline.clear()
         indexes = self.explorer.tree.selectionModel().selectedIndexes()
         if indexes:
             index = indexes[0]
@@ -483,6 +494,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 data = json.load(file)
                 content = data.get('file', {}).get('content', '')
                 self.process_data = data.get('process', {})
+                self.ui.reference_editline.setText(self.process_data.get('reference', ''))
                 self.ui.kv3_QplainTextEdit.setPlainText(content)
                 self.ui.extension_lineEdit.setText(self.process_data.get('extension', default_file['process']['extension']))
                 self.populate_replacements(data.get('replacements', default_replacements))
