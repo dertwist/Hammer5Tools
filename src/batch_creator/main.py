@@ -128,6 +128,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.addon_name = get_addon_name()
         self.cs2_path = get_cs2_path()
         self.explorer_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
+        self.replace_reference_editline()
 
 
         self.explorer = Explorer(parent=self.ui.left_vertical_frame, tree_directory=self.explorer_directory, addon=self.addon_name, editor_name='BatchCreator')
@@ -138,7 +139,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.context_menu = ReplacementsContextMenu(self, self.ui.kv3_QplainTextEdit)
 
-        self.replace_reference_editline()
+
 
         # Connect signals
         self.ui.select_reference_button.clicked.connect(self.select_reference)
@@ -193,18 +194,15 @@ class BatchCreatorMainWindow(QMainWindow):
     #============================================================<  Referencing  >==========================================================
 
     def replace_reference_editline(self):
-        parent_layout = self.ui.reference_editline.parent().layout()
-        index = parent_layout.indexOf(self.ui.reference_editline)
+        parent_layout = self.ui.frame_8.layout()
 
-        # Remove the old widget
-        self.ui.reference_editline.deleteLater()
 
         # Create new DragDropLineEdit
         self.ui.reference_editline = DragDropLineEdit()
         self.ui.reference_editline.setObjectName("reference_editline")
 
         # Add the new widget to the layout
-        parent_layout.insertWidget(index, self.ui.reference_editline)
+        parent_layout.insertWidget(1, self.ui.reference_editline)
     def select_reference(self):
         file_dialog = QFileDialog(self)
         file_dialog.setWindowTitle("Select Reference File")
