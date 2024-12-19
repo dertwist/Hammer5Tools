@@ -25,7 +25,7 @@ class Ui_BatchCreator_MainWindow(object):
     def setupUi(self, BatchCreator_MainWindow):
         if not BatchCreator_MainWindow.objectName():
             BatchCreator_MainWindow.setObjectName(u"BatchCreator_MainWindow")
-        BatchCreator_MainWindow.resize(1271, 707)
+        BatchCreator_MainWindow.resize(1271, 578)
         BatchCreator_MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
         self.centralwidget = QWidget(BatchCreator_MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -283,7 +283,7 @@ class Ui_BatchCreator_MainWindow(object):
         BatchCreator_MainWindow.setCentralWidget(self.centralwidget)
         self.dockWidget = QDockWidget(BatchCreator_MainWindow)
         self.dockWidget.setObjectName(u"dockWidget")
-        self.dockWidget.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.dockWidget.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.dockWidgetContents = QWidget()
         self.dockWidgetContents.setObjectName(u"dockWidgetContents")
         self.verticalLayout_3 = QVBoxLayout(self.dockWidgetContents)
@@ -603,7 +603,7 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.referencing_groupbox = QGroupBox(self.left_vertical_frame)
         self.referencing_groupbox.setObjectName(u"referencing_groupbox")
-        self.referencing_groupbox.setMaximumSize(QSize(16777215, 110))
+        self.referencing_groupbox.setMaximumSize(QSize(16777215, 60))
         self.verticalLayout_10 = QVBoxLayout(self.referencing_groupbox)
         self.verticalLayout_10.setObjectName(u"verticalLayout_10")
         self.verticalLayout_10.setContentsMargins(0, 4, 0, 9)
@@ -659,16 +659,6 @@ class Ui_BatchCreator_MainWindow(object):
 
         self.verticalLayout_10.addWidget(self.frame_8)
 
-        self.frame_9 = QFrame(self.referencing_groupbox)
-        self.frame_9.setObjectName(u"frame_9")
-        self.frame_9.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_9.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_3 = QHBoxLayout(self.frame_9)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-
-        self.verticalLayout_10.addWidget(self.frame_9)
-
 
         self.verticalLayout_2.addWidget(self.referencing_groupbox)
 
@@ -680,7 +670,7 @@ class Ui_BatchCreator_MainWindow(object):
         self.dockWidget_2 = QDockWidget(BatchCreator_MainWindow)
         self.dockWidget_2.setObjectName(u"dockWidget_2")
         self.dockWidget_2.setMinimumSize(QSize(354, 200))
-        self.dockWidget_2.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.dockWidget_2.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.dockWidgetContents_2 = QWidget()
         self.dockWidgetContents_2.setObjectName(u"dockWidgetContents_2")
         self.verticalLayout_8 = QVBoxLayout(self.dockWidgetContents_2)

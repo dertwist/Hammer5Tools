@@ -94,7 +94,7 @@ def create_installer(folder_path, output_exe):
     # Base64 encode the zip data
     encoded_zip_data = base64.b64encode(zip_data).decode('utf-8')
 
-    # Installer script content with a GUI and dark theme using tkinter
+    # Installer script content with fixes
     installer_script = f"""
 import sys
 import os
@@ -188,7 +188,7 @@ def main():
             desktop = os.path.join(os.environ['USERPROFILE'], 'Desktop')
             shortcut_path = os.path.join(desktop, 'Hammer5Tools.lnk')
             target = os.path.join(install_dir, 'Hammer5Tools.exe')
-            create_shortcut(target, shortcut_path, icon_path=target)
+            create_shortcut(target, shortcut_path, install_dir, icon_path=target)
         except Exception as e:
             messagebox.showerror('Shortcut Error', f'Failed to create desktop shortcut: {{e}}')
 
@@ -199,11 +199,11 @@ def main():
             os.makedirs(shortcut_dir, exist_ok=True)
             shortcut_path = os.path.join(shortcut_dir, 'Hammer5Tools.lnk')
             target = os.path.join(install_dir, 'Hammer5Tools.exe')
-            create_shortcut(target, shortcut_path, icon_path=target)
+            create_shortcut(target, shortcut_path, install_dir, icon_path=target)
         except Exception as e:
             messagebox.showerror('Shortcut Error', f'Failed to create Start Menu shortcut: {{e}}')
 
-    def create_shortcut(target, shortcut_path, icon_path=None):
+    def create_shortcut(target, shortcut_path, working_directory, icon_path=None):
         import pythoncom
         from win32com.shell import shell
         shortcut = pythoncom.CoCreateInstance(
@@ -211,6 +211,7 @@ def main():
             pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
         shortcut.SetPath(target)
         shortcut.SetArguments('')
+        shortcut.SetWorkingDirectory(working_directory)
         if icon_path:
             shortcut.SetIconLocation(icon_path, 0)
         shortcut.QueryInterface(pythoncom.IID_IPersistFile).Save(shortcut_path, 0)
@@ -244,6 +245,15 @@ def main():
         style.map('TCheckbutton', background=[('active', '#2e2e2e')])
 
     set_dark_theme()
+
+    # Center the window on the screen
+    def center_window():
+        root.update_idletasks()
+        width = root.winfo_width()
+        height = root.winfo_height()
+        x = (root.winfo_screenwidth() // 2) - (width // 2)
+        y = (root.winfo_screenheight() // 2) - (height // 2)
+        root.geometry(f'+{{x}}+{{y}}')
 
     # Installation directory
     install_dir_var = tk.StringVar()
@@ -282,6 +292,9 @@ def main():
 
     install_button = ttk.Button(frame, text='Install', command=lambda: threading.Thread(target=install).start())
     install_button.grid(row=5, column=0, columnspan=3, pady=(10, 0))
+
+    # Center the window after widgets are added
+    center_window()
 
     root.mainloop()
 
@@ -362,7 +375,7 @@ def main():
     # Archive files if requested
     if args.archive:
         stage_start_time = time.time()
-        excluded_files = {'hammer5tools.7z', 'Hammer5ToolsInstaller.exe'}
+        excluded_files = {'hammer5tools.7z', 'Hammer5ToolsInstaller.exe', 'hammer5tools.zip'}
         excluded_paths = ['SoundEventEditor\\sounds']
         archive_files(output_folder, zip_output_path, excluded_files, excluded_paths)
         print_elapsed_time("Archiving files", stage_start_time)
