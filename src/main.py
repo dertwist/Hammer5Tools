@@ -47,21 +47,11 @@ class Notification(QMessageBox):
 
         if self.hwnd:
             ctypes.windll.user32.SetForegroundWindow(self.hwnd)
-
-class Stream(QObject):
-    newText = Signal(str)
-
-    def write(self, text):
-        self.newText.emit(str(text))
-
-    def flush(self):
-        pass
 class Widget(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        sys.stdout = Stream(newText=self.on_update)
         self.setup_tray_icon()
         self.setup_tabs()
         self.populate_addon_combobox()
@@ -87,16 +77,6 @@ class Widget(QMainWindow):
             self.settings.setValue("MainWindow/default_windowState", self.saveState())
             set_config_bool('APP', 'first_launch', False)
 
-    # def __del__(self):
-    #     sys.stdout = sys.__stdout__
-    def on_update(self, text):
-        cursor = self.ui.console.textCursor()
-        cursor.movePosition(QTextCursor.End)
-        cursor.insertText(text)
-        self.ui.console.setTextCursor(cursor)
-        self.ui.console.ensureCursorVisible()
-        # cursor = self.ui.console.textCursor()
-        cursor.removeSelectedText()
 
     def current_tab(self, set):
         if set:
