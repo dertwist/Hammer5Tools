@@ -157,9 +157,6 @@ class PreferencesDialog(QDialog):
         self.ui.version_label.setText(f"Version: {app_version}")
 
     def populate_preferences(self):
-        # paths
-        self.ui.preferences_lineedit_cs2_path.setText(get_cs2_path())
-        self.ui.preferences_lineedit_steam_path.setText(get_steam_path())
         self.ui.preferences_lineedit_archive_path.setText(get_config_value('PATHS', 'archive'))
         # discord_status
         self.ui.checkBox_show_in_hammer_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_status'))
@@ -175,9 +172,6 @@ class PreferencesDialog(QDialog):
         self.ui.spe_display_id_with_variable_class.setChecked(get_config_bool('SmartPropEditor', 'display_id_with_variable_class', False))
 
     def connect_signals(self):
-        # Connect UI elements to methods for immediate preference updates
-        self.ui.preferences_lineedit_cs2_path.textChanged.connect(lambda: set_config_value('PATHS', 'cs2', self.ui.preferences_lineedit_cs2_path.text()))
-        self.ui.preferences_lineedit_steam_path.textChanged.connect(lambda: set_config_value('PATHS', 'steam', self.ui.preferences_lineedit_steam_path.text()))
         self.ui.preferences_lineedit_archive_path.textChanged.connect(lambda: set_config_value('PATHS', 'archive', self.ui.preferences_lineedit_archive_path.text()))
 
         self.ui.checkBox_show_in_hammer_discord_status.toggled.connect(lambda: set_config_bool('DISCORD_STATUS', 'show_status', self.ui.checkBox_show_in_hammer_discord_status.isChecked()))

@@ -45,145 +45,6 @@ class Ui_preferences_dialog(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.frame_8 = QFrame(self.Paths)
-        self.frame_8.setObjectName(u"frame_8")
-        self.frame_8.setMaximumSize(QSize(16777215, 48))
-        self.frame_8.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame_8.setFrameShape(QFrame.Shape.NoFrame)
-        self.frame_8.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_8 = QHBoxLayout(self.frame_8)
-        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
-        self.frame_10 = QFrame(self.frame_8)
-        self.frame_10.setObjectName(u"frame_10")
-        self.frame_10.setStyleSheet(u"border:0px;")
-        self.frame_10.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_10.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_9 = QHBoxLayout(self.frame_10)
-        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
-        self.horizontalLayout_9.setContentsMargins(0, 0, 0, 0)
-        self.label_9 = QLabel(self.frame_10)
-        self.label_9.setObjectName(u"label_9")
-        self.label_9.setMinimumSize(QSize(130, 0))
-        self.label_9.setMaximumSize(QSize(130, 16777215))
-        self.label_9.setStyleSheet(u"        font: 580 10pt \"Segoe UI\";\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;")
-        self.label_9.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
-
-        self.horizontalLayout_9.addWidget(self.label_9)
-
-
-        self.horizontalLayout_8.addWidget(self.frame_10)
-
-        self.preferences_lineedit_steam_path = QLineEdit(self.frame_8)
-        self.preferences_lineedit_steam_path.setObjectName(u"preferences_lineedit_steam_path")
-        self.preferences_lineedit_steam_path.setStyleSheet(u"    QLineEdit {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QLineEdit {\n"
-"\n"
-"        font: 580 10pt \"Segoe UI\";\n"
-"        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QLineEdit:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QLineEdit:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"\n"
-"    }")
-        self.preferences_lineedit_steam_path.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
-
-        self.horizontalLayout_8.addWidget(self.preferences_lineedit_steam_path)
-
-
-        self.verticalLayout_2.addWidget(self.frame_8)
-
-        self.frame = QFrame(self.Paths)
-        self.frame.setObjectName(u"frame")
-        self.frame.setMaximumSize(QSize(16777215, 48))
-        self.frame.setStyleSheet(u"background-color: #1C1C1C;")
-        self.frame.setFrameShape(QFrame.Shape.NoFrame)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_2 = QHBoxLayout(self.frame)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.label_8 = QLabel(self.frame)
-        self.label_8.setObjectName(u"label_8")
-        self.label_8.setMinimumSize(QSize(130, 0))
-        self.label_8.setMaximumSize(QSize(130, 16777215))
-        self.label_8.setStyleSheet(u"        font: 580 10pt \"Segoe UI\";\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;")
-        self.label_8.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
-
-        self.horizontalLayout_2.addWidget(self.label_8)
-
-        self.preferences_lineedit_cs2_path = QLineEdit(self.frame)
-        self.preferences_lineedit_cs2_path.setObjectName(u"preferences_lineedit_cs2_path")
-        self.preferences_lineedit_cs2_path.setStyleSheet(u"    QLineEdit {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QLineEdit {\n"
-"\n"
-"        font: 580 10pt \"Segoe UI\";\n"
-"        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QLineEdit:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QLineEdit:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"\n"
-"    }")
-        self.preferences_lineedit_cs2_path.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
-
-        self.horizontalLayout_2.addWidget(self.preferences_lineedit_cs2_path)
-
-
-        self.verticalLayout_2.addWidget(self.frame)
-
         self.frame_3 = QFrame(self.Paths)
         self.frame_3.setObjectName(u"frame_3")
         self.frame_3.setMaximumSize(QSize(16777215, 48))
@@ -955,7 +816,7 @@ class Ui_preferences_dialog(object):
 
         self.retranslateUi(preferences_dialog)
 
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(preferences_dialog)
@@ -963,8 +824,6 @@ class Ui_preferences_dialog(object):
 
     def retranslateUi(self, preferences_dialog):
         preferences_dialog.setWindowTitle(QCoreApplication.translate("preferences_dialog", u"Settings", None))
-        self.label_9.setText(QCoreApplication.translate("preferences_dialog", u"Steam path:", None))
-        self.label_8.setText(QCoreApplication.translate("preferences_dialog", u"Path to cs2:", None))
         self.label_7.setText(QCoreApplication.translate("preferences_dialog", u"Archive path:", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Paths), QCoreApplication.translate("preferences_dialog", u"Paths", None))
         self.checkBox_show_in_hammer_discord_status.setText(QCoreApplication.translate("preferences_dialog", u"Show hammer status in Discord", None))
