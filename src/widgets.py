@@ -6,10 +6,15 @@ from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
 from src.qt_styles.common import *
+from PySide6.QtWidgets import QMessageBox, QFileDialog
+from PySide6.QtGui import QIcon
+import webbrowser
 from src.common import discord_feedback_channel
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.preferences import get_config_bool, set_config_bool
 from src.widgets_common import *
+from logging import error
+import traceback
 #============================================================<  Generic widgets  >==========================================================
 class Spacer(QWidget):
     def __init__(self):
@@ -24,9 +29,8 @@ class Spacer(QWidget):
         self.setStyleSheet('border:None;')
         self.setContentsMargins(0,0,0,0)
 class ErrorInfo(QMessageBox):
-    def __init__(self, text="Test", details=""):
+    def __init__(self, text="Error", details=""):
         super().__init__()
-
 
         self.setWindowTitle("Error")
         self.setText(text)
@@ -34,24 +38,47 @@ class ErrorInfo(QMessageBox):
         self.setIcon(QMessageBox.Critical)
         self.setWindowIcon(QIcon("appicon.ico"))
 
+        self.details = details
+        self.setDetailedText(self.details)
 
-        self.setDetailedText(details)
+        self.save_button = self.addButton("Save Details", QMessageBox.ActionRole)
+        self.report_button = self.addButton("Report", QMessageBox.ActionRole)
+        self.close_button = self.addButton(QMessageBox.Close)
 
-        report_button = self.addButton("Report", QMessageBox.ActionRole)
-        close_button = self.addButton(QMessageBox.Close)
+        self.save_button.clicked.connect(self.save_details)
+        self.report_button.clicked.connect(self.report_issue)
 
-
-        report_button.clicked.connect(self.report_issue)
+    def save_details(self):
+        options = QFileDialog.Options()
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Error Details",
+            "error_details.txt",
+            "Text Files (*.txt);;All Files (*)",
+            options=options
+        )
+        if filename:
+            try:
+                with open(filename, 'w') as file:
+                    file.write(self.details)
+            except Exception as e:
+                error_dialog = QMessageBox(self)
+                error_dialog.setWindowTitle("Save Error")
+                error_dialog.setText(f"An error occurred while saving the file:\n{e}")
+                error_dialog.setIcon(QMessageBox.Critical)
+                error_dialog.exec_()
 
     def report_issue(self):
         webbrowser.open(discord_feedback_channel)
 
-def ExpetionErrorDialog(function, id):
+def ExpetionErrorDialog(function):
     try:
         function()
-    except (Exception, ValueError, EOFError, InterruptedError, TypeError) as e:
-        error_details = str(e)
-        ErrorInfo(text=f"{id} Error: {e}", details=error_details).exec_()
+    except Exception as e:
+        error_message = f"An error occurred in `{function.__name__}`: {e}"
+        error_details = traceback.format_exc()
+        error(error_message)
+        ErrorInfo(text=error_message, details=error_details).exec_()
 #============================================================<  Property widgets  >=========================================================
 class FloatWidget(QWidget):
     edited = Signal(float)
