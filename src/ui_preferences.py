@@ -498,87 +498,6 @@ class Ui_preferences_dialog(object):
 
         self.horizontalLayout_18.addWidget(self.launch_addon_after_nosteamlogon_fix)
 
-        self.horizontalLayout_12 = QHBoxLayout()
-        self.horizontalLayout_12.setObjectName(u"horizontalLayout_12")
-        self.reset_console_button = QPushButton(self.frame_17)
-        self.reset_console_button.setObjectName(u"reset_console_button")
-        self.reset_console_button.setStyleSheet(u"    QLabel {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 600 10pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-
-        self.horizontalLayout_12.addWidget(self.reset_console_button)
-
-        self.checkBox_debug_info = QCheckBox(self.frame_17)
-        self.checkBox_debug_info.setObjectName(u"checkBox_debug_info")
-        self.checkBox_debug_info.setEnabled(True)
-        self.checkBox_debug_info.setMinimumSize(QSize(96, 32))
-        self.checkBox_debug_info.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
-        self.checkBox_debug_info.setStyleSheet(u"QCheckBox {\n"
-"    font: 580 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:18px;\n"
-"    padding-top: 2px;\n"
-"    padding-bottom:2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"    padding-left: 4px;\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:unchecked {\n"
-"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:checked {\n"
-"    image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
-"}\n"
-"\n"
-"/* -------------------------- */\n"
-"\n"
-"\n"
-"QCheckBox:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        self.checkBox_debug_info.setTristate(False)
-
-        self.horizontalLayout_12.addWidget(self.checkBox_debug_info)
-
-
-        self.horizontalLayout_18.addLayout(self.horizontalLayout_12)
-
 
         self.verticalLayout_4.addWidget(self.frame_17)
 
@@ -834,9 +753,7 @@ class Ui_preferences_dialog(object):
         self.setup_ncm_mode.setText(QCoreApplication.translate("preferences_dialog", u"Setup NCM mode", None))
         self.checkBox_start_with_system.setText(QCoreApplication.translate("preferences_dialog", u"Start with system", None))
         self.checkBox_close_to_tray.setText(QCoreApplication.translate("preferences_dialog", u"Minimize on Close", None))
-        self.launch_addon_after_nosteamlogon_fix.setText(QCoreApplication.translate("preferences_dialog", u"Launch the addon after NoSteamLogon fix", None))
-        self.reset_console_button.setText(QCoreApplication.translate("preferences_dialog", u"Reset console position", None))
-        self.checkBox_debug_info.setText(QCoreApplication.translate("preferences_dialog", u"Debug info", None))
+        self.launch_addon_after_nosteamlogon_fix.setText(QCoreApplication.translate("preferences_dialog", u"Launch addon after Steam restarting", None))
         self.check_update_button.setText(QCoreApplication.translate("preferences_dialog", u"Check Update", None))
         self.version_label.setText(QCoreApplication.translate("preferences_dialog", u"TextLabel", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.onter_preferences_tab), QCoreApplication.translate("preferences_dialog", u"Other", None))

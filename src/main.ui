@@ -483,7 +483,7 @@ QTabBar::tab:selected {
          <string notr="true">padding: 5px;</string>
         </property>
         <property name="text">
-         <string>Launch Hammer</string>
+         <string>Edit map</string>
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
@@ -588,7 +588,7 @@ QTabBar::tab:selected {
          <string notr="true">padding: 5px;</string>
         </property>
         <property name="text">
-         <string>Fix NoLogon</string>
+         <string>Restart Steam</string>
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
