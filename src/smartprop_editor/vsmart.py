@@ -182,29 +182,34 @@ class VsmartSave:
             data['m_Children'].append(child_data)
 
         return data
+
     def choices(self, parent):
         m_Choices = []
-        # Choices
         for choice_index in range(parent.childCount()):
             child = parent.child(choice_index)
             widget = parent.treeWidget().itemWidget(child, 1)
             options = []
             for option_index in range(child.childCount()):
-                option_child = parent.child(choice_index).child(option_index)
+                option_child = child.child(option_index)
                 variables = []
                 for variable_index in range(option_child.childCount()):
-                    variable_child = parent.child(choice_index).child(option_index).child(variable_index)
+                    variable_child = option_child.child(variable_index)
                     variable_widget = parent.treeWidget().itemWidget(variable_child, 1)
                     variable_combobox = parent.treeWidget().itemWidget(variable_child, 0)
-                    if variable_widget == None:
+                    if variable_widget is None:
                         variables.append({})
                     else:
-                        out =  {'m_TargetName': variable_combobox.currentText()}
+                        out = {'m_TargetName': variable_combobox.combobox.currentText()}
                         out.update(variable_widget.data)
                         variables.append(out)
                 options.append({'m_Name': option_child.text(0), 'm_VariableValues': variables})
-            # Temp m_nElementID. Needs to be rewritten
-            choice = {'_class': 'CSmartPropChoice', 'm_Name': child.text(0), 'm_Options': options, 'm_DefaultOption': widget.currentText(), 'm_nElementID': set_ElementID(force=True)}
+            choice = {
+                '_class': 'CSmartPropChoice',
+                'm_Name': child.text(0),
+                'm_Options': options,
+                'm_DefaultOption': widget.currentText(),
+                'm_nElementID': set_ElementID(force=True)
+            }
             update_child_ElementID_value(choice, force=True)
             m_Choices.append(choice)
         return m_Choices
