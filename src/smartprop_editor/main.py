@@ -301,7 +301,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.load_preset(name, value))
         self.popup_menu.show()
 
-    def file_deserialization(self, __data:dict):
+    def file_deserialization(self, __data:dict, to_parent:bool):
         def populate_tree(data, parent = None):
             if parent is None:
                 parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
@@ -326,8 +326,10 @@ class SmartPropEditorMainWindow(QMainWindow):
                                     _name=value_dict.get('m_sLabel', get_label_id_from_value(value_dict)),
                                     _data=str(value_dict), _class=get_clean_class_name(item_class),
                                     _id=get_ElementID_key(value_dict))
-
-                                parent.addChild(child_item)
+                                if to_parent:
+                                    parent.parent.addChild(child_item)
+                                else:
+                                    parent.addChild(child_item)
                                 populate_tree(item, child_item)
             pass
 
@@ -948,7 +950,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         try:
             input = Kv3ToJson(self.fix_format(data_input))
             if 'm_Children' in input:
-                self.file_deserialization(input)
+                self.file_deserialization(input, to_parent=paste_to_parent)
             else:
                 tree_item = self.deserialize_hierarchy_item(input)
                 try:
