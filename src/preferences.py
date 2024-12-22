@@ -60,7 +60,7 @@ default_settings()
 # debug
 
 def debug(value):
-    if settings.value("OTHER/debug_info", type=bool):
+    if settings.value("OTHER/debug_info", type=bool, defaultValue=False):
         print(value)
 
 
@@ -138,7 +138,6 @@ from src.common import Presets_Path
 settings = QSettings(QSettings.IniFormat, QSettings.UserScope, "DerTwist\\Hammer5Tools", "settings")
 
 class PreferencesDialog(QDialog):
-    reset_window_signal = Signal()
 
     def __init__(self, app_version, parent=None):
         super().__init__(parent)
@@ -179,7 +178,6 @@ class PreferencesDialog(QDialog):
         self.ui.editline_custom_discord_status.textChanged.connect(lambda: set_config_value('DISCORD_STATUS', 'custom_status', self.ui.editline_custom_discord_status.text()))
 
         self.ui.launch_addon_after_nosteamlogon_fix.toggled.connect(lambda: set_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix', self.ui.launch_addon_after_nosteamlogon_fix.isChecked()))
-        self.ui.checkBox_debug_info.toggled.connect(lambda: set_config_bool('OTHER', 'debug_info', self.ui.checkBox_debug_info.isChecked()))
 
         self.ui.checkBox_start_with_system.toggled.connect(lambda: self.start_with_system())
         self.ui.checkBox_close_to_tray.toggled.connect(lambda: set_config_bool('APP', 'minimize_to_tray', self.ui.checkBox_close_to_tray.isChecked()))
@@ -191,10 +189,7 @@ class PreferencesDialog(QDialog):
         self.ui.setup_ncm_mode.clicked.connect(self.setup_ncm_mode)
         self.ui.open_presets_folder_button.clicked.connect(self.open_presets_folder)
         self.ui.check_update_button.clicked.connect(self.check_update)
-        self.ui.reset_console_button.clicked.connect(self.reset_console)
 
-    def reset_console(self):
-        self.reset_window_signal.emit()
 
     def open_settings_folder(self):
         cfg_path = get_config_value('PATHS', 'settings')
