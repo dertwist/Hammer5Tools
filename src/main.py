@@ -18,7 +18,8 @@ from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
 from minor_features.assettypes import AssetTypesModify
 from src.launch_options.main import LaunchOptionsDialog
-
+import argparse
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QCheckBox
 # Variables
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -29,6 +30,25 @@ LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 app_version = '3.6.0'
 
 
+class DevWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Development Widget")
+        self.setGeometry(100, 100, 400, 300)
+
+        layout = QVBoxLayout()
+
+        # Label indicating development mode
+        label = QLabel("Development Mode Active", self)
+        layout.addWidget(label)
+
+        # Checkbox for toggling debug info
+        self.checkBox_debug_info = QCheckBox("Enable Debug Info", self)
+        self.checkBox_debug_info.setChecked(get_config_bool('OTHER', 'debug_info', False))
+        self.checkBox_debug_info.toggled.connect(lambda: set_config_bool('OTHER', 'debug_info', self.checkBox_debug_info.isChecked()))
+        layout.addWidget(self.checkBox_debug_info)
+
+        self.setLayout(layout)
 class Notification(QMessageBox):
     def __init__(self, parent=None):
         super(Notification, self).__init__(parent)
@@ -48,7 +68,7 @@ class Notification(QMessageBox):
         if self.hwnd:
             ctypes.windll.user32.SetForegroundWindow(self.hwnd)
 class Widget(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, dev_mode=False):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -62,6 +82,12 @@ class Widget(QMainWindow):
         self.Delete_addon_Dialog = None
         self.current_tab(False)
         self.settings = settings
+
+        # Add DevWidget if dev_mode is enabled
+        if dev_mode:
+            self.dev_widget = DevWidget(self)
+            self.ui.centralwidget.layout().addWidget(self.dev_widget)
+
         try:
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except Exception as e:
@@ -74,7 +100,6 @@ class Widget(QMainWindow):
         self._restore_user_prefs()
         if get_config_bool('APP', 'first_launch'):
             self.open_documentation()
-            self.settings.setValue("MainWindow/default_windowState", self.saveState())
             set_config_bool('APP', 'first_launch', False)
 
 
@@ -224,15 +249,11 @@ class Widget(QMainWindow):
         folder_path = r"\game\csgo_addons" if folder_name == "Game" else r"\content\csgo_addons"
         os.startfile(f"{cs2_path}{folder_path}\\{addon_name}")
 
-    def reset_window(self):
-        state = self.settings.value("MainWindow/default_windowState")
-        self.restoreState(state)
     def open_preferences_dialog(self):
         if self.preferences_dialog is None:
             self.preferences_dialog = PreferencesDialog(app_version, self)
             self.preferences_dialog.show()
             self.preferences_dialog.finished.connect(self.preferences_dialog_closed)
-            self.preferences_dialog.reset_window_signal.connect(self.reset_window)
     def open_launch_options(self):
         if self.launch_options is None:
             self.launch_options = LaunchOptionsDialog()
@@ -337,6 +358,10 @@ def DiscordStatusMain_do():
         time.sleep(1)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
+    parser.add_argument('--dev', action='store_true', help='Enable development mode')
+    args, unknown = parser.parse_known_args()
+
     lock_file = open(LOCK_FILE, 'w')
     try:
         portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
@@ -350,12 +375,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyleSheet(QT_Stylesheet_global)
 
-    # import qtvscodestyle as qtvsc
-    #
-    # stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
-    # app.setStyleSheet(stylesheet)
-    # app.setStyle('fusion')
-    widget = Widget()
+    widget = Widget(dev_mode=args.dev)
     widget.show()
 
     if get_config_bool('DISCORD_STATUS', 'show_status'):
@@ -364,6 +384,5 @@ if __name__ == "__main__":
         widget.discord_thread.start()
     else:
         debug('Discord status updates are disabled.')
-
 
     sys.exit(app.exec())
