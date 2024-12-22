@@ -15,10 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QGridLayout,
-    QHBoxLayout, QMainWindow, QPlainTextEdit, QPushButton,
-    QSizePolicy, QSpacerItem, QTabWidget, QToolButton,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QGridLayout, QHBoxLayout,
+    QMainWindow, QPushButton, QSizePolicy, QSpacerItem,
+    QTabWidget, QToolButton, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -304,50 +303,6 @@ class Ui_MainWindow(object):
         self.verticalLayout.addLayout(self.horizontalLayout_2)
 
         MainWindow.setCentralWidget(self.centralwidget)
-        self.dockWidget = QDockWidget(MainWindow)
-        self.dockWidget.setObjectName(u"dockWidget")
-        self.dockWidget.setMinimumSize(QSize(196, 119))
-        self.dockWidget.setMaximumSize(QSize(524287, 5433))
-        self.dockWidget.setStyleSheet(u"")
-        self.dockWidget.setFloating(False)
-        self.dockWidget.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable|QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidgetContents = QWidget()
-        self.dockWidgetContents.setObjectName(u"dockWidgetContents")
-        self.dockWidgetContents.setMaximumSize(QSize(16777215, 16666))
-        self.verticalLayout_7 = QVBoxLayout(self.dockWidgetContents)
-        self.verticalLayout_7.setSpacing(0)
-        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
-        self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
-        self.console = QPlainTextEdit(self.dockWidgetContents)
-        self.console.setObjectName(u"console")
-        self.console.setMaximumSize(QSize(16777215, 16666))
-        self.console.setStyleSheet(u"QPlainTextEdit {\n"
-"\n"
-"    font: 600 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 2px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    /* height:18px; */\n"
-"    padding: 0px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #151515;\n"
-"}\n"
-"\n"
-"\n"
-"\n"
-"QPlainTextEdit:focus {\n"
-"\n"
-"    background-color: #1C1C1C;\n"
-"}")
-        self.console.setTabChangesFocus(False)
-        self.console.setTabStopDistance(80.000000000000000)
-        self.console.setCursorWidth(1)
-        self.console.setCenterOnScroll(False)
-
-        self.verticalLayout_7.addWidget(self.console)
-
-        self.dockWidget.setWidget(self.dockWidgetContents)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.TopDockWidgetArea, self.dockWidget)
 
         self.retranslateUi(MainWindow)
 
@@ -422,7 +377,5 @@ class Ui_MainWindow(object):
         self.FixNoSteamLogon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Fix No Steam Logon</span></p><p>This script restarts Steam and launches the current addon.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.FixNoSteamLogon_Button.setText(QCoreApplication.translate("MainWindow", u"Fix NoLogon", None))
-        self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Console", None))
-        self.console.setPlainText("")
     # retranslateUi
 
