@@ -19,7 +19,20 @@ from soundevent_editor.main import SoundEventEditorMainWindow
 from minor_features.assettypes import AssetTypesModify
 from src.launch_options.main import LaunchOptionsDialog
 import argparse
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QCheckBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QCheckBox, QGraphicsDropShadowEffect
+import sys
+import os
+import threading
+import portalocker
+import tempfile
+import webbrowser
+import time
+import argparse
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
+from ui_main import Ui_MainWindow
+from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 # Variables
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -67,11 +80,35 @@ class Notification(QMessageBox):
 
         if self.hwnd:
             ctypes.windll.user32.SetForegroundWindow(self.hwnd)
+
+def enable_dark_title_bar(window):
+    DWMWA_USE_IMMERSIVE_DARK_MODE = 20  # Adjust based on Windows version
+    try:
+        hwnd = int(window.winId())
+        set_dark_mode = ctypes.c_int(1)
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_USE_IMMERSIVE_DARK_MODE,
+            ctypes.byref(set_dark_mode),
+            ctypes.sizeof(set_dark_mode)
+        )
+    except Exception as e:
+        print(f"Failed to set dark mode title bar: {e}")
+
 class Widget(QMainWindow):
     def __init__(self, parent=None, dev_mode=False):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+        self.ui.setupUi(self)  # Pass the QMainWindow instance here
+
+        enable_dark_title_bar(self)
+
+        # Add DevWidget if dev_mode is enabled
+        if dev_mode:
+            self.dev_widget = DevWidget(self)
+            self.main_layout.addWidget(self.dev_widget)
+
+
         self.setup_tray_icon()
         self.setup_tabs()
         self.populate_addon_combobox()
@@ -168,7 +205,7 @@ class Widget(QMainWindow):
         self.ui.export_and_import_addon_button.clicked.connect(self.open_export_and_import_addon)
         self.ui.open_addons_folder_button.clicked.connect(self.open_addons_folder)
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
-        self.ui.bluesky_button.clicked.connect(self.open_bluesky)
+        # self.ui.bluesky_button.clicked.connect(self.open_bluesky)
         self.ui.discord.clicked.connect(self.open_discord)
         self.ui.documentation_button.clicked.connect(self.open_documentation)
 
