@@ -65,13 +65,28 @@ def debug(value):
 
 
 def get_cs2_path():
+    def cs2_exe_exists(cs2_path):
+        cs2_exe_path = os.path.join(cs2_path, "game", "bin", "win64", "cs2.exe")
+        return os.path.exists(cs2_exe_path)
+
     cs2_path = get_config_value('PATHS', 'Cs2')
+
+    if cs2_path:
+        cs2_path = os.path.normpath(cs2_path)
+        if cs2_exe_exists(cs2_path):
+            return cs2_path
+        else:
+            cs2_path = None
 
     if not cs2_path:
         cs2_path = get_counter_strike_path_from_registry()
         if cs2_path:
             cs2_path = os.path.normpath(cs2_path)
-            set_config_value('PATHS', 'Cs2', cs2_path)
+            if cs2_exe_exists(cs2_path):
+                set_config_value('PATHS', 'Cs2', cs2_path)
+                return cs2_path
+            else:
+                cs2_path = None
 
     return cs2_path
 
