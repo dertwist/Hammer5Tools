@@ -1,7 +1,7 @@
 import os.path
-from preferences import get_cs2_path, debug
+from src.preferences import get_cs2_path, debug
 import keyvalues3
-from common import editor_info
+from src.common import editor_info
 class AssetTypesModify:
     def __init__(self):
         super().__init__()

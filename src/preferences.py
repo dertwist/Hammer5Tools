@@ -37,8 +37,6 @@ def get_config_bool(section, key, default:bool = None):
             return settings.value(f"{section}/{key}", type=bool)
         except:
             return default
-
-print()
 def default_settings():
     if os.path.exists(os.path.normpath(settings.fileName())):
         pass
@@ -69,10 +67,11 @@ def debug(value):
 def get_cs2_path():
     cs2_path = get_config_value('PATHS', 'Cs2')
 
-    if cs2_path is None:
-        registry_path = get_counter_strike_path_from_registry()
-        if registry_path is not None:
-            cs2_path = registry_path.replace("\\\\", "\\")
+    if not cs2_path:
+        cs2_path = get_counter_strike_path_from_registry()
+        if cs2_path:
+            cs2_path = os.path.normpath(cs2_path)
+            set_config_value('PATHS', 'Cs2', cs2_path)
 
     return cs2_path
 

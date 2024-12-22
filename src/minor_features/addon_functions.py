@@ -39,27 +39,37 @@ def __launch_addon():
     addon_name = get_addon_name()
     cs2_path = get_cs2_path()
 
-    # get commands from settings, if not could find them, add defaults to the setitngs
     commands = get_config_value("LAUNCH", "commands")
     if not commands:
         commands = default_commands
-        set_config_value("LAUNCH", 'commands', commands)
+        set_config_value("LAUNCH", "commands", commands)
+
     commands = assemble_commands(commands, addon_name)
-    cs2_launch_commands = '"' + cs2_path + '"' r"\game\bin\win64\cs2.exe" + commands
-    if "-nocustomermachine" in commands:
-        NCM_mode_setup(cs2_path)
-    if get_config_bool('LAUNCH', 'ncm_mode'):
-        if get_config_bool('LAUNCH', 'ncm_mode_setup'):
-            psutil.Popen((cs2_launch_commands + " -nocustomermachine"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        else:
+
+    cs2_exe_path = os.path.join(cs2_path, "game", "bin", "win64", "cs2.exe")
+
+    cs2_launch_commands = f'"{cs2_exe_path}" {commands}'
+
+    ncm_mode = get_config_bool("LAUNCH", "ncm_mode", default=False)
+    ncm_mode_setup_done = get_config_bool("LAUNCH", "ncm_mode_setup", default=False)
+
+    if ncm_mode:
+        if not ncm_mode_setup_done:
             NCM_mode_setup(cs2_path)
-            psutil.Popen((cs2_launch_commands + " -nocustomermachine"), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            set_config_bool('LAUNCH', 'ncm_mode_setup', True)
+            set_config_bool("LAUNCH", "ncm_mode_setup", True)
+        launch_command = f'{cs2_launch_commands} -nocustomermachine'
     else:
-        psutil.Popen(cs2_launch_commands, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        launch_command = cs2_launch_commands
+
+    psutil.Popen(
+        launch_command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
 def launch_addon():
-    ExpetionErrorDialog(AssetTypesModify, 'AssetTypesModify')
-    ExpetionErrorDialog(__launch_addon, 'LaunchAddon')
+    ExpetionErrorDialog(AssetTypesModify)
+    ExpetionErrorDialog(__launch_addon)
 
 
 def kill_addon():
