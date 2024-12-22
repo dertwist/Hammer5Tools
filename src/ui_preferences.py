@@ -816,7 +816,7 @@ class Ui_preferences_dialog(object):
 
         self.retranslateUi(preferences_dialog)
 
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(2)
 
 
         QMetaObject.connectSlotsByName(preferences_dialog)
