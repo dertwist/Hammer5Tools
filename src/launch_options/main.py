@@ -6,12 +6,14 @@ from src.preferences import get_addon_name, get_config_value, get_config_bool, s
 from src.launch_options.ui_main import Ui_preferences_dialog
 from src.minor_features.addon_functions import assemble_commands
 from src.common import *
+from src.common import enable_dark_title_bar
 
 class LaunchOptionsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_preferences_dialog()
         self.ui.setupUi(self)
+        enable_dark_title_bar(self)
         self.commands = get_config_value("LAUNCH", "commands")
         if not self.commands:
             self.commands = default_commands

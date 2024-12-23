@@ -13,7 +13,7 @@ from src.minor_features.update_check import check_updates
 from src.common import Presets_Path
 
 
-
+from src.common import enable_dark_title_bar
 settings = QSettings(QSettings.IniFormat, QSettings.UserScope, "DerTwist\\Hammer5Tools", "settings")
 
 app_dir = os.getcwd()
@@ -145,6 +145,7 @@ class PreferencesDialog(QDialog):
         self.ui.setupUi(self)
 
         self.app_version = app_version
+        enable_dark_title_bar(self)
 
         # Populate UI with current preferences
         self.populate_preferences()
@@ -163,7 +164,6 @@ class PreferencesDialog(QDialog):
         self.ui.editline_custom_discord_status.setText(get_config_value('DISCORD_STATUS', 'custom_status'))
         # other
         self.ui.launch_addon_after_nosteamlogon_fix.setChecked(get_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix'))
-        self.ui.checkBox_debug_info.setChecked(get_config_bool('OTHER', 'debug_info'))
         # APP
         self.ui.checkBox_start_with_system.setChecked(get_config_bool('APP', 'start_with_system'))
         self.ui.checkBox_close_to_tray.setChecked(settings.value("APP/minimize_to_tray", type=bool, defaultValue=True))

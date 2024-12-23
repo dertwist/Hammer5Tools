@@ -4,6 +4,7 @@ import os
 import subprocess
 import threading
 import keyvalues3 as kv3
+import ctypes
 import re, unicodedata, random, string
 #======================================================<  Copied from preferences.py file  >===================================================
 
@@ -14,6 +15,22 @@ def get_cs2_path():
     except:
         pass
 
+
+
+#=================================================================<  Title  >===============================================================
+def enable_dark_title_bar(window):
+    DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+    try:
+        hwnd = int(window.winId())
+        set_dark_mode = ctypes.c_int(1)
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_USE_IMMERSIVE_DARK_MODE,
+            ctypes.byref(set_dark_mode),
+            ctypes.sizeof(set_dark_mode)
+        )
+    except Exception as e:
+        print(f"Failed to set dark mode title bar: {e}")
 
 #===============================================================<  Variables  >=============================================================
 editor_info = {

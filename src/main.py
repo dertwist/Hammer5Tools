@@ -33,6 +33,7 @@ from PySide6.QtCore import Qt
 from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from PySide6.QtCore import QTimer
+from src.common import enable_dark_title_bar
 # Variables
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -80,20 +81,6 @@ class Notification(QMessageBox):
 
         if self.hwnd:
             ctypes.windll.user32.SetForegroundWindow(self.hwnd)
-
-def enable_dark_title_bar(window):
-    DWMWA_USE_IMMERSIVE_DARK_MODE = 20  # Adjust based on Windows version
-    try:
-        hwnd = int(window.winId())
-        set_dark_mode = ctypes.c_int(1)
-        ctypes.windll.dwmapi.DwmSetWindowAttribute(
-            hwnd,
-            DWMWA_USE_IMMERSIVE_DARK_MODE,
-            ctypes.byref(set_dark_mode),
-            ctypes.sizeof(set_dark_mode)
-        )
-    except Exception as e:
-        print(f"Failed to set dark mode title bar: {e}")
 
 class Widget(QMainWindow):
     def __init__(self, parent=None, dev_mode=False):
