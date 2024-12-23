@@ -54,6 +54,7 @@ def default_settings():
         set_config_bool('APP', 'minimize_message_shown', True)
         set_config_bool('APP', 'start_with_system', False)
         set_config_bool('APP', 'first_launch', True)
+        set_config_bool('APP', 'minimize_to_tray', True)
         set_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix', False)
         settings.sync()
 
