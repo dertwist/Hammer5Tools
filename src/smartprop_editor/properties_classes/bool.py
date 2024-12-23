@@ -37,7 +37,7 @@ class PropertyBool(QWidget):
         self.text_line.setPlainText('')
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['Bool'])
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Bool'])
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)

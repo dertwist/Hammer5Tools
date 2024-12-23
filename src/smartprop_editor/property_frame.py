@@ -229,7 +229,7 @@ class PropertyFrame(QWidget):
                 add_instance()
 
             elif 'm_VariableName' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=False, only_variable=True, force_variable=True, placeholder='Variable name')
+                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=False, only_variable=True, force_variable=True, placeholder='Variable name', filter_types=['String', 'Int', 'Float', 'Bool'])
                 add_instance()
             elif 'm_VariableValue' in value_class:
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=True)

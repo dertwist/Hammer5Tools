@@ -31,7 +31,7 @@ class PropertyComparison(QWidget):
         self.ui.comparison.currentTextChanged.connect(self.on_changed)
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
