@@ -1,9 +1,16 @@
 import ast
 import re
-from smartprop_editor.properties_classes.ui_comparison import Ui_Widget
+from src.smartprop_editor.properties_classes.ui_comparison import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
+import ast
+import re
+from src.completer.main import CompletingPlainTextEdit
+from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
+from PySide6.QtCore import Signal
+from src.smartprop_editor.objects import expression_completer
+from src.widgets import FloatWidget, ComboboxVariablesWidget
 
 
 class PropertyComparison(QWidget):
@@ -23,12 +30,20 @@ class PropertyComparison(QWidget):
         self.ui.property_class.setText(output)
         self.ui.comparison.currentTextChanged.connect(self.on_changed)
 
-        # Name
-        self.m_name = CompletingPlainTextEdit()
-        self.m_name.completion_tail = ''
-        self.m_name.setPlaceholderText('Variable name')
-        self.ui.layout_2.insertWidget(1, self.m_name)
-        self.m_name.textChanged.connect(self.on_changed)
+        # Variable setup
+        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea)
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.variable)
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.variable_frame = QWidget()
+        self.variable_frame.setLayout(layout)
+        self.variable.setFixedWidth(256)
+        self.variable.setMaximumHeight(24)
+        self.variable.search_button.set_size(width=24, height=24)
+        self.variable_frame.setMinimumHeight(32)
+        self.variable.combobox.changed.connect(self.on_changed)
+        self.ui.layout_2.insertWidget(1, self.variable_frame)
 
 
 
@@ -39,13 +54,12 @@ class PropertyComparison(QWidget):
         self.ui.layout_2.insertWidget(4, self.m_value)
         self.m_value.textChanged.connect(self.on_changed)
 
-        self.m_value.setPlainText('')
-        self.m_name.setPlainText('')
 
 
         if isinstance(value, dict):
             if 'm_Name' in value:
-                self.m_name.setPlainText(str(value['m_Name']))
+                name_value = value['m_Name']
+                self.variable.combobox.set_variable(str(name_value))
             if 'm_Value' in value:
                 self.m_value.setPlainText(str(value['m_Value']))
 
@@ -55,7 +69,6 @@ class PropertyComparison(QWidget):
 
     def on_changed(self):
         variables = self.get_variables()
-        self.m_name.completions.setStringList(variables)
         self.m_value.completions.setStringList(variables)
         self.change_value()
         self.edited.emit()
@@ -67,7 +80,7 @@ class PropertyComparison(QWidget):
         except:
             pass
 
-        self.value = {self.value_class: {'m_Name': self.m_name.toPlainText(), 'm_Value': var_value,'m_Comparison': self.ui.comparison.currentText()}}
+        self.value = {self.value_class: {'m_Name': self.variable.combobox.get_variable(), 'm_Value': var_value,'m_Comparison': self.ui.comparison.currentText()}}
 
     def get_variables(self, search_term=None):
         self.variables_scrollArea
