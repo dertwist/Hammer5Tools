@@ -10,6 +10,8 @@ from PySide6.QtCore import Qt, QMimeData
 from PySide6.QtGui import QCursor, QDrag,QAction
 from src.smartprop_editor.element_id import *
 from src.preferences import get_config_bool
+from src.popup_menu.popup_menu_main import PopupMenu
+from src.smartprop_editor.objects import variables_list
 
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
@@ -54,6 +56,8 @@ class VariableFrame(QWidget):
         self.ui.varialbe_display_name.textChanged.connect(self.update_self)
         self.ui.variable_name.textChanged.connect(self.update_self)
         self.widget_list = widget_list
+
+        self.ui.change_class.connect(self.call_class_select_menu)
 
 
 
@@ -126,6 +130,20 @@ class VariableFrame(QWidget):
         self.ui.show_child.clicked.connect(self.show_child)
 
         self.init_ui()
+    def set_class(self, var_class):
+        pass
+    def get_classes(self):
+        elements = []
+        variables = variables_list
+        for item in variables:
+            elements.append({item['name']: item['name']})
+
+        return elements
+    def call_class_select_menu(self):
+        elements = self.get_classes()
+        self.popup_menu = PopupMenu(elements, add_once=False)
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.set_class(value))
+        self.popup_menu.show()
 
     def show_child(self):
         if not self.ui.show_child.isChecked():

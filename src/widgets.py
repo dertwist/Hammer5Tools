@@ -16,6 +16,17 @@ from src.widgets_common import *
 from logging import error
 import traceback, ctypes
 from src.common import enable_dark_title_bar
+import winsound
+from PySide6.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QLabel,
+    QTextEdit,
+    QPushButton,
+    QFileDialog,
+    QHBoxLayout,
+    QMessageBox
+)
 
 #============================================================<  Generic widgets  >==========================================================
 class Spacer(QWidget):
@@ -30,26 +41,55 @@ class Spacer(QWidget):
         self.setLayout(spacer_layout)
         self.setStyleSheet('border:None;')
         self.setContentsMargins(0,0,0,0)
-class ErrorInfo(QMessageBox):
+class ErrorInfo(QDialog):
     def __init__(self, text="Error", details=""):
         super().__init__()
-
         self.setWindowTitle("Error")
-        self.setText(text)
-        self.setMinimumSize(400, 200)
-        self.setIcon(QMessageBox.Critical)
         self.setWindowIcon(QIcon("appicon.ico"))
         enable_dark_title_bar(self)
+        self.setMinimumSize(600, 400)
+        self.setModal(True)
+        self.setAttribute(Qt.WA_DeleteOnClose)
 
         self.details = details
-        self.setDetailedText(self.details)
+        winsound.MessageBeep(winsound.MB_ICONHAND)
+        # Main layout
+        main_layout = QVBoxLayout(self)
 
-        self.save_button = self.addButton("Save Details", QMessageBox.ActionRole)
-        self.report_button = self.addButton("Report", QMessageBox.ActionRole)
-        self.close_button = self.addButton(QMessageBox.Close)
+        # Error message label
+        self.message_label = QLabel(text)
+        self.message_label.setWordWrap(True)
+        main_layout.addWidget(self.message_label)
 
+        # Details text area
+        self.details_text = QTextEdit()
+        self.details_text.setReadOnly(True)
+        self.details_text.setPlainText(self.details)
+        self.details_text.setStyleSheet("background-color: #1C1C1C; border-color: #974533")
+        main_layout.addWidget(self.details_text)
+
+        # Buttons layout
+        buttons_layout = QHBoxLayout()
+
+        # Save Details button
+        self.save_button = QPushButton("Save Details")
         self.save_button.clicked.connect(self.save_details)
+        buttons_layout.addWidget(self.save_button)
+
+        # Report button
+        self.report_button = QPushButton("Report")
         self.report_button.clicked.connect(self.report_issue)
+        buttons_layout.addWidget(self.report_button)
+
+        # Spacer to push Close button to the right
+        buttons_layout.addStretch()
+
+        # Close button
+        self.close_button = QPushButton("Close")
+        self.close_button.clicked.connect(self.close)
+        buttons_layout.addWidget(self.close_button)
+
+        main_layout.addLayout(buttons_layout)
 
     def save_details(self):
         options = QFileDialog.Options()
@@ -73,6 +113,8 @@ class ErrorInfo(QMessageBox):
 
     def report_issue(self):
         webbrowser.open(discord_feedback_channel)
+        # Close the dialog after reporting the issue
+        self.close()
 
 def ExpetionErrorDialog(function):
     try:
@@ -328,7 +370,7 @@ class ComboboxVariables(ComboboxDynamicItems):
         else:
             return self.currentText()
 class ComboboxVariablesWidget(QWidget):
-    def __init__(self, parent=None, variables_layout=None, filter_types=None, variable_type='Int'):
+    def __init__(self, parent=None, variables_layout=None, filter_types=None, variable_type=None):
         """Combobox variables widget with search and add buttons that dynamically show or hide the add button."""
         super().__init__(parent)
 
@@ -363,6 +405,9 @@ class ComboboxVariablesWidget(QWidget):
 
         # Connect the combobox text change signal to update the add button visibility
         self.combobox.currentTextChanged.connect(self.update_add_button_visibility)
+
+        if variable_type is None:
+            self.variable_type = filter_types[0]
 
     def update_add_button_visibility(self, value):
         """Show the add button if value is None or empty, otherwise hide it."""
