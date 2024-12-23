@@ -305,36 +305,43 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.load_preset(name, value))
         self.popup_menu.show()
 
-    def file_deserialization(self, __data:dict, to_parent:bool):
-        def populate_tree(data, parent = None):
+    def file_deserialization(self, __data: dict, to_parent: bool):
+        def populate_tree(data, parent=None):
             if parent is None:
                 parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
             if isinstance(data, dict):
                 for key, value in data.items():
-                    if key == 'm_Children':
-                        if isinstance(value, list):
-                            for item in value:
-                                # Get keys
-                                item_class = item.get('_class')
-                                value_dict = item.copy()
+                    if key == 'm_Children' and isinstance(value, list):
+                        for item in value:
+                            # Get keys
+                            item_class = item.get('_class')
+                            value_dict = item.copy()
 
-                                # Delete m_Children key
-                                value_dict.pop('m_Children', None)
+                            # Delete m_Children key
+                            value_dict.pop('m_Children', None)
 
-                                # Assign or get element id
-                                update_value_ElementID(value_dict)
-                                value_dict = update_child_ElementID_value(value_dict, force=True)
+                            # Assign or get element id
+                            update_value_ElementID(value_dict)
+                            value_dict = update_child_ElementID_value(value_dict, force=True)
 
-                                # Add tree item
-                                child_item = HierarchyItemModel(
-                                    _name=value_dict.get('m_sLabel', get_label_id_from_value(value_dict)),
-                                    _data=str(value_dict), _class=get_clean_class_name(item_class),
-                                    _id=get_ElementID_key(value_dict))
-                                if to_parent:
-                                    parent.parent.addChild(child_item)
-                                else:
-                                    parent.addChild(child_item)
-                                populate_tree(item, child_item)
+                            # Add tree item
+                            child_item = HierarchyItemModel(
+                                _name=value_dict.get('m_sLabel', get_label_id_from_value(value_dict)),
+                                _data=str(value_dict),
+                                _class=get_clean_class_name(item_class),
+                                _id=get_ElementID_key(value_dict)
+                            )
+
+                            # Add child item to the correct parent
+                            if to_parent and parent.parent() is not None:
+                                parent.parent().addChild(child_item)
+                            elif to_parent:
+                                self.ui.tree_hierarchy_widget.invisibleRootItem().addChild(child_item)
+                            else:
+                                parent.addChild(child_item)
+
+                            # Recursively populate the tree
+                            populate_tree(item, child_item)
             pass
 
         def populate_choices(data):
