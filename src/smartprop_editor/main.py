@@ -460,6 +460,10 @@ class SmartPropEditorMainWindow(QMainWindow):
             if isinstance(widget, PropertyFrame):
                 exists_classes.append(widget.name)
 
+        for class_name in ['SetVariableBool', 'SetVariableFloat']:
+            if class_name in exists_classes:
+                exists_classes.remove(class_name)
+
         for item in operators_and_filters:
             for key, value in item.items():
                 if key in exists_classes:
