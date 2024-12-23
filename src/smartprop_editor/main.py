@@ -30,6 +30,7 @@ from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItem
 from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
 from src.common import *
+from src.common import enable_dark_title_bar
 
 # Get cs2_path
 cs2_path = get_cs2_path()
@@ -43,6 +44,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.realtime_save = False
         self.opened_file = None
         self.update_title = update_title
+        enable_dark_title_bar(self)
 
         self.ui.tree_hierarchy_widget.installEventFilter(self)
 

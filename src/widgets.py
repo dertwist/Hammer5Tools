@@ -14,7 +14,9 @@ from src.popup_menu.popup_menu_main import PopupMenu
 from src.preferences import get_config_bool, set_config_bool
 from src.widgets_common import *
 from logging import error
-import traceback
+import traceback, ctypes
+from src.common import enable_dark_title_bar
+
 #============================================================<  Generic widgets  >==========================================================
 class Spacer(QWidget):
     def __init__(self):
@@ -37,6 +39,7 @@ class ErrorInfo(QMessageBox):
         self.setMinimumSize(400, 200)
         self.setIcon(QMessageBox.Critical)
         self.setWindowIcon(QIcon("appicon.ico"))
+        enable_dark_title_bar(self)
 
         self.details = details
         self.setDetailedText(self.details)

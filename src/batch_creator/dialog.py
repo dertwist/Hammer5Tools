@@ -8,7 +8,7 @@ from src.batch_creator.ui_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path
 from src.qt_styles.common import qt_stylesheet_button
 from src.batch_creator.process import perform_batch_processing
-
+from src.common import enable_dark_title_bar
 
 class BatchCreatorProcessDialog(QDialog):
     def __init__(self, process, current_file, parent=None, process_all=None, collect_replacements = None, viewport = None):
@@ -16,6 +16,8 @@ class BatchCreatorProcessDialog(QDialog):
         self.ui = Ui_BatchCreator_process_Dialog()
         self.ui.setupUi(self)
         self.setModal(False)
+
+        enable_dark_title_bar(self)
 
         self.process_data = process
         self.current_file = current_file

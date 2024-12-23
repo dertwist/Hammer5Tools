@@ -4,6 +4,7 @@ from PySide6.QtGui import QTextCharFormat, QColor, QTextCursor
 from PySide6.QtCore import Signal
 
 from src.find_and_replace.ui_main import Ui_Dialog
+from src.common import enable_dark_title_bar
 
 
 class FindAndReplaceDialog(QDialog):
@@ -12,6 +13,8 @@ class FindAndReplaceDialog(QDialog):
         super().__init__(parent)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
+
+        enable_dark_title_bar(self)
 
         self.data = data
         self.ui.viewport_QplainText.setPlainText(self.data)

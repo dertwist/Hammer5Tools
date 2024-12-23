@@ -5,7 +5,7 @@ from src.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QApplication
 from src.preferences import settings
 from src.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
-from src.common import app_dir, Kv3ToJson, JsonToKv3, SoundEventEditor_Preset_Path
+from src.common import app_dir, Kv3ToJson, JsonToKv3, SoundEventEditor_Preset_Path, enable_dark_title_bar
 from src.widgets import ExpetionErrorDialog, ErrorInfo
 
 
@@ -16,6 +16,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.setupUi(self)
         self.settings = settings
         self.opened_file = ""
+        enable_dark_title_bar(self)
 
         self.PropertiesWindow = SoundEventEditorPropertiesWindow()
         self.ui.frame.layout().addWidget(self.PropertiesWindow)

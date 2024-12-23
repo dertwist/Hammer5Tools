@@ -1,6 +1,7 @@
 from src.export_and_import_addon.ui_export_and_import_addon import Ui_export_and_import_addon_widget
-from preferences import get_cs2_path, get_addon_name, get_config_value
+from src.preferences import get_cs2_path, get_addon_name, get_config_value
 from PySide6.QtWidgets import QDialog
+from src.common import enable_dark_title_bar
 
 import os
 import shutil
@@ -24,6 +25,7 @@ class export_and_import_addon_dialog(QDialog):
         super().__init__(parent)
         self.ui = Ui_export_and_import_addon_widget()
         self.ui.setupUi(self)
+        enable_dark_title_bar(self)
         self.ui.export_addon_button.clicked.connect(self.do_export_addon)
         self.ui.import_addon_button.clicked.connect(self.do_import_addon)
         self.update_size_status()

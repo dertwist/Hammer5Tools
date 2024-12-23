@@ -5,6 +5,7 @@ from src.create_addon.ui_create_addon_dialog import Ui_Create_addon_Dialog
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtCore import QRegularExpression
 from src.common import Presets_Path
+from src.common import enable_dark_title_bar
 
 # noinspection PyTypeChecker
 class Create_addon_Dialog(QDialog):
@@ -13,6 +14,7 @@ class Create_addon_Dialog(QDialog):
         self.ui = Ui_Create_addon_Dialog()
         self.ui.setupUi(self)
         self.ui.create_addon_button.clicked.connect(self.create_addon)
+        enable_dark_title_bar(self)
 
         regex = QRegularExpression("[a-z0-9_]*")
         validator = QRegularExpressionValidator(regex, self.ui.lineEdit_addon_name)
