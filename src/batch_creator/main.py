@@ -92,7 +92,6 @@ class BatchCreatorMainWindow(QMainWindow):
         self.monitoring_list.open_file.connect(self.load_file)
         self.ui.monitoring_content.addWidget(self.monitoring_list)
 
-        self.load_splitter_position()
         self.connect_signals()
 
         self.ui.monitor_searchbar.textChanged.connect(self.filter_monitoring_list)
@@ -124,24 +123,9 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.viewport_searchbar.textChanged.connect(self.perform_search)
         self.ui.viewport_search_previous_button.clicked.connect(self.search_previous)
         self.ui.viewport_search_next_button.clicked.connect(self.search_next)
-        self.ui.splitter.splitterMoved.connect(self.save_splitter_position)
-
-    def save_splitter_position(self):
-        """Save the splitter position to settings."""
-        set_config_value('BatchCreator', 'splitterSizes', self.ui.splitter.sizes())
-
-    def load_splitter_position(self):
-        """Load the splitter position from settings."""
-        sizes = get_config_value("BatchCreator", 'splitterSizes')
-        if sizes:
-            sizes = [int(size) for size in sizes]
-        else:
-            sizes = [448, 220]
-        self.ui.splitter.setSizes(sizes)
 
     def closeEvent(self, event):
         """Override close event to save splitter position."""
-        self.save_splitter_position()
         super().closeEvent(event)
 
     # ============================================================<  Referencing  >==========================================================
