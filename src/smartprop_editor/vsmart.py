@@ -148,8 +148,6 @@ class VsmartSave:
         self.choices_data = self.choices(self.choices_tree.invisibleRootItem())
         self.save_file()
 
-        print(f'Saved File: {filename}')
-
     def save_file(self):
         """Saving file"""
         out_data = {'generic_data_type': "CSmartPropRoot"}
