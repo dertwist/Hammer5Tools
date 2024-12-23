@@ -22,6 +22,7 @@ from src.smartprop_editor.commands import DeleteTreeItemCommand
 from src.find_and_replace.main import FindAndReplaceDialog
 
 from PySide6.QtGui import QKeySequence
+from PySide6.QtCore import QTimer
 
 from src.explorer.main import Explorer
 from src.preferences import settings
@@ -45,6 +46,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.opened_file = None
         self.update_title = update_title
         enable_dark_title_bar(self)
+
+        # timer
+        self.realtime_save_timer = QTimer(self)
+        self.realtime_save_timer.setSingleShot(True)
+        self.realtime_save_timer.timeout.connect(self.save_file)
 
         self.ui.tree_hierarchy_widget.installEventFilter(self)
 
@@ -236,7 +242,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             if settings.value("OTHER/debug_info", type=bool):
                 print(output_value)
             if self.realtime_save:
-                self.save_file()
+                self.realtime_save_timer.start(5)
 
     # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
@@ -604,7 +610,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                     })
                 self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
         if not self.realtime_save:
-            print(f'Opened file: {filename}')
             self.update_title('opened',filename)
         self.explorer_status()
 
