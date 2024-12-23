@@ -16,7 +16,6 @@ from export_and_import_addon.export_and_import_addon import export_and_import_ad
 from batch_creator.main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
-from minor_features.assettypes import AssetTypesModify
 from src.launch_options.main import LaunchOptionsDialog
 import argparse
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QCheckBox, QGraphicsDropShadowEffect
@@ -129,10 +128,6 @@ class Widget(QMainWindow):
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except Exception as e:
             print(f"Error checking updates: {e}")
-        try:
-            AssetTypesModify()
-        except Exception as e:
-            debug(f"Error: {e}")
 
         self._restore_user_prefs()
         if get_config_bool('APP', 'first_launch'):
