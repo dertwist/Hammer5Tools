@@ -1,11 +1,11 @@
 import ast
 import re
-from smartprop_editor.properties_classes.ui_color import Ui_Widget
+from src.smartprop_editor.properties_classes.ui_color import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QColorDialog
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
-from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
+from src.qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 
 
 class PropertyColor(QWidget):
@@ -61,18 +61,21 @@ class PropertyColor(QWidget):
         self.ui.value.clicked.connect(self.open_dialog)
 
         self.on_changed()
+
     def open_dialog(self):
         color_dialog = self.dialog
-        color = color_dialog.getColor(QColor(*self.color)).getRgb()[:3]
-        self.ui.value.setStyleSheet(f"""background-color: rgb{color};
-            padding:4px;
-            border:0px;
-            border: 2px solid translucent;
-            border-color: rgba(80, 80, 80, 100);
-            """)
-        print("RGB Color:", color)
-        self.color = list(color)
-        self.on_changed()
+        selected_color = color_dialog.getColor(QColor(*self.color))
+        if selected_color.isValid():
+            color = selected_color.getRgb()[:3]
+            self.ui.value.setStyleSheet(f"""background-color: rgb{color};
+                padding:4px;
+                border:0px;
+                border: 2px solid translucent;
+                border-color: rgba(80, 80, 80, 100);
+                """)
+            print("RGB Color:", color)
+            self.color = list(color)
+            self.on_changed()
 
 
     def logic_switch(self):
