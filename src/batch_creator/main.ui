@@ -1143,7 +1143,7 @@ color: gray;
     <set>QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
    <property name="windowTitle">
-    <string>Config Inspector</string>
+    <string>Config browser</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
