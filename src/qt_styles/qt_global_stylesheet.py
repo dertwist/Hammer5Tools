@@ -53,7 +53,7 @@ QGroupBox::indicator:unchecked {
 /* ========================================================== */
 QPushButton {
 
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -98,7 +98,7 @@ QToolTip {
 
 QToolButton {
 
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -147,7 +147,7 @@ QTabBar::tab {
     border-top: 2px solid gray;
     border-bottom: 0px solid black;
 
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border-left: 2px solid darkgray;
     border-top: 0px solid darkgray;
     border-color: #151515;
@@ -169,7 +169,7 @@ QTabBar::tab:selected {
     border-right: 2px solid gray;
     border-bottom: 0px solid black;
 
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border-color: rgba(80, 80, 80, 180);
     height:20px;
     color: #E3E3E3;
@@ -239,7 +239,7 @@ QDockWidget DockTitleWidget QToolButton::menu-indicator {
 /* ========================================================== */
 
 QComboBox {
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -331,7 +331,7 @@ QProgressBar {
     text-align: center;        /* Center the text */
     color: #E3E3E3;            /* Text color */
     background-color: #1C1C1C; /* Background color */
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -354,7 +354,7 @@ QProgressBar::chunk {
 
 QTextBrowser {
 
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -370,7 +370,7 @@ QTextBrowser {
 
 QTextBrowser:focus {
 
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -397,7 +397,7 @@ QTextBrowser:pressed {
 /* ========================================================== */
 
 QCheckBox {
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -444,7 +444,7 @@ QListView {
 
 QPlainTextEdit {
 
-    font: 600 10pt "Segoe UI";
+    font: 700 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
