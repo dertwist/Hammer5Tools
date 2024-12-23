@@ -75,12 +75,13 @@ class SaveSoundEvents:
         with open(path, 'w') as output:
             output.write(JsonToKv3(data))
 class SoundEventEditorMainWindow(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, update_title=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
         self.undo_stack = QUndoStack(self)
+        self.update_title = update_title
 
         # Variables
         self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
@@ -185,6 +186,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         SaveSoundEvents(tree=self.ui.hierarchy_widget, path=(self.filepath_vsndevts))
         if not self.realtime_save():
             print(f'Saved file: {self.filepath_vsndevts}')
+            self.update_title('saved', self.filepath_vsndevts)
 
     #=======================================================<  Properties Window  >=====================================================
 
