@@ -328,21 +328,53 @@ class ComboboxVariables(ComboboxDynamicItems):
         else:
             return self.currentText()
 class ComboboxVariablesWidget(QWidget):
-    def __init__(self, parent=None, layout=None, filter_types=None):
-        """Combobox variables widget with search button"""
+    def __init__(self, parent=None, variables_layout=None, filter_types=None, variable_type='Int'):
+        """Combobox variables widget with search and add buttons that dynamically show or hide the add button."""
         super().__init__(parent)
 
+        # Set up the main layout for the widget
         layout_widget = QHBoxLayout(self)
-        layout_widget.setContentsMargins(0,0,0,0)
+        layout_widget.setContentsMargins(0, 0, 0, 0)
+
         self.filter_types = filter_types
-        self.combobox = ComboboxVariables(parent=self, layout=layout, filter_types=filter_types)
+        self.variable_type = variable_type
+
+        # Initialize the combobox for variables
+        self.combobox = ComboboxVariables(parent=self, layout=variables_layout, filter_types=filter_types)
         layout_widget.addWidget(self.combobox)
 
+        # Initialize the add new variable button
+        self.add_new_variable_button = Button()
+        self.add_new_variable_button.set_icon_add()
+        self.add_new_variable_button.set_size(width=24)
+        self.add_new_variable_button.clicked.connect(self.new_variable)
+        layout_widget.addWidget(self.add_new_variable_button)
+
+        # Initialize the search button
         self.search_button = Button()
         self.search_button.set_icon_search()
-        self.search_button.set_size(width=32)
+        self.search_button.set_size(width=24)
         self.search_button.clicked.connect(self.call_search_popup_menu)
         layout_widget.addWidget(self.search_button)
+
+
+        # Set the initial visibility of the add button
+        self.update_add_button_visibility(self.combobox.currentText())
+
+        # Connect the combobox text change signal to update the add button visibility
+        self.combobox.currentTextChanged.connect(self.update_add_button_visibility)
+
+    def update_add_button_visibility(self, value):
+        """Show the add button if value is None or empty, otherwise hide it."""
+        if value == "" or value is None or value == 'None':
+            self.add_new_variable_button.show()
+        else:
+            self.add_new_variable_button.hide()
+
+    def new_variable(self):
+        """Method to handle the creation of a new variable."""
+        # Implement logic to add a new variable
+        pass
 
     def get_variables(self):
         elements = []

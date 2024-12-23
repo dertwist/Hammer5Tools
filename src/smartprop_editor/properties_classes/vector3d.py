@@ -28,7 +28,7 @@ class PropertyVector3D(QWidget):
         filter_types = ['Int', 'Float']
 
         # Variable
-        self.variable_logic_switch = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['Vector3D'])
+        self.variable_logic_switch = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Vector3D'])
         self.variable_logic_switch.setMinimumWidth(256)
         self.variable_logic_switch.setMaximumHeight(24)
         self.variable_logic_switch.search_button.set_size(width=24, height=24)
@@ -43,7 +43,7 @@ class PropertyVector3D(QWidget):
         self.float_widget_x.edited.connect(self.on_changed)
         self.ui.layout_x.insertWidget(2, self.float_widget_x)
         # Variable
-        self.variable_x = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
+        self.variable_x = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable_x.setMinimumWidth(256)
         self.variable_x.setMaximumHeight(24)
         self.variable_x.search_button.set_size(width=24, height=24)
@@ -71,7 +71,7 @@ class PropertyVector3D(QWidget):
         self.float_widget_y.edited.connect(self.on_changed)
         self.ui.layout_y.insertWidget(2, self.float_widget_y)
         # Variable
-        self.variable_y = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
+        self.variable_y = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable_y.setMinimumWidth(256)
         self.variable_y.setMaximumHeight(24)
         self.variable_y.search_button.set_size(width=24, height=24)
@@ -99,7 +99,7 @@ class PropertyVector3D(QWidget):
         self.float_widget_z.edited.connect(self.on_changed)
         self.ui.layout_z.insertWidget(2, self.float_widget_z)
         # Variable
-        self.variable_z = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
+        self.variable_z = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable_z.setMinimumWidth(196)
         self.variable_z.setMaximumHeight(24)
         self.variable_z.search_button.set_size(width=24, height=24)

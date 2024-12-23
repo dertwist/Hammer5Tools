@@ -9,7 +9,7 @@ from src.widgets import ComboboxVariables, Spacer, ComboboxVariablesWidget
 
 class PropertyString(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False):
+    def __init__(self, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False, filter_types=None):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -24,6 +24,8 @@ class PropertyString(QWidget):
         self.spacer = Spacer()
         self.ui.layout.addWidget(self.spacer)
 
+        if filter_types is None:
+            filter_types = ['String', 'MaterialGroup', 'Model']
         if expression_bool:
             self.ui.property_class.setStyleSheet("""
                         border:0px;
@@ -55,7 +57,7 @@ class PropertyString(QWidget):
         self.text_line.completion_tail = ''
 
         # Variable
-        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['String','MaterialGroup', 'Model'])
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types)
         self.variable.setFixedWidth(256)
         self.variable.setMaximumHeight(24)
         self.variable.search_button.set_size(width=24, height=24)
