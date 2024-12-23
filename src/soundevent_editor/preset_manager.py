@@ -33,7 +33,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         else:
             def make_dir():
                 os.makedirs(self.tree_directory)
-            ExpetionErrorDialog(make_dir, 'Makedir')
+            ExpetionErrorDialog(make_dir)
         if self.tree_directory == '':
             ErrorInfo('Could not create presets directory')
         self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name='SoundEvent_Editor_PresetManager', parent=self.ui.explorer_layout_widget)

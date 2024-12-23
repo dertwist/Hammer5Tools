@@ -113,7 +113,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.save_file_button.clicked.connect(self.save_file)
         self.ui.save_as_file_button.clicked.connect(lambda: self.save_file(external=True))
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
-        self.ui.cerate_file_button.clicked.connect(lambda : ExpetionErrorDialog(self.create_new_file))
+        self.ui.cerate_file_button.clicked.connect(lambda: ExpetionErrorDialog(self.create_new_file))
         self.ui.paste_variable_button.clicked.connect(self.paste_variable)
         self.ui.realtime_save_checkbox.clicked.connect(self.realtime_save_action)
         self.ui.preset_manager_button.clicked.connect(self.open_preset_manager)
