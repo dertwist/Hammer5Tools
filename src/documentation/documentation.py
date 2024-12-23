@@ -9,6 +9,7 @@ class Documentation_Dialog(QDialog):
         self.ui = Ui_documentation_dialog()
         self.ui.setupUi(self)
         self.ui.version.setText(f"Version: {version}")
+        enable_dark_title_bar(self)
         self.ui.report_a_bug_button.clicked.connect(self.open_report_bug_link)
         self.ui.request_a_new_feature_button.clicked.connect(self.open_request_a_new_feature)
         self.ui.open_documentation_button.clicked.connect(self.open_documentation)
