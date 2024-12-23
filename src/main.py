@@ -32,6 +32,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
+from PySide6.QtCore import QTimer
 # Variables
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -98,16 +99,9 @@ class Widget(QMainWindow):
     def __init__(self, parent=None, dev_mode=False):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)  # Pass the QMainWindow instance here
+        self.ui.setupUi(self)
 
         enable_dark_title_bar(self)
-
-        # Add DevWidget if dev_mode is enabled
-        if dev_mode:
-            self.dev_widget = DevWidget(self)
-            self.main_layout.addWidget(self.dev_widget)
-
-
         self.setup_tray_icon()
         self.setup_tabs()
         self.populate_addon_combobox()
@@ -119,7 +113,13 @@ class Widget(QMainWindow):
         self.current_tab(False)
         self.settings = settings
 
-        # Add DevWidget if dev_mode is enabled
+        self.default_title = "Hammer 5 Tools"
+        self.setWindowTitle(self.default_title)
+
+        self.title_reset_timer = QTimer(self)
+        self.title_reset_timer.setSingleShot(True)
+        self.title_reset_timer.timeout.connect(self.reset_title)
+
         if dev_mode:
             self.dev_widget = DevWidget(self)
             self.ui.centralwidget.layout().addWidget(self.dev_widget)
@@ -133,6 +133,24 @@ class Widget(QMainWindow):
         if get_config_bool('APP', 'first_launch'):
             self.open_documentation()
             set_config_bool('APP', 'first_launch', False)
+
+    def update_title(self, status, file_path=None):
+        base_title = "Hammer 5 Tools"
+
+        if status == "saved":
+            new_title = f"{base_title} [ Saved file --- {file_path} ]"
+        elif status == "opened":
+            new_title = f"{base_title} [ Opened file --- {file_path}] "
+        else:
+            new_title = base_title
+
+        self.setWindowTitle(new_title)
+
+        # Reset the title after 5 seconds
+        self.title_reset_timer.start(5000)
+
+    def reset_title(self):
+        self.setWindowTitle("Hammer 5 Tools")
 
 
     def current_tab(self, set):
@@ -248,7 +266,7 @@ class Widget(QMainWindow):
 
         # Create a new instance of BatchCreatorMainWindow
         try:
-            self.BatchCreator_MainWindow = BatchCreatorMainWindow()
+            self.BatchCreator_MainWindow = BatchCreatorMainWindow(update_title=self.update_title)
 
             self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
         except Exception as e:
@@ -257,13 +275,13 @@ class Widget(QMainWindow):
         # Smartprop editior
 
         try:
-            self.SoundEventEditorMainWindow = SoundEventEditorMainWindow()
+            self.SoundEventEditorMainWindow = SoundEventEditorMainWindow(update_title=self.update_title)
             self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWindow)
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
 
         try:
-            self.SmartPropEditorMainWindow = SmartPropEditorMainWindow()
+            self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(update_title=self.update_title)
             self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
         except Exception as e:
             print(f"Error while cleaning up SmartPropEditorMainWindow: {e}")
