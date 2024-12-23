@@ -47,10 +47,11 @@ class DragDropLineEdit(QLineEdit):
             event.ignore()
 
 class BatchCreatorMainWindow(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, update_title=None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
+        self.update_title = update_title
 
         self.current_file = None
         self.process_data = default_file['process'].copy()
@@ -447,6 +448,7 @@ class BatchCreatorMainWindow(QMainWindow):
             self.write_json_file(self.current_file, data)
         else:
             debug("No file is currently opened to save.")
+        self.update_title('saved', self.current_file)
 
     def open_file(self):
         """Open a file selected in the explorer."""
@@ -459,10 +461,12 @@ class BatchCreatorMainWindow(QMainWindow):
                     if not self.confirm_open_anyway():
                         return
                 self.load_file(file_path)
+                self.update_title('opened', file_path)
             else:
                 QMessageBox.information(self, "Folder Selected", "You have selected a folder. Please select a file to open.")
         else:
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
+
 
     def confirm_open_anyway(self):
         """Confirm opening a file with an unsupported extension."""
