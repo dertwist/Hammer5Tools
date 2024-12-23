@@ -7,6 +7,14 @@ from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
 from src.qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 
+import ast
+import re
+from src.completer.main import CompletingPlainTextEdit
+from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
+from PySide6.QtCore import Signal
+from src.smartprop_editor.objects import expression_completer
+from src.widgets import FloatWidget, ComboboxVariablesWidget
+
 
 class PropertyColor(QWidget):
     edited = Signal()
@@ -33,6 +41,23 @@ class PropertyColor(QWidget):
         self.ui.property_class.setText(output)
         self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
 
+
+        # Variable setup
+        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['Color'])
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.variable)
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.variable_frame = QWidget()
+        self.variable_frame.setLayout(layout)
+        self.variable.setFixedWidth(256)
+        self.variable.setMaximumHeight(24)
+        self.variable.search_button.set_size(width=24, height=24)
+        self.variable_frame.setMinimumHeight(32)
+        self.variable.combobox.changed.connect(self.on_changed)
+        self.ui.layout.insertWidget(2, self.variable_frame)
+
+
         # EditLine
         self.text_line = CompletingPlainTextEdit()
         self.text_line.completion_tail = ''
@@ -48,9 +73,9 @@ class PropertyColor(QWidget):
                 self.color = [255, 255, 255]
             elif 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
-                self.var_value = value['m_SourceName']
                 self.color = [255, 255 ,255]
-                self.text_line.setPlainText(self.var_value)
+                self.var_value = value['m_SourceName']
+                self.variable.combobox.set_variable(str(self.var_value))
             else:
                 print('Could not parse given input data')
                 self.color = [255, 255, 255]
@@ -82,9 +107,15 @@ class PropertyColor(QWidget):
         if self.ui.logic_switch.currentIndex() == 0:
             self.text_line.hide()
             self.ui.value.hide()
+            self.variable_frame.hide()
         elif self.ui.logic_switch.currentIndex() == 1:
             self.text_line.hide()
             self.ui.value.show()
+            self.variable_frame.hide()
+        elif self.ui.logic_switch.currentIndex() == 2:
+            self.text_line.hide()
+            self.ui.value.hide()
+            self.variable_frame.show()
         else:
             self.text_line.show()
             self.ui.value.hide()
@@ -110,11 +141,7 @@ class PropertyColor(QWidget):
             self.value = {self.value_class: self.color}
         # Variable
         elif self.ui.logic_switch.currentIndex() == 2:
-            value = self.text_line.toPlainText()
-            try:
-                value = ast.literal_eval(value)
-            except:
-                pass
+            value = self.variable.combobox.get_variable()
             self.value = {self.value_class: {'m_SourceName': value}}
         # Expression
         elif self.ui.logic_switch.currentIndex() == 3:
@@ -126,7 +153,6 @@ class PropertyColor(QWidget):
             self.value = {self.value_class: {'m_Expression': value}}
 
     def get_variables(self, search_term=None):
-        self.variables_scrollArea
         data_out = []
         for i in range(self.variables_scrollArea.count()):
             widget = self.variables_scrollArea.itemAt(i).widget()
