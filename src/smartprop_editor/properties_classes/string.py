@@ -9,7 +9,7 @@ from src.widgets import ComboboxVariables, Spacer, ComboboxVariablesWidget
 
 class PropertyString(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False):
+    def __init__(self, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -85,8 +85,12 @@ class PropertyString(QWidget):
                 self.var_value = value['m_SourceName']
                 self.variable.combobox.set_variable(value['m_SourceName'])
         elif isinstance(value, str):
-            self.ui.logic_switch.setCurrentIndex(1)
-            self.text_line.setPlainText(value)
+            if force_variable:
+                self.ui.logic_switch.setCurrentIndex(2)
+                self.variable.combobox.set_variable(str(value))
+            else:
+                self.ui.logic_switch.setCurrentIndex(1)
+                self.text_line.setPlainText(value)
         else:
             self.ui.logic_switch.setCurrentIndex(0)
             self.text_line.setPlainText('')
