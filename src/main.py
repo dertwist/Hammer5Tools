@@ -213,6 +213,7 @@ class Widget(QMainWindow):
         if settings.value("APP/minimize_to_tray", type=bool, defaultValue=True):
             event.ignore()
             self.hide()
+            settings.setValue("APP/minimize_to_tray", type=bool, value=True)
             self.show_minimize_message_once()
         else:
             self.exit_application()
