@@ -359,7 +359,7 @@ def main():
     # Archive files if requested
     if args.archive:
         stage_start_time = time.time()
-        excluded_files = {'hammer5tools.7z', 'hammer5tools_setup.exe', 'hammer5tools.zip'}
+        excluded_files = {'hammer5tools.7z', 'hammer5tools_setup.exe', 'hammer5tools.zip', 'settings.ini'}
         excluded_paths = ['SoundEventEditor\\sounds']
         archive_files(output_folder, zip_output_path, excluded_files, excluded_paths)
         print_elapsed_time("Archiving files", stage_start_time)
