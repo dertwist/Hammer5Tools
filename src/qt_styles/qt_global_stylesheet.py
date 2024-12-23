@@ -1087,7 +1087,7 @@ QStatusBar::item {
 
 
 
-/*QSplitter {
+QSplitter {
     border: none;
 }
 QSplitter::handle {
@@ -1104,20 +1104,20 @@ QSplitter::handle:vertical:hover, QSplitter::handle:horizontal:hover {
     background: #505050;
 }
 QSplitter::handle:vertical {
-    image: url(://icons/splitter-vertical.svg);
-    width: 13px;
+/*    image: url(://icons/splitter-vertical.svg);*/
+/*    width: 13px;
     height: 16px;
-    padding: 0px;
+    padding: 0px;*/
     margin: 0px;
 }  
 
 QSplitter::handle:horizontal {
-    image: url(://icons/splitter-horizontal.svg);
+/*    image: url(://icons/splitter-horizontal.svg);
     height: 13px;
-    width: 16px;
+    width: 16px;*/
     padding: 0px;
     margin: 0px;
-}*/
+}
 
 
 """
