@@ -107,16 +107,17 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name=editor_name, parent=self.ui.explorer_layout_widget)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
     def buttons(self):
-        self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
-        self.ui.open_file_button.clicked.connect(lambda: self.open_file())
-        self.ui.open_file_as_button.clicked.connect(lambda: self.open_file(external=True))
-        self.ui.save_file_button.clicked.connect(self.save_file)
-        self.ui.save_as_file_button.clicked.connect(lambda: self.save_file(external=True))
-        self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
+        self.ui.add_new_variable_button.clicked.connect(lambda: ExpetionErrorDialog(self.add_new_variable))
+        self.ui.open_file_button.clicked.connect(lambda: ExpetionErrorDialog(lambda: self.open_file()))
+        self.ui.open_file_as_button.clicked.connect(lambda: ExpetionErrorDialog(lambda: self.open_file(external=True)))
+        self.ui.save_file_button.clicked.connect(lambda: ExpetionErrorDialog(lambda: self.save_file()))
+        self.ui.save_as_file_button.clicked.connect(lambda: ExpetionErrorDialog(lambda: self.save_file(external=True)))
+        self.ui.variables_scroll_area_searchbar.textChanged.connect(lambda text: ExpetionErrorDialog(lambda: self.search_variables(text)))
         self.ui.cerate_file_button.clicked.connect(lambda: ExpetionErrorDialog(self.create_new_file))
-        self.ui.paste_variable_button.clicked.connect(self.paste_variable)
-        self.ui.realtime_save_checkbox.clicked.connect(self.realtime_save_action)
-        self.ui.preset_manager_button.clicked.connect(self.open_preset_manager)
+        self.ui.paste_variable_button.clicked.connect(lambda: ExpetionErrorDialog(self.paste_variable))
+        self.ui.realtime_save_checkbox.clicked.connect(lambda: ExpetionErrorDialog(self.realtime_save_action))
+        self.ui.preset_manager_button.clicked.connect(lambda: ExpetionErrorDialog(self.open_preset_manager))
+
 
     # ======================================[Properties groups]========================================
     def properties_groups_init(self):
