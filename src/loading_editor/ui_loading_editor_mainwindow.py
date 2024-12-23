@@ -18,12 +18,13 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGroupBox,
     QHBoxLayout, QMainWindow, QPlainTextEdit, QPushButton,
     QSizePolicy, QSplitter, QVBoxLayout, QWidget)
+import resources_rc
 
 class Ui_Loading_editorMainWindow(object):
     def setupUi(self, Loading_editorMainWindow):
         if not Loading_editorMainWindow.objectName():
             Loading_editorMainWindow.setObjectName(u"Loading_editorMainWindow")
-        Loading_editorMainWindow.resize(1339, 759)
+        Loading_editorMainWindow.resize(1025, 545)
         Loading_editorMainWindow.setStyleSheet(u"background-color: rgb(28, 28, 28);")
         self.centralwidget = QWidget(Loading_editorMainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -66,19 +67,17 @@ class Ui_Loading_editorMainWindow(object):
         self.clear_all_button = QPushButton(self.screenshots)
         self.clear_all_button.setObjectName(u"clear_all_button")
         self.clear_all_button.setMinimumSize(QSize(0, 32))
-        self.clear_all_button.setStyleSheet(u"    QLabel {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
+        self.clear_all_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 580 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
+"        height:22px;\n"
 "        padding-top: 2px;\n"
 "        padding-bottom:2px;\n"
 "        padding-left: 4px;\n"
@@ -98,25 +97,27 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
+        icon = QIcon()
+        icon.addFile(u":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.clear_all_button.setIcon(icon)
+        self.clear_all_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.clear_all_button)
 
         self.open_folder_button = QPushButton(self.screenshots)
         self.open_folder_button.setObjectName(u"open_folder_button")
         self.open_folder_button.setMinimumSize(QSize(0, 32))
-        self.open_folder_button.setStyleSheet(u"    QLabel {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
+        self.open_folder_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 580 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
+"        height:22px;\n"
 "        padding-top: 2px;\n"
 "        padding-bottom:2px;\n"
 "        padding-left: 4px;\n"
@@ -136,6 +137,10 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_folder_button.setIcon(icon1)
+        self.open_folder_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.open_folder_button)
 
@@ -170,25 +175,27 @@ class Ui_Loading_editorMainWindow(object):
 "    QCheckBox:pressed {\n"
 "\n"
 "    }")
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.delete_existings.setIcon(icon2)
+        self.delete_existings.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.delete_existings)
 
         self.apply_screenshots_button = QPushButton(self.screenshots)
         self.apply_screenshots_button.setObjectName(u"apply_screenshots_button")
         self.apply_screenshots_button.setMinimumSize(QSize(0, 32))
-        self.apply_screenshots_button.setStyleSheet(u"    QLabel {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
+        self.apply_screenshots_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 580 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
+"        height:22px;\n"
 "        padding-top: 2px;\n"
 "        padding-bottom:2px;\n"
 "        padding-left: 4px;\n"
@@ -208,6 +215,10 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.apply_screenshots_button.setIcon(icon3)
+        self.apply_screenshots_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.apply_screenshots_button)
 
@@ -226,7 +237,7 @@ class Ui_Loading_editorMainWindow(object):
         self.screenshot_preview.setObjectName(u"screenshot_preview")
         sizePolicy.setHeightForWidth(self.screenshot_preview.sizePolicy().hasHeightForWidth())
         self.screenshot_preview.setSizePolicy(sizePolicy)
-        self.screenshot_preview.setMinimumSize(QSize(600, 0))
+        self.screenshot_preview.setMinimumSize(QSize(400, 0))
         self.screenshot_preview.setMaximumSize(QSize(16777215, 16777215))
         self.screenshot_preview.setBaseSize(QSize(1200, 0))
         self.verticalLayout_6 = QVBoxLayout(self.screenshot_preview)
@@ -273,19 +284,17 @@ class Ui_Loading_editorMainWindow(object):
         self.apply_icon_button.setObjectName(u"apply_icon_button")
         self.apply_icon_button.setEnabled(True)
         self.apply_icon_button.setMinimumSize(QSize(0, 32))
-        self.apply_icon_button.setStyleSheet(u"     QLabel {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
+        self.apply_icon_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 580 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
+"        height:22px;\n"
 "        padding-top: 2px;\n"
 "        padding-bottom:2px;\n"
 "        padding-left: 4px;\n"
@@ -304,24 +313,9 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-left: 2px;\n"
 "        margin-right: 2px;\n"
 "\n"
-"    }\n"
-"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton:disabled {\n"
-"\n"
-"        font: 580 10pt \"Segoe UI\";\n"
-"        border: 2px sol"
-                        "id black;\n"
-"        border-radius: 4px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #8c8c8c;\n"
-"        background-color: #1C1C1C;\n"
 "    }")
+        self.apply_icon_button.setIcon(icon3)
+        self.apply_icon_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_4.addWidget(self.apply_icon_button)
 
@@ -382,19 +376,17 @@ class Ui_Loading_editorMainWindow(object):
         self.apply_description_button = QPushButton(self.groupBox)
         self.apply_description_button.setObjectName(u"apply_description_button")
         self.apply_description_button.setMinimumSize(QSize(0, 32))
-        self.apply_description_button.setStyleSheet(u"    QLabel {\n"
-"        font-family: Sergo UI;\n"
-"        color: #9D9D9D;\n"
-"    }\n"
-"\n"
+        self.apply_description_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
-"        font: 580 10pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
 "        border: 2px solid black;\n"
-"        border-radius: 4px;\n"
+"        border-radius: 2px;\n"
 "        border-color: rgba(80, 80, 80, 255);\n"
-"        height:18px;\n"
+"        height:22px;\n"
 "        padding-top: 2px;\n"
 "        padding-bottom:2px;\n"
 "        padding-left: 4px;\n"
@@ -414,6 +406,8 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
+        self.apply_description_button.setIcon(icon3)
+        self.apply_description_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_2.addWidget(self.apply_description_button)
 
@@ -445,7 +439,7 @@ class Ui_Loading_editorMainWindow(object):
 "</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
 "<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Deletes all files in the folder.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.clear_all_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete all", None))
+        self.clear_all_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete all files in folder", None))
 #if QT_CONFIG(tooltip)
         self.open_folder_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
@@ -460,7 +454,7 @@ class Ui_Loading_editorMainWindow(object):
 #if QT_CONFIG(tooltip)
         self.delete_existings.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Deletes all existing screenshots on the loading screen.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.delete_existings.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete existing", None))
+        self.delete_existings.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete previous", None))
 #if QT_CONFIG(tooltip)
         self.apply_screenshots_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
