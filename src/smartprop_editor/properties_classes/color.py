@@ -43,7 +43,7 @@ class PropertyColor(QWidget):
 
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['Color'])
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Color'])
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)

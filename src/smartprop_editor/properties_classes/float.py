@@ -64,7 +64,7 @@ class PropertyFloat(QWidget):
 
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=['Int', 'Float'])
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Int', 'Float'])
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)

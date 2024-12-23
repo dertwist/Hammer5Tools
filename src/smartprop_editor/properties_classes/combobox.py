@@ -43,7 +43,7 @@ class PropertyCombobox(QWidget):
 
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(layout=self.variables_scrollArea, filter_types=filter_types)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
