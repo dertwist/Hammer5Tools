@@ -35,13 +35,14 @@ from src.common import *
 cs2_path = get_cs2_path()
 
 class SmartPropEditorMainWindow(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, update_title=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
         self.realtime_save = False
         self.opened_file = None
+        self.update_title = update_title
 
         self.ui.tree_hierarchy_widget.installEventFilter(self)
 
@@ -593,7 +594,9 @@ class SmartPropEditorMainWindow(QMainWindow):
                         'max': None
                     })
                 self.add_variable(name=var_name, var_value=var_value, var_visible_in_editor=var_visible_in_editor, var_class=var_class, var_display_name=var_display_name)
-        print(f'Opened file: {filename}')
+        if not self.realtime_save:
+            print(f'Opened file: {filename}')
+            self.update_title('opened',filename)
         self.explorer_status()
 
     # ======================================[Save File]========================================
@@ -658,6 +661,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         var_data = save_variables()
         VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget, var_data=var_data, choices_tree=self.ui.choices_tree_widget)
         self.opened_file = VsmartSaveInstance.filename
+        self.update_title('saved', filename)
 
     # ======================================[Choices Context Menu]========================================
     def open_MenuChoices(self, position):
