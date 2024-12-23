@@ -17,7 +17,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout,
     QLabel, QLayout, QLineEdit, QSizePolicy,
-    QVBoxLayout, QWidget)
+    QToolButton, QVBoxLayout, QWidget)
+import resources_rc
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -166,6 +167,38 @@ class Ui_Form(object):
         self.variable_name.setReadOnly(False)
 
         self.horizontalLayout.addWidget(self.variable_name)
+
+        self.change_class = QToolButton(self.frame)
+        self.change_class.setObjectName(u"change_class")
+        self.change_class.setStyleSheet(u"\n"
+"\n"
+"QToolButton {\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:14px;\n"
+"    padding-top: 2px;\n"
+"    padding-bottom:2px;\n"
+"    color: #E3E3E3;\n"
+"    padding-left: 4px;\n"
+"background-color: #242424;\n"
+"}\n"
+"QToolButton:hover {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"QToolButton{\n"
+"	padding-left:5px;\n"
+"	border-left: 0px solid black;\n"
+"border-right: 0px solid black;\n"
+"border-top: 0px solid black;\n"
+"}")
+        icon = QIcon()
+        icon.addFile(u":/icons/edit_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.change_class.setIcon(icon)
+
+        self.horizontalLayout.addWidget(self.change_class)
 
         self.variable_class = QLineEdit(self.frame)
         self.variable_class.setObjectName(u"variable_class")
@@ -351,6 +384,7 @@ class Ui_Form(object):
         self.variable_name.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.variable_name.setText(QCoreApplication.translate("Form", u"Variable name", None))
+        self.change_class.setText("")
 #if QT_CONFIG(tooltip)
         self.variable_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>class</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
