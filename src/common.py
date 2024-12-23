@@ -49,7 +49,7 @@ editor_info = {
     }
 
 # Paths
-app_dir = os.getcwd()
+app_dir = os.path.dirname(os.path.abspath(__file__))
 SoundEventEditor_Preset_Path = os.path.join(app_dir, "SoundEventEditor", "Presets")
 SmartPropEditor_Preset_Path = os.path.join(app_dir, "SmartPropEditor", "Presets")
 Presets_Path = os.path.join(app_dir, "presets")
