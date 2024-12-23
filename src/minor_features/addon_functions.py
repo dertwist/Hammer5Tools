@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QMessageBox
 from src.minor_features.NCM_mode_setup_main import NCM_mode_setup
-from src.minor_features.assettypes import AssetTypesModify
+from src.minor_features.assettypes import asset_types_modify
 from src.preferences import get_addon_name, get_cs2_path, get_config_bool, set_config_bool, get_config_value, \
     set_config_value
 import os, subprocess, shutil, psutil
@@ -68,7 +68,7 @@ def __launch_addon():
         stderr=subprocess.PIPE
     )
 def launch_addon():
-    ExpetionErrorDialog(AssetTypesModify)
+    ExpetionErrorDialog(asset_types_modify)
     ExpetionErrorDialog(__launch_addon)
 
 
