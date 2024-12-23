@@ -21,29 +21,61 @@ def kill_process(process_name):
     )
 
 def build_hammer5_tools():
-    """Builds the Hammer 5 Tools executable."""
+    """Builds the Hammer 5 Tools executable with optimized size."""
     subprocess.run([
-        'pyinstaller', '--name=Hammer5Tools', '--noconfirm', '--onefile', '--windowed',
-        '--optimize=2', '--icon=src/appicon.ico',
+        'pyinstaller',
+        '--name=Hammer5Tools',
+        '--noupx', '--distpath=hammer5tools',
+        '--noconfirm',
+        '--onefile',
+        '--windowed',
+        '--strip',
+        '--optimize=2',
+        '--icon=src/appicon.ico',
         '--add-data=src/appicon.ico;.',
         '--add-data=src/images;images/',
         '--add-data=src/qt_styles;qt_styles/',
-        '--noupx', '--distpath=hammer5tools',
-        '--exclude-module=PyQt5', 'src/main.py'
+        '--exclude-module=PyQt5',
+        # Exclude unused PySide6 modules
+        '--exclude-module=PySide6.QtWebEngineWidgets',
+        '--exclude-module=PySide6.QtWebEngineCore',
+        '--exclude-module=PySide6.QtWebEngine',
+        '--exclude-module=PySide6.QtMultimediaWidgets',
+        '--exclude-module=PySide6.QtCharts',
+        '--exclude-module=PySide6.QtSql',
+        '--exclude-module=PySide6.QtTest',
+        '--exclude-module=PySide6.QtQml',
+        '--exclude-module=PySide6.QtQuick',
+        '--exclude-module=PySide6.QtQuickWidgets',
+        '--exclude-module=PySide6.QtPositioning',
+        '--exclude-module=PySide6.QtLocation',
+        '--exclude-module=PySide6.QtBluetooth',
+        '--exclude-module=PySide6.QtNfc',
+        '--exclude-module=PySide6.QtRemoteObjects',
+        '--exclude-module=PySide6.QtTextToSpeech',
+        '--exclude-module=PySide6.QtWebSockets',
+        '--exclude-module=PySide6.QtSensors',
+        'src/main.py'
     ], check=True)
 
 def build_updater():
-    """Builds the Hammer 5 Tools Updater executable."""
+    """Builds the Hammer 5 Tools Updater executable with optimized size."""
     subprocess.run([
-        'pyinstaller', '--name=Hammer5Tools_Updater', '--noconfirm', '--onefile',
-        '--optimize=2', '--icon=src/appicon.ico',
-        '--noupx', '--distpath=hammer5tools',
+        'pyinstaller',
+        '--name=Hammer5Tools_Updater',
+        '--noconfirm',
+        '--onefile',
+        '--windowed',
+        '--strip',
+        '--optimize=2',
+        '--icon=src/appicon.ico',
         '--exclude-module=PySide6',
         '--exclude-module=PyQt5',
-        '--exclude-module=numpy',
-        '--exclude-module=PIL',
-        '--exclude', 'matplotlib',
-        '--exclude', 'pandas',
+        # Exclude modules that are no longer used
+        '--exclude-module=psutil',
+        '--exclude-module=tqdm',
+        '--noupx', '--distpath=hammer5tools',
+        '--exclude-module=colorama',
         'src/updater.py'
     ], check=True)
 

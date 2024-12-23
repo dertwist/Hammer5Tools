@@ -109,3 +109,5 @@ Hammer5Tools_Updater.spec
 /SoundEventEditor/
 /src/soundevent_editor/resource/parsing/soundevents.build/
 /src/soundevent_editor/resource/parsing/soundevents.dist/
+/src/settings.ini
+/settings.ini
