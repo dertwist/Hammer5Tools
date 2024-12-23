@@ -168,6 +168,35 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.variable_name)
 
+        self.variable_class = QLineEdit(self.frame)
+        self.variable_class.setObjectName(u"variable_class")
+        self.variable_class.setMaximumSize(QSize(130, 16777215))
+        self.variable_class.setStyleSheet(u"QLineEdit {\n"
+"	font: 8pt \"Segoe UI\";\n"
+"    border: 2px solid #CCCCCC;\n"
+"	border-top: 0px;\n"
+"	border-left: 0px;\n"
+"	border-right: 0px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"	color: rgb(188, 188, 188);\n"
+"	background-color: #242424;\n"
+"}\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}\n"
+"\n"
+"")
+        self.variable_class.setMaxLength(64)
+        self.variable_class.setReadOnly(True)
+
+        self.horizontalLayout.addWidget(self.variable_class)
+
         self.change_class = QToolButton(self.frame)
         self.change_class.setObjectName(u"change_class")
         self.change_class.setStyleSheet(u"\n"
@@ -199,35 +228,6 @@ class Ui_Form(object):
         self.change_class.setIcon(icon)
 
         self.horizontalLayout.addWidget(self.change_class)
-
-        self.variable_class = QLineEdit(self.frame)
-        self.variable_class.setObjectName(u"variable_class")
-        self.variable_class.setMaximumSize(QSize(130, 16777215))
-        self.variable_class.setStyleSheet(u"QLineEdit {\n"
-"	font: 8pt \"Segoe UI\";\n"
-"    border: 2px solid #CCCCCC;\n"
-"	border-top: 0px;\n"
-"	border-left: 0px;\n"
-"	border-right: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"	color: rgb(188, 188, 188);\n"
-"	background-color: #242424;\n"
-"}\n"
-"QLineEdit:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"QLineEdit::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"\n"
-"")
-        self.variable_class.setMaxLength(64)
-        self.variable_class.setReadOnly(True)
-
-        self.horizontalLayout.addWidget(self.variable_class)
 
         self.id_display_label = QLineEdit(self.frame)
         self.id_display_label.setObjectName(u"id_display_label")
@@ -384,11 +384,11 @@ class Ui_Form(object):
         self.variable_name.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.variable_name.setText(QCoreApplication.translate("Form", u"Variable name", None))
-        self.change_class.setText("")
 #if QT_CONFIG(tooltip)
         self.variable_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>class</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.variable_class.setText(QCoreApplication.translate("Form", u"RadiusPlacementMode", None))
+        self.change_class.setText("")
 #if QT_CONFIG(tooltip)
         self.id_display_label.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>class</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
