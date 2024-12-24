@@ -147,13 +147,13 @@ class PropertyFrame(QWidget):
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['CENTER', 'CORNER'], filter_types=['GridOriginMode'])
                 add_instance()
             elif 'm_nNoHitResult' in value_class:
-                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'], filter_types=['nNoHitResult'])
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'], filter_types=['TraceNoHit'])
                 add_instance()
             elif 'm_SelectionMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM', 'FIRST', 'SPECIFIC'], filter_types=['ChoiceSelectionMode'])
                 add_instance()
             elif 'm_PlacementMode' in value_class:
-                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SPHERE', 'CIRCLE'], filter_types=['PlacementMode'])
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SPHERE', 'CIRCLE'], filter_types=['RadiusPlacementMode'])
                 add_instance()
             elif 'm_DistributionMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM', 'REGULAR'], filter_types=['DistributionMode'])
@@ -162,13 +162,13 @@ class PropertyFrame(QWidget):
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SQUARE', 'DIAMOND', 'CIRCLE'], filter_types=['HandleShape'])
                 add_instance()
             elif 'm_PointSpace' in value_class:
-                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'], filter_types=['PointSpace'])
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'], filter_types=['CoordinateSpace'])
                 add_instance()
             elif 'm_PathSpace' in value_class:
-                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'], filter_types=['PathSpace'])
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT', 'OBJECT', 'WORLD'], filter_types=['CoordinateSpace'])
                 add_instance()
             elif 'm_PlaceAtPositions' in value_class:
-                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'], filter_types=['PlaceAtPositions'])
+                property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'], filter_types=['PathPositions'])
                 add_instance()
             elif 'm_Mode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'], filter_types=['ApplyColorMode'])
