@@ -124,7 +124,7 @@ class VariableFrame(QWidget):
             'ScaleMode': ['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'],
             'TraceNoHit': ['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'],
             'ApplyColorMode': ['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'],
-            'ChoiceSelectionMode': ['RANDOM', 'FIRST'],
+            'ChoiceSelectionMode': ['RANDOM', 'FIRST', 'SPECIFIC'],
             'RadiusPlacementMode': ['SPHERE', 'CIRCLE'],
             'DistributionMode': ['RANDOM', 'REGULAR'],
             'PathPositions': ['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'],

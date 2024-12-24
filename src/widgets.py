@@ -117,14 +117,16 @@ class ErrorInfo(QDialog):
         # Close the dialog after reporting the issue
         self.close()
 
-def ExpetionErrorDialog(function):
-    try:
-        function()
-    except Exception as e:
-        error_message = f"An error occurred in `{function.__name__}`: {e}"
-        error_details = traceback.format_exc()
-        error(error_message)
-        ErrorInfo(text=error_message, details=error_details).exec_()
+def exception_handler(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            error_message = f"An error occurred in `{func.__name__}`: {e}"
+            error_details = traceback.format_exc()
+            error(error_message)
+            ErrorInfo(text=error_message, details=error_details).exec_()
+    return wrapper
 #============================================================<  Property widgets  >=========================================================
 class FloatWidget(QWidget):
     edited = Signal(float)
