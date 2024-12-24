@@ -431,7 +431,7 @@ class ComboboxVariablesWidget(QWidget):
         )
         variable.duplicate.connect(self.duplicate_variable)
         if index is None:
-            index = self.variables_layout.count()
+            index = self.variables_layout.count() - 1
         else:
             index += 1  # Insert after current index when duplicating
         self.variables_layout.insertWidget(index, variable)
