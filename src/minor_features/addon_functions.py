@@ -4,9 +4,12 @@ from src.minor_features.assettypes import asset_types_modify
 from src.preferences import get_addon_name, get_cs2_path, get_config_bool, set_config_bool, get_config_value, \
     set_config_value
 import os, subprocess, shutil, psutil
-from src.widgets import ErrorInfo, ExpetionErrorDialog
+from src.widgets import ErrorInfo, exception_handler
 from src.common import *
+from src.widgets import exception_handler
 
+
+@exception_handler
 def delete_addon(ui, cs2_path, get_addon_name):
     delete_paths = [
         os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name()),
@@ -34,7 +37,7 @@ def delete_addon(ui, cs2_path, get_addon_name):
 
 def assemble_commands(commands:str, addon_name):
     return commands.replace('addon_name', addon_name)
-
+@exception_handler
 def __launch_addon():
     addon_name = get_addon_name()
     cs2_path = get_cs2_path()
@@ -68,8 +71,8 @@ def __launch_addon():
         stderr=subprocess.PIPE
     )
 def launch_addon():
-    ExpetionErrorDialog(asset_types_modify)
-    ExpetionErrorDialog(__launch_addon)
+    asset_types_modify()
+    __launch_addon()
 
 
 def kill_addon():

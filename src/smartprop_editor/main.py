@@ -27,7 +27,7 @@ from PySide6.QtCore import QTimer
 from src.explorer.main import Explorer
 from src.preferences import settings
 from src.common import Kv3ToJson, JsonToKv3
-from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, ExpetionErrorDialog
+from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, exception_handler
 from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
 from src.common import *
@@ -116,16 +116,16 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name=editor_name, parent=self.ui.explorer_layout_widget)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
     def buttons(self):
-        self.ui.add_new_variable_button.clicked.connect(lambda: ExpetionErrorDialog(self.add_new_variable))
-        self.ui.open_file_button.clicked.connect(lambda: ExpetionErrorDialog(lambda: self.open_file()))
-        self.ui.open_file_as_button.clicked.connect(lambda: ExpetionErrorDialog(lambda: self.open_file(external=True)))
-        self.ui.save_file_button.clicked.connect(lambda: ExpetionErrorDialog(lambda: self.save_file()))
-        self.ui.save_as_file_button.clicked.connect(lambda: ExpetionErrorDialog(lambda: self.save_file(external=True)))
-        self.ui.variables_scroll_area_searchbar.textChanged.connect(lambda text: ExpetionErrorDialog(lambda: self.search_variables(text)))
-        self.ui.cerate_file_button.clicked.connect(lambda: ExpetionErrorDialog(self.create_new_file))
-        self.ui.paste_variable_button.clicked.connect(lambda: ExpetionErrorDialog(self.paste_variable))
-        self.ui.realtime_save_checkbox.clicked.connect(lambda: ExpetionErrorDialog(self.realtime_save_action))
-        self.ui.preset_manager_button.clicked.connect(lambda: ExpetionErrorDialog(self.open_preset_manager))
+        self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
+        self.ui.open_file_button.clicked.connect(lambda: self.open_file())
+        self.ui.open_file_as_button.clicked.connect(lambda: self.open_file(external=True))
+        self.ui.save_file_button.clicked.connect(lambda: self.save_file())
+        self.ui.save_as_file_button.clicked.connect(lambda: self.save_file(external=True))
+        self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
+        self.ui.cerate_file_button.clicked.connect(self.create_new_file)
+        self.ui.paste_variable_button.clicked.connect(self.paste_variable)
+        self.ui.realtime_save_checkbox.clicked.connect(self.realtime_save_action)
+        self.ui.preset_manager_button.clicked.connect(self.open_preset_manager)
 
 
     # ======================================[Properties groups]========================================
@@ -564,6 +564,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             pass
 
     # ======================================[Open File]========================================
+    @exception_handler
     def open_file(self, external=False):
         if external:
             filename, _ = QFileDialog.getOpenFileName(None, "Open File", os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()), "VSmart Files (*.vsmart);;All Files (*)")
@@ -618,6 +619,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.explorer_status()
 
     # ======================================[Save File]========================================
+    @exception_handler
     def save_file(self, external=False):
         if external:
             pass
@@ -682,6 +684,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.update_title('saved', filename)
 
     # ======================================[Choices Context Menu]========================================
+    @exception_handler
     def open_MenuChoices(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
@@ -726,6 +729,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
 
     # ======================================[Variables Actions]========================================
+    @exception_handler
 
     def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name, index:int = None):
         variable = VariableFrame(name=name, widget_list=self.ui.variables_scrollArea, var_value=var_value, var_class=var_class, var_visible_in_editor=var_visible_in_editor, var_display_name=var_display_name)
