@@ -1,8 +1,10 @@
 import os
 from src.preferences import get_cs2_path, debug
 import keyvalues3
-from src.common import editor_info
+from src.common import editor_info, JsonToKv3
+from src.widgets import exception_handler
 
+@exception_handler
 def asset_types_modify():
     # Initialize variables
     process = False
@@ -52,5 +54,6 @@ def asset_types_modify():
         output = editor_info
         output.update(data)
 
-        # Write the updated data back to the file
-        keyvalues3.write(output, path)
+        kv3_data =JsonToKv3(output)
+        with open(path, 'w') as file:
+            file.write(kv3_data)
