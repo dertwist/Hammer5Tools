@@ -16,6 +16,7 @@ from src.widgets_common import *
 from logging import error
 import traceback, ctypes
 from src.common import enable_dark_title_bar
+from src.smartprop_editor.variable_frame import VariableFrame
 import winsound
 from PySide6.QtWidgets import (
     QDialog,
@@ -380,6 +381,7 @@ class ComboboxVariablesWidget(QWidget):
 
         self.filter_types = filter_types
         self.variable_type = variable_type
+        self.variables_layout = variables_layout
 
         # Initialize the combobox for variables
         self.combobox = ComboboxVariables(parent=self, layout=variables_layout, filter_types=filter_types)
@@ -389,7 +391,7 @@ class ComboboxVariablesWidget(QWidget):
         self.add_new_variable_button = Button()
         self.add_new_variable_button.set_icon_add()
         self.add_new_variable_button.set_size(width=24)
-        self.add_new_variable_button.clicked.connect(self.new_variable)
+        self.add_new_variable_button.clicked.connect(self.add_new_variable_and_set)
         layout_widget.addWidget(self.add_new_variable_button)
 
         # Initialize the search button
@@ -416,10 +418,72 @@ class ComboboxVariablesWidget(QWidget):
         else:
             self.add_new_variable_button.hide()
 
+    def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name, index: int = None):
+        variable = VariableFrame(
+            name=name,
+            widget_list=self.variables_layout,
+            var_value=var_value,
+            var_class=var_class,
+            var_visible_in_editor=var_visible_in_editor,
+            var_display_name=var_display_name
+        )
+        variable.duplicate.connect(self.duplicate_variable)
+        if index is None:
+            index = self.variables_layout.count()
+        else:
+            index += 1  # Insert after current index when duplicating
+        self.variables_layout.insertWidget(index, variable)
+
+    def duplicate_variable(self, data, index):
+        self.add_variable(
+            name=data[0],
+            var_class=data[1],
+            var_value=data[2],
+            var_visible_in_editor=data[3],
+            var_display_name=data[4],
+            index=index
+        )
+    def add_new_variable_and_set(self):
+        name = self.new_variable()
+        self.combobox.set_variable(name)
     def new_variable(self):
-        """Method to handle the creation of a new variable."""
-        # Implement logic to add a new variable
-        pass
+        base_name = 'new_var'
+        existing_variable_names = self.get_all_variables()
+        print(existing_variable_names)
+
+        # Generate a unique variable name
+        name = base_name
+        if name in existing_variable_names:
+            suffix = 1
+            while f"{base_name}_{suffix}" in existing_variable_names:
+                suffix += 1
+            name = f"{base_name}_{suffix}"
+
+        var_class = self.variable_type  # Ensure 'variable_type' is defined
+        var_display_name = ''
+        var_visible_in_editor = False
+        var_value = {
+            'default': None,
+            'min': None,
+            'max': None,
+            'model': None
+        }
+        self.add_variable(
+            name=name,
+            var_class=var_class,
+            var_value=var_value,
+            var_visible_in_editor=var_visible_in_editor,
+            var_display_name=var_display_name
+        )
+        return name
+
+    def get_all_variables(self):
+        data_out = []
+        for i in range(self.variables_layout.count()):
+            widget = self.variables_layout.itemAt(i).widget()
+            if widget:
+                data_out.append(widget.name)
+        return data_out
 
     def get_variables(self):
         elements = []

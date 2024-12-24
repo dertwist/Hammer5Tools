@@ -25,7 +25,7 @@ class PropertyVector3D(QWidget):
         self.ui.property_class.setText(output)
         self.ui.logic_switch.currentIndexChanged.connect(self.on_changed)
 
-        filter_types = ['Int', 'Float']
+        filter_types = ['Float', 'Int']
 
         # Variable
         self.variable_logic_switch = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Vector3D'])
@@ -239,7 +239,7 @@ class PropertyVector3D(QWidget):
                 if index == 0:
                     value = float_widget.value
                 elif index == 1:
-                    value = {'m_SourceName': variable.source_line.get_variable()}
+                    value = {'m_SourceName': variable.combobox.get_variable()}
                 elif index == 2:
                     value = {'m_Expression': line.toPlainText()}
                 return value
