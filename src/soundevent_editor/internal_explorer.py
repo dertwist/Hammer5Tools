@@ -6,7 +6,8 @@ from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess, QThread, Signal
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from src.preferences import get_cs2_path, get_addon_dir, debug
 from src.common import SoundEventEditor_sounds_path, Decompiler_path, SoundEventEditor_path
-
+from src.widgets import exception_handler
+@exception_handler
 class VPKLoaderThread(QThread):
     vpk_loaded = Signal(list)
 
@@ -23,7 +24,7 @@ class VPKLoaderThread(QThread):
                 self.vpk_loaded.emit(folders)
         except Exception as e:
             self.vpk_loaded.emit([])
-
+@exception_handler
 class InternalSoundFileExplorer(QTreeWidget):
     play_sound = Signal(str)
     def __init__(self, audio_player:QMediaPlayer):
@@ -38,10 +39,12 @@ class InternalSoundFileExplorer(QTreeWidget):
         self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
         self.vpk_loader_thread.start()
 
+    @exception_handler
     def _play_audio_file(self, file_path):
         debug(f'Playing audio {file_path}')
         self.play_sound.emit(file_path)
 
+    @exception_handler
     def play_audio_file(self, path):
         internal_audiopath = os.path.join('sounds', path.replace('vsnd', 'vsnd_c')).replace('/', '\\')
 
@@ -58,6 +61,7 @@ class InternalSoundFileExplorer(QTreeWidget):
         else:
             self.decompile_audio(internal_audiopath, local_audiopath_wav, path)
 
+    @exception_handler
     def decompile_audio(self, internal_path, local_path, assembled_path):
         pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
         process = QProcess(self)
@@ -76,14 +80,12 @@ class InternalSoundFileExplorer(QTreeWidget):
                 ]
             )
         except Exception as e:
+            print(e)
             pass
 
+    @exception_handler
     def on_process_finished(self, exit_code, exit_status, process, path, assembled_path):
-        if exit_code != 0:
-            stderr = process.readAllStandardError().data().decode()
-            raise ValueError
-        else:
-            self.play_audio_file(assembled_path)
+        self.play_audio_file(assembled_path)
 
     def on_process_error(self, error, process):
         pass
