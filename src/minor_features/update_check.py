@@ -118,8 +118,6 @@ def show_install_dialog():
 
     layout.addLayout(button_layout)
     dialog.adjustSize()
-    dialog.setMinimumWidth(700)
-    dialog.setMinimumHeight(200)  # Set a minimum height for the install dialog
     dialog.exec()
 
 def handle_installation(dialog):
