@@ -32,10 +32,11 @@ from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
 from src.common import *
 from src.common import enable_dark_title_bar
+from src.widgets import exception_handler
 
 # Get cs2_path
 cs2_path = get_cs2_path()
-
+@exception_handler
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
         super().__init__(parent)
@@ -94,7 +95,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         self.undo_stack = QUndoStack(self)
 
-
+    @exception_handler
     def open_preset_manager(self):
         """Creating another instance of this window without button preset manger and another path in the explorer"""
         self.new_instance = SmartPropEditorMainWindow()
@@ -104,6 +105,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.new_instance.init_explorer(tree_directory, 'SmartPropEditorPresetManager')
         self.new_instance.ui.preset_manager_button.deleteLater()
         self.new_instance.show()
+
+    @exception_handler
     def init_explorer(self, dir: str = None, editor_name: str = None):
         if dir is None:
             self.tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
@@ -154,7 +157,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.selection_criteria_group_instance.show()
 
     # ======================================[Tree Hierarchy updating]========================================
-
+    @exception_handler
     def on_tree_current_item_changed(self, current_item, previous_item):
         item = current_item
         if current_item is not None:
@@ -203,6 +206,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                     self.selection_criteria_group_instance.layout.insertWidget(0, property_instance)
         except Exception as error:
             print(error)
+
+    @exception_handler
     def update_tree_item_value(self, item=None):
         if item is None:
             item = self.ui.tree_hierarchy_widget.currentItem()
@@ -311,6 +316,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.load_preset(name, value))
         self.popup_menu.show()
 
+    @exception_handler
     def file_deserialization(self, __data: dict, to_parent: bool):
         def populate_tree(data, parent=None):
             if parent is None:
@@ -350,6 +356,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                             populate_tree(item, child_item)
             pass
 
+        @exception_handler
         def populate_choices(data):
             if data == None:
                 print('No choices')
@@ -369,6 +376,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                             AddVariable(parent=option_item, variables_scrollArea=self.ui.variables_scrollArea,
                                         name=variable['m_TargetName'], type=variable.get('m_DataType', ''),
                                         value=variable['m_Value'])
+
+        @exception_handler
         def populate_variables(data):
             if isinstance(data, list):
                 for item in data:
@@ -426,6 +435,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         populate_tree(__data, parent)
         populate_choices(__data.get('m_Choices', None))
         populate_variables(__data.get('m_Variables'))
+
+    @exception_handler
     def load_preset(self, name: str = None, path:str = None):
         with open(path, 'r') as file:
             __data = file.read()
@@ -435,6 +446,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu = PopupMenu(elements_list, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
         self.popup_menu.show()
+
+    @exception_handler
     def new_element(self, element_class, element_value):
         element_value = ast.literal_eval(element_value)
         update_value_ElementID(element_value)
@@ -446,11 +459,14 @@ class SmartPropEditorMainWindow(QMainWindow):
         parent.addChild(new_element)
 
     # ======================================[Properties operator]========================================
+    @exception_handler
     def new_operator(self, element_class, element_value):
         operator_instance = PropertyFrame(widget_list=self.modifiers_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
         operator_instance.edited.connect(self.update_tree_item_value)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
         self.update_tree_item_value()
+
+    @exception_handler
     def add_an_operator(self):
         operators_and_filters = operators_list + filters_list
         elements_in_popupmenu = []
@@ -475,6 +491,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_operator(name, value))
         self.popup_menu.show()
 
+    @exception_handler
     def paste_operator(self):
         clipboard = QApplication.clipboard()
         clipboard_text = clipboard.text()
@@ -489,7 +506,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.update_tree_item_value()
 
     # ======================================[Properties Selection Criteria]========================================
-
+    @exception_handler
     def add_a_selection_criteria(self):
         elements_in_popupmenu = []
         exists_classes = []
@@ -508,11 +525,14 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_selection_criteria(name, value))
         self.popup_menu.show()
 
+    @exception_handler
     def new_selection_criteria(self, element_class, element_value):
         operator_instance = PropertyFrame(widget_list=self.selection_criteria_group_instance.layout, value=element_value, variables_scrollArea=self.ui.variables_scrollArea)
         operator_instance.edited.connect(self.update_tree_item_value)
         self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
         self.update_tree_item_value()
+
+    @exception_handler
     def paste_selection_criteria(self):
         clipboard = QApplication.clipboard()
         clipboard_text = clipboard.text()
@@ -540,6 +560,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             self.realtime_save = False
 
+    @exception_handler
     def create_new_file(self):
         extension = 'vsmart'
         from src.smartprop_editor.blank_vsmart import blank_vsmart
@@ -743,6 +764,7 @@ class SmartPropEditorMainWindow(QMainWindow):
     def duplicate_variable(self, __data, __index):
         self.add_variable(__data[0], __data[1], __data[2], __data[3], __data[4], __index)
 
+    @exception_handler
     def add_new_variable(self):
         name = 'new_var'
         existing_variables = []
@@ -810,6 +832,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         context_menu.exec_(event.globalPos())
 
+    @exception_handler
     def paste_variable(self):
         clipboard = QApplication.clipboard()
         clipboard_text = clipboard.text()
@@ -824,7 +847,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             update_value_ElementID(var_value, force=True)
             self.add_variable(clipboard_data[1], clipboard_data[2], var_value, visible_in_editor, display_name)
         else:
-            ErrorInfo(text="Clipboard data format is not valid.", details=clipboard_data).exec()
+            ErrorInfo(text="Clipboard data format is not valid.", details=str(clipboard_data)).exec()
 
     # ======================================[Tree widget hierarchy filter]========================================
     def search_hierarchy(self, filter_text, parent_item):
@@ -919,6 +942,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         instance.accepted_output.connect(lambda text:self.paste_item(tree=self.ui.tree_hierarchy_widget, data_input=text))
         instance.exec()
 
+    @exception_handler
     def move_tree_item(self,tree, direction):
         """Move selected tree items up or down within their parent."""
         selected_items = tree.selectedItems()
@@ -952,6 +976,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         for item in selected_items:
             item.setSelected(True)
         tree.scrollToItem(selected_items[-1] if direction > 0 else selected_items[0])
+
+    @exception_handler
     def copy_item(self, tree, copy_to_clipboard=True):
         """Coping Tree item"""
         # Gathering selected items
@@ -970,6 +996,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             return JsonToKv3(item_data)
 
+    @exception_handler
     def paste_item(self, tree, data_input=None, paste_to_parent=False):
         """Pasting tree item"""
         if data_input is None:
@@ -997,6 +1024,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             error_dialog = ErrorInfo(text="Wrong format of the pasting content", details=error_message)
             error_dialog.exec()
 
+    @exception_handler
     def remove_tree_item(self, tree):
         """Removing Tree item"""
         selected_indexes = tree.selectedIndexes()
