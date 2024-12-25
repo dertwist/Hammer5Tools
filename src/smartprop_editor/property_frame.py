@@ -398,7 +398,26 @@ class PropertyFrame(QWidget):
     mousePressEvent = PropertyMethods.mousePressEvent
     mouseMoveEvent = PropertyMethods.mouseMoveEvent
     dragEnterEvent = PropertyMethods.dragEnterEvent
-    dropEvent = PropertyMethods.dropEvent
+
+    def dropEvent(self, event):
+        if event.source() == self:
+            return
+
+        mime_data = event.mimeData()
+        if mime_data.hasText():
+
+            if event.source() != self:
+                source_index = self.widget_list.layout().indexOf(event.source())
+                target_index = self.widget_list.layout().indexOf(self)
+
+                if source_index != -1 and target_index != -1:
+                    if source_index < self.widget_list.layout().count():
+                        source_widget = self.widget_list.layout().takeAt(source_index).widget()
+                        if source_widget:
+                            self.widget_list.layout().insertWidget(target_index, source_widget)
+        self.edited.emit()
+
+        event.accept()
     def show_context_menu(self):
         context_menu = QMenu()
         delete_action = QAction("Delete", context_menu)
