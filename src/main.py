@@ -225,7 +225,6 @@ class Widget(QMainWindow):
 
         if any(getattr(self, tool, None) for tool in tools):
             pass
-            print('tools tehre')
         else:
             self.selected_addon_name()
 
