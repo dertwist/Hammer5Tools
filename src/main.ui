@@ -441,11 +441,6 @@ QTabBar::tab:selected {
         <property name="styleSheet">
          <string notr="true"/>
         </property>
-        <item>
-         <property name="text">
-          <string>de_addon</string>
-         </property>
-        </item>
        </widget>
       </item>
       <item>
