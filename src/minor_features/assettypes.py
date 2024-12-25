@@ -4,7 +4,6 @@ import keyvalues3
 from src.common import editor_info, JsonToKv3
 from src.widgets import exception_handler
 
-@exception_handler
 def asset_types_modify():
     # Initialize variables
     process = False

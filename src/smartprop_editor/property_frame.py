@@ -24,7 +24,6 @@ from src.smartprop_editor.properties_classes.comparison import PropertyCompariso
 from src.smartprop_editor.properties_classes.filtersurface import PropertySurface
 from src.smartprop_editor.properties_classes.colormatch import PropertyColorMatch
 from src.smartprop_editor.properties_classes.variable import PropertyVariableOutput
-from src.widgets import exception_handler
 
 
 import ast
@@ -357,7 +356,6 @@ class PropertyFrame(QWidget):
     def add_variable(self, name, value):
         self.ui.variable_display.setText(name)
 
-    @exception_handler
     def get_variables(self, search_term=None):
         data_out = []
         for i in range(self.variables_scrollArea.count()):
@@ -367,7 +365,6 @@ class PropertyFrame(QWidget):
                     data_out.append({widget.name: {widget.var_class}})
         return data_out
 
-    @exception_handler
     def on_edited(self):
         debug('Property frame was edited')
         if self.ui.variable_display.text() != '':
