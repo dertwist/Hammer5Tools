@@ -487,7 +487,7 @@ QTabBar::tab:selected {
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
-          <normaloff>:/icons/edit_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/edit_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+          <normaloff>:/icons/icons/hammer_icon.png</normaloff>:/icons/icons/hammer_icon.png</iconset>
         </property>
         <property name="iconSize">
          <size>
