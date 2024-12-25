@@ -234,7 +234,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.create_new_addon_button)
 
         self.ComboBoxSelectAddon = QComboBox(self.centralwidget)
-        self.ComboBoxSelectAddon.addItem("")
         self.ComboBoxSelectAddon.setObjectName(u"ComboBoxSelectAddon")
         self.ComboBoxSelectAddon.setMinimumSize(QSize(220, 0))
         self.ComboBoxSelectAddon.setStyleSheet(u"")
@@ -351,8 +350,6 @@ class Ui_MainWindow(object):
         self.create_new_addon_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Create addon</span></p><p>Quick create an addon with custom presets.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.create_new_addon_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-        self.ComboBoxSelectAddon.setItemText(0, QCoreApplication.translate("MainWindow", u"de_addon", None))
-
 #if QT_CONFIG(tooltip)
         self.ComboBoxSelectAddon.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">Addon selection</span></p><p>In the Addon selection, all tools apply changes to the addon selected in this section.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
