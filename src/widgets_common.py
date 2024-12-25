@@ -98,7 +98,13 @@ class ErrorInfo(QDialog):
         # Close the dialog after reporting the issue
         self.close()
 
+
 def exception_handler(func):
+    """
+    A decorator that wraps the passed in function and logs exceptions should one occur.
+    It also displays an error dialog with the exception details.
+    """
+
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -106,7 +112,17 @@ def exception_handler(func):
             error_message = f"An error occurred in `{func.__name__}`: {e}"
             error_details = traceback.format_exc()
             error(error_message)
-            ErrorInfo(text=error_message, details=error_details).exec_()
+
+            # Ensure the dialog is executed in the main thread
+            app = QApplication.instance()
+            if app is not None:
+                ErrorInfo(text=error_message, details=error_details).exec_()
+            else:
+                print("Error: QApplication instance is not available.")
+
+            # Return None or a default value
+            return None
+
     return wrapper
 
 
