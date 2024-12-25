@@ -166,17 +166,40 @@ class Widget(QMainWindow):
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
         self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
 
-
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
+
+        addons_folder = os.path.join(cs2_path, "content", "csgo_addons")
+        found_any = False
+
         try:
-            for item in os.listdir(os.path.join(cs2_path, "content", "csgo_addons")):
-                if os.path.isdir(os.path.join(cs2_path, "content", "csgo_addons", item)) and item not in exclude_addons:
+            for item in os.listdir(addons_folder):
+                full_path = os.path.join(addons_folder, item)
+                if os.path.isdir(full_path) and item not in exclude_addons:
                     self.ui.ComboBoxSelectAddon.addItem(item)
-            if not get_addon_name():
+                    found_any = True
+
+            # If no addons were found, suggest creating an addon
+            if not found_any:
+                response = QMessageBox.question(
+                    self,
+                    "No Addon Found",
+                    "No addons found. Would you like to create one now?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                if response == QMessageBox.Yes:
+                    self.open_create_addon_dialog()
+                else:
+                    # Optionally add a placeholder in the combobox or leave it empty
+                    self.ui.ComboBoxSelectAddon.addItem("")
+                    self.ui.ComboBoxSelectAddon.setCurrentIndex(0)
+
+            # If there is a stored addon name but it doesn't exist or is empty, set addon selection
+            if not get_addon_name() and found_any:
                 set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
-        except:
-            print("Wrong Cs2 Path")
+
+        except Exception as e:
+            print("Failed to load addons:", e)
     def refresh_addon_combobox(self):
         self.ui.ComboBoxSelectAddon.currentTextChanged.disconnect(self.selected_addon_name)
 
@@ -311,6 +334,7 @@ class Widget(QMainWindow):
     def create_addon_dialog_closed(self):
         self.Create_addon_Dialog = None
         self.refresh_addon_combobox()
+
 
     def delete_addon(self):
         delete_addon(self.ui, cs2_path, get_addon_name)
