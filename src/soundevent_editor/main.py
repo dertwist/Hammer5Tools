@@ -16,7 +16,8 @@ from src.common import *
 from src.soundevent_editor.commands import DeleteTreeItemCommand
 from src.soundevent_editor.internal_explorer import InternalSoundFileExplorer
 from src.soundevent_editor.audio_player import AudioPlayer
-
+from src.widgets import exception_handler
+@exception_handler
 class CopyDefaultSoundFolders:
     def __init__(self):
         """Coping  soundevents file and sounds from sounds folder from addon_template to the current addon"""
@@ -46,7 +47,7 @@ class CopyDefaultSoundFolders:
                     shutil.copytree(source_item, destination_item, dirs_exist_ok=True)
                 else:
                     shutil.copy2(source_item, destination_item)
-
+@exception_handler
 class LoadSoundEvents:
     def __init__(self, tree: QTreeWidget, path: str):
         super().__init__()
@@ -59,6 +60,8 @@ class LoadSoundEvents:
             if key != "editor_info":
                 new_item = HierarchyItemModel(_data=data[key], _name=key)
                 self.root.addChild(new_item)
+
+@exception_handler
 class SaveSoundEvents:
     def __init__(self, tree: QTreeWidget, path:str):
         super().__init__()
@@ -74,6 +77,8 @@ class SaveSoundEvents:
         # Write to file
         with open(path, 'w') as output:
             output.write(JsonToKv3(data))
+
+@exception_handler
 class SoundEventEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
         super().__init__(parent)
@@ -250,7 +255,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         return super().eventFilter(source, event)
 
     #=========================================================<  Hierarchy Actions  >=======================================================
-
+    @exception_handler
     def new_soundevent(self, _data: dict = None, __soundevent_name: str = None):
         """Creates new soundevent using given data. Input dict"""
         if __soundevent_name is None:
@@ -259,6 +264,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         __soundevent = HierarchyItemModel(_name=__soundevent_name, _data=_data)
         self.ui.hierarchy_widget.invisibleRootItem().addChild(__soundevent)
 
+    @exception_handler
     def unique_soundevent_int(self, _name: str = None):
         """Creating Unique name for new hierarchy element"""
         if _name is None:
