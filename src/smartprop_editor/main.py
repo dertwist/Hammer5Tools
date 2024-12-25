@@ -27,7 +27,7 @@ from PySide6.QtCore import QTimer
 from src.explorer.main import Explorer
 from src.preferences import settings
 from src.common import Kv3ToJson, JsonToKv3
-from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, exception_handler
+from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
 from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
 from src.common import *
@@ -214,17 +214,20 @@ class SmartPropEditorMainWindow(QMainWindow):
                 widget = self.modifiers_group_instance.layout.itemAt(item).widget()
                 if isinstance(widget, PropertyFrame):
                     value = widget.value
-                    modifiers.append(value)
+                    if value is not None:
+                        modifiers.append(value)
             for item in range(self.selection_criteria_group_instance.layout.count()):
                 widget = self.selection_criteria_group_instance.layout.itemAt(item).widget()
                 if isinstance(widget, PropertyFrame):
                     value = widget.value
-                    selection_criteria.append(value)
+                    if value is not None:
+                        selection_criteria.append(value)
             for item in range(self.ui.properties_layout.count()):
                 widget = self.ui.properties_layout.itemAt(item).widget()
                 if isinstance(widget, PropertyFrame):
                     value = widget.value
-                    output_value.update(value)
+                    if value is not None:
+                        output_value.update(value)
             # if any modifier, set empty list
             try:
                 if modifiers[0] == None:
@@ -564,7 +567,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             pass
 
     # ======================================[Open File]========================================
-    @exception_handler
     def open_file(self, external=False):
         if external:
             filename, _ = QFileDialog.getOpenFileName(None, "Open File", os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()), "VSmart Files (*.vsmart);;All Files (*)")
@@ -619,7 +621,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.explorer_status()
 
     # ======================================[Save File]========================================
-    @exception_handler
     def save_file(self, external=False):
         if external:
             pass
