@@ -215,6 +215,20 @@ class Widget(QMainWindow):
 
         self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
 
+        # for those who didn't have editors
+        tools = [
+            "SoundEventEditorMainWindow",
+            "SmartPropEditorMainWindow",
+            "BatchCreator_MainWindow",
+            "LoadingEditorMainWindow",
+        ]
+
+        if any(getattr(self, tool, None) for tool in tools):
+            pass
+            print('tools tehre')
+        else:
+            self.selected_addon_name()
+
     def setup_buttons(self):
         self.ui.Launch_Addon_Button.clicked.connect(launch_addon)
         self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)

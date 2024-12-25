@@ -64,7 +64,6 @@ class Create_addon_Dialog(QDialog):
                 QMessageBox.critical(self, "Copy Error", f"An error occurred while copying content: {str(e)}")
                 return
         QMessageBox.information(self, "Info", f"Addon {str(new_addon_name)} was created")
-        set_addon_name(new_addon_name)
         self.close()
 
     def replace_filenames(self, directory, new_addon_name):
