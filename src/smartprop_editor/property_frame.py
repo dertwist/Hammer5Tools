@@ -28,7 +28,6 @@ from src.widgets import exception_handler
 
 
 import ast
-@exception_handler
 class PropertyFrame(QWidget):
     edited = Signal()
     def __init__(self, value, widget_list, variables_scrollArea, element=False):
