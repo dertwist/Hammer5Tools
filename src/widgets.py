@@ -303,7 +303,10 @@ class ComboboxVariablesWidget(QWidget):
         self.combobox.currentTextChanged.connect(self.update_add_button_visibility)
 
         if variable_type is None:
-            self.variable_type = filter_types[0]
+            if isinstance(filter_types, list):
+                self.variable_type = filter_types[0]
+            else:
+                self.variable_type = 'String'
 
     def update_add_button_visibility(self, value):
         """Show the add button if value is None or empty, otherwise hide it."""
