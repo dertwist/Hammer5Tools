@@ -33,6 +33,7 @@ from PySide6.QtCore import Qt
 from ui_main import Ui_MainWindow
 from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from PySide6.QtCore import QTimer
+from PySide6.QtCore import QFileSystemWatcher
 from src.common import enable_dark_title_bar
 # Variables
 steam_path = get_steam_path()
@@ -41,7 +42,7 @@ stop_discord_thread = threading.Event()
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
 # Versions
-app_version = '3.6.1'
+app_version = '3.6.2'
 
 
 class DevWidget(QWidget):
@@ -120,6 +121,10 @@ class Widget(QMainWindow):
         if get_config_bool('APP', 'first_launch'):
             self.open_documentation()
             set_config_bool('APP', 'first_launch', False)
+
+        self.addon_watcher = QFileSystemWatcher(self)
+        self.addon_watcher.addPath(os.path.join(cs2_path, "content", "csgo_addons"))
+        self.addon_watcher.directoryChanged.connect(self.refresh_addon_combobox)
 
     def update_title(self, status, file_path=None):
         base_title = "Hammer 5 Tools"
