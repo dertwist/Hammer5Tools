@@ -39,12 +39,10 @@ class InternalSoundFileExplorer(QTreeWidget):
         self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
         self.vpk_loader_thread.start()
 
-    @exception_handler
     def _play_audio_file(self, file_path):
         debug(f'Playing audio {file_path}')
         self.play_sound.emit(file_path)
 
-    @exception_handler
     def play_audio_file(self, path):
         internal_audiopath = os.path.join('sounds', path.replace('vsnd', 'vsnd_c')).replace('/', '\\')
 
@@ -61,7 +59,6 @@ class InternalSoundFileExplorer(QTreeWidget):
         else:
             self.decompile_audio(internal_audiopath, local_audiopath_wav, path)
 
-    @exception_handler
     def decompile_audio(self, internal_path, local_path, assembled_path):
         pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
         process = QProcess(self)
