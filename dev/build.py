@@ -127,6 +127,8 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
 
+import win32com.client
+
 def main():
     def install():
         install_button.config(state='disabled')
@@ -156,7 +158,7 @@ def main():
                 create_start_menu_shortcut(install_dir)
             exe_path = os.path.join(install_dir, "Hammer5Tools.exe")
             if messagebox.askyesno("Launch Application", "Do you want to launch Hammer 5 Tools now?"):
-                subprocess.Popen([exe_path], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.Popen([exe_path], cwd=install_dir, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             os._exit(0) # Exit immediately after launching or skipping the launch
         except Exception as e:
             messagebox.showerror("Installation Error", str(e))
@@ -166,10 +168,30 @@ def main():
                 os.remove(temp_zip_path)
 
     def create_desktop_shortcut(install_path):
-        pass
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        shortcut_path = os.path.join(desktop_path, "Hammer 5 Tools.lnk")
+        target = os.path.join(install_path, "Hammer5Tools.exe")
+        working_dir = install_path
+
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortCut(shortcut_path)
+        shortcut.Targetpath = target
+        shortcut.WorkingDirectory = working_dir
+        shortcut.IconLocation = target
+        shortcut.save()
 
     def create_start_menu_shortcut(install_path):
-        pass
+        start_menu_path = os.path.join(os.path.expanduser("~"), "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs")
+        shortcut_path = os.path.join(start_menu_path, "Hammer 5 Tools.lnk")
+        target = os.path.join(install_path, "Hammer5Tools.exe")
+        working_dir = install_path
+
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shortcut = shell.CreateShortCut(shortcut_path)
+        shortcut.Targetpath = target
+        shortcut.WorkingDirectory = working_dir
+        shortcut.IconLocation = target
+        shortcut.save()
 
     def browse_directory():
         directory = filedialog.askdirectory(initialdir=install_dir_var.get())
