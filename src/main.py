@@ -1,9 +1,6 @@
 import os, threading, portalocker, tempfile, webbrowser, time, socket, logging, ctypes, hashlib, sys, subprocess, datetime
 from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow, QMessageBox, QDialog, QLabel, QMessageBox
 from PySide6.QtGui import QIcon, QAction, QTextCursor
-from PySide6.QtCore import QObject, Signal, Qt
-from ui_main import Ui_MainWindow
-from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from documentation.documentation import Documentation_Dialog
 from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
 from loading_editor.loading_editor_main import Loading_editorMainWindow
@@ -232,6 +229,17 @@ class Widget(QMainWindow):
         self.ui.Launch_Addon_Button.clicked.connect(launch_addon)
         self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)
         self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
+
+        addon = get_addon_name()
+        combo_items = [
+            self.ui.ComboBoxSelectAddon.itemText(i)
+            for i in range(self.ui.ComboBoxSelectAddon.count())
+        ]
+
+        if addon not in combo_items:
+            self.refresh_addon_combobox()
+            self.selected_addon_name()
+
         # if index 0, loads tabs
         if self.ui.ComboBoxSelectAddon.currentText() == get_addon_name():
             self.selected_addon_name()
