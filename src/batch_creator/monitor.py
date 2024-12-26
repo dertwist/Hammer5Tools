@@ -85,6 +85,15 @@ class FileItemWidget(QWidget):
         folder_path = os.path.dirname(self.file_path)
         os.startfile(folder_path)
 
+import os
+from PySide6.QtCore import QFileSystemWatcher, Signal
+from PySide6.QtWidgets import QListWidget, QListWidgetItem
+from src.widgets import exception_handler
+from src.preferences import debug
+from src.batch_creator.process import StartProcess
+from src.qt_styles.qt_global_stylesheet import *
+
+
 class MonitoringFileWatcher(QListWidget):
     open_file = Signal(str)
 
@@ -96,44 +105,76 @@ class MonitoringFileWatcher(QListWidget):
         self.config_references = {}
         self.reference_configs = {}
         self.process_threads = {}
+        self.watched_directories = set()
         self.initialize_watcher()
         self.setStyleSheet(qt_stylesheet_widgetlist)
 
     def initialize_watcher(self):
         if not self.root_path or not os.path.isdir(self.root_path):
+            debug("Invalid root path provided to MonitoringFileWatcher.")
             return
+
+        # Recursively add all directories to the watcher
+        for dirpath, dirnames, _ in os.walk(self.root_path):
+            self.add_directory_watch(dirpath)
 
         self.update_file_list()
         self.file_system_watcher.directoryChanged.connect(self.on_directory_changed)
         self.file_system_watcher.fileChanged.connect(self.on_file_changed)
-        self.file_system_watcher.addPath(self.root_path)
 
-    def update_file_list(self):
-        current_files = set(self.file_widgets.keys())
-        found_files = set()
+    def add_directory_watch(self, directory):
+        if directory not in self.watched_directories:
+            self.file_system_watcher.addPath(directory)
+            self.watched_directories.add(directory)
+            debug(f"Watching directory: {directory}")
 
+    def remove_directory_watch(self, directory):
+        if directory in self.watched_directories:
+            self.file_system_watcher.removePath(directory)
+            self.watched_directories.remove(directory)
+            debug(f"Stopped watching directory: {directory}")
+
+    def collect_hbat_files(self):
+        """
+        Collect all .hbat files under self.root_path, returning them as a list.
+        """
+        collected_files = []
         for dirpath, _, filenames in os.walk(self.root_path):
             for filename in filenames:
                 if filename.lower().endswith('.hbat'):
                     full_path = os.path.join(dirpath, filename)
-                    found_files.add(full_path)
-                    if full_path not in self.file_widgets:
-                        self.add_file_widget(full_path)
+                    collected_files.append(full_path)
+        debug(f"Collected {len(collected_files)} .hbat files.")
+        return collected_files
 
-        # Remove widgets for files that no longer exist
-        for path in current_files - found_files:
-            self.remove_file_widget(path)
+    @exception_handler
+    def update_file_list(self):
+        current_files = set(self.file_widgets.keys())
+        found_files = set(self.collect_hbat_files())
 
-        # Update watchers for new files
+        # Add new files
         new_files = found_files - current_files
         for path in new_files:
-            if path not in self.file_system_watcher.files():
-                self.file_system_watcher.addPath(path)
-                self.update_reference(path)
+            self.add_file_widget(path)
 
+        # Remove deleted files
+        removed_files = current_files - found_files
+        for path in removed_files:
+            self.remove_file_widget(path)
+
+        # Update references for existing files
+        for path in found_files & current_files:
+            self.update_reference(path)
+
+        # Watch new directories if any
+        for path in found_files:
+            directory = os.path.dirname(path)
+            self.add_directory_watch(directory)
+
+    @exception_handler
     def add_file_widget(self, path):
         item = QListWidgetItem(self)
-        widget = FileItemWidget(path)
+        widget = FileItemWidget(path)  # Assuming FileItemWidget is defined elsewhere
         item.setSizeHint(widget.sizeHint())
         self.addItem(item)
         self.setItemWidget(item, widget)
@@ -144,23 +185,29 @@ class MonitoringFileWatcher(QListWidget):
 
         self.update_reference(path)
         self.file_system_watcher.addPath(path)
+        debug(f"Added watcher for file: {path}")
 
+    @exception_handler
     def remove_file_widget(self, path):
         self.stop_processing(path)
         if path in self.file_system_watcher.files():
             self.file_system_watcher.removePath(path)
+            debug(f"Removed watcher for file: {path}")
         item, _ = self.file_widgets.pop(path, (None, None))
         if item:
             self.takeItem(self.row(item))
         self.untrack_reference(path)
+        debug(f"Removed file widget for: {path}")
 
+    @exception_handler
     def update_reference(self, config_path):
-        reference_path = read_reference_from_file(config_path)
+        reference_path = read_reference_from_file(config_path)  # Assuming this function is defined
         if reference_path:
             self.track_reference(config_path, reference_path)
         else:
             self.untrack_reference(config_path)
 
+    @exception_handler
     def track_reference(self, config_path, reference_path):
         old_reference = self.config_references.get(config_path)
         if old_reference and old_reference != reference_path:
@@ -170,8 +217,10 @@ class MonitoringFileWatcher(QListWidget):
         if reference_path not in self.reference_configs:
             self.reference_configs[reference_path] = set()
             self.file_system_watcher.addPath(reference_path)
+            debug(f"Tracking new reference: {reference_path}")
         self.reference_configs[reference_path].add(config_path)
 
+    @exception_handler
     def untrack_reference(self, config_path):
         reference_path = self.config_references.pop(config_path, None)
         if reference_path:
@@ -182,23 +231,31 @@ class MonitoringFileWatcher(QListWidget):
                     self.reference_configs.pop(reference_path)
                     if reference_path in self.file_system_watcher.files():
                         self.file_system_watcher.removePath(reference_path)
+                        debug(f"Stopped tracking reference: {reference_path}")
 
+    @exception_handler
     def on_directory_changed(self, path):
+        debug(f"Directory changed: {path}")
         self.update_file_list()
 
+        # Check for new subdirectories and add them to the watcher
+        for dirpath, dirnames, _ in os.walk(self.root_path):
+            for dirname in dirnames:
+                full_dir_path = os.path.join(dirpath, dirname)
+                self.add_directory_watch(full_dir_path)
+
+    @exception_handler
     def on_file_changed(self, path):
+        debug(f"File changed: {path}")
         if os.path.exists(path):
             if path in self.file_widgets:
-                # Config file changed
                 self.update_reference(path)
                 _, widget = self.file_widgets[path]
                 self.stop_processing(path)
                 self.start_processing(path)
             elif path in self.reference_configs:
-                # Reference file changed
                 configs = self.reference_configs[path]
                 for config_path in configs:
-                    _, widget = self.file_widgets.get(config_path, (None, None))
                     self.stop_processing(config_path)
                     self.start_processing(config_path)
         else:
@@ -208,36 +265,38 @@ class MonitoringFileWatcher(QListWidget):
                 configs = self.reference_configs.pop(path)
                 for config_path in configs:
                     self.config_references.pop(config_path, None)
-                    _, widget = self.file_widgets.get(config_path, (None, None))
                     self.stop_processing(config_path)
                 if path in self.file_system_watcher.files():
                     self.file_system_watcher.removePath(path)
+                    debug(f"Removed non-existent reference: {path}")
 
     def start_processing(self, config_path):
-        # Start processing in a separate thread
         if config_path in self.process_threads:
-            # If already processing, do nothing
+            debug(f"Processing already started for: {config_path}")
             return
-        process_thread = StartProcess(config_path)
+        process_thread = StartProcess(config_path)  # Assuming StartProcess is defined
         process_thread.finished.connect(lambda: self.on_process_finished(config_path))
         process_thread.start()
         self.process_threads[config_path] = process_thread
+        debug(f"Started processing for: {config_path}")
 
     def stop_processing(self, config_path):
         if config_path in self.process_threads:
             thread = self.process_threads.pop(config_path)
             if thread.isRunning():
-                thread.stop()
+                thread.stop()  # Assuming StartProcess has a stop method
                 thread.wait()
+                debug(f"Stopped processing for: {config_path}")
 
     def on_process_finished(self, config_path):
         self.process_threads.pop(config_path, None)
-        debug(f"Finished processing {config_path}")
+        debug(f"Finished processing: {config_path}")
 
     def closeEvent(self, event):
+        debug("Closing MonitoringFileWatcher.")
         self.file_system_watcher.directoryChanged.disconnect(self.on_directory_changed)
         self.file_system_watcher.fileChanged.disconnect(self.on_file_changed)
-        for thread in self.process_threads.values():
+        for thread in list(self.process_threads.values()):
             if thread.isRunning():
                 thread.stop()
                 thread.wait()
