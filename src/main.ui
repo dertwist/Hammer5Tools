@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1194</width>
-    <height>878</height>
+    <height>889</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -104,7 +104,7 @@ QTabBar::tab:selected {
 }</string>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>3</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
@@ -148,7 +148,7 @@ QTabBar::tab:selected {
          <normaloff>:/icons/dashboard_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/dashboard_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
        </attribute>
        <attribute name="title">
-        <string>BatchCreator</string>
+        <string>AssetGroup Maker</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2"/>
       </widget>

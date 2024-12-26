@@ -24,7 +24,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1194, 878)
+        MainWindow.resize(1194, 889)
         icon = QIcon()
         icon.addFile(u":/icons/appicon.ico", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         MainWindow.setWindowIcon(icon)
@@ -305,7 +305,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.MainWindowTools_tabs.setCurrentIndex(1)
+        self.MainWindowTools_tabs.setCurrentIndex(3)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -316,7 +316,7 @@ class Ui_MainWindow(object):
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.Loading_Editor_Tab), QCoreApplication.translate("MainWindow", u"Loading Editor", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.soundeditor_tab), QCoreApplication.translate("MainWindow", u"SoundEvent Editor", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.smartpropeditor_tab), QCoreApplication.translate("MainWindow", u"SmartProp Editor", None))
-        self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.BatchCreator_tab), QCoreApplication.translate("MainWindow", u"BatchCreator", None))
+        self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.BatchCreator_tab), QCoreApplication.translate("MainWindow", u"AssetGroup Maker", None))
         self.MainWindowTools_tabs.setTabText(self.MainWindowTools_tabs.indexOf(self.hotkeyeditor_tab), QCoreApplication.translate("MainWindow", u"Hotkey Editor", None))
 #if QT_CONFIG(tooltip)
         self.my_twitter_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Twitter</p></body></html>", None))
