@@ -65,7 +65,7 @@
           <x>0</x>
           <y>0</y>
           <width>1179</width>
-          <height>427</height>
+          <height>613</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -94,7 +94,7 @@
            <item>
             <widget class="QLabel" name="properties_placeholder">
              <property name="text">
-              <string>Select event in the hierarchy</string>
+              <string>Select an element in the soundvents</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignmentFlag::AlignCenter</set>

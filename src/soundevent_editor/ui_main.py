@@ -429,7 +429,7 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
-        self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
+        self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Soundevents", None))
         self.hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem = self.hierarchy_widget.headerItem()
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
@@ -440,7 +440,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(shortcut)
         self.open_preset_manager_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+P", None))
 #endif // QT_CONFIG(shortcut)
-        self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
+        self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Audio Explorer", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.addon_sounds), QCoreApplication.translate("MainWindow", u"Addon", None))
         self.internal_explorer_search_bar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.internal_sounds), QCoreApplication.translate("MainWindow", u"Internal", None))
