@@ -86,7 +86,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1179, 427))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1179, 613))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -163,7 +163,7 @@ class Ui_MainWindow(object):
         self.actionConvert_all_vsmart_file_to_vdata.setToolTip(QCoreApplication.translate("MainWindow", u"Convert all to data", None))
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
-        self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select event in the hierarchy", None))
+        self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select an element in the soundvents", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"Comment", None))
     # retranslateUi
 
