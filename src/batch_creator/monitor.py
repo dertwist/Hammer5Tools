@@ -24,7 +24,7 @@ def read_reference_from_file(config_path):
             if reference:
                 return os.path.join(get_addon_dir(), reference)
     except Exception as e:
-        print(f"Error reading {config_path}: {e}")
+        debug(f"Error reading {config_path}: {e}")
     return None
 
 class FileItemWidget(QWidget):
@@ -147,7 +147,6 @@ class MonitoringFileWatcher(QListWidget):
         debug(f"Collected {len(collected_files)} .hbat files.")
         return collected_files
 
-    @exception_handler
     def update_file_list(self):
         current_files = set(self.file_widgets.keys())
         found_files = set(self.collect_hbat_files())
@@ -171,7 +170,6 @@ class MonitoringFileWatcher(QListWidget):
             directory = os.path.dirname(path)
             self.add_directory_watch(directory)
 
-    @exception_handler
     def add_file_widget(self, path):
         item = QListWidgetItem(self)
         widget = FileItemWidget(path)  # Assuming FileItemWidget is defined elsewhere
@@ -187,7 +185,6 @@ class MonitoringFileWatcher(QListWidget):
         self.file_system_watcher.addPath(path)
         debug(f"Added watcher for file: {path}")
 
-    @exception_handler
     def remove_file_widget(self, path):
         self.stop_processing(path)
         if path in self.file_system_watcher.files():
@@ -199,7 +196,6 @@ class MonitoringFileWatcher(QListWidget):
         self.untrack_reference(path)
         debug(f"Removed file widget for: {path}")
 
-    @exception_handler
     def update_reference(self, config_path):
         reference_path = read_reference_from_file(config_path)  # Assuming this function is defined
         if reference_path:
@@ -207,7 +203,6 @@ class MonitoringFileWatcher(QListWidget):
         else:
             self.untrack_reference(config_path)
 
-    @exception_handler
     def track_reference(self, config_path, reference_path):
         old_reference = self.config_references.get(config_path)
         if old_reference and old_reference != reference_path:
@@ -220,7 +215,6 @@ class MonitoringFileWatcher(QListWidget):
             debug(f"Tracking new reference: {reference_path}")
         self.reference_configs[reference_path].add(config_path)
 
-    @exception_handler
     def untrack_reference(self, config_path):
         reference_path = self.config_references.pop(config_path, None)
         if reference_path:
@@ -233,7 +227,6 @@ class MonitoringFileWatcher(QListWidget):
                         self.file_system_watcher.removePath(reference_path)
                         debug(f"Stopped tracking reference: {reference_path}")
 
-    @exception_handler
     def on_directory_changed(self, path):
         debug(f"Directory changed: {path}")
         self.update_file_list()
@@ -244,7 +237,6 @@ class MonitoringFileWatcher(QListWidget):
                 full_dir_path = os.path.join(dirpath, dirname)
                 self.add_directory_watch(full_dir_path)
 
-    @exception_handler
     def on_file_changed(self, path):
         debug(f"File changed: {path}")
         if os.path.exists(path):
