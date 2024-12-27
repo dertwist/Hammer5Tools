@@ -20,18 +20,18 @@
 
 
 
-# A bunch of tools for Counter-Strike 2 Workshop:
+# Essential Tools for Counter-Strike 2 Mapping:
 
 | ![image](https://i.imgur.com/7znAlv4.jpeg) Loading Editor | ![image](https://i.imgur.com/HMmbQgR.png) SoundEvent Editor | ![image](https://i.imgur.com/kFjGhI7.png)  SmartProp Editor |
 | ----------- | ----------- | ----------- |
-| ![image](https://i.imgur.com/D9v7e6w.png) Hotkey Editor | ![image](https://i.imgur.com/cRFsq49.png) BatchCreator |
+| ![image](https://i.imgur.com/D9v7e6w.png) Hotkey Editor | ![image](https://i.imgur.com/cRFsq49.png) AssetGroup Maker |
 
-### Tools Description
+### Tools Overview:
 
 |        Tool       |                                                                                                                   Description                                                                                                                   |
 |:-----------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Loading Editor    | With this tool, you can add images, descriptions, and icons to the loading screen.                                                                                                                                                              |
-| SoundEvent Editor | A tool for more comfortable sound editing within the game.                                                                                                                                                                                      |
-| Hotkey Editor     | Edit default keyboard shortcuts and add your own!                                                                                                                                                                                               |
-| BatchCreator      | Allows you to edit multiple files with the same parameters at one time. For example, if you have a modular set with 15 models, it is tedious to use the default Model/Material Editor, but with BatchCreator, you can do it all with one click. |
-| SmartProp Editor  | A tool that helps with smartprops creation in the game.                                                                                                                                                                                         |
+| Loading Editor    | Add images, descriptions, and icons to loading screens.                                                                                                                                                              |
+| SoundEvent Editor | Edit in-game sounds easily.                                                                                                                                                                                     |
+| Hotkey Editor     | Customize and add new keyboard shortcuts.                                                                                                                                                                                        |
+| AssetGroup Maker      | Edit multiple files at once. Perfect for large modular sets. |
+| SmartProp Editor  | Simplifies smartprop creation.                                                                                                                                                                                       |
