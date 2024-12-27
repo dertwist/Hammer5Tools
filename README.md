@@ -24,7 +24,7 @@
 
 | ![image](https://i.imgur.com/7znAlv4.jpeg) Loading Editor | ![image](https://i.imgur.com/HMmbQgR.png) SoundEvent Editor | ![image](https://i.imgur.com/kFjGhI7.png)  SmartProp Editor |
 | ----------- | ----------- | ----------- |
-| ![image](https://i.imgur.com/D9v7e6w.png) Hotkey Editor | ![image](https://i.imgur.com/cRFsq49.png) BatchCreator |
+| ![image](https://i.imgur.com/D9v7e6w.png) Hotkey Editor | ![image](https://i.imgur.com/cRFsq49.png) AssetGroup Maker |
 
 ### Tools Overview:
 
@@ -33,5 +33,5 @@
 | Loading Editor    | Add images, descriptions, and icons to loading screens.                                                                                                                                                              |
 | SoundEvent Editor | Edit in-game sounds easily.                                                                                                                                                                                     |
 | Hotkey Editor     | Customize and add new keyboard shortcuts.                                                                                                                                                                                        |
-| BatchCreator      | Edit multiple files at once. Perfect for large modular sets. |
+| AssetGroup Maker      | Edit multiple files at once. Perfect for large modular sets. |
 | SmartProp Editor  | Simplifies smartprop creation.                                                                                                                                                                                       |
