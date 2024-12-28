@@ -98,6 +98,7 @@ class Ui_MainWindow(object):
         self.properties_layout.setObjectName(u"properties_layout")
         self.properties_placeholder = QLabel(self.scrollAreaWidgetContents)
         self.properties_placeholder.setObjectName(u"properties_placeholder")
+        self.properties_placeholder.setStyleSheet(u"color: gray; font-size: 13px;")
         self.properties_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.properties_layout.addWidget(self.properties_placeholder)
