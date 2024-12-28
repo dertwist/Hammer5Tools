@@ -105,7 +105,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>725</width>
+            <width>728</width>
             <height>700</height>
            </rect>
           </property>
@@ -134,6 +134,9 @@
             <layout class="QVBoxLayout" name="properties_layout">
              <item>
               <widget class="QLabel" name="properties_placeholder">
+               <property name="styleSheet">
+                <string notr="true">color: gray; font-size: 13px;</string>
+               </property>
                <property name="text">
                 <string>Select an element in the hierarchy</string>
                </property>
@@ -416,8 +419,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>283</width>
-          <height>327</height>
+          <width>280</width>
+          <height>345</height>
          </rect>
         </property>
         <property name="styleSheet">

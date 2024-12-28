@@ -93,6 +93,9 @@
           <layout class="QVBoxLayout" name="properties_layout">
            <item>
             <widget class="QLabel" name="properties_placeholder">
+             <property name="styleSheet">
+              <string notr="true">color: gray; font-size: 13px;</string>
+             </property>
              <property name="text">
               <string>Select an element in the soundvents</string>
              </property>
