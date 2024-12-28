@@ -60,6 +60,7 @@ class Ui_BatchCreator_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_editor_placeholder.sizePolicy().hasHeightForWidth())
         self.label_editor_placeholder.setSizePolicy(sizePolicy)
+        self.label_editor_placeholder.setStyleSheet(u"color: gray; font-size: 13px;")
         self.label_editor_placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.verticalLayout_7.addWidget(self.label_editor_placeholder)

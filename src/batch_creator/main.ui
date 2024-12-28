@@ -93,6 +93,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="styleSheet">
+             <string notr="true">color: gray; font-size: 13px;</string>
+            </property>
             <property name="text">
              <string>Please, open a file for editing</string>
             </property>
