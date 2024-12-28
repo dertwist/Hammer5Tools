@@ -11,7 +11,8 @@ from PySide6.QtWidgets import (
     QLabel,
     QScrollArea,
     QMenu,
-    QWidget
+    QWidget,
+    QVBoxLayout
 )
 from src.widgets import exception_handler
 from src.preferences import debug
@@ -20,6 +21,7 @@ from src.batch_creator.process import StartProcess
 
 class NoWheelScrollArea(QScrollArea):
     def wheelEvent(self, event: QWheelEvent):
+        # Prevent zooming with mouse wheel over the scroll area
         event.ignore()
 
 
@@ -33,31 +35,58 @@ class AdvancedImageViewer(QMainWindow):
         self.image_files = []
         self.current_image_index = 0
 
-        self.initUI()
+        self.setupUI()
 
-    def initUI(self):
-        self.image_label = QLabel(self)
+    def setupUI(self):
+        # Create a container so we do not repeatedly set different central widgets
+        self.container = QWidget(self)
+        self.setCentralWidget(self.container)
+
+        # Use a vertical layout to hold both placeholder_label and scroll_area
+        layout = QVBoxLayout(self.container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Placeholder label displayed when no image is selected
+        self.placeholder_label = QLabel(self.container)
+        self.placeholder_label.setAlignment(Qt.AlignCenter)
+        self.placeholder_label.setText("Select image in the screenshots")
+        self.placeholder_label.setStyleSheet("color: gray; font-size: 13px;")
+
+        # Image label for displaying pictures when available
+        self.image_label = QLabel(self.container)
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setScaledContents(False)
-        self.set_placeholder_text()
 
-        self.scroll_area = NoWheelScrollArea(self)
+        # Scroll area that holds the image label
+        self.scroll_area = NoWheelScrollArea(self.container)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.image_label)
-
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        self.setCentralWidget(self.scroll_area)
+        # Add both widgets to the layout
+        layout.addWidget(self.placeholder_label)
+        layout.addWidget(self.scroll_area)
+
+        # Show placeholder by default, hide scroll area
+        self.placeholder_label.show()
+        self.scroll_area.hide()
 
     def set_placeholder_text(self):
-        self.image_label.setText("Select image in the screenshots")
-        self.image_label.setStyleSheet("color: gray; font-size: 16px;")
-        self.image_label.setPixmap(QPixmap())
+        # Show placeholder, hide scroll area
+        self.placeholder_label.setText("Select image in the screenshots")
+        self.placeholder_label.setStyleSheet("color: gray; font-size: 16px;")
+        self.placeholder_label.show()
+        self.scroll_area.hide()
+        self.image_label.clear()
 
     def clear_placeholder_text(self):
-        self.image_label.setText("")
-        self.image_label.setStyleSheet("")
+        # Hide placeholder, show scroll area
+        self.placeholder_label.hide()
+        self.placeholder_label.clear()
+        self.placeholder_label.setStyleSheet("")
+        self.scroll_area.show()
 
     def loadImagesFromDirectory(self, directory):
         valid_extensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga"]
@@ -127,16 +156,19 @@ class AdvancedImageViewer(QMainWindow):
                 self.image_label.setPixmap(scaled_pixmap)
                 self.image_label.adjustSize()
 
+                # Adjust scroll bars if mouse_pos was provided
                 if mouse_pos:
                     new_size = self.image_label.size()
                     delta_size = new_size - old_size
                     scroll_bar_h = self.scroll_area.horizontalScrollBar()
                     scroll_bar_v = self.scroll_area.verticalScrollBar()
 
-                    # Calculate the new scroll bar values to keep the mouse position centered
-                    scroll_bar_h.setValue(scroll_bar_h.value() + delta_size.width() * mouse_pos.x() / old_size.width())
-                    scroll_bar_v.setValue(scroll_bar_v.value() + delta_size.height() * mouse_pos.y() / old_size.height())
-
+                    scroll_bar_h.setValue(
+                        scroll_bar_h.value() + delta_size.width() * mouse_pos.x() / old_size.width()
+                    )
+                    scroll_bar_v.setValue(
+                        scroll_bar_v.value() + delta_size.height() * mouse_pos.y() / old_size.height()
+                    )
             except Exception as e:
                 debug(f"Error updating image display: {e}")
 
@@ -195,7 +227,6 @@ class ExplorerImageViewer(QMainWindow):
 
         splitter.addWidget(self.tree_view)
         splitter.addWidget(self.image_viewer)
-
         self.setCentralWidget(splitter)
 
         self.tree_view.header().setDefaultSectionSize(120)
@@ -253,7 +284,9 @@ class ThumbnailWorker(QRunnable):
             pixmap = QPixmap(self.file_path)
             if not pixmap.isNull():
                 thumbnail = pixmap.scaled(
-                    128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                    128, 128,
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
                 )
                 icon = QIcon(thumbnail)
                 self.signals.result.emit(self.file_path, icon)
