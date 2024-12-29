@@ -115,8 +115,6 @@ class Widget(QMainWindow):
         except Exception as e:
             print(f"Error checking updates: {e}")
 
-        asset_types_modify()
-
         self._restore_user_prefs()
         if get_config_bool('APP', 'first_launch'):
             self.open_documentation()
@@ -126,19 +124,19 @@ class Widget(QMainWindow):
         self.addon_watcher.addPath(os.path.join(cs2_path, "content", "csgo_addons"))
         self.addon_watcher.directoryChanged.connect(self.refresh_addon_combobox)
 
-    def update_title(self, status, file_path=None):
+    def update_title(self, status=None, file_path=None, text=None):
         base_title = "Hammer 5 Tools"
+        new_title = base_title
 
-        if status == "saved":
-            new_title = f"{base_title} [ Saved file --- {file_path} ]"
-        elif status == "opened":
-            new_title = f"{base_title} [ Opened file --- {file_path}] "
-        else:
-            new_title = base_title
+        if file_path:
+            if status == "saved":
+                new_title = f"{base_title} [ Saved file --- {file_path} ]"
+            elif status == "opened":
+                new_title = f"{base_title} [ Opened file --- {file_path} ]"
+        elif text:
+            new_title = f"{base_title} [ {text} ]"
 
         self.setWindowTitle(new_title)
-
-        # Reset the title after 5 seconds
         self.title_reset_timer.start(5000)
 
     def reset_title(self):
@@ -228,8 +226,12 @@ class Widget(QMainWindow):
         else:
             self.selected_addon_name()
 
+    def launch_addon_action(self):
+        self.update_title(text=f'Launched addon --- {get_addon_name()}')
+        launch_addon()
+
     def setup_buttons(self):
-        self.ui.Launch_Addon_Button.clicked.connect(launch_addon)
+        self.ui.Launch_Addon_Button.clicked.connect(self.launch_addon_action)
         self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)
         self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
 
