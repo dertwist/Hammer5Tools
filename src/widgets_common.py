@@ -97,29 +97,6 @@ class ErrorInfo(QDialog):
         webbrowser.open(discord_feedback_channel)
         # Close the dialog after reporting the issue
         self.close()
-
-
-def __call__(self, func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            error_message = f"An error occurred in `{func.__name__}`: {e}"
-            error_details = traceback.format_exc()
-            error(error_message)
-
-            # Ensure the dialog is executed in the main thread
-            app = QApplication.instance()
-            if app is not None:
-                ErrorInfo(text=error_message, details=error_details).exec_()
-            else:
-                print("Error: QApplication instance is not available.")
-
-            # Return None or a default value
-            return None
-    return wrapper
-
-
 def exception_handler(func):
     """
     A decorator that wraps the passed in function and logs exceptions should one occur.

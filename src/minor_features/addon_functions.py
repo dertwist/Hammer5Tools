@@ -37,7 +37,6 @@ def delete_addon(ui, cs2_path, get_addon_name):
 
 def assemble_commands(commands:str, addon_name):
     return commands.replace('addon_name', addon_name)
-@exception_handler
 def __launch_addon():
     addon_name = get_addon_name()
     cs2_path = get_cs2_path()
@@ -70,6 +69,9 @@ def __launch_addon():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
+
+
+@exception_handler
 def launch_addon():
     asset_types_modify()
     __launch_addon()
