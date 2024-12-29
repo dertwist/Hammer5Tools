@@ -1,58 +1,48 @@
 import os
-from src.preferences import get_cs2_path, debug
+from src.preferences import get_cs2_path
 import keyvalues3
-from src.common import editor_info, JsonToKv3
-from src.widgets import exception_handler
+from src.common import editor_info
+
+def load_assettypes():
+    file_path = os.path.join(get_cs2_path(), 'game', 'bin', 'assettypes_common.txt')
+    if not os.path.isfile(file_path):
+        return file_path, {}
+    try:
+        data_dict = keyvalues3.read(file_path).value
+        return file_path, data_dict
+    except:
+        return file_path, {}
+
+def is_editor_info_processed(data):
+    processed = data.get('editor_info')
+    return isinstance(processed, list)
+
+def add_vsmart_block(data):
+    vsmart_block = {
+        'smart_prop': {
+            '_class': 'CResourceAssetTypeInfo',
+            'm_FriendlyName': 'Smart Prop',
+            'm_Ext': 'vsmart',
+            'm_IconLg': 'game:tools/images/assettypes/smart_prop_lg.png',
+            'm_IconSm': 'game:tools/images/assettypes/smart_prop_sm.png',
+            'm_CompilerIdentifier': 'CompileVData',
+            'm_Blocks': [
+                {'m_BlockID': 'DATA', 'm_Encoding': 'RESOURCE_ENCODING_KV3'}
+            ]
+        }
+    }
+    if 'assettypes' not in data:
+        data['assettypes'] = {}
+    data['assettypes'].update(vsmart_block)
+    return data
 
 def asset_types_modify():
-    # Initialize variables
-    process = False
-    processed = None
-    output = {}
-    vsmart_block = {}
-    data = {}
-    path = os.path.join(get_cs2_path(), 'game', 'bin', 'assettypes_common.txt')
-    debug(path)
-
-    # Load the file
-    data.update(keyvalues3.read(path).value)
-
-    # Check if 'editor_info' is already processed
-    processed = data.get('editor_info', None)
-    debug(f'Process var: {type(processed)}')
-    if isinstance(processed, list):
-        process = False
+    file_path, data = load_assettypes()
+    if not data:
+        return
+    if not is_editor_info_processed(data):
+        updated_data = add_vsmart_block(data)
+        merged_data = dict(editor_info, **updated_data)
+        keyvalues3.write(merged_data, file_path)
     else:
-        process = True
-
-    if process:
-        debug('Adding custom asset types to cs2 cfg')
-        debug(process)
-
-        # Add vsmart block
-        vsmart_block = {
-            'smart_prop': {
-                '_class': 'CResourceAssetTypeInfo',
-                'm_FriendlyName': 'Smart Prop',
-                'm_Ext': 'vsmart',
-                'm_IconLg': 'game:tools/images/assettypes/smart_prop_lg.png',
-                'm_IconSm': 'game:tools/images/assettypes/smart_prop_sm.png',
-                'm_CompilerIdentifier': 'CompileVData',
-                'm_Blocks': [
-                    {
-                        'm_BlockID': 'DATA',
-                        'm_Encoding': 'RESOURCE_ENCODING_KV3'
-                    }
-                ]
-            }
-        }
-        data['assettypes'].update(vsmart_block)
-        debug('Added vsmart asset type')
-
-        # Prepare output data
-        output = editor_info
-        output.update(data)
-
-        kv3_data =JsonToKv3(output)
-        with open(path, 'w') as file:
-            file.write(kv3_data)
+        pass
