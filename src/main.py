@@ -32,6 +32,7 @@ from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 from PySide6.QtCore import QTimer
 from PySide6.QtCore import QFileSystemWatcher
 from src.common import enable_dark_title_bar
+from src.minor_features.assettypes import asset_types_modify
 # Variables
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -113,6 +114,8 @@ class Widget(QMainWindow):
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except Exception as e:
             print(f"Error checking updates: {e}")
+
+        asset_types_modify()
 
         self._restore_user_prefs()
         if get_config_bool('APP', 'first_launch'):
