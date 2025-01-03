@@ -47,7 +47,7 @@ class StartProcess(QThread):
             self.finished.emit()
 
         except Exception as e:
-            print(f"Error in StartProcess: {e}")
+            debug(f"Error in StartProcess: {e}")
 
     def stop(self):
         self.stop_thread = True
@@ -98,11 +98,11 @@ def perform_batch_processing(file_path, process, preview, replacements, content_
         )
         return created_files
 
-
 def execute_file_creation(files, output_path, relative_path, extension, created_files,
                           replacements, reference, content_template, load_from_the_folder,
                           base_directory=None):
     if content_template is None:
+        debug("Content template is missing. Skipping file creation.")
         return
 
     for file_name in files:
@@ -127,8 +127,8 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
             __data = __data.replace("#$ASSET_NAME$#", base_name)
             output_file_path = os.path.join(output_path, f"{base_name}.{extension}")
 
-        output_path_resolved = Path(output_file_path).resolve()
-        reference_path_resolved = Path(reference).resolve() if reference else None
+        output_path_resolved = os.path.abspath(output_file_path)
+        reference_path_resolved = os.path.abspath(reference) if reference else None
 
         if output_path_resolved != reference_path_resolved:
             try:
@@ -138,12 +138,11 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
                 debug(f"File created: {output_file_path}")
                 created_files.append(output_file_path)
             except PermissionError as e:
-                print(f"Permission denied: {output_file_path}\n{e}")
+                debug(f"Permission denied: {output_file_path}\n{e}")
             except Exception as e:
-                print(f"Failed to create file {output_file_path}\n{e}")
+                debug(f"Failed to create file {output_file_path}\n{e}")
         else:
             debug(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
-
 
 def preview_processing_files(files, base_directory, extension, process):
     if process.get('load_from_the_folder'):
@@ -156,14 +155,11 @@ def preview_processing_files(files, base_directory, extension, process):
     else:
         return [os.path.basename(f) for f in files], None, extension, base_directory
 
-
 def extract_base_names(names):
     return set(os.path.basename(name) for name in names)
 
-
 def extract_base_names_underscore(names):
     return set(name.rsplit('_', 1)[0] if '_' in name else name for name in names)
-
 
 def search_files(directory, algorithm, ignore_extensions, process):
     ignore_list = [item.strip() for item in process.get('ignore_list', '').split(',')]
@@ -179,4 +175,5 @@ def search_files(directory, algorithm, ignore_extensions, process):
     elif algorithm == 1:
         return extract_base_names_underscore(files_found)
     else:
+        debug(f"Unknown algorithm: {algorithm}")
         return []
