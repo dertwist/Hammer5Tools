@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 from src.batch_creator.ui_dialog import Ui_BatchCreator_process_Dialog
-from src.preferences import get_addon_name, get_cs2_path
+from src.preferences import get_addon_name, get_cs2_path, get_addon_dir
 from src.qt_styles.common import qt_stylesheet_button
 from src.batch_creator.process import perform_batch_processing
 from src.common import enable_dark_title_bar
@@ -73,8 +73,7 @@ class BatchCreatorProcessDialog(QDialog):
     def select_files_to_process(self):
         file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Files to Process", "", "All Files (*)")
         if file_paths:
-            base_names = [os.path.basename(file_path) for file_path in file_paths]
-            self.process_data['custom_files'] = base_names
+            self.process_data['custom_files'] = file_paths
             self.update_previews()
 
     def choose_output_directory(self):
@@ -111,7 +110,7 @@ class BatchCreatorProcessDialog(QDialog):
                 input_preview.setItemWidget(list_item, item_widget)
         else:
             for file in self.process_data.get('custom_files', []):
-                input_preview.addItem(QListWidgetItem(file))
+                input_preview.addItem(QListWidgetItem(os.path.basename(file)))
 
         for output_file in processed_files[0]:
             output_preview.addItem(QListWidgetItem(f"{output_file}.{processed_files[2]}"))
