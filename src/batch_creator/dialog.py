@@ -1,9 +1,9 @@
 import os
 from PySide6.QtWidgets import (
-    QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem
+    QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem, QApplication
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QClipboard
 from src.batch_creator.ui_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path, get_addon_dir
 from src.qt_styles.common import qt_stylesheet_button
@@ -11,7 +11,7 @@ from src.batch_creator.process import perform_batch_processing
 from src.common import enable_dark_title_bar
 
 class BatchCreatorProcessDialog(QDialog):
-    def __init__(self, process, current_file, parent=None, process_all=None, collect_replacements = None, viewport = None):
+    def __init__(self, process, current_file, parent=None, process_all=None, collect_replacements=None, viewport=None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_process_Dialog()
         self.ui.setupUi(self)
@@ -49,6 +49,7 @@ class BatchCreatorProcessDialog(QDialog):
         self.ui.select_files_to_process_button.clicked.connect(self.select_files_to_process)
         self.ui.choose_output_button.clicked.connect(self.choose_output_directory)
         self.ui.process_button.clicked.connect(self.process_all_files)
+        self.ui.paste_files_to_process_button.clicked.connect(self.paste_files_from_clipboard)
 
     def on_algorithm_changed(self, index):
         self.process_data['algorithm'] = index
@@ -145,3 +146,14 @@ class BatchCreatorProcessDialog(QDialog):
         container = QWidget()
         container.setLayout(layout)
         return container
+
+    def paste_files_from_clipboard(self):
+        clipboard = QApplication.clipboard()
+        clipboard_text = clipboard.text()
+        if clipboard_text:
+            file_paths = clipboard_text.strip().split('\n')
+            # Assuming the paths are relative to the addon directory
+            addon_dir = get_addon_dir()
+            full_paths = [os.path.join(addon_dir, file_path.strip()) for file_path in file_paths]
+            self.process_data['custom_files'] = full_paths
+            self.update_previews()
