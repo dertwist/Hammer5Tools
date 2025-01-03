@@ -55,6 +55,43 @@ class Ui_BatchCreator_process_Dialog(object):
         self.horizontalLayout_3 = QHBoxLayout(self.frame_5)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.paste_files_to_process_button = QPushButton(self.frame_5)
+        self.paste_files_to_process_button.setObjectName(u"paste_files_to_process_button")
+        self.paste_files_to_process_button.setStyleSheet(u"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }\n"
+"QPushButton:disabled {\n"
+"color: gray;\n"
+" background-color: #2C2C2C;\n"
+"}")
+
+        self.horizontalLayout_3.addWidget(self.paste_files_to_process_button)
+
         self.select_files_to_process_button = QPushButton(self.frame_5)
         self.select_files_to_process_button.setObjectName(u"select_files_to_process_button")
         self.select_files_to_process_button.setStyleSheet(u"    QPushButton {\n"
@@ -440,7 +477,8 @@ class Ui_BatchCreator_process_Dialog(object):
 
     def retranslateUi(self, BatchCreator_process_Dialog):
         BatchCreator_process_Dialog.setWindowTitle(QCoreApplication.translate("BatchCreator_process_Dialog", u"Process options", None))
-        self.select_files_to_process_button.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Select files to process", None))
+        self.paste_files_to_process_button.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Paste", None))
+        self.select_files_to_process_button.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Select files", None))
         self.load_from_the_folder_checkBox.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Load from the folder", None))
         self.toolButton.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"...", None))
         self.choose_output_button.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Choose output", None))
