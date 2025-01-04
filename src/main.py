@@ -40,7 +40,7 @@ stop_discord_thread = threading.Event()
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
 
 # Versions
-app_version = '3.7.2'
+app_version = '3.8.0'
 
 
 class DevWidget(QWidget):
