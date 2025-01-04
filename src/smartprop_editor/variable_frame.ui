@@ -227,7 +227,7 @@ QLineEdit::selection {
          <string>Variable name</string>
         </property>
         <property name="maxLength">
-         <number>32</number>
+         <number>86</number>
         </property>
         <property name="readOnly">
          <bool>false</bool>
@@ -236,11 +236,26 @@ QLineEdit::selection {
       </item>
       <item>
        <widget class="QLineEdit" name="variable_class">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>128</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="maximumSize">
          <size>
-          <width>130</width>
+          <width>128</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="contextMenuPolicy">
+         <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
         </property>
         <property name="toolTip">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;class&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -273,6 +288,9 @@ QLineEdit::selection {
         </property>
         <property name="maxLength">
          <number>64</number>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
         </property>
         <property name="readOnly">
          <bool>true</bool>
