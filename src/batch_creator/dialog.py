@@ -124,12 +124,12 @@ class BatchCreatorProcessDialog(QDialog):
 
         if self.process_data.get('load_from_the_folder'):
             for file in processed_files[1]:
-                absolute_path = os.path.abspath(file)
+                item_widget = self.create_preview_item(file)
                 base_name = os.path.basename(file)
                 list_item = QListWidgetItem(base_name)
-                list_item.setToolTip(absolute_path)
-                list_item.setData(Qt.UserRole, absolute_path)
                 input_preview.addItem(list_item)
+                list_item.setSizeHint(item_widget.sizeHint())
+                input_preview.setItemWidget(list_item, item_widget)
         else:
             for file in self.process_data.get('custom_files', []):
                 absolute_path = os.path.abspath(file)
