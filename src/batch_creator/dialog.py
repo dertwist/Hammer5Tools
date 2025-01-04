@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QListWidgetItem, QApplication, QListWidget, QMenu
 )
 from PySide6.QtCore import Qt, QPoint
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QFont
 from src.batch_creator.ui_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path, get_addon_dir
 from src.qt_styles.common import qt_stylesheet_button
@@ -41,6 +41,10 @@ class BatchCreatorProcessDialog(QDialog):
             self.ui.output_to_the_folder_checkBox.setChecked(self.process_data.get('output_to_the_folder', False))
             self.ui.ignore_extensions_lineEdit.setText(self.process_data.get('ignore_extensions', ''))
             self.ui.ignore_files_lineEdit.setText(self.process_data.get('ignore_list', ''))
+
+            # Set the initial enabled state of the choose_output_button
+            is_output_to_folder = self.process_data.get('output_to_the_folder', False)
+            self.ui.choose_output_button.setEnabled(not is_output_to_folder)
         except KeyError as e:
             QMessageBox.critical(self, "Initialization Error", f"Missing configuration: {e}")
 
@@ -70,7 +74,9 @@ class BatchCreatorProcessDialog(QDialog):
         self.update_previews()
 
     def on_output_to_folder_toggled(self, state):
-        self.process_data['output_to_the_folder'] = bool(state)
+        is_checked = bool(state)
+        self.process_data['output_to_the_folder'] = is_checked
+        self.ui.choose_output_button.setEnabled(not is_checked)
         self.update_previews()
 
     def on_ignore_extensions_changed(self, text):
@@ -253,6 +259,7 @@ class BatchCreatorProcessDialog(QDialog):
             for file, reason in skipped_files:
                 message += f"- {file}: {reason}\n"
 
+        QMessageBox.information(self, "Paste Files", message.strip())
 
     def show_context_menu(self, position: QPoint):
         sender = self.sender()
