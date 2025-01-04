@@ -169,6 +169,7 @@ class Ui_BatchCreator_process_Dialog(object):
 
         self.Input_files_preview_scrollarea = QListWidget(self.frame_3)
         self.Input_files_preview_scrollarea.setObjectName(u"Input_files_preview_scrollarea")
+        self.Input_files_preview_scrollarea.setAlternatingRowColors(True)
 
         self.verticalLayout_3.addWidget(self.Input_files_preview_scrollarea)
 
@@ -275,6 +276,7 @@ class Ui_BatchCreator_process_Dialog(object):
 
         self.output_files_preview_scrollarea = QListWidget(self.frame_2)
         self.output_files_preview_scrollarea.setObjectName(u"output_files_preview_scrollarea")
+        self.output_files_preview_scrollarea.setAlternatingRowColors(True)
 
         self.verticalLayout_2.addWidget(self.output_files_preview_scrollarea)
 
