@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from PySide6.QtWidgets import (
     QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget,
     QHBoxLayout, QListWidgetItem, QApplication, QListWidget, QMenu
@@ -66,9 +67,6 @@ class BatchCreatorProcessDialog(QDialog):
         self.process_data['load_from_the_folder'] = is_checked
         self.ui.select_files_to_process_button.setEnabled(not is_checked)
         self.ui.paste_files_to_process_button.setEnabled(not is_checked)
-        self.ui.Input_files_preview_scrollarea.setSelectionMode(
-            QListWidget.MultiSelection if not is_checked else QListWidget.SingleSelection
-        )
         self.update_previews()
 
     def on_output_to_folder_toggled(self, state):
@@ -178,20 +176,52 @@ class BatchCreatorProcessDialog(QDialog):
 
     def paste_files_from_clipboard(self):
         clipboard = QApplication.clipboard()
-        clipboard_text = clipboard.text()
-        if clipboard_text:
-            file_paths = clipboard_text.strip().split('\n')
-            addon_dir = get_addon_dir()
-            full_paths = [os.path.abspath(os.path.join(addon_dir, file_path.strip())) for file_path in file_paths]
+        clipboard_text = clipboard.text().strip()
 
-            existing_files = set(self.process_data.get('custom_files', []))
-            new_files = [f for f in full_paths if f not in existing_files and os.path.exists(f)]
+        if not clipboard_text:
+            QMessageBox.information(self, "Paste Files", "Clipboard is empty.")
+            return
 
-            if new_files:
-                self.process_data['custom_files'].extend(new_files)
-                self.update_previews()
+        # Split clipboard text into lines, supporting different newline characters
+        raw_paths = re.split(r'\r?\n|\r', clipboard_text)
+        addon_dir = get_addon_dir()
+
+        added_files = []
+        skipped_files = []
+
+        existing_files = set(self.process_data.get('custom_files', []))
+
+        for path in raw_paths:
+            path = path.strip()
+            if not path:
+                continue
+
+            # Determine if the path is absolute or relative
+            if os.path.isabs(path):
+                full_path = os.path.normpath(path)
             else:
-                QMessageBox.information(self, "Paste Files", "No new valid files to paste.")
+                full_path = os.path.abspath(os.path.join(addon_dir, path))
+
+            if full_path in existing_files:
+                skipped_files.append((path, "Already in the list"))
+                continue
+
+            added_files.append(full_path)
+            existing_files.add(full_path)
+
+        if added_files:
+            self.process_data.setdefault('custom_files', []).extend(added_files)
+            self.update_previews()
+
+        # Prepare feedback message
+        message = ""
+        if added_files:
+            message += f"Added {len(added_files)} file(s) successfully.\n"
+        if skipped_files:
+            message += f"Skipped {len(skipped_files)} file(s):\n"
+            for file, reason in skipped_files:
+                message += f"- {file}: {reason}\n"
+
 
     def show_context_menu(self, position: QPoint):
         sender = self.sender()

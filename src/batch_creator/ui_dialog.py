@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
-    QFrame, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QPushButton, QSizePolicy,
-    QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox,
+    QDialog, QFrame, QHBoxLayout, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QPushButton,
+    QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_BatchCreator_process_Dialog(object):
@@ -170,6 +170,7 @@ class Ui_BatchCreator_process_Dialog(object):
         self.Input_files_preview_scrollarea = QListWidget(self.frame_3)
         self.Input_files_preview_scrollarea.setObjectName(u"Input_files_preview_scrollarea")
         self.Input_files_preview_scrollarea.setAlternatingRowColors(True)
+        self.Input_files_preview_scrollarea.setSelectionMode(QAbstractItemView.SelectionMode.ContiguousSelection)
 
         self.verticalLayout_3.addWidget(self.Input_files_preview_scrollarea)
 
