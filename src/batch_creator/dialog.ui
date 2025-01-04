@@ -228,6 +228,9 @@ color: gray;
            <property name="alternatingRowColors">
             <bool>true</bool>
            </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::SelectionMode::ContiguousSelection</enum>
+           </property>
           </widget>
          </item>
         </layout>
