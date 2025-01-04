@@ -1,14 +1,17 @@
 import os
+import json
 from PySide6.QtWidgets import (
-    QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget, QHBoxLayout, QListWidgetItem, QApplication
+    QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget,
+    QHBoxLayout, QListWidgetItem, QApplication, QListWidget, QMenu
 )
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QClipboard
+from PySide6.QtCore import Qt, QPoint
+from PySide6.QtGui import QAction
 from src.batch_creator.ui_dialog import Ui_BatchCreator_process_Dialog
 from src.preferences import get_addon_name, get_cs2_path, get_addon_dir
 from src.qt_styles.common import qt_stylesheet_button
 from src.batch_creator.process import perform_batch_processing
 from src.common import enable_dark_title_bar
+
 
 class BatchCreatorProcessDialog(QDialog):
     def __init__(self, process, current_file, parent=None, process_all=None, collect_replacements=None, viewport=None):
@@ -51,12 +54,21 @@ class BatchCreatorProcessDialog(QDialog):
         self.ui.process_button.clicked.connect(self.process_all_files)
         self.ui.paste_files_to_process_button.clicked.connect(self.paste_files_from_clipboard)
 
+        self.ui.Input_files_preview_scrollarea.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.Input_files_preview_scrollarea.customContextMenuRequested.connect(self.show_context_menu)
+
     def on_algorithm_changed(self, index):
         self.process_data['algorithm'] = index
         self.update_previews()
 
     def on_load_from_folder_toggled(self, state):
-        self.process_data['load_from_the_folder'] = bool(state)
+        is_checked = bool(state)
+        self.process_data['load_from_the_folder'] = is_checked
+        self.ui.select_files_to_process_button.setEnabled(not is_checked)
+        self.ui.paste_files_to_process_button.setEnabled(not is_checked)
+        self.ui.Input_files_preview_scrollarea.setSelectionMode(
+            QListWidget.MultiSelection if not is_checked else QListWidget.SingleSelection
+        )
         self.update_previews()
 
     def on_output_to_folder_toggled(self, state):
@@ -72,20 +84,28 @@ class BatchCreatorProcessDialog(QDialog):
         self.update_previews()
 
     def select_files_to_process(self):
-        file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Files to Process", "", "All Files (*)")
+        file_paths, _ = QFileDialog.getOpenFileNames(
+            self, "Select Files to Process", "", "All Files (*)"
+        )
         if file_paths:
-            self.process_data['custom_files'] = file_paths
+            absolute_paths = [os.path.abspath(path) for path in file_paths]
+            self.process_data['custom_files'] = absolute_paths
             self.update_previews()
 
     def choose_output_directory(self):
-        default_output = os.path.join(self.parent_window.cs2_path, 'content', 'csgo_addons', self.parent_window.addon_name)
-        selected_directory = QFileDialog.getExistingDirectory(self, "Select Output Directory", default_output, options=QFileDialog.ShowDirsOnly)
+        default_output = os.path.join(
+            self.parent_window.cs2_path, 'content', 'csgo_addons', self.parent_window.addon_name
+        )
+        selected_directory = QFileDialog.getExistingDirectory(
+            self, "Select Output Directory", default_output, options=QFileDialog.ShowDirsOnly
+        )
         if selected_directory:
-            self.process_data['custom_output'] = os.path.relpath(selected_directory, default_output)
+            self.process_data['custom_output'] = os.path.abspath(selected_directory)
             self.update_previews()
 
     def process_all_files(self):
-        self.process_all()
+        if callable(self.process_all):
+            self.process_all()
 
     def update_previews(self):
         processed_files = perform_batch_processing(
@@ -104,23 +124,32 @@ class BatchCreatorProcessDialog(QDialog):
 
         if self.process_data.get('load_from_the_folder'):
             for file in processed_files[1]:
-                item_widget = self.create_preview_item(file)
-                list_item = QListWidgetItem()
-                list_item.setSizeHint(item_widget.sizeHint())
+                absolute_path = os.path.abspath(file)
+                base_name = os.path.basename(file)
+                list_item = QListWidgetItem(base_name)
+                list_item.setToolTip(absolute_path)
+                list_item.setData(Qt.UserRole, absolute_path)
                 input_preview.addItem(list_item)
-                input_preview.setItemWidget(list_item, item_widget)
         else:
             for file in self.process_data.get('custom_files', []):
-                input_preview.addItem(QListWidgetItem(os.path.basename(file)))
+                absolute_path = os.path.abspath(file)
+                base_name = os.path.basename(file)
+                list_item = QListWidgetItem(base_name)
+                list_item.setToolTip(absolute_path)
+                list_item.setData(Qt.UserRole, absolute_path)
+                input_preview.addItem(list_item)
 
         for output_file in processed_files[0]:
             output_preview.addItem(QListWidgetItem(f"{output_file}.{processed_files[2]}"))
 
-        output_text = (
-            f'Output folder: {os.path.relpath(processed_files[3], os.path.join(self.parent_window.cs2_path, "content", "csgo_addons", self.parent_window.addon_name))}'
-            if self.process_data.get('output_to_the_folder')
-            else f'Output folder: {self.process_data.get("custom_output", "")}'
-        )
+        if self.process_data.get('output_to_the_folder'):
+            output_relative_path = os.path.relpath(
+                processed_files[3],
+                os.path.join(self.parent_window.cs2_path, "content", "csgo_addons", self.parent_window.addon_name)
+            )
+            output_text = f'Output folder: {output_relative_path}'
+        else:
+            output_text = f'Output folder: {self.process_data.get("custom_output", "")}'
         self.ui.output_folder.setText(output_text)
 
     def create_preview_item(self, file_name):
@@ -152,8 +181,61 @@ class BatchCreatorProcessDialog(QDialog):
         clipboard_text = clipboard.text()
         if clipboard_text:
             file_paths = clipboard_text.strip().split('\n')
-            # Assuming the paths are relative to the addon directory
             addon_dir = get_addon_dir()
-            full_paths = [os.path.join(addon_dir, file_path.strip()) for file_path in file_paths]
-            self.process_data['custom_files'] = full_paths
+            full_paths = [os.path.abspath(os.path.join(addon_dir, file_path.strip())) for file_path in file_paths]
+
+            existing_files = set(self.process_data.get('custom_files', []))
+            new_files = [f for f in full_paths if f not in existing_files and os.path.exists(f)]
+
+            if new_files:
+                self.process_data['custom_files'].extend(new_files)
+                self.update_previews()
+            else:
+                QMessageBox.information(self, "Paste Files", "No new valid files to paste.")
+
+    def show_context_menu(self, position: QPoint):
+        sender = self.sender()
+        if isinstance(sender, QListWidget):
+            menu = QMenu(self)
+
+            delete_action = QAction("Delete Item", self)
+            clear_all_action = QAction("Clear All", self)
+            paste_action = QAction("Paste", self)
+
+            delete_action.triggered.connect(self.delete_selected_items)
+            clear_all_action.triggered.connect(self.clear_all_items)
+            paste_action.triggered.connect(self.paste_files_from_clipboard)
+
+            menu.addAction(delete_action)
+            menu.addAction(clear_all_action)
+            menu.addAction(paste_action)
+
+            menu.exec_(sender.mapToGlobal(position))
+
+    def delete_selected_items(self):
+        input_preview = self.ui.Input_files_preview_scrollarea
+        selected_items = input_preview.selectedItems()
+        if not selected_items:
+            QMessageBox.information(self, "Delete Item", "No items selected to delete.")
+            return
+        for item in selected_items:
+            full_path = item.data(Qt.UserRole)
+            if full_path in self.process_data.get('custom_files', []):
+                self.process_data['custom_files'].remove(full_path)
+            input_preview.takeItem(input_preview.row(item))
+
+        # Write updated data back to disk
+        self.update_previews()
+
+    def clear_all_items(self):
+        confirmation = QMessageBox.question(
+            self,
+            "Clear All Items",
+            "Are you sure you want to clear all items?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if confirmation == QMessageBox.Yes:
+            self.process_data['custom_files'] = []
+            self.ui.Input_files_preview_scrollarea.clear()
+
             self.update_previews()
