@@ -109,7 +109,7 @@ def perform_batch_processing(file_path, process, preview, replacements, content_
 
     created_files = []
     if preview:
-        return preview_processing_files(files_to_process, base_directory, file_extension, process)
+        return preview_processing_files(files_to_process, batch_directory, file_extension, process)
     else:
         if output_to_the_folder:
             output_directory = batch_directory
