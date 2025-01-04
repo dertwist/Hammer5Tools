@@ -207,7 +207,7 @@ color: gray;
 }</string>
               </property>
               <property name="text">
-               <string>Load from the folder</string>
+               <string>Load from folder</string>
               </property>
               <property name="iconSize">
                <size>
@@ -371,7 +371,7 @@ color: gray;
 }</string>
               </property>
               <property name="text">
-               <string>Output to the folder</string>
+               <string>Output to folder</string>
               </property>
               <property name="iconSize">
                <size>
