@@ -15,7 +15,7 @@ from src.preferences import debug
 from src.common import editor_info, JsonToKv3, Kv3ToJson
 from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
-from src.widgets import HierarchyItemModel
+from src.widgets import HierarchyItemModel, exception_handler
 class VsmartOpen:
     def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
         self.filename = filename
@@ -148,6 +148,7 @@ class VsmartSave:
         self.choices_data = self.choices(self.choices_tree.invisibleRootItem())
         self.save_file()
 
+    @exception_handler
     def save_file(self):
         """Saving file"""
         out_data = {'generic_data_type': "CSmartPropRoot"}
