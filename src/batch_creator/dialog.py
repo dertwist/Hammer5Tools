@@ -42,9 +42,15 @@ class BatchCreatorProcessDialog(QDialog):
             self.ui.ignore_extensions_lineEdit.setText(self.process_data.get('ignore_extensions', ''))
             self.ui.ignore_files_lineEdit.setText(self.process_data.get('ignore_list', ''))
 
+            self.on_load_from_folder_toggled(self.ui.load_from_the_folder_checkBox.isChecked())
+            self.on_output_to_folder_toggled(self.ui.output_to_the_folder_checkBox.isChecked())
+
             # Set the initial enabled state of the choose_output_button
             is_output_to_folder = self.process_data.get('output_to_the_folder', False)
             self.ui.choose_output_button.setEnabled(not is_output_to_folder)
+
+            # Enable or disable context menu based on "Load from Folder" checkbox
+            self.update_context_menu_policy(is_output_to_folder)
         except KeyError as e:
             QMessageBox.critical(self, "Initialization Error", f"Missing configuration: {e}")
 
@@ -59,8 +65,19 @@ class BatchCreatorProcessDialog(QDialog):
         self.ui.process_button.clicked.connect(self.process_all_files)
         self.ui.paste_files_to_process_button.clicked.connect(self.paste_files_from_clipboard)
 
-        self.ui.Input_files_preview_scrollarea.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.ui.Input_files_preview_scrollarea.customContextMenuRequested.connect(self.show_context_menu)
+        # Initially set context menu policy
+        self.update_context_menu_policy(self.process_data.get('load_from_the_folder', False))
+
+    def update_context_menu_policy(self, load_from_folder):
+        if not load_from_folder:
+            self.ui.Input_files_preview_scrollarea.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.ui.Input_files_preview_scrollarea.customContextMenuRequested.connect(self.show_context_menu)
+        else:
+            self.ui.Input_files_preview_scrollarea.setContextMenuPolicy(Qt.NoContextMenu)
+            try:
+                self.ui.Input_files_preview_scrollarea.customContextMenuRequested.disconnect()
+            except TypeError:
+                pass  # Signal was not connected
 
     def on_algorithm_changed(self, index):
         self.process_data['algorithm'] = index
@@ -71,6 +88,7 @@ class BatchCreatorProcessDialog(QDialog):
         self.process_data['load_from_the_folder'] = is_checked
         self.ui.select_files_to_process_button.setEnabled(not is_checked)
         self.ui.paste_files_to_process_button.setEnabled(not is_checked)
+        self.update_context_menu_policy(is_checked)
         self.update_previews()
 
     def on_output_to_folder_toggled(self, state):
@@ -92,9 +110,8 @@ class BatchCreatorProcessDialog(QDialog):
             self, "Select Files to Process", "", "All Files (*)"
         )
         if file_paths:
-            absolute_paths = [os.path.abspath(path) for path in file_paths]
-            self.process_data['custom_files'] = absolute_paths
-            self.update_previews()
+            addon_dir = get_addon_dir()
+            added_files, skipped_files = self._validate_and_add_files(file_paths, addon_dir, from_paste=False)
 
     def choose_output_directory(self):
         default_output = os.path.join(
@@ -219,7 +236,6 @@ class BatchCreatorProcessDialog(QDialog):
             QMessageBox.information(self, "Paste Files", "Clipboard is empty.")
             return
 
-        # Split clipboard text into lines, supporting different newline characters
         raw_paths = re.split(r'\r?\n|\r', clipboard_text)
         addon_dir = get_addon_dir()
 
@@ -249,17 +265,6 @@ class BatchCreatorProcessDialog(QDialog):
         if added_files:
             self.process_data.setdefault('custom_files', []).extend(added_files)
             self.update_previews()
-
-        # Prepare feedback message
-        message = ""
-        if added_files:
-            message += f"Added {len(added_files)} file(s) successfully.\n"
-        if skipped_files:
-            message += f"Skipped {len(skipped_files)} file(s):\n"
-            for file, reason in skipped_files:
-                message += f"- {file}: {reason}\n"
-
-        QMessageBox.information(self, "Paste Files", message.strip())
 
     def show_context_menu(self, position: QPoint):
         sender = self.sender()

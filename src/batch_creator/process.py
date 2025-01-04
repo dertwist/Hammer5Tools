@@ -185,6 +185,9 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
         else:
             debug(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
 
+def get_basename_without_extension(file_path):
+    return os.path.splitext(os.path.basename(file_path))[0]
+
 def preview_processing_files(files, base_directory, extension, process):
     if process.get('load_from_the_folder'):
         files_list_out = []
@@ -197,7 +200,8 @@ def preview_processing_files(files, base_directory, extension, process):
                     files_list_out.append(file)
         return files, files_list_out, extension, base_directory
     else:
-        return [os.path.basename(f) for f in files], None, extension, base_directory
+        return [get_basename_without_extension(f) for f in files], None, extension, base_directory
+
 
 def extract_base_names(names):
     return set(os.path.basename(name) for name in names)
