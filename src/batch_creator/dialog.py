@@ -12,6 +12,7 @@ from src.preferences import get_addon_name, get_cs2_path, get_addon_dir
 from src.qt_styles.common import qt_stylesheet_button
 from src.batch_creator.process import perform_batch_processing
 from src.common import enable_dark_title_bar
+from src.widgets_common import ErrorInfo
 
 
 class BatchCreatorProcessDialog(QDialog):
@@ -42,6 +43,7 @@ class BatchCreatorProcessDialog(QDialog):
             self.ui.ignore_extensions_lineEdit.setText(self.process_data.get('ignore_extensions', ''))
             self.ui.ignore_files_lineEdit.setText(self.process_data.get('ignore_list', ''))
 
+            # Initialize button states based on checkbox statuses
             self.on_load_from_folder_toggled(self.ui.load_from_the_folder_checkBox.isChecked())
             self.on_output_to_folder_toggled(self.ui.output_to_the_folder_checkBox.isChecked())
 
@@ -69,15 +71,15 @@ class BatchCreatorProcessDialog(QDialog):
         self.update_context_menu_policy(self.process_data.get('load_from_the_folder', False))
 
     def update_context_menu_policy(self, load_from_folder):
-        if not load_from_folder:
-            self.ui.Input_files_preview_scrollarea.setContextMenuPolicy(Qt.CustomContextMenu)
-            self.ui.Input_files_preview_scrollarea.customContextMenuRequested.connect(self.show_context_menu)
-        else:
+        if load_from_folder:
             self.ui.Input_files_preview_scrollarea.setContextMenuPolicy(Qt.NoContextMenu)
             try:
                 self.ui.Input_files_preview_scrollarea.customContextMenuRequested.disconnect()
             except TypeError:
                 pass  # Signal was not connected
+        else:
+            self.ui.Input_files_preview_scrollarea.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.ui.Input_files_preview_scrollarea.customContextMenuRequested.connect(self.show_context_menu)
 
     def on_algorithm_changed(self, index):
         self.process_data['algorithm'] = index
@@ -111,7 +113,7 @@ class BatchCreatorProcessDialog(QDialog):
         )
         if file_paths:
             addon_dir = get_addon_dir()
-            added_files, skipped_files = self._validate_and_add_files(file_paths, addon_dir, from_paste=False)
+            self._validate_and_add_files(file_paths, addon_dir, from_paste=False)
 
     def choose_output_directory(self):
         default_output = os.path.join(
@@ -146,7 +148,7 @@ class BatchCreatorProcessDialog(QDialog):
         if self.process_data.get('load_from_the_folder'):
             for file in processed_files[1]:
                 item_widget = self.create_preview_item(file)
-                base_name = os.path.basename(file)
+                base_name = os.path.splitext(os.path.basename(file))[0]  # Removed extension
                 list_item = QListWidgetItem(base_name)
                 input_preview.addItem(list_item)
                 list_item.setSizeHint(item_widget.sizeHint())
@@ -154,7 +156,7 @@ class BatchCreatorProcessDialog(QDialog):
         else:
             for file in self.process_data.get('custom_files', []):
                 absolute_path = os.path.abspath(file)
-                base_name = os.path.basename(file)
+                base_name = os.path.splitext(os.path.basename(file))[0]  # Removed extension
                 list_item = QListWidgetItem(base_name)
                 list_item.setToolTip(absolute_path)
                 list_item.setData(Qt.UserRole, absolute_path)
@@ -208,6 +210,9 @@ class BatchCreatorProcessDialog(QDialog):
             }"""
 
         remove_button.setStyleSheet(qt_stylesheet_button)
+        font = QFont()
+        font.setPointSize(12)  # Desired font size
+        remove_button.setFont(font)
         remove_button.setMaximumWidth(64)
 
         def ignore_file():
@@ -239,12 +244,15 @@ class BatchCreatorProcessDialog(QDialog):
         raw_paths = re.split(r'\r?\n|\r', clipboard_text)
         addon_dir = get_addon_dir()
 
+        self._validate_and_add_files(raw_paths, addon_dir, from_paste=True)
+
+    def _validate_and_add_files(self, paths, addon_dir, from_paste=True):
         added_files = []
         skipped_files = []
-
+        error_files = []
         existing_files = set(self.process_data.get('custom_files', []))
 
-        for path in raw_paths:
+        for path in paths:
             path = path.strip()
             if not path:
                 continue
@@ -255,6 +263,12 @@ class BatchCreatorProcessDialog(QDialog):
             else:
                 full_path = os.path.abspath(os.path.join(addon_dir, path))
 
+            # Check for file extension
+            _, ext = os.path.splitext(full_path)
+            if not ext:
+                error_files.append(path)
+                continue
+
             if full_path in existing_files:
                 skipped_files.append((path, "Already in the list"))
                 continue
@@ -262,9 +276,16 @@ class BatchCreatorProcessDialog(QDialog):
             added_files.append(full_path)
             existing_files.add(full_path)
 
+        if error_files:
+            error_message = "The following files do not have extensions:\n" + "\n".join(error_files)
+            ErrorInfo("Wrong format",str(error_message)).exec_()
+
         if added_files:
             self.process_data.setdefault('custom_files', []).extend(added_files)
             self.update_previews()
+
+        return added_files, skipped_files
+
 
     def show_context_menu(self, position: QPoint):
         sender = self.sender()
@@ -297,7 +318,6 @@ class BatchCreatorProcessDialog(QDialog):
                 self.process_data['custom_files'].remove(full_path)
             input_preview.takeItem(input_preview.row(item))
 
-        # Write updated data back to disk
         self.update_previews()
 
     def clear_all_items(self):
@@ -310,5 +330,4 @@ class BatchCreatorProcessDialog(QDialog):
         if confirmation == QMessageBox.Yes:
             self.process_data['custom_files'] = []
             self.ui.Input_files_preview_scrollarea.clear()
-
             self.update_previews()
