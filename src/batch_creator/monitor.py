@@ -126,13 +126,11 @@ class MonitoringFileWatcher(QListWidget):
         if directory not in self.watched_directories:
             self.file_system_watcher.addPath(directory)
             self.watched_directories.add(directory)
-            debug(f"Watching directory: {directory}")
 
     def remove_directory_watch(self, directory):
         if directory in self.watched_directories:
             self.file_system_watcher.removePath(directory)
             self.watched_directories.remove(directory)
-            debug(f"Stopped watching directory: {directory}")
 
     def collect_hbat_files(self):
         """
@@ -183,18 +181,15 @@ class MonitoringFileWatcher(QListWidget):
 
         self.update_reference(path)
         self.file_system_watcher.addPath(path)
-        debug(f"Added watcher for file: {path}")
 
     def remove_file_widget(self, path):
         self.stop_processing(path)
         if path in self.file_system_watcher.files():
             self.file_system_watcher.removePath(path)
-            debug(f"Removed watcher for file: {path}")
         item, _ = self.file_widgets.pop(path, (None, None))
         if item:
             self.takeItem(self.row(item))
         self.untrack_reference(path)
-        debug(f"Removed file widget for: {path}")
 
     def update_reference(self, config_path):
         reference_path = read_reference_from_file(config_path)  # Assuming this function is defined
@@ -212,7 +207,6 @@ class MonitoringFileWatcher(QListWidget):
         if reference_path not in self.reference_configs:
             self.reference_configs[reference_path] = set()
             self.file_system_watcher.addPath(reference_path)
-            debug(f"Tracking new reference: {reference_path}")
         self.reference_configs[reference_path].add(config_path)
 
     def untrack_reference(self, config_path):
@@ -225,10 +219,8 @@ class MonitoringFileWatcher(QListWidget):
                     self.reference_configs.pop(reference_path)
                     if reference_path in self.file_system_watcher.files():
                         self.file_system_watcher.removePath(reference_path)
-                        debug(f"Stopped tracking reference: {reference_path}")
 
     def on_directory_changed(self, path):
-        debug(f"Directory changed: {path}")
         self.update_file_list()
 
         # Check for new subdirectories and add them to the watcher
@@ -270,7 +262,6 @@ class MonitoringFileWatcher(QListWidget):
         process_thread.finished.connect(lambda: self.on_process_finished(config_path))
         process_thread.start()
         self.process_threads[config_path] = process_thread
-        debug(f"Started processing for: {config_path}")
 
     def stop_processing(self, config_path):
         if config_path in self.process_threads:
@@ -278,7 +269,6 @@ class MonitoringFileWatcher(QListWidget):
             if thread.isRunning():
                 thread.stop()  # Assuming StartProcess has a stop method
                 thread.wait()
-                debug(f"Stopped processing for: {config_path}")
 
     def on_process_finished(self, config_path):
         self.process_threads.pop(config_path, None)
