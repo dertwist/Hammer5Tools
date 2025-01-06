@@ -7,6 +7,19 @@ import shutil
 import tempfile
 import base64
 
+import sys
+import pkg_resources
+
+# Print Python version
+print("Python version:", sys.version)
+
+# Print installed Python packages
+installed_packages = pkg_resources.working_set
+installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
+print("Python packages:")
+for package in installed_packages_list:
+    print(package)
+
 def print_elapsed_time(stage_name, start_time):
     elapsed_time = time.time() - start_time
     print(f"{stage_name} took {elapsed_time:.2f} seconds")
@@ -17,6 +30,7 @@ def kill_process(process_name):
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
+
 
 def build_hammer5_tools():
     subprocess.run([
@@ -58,15 +72,17 @@ def build_updater():
     subprocess.run([
         'pyinstaller',
         '--name=Hammer5Tools_Updater',
-        '--noconfirm',
         '--onefile',
-        '--windowed',
-        '--strip',
         '--optimize=2',
         '--icon=src/appicon.ico',
         '--exclude-module=PySide6',
         '--exclude-module=PyQt5',
-        '--noupx', '--distpath=hammer5tools',
+        '--exclude-module=pandas',
+        '--exclude-module=numpy',
+        '--hidden-import=psutil',
+        '--hidden-import=colorama',
+        '--hidden-import=tqdm',
+        '--distpath=hammer5tools',
         'src/updater.py'
     ], check=True)
 
