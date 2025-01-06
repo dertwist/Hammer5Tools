@@ -663,7 +663,8 @@ QListWidget {
     color: #E3E3E3;
 }
 QListWidget::item {
-    padding: 0px;
+    padding: 2px;
+    alternate-background-color: #ff242424;
 }
 QListWidget::item:selected {
     background-color: #414956;

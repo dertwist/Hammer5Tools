@@ -163,14 +163,21 @@ class Ui_Form(object):
 "\n"
 "")
         self.variable_name.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
-        self.variable_name.setMaxLength(32)
+        self.variable_name.setMaxLength(86)
         self.variable_name.setReadOnly(False)
 
         self.horizontalLayout.addWidget(self.variable_name)
 
         self.variable_class = QLineEdit(self.frame)
         self.variable_class.setObjectName(u"variable_class")
-        self.variable_class.setMaximumSize(QSize(130, 16777215))
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.variable_class.sizePolicy().hasHeightForWidth())
+        self.variable_class.setSizePolicy(sizePolicy)
+        self.variable_class.setMinimumSize(QSize(128, 0))
+        self.variable_class.setMaximumSize(QSize(128, 16777215))
+        self.variable_class.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self.variable_class.setStyleSheet(u"QLineEdit {\n"
 "	font: 8pt \"Segoe UI\";\n"
 "    border: 2px solid #CCCCCC;\n"
@@ -193,6 +200,7 @@ class Ui_Form(object):
 "\n"
 "")
         self.variable_class.setMaxLength(64)
+        self.variable_class.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
         self.variable_class.setReadOnly(True)
 
         self.horizontalLayout.addWidget(self.variable_class)

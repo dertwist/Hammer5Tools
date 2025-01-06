@@ -5,13 +5,11 @@ from src.common import editor_info
 
 def load_assettypes():
     file_path = os.path.join(get_cs2_path(), 'game', 'bin', 'assettypes_common.txt')
-    if not os.path.isfile(file_path):
-        return file_path, {}
     try:
         data_dict = keyvalues3.read(file_path).value
         return file_path, data_dict
     except:
-        return file_path, {}
+        raise ValueError
 
 def is_editor_info_processed(data):
     processed = data.get('editor_info')

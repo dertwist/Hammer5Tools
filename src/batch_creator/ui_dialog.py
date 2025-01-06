@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
-    QFrame, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QPushButton, QSizePolicy,
-    QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox,
+    QDialog, QFrame, QHBoxLayout, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QPushButton,
+    QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_BatchCreator_process_Dialog(object):
@@ -169,6 +169,8 @@ class Ui_BatchCreator_process_Dialog(object):
 
         self.Input_files_preview_scrollarea = QListWidget(self.frame_3)
         self.Input_files_preview_scrollarea.setObjectName(u"Input_files_preview_scrollarea")
+        self.Input_files_preview_scrollarea.setAlternatingRowColors(True)
+        self.Input_files_preview_scrollarea.setSelectionMode(QAbstractItemView.SelectionMode.ContiguousSelection)
 
         self.verticalLayout_3.addWidget(self.Input_files_preview_scrollarea)
 
@@ -275,6 +277,7 @@ class Ui_BatchCreator_process_Dialog(object):
 
         self.output_files_preview_scrollarea = QListWidget(self.frame_2)
         self.output_files_preview_scrollarea.setObjectName(u"output_files_preview_scrollarea")
+        self.output_files_preview_scrollarea.setAlternatingRowColors(True)
 
         self.verticalLayout_2.addWidget(self.output_files_preview_scrollarea)
 
@@ -479,10 +482,10 @@ class Ui_BatchCreator_process_Dialog(object):
         BatchCreator_process_Dialog.setWindowTitle(QCoreApplication.translate("BatchCreator_process_Dialog", u"Process options", None))
         self.paste_files_to_process_button.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Paste", None))
         self.select_files_to_process_button.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Select files", None))
-        self.load_from_the_folder_checkBox.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Load from the folder", None))
+        self.load_from_the_folder_checkBox.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Load from folder", None))
         self.toolButton.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"...", None))
         self.choose_output_button.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Choose output", None))
-        self.output_to_the_folder_checkBox.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Output to the folder", None))
+        self.output_to_the_folder_checkBox.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Output to folder", None))
         self.label.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Ignore extensions:", None))
         self.ignore_extensions_lineEdit.setPlaceholderText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Ignore extensions: .blend", None))
         self.label_2.setText(QCoreApplication.translate("BatchCreator_process_Dialog", u"Ignore: files", None))

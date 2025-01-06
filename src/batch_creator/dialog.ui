@@ -207,7 +207,7 @@ color: gray;
 }</string>
               </property>
               <property name="text">
-               <string>Load from the folder</string>
+               <string>Load from folder</string>
               </property>
               <property name="iconSize">
                <size>
@@ -224,7 +224,14 @@ color: gray;
           </widget>
          </item>
          <item>
-          <widget class="QListWidget" name="Input_files_preview_scrollarea"/>
+          <widget class="QListWidget" name="Input_files_preview_scrollarea">
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::SelectionMode::ContiguousSelection</enum>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -364,7 +371,7 @@ color: gray;
 }</string>
               </property>
               <property name="text">
-               <string>Output to the folder</string>
+               <string>Output to folder</string>
               </property>
               <property name="iconSize">
                <size>
@@ -381,7 +388,11 @@ color: gray;
           </widget>
          </item>
          <item>
-          <widget class="QListWidget" name="output_files_preview_scrollarea"/>
+          <widget class="QListWidget" name="output_files_preview_scrollarea">
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
