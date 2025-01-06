@@ -66,7 +66,6 @@ def build_updater():
         '--icon=src/appicon.ico',
         '--exclude-module=PySide6',
         '--exclude-module=PyQt5',
-        '--exclude-module=psutil',
         '--exclude-module=tqdm',
         '--noupx', '--distpath=hammer5tools',
         '--exclude-module=colorama',
