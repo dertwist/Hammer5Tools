@@ -14,3 +14,5 @@ colorama
 pygetwindow
 watchdog
 json-stream
+requests
+pyinstaller
