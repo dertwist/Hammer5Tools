@@ -104,7 +104,7 @@ def main():
     kill_main_app()
 
     # Initialize paths
-    dev_mode = False  # Set to True for testing or development
+    dev_mode = True  # Set to True for testing or development
     update_path = tempfile.mkdtemp(prefix="hammer5tools_update_")
     program_path = os.getcwd() if not dev_mode else os.path.normpath("D:/CG/Projects/Other/Hammer5Tools/hammer5tools")
     updater_name = "Hammer5Tools_Updater.exe"
