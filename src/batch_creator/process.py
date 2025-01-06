@@ -17,17 +17,34 @@ class StartProcess(QThread):
 
     def update_reference_content(self, reference):
         reference_path = os.path.join(get_addon_dir(), reference)
-        with open(reference_path, 'r') as file:
-            __data = file.read()
-        return __data
+        try:
+            with open(reference_path, 'r') as file:
+                __data = file.read()
+            return __data
+        except FileNotFoundError:
+            debug(f"Reference file not found: {reference_path}")
+            return ""
+        except Exception as e:
+            debug(f"Error reading reference file {reference_path}: {e}")
+            return ""
 
     def load_file(self, filepath):
-        with open(filepath, 'r') as file:
-            __data = json.load(file)
-        process = __data.get('process', {})
-        replacements = __data.get('replacements', {})
-        content = __data.get('file', {}).get('content', '')
-        return process, replacements, content
+        try:
+            with open(filepath, 'r') as file:
+                __data = json.load(file)
+            process = __data.get('process', {})
+            replacements = __data.get('replacements', {})
+            content = __data.get('file', {}).get('content', '')
+            return process, replacements, content
+        except FileNotFoundError:
+            debug(f"File to load not found: {filepath}")
+            return {}, {}, ""
+        except json.JSONDecodeError as e:
+            debug(f"JSON decode error in file {filepath}: {e}")
+            return {}, {}, ""
+        except Exception as e:
+            debug(f"Error loading file {filepath}: {e}")
+            return {}, {}, ""
 
     def run(self):
         try:
@@ -35,6 +52,10 @@ class StartProcess(QThread):
                 return
 
             process, replacements, content = self.load_file(self.filepath)
+            if not process:
+                debug("No process configuration found. Aborting.")
+                return
+
             reference = process.get('reference')
             if reference:
                 content = self.update_reference_content(reference)
@@ -42,22 +63,34 @@ class StartProcess(QThread):
             if self.stop_thread:
                 return
 
-            perform_batch_processing(self.filepath, process, False, replacements, content)
+            perform_batch_processing(
+                file_path=self.filepath,
+                process=process,
+                preview=False,
+                replacements=replacements,
+                content_template=content  # Assuming 'content' is intended as 'content_template'
+            )
 
             self.finished.emit()
 
         except Exception as e:
-            print(f"Error in StartProcess: {e}")
+            debug(f"Error in StartProcess: {e}")
 
     def stop(self):
         self.stop_thread = True
         self.quit()
         self.wait()
 
-
 def perform_batch_processing(file_path, process, preview, replacements, content_template=None):
     base_directory = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
+    if not os.path.isdir(base_directory):
+        debug(f"Base directory does not exist: {base_directory}")
+        return []
+
     batch_directory = os.path.splitext(file_path)[0]
+    if not os.path.isdir(batch_directory):
+        os.makedirs(batch_directory)
+
     relative_batch_path = os.path.relpath(batch_directory, base_directory).replace('\\', '/')
 
     algorithm = int(process.get('algorithm', default_file['process']['algorithm']))
@@ -76,13 +109,21 @@ def perform_batch_processing(file_path, process, preview, replacements, content_
 
     created_files = []
     if preview:
-        return preview_processing_files(files_to_process, base_directory, file_extension, process)
+        return preview_processing_files(files_to_process, batch_directory, file_extension, process)
     else:
         if output_to_the_folder:
             output_directory = batch_directory
         else:
             custom_output = process.get('custom_output', '')
             output_directory = os.path.join(get_addon_dir(), custom_output)
+
+        if not os.path.isdir(output_directory):
+            try:
+                os.makedirs(output_directory, exist_ok=True)
+                debug(f"Created output directory: {output_directory}")
+            except Exception as e:
+                debug(f"Failed to create output directory {output_directory}: {e}")
+                return created_files
 
         execute_file_creation(
             files=files_to_process,
@@ -98,11 +139,11 @@ def perform_batch_processing(file_path, process, preview, replacements, content_
         )
         return created_files
 
-
 def execute_file_creation(files, output_path, relative_path, extension, created_files,
                           replacements, reference, content_template, load_from_the_folder,
                           base_directory=None):
     if content_template is None:
+        debug("Content template is missing. Skipping file creation.")
         return
 
     for file_name in files:
@@ -127,8 +168,8 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
             __data = __data.replace("#$ASSET_NAME$#", base_name)
             output_file_path = os.path.join(output_path, f"{base_name}.{extension}")
 
-        output_path_resolved = Path(output_file_path).resolve()
-        reference_path_resolved = Path(reference).resolve() if reference else None
+        output_path_resolved = os.path.abspath(output_file_path)
+        reference_path_resolved = os.path.abspath(reference) if reference else None
 
         if output_path_resolved != reference_path_resolved:
             try:
@@ -138,32 +179,35 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
                 debug(f"File created: {output_file_path}")
                 created_files.append(output_file_path)
             except PermissionError as e:
-                print(f"Permission denied: {output_file_path}\n{e}")
+                debug(f"Permission denied: {output_file_path}\n{e}")
             except Exception as e:
-                print(f"Failed to create file {output_file_path}\n{e}")
+                debug(f"Failed to create file {output_file_path}\n{e}")
         else:
             debug(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
 
+def get_basename_without_extension(file_path):
+    return os.path.splitext(os.path.basename(file_path))[0]
 
 def preview_processing_files(files, base_directory, extension, process):
     if process.get('load_from_the_folder'):
         files_list_out = []
         for root, _, files_in_dir in os.walk(base_directory):
             for file in files_in_dir:
-                if file not in process.get('ignore_list', []) and not any(file.endswith(ext) for ext in process.get('ignore_extensions', '').split(',')):
+                if (
+                    file not in process.get('ignore_list', [])
+                    and not any(file.endswith(ext) for ext in process.get('ignore_extensions', '').split(','))
+                ):
                     files_list_out.append(file)
         return files, files_list_out, extension, base_directory
     else:
-        return [os.path.basename(f) for f in files], None, extension, base_directory
+        return [get_basename_without_extension(f) for f in files], None, extension, base_directory
 
 
 def extract_base_names(names):
     return set(os.path.basename(name) for name in names)
 
-
 def extract_base_names_underscore(names):
     return set(name.rsplit('_', 1)[0] if '_' in name else name for name in names)
-
 
 def search_files(directory, algorithm, ignore_extensions, process):
     ignore_list = [item.strip() for item in process.get('ignore_list', '').split(',')]
@@ -179,4 +223,5 @@ def search_files(directory, algorithm, ignore_extensions, process):
     elif algorithm == 1:
         return extract_base_names_underscore(files_found)
     else:
+        debug(f"Unknown algorithm: {algorithm}")
         return []
