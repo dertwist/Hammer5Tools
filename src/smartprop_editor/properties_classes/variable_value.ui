@@ -245,22 +245,12 @@ QComboBox QAbstractItemView::item:selected {
           </property>
           <item>
            <property name="text">
-            <string>Default</string>
+            <string>Bool</string>
            </property>
           </item>
           <item>
            <property name="text">
             <string>Float</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Variable</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Expression</string>
            </property>
           </item>
          </widget>
