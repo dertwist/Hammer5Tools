@@ -1,6 +1,6 @@
 import ast
 import re
-from src.smartprop_editor.property.ui_variable_value import Ui_Widget
+from src.smartprop_editor.property.ui_set_variable import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
@@ -9,10 +9,18 @@ from src.widgets import FloatWidget, ComboboxVariablesWidget
 
 # m_VariableValue =
 # {
-#     m_TargetName = "end_weight"
-# m_DataType = "FLOAT"
-# m_Value = 1.000000
+#       m_TargetName = "end_weight"
+#       m_DataType = "FLOAT"
+#       m_Value = 1.000000
 # }
+# TODO: SetVariable property
+# The SetVariable property should output m_Variable.
+# The widget must include a combobox to select the variable type,
+# and a specialized widget for each variable type.
+# Currently, the planned variable types are: bool, float, and string.
+
+# There is also a conflict with legacy SetVariableBool and SetVariableFloat which have also m_VariableValue key.
+# I planed to make only one universal property - SetVariable, all related properties SetVariableFloat and SetVariableBool
 
 class PropertyVariableValue(QWidget):
     edited = Signal()
