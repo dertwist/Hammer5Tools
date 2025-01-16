@@ -1,20 +1,14 @@
 import ast
 import re
-from src.smartprop_editor.properties_classes.ui_float import Ui_Widget
+from src.smartprop_editor.properties.ui_float import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
 from src.smartprop_editor.objects import expression_completer
 from src.widgets import FloatWidget, ComboboxVariablesWidget
 
-# m_VariableValue =
-# {
-#     m_TargetName = "end_weight"
-# m_DataType = "FLOAT"
-# m_Value = 1.000000
-# }
 
-class PropertyVariableValue(QWidget):
+class PropertyFloat(QWidget):
     edited = Signal()
 
     def __init__(self, value_class, value, variables_scrollArea, int_bool=False, slider_range=[0, 0]):
