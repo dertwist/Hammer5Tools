@@ -63,6 +63,7 @@ operators_list = [
     {'SetVariableBool': {'_class': 'CSmartPropOperation_SetVariableBool', 'm_VariableName': None, 'm_VariableValue': None}},
     {'StateSave': {'_class': 'CSmartPropOperation_SaveState', 'm_StateName': 'State'}},
     {'SetVariableFloat': {'_class': 'CSmartPropOperation_SetVariableFloat', 'm_VariableName': None, 'm_VariableValue': None}},
+    {'SetVariable' : {'_class': 'CSmartPropOperation_SetVariable'}, 'm_TargetName': None, 'm_DataType': None, 'm_Value':None}
 ]
 
 operators_dict_todo = {
