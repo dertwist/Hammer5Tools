@@ -1,12 +1,12 @@
 import re
 
-from src.smartprop_editor.properties.ui_colormatch import Ui_Widget
+from src.smartprop_editor.property.ui_colormatch import Ui_Widget
 from PySide6.QtWidgets import QWidget, QColorDialog, QToolButton
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 from src.qt_styles.qt_global_stylesheet import QT_Stylesheet_global
 
-from src.smartprop_editor.properties.color import PropertyColor
+from src.smartprop_editor.property.color import PropertyColor
 
 
 class PropertyColorMatch(QWidget):

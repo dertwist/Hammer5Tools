@@ -1,6 +1,6 @@
 import re
 
-from src.smartprop_editor.properties.ui_vector3d import Ui_Widget
+from src.smartprop_editor.property.ui_vector3d import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
