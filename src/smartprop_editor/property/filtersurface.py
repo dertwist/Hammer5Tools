@@ -1,7 +1,7 @@
 import re
 
 from src.smartprop_editor.objects import surfaces_list
-from src.smartprop_editor.properties.ui_filtersurface import Ui_Widget
+from src.smartprop_editor.property.ui_filtersurface import Ui_Widget
 from PySide6.QtWidgets import QWidget, QColorDialog, QTreeWidgetItem, QMenu
 from PySide6.QtCore import Signal, Qt
 from src.qt_styles.qt_global_stylesheet import QT_Stylesheet_global
