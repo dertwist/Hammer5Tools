@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QVBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsEllipseItem, QGraphicsLineItem
+from PySide6.QtWidgets import QApplication, QDialog, QVBoxLayout, QGraphicsView, QGraphicsScene, QGraphicsEllipseItem, QGraphicsLineItem
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QMouseEvent
 from PySide6.QtCore import Qt, QPointF
 
@@ -34,6 +34,10 @@ class CurveWidget(QGraphicsView):
 
         self.selected_dot_index = None
 
+        # Disable scrolling
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
     def setCurve(self, curve):
         self.curve = curve
         self.update_scene()
@@ -43,27 +47,31 @@ class CurveWidget(QGraphicsView):
         width = self.width()
         height = self.height()
 
+        # Calculate margins
+        margin_x = width * 0.04
+        margin_y = height * 0.04
+
         pen = QPen(QColor(150, 150, 150))
         for i in range(0, 1001):
             t = i / 1000.0
             point = self.curve.evaluate(t)
-            x = point.x() * width
-            y = (1 - point.y()) * height
+            x = margin_x + point.x() * (width - 2 * margin_x)
+            y = margin_y + (1 - point.y()) * (height - 2 * margin_y)
             if 0 <= x <= width and 0 <= y <= height:
                 self.scene.addLine(x - 1, y, x + 1, y, pen)
 
         dot_radius = 6
         pen = QPen(QColor(150, 150, 40), 2)
         for i, dot in enumerate(self.curve.dots):
-            x = dot.x() * width
-            y = (1 - dot.y()) * height
+            x = margin_x + dot.x() * (width - 2 * margin_x)
+            y = margin_y + (1 - dot.y()) * (height - 2 * margin_y)
             ellipse = QGraphicsEllipseItem(x - dot_radius, y - dot_radius, 2 * dot_radius, 2 * dot_radius)
             ellipse.setBrush(QColor(255, 100, 100))
             self.scene.addItem(ellipse)
 
             if i == 2 or i == 3:
-                anchor_x = self.curve.dots[i - 2].x() * width
-                anchor_y = (1 - self.curve.dots[i - 2].y()) * height
+                anchor_x = margin_x + self.curve.dots[i - 2].x() * (width - 2 * margin_x)
+                anchor_y = margin_y + (1 - self.curve.dots[i - 2].y()) * (height - 2 * margin_y)
                 line = QGraphicsLineItem(anchor_x, anchor_y, x, y)
                 line.setPen(pen)
                 self.scene.addItem(line)
@@ -76,10 +84,12 @@ class CurveWidget(QGraphicsView):
         pos = event.position()
         width = self.width()
         height = self.height()
+        margin_x = width * 0.04
+        margin_y = height * 0.04
         bounding_box_size = 16
         for i, dot in enumerate(self.curve.dots):
-            x = dot.x() * width
-            y = (1 - dot.y()) * height
+            x = margin_x + dot.x() * (width - 2 * margin_x)
+            y = margin_y + (1 - dot.y()) * (height - 2 * margin_y)
             if (x - bounding_box_size <= pos.x() <= x + bounding_box_size) and (y - bounding_box_size <= pos.y() <= y + bounding_box_size):
                 self.selected_dot_index = i
                 break
@@ -89,8 +99,10 @@ class CurveWidget(QGraphicsView):
             pos = event.position()
             width = self.width()
             height = self.height()
-            x = pos.x() / width
-            y = 1 - (pos.y() / height)
+            margin_x = width * 0.02
+            margin_y = height * 0.02
+            x = (pos.x() - margin_x) / (width - 2 * margin_x)
+            y = 1 - ((pos.y() - margin_y) / (height - 2 * margin_y))
             self.curve.dots[self.selected_dot_index] = QPointF(x, y)
             self.update_scene()
 
@@ -110,27 +122,9 @@ class CurveWidgetDialog(QDialog):
 
         self.curve_widget.setCurve(Curve())
 
-        normalize_button = QPushButton("Normalize View", self)
-        layout.addWidget(normalize_button)
-        normalize_button.clicked.connect(self.curve_widget.update_scene)
-
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Main Window")
-        self.setGeometry(100, 100, 400, 300)
-
-        self.button = QPushButton("Open Curve Widget Dialog", self)
-        self.button.clicked.connect(self.on_pushButton_clicked)
-        self.setCentralWidget(self.button)
-
-    def on_pushButton_clicked(self):
-        dialog = CurveWidgetDialog(self)
-        dialog.show()
-
 def main():
     app = QApplication(sys.argv)
-    main_window = MainWindow()
+    main_window = CurveWidgetDialog()
     main_window.show()
     sys.exit(app.exec())
 
