@@ -1,6 +1,6 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QVBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsEllipseItem
-from PySide6.QtGui import QPainter, QPen, QColor, QMouseEvent
+from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QVBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsEllipseItem, QGraphicsLineItem
+from PySide6.QtGui import QPainter, QPen, QColor, QMouseEvent, QFont
 from PySide6.QtCore import Qt, QPointF
 
 class Curve:
@@ -31,6 +31,12 @@ class CurveWidget(QGraphicsView):
         self.setRenderHint(QPainter.Antialiasing)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
 
+        self.debug_text = self.scene.addText("")
+        self.debug_text.setDefaultTextColor(QColor(0, 0, 255))  # Blue debug text
+        font = QFont()
+        font.setPointSize(8)
+        self.debug_text.setFont(font)
+
     def setCurve(self, curve):
         self.curve = curve
         self.update_scene()
@@ -45,7 +51,7 @@ class CurveWidget(QGraphicsView):
         width = self.width()
         height = self.height()
 
-        pen = QPen(QColor(0, 0, 0))
+        pen = QPen(QColor(128, 128, 128))
         for i in range(0, 1001):
             t = i / 1000.0
             point = self.curve.evaluate(t)
@@ -55,12 +61,20 @@ class CurveWidget(QGraphicsView):
                 self.scene.addLine(x - 1, y, x + 1, y, pen)
 
         dot_radius = 6
+        pen = QPen(QColor(0, 0, 0), 1, Qt.DashLine)
         for i, dot in enumerate(self.curve.dots):
             x = dot.x() * width * self.zoom_factor + self.pan_offset.x()
             y = (1 - dot.y()) * height * self.zoom_factor + self.pan_offset.y()
             ellipse = QGraphicsEllipseItem(x - dot_radius, y - dot_radius, 2 * dot_radius, 2 * dot_radius)
             ellipse.setBrush(QColor(255, 0, 0) if self.is_dragging_dot[i] != -1 else QColor(0, 0, 0))
             self.scene.addItem(ellipse)
+
+            if i == 2 or i == 3:
+                anchor_x = self.curve.dots[i - 2].x() * width * self.zoom_factor + self.pan_offset.x()
+                anchor_y = (1 - self.curve.dots[i - 2].y()) * height * self.zoom_factor + self.pan_offset.y()
+                line = QGraphicsLineItem(anchor_x, anchor_y, x, y)
+                line.setPen(pen)
+                self.scene.addItem(line)
 
     def wheelEvent(self, event):
         zoom_in = event.angleDelta().y() > 0
