@@ -65,6 +65,7 @@ def build_hammer5_tools():
         '--exclude-module=PySide6.QtTextToSpeech',
         '--exclude-module=PySide6.QtWebSockets',
         '--exclude-module=PySide6.QtSensors',
+        '--hidden-import=tqdm',
         'src/main.py'
     ], check=True)
 
