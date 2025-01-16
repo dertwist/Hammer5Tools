@@ -28,10 +28,10 @@
 
 ### Tools Overview:
 
-|        Tool       |                                                                                                                   Description                                                                                                                   |
-|:-----------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Loading Editor    | Add images, descriptions, and icons to loading screens.                                                                                                                                                              |
-| SoundEvent Editor | Edit in-game sounds easily.                                                                                                                                                                                     |
-| Hotkey Editor     | Customize and add new keyboard shortcuts.                                                                                                                                                                                        |
+|        Tool       | Description                                                  |
+|:-----------------:|:-------------------------------------------------------------|
+| Loading Editor    | Add images, descriptions, and icons to loading screens.      |
+| SoundEvent Editor | Edit in-game sounds easily.                                  |
+| Hotkey Editor     | Customize and add new keyboard shortcuts.                    |
 | AssetGroup Maker      | Edit multiple files at once. Perfect for large modular sets. |
-| SmartProp Editor  | Simplifies smartprop creation.                                                                                                                                                                                       |
+| SmartProp Editor  | Simplifies smartprops creation.                              |
