@@ -13,17 +13,17 @@ from PySide6.QtGui import QCursor, QAction
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.smartprop_editor.element_id import update_value_ElementID, get_ElementID_key
 
-from src.smartprop_editor.properties_classes.legacy import PropertyLegacy
-from src.smartprop_editor.properties_classes.vector3d import PropertyVector3D
-from src.smartprop_editor.properties_classes.float import PropertyFloat
-from src.smartprop_editor.properties_classes.bool import PropertyBool
-from src.smartprop_editor.properties_classes.combobox import PropertyCombobox
-from src.smartprop_editor.properties_classes.string import PropertyString
-from src.smartprop_editor.properties_classes.color import PropertyColor
-from src.smartprop_editor.properties_classes.comparison import PropertyComparison
-from src.smartprop_editor.properties_classes.filtersurface import PropertySurface
-from src.smartprop_editor.properties_classes.colormatch import PropertyColorMatch
-from src.smartprop_editor.properties_classes.variable import PropertyVariableOutput
+from src.smartprop_editor.properties.legacy import PropertyLegacy
+from src.smartprop_editor.properties.vector3d import PropertyVector3D
+from src.smartprop_editor.properties.float import PropertyFloat
+from src.smartprop_editor.properties.bool import PropertyBool
+from src.smartprop_editor.properties.combobox import PropertyCombobox
+from src.smartprop_editor.properties.string import PropertyString
+from src.smartprop_editor.properties.color import PropertyColor
+from src.smartprop_editor.properties.comparison import PropertyComparison
+from src.smartprop_editor.properties.filtersurface import PropertySurface
+from src.smartprop_editor.properties.colormatch import PropertyColorMatch
+from src.smartprop_editor.properties.variable import PropertyVariableOutput
 
 
 import ast
