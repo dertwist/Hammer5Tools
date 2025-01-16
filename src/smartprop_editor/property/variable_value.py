@@ -1,6 +1,6 @@
 import ast
 import re
-from src.smartprop_editor.properties.ui_variable_value import Ui_Widget
+from src.smartprop_editor.property.ui_variable_value import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
