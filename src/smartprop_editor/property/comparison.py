@@ -1,6 +1,6 @@
 import ast
 import re
-from src.smartprop_editor.properties.ui_comparison import Ui_Widget
+from src.smartprop_editor.property.ui_comparison import Ui_Widget
 from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
