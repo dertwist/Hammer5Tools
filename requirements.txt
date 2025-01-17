@@ -16,3 +16,4 @@ watchdog
 json-stream
 requests
 pyinstaller
+numba
