@@ -124,10 +124,14 @@ class CurveGraphForm(QWidget):
         min_distance = min(distances_from_widgets)
         max_distance = max(distances_from_widgets)
 
-        setup_all_curve_values(self.points, len(self.points))
+        if len(self.points) > 1:
+            setup_all_curve_values(self.points, len(self.points))
+        else:
+            QMessageBox.warning(self, "Insufficient Data", "At least two points are required to plot the curve.")
+            return
 
-        # Optimization: Reduce the number of points plotted, handle float steps
-        num_steps = 200  # Or any other desired resolution
+        # Reduce the number of points plotted, handle float steps for performance reason
+        num_steps = 200
         step = (max_distance - min_distance) / num_steps
 
         # Generate distances using a loop and rounding to handle float steps
