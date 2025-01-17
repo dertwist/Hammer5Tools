@@ -1,0 +1,296 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	[
+		
+		{
+			Info = "Hammer5Tools by Twist"
+			GitHub = "https://github.com/dertwist/Hammer5Tools"
+			Discord_Server = "https://discord.gg/DvCXEyhssd"
+			social_links = 
+			{
+				Steam = "https://steamcommunity.com/id/der_twist"
+				Twitter = "https://twitter.com/der_twist"
+				Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+				ArtStation = "https://www.artstation.com/nucky3d"
+			}
+		}
+	]
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "length"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_ParameterName = "length"
+		},
+		
+		{
+			_class = "CSmartPropVariable_ScaleMode"
+			m_VariableName = "ScaleMode"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_ParameterName = "Scaling Mode"
+		},
+		
+		{
+			_class = "CSmartPropVariable_PickMode"
+			m_VariableName = "PickMode"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_ParameterName = "Pick Mode"
+		},
+		
+		{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "MaterialGroup"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_ParameterName = "Material Group"
+		}
+	]
+	m_Choices = 
+	[
+
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_ModifyState"
+			m_Modifiers = [
+			{
+				_class = "CSmartPropOperation_CreateSizer"
+				m_flInitialMaxX = 64.0
+				m_flInitialMaxZ = 128.0
+				m_OutputVariableMaxX = "length"
+			}]
+			m_nElementID = 6
+			m_sLabel = "ModifyState_01"
+		},
+		
+		{
+			_class = "CSmartPropElement_FitOnLine"
+			m_vStart = [0.0, 0.0, 0.0]
+			m_bOrientAlongLine = true
+			m_vEnd = 
+			{
+				m_Components = [
+				{
+					m_SourceName = "length"
+				}, 0.0, 0.0]
+			}
+			m_nScaleMode = 
+			{
+				m_SourceName = "ScaleMode"
+			}
+			m_nPickMode = 
+			{
+				m_SourceName = "PickMode"
+			}
+			m_Modifiers = [
+			{
+				_class = "CSmartPropOperation_CreateLocator"
+				m_LocatorName = "Penis"
+			}, 
+			{
+				_class = "CSmartPropOperation_CreateLocator"
+				m_LocatorName = "Pe2nis"
+				m_LocatorConfig = "penis"
+			}]
+			m_nElementID = 7
+			m_sLabel = "FitOnLine_02"
+			m_Children = [
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_bEnabled = true
+				m_SelectionCriteria = [
+				{
+					_class = "CSmartPropSelectionCriteria_LinearLength"
+					m_flMinLength = 248.0
+					m_flLength = 256.0
+					m_flMaxLength = 264.0
+					m_bAllowScale = true
+				}]
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_bEnabled = true
+					m_vRotation = [0.0, -90, 0.0]
+				}]
+				m_sModelName = "models/props/de_nuke/hr_nuke/chainlink_fence_001/chainlink_fence_001_256.vmdl"
+				m_MaterialGroupName = 
+				{
+					m_SourceName = "MaterialGroup"
+				}
+				m_vModelScale = [1.0, 1.0, 1.0]
+				m_sLabel = "Model_01"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 2
+				m_bEnabled = true
+				m_SelectionCriteria = [
+				{
+					_class = "CSmartPropSelectionCriteria_LinearLength"
+					m_flMinLength = 120.0
+					m_flLength = 128.0
+					m_flMaxLength = 136.0
+					m_bAllowScale = true
+				}]
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_bEnabled = true
+					m_vRotation = [0.0, -89.999985, 0.0]
+				}]
+				m_sModelName = "models/props/de_nuke/hr_nuke/chainlink_fence_001/chainlink_fence_001_128.vmdl"
+				m_MaterialGroupName = 
+				{
+					m_SourceName = "MaterialGroup"
+				}
+				m_vModelScale = [1.0, 1.0, 1.0]
+				m_sLabel = "Model_02"
+			}, 
+			{
+				_class = "CSmartPropElement_PickOne"
+				m_SelectionMode = "FIRST"
+				m_SelectionCriteria = [
+				{
+					_class = "CSmartPropSelectionCriteria_LinearLength"
+					m_flMinLength = 56.0
+					m_flLength = 64.0
+					m_flMaxLength = 72.0
+					m_bAllowScale = true
+				}]
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_bEnabled = true
+					m_vRotation = [0.0, -89.999985, 0.0]
+				}]
+				m_nElementID = 8
+				m_sLabel = "PickOne_03"
+				m_Children = [
+				{
+					_class = "CSmartPropElement_Model"
+					m_sModelName = "models/props/de_nuke/hr_nuke/chainlink_fence_001/chainlink_fence_001_64.vmdl"
+					m_MaterialGroupName = 
+					{
+						m_SourceName = "MaterialGroup"
+					}
+					m_nElementID = 9
+					m_sLabel = "Model_01"
+				}, 
+				{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 10
+					m_sLabel = "Group_02"
+					m_Children = [
+					{
+						_class = "CSmartPropElement_Model"
+						m_sModelName = "models/props/de_nuke/hr_nuke/chainlink_fence_001/chainlink_fence_gate_001_64_capped.vmdl"
+						m_MaterialGroupName = 
+						{
+							m_SourceName = "MaterialGroup"
+						}
+						m_vModelScale = [1.0, 1.0, 1.0]
+						m_nElementID = 13
+						m_sLabel = "Model_01"
+					}, 
+					{
+						_class = "CSmartPropElement_Model"
+						m_nElementID = 3
+						m_bEnabled = true
+						m_Modifiers = [
+						{
+							_class = "CSmartPropOperation_Translate"
+							m_vPosition = [0.0, 61.0, 0.0]
+						}, 
+						{
+							_class = "CSmartPropOperation_CreateRotator"
+						}]
+						m_sModelName = "models/props/de_nuke/hr_nuke/chainlink_fence_001/chainlink_fence_gate_001_64_door.vmdl"
+						m_MaterialGroupName = 
+						{
+							m_SourceName = "MaterialGroup"
+						}
+						m_vModelScale = [1.0, 1.0, 1.0]
+						m_sLabel = "Model_02"
+					}]
+				}]
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 4
+				m_bEnabled = true
+				m_SelectionCriteria = [
+				{
+					_class = "CSmartPropSelectionCriteria_LinearLength"
+					m_flMinLength = 24.0
+					m_flLength = 32.0
+					m_flMaxLength = 40.0
+				}]
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_bEnabled = true
+					m_vRotation = [0.0, -89.999985, 0.0]
+				}]
+				m_sModelName = "models/props/de_nuke/hr_nuke/chainlink_fence_001/chainlink_fence_001_32.vmdl"
+				m_MaterialGroupName = 
+				{
+					m_SourceName = "MaterialGroup"
+				}
+				m_vModelScale = [1.0, 1.0, 1.0]
+				m_sLabel = "Model_04"
+			}, 
+			{
+				_class = "CSmartPropElement_PickOne"
+				m_SelectionMode = "FIRST"
+				m_HandleShape = "CIRCLE"
+				m_nElementID = 5
+				m_bEnabled = true
+				m_SelectionCriteria = [
+				{
+					_class = "CSmartPropSelectionCriteria_EndCap"
+					m_bStart = false
+					m_bEnd = true
+				}]
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_bEnabled = true
+					m_vRotation = [0.0, -89.999985, 0.0]
+				}]
+				m_sLabel = "PickOne_05"
+				m_Children = [
+				{
+					_class = "CSmartPropElement_Model"
+					m_sModelName = "models/props/de_nuke/hr_nuke/chainlink_fence_001/chainlink_fence_001_post.vmdl"
+					m_MaterialGroupName = 
+					{
+						m_SourceName = "MaterialGroup"
+					}
+					m_vModelScale = [1.0, 1.0, 1.0]
+					m_nElementID = 11
+					m_sLabel = "Model_01"
+				}, 
+				{
+					_class = "CSmartPropElement_SmartProp"
+					m_sSmartProp = "smartprops/smart_fence.vsmart"
+					m_Modifiers = [
+					{
+						_class = "CSmartPropOperation_CreateRotator"
+					}]
+					m_nElementID = 12
+					m_sLabel = "SmartProp_02"
+				}]
+			}]
+		}
+	]
+}
