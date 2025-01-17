@@ -1,9 +1,8 @@
 import sys
 import pyqtgraph as pg
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMessageBox, QLabel, QDoubleSpinBox
-from PySide6.QtGui import Qt
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMessageBox, QLabel
 from PySide6.QtCore import Signal
-from src.widgets import FloatWidget, SpinBoxSlider
+from src.widgets import SpinBoxSlider
 from dev.custom_curve.custom_curve import CurvePoint, setup_all_curve_values, sample_curve
 from src.widgets_common import DeleteButton
 from src.common import JsonToKv3
@@ -55,7 +54,7 @@ class CurveGraphForm(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Distance-Volume Curve Graph")
-        self.setStyleSheet("background-color: #2E2E2E; color: #FFFFFF;")
+        self.setStyleSheet("background-color: #1C1C1C; color: #FFFFFF;")
 
         self.points = []
         self.datapoint_items = []
@@ -66,12 +65,13 @@ class CurveGraphForm(QWidget):
 
     def init_ui(self):
         self.graph_widget = pg.PlotWidget()
-        self.graph_widget.setBackground('#2E2E2E')
+        self.graph_widget.setAntialiasing(True)  # Enable antialiasing for smoother curves
+        self.graph_widget.setBackground('#1C1C1C')
         self.main_layout.addWidget(self.graph_widget)
         self.plot_item = self.graph_widget.getPlotItem()
         self.plot_item.showGrid(x=True, y=True, alpha=0.3)
-        self.plot_item.getAxis("bottom").setPen("white")
-        self.plot_item.getAxis("left").setPen("white")
+        self.plot_item.getAxis("bottom").setPen(pg.mkPen(color='#232323', width=2))
+        self.plot_item.getAxis("left").setPen(pg.mkPen(color='#232323', width=2))
 
         add_point_button = QPushButton("Add Point")
         add_point_button.setStyleSheet("background-color: #444444; color: #FFFFFF;")
@@ -146,7 +146,7 @@ class CurveGraphForm(QWidget):
         volumes = [sample_curve(d, self.points, len(self.points)) for d in distances]
 
         self.plot_item.clear()
-        self.plot_item.plot(distances, volumes, pen=pg.mkPen('c'))
+        self.plot_item.plot(distances, volumes, pen=pg.mkPen('#7F7F7F', width=1.5))
 
     def output_values(self):
         values_list = [item.get_values() for item in self.datapoint_items]
