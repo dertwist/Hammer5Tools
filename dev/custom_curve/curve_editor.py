@@ -14,6 +14,7 @@ class DataPointItem(QWidget):
 
     def __init__(self, values, parent=None):
         super().__init__(parent)
+        self.parent_widget = parent
         self.layout = QHBoxLayout()
         self.setLayout(self.layout)
         self.float_widgets = []
@@ -31,7 +32,7 @@ class DataPointItem(QWidget):
             self.float_widgets.append(float_widget)
 
         delete_button = DeleteButton(self)
-        delete_button.clicked.connect(self.deleteLater)
+        delete_button.clicked.connect(self.delete_item)
         self.layout.addWidget(delete_button)
 
     def on_edited(self):
@@ -39,6 +40,16 @@ class DataPointItem(QWidget):
 
     def get_values(self):
         return [widget.value for widget in self.float_widgets]
+
+    def delete_item(self):
+        """Remove the widget, clean up, and update the graph."""
+        parent = self.parent_widget # Access parent before deletion
+        self.setParent(None)
+        self.deleteLater()
+
+        if parent: # Check if parent exists
+            parent.datapoint_items.remove(self)
+            parent.plot_graph()
 
 class CurveGraphForm(QWidget):
     def __init__(self):
