@@ -134,7 +134,7 @@ def Kv3ToJson(input):
     output = kv3.textreader.KV3TextReader().parse(input).value
     return output
 def JsonToKv3(input):
-    if isinstance(input, dict):
+    if isinstance(input, dict) or isinstance(input, list):
         return kv3.textwriter.encode(input)
     else:
         raise ValueError('[JsonToKv3] Invalid input type: Input should be a dictionary')
