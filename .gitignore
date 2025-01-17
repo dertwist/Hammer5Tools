@@ -112,3 +112,4 @@ Hammer5Tools_Updater.spec
 /src/settings.ini
 /settings.ini
 .qodo
+/dev/custom_curve/settings.ini
