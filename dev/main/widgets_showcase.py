@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
-from src.widgets import FloatWidget
+from src.widgets import FloatWidget, SpinBoxSlider
 import sys
 
 class WidgetsShowcaseWindow(QMainWindow):
@@ -19,6 +19,9 @@ class WidgetsShowcaseWindow(QMainWindow):
 
         self.float_test_2 = FloatWidget(spacer_enable=False)
         main_layout.addWidget(self.float_test_2)
+
+        self.float_test_3 = SpinBoxSlider(spacer_enable=False)
+        main_layout.addWidget(self.float_test_3)
 
         # Set the central widget
         self.setCentralWidget(main_widget)
