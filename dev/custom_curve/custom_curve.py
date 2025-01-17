@@ -21,7 +21,7 @@ class CurvePoint:
 # coppies the data to another place in memory, and then runs this function on that copy.
 # and it appears that this happens each frame before the yValue is calculated.
 # This is done to preserve the original curve data that originally came from the sound event file.
-def setup_curve_point(point, prev_point, next_point):
+def _setup_curve_point(point, prev_point, next_point):
     delta_x2 = 0
     delta_y2 = 0
     delta_x = 0
@@ -114,7 +114,7 @@ def setup_all_curve_values(points, totalPoints):
         return
     
     if totalPoints == 1:
-        setup_curve_point(points[0], None, None)
+        _setup_curve_point(points[0], None, None)
         return
     
     lastIndex = totalPoints-1
@@ -123,7 +123,7 @@ def setup_all_curve_values(points, totalPoints):
         prevPoint = points[i-1] if i>0 else None
         nextPoint = points[i+1] if i<lastIndex else None
         
-        setup_curve_point(points[i], prevPoint, nextPoint)
+        _setup_curve_point(points[i], prevPoint, nextPoint)
 
 # If anyone wants to help rename some of the local variables, that would be awesome.
 def sample_curve(xValue, points, total_points):
