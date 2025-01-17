@@ -8,8 +8,8 @@ from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton,
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from dev.curve_volume.distance_volume_curve import (CurvePoint,
-    configure_all_magic_numbers, sample_curve)
+from dev.custom_curve.custom_curve import (CurvePoint,
+    setup_all_curve_values, sample_curve)
 
 DEFAULT_VALUES = [[20, 3, 0, 0, 2, 3], [260, 1, 0, 0, 2, 3]]
 
@@ -38,7 +38,7 @@ class CurveGraphForm(QWidget):
         # Table for curve points
         self.table = QTableWidget()
         self.table.setColumnCount(6)
-        self.table.setHorizontalHeaderLabels(["Distance", "Volume", "Magic1", "Magic2", "Mode1", "Mode2"])
+        self.table.setHorizontalHeaderLabels(["Distance", "Volume", "Slope Left", "Slope Right", "Mode Left", "Mode Right"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         for row_data in DEFAULT_VALUES:
@@ -89,12 +89,12 @@ class CurveGraphForm(QWidget):
             try:
                 distance = float(self.table.item(row, 0).text())
                 volume = float(self.table.item(row, 1).text())
-                magic1 = float(self.table.item(row, 2).text() or "0")
-                magic2 = float(self.table.item(row, 3).text() or "0")
-                mode1 = int(self.table.item(row, 4).text() or "0")
-                mode2 = int(self.table.item(row, 5).text() or "0")
+                slopeLeft = float(self.table.item(row, 2).text() or "0")
+                slopeRight = float(self.table.item(row, 3).text() or "0")
+                modeLeft = int(self.table.item(row, 4).text() or "0")
+                modeRight = int(self.table.item(row, 5).text() or "0")
 
-                point = CurvePoint(distance, volume, magic1, magic2, mode1, mode2)
+                point = CurvePoint(distance, volume, slopeLeft, slopeRight, modeLeft, modeRight)
                 self.points.append(point)
                 distances_from_table.append(distance)
 
@@ -108,7 +108,7 @@ class CurveGraphForm(QWidget):
         min_distance = min(distances_from_table)
         max_distance = max(distances_from_table)
 
-        configure_all_magic_numbers(self.points, len(self.points))
+        setup_all_curve_values(self.points, len(self.points))
 
         distances = [d for d in range(int(min_distance), int(max_distance) + 1)]  # Include max_distance
         volumes = [sample_curve(d, self.points, len(self.points)) for d in distances]
