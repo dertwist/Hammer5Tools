@@ -1,5 +1,7 @@
 import time
 import numpy as np
+from numba import njit, float64, int32
+from numba.experimental import jitclass
 
 # This code was originally decompiled C code extracted directly from the Counter Strike 2 executable using Ghidra.
 # Then, it was rewritten with some minor C++ syntax, and then converted into python for the sake of this project.
@@ -11,6 +13,17 @@ import numpy as np
 # Also, some of the below comments are understandably long. My intent is to remove most of them once everyone is happy with the way this code is written.
 # A lot of things should be renamed to somthing better.
 
+# Define the CurvePoint class with numba's jitclass
+spec = [
+    ('xValue', float64),
+    ('yValue', float64),
+    ('slopeLeft', float64),
+    ('slopeRight', float64),
+    ('modeLeft', int32),
+    ('modeRight', int32)
+]
+
+@jitclass(spec)
 class CurvePoint:
     def __init__(self, xValue, yValue, slopeLeft, slopeRight, modeLeft, modeRight):
         self.xValue = xValue
@@ -24,14 +37,15 @@ class CurvePoint:
 # coppies the data to another place in memory, and then runs this function on that copy.
 # and it appears that this happens each frame before the yValue is calculated.
 # This is done to preserve the original curve data that originally came from the sound event file.
+@njit
 def _setup_curve_point(point, prev_point, next_point):
-    delta_x2 = 0
-    delta_y2 = 0
-    delta_x = 0
-    delta_y = 0
-    slope2 = 0
-    slope3 = 0
-    slope = 0
+    delta_x2 = 0.0
+    delta_y2 = 0.0
+    delta_x = 0.0
+    delta_y = 0.0
+    slope2 = 0.0
+    slope3 = 0.0
+    slope = 0.0
 
     first_point = prev_point is None
     last_point = next_point is None
@@ -97,6 +111,7 @@ def _setup_curve_point(point, prev_point, next_point):
         point.slopeLeft = point.slopeRight
 
 # This function essentially performs the entire setup necesary for the curve data before calling "sample_curve"
+@njit
 def setup_all_curve_values(points, totalPoints):
     if totalPoints == 0:
         return
@@ -114,6 +129,7 @@ def setup_all_curve_values(points, totalPoints):
         _setup_curve_point(points[i], prevPoint, nextPoint)
 
 # If anyone wants to help rename some of the local variables, that would be awesome.
+@njit
 def sample_curve(xValue, points, total_points):
     # start_time = time.time()
     # Validate that we were given a list of points, and that there are more than 2 points to sample between.
@@ -162,7 +178,6 @@ def sample_curve(xValue, points, total_points):
         p1 = ((yValue_result + right_point.slopeLeft) * delta_x - (delta_y + delta_y)) * yValue
         p2 = (p1 + (-right_point.slopeLeft - (yValue_result + yValue_result)) * delta_x + delta_y * 3.0)
         calc_yValue = (p2 * yValue + yValue_result * delta_x) * yValue + left_point.yValue
-        end_time = time.time()
         # print(f"Calculation time: {(end_time - start_time) * 1000} milliseconds")
         return calc_yValue
 
