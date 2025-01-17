@@ -6,6 +6,7 @@ from PySide6.QtCore import Signal
 from src.widgets import FloatWidget, SpinBoxSlider
 from dev.custom_curve.custom_curve import CurvePoint, setup_all_curve_values, sample_curve
 from src.widgets_common import DeleteButton
+from src.common import JsonToKv3
 
 DEFAULT_VALUES = [[20, 3, 0, 0, 2, 3], [260, 1, 0, 0, 2, 3]]
 
@@ -26,9 +27,7 @@ class DataPointItem(QWidget):
 
         for value, slider_range, int_output, value_step, digits in zip(values, slider_ranges, int_outputs, value_steps, digits_list):
             float_widget = SpinBoxSlider(vertical=False, slider_scale=2, slider_range=slider_range, int_output=int_output, value_step=value_step, digits=digits)
-            # float_widget.SpinBox.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
             float_widget.set_value(value)
-            # float_widget.Slider.setMinimumHeight(128)
             float_widget.edited.connect(self.on_edited)
             self.layout.addWidget(float_widget)
             self.float_widgets.append(float_widget)
@@ -44,12 +43,11 @@ class DataPointItem(QWidget):
         return [widget.value for widget in self.float_widgets]
 
     def delete_item(self):
-        """Remove the widget, clean up, and update the graph."""
-        parent = self.parent_widget # Access parent before deletion
+        parent = self.parent_widget
         self.setParent(None)
         self.deleteLater()
 
-        if parent: # Check if parent exists
+        if parent:
             parent.datapoint_items.remove(self)
             parent.plot_graph()
 
@@ -75,12 +73,15 @@ class CurveGraphForm(QWidget):
         self.plot_item.getAxis("bottom").setPen("white")
         self.plot_item.getAxis("left").setPen("white")
 
-
-
         add_point_button = QPushButton("Add Point")
         add_point_button.setStyleSheet("background-color: #444444; color: #FFFFFF;")
         add_point_button.clicked.connect(self.add_point)
         self.main_layout.addWidget(add_point_button)
+
+        output_button = QPushButton("Output Values")
+        output_button.setStyleSheet("background-color: #444444; color: #FFFFFF;")
+        output_button.clicked.connect(self.output_values)
+        self.main_layout.addWidget(output_button)
 
         self.add_column_labels()
         for values in DEFAULT_VALUES:
@@ -133,14 +134,12 @@ class CurveGraphForm(QWidget):
             QMessageBox.warning(self, "Insufficient Data", "At least two points are required to plot the curve.")
             return
 
-        # Reduce the number of points plotted, handle float steps for performance reason
         num_steps = 200
         step = (max_distance - min_distance) / num_steps
 
-        # Generate distances using a loop and rounding to handle float steps
         distances = []
         current_distance = min_distance
-        for _ in range(num_steps + 1): # +1 to include the last point
+        for _ in range(num_steps + 1):
             distances.append(current_distance)
             current_distance += step
 
@@ -149,6 +148,13 @@ class CurveGraphForm(QWidget):
         self.plot_item.clear()
         self.plot_item.plot(distances, volumes, pen=pg.mkPen('c'))
 
+    def output_values(self):
+        values_list = [item.get_values() for item in self.datapoint_items]
+        print(values_list)
+        input_a = values_list
+        kv3_output = JsonToKv3(input_a)
+        clipboard = QApplication.clipboard()
+        clipboard.setText(kv3_output)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
