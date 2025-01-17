@@ -22,17 +22,21 @@ class Spacer(QWidget):
 #============================================================<  Property widgets  >=========================================================
 class FloatWidget(QWidget):
     edited = Signal(float)
-    def __init__(self, int_output: bool =False, slider_range: list = [0,0], value: float=0.0, only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True):
-        """Float widget is a widget with sping box and slider that are synchronized with each-other. This widget give float or round(float) which is int variable type"""
+
+    def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0, only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True, vertical: bool = False, digits: int = 3, value_step: float = 1, slider_scale: int = 5):
+        """Float widget is a widget with spin box and slider that are synchronized with each other. This widget gives float or round(float) which is int variable type."""
         super().__init__()
 
         # Variables
         self.int_output = int_output
         self.value = value
         self.only_positive = only_positive
+        self.slider_scale = slider_scale
 
-        # SpinnBox setup
+        # SpinBox setup
         self.SpinBox = QDoubleSpinBox()
+        self.SpinBox.setDecimals(digits)
+        self.SpinBox.setSingleStep(value_step)
         if self.only_positive:
             self.SpinBox.setMinimum(0)
         else:
@@ -42,35 +46,41 @@ class FloatWidget(QWidget):
 
         # Slider setup
         self.Slider = QSlider()
-        self.Slider.setOrientation(Qt.Horizontal)
+        self.Slider.setOrientation(Qt.Vertical if vertical else Qt.Horizontal)
         # Range
         if slider_range[0] == 0 and slider_range[1] == 0:
             value = self.SpinBox.value()
-            self.Slider.setMaximum(abs(value) * 10 * 100 +1000)
+            self.Slider.setMaximum(abs(value) * self.slider_scale * 100 + 1000)
             if only_positive:
                 self.Slider.setMinimum(0)
             else:
-                self.Slider.setMinimum(-abs(value) * 10 * 100 -1000)
+                self.Slider.setMinimum(-abs(value) * self.slider_scale * 100 - 1000)
         else:
             if only_positive:
                 self.Slider.setMinimum(0)
             else:
-                self.Slider.setMinimum(slider_range[0]*100)
-            self.Slider.setMaximum(slider_range[1]*100)
+                self.Slider.setMinimum(slider_range[0] * 100)
+            self.Slider.setMaximum(slider_range[1] * 100)
         self.Slider.valueChanged.connect(self.on_Slider_updated)
 
         # Layout setup
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0,0,0,0)
-        layout.addWidget(self.SpinBox)
-        layout.addWidget(self.Slider)
+        layout = QVBoxLayout() if vertical else QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        if vertical:
+            layout.addWidget(self.Slider)
+            layout.addWidget(self.SpinBox)
+        else:
+            layout.addWidget(self.SpinBox)
+            layout.addWidget(self.Slider)
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         if spacer_enable:
             layout.addItem(spacer)
         self.setLayout(layout)
+        if vertical:
+            self.setFixedWidth(72)
         self.on_SpinBox_updated()
         self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
-        # Widget class
+
     # Colors
     def set_color(self, color):
         self.SpinBox.setStyleSheet(f"color: {color};")
@@ -80,15 +90,16 @@ class FloatWidget(QWidget):
         value = self.SpinBox.value()
         if self.int_output:
             value = round(value)
-        if value > self.Slider.maximum()/100 or value < self.Slider.minimum()/100:
+        if value > self.Slider.maximum() / 100 or value < self.Slider.minimum() / 100:
             if self.only_positive:
                 self.Slider.setMinimum(0)
             else:
-                self.Slider.setMinimum(-abs(value) * 10 * 100 - 1000)
-            self.Slider.setMaximum(abs(value) * 10 * 100 + 1000)
-        self.Slider.setValue(value*100)
+                self.Slider.setMinimum(-abs(value) * self.slider_scale * 100 - 1000)
+            self.Slider.setMaximum(abs(value) * self.slider_scale * 100 + 1000)
+        self.Slider.setValue(value * 100)
         self.value = value
         self.edited.emit(value)
+
     def on_Slider_updated(self):
         value = self.Slider.value() / 100
         if self.int_output:
@@ -96,6 +107,7 @@ class FloatWidget(QWidget):
         self.SpinBox.setValue(value)
         self.value = value
         self.edited.emit(value)
+
     def set_value(self, value):
         self.SpinBox.setValue(value)
         self.on_SpinBox_updated()
