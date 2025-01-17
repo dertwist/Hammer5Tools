@@ -1,10 +1,17 @@
 from src.popup_menu.popup_menu_main import PopupMenu
-from src.preferences import get_config_bool, set_config_bool
-from src.widgets_common import *
 from src.smartprop_editor.variable_frame import VariableFrame
+from src.widgets_common import *
 from PySide6.QtWidgets import (
+    QWidget,
+    QDoubleSpinBox,
+    QVBoxLayout,
     QHBoxLayout,
+    QSpacerItem,
+    QSizePolicy,
 )
+from PySide6.QtGui import QPainter, QPen, QColor
+from PySide6.QtCore import Qt, QRect, QEvent, Signal
+
 
 #============================================================<  Generic widgets  >==========================================================
 class Spacer(QWidget):
@@ -112,6 +119,87 @@ class FloatWidget(QWidget):
     def set_value(self, value):
         self.SpinBox.setValue(value)
         self.on_SpinBox_updated()
+
+class SpinBoxSlider(QWidget):
+    edited = Signal(float)
+
+    def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0,
+                 only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True,
+                 vertical: bool = False, digits: int = 3, value_step: float = 1, slider_scale: int = 5):
+        """SpinBox with an embedded draggable slider."""
+        super().__init__()
+
+        # Variables
+        self.int_output = int_output
+        self.value = value
+        self.only_positive = only_positive
+        self.slider_scale = slider_scale
+        self.slider_dragging = False
+        self.middle_mouse_pressed = False
+
+        # SpinBox setup
+        self.SpinBox = QDoubleSpinBox()
+        self.SpinBox.setDecimals(digits)
+        self.SpinBox.setSingleStep(value_step)
+        if self.only_positive:
+            self.SpinBox.setMinimum(0)
+        else:
+            self.SpinBox.setMinimum(-99999999)
+        if slider_range == [0, 0]:
+            self.SpinBox.setMaximum(99999999)
+        else:
+            self.SpinBox.setMinimum(slider_range[0])
+            self.SpinBox.setMaximum(slider_range[1])
+        self.SpinBox.setValue(value)
+        self.SpinBox.setToolTip("Hold and drag middle mouse on the arrows area to change value")
+
+        # Layout setup
+        layout = QVBoxLayout() if vertical else QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.SpinBox)
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        if spacer_enable:
+            layout.addItem(spacer)
+        self.setLayout(layout)
+        if vertical:
+            self.setFixedWidth(96)
+
+        self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
+        self.SpinBox.installEventFilter(self)  # For mouse events
+
+    def eventFilter(self, obj, event):
+        if obj == self.SpinBox:
+            if event.type() == QEvent.MouseButtonPress:
+                if event.button() == Qt.MiddleButton:
+                    self.middle_mouse_pressed = True
+                    self.slider_dragging = True
+                    self.slider_drag_start_value = self.SpinBox.value()
+                    self.slider_drag_start_pos = event.globalPos()
+            elif event.type() == QEvent.MouseButtonRelease:
+                if event.button() == Qt.MiddleButton:
+                    self.middle_mouse_pressed = False
+                    self.slider_dragging = False
+            elif event.type() == QEvent.MouseMove and self.slider_dragging:
+                delta = event.globalPos() - self.slider_drag_start_pos
+                delta_x = delta.x()
+                new_value = self.slider_drag_start_value + delta_x * self.SpinBox.singleStep() * self.slider_scale / 100
+                self.SpinBox.setValue(new_value)
+                self.on_SpinBox_updated(new_value)  # Emit signal while dragging
+
+        return super().eventFilter(obj, event)
+
+    def on_SpinBox_updated(self, value=None):
+        if value is None:
+            value = self.SpinBox.value()
+
+        if self.int_output:
+            value = round(value)
+        self.value = value
+        self.edited.emit(value)
+
+    def set_value(self, value):
+        self.SpinBox.setValue(value)
+
 
 class LegacyWidget(QWidget):
     edited = Signal(str)
