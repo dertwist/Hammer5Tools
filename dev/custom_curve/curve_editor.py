@@ -22,6 +22,7 @@ class CurveGraphForm(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Distance-Volume Curve Graph")
+        self.setStyleSheet("background-color: #2E2E2E; color: #FFFFFF;")
 
         self.points = []
         self.float_widgets = []
@@ -31,20 +32,17 @@ class CurveGraphForm(QWidget):
         self.plot_graph()
 
     def init_ui(self):
-        # Graph
-        self.figure = Figure()
+        self.figure = Figure(facecolor='#2E2E2E')
         self.canvas = FigureCanvas(self.figure)
         self.main_layout.addWidget(self.canvas)
 
-        # Add column labels
         self.add_column_labels()
 
-        # FloatWidgets for curve points
         for values in DEFAULT_VALUES:
             self.add_float_widget(values)
 
-        # Add Point Button
         add_point_button = QPushButton("Add Point")
+        add_point_button.setStyleSheet("background-color: #444444; color: #FFFFFF;")
         add_point_button.clicked.connect(self.add_point)
         self.main_layout.addWidget(add_point_button)
 
@@ -53,8 +51,8 @@ class CurveGraphForm(QWidget):
         texts = ['Distance', 'Volume', 'Slope Left', 'Slope Right', 'Mode Left', 'Mode Right']
         for text in texts:
             label = QLabel(text)
+            label.setStyleSheet("color: #FFFFFF;")
             label_layout.addWidget(label)
-            # label_layout.setAlignment(Qt.AlignCenter)
         self.main_layout.addLayout(label_layout)
 
     def add_point(self):
@@ -112,12 +110,12 @@ class CurveGraphForm(QWidget):
         volumes = [sample_curve(d, self.points, len(self.points)) for d in distances]
 
         self.figure.clear()
-        ax = self.figure.add_subplot(111)
-        ax.plot(distances, volumes)
-        ax.grid(True)  # Add grid lines
+        ax = self.figure.add_subplot(111, facecolor='#2E2E2E')
         with pyplot.style.context('dark_background'):
-            ax.plot(distances, volumes)
-            ax.grid(True)
+            ax.plot(distances, volumes, color='cyan')
+            ax.grid(True, color=(80/255, 80/255, 80/255))
+            ax.tick_params(axis='x', colors='white')
+            ax.tick_params(axis='y', colors='white')
 
         self.canvas.draw()
 
@@ -125,5 +123,6 @@ class CurveGraphForm(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = CurveGraphForm()
+    app.setStyle('Fusion')
     window.show()
     sys.exit(app.exec())
