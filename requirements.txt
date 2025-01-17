@@ -17,3 +17,4 @@ json-stream
 requests
 pyinstaller
 numba
+tabulate
