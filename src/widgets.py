@@ -20,6 +20,7 @@ class Spacer(QWidget):
         self.setStyleSheet('border:None;')
         self.setContentsMargins(0,0,0,0)
 #============================================================<  Property widgets  >=========================================================
+
 class FloatWidget(QWidget):
     edited = Signal(float)
 
@@ -67,8 +68,8 @@ class FloatWidget(QWidget):
         layout = QVBoxLayout() if vertical else QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         if vertical:
-            layout.addWidget(self.Slider)
-            layout.addWidget(self.SpinBox)
+            layout.addWidget(self.Slider, alignment=Qt.AlignCenter)
+            layout.addWidget(self.SpinBox, alignment=Qt.AlignCenter)
         else:
             layout.addWidget(self.SpinBox)
             layout.addWidget(self.Slider)
@@ -77,7 +78,7 @@ class FloatWidget(QWidget):
             layout.addItem(spacer)
         self.setLayout(layout)
         if vertical:
-            self.setFixedWidth(72)
+            self.setFixedWidth(96)
         self.on_SpinBox_updated()
         self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
 
