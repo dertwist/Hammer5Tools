@@ -3,7 +3,7 @@ import pyqtgraph as pg
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMessageBox, QLabel, QDoubleSpinBox
 from PySide6.QtGui import Qt
 from PySide6.QtCore import Signal
-from src.widgets import FloatWidget
+from src.widgets import FloatWidget, SpinBoxSlider
 from dev.custom_curve.custom_curve import CurvePoint, setup_all_curve_values, sample_curve
 from src.widgets_common import DeleteButton
 
@@ -19,14 +19,16 @@ class DataPointItem(QWidget):
         self.setLayout(self.layout)
         self.float_widgets = []
 
-        slider_ranges = [[-2, 2], [-2, 2], [-2, 2], [-2, 2], [0, 4], [0, 4]]
+        value_steps = [1, 1, 0.001, 0.001, 1, 1]
+        digits_list = [3, 3, 3, 3, 0, 0]
+        slider_ranges = [[0, 0], [0, 0], [-2, 2], [-2, 2], [0, 4], [0, 4]]
         int_outputs = [False, False, False, False, True, True]
 
-        for value, slider_range, int_output in zip(values, slider_ranges, int_outputs):
-            float_widget = FloatWidget(vertical=True, slider_scale=2, slider_range=slider_range, int_output=int_output)
-            float_widget.SpinBox.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
+        for value, slider_range, int_output, value_step, digits in zip(values, slider_ranges, int_outputs, value_steps, digits_list):
+            float_widget = SpinBoxSlider(vertical=False, slider_scale=2, slider_range=slider_range, int_output=int_output, value_step=value_step, digits=digits)
+            # float_widget.SpinBox.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
             float_widget.set_value(value)
-            float_widget.Slider.setMinimumHeight(128)
+            # float_widget.Slider.setMinimumHeight(128)
             float_widget.edited.connect(self.on_edited)
             self.layout.addWidget(float_widget)
             self.float_widgets.append(float_widget)
@@ -73,13 +75,14 @@ class CurveGraphForm(QWidget):
         self.plot_item.getAxis("bottom").setPen("white")
         self.plot_item.getAxis("left").setPen("white")
 
-        self.add_column_labels()
+
 
         add_point_button = QPushButton("Add Point")
         add_point_button.setStyleSheet("background-color: #444444; color: #FFFFFF;")
         add_point_button.clicked.connect(self.add_point)
         self.main_layout.addWidget(add_point_button)
 
+        self.add_column_labels()
         for values in DEFAULT_VALUES:
             self.add_datapoint_item(values)
 
