@@ -2,7 +2,7 @@ import sys
 import pyqtgraph as pg
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMessageBox, QLabel
 from PySide6.QtCore import Signal
-from src.widgets import SpinBoxSlider
+from src.widgets import BoxSlider
 from src.soundevent_editor.property.curve.algorithm import CurvePoint, setup_all_curve_values, sample_curve
 from src.widgets_common import DeleteButton
 from src.common import JsonToKv3
@@ -25,7 +25,7 @@ class DataPointItem(QWidget):
         int_outputs = [False, False, False, False, True, True]
 
         for value, slider_range, int_output, value_step, digits in zip(values, slider_ranges, int_outputs, value_steps, digits_list):
-            float_widget = SpinBoxSlider(vertical=False, slider_scale=2, slider_range=slider_range, int_output=int_output, value_step=value_step, digits=digits)
+            float_widget = BoxSlider(slider_scale=2, slider_range=slider_range, int_output=int_output, value_step=value_step, digits=digits)
             float_widget.set_value(value)
             float_widget.edited.connect(self.on_edited)
             self.layout.addWidget(float_widget)
