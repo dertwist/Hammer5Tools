@@ -1,165 +1,217 @@
 import sys
 import pyqtgraph as pg
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMessageBox, QLabel
-from PySide6.QtCore import Signal
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
+                              QLabel, QMessageBox)
+from PySide6.QtCore import Signal, Qt
 from src.widgets import BoxSlider
-from src.soundevent_editor.property.curve.algorithm import CurvePoint, setup_all_curve_values, sample_curve
+from src.soundevent_editor.property.curve.algorithm import (CurvePoint,
+                                                          setup_all_curve_values,
+                                                          sample_curve)
 from src.widgets_common import DeleteButton
-from src.common import JsonToKv3
+from src.soundevent_editor.property.curve.ui_main import Ui_CurveWidget
 
-DEFAULT_VALUES = [[20, 3, 0, 0, 2, 3], [260, 1, 0, 0, 2, 3]]
 
 class DataPointItem(QWidget):
     edited = Signal()
 
+    # Column configurations
+    COLUMNS = [
+        {"name": "value_01", "step": 10, "digits": 3, "range": [0, 0], "sensitivity": 1.0},
+        {"name": "value_02", "step": 1, "digits": 3, "range": [0, 0], "sensitivity": 0.2},
+        {"name": "value_03", "step": 0.001, "digits": 3, "range": [-2, 2], "sensitivity": 0.01},
+        {"name": "value_04", "step": 0.001, "digits": 3, "range": [-2, 2], "sensitivity": 0.01},
+        {"name": "value_05", "step": 0.1, "digits": 0, "range": [0, 4], "sensitivity": 1.0},
+        {"name": "value_06", "step": 0.1, "digits": 0, "range": [0, 4], "sensitivity": 1.0}
+    ]
+
     def __init__(self, values, parent=None):
         super().__init__(parent)
         self.parent_widget = parent
-        self.layout = QHBoxLayout()
-        self.setLayout(self.layout)
+        self.values = values
         self.float_widgets = []
+        self.setup_widgets()
 
-        value_steps = [10, 1, 0.001, 0.001, 0.1, 0.1]
-        digits_list = [3, 3, 3, 3, 0, 0]
-        slider_ranges = [[0, 0], [0, 0], [-2, 2], [-2, 2], [0, 4], [0, 4]]
-        int_outputs = [False, False, False, False, False, False]
-        sensitivities = [1, 0.2, 0.01, 0.01, 1, 1]
+    def setup_widgets(self):
+        """Setup BoxSlider widgets in the appropriate layouts"""
+        layouts = [
+            self.parent_widget.ui.value_01,
+            self.parent_widget.ui.value_02,
+            self.parent_widget.ui.value_03,
+            self.parent_widget.ui.value_04,
+            self.parent_widget.ui.value_05,
+            self.parent_widget.ui.value_06
+        ]
 
-        for value, slider_range, int_output, value_step, digits, sensitivity in zip(values, slider_ranges, int_outputs, value_steps, digits_list, sensitivities):
-            float_widget = BoxSlider(slider_scale=2, slider_range=slider_range, int_output=int_output, value_step=value_step, digits=digits, sensitivity=sensitivity)
+        for value, column, layout in zip(self.values, self.COLUMNS, layouts):
+            float_widget = BoxSlider(
+                slider_scale=2,
+                slider_range=column["range"],
+                value_step=column["step"],
+                digits=column["digits"],
+                sensitivity=column["sensitivity"]
+            )
             float_widget.set_value(value)
             float_widget.edited.connect(self.on_edited)
-            self.layout.addWidget(float_widget)
+            layout.addWidget(float_widget)
             self.float_widgets.append(float_widget)
 
+        # Add delete button to actions layout
         delete_button = DeleteButton(self)
+        delete_button.set_size(24, 24)
         delete_button.clicked.connect(self.delete_item)
-        self.layout.addWidget(delete_button)
+        self.parent_widget.ui.actions.addWidget(delete_button)
 
     def on_edited(self):
+        """Handle value editing"""
         self.edited.emit()
 
     def get_values(self):
+        """Get current values from all widgets"""
         return [widget.value for widget in self.float_widgets]
 
     def delete_item(self):
-        parent = self.parent_widget
-        self.setParent(None)
+        """Remove this item from parent"""
+        if self.parent_widget:
+            self.parent_widget.datapoint_items.remove(self)
+            # Clean up only this item's widgets
+            for widget in self.float_widgets:
+                widget.deleteLater()
+            # Remove only this item's widgets from layouts
+            for layout in [
+                self.parent_widget.ui.value_01,
+                self.parent_widget.ui.value_02,
+                self.parent_widget.ui.value_03,
+                self.parent_widget.ui.value_04,
+                self.parent_widget.ui.value_05,
+                self.parent_widget.ui.value_06,
+                self.parent_widget.ui.actions
+            ]:
+                # Find and remove only this item's widget from each layout
+                for i in range(layout.count()):
+                    item = layout.itemAt(i)
+                    if item and item.widget() and item.widget() in self.float_widgets + [self.findChild(DeleteButton)]:
+                        item.widget().deleteLater()
+                        break
+            self.parent_widget.plot_graph()
         self.deleteLater()
 
-        if parent:
-            parent.datapoint_items.remove(self)
-            parent.plot_graph()
 
-class CurveGraphForm(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Distance-Volume Curve Graph")
-        self.setStyleSheet("background-color: #1C1C1C; color: #FFFFFF;")
+class SoundEventEditorPropertyCurve(QWidget):
+    edited = Signal()
 
-        self.points = []
+    # Constants
+    MIN_POINTS_REQUIRED = 2
+    CURVE_STEPS = 200
+    GRID_ALPHA = 0.3
+    CURVE_COLOR = '#7F7F7F'
+    CURVE_WIDTH = 1.5
+    BACKGROUND_COLOR = '#1C1C1C'
+    AXIS_COLOR = '#232323'
+    AXIS_WIDTH = 2
+
+    def __init__(self, parent=None, label_text: str = None, value: dict = None, labels = None):
+        super().__init__(parent)
+        self.ui = Ui_CurveWidget()
+        self.ui.setupUi(self)
+        self.value_class = label_text
         self.datapoint_items = []
-        self.main_layout = QVBoxLayout()
-        self.setLayout(self.main_layout)
-        self.init_ui()
-        self.plot_graph()
+        self.points = []
 
-    def init_ui(self):
+        self.setup_graph()
+        self.setup_connections()
+
+        # Initialize with provided values
+        if value:
+            self.value_update(value)
+            for point_values in value:
+                self.add_datapoint(point_values)
+            self.on_property_update()
+
+    def value_update(self, value):
+        """Update the widget's value"""
+        self.value = {self.value_class: value}
+
+    def setup_graph(self):
+        """Setup the graph widget with proper styling"""
         self.graph_widget = pg.PlotWidget()
-        self.graph_widget.setAntialiasing(True)  # Enable antialiasing for smoother curves
-        self.graph_widget.setBackground('#1C1C1C')
-        self.main_layout.addWidget(self.graph_widget)
+        self.graph_widget.setAntialiasing(True)
+        self.graph_widget.setBackground(self.BACKGROUND_COLOR)
+        self.ui.verticalLayout_4.addWidget(self.graph_widget)
+
         self.plot_item = self.graph_widget.getPlotItem()
-        self.plot_item.showGrid(x=True, y=True, alpha=0.3)
-        self.plot_item.getAxis("bottom").setPen(pg.mkPen(color='#232323', width=2))
-        self.plot_item.getAxis("left").setPen(pg.mkPen(color='#232323', width=2))
+        self.plot_item.showGrid(x=True, y=True, alpha=self.GRID_ALPHA)
 
-        add_point_button = QPushButton("Add Point")
-        add_point_button.setStyleSheet("background-color: #444444; color: #FFFFFF;")
-        add_point_button.clicked.connect(self.add_point)
-        self.main_layout.addWidget(add_point_button)
+        for axis in ["bottom", "left"]:
+            self.plot_item.getAxis(axis).setPen(
+                pg.mkPen(color=self.AXIS_COLOR, width=self.AXIS_WIDTH)
+            )
 
-        output_button = QPushButton("Output Values")
-        output_button.setStyleSheet("background-color: #444444; color: #FFFFFF;")
-        output_button.clicked.connect(self.output_values)
-        self.main_layout.addWidget(output_button)
-
-        self.add_column_labels()
-        for values in DEFAULT_VALUES:
-            self.add_datapoint_item(values)
-
-    def add_column_labels(self):
-        label_layout = QHBoxLayout()
-        texts = ['Distance', 'Volume', 'Slope Left', 'Slope Right', 'Mode Left', 'Mode Right']
-        for text in texts:
-            label = QLabel(text)
-            label.setStyleSheet("color: #FFFFFF;")
-            label_layout.addWidget(label)
-        self.main_layout.addLayout(label_layout)
-
-    def add_point(self):
-        self.add_datapoint_item([0.0, 0.0, 0.0, 0.0, 0, 0])
-
-    def add_datapoint_item(self, values):
-        datapoint_item = DataPointItem(values, self)
-        datapoint_item.edited.connect(self.plot_graph)
-        self.main_layout.addWidget(datapoint_item)
-        self.datapoint_items.append(datapoint_item)
+    def setup_connections(self):
+        """Setup widget connections"""
+        self.ui.add_data_point_button.clicked.connect(
+            lambda: self.add_datapoint()
+        )
 
     def plot_graph(self):
+        """Plot the curve based on current datapoints"""
+        try:
+            self._collect_points()
+            if not self._validate_points():
+                return
+            self._calculate_and_draw_curve()
+        except Exception:
+            pass  # Silently handle errors
+
+    def _collect_points(self):
+        """Collect points from all datapoint widgets"""
         self.points = []
-        distances_from_widgets = []
+        self.distances_from_widgets = []
 
         for item in self.datapoint_items:
-            try:
-                values = item.get_values()
-                distance, volume, slopeLeft, slopeRight, modeLeft, modeRight = values
+            values = item.get_values()
+            point = CurvePoint(*values)
+            self.points.append(point)
+            self.distances_from_widgets.append(values[0])
 
-                point = CurvePoint(distance, volume, slopeLeft, slopeRight, modeLeft, modeRight)
-                self.points.append(point)
-                distances_from_widgets.append(distance)
+    def _validate_points(self):
+        """Validate collected points"""
+        return bool(self.distances_from_widgets and len(self.points) >= self.MIN_POINTS_REQUIRED)
 
-            except (ValueError, AttributeError):
-                QMessageBox.warning(self, "Invalid Input", "Invalid data in one of the datapoint items. Please check the values.")
-                return
+    def _calculate_and_draw_curve(self):
+        """Calculate and draw the curve"""
+        setup_all_curve_values(self.points, len(self.points))
+        min_distance = min(self.distances_from_widgets)
+        max_distance = max(self.distances_from_widgets)
 
-        if not distances_from_widgets:
-            return
-
-        min_distance = min(distances_from_widgets)
-        max_distance = max(distances_from_widgets)
-
-        if len(self.points) > 1:
-            setup_all_curve_values(self.points, len(self.points))
-        else:
-            QMessageBox.warning(self, "Insufficient Data", "At least two points are required to plot the curve.")
-            return
-
-        num_steps = 200
-        step = (max_distance - min_distance) / num_steps
-
-        distances = []
-        current_distance = min_distance
-        for _ in range(num_steps + 1):
-            distances.append(current_distance)
-            current_distance += step
-
-        volumes = [sample_curve(d, self.points, len(self.points)) for d in distances]
+        step = (max_distance - min_distance) / self.CURVE_STEPS
+        distances = [min_distance + step * i
+                    for i in range(self.CURVE_STEPS + 1)]
+        volumes = [sample_curve(d, self.points, len(self.points))
+                  for d in distances]
 
         self.plot_item.clear()
-        self.plot_item.plot(distances, volumes, pen=pg.mkPen('#7F7F7F', width=1.5))
+        self.plot_item.plot(
+            distances,
+            volumes,
+            pen=pg.mkPen(self.CURVE_COLOR, width=self.CURVE_WIDTH)
+        )
 
-    def output_values(self):
-        values_list = [item.get_values() for item in self.datapoint_items]
-        print(values_list)
-        input_a = values_list
-        kv3_output = JsonToKv3(input_a)
-        clipboard = QApplication.clipboard()
-        clipboard.setText(kv3_output)
+    def add_datapoint(self, values: list = None):
+        """Add a new datapoint to the curve"""
+        values = values or [0, 0, 0, 0, 2, 3]
+        datapoint = DataPointItem(values=values, parent=self)
+        datapoint.edited.connect(self.on_property_update)
+        self.datapoint_items.append(datapoint)
+        self.on_property_update()
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = CurveGraphForm()
-    app.setStyle('Fusion')
-    window.show()
-    sys.exit(app.exec())
+    def on_property_update(self):
+        """Handle updates to curve properties"""
+        values = [item.get_values() for item in self.datapoint_items]
+        self.value_update(values)
+        self.plot_graph()
+        self.edited.emit()
+
+    def resizeEvent(self, event):
+        """Handle widget resize events"""
+        self.on_property_update()
+        super().resizeEvent(event)
