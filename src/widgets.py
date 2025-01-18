@@ -125,7 +125,7 @@ class FloatWidget(QWidget):
 class BoxSlider(QWidget):
     edited = Signal(float)
 
-    def __init__(self, value: float = 0.0, min_value: float = 0.0, max_value: float = 1.0, width: int = 100, height: int = 20, int_output: bool = False, only_positive: bool = False, lock_range: bool = False, digits: int = 3, value_step: float = 1, slider_scale: int = 5):
+    def __init__(self, value: float = 0.0, min_value: float = 0.0, max_value: float = 1.0, width: int = 100, height: int = 20, int_output: bool = False, only_positive: bool = False, lock_range: bool = False, digits: int = 3, value_step: float = 1):
         super().__init__()
 
         self.value = value
@@ -138,7 +138,6 @@ class BoxSlider(QWidget):
         self.lock_range = lock_range
         self.digits = digits
         self.value_step = value_step
-        self.slider_scale = slider_scale
         self.in_edit_mode = False
         self.dragging = False
 
@@ -152,49 +151,35 @@ class BoxSlider(QWidget):
 
         self.setFixedSize(self.width, self.height)
         self.installEventFilter(self)
-
-        # Set focus policy to ensure the widget can receive focus
         self.setFocusPolicy(Qt.StrongFocus)
         self.edit_box.setFocusPolicy(Qt.StrongFocus)
 
     def paintEvent(self, event):
         painter = QPainter(self)
-
-        if not self.in_edit_mode:  # Only draw the slider if not in edit mode
-            painter.setPen(QPen(QColor(0, 0, 0)))
-            painter.drawRect(self.slider_rect)
-
-            slider_width = 5
-            slider_x = self.slider_pos - slider_width // 2
-            painter.fillRect(QRect(slider_x, 0, slider_width, self.height), QColor(100, 100, 255))
-
-            # Draw the value overlay
-            painter.setPen(QPen(QColor(0, 0, 0)))
-            painter.drawText(self.slider_rect, Qt.AlignCenter, f"{self.value:.{self.digits}f}")
+        painter.setPen(QPen(QColor(0, 0, 0)))
+        painter.drawRect(self.slider_rect)
+        painter.drawText(self.slider_rect, Qt.AlignCenter, f"{self.value:.{self.digits}f}")
 
     def eventFilter(self, obj, event):
         if obj == self:
             if event.type() == QEvent.MouseButtonDblClick and event.button() == Qt.LeftButton:
-                self.enter_edit_mode()
-                print('Editmode')
+                if not self.in_edit_mode:
+                    self.enter_edit_mode()
+                    print('1')
                 return True
-
-            elif event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton and not self.in_edit_mode:
-                self.start_drag(event.position().x())
-                return True
-
-            elif event.type() == QEvent.MouseMove and event.buttons() & Qt.LeftButton and self.dragging:
-                self.update_value_by_drag(event.position().x())
-                return True
-
-            elif event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton and self.dragging:
-                self.finish_drag()
-                return True
-
+            if not self.in_edit_mode:
+                if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
+                    self.start_drag(event.position().x())
+                    return True
+                elif event.type() == QEvent.MouseMove and event.buttons() & Qt.LeftButton and self.dragging:
+                    self.update_value_by_drag(event.position().x())
+                    return True
+                elif event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton and self.dragging:
+                    self.finish_drag()
+                    return True
             elif event.type() == QEvent.FocusOut and self.in_edit_mode:
                 self.finish_edit()
                 return True
-
         return super().eventFilter(obj, event)
 
     def enter_edit_mode(self):
@@ -202,34 +187,34 @@ class BoxSlider(QWidget):
         self.edit_box.setText(f"{self.value:.{self.digits}f}")
         self.edit_box.setGeometry(self.slider_rect)
         self.edit_box.show()
-        self.update()  # Redraw to hide the slider
-
+        self.edit_box.setFocus()
+        self.update()
 
     def finish_edit(self):
         try:
             new_value = float(self.edit_box.text())
             if self.lock_range:
                 new_value = max(self.min_value, min(new_value, self.max_value))
-            self.set_value(new_value)  # This will also update the display
+            self.set_value(new_value)
         except ValueError:
-            # If invalid input, restore the previous value and keep edit mode active
             self.edit_box.setText(f"{self.value:.{self.digits}f}")
             return
-
         self.in_edit_mode = False
         self.edit_box.hide()
-        self.update()  # Redraw to show the slider again
+        self.update()
 
     def start_drag(self, x):
-        self.dragging = True
-        self.last_drag_x = x
+        if not self.in_edit_mode:
+            self.dragging = True
+            self.last_drag_x = x
 
     def update_value_by_drag(self, x):
-        delta = x - self.last_drag_x
-        self.last_drag_x = x
-        sensitivity = (self.max_value - self.min_value) / self.width
-        new_value = self.value + delta * sensitivity
-        self.set_value(new_value)
+        if not self.in_edit_mode:
+            delta = x - self.last_drag_x
+            self.last_drag_x = x
+            sensitivity = (self.max_value - self.min_value) / self.width
+            new_value = self.value + delta * sensitivity
+            self.set_value(new_value)
 
     def finish_drag(self):
         self.dragging = False
@@ -242,7 +227,6 @@ class BoxSlider(QWidget):
         self.slider_pos = int((self.value - self.min_value) / (self.max_value - self.min_value) * self.width)
         self.edited.emit(self.value)
         self.update()
-
 
 class LegacyWidget(QWidget):
     edited = Signal(str)
