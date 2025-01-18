@@ -24,7 +24,7 @@ class Ui_CurveWidget(object):
     def setupUi(self, CurveWidget):
         if not CurveWidget.objectName():
             CurveWidget.setObjectName(u"CurveWidget")
-        CurveWidget.resize(938, 685)
+        CurveWidget.resize(800, 649)
         CurveWidget.setMinimumSize(QSize(512, 0))
         CurveWidget.setMaximumSize(QSize(16666, 16777215))
         self.verticalLayout = QVBoxLayout(CurveWidget)
