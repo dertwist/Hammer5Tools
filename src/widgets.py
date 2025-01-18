@@ -184,7 +184,7 @@ class BoxSlider(QWidget):
         self.edit_box.returnPressed.connect(self.finish_edit)
         self.edit_box.installEventFilter(self)
 
-        self.slider_rect = QRect(0, 0, 100, 20)
+        self.slider_rect = QRect(0, 0, 100, 24)
         self.setFixedSize(self.slider_rect.width(), self.slider_rect.height())
 
         self.setStyleSheet(self.STYLE)
@@ -315,6 +315,52 @@ class BoxSlider(QWidget):
         self.value = value
         self.edited.emit(self.value)
         self.update()
+
+class LegacyWidget(QWidget):
+    edited = Signal(str)
+
+    def __init__(self, value: str = None, spacer_enable: bool = True):
+        """Initialize the LegacyWidget with a given value."""
+        super().__init__()
+        self.isdict = False
+
+        # Edit line initialization
+        self.edit_line = QLineEdit()
+        self.edit_line.textChanged.connect(self.on_editline_updated)
+
+        # Layout initialization
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.edit_line)
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        if spacer_enable:
+            layout.addItem(spacer)
+        self.setLayout(layout)
+
+        # Set initial value
+        self.set_value(value)
+
+    def on_editline_updated(self):
+        """Handle updates to the edit line."""
+        value = self.edit_line.text()
+        try:
+            value = ast.literal_eval(value)
+        except:
+            pass
+        self.edited.emit(value)
+
+    def set_value(self, value):
+        """Set the value of the edit line."""
+        if isinstance(value, dict):
+            self.isdict = True
+            self.edit_line.setText(str(value))
+        elif isinstance(value, str):
+            self.isdict = False
+            self.edit_line.setText(value)
+        else:
+            # raise ValueError("Value must be a string or a dictionary.")
+            self.isdict = False
+            self.edit_line.setText(str(value))
 
 class BoolWidget(QWidget):
     edited = Signal(bool)
