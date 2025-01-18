@@ -137,12 +137,22 @@ class BoxSlider(QWidget):
     }
     """
 
-    def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0,
-                 only_positive: bool = False, lock_range: bool = False, digits: int = 3,
-                 value_step: float = 0.1, slider_scale: int = 5):
+    def __init__(self, int_output=False, slider_range=[0, 0], value=0.0,
+                 only_positive=False, lock_range=False, digits=3,
+                 value_step=0.1, slider_scale=5, sensitivity=1):
         """
         BoxSlider is a widget with a spin box and slider that are synchronized with each other.
-        This widget gives float or round(float) which is int variable type.
+
+        Args:
+            int_output (bool): Output integer values if True
+            slider_range (list): [min, max] range for the slider
+            value (float): Initial value
+            only_positive (bool): Restrict to positive values only
+            lock_range (bool): Lock values within the slider range
+            digits (int): Number of decimal places to display
+            value_step (float): Step size for value changes
+            slider_scale (int): Base scale factor for slider movement
+            sensitivity (float): Additional multiplier for movement sensitivity
         """
         super().__init__()
 
@@ -154,9 +164,9 @@ class BoxSlider(QWidget):
         self.digits = digits
         self.value_step = value_step
         self.slider_scale = slider_scale
+        self.sensitivity = sensitivity
 
-        # Handle infinity range case
-        if slider_range[0] == 0 and slider_range[1] == 0:
+        if slider_range == [0, 0]:
             self.min_value = -math.inf
             self.max_value = math.inf
 
@@ -260,21 +270,36 @@ class BoxSlider(QWidget):
             delta = x - self.last_drag_x
             self.last_drag_x = x
 
-            # Calculate sensitivity based on slider_scale
+            # Calculate sensitivity based on slider_scale and sensitivity
             range_width = self.max_value - self.min_value if not math.isinf(self.max_value) else 100
-            sensitivity = ((range_width / self.slider_rect.width()) * self.slider_scale)/4
+            adjusted_sensitivity = ((range_width / self.slider_rect.width()) * self.slider_scale) * self.sensitivity
 
-            new_value = self.value + delta * sensitivity
+            # Calculate raw new value
+            raw_delta = delta * adjusted_sensitivity
+
+            # Calculate number of steps to move
+            steps = round(raw_delta / self.value_step)
+
+            # Apply steps to current value
+            new_value = self.value + (steps * self.value_step)
+
             if self.int_output:
                 new_value = round(new_value)
+
             self.set_value(new_value)
 
     def finish_drag(self):
         self.dragging = False
 
     def set_value(self, value):
+        """
+        Set the widget's value with range enforcement.
+
+        Args:
+            value: The value to set
+        """
         value = float(value)
-        if self.lock_range and not math.isinf(self.max_value):
+        if not math.isinf(self.max_value) and (self.min_value != 0 or self.max_value != 0 or self.lock_range):
             value = max(self.min_value, min(value, self.max_value))
 
         if self.only_positive:
@@ -282,6 +307,10 @@ class BoxSlider(QWidget):
 
         if self.int_output:
             value = round(value)
+
+        if not math.isinf(value):
+            steps = round(value / self.value_step)
+            value = steps * self.value_step
 
         self.value = value
         self.edited.emit(self.value)
@@ -322,6 +351,8 @@ class BoolWidget(QWidget):
         """Set value as text for checkbox"""
         self.checkbox.setChecked(value)
         self.checkbox.setText(str(value))
+
+
 #================================================================<  Combobox  >=============================================================
 class ComboboxDynamicItems(QComboBox):
     clicked = Signal()
