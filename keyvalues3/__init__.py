@@ -9,8 +9,8 @@ from .binarywriter import BinaryMagics
 from .textreader import KV3TextReader
 from . import textwriter
 
-__version__ = "0.1"
-__all__ = [ "read", "write" ]
+__version__ = "0.2"
+__all__ = [ "read", "write", "json_to_kv3", "kv3_to_json"]
 
 #region: read
 
@@ -129,5 +129,80 @@ def write(kv3: KV3File | ValueType, path_or_stream: str | os.PathLike | typing.I
     
     if is_file:
         fp.close()
+
+#endregion
+
+
+#region: json_to_kv3
+@typing.overload
+def json_to_kv3(data: dict | list) -> KV3File:
+    """Converts a dictionary or list to KV3 format."""
+
+@typing.overload
+def json_to_kv3(data: dict | list) -> KV3File:
+    """
+    Converts a file path or text stream to KV3 format.
+
+    Raises:
+        KV3DecodeError: If decoding fails.
+    """
+
+def json_to_kv3(data: str | dict | list) -> str:
+    """
+    Converts input data to KV3 format.
+
+    Args:
+        data: The input data, which can be a string, dictionary, or list.
+
+    Returns:
+        KV3File: The converted KV3 file object (in string format).
+
+    Raises:
+        ValueError: If the input type is not supported.
+    """
+    if isinstance(data, (dict, list, str)):
+        return textwriter.encode(data)
+    else:
+        raise ValueError('Invalid input type: Input should be a dictionary, list, or string.')
+
+#endregion
+
+#region: kv3_to_json
+
+@typing.overload
+def kv3_to_json(text_stream: typing.TextIO | str | KV3File) -> dict:
+    """Converts a KV3 text stream to JSON format."""
+
+@typing.overload
+def kv3_to_json(data: str | KV3File) -> dict:
+    """
+    Converts a KV3 data format to JSON format.
+
+    Raises:
+        KV3DecodeError: If decoding fails.
+    """
+
+def kv3_to_json(data: str | KV3File) -> dict:
+    """
+    Converts KV3 data to JSON format.
+
+    Args:
+        data: The input data, which can be a string or KV3File.
+
+    Returns:
+        dict: The converted JSON object.
+
+    Raises:
+        ValueError: If the input type is not supported.
+    """
+    if isinstance(data, (str, KV3File)):
+        if '<!-- kv3 encoding:' in data:
+            pass
+        else:
+            data = '<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{' + input + '\n}'
+        output = KV3TextReader().parse(data).value
+        return output
+    else:
+        raise ValueError('Invalid input type or format for KV3 to JSON conversion.')
 
 #endregion
