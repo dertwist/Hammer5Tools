@@ -1,23 +1,14 @@
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsWidget, QGraphicsPathItem, QTreeWidget, QSpacerItem, QSizePolicy
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsPathItem, QFrame, QLineEdit, QPlainTextEdit,QToolButton, QToolTip
-from PySide6.QtWidgets import QPlainTextEdit
-from PySide6.QtGui import QTextOption
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication, QPainter
-from PySide6.QtCore import QEasingCurve, Qt, Signal, QLineF, QRectF
-from src.popup_menu.popup_menu_main import PopupMenu
-from src.preferences import debug, get_addon_dir
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
+from PySide6.QtCore import Signal
 from src.common import convert_snake_case
-from src.batch_creator.context_menu import ReplacementsContextMenu
-from src.batch_creator.highlighter import CustomHighlighter
-from src.qt_styles.common import *
+
 try:
-    from src.soundevent_editor.property.ui_curve import Ui_CurveWidget
+    from src.soundevent_editor.property.curve.ui_main import Ui_CurveWidget
 except:
     pass
-from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button, ComboboxDynamicItems, Spacer
+from src.widgets import Button
 
-import re, os
+
 class ExplorerItem(QWidget):
     edited = Signal()
     def __init__(self, parent=None, label_text: str = None, value: dict = None):
