@@ -199,7 +199,7 @@ def kv3_to_json(data: str | KV3File) -> dict:
         if '<!-- kv3 encoding:' in data:
             pass
         else:
-            data = '<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{' + input + '\n}'
+            data = '<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{' + data + '\n}'
         output = KV3TextReader().parse(data).value
         return output
     else:
