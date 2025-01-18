@@ -1,12 +1,9 @@
 import sys
 import pyqtgraph as pg
-from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-                              QLabel, QMessageBox, QFrame)
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,QLabel, QMessageBox, QFrame)
 from PySide6.QtCore import Signal, Qt
 from src.widgets import BoxSlider
-from src.soundevent_editor.property.curve.algorithm import (CurvePoint,
-                                                          setup_all_curve_values,
-                                                          sample_curve)
+from src.soundevent_editor.property.curve.algorithm import (CurvePoint,setup_all_curve_values,sample_curve)
 from src.widgets_common import DeleteButton, Button
 from src.soundevent_editor.property.curve.ui_main import Ui_CurveWidget
 
@@ -18,8 +15,8 @@ class DataPointItem(QWidget):
     COLUMNS = [
         {"name": "distance", "label": "Distance", "step": 10, "digits": 3, "range": [0, 0], "sensitivity": 1.0},
         {"name": "volume", "label": "Volume", "step": 1, "digits": 3, "range": [0, 0], "sensitivity": 0.2},
-        {"name": "slope_left", "label": "Slope Left", "step": 0.001, "digits": 3, "range": [-2, 2], "sensitivity": 0.01},
-        {"name": "slope_right", "label": "Slope Right", "step": 0.001, "digits": 3, "range": [-2, 2], "sensitivity": 0.01},
+        {"name": "slope_left", "label": "Slope Left", "step": 0.001, "digits": 3, "range": [-2, 2],"sensitivity": 0.01},
+        {"name": "slope_right", "label": "Slope Right", "step": 0.001, "digits": 3, "range": [-2, 2],"sensitivity": 0.01},
         {"name": "mode_left", "label": "Mode Left", "step": 0.1, "digits": 0, "range": [0, 4], "sensitivity": 1.0},
         {"name": "mode_right", "label": "Mode Right", "step": 0.1, "digits": 0, "range": [0, 4], "sensitivity": 1.0}
     ]
@@ -28,9 +25,12 @@ class DataPointItem(QWidget):
         super().__init__(parent)
         self.parent_widget = parent
         self.values = values.copy() if values else [0, 0, 0, 0, 2, 3]
-        self.float_widgets = []
-        self.action_buttons = {}
-        self.widget_map = {}
+        self.widgets = {
+            'float_widgets': [],
+            'action_buttons': {},
+            'layouts': {},
+            'frames': {}
+        }
         self.setup_widgets()
 
     def setup_widgets(self):
@@ -46,51 +46,73 @@ class DataPointItem(QWidget):
 
         # Create and map float widgets
         for value, column, layout in zip(self.values, self.COLUMNS, layouts):
-            float_widget = BoxSlider(
-                slider_scale=2,
-                slider_range=column["range"],
-                value_step=column["step"],
-                digits=column["digits"],
-                sensitivity=column["sensitivity"]
-            )
-            float_widget.set_value(value)
-            float_widget.edited.connect(self.on_edited)
+            float_widget = self._create_float_widget(value, column)
             layout.addWidget(float_widget)
-            self.float_widgets.append(float_widget)
-            self.widget_map[float_widget] = layout
+            self.widgets['float_widgets'].append(float_widget)
+            self.widgets['layouts'][float_widget] = layout
 
-        # Setup action buttons
         self.setup_action_buttons()
 
+    def _create_float_widget(self, value, column):
+        """Create a BoxSlider widget with specified parameters"""
+        float_widget = BoxSlider(
+            slider_scale=2,
+            slider_range=column["range"],
+            value_step=column["step"],
+            digits=column["digits"],
+            sensitivity=column["sensitivity"]
+        )
+        float_widget.set_value(value)
+        float_widget.edited.connect(self.on_edited)
+        return float_widget
+
     def setup_action_buttons(self):
-        """Setup delete and duplicate buttons within a dedicated frame."""
+        """Setup delete and duplicate buttons within a dedicated frame"""
+        action_frame = self._create_action_frame()
+        action_layout = QHBoxLayout(action_frame)
+        self._setup_action_layout(action_layout)
 
-        # Create a frame for action buttons
-        self.action_buttons_frame = QFrame(self)
-        self.action_buttons_frame.setMaximumWidth(64)
-        self.action_buttons_frame.setFrameShape(QFrame.NoFrame)
-        self.action_buttons_frame.setContentsMargins(0, 0, 0, 0)  # Set margins to 0
-        action_buttons_layout = QHBoxLayout(self.action_buttons_frame)
-        action_buttons_layout.setContentsMargins(0, 0, 0, 0)
-        action_buttons_layout.setSpacing(0)  # Remove spacing between buttons
-        self.parent_widget.ui.actions.addWidget(self.action_buttons_frame)
+        delete_button = self._create_delete_button()
+        duplicate_button = self._create_duplicate_button()
 
-        # Delete button
-        delete_button = DeleteButton(self)
-        delete_button.set_size(24, 24)
-        delete_button.clicked.connect(self.delete_item)
-        action_buttons_layout.addWidget(delete_button)
-        self.action_buttons['delete'] = delete_button
-        self.widget_map[delete_button] = action_buttons_layout  # Map to the new layout
+        action_layout.addWidget(delete_button)
+        action_layout.addWidget(duplicate_button)
 
-        # Duplicate button
-        duplicate_button = Button()
-        duplicate_button.set_size(24, 24)
-        duplicate_button.set_icon_paste()
-        duplicate_button.clicked.connect(self.duplicate_item)
-        action_buttons_layout.addWidget(duplicate_button)
-        self.action_buttons['duplicate'] = duplicate_button
-        self.widget_map[duplicate_button] = action_buttons_layout  # Map to the new layout
+        self.widgets['action_buttons'].update({
+            'delete': delete_button,
+            'duplicate': duplicate_button
+        })
+        self.widgets['frames']['action'] = action_frame
+        self.widgets['layouts']['action'] = action_layout
+
+    def _create_action_frame(self):
+        """Create and configure the action buttons frame"""
+        frame = QFrame(self)
+        frame.setMaximumWidth(64)
+        frame.setFrameShape(QFrame.NoFrame)
+        frame.setContentsMargins(0, 0, 0, 0)
+        self.parent_widget.ui.actions.addWidget(frame)
+        return frame
+
+    def _setup_action_layout(self, layout):
+        """Configure the action buttons layout"""
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+    def _create_delete_button(self):
+        """Create and configure the delete button"""
+        button = DeleteButton(self)
+        button.set_size(24, 24)
+        button.clicked.connect(self.delete_item)
+        return button
+
+    def _create_duplicate_button(self):
+        """Create and configure the duplicate button"""
+        button = Button()
+        button.set_size(24, 24)
+        button.set_icon_paste()
+        button.clicked.connect(self.duplicate_item)
+        return button
 
     def on_edited(self):
         """Handle value editing"""
@@ -98,7 +120,7 @@ class DataPointItem(QWidget):
 
     def get_values(self):
         """Get current values from all widgets"""
-        return [widget.value for widget in self.float_widgets]
+        return [widget.value for widget in self.widgets['float_widgets']]
 
     def duplicate_item(self):
         """Create a duplicate of this datapoint"""
@@ -107,30 +129,39 @@ class DataPointItem(QWidget):
             self.parent_widget.add_datapoint(values)
 
     def delete_item(self):
-        """Remove this item and its associated widgets from parent"""
+        """Remove this item and its associated widgets"""
         if self.parent_widget:
-            # Remove from parent's datapoint items list
             self.parent_widget.datapoint_items.remove(self)
-
-            # Remove all widgets from their respective layouts
-            for widget, layout in self.widget_map.items():
-                layout.removeWidget(widget)
-                widget.deleteLater()
-
-            # Update the graph
+            self.cleanup()
             self.parent_widget.plot_graph()
-
-            # Delete the item itself
             self.deleteLater()
 
     def cleanup(self):
-        """Explicit cleanup method"""
-        for widget in self.widget_map.keys():
+        """Clean up all widgets and their layouts"""
+        # Clean up float widgets
+        for widget in self.widgets['float_widgets']:
+            layout = self.widgets['layouts'].get(widget)
+            if layout:
+                layout.removeWidget(widget)
             widget.setParent(None)
             widget.deleteLater()
-        self.widget_map.clear()
-        self.float_widgets.clear()
-        self.action_buttons.clear()
+
+        # Clean up action buttons
+        for button in self.widgets['action_buttons'].values():
+            button.setParent(None)
+            button.deleteLater()
+
+        # Clean up frames
+        for frame in self.widgets['frames'].values():
+            frame.setParent(None)
+            frame.deleteLater()
+
+        # Clear all widget collections
+        for collection in self.widgets.values():
+            if isinstance(collection, dict):
+                collection.clear()
+            elif isinstance(collection, list):
+                collection.clear()
 
 
 class SoundEventEditorPropertyCurve(QWidget):
@@ -170,11 +201,8 @@ class SoundEventEditorPropertyCurve(QWidget):
 
     def update_labels(self, labels):
         """Update column labels"""
-        if isinstance(labels, dict):
-            if 'distance' in labels:
-                self.ui.label_01.setText(labels['distance'])
-            if 'volume' in labels:
-                self.ui.label_02.setText(labels['volume'])
+        self.ui.label_01.setText(labels[0])
+        self.ui.label_02.setText(labels[1])
 
     def value_update(self, value):
         """Update the widget's value"""
