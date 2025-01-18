@@ -19,13 +19,14 @@ class DataPointItem(QWidget):
         self.setLayout(self.layout)
         self.float_widgets = []
 
-        value_steps = [1, 1, 0.001, 0.001, 1, 1]
+        value_steps = [10, 1, 0.001, 0.001, 0.1, 0.1]
         digits_list = [3, 3, 3, 3, 0, 0]
         slider_ranges = [[0, 0], [0, 0], [-2, 2], [-2, 2], [0, 4], [0, 4]]
-        int_outputs = [False, False, False, False, True, True]
+        int_outputs = [False, False, False, False, False, False]
+        sensitivities = [1, 0.2, 0.01, 0.01, 1, 1]
 
-        for value, slider_range, int_output, value_step, digits in zip(values, slider_ranges, int_outputs, value_steps, digits_list):
-            float_widget = BoxSlider(slider_scale=2, slider_range=slider_range, int_output=int_output, value_step=value_step, digits=digits)
+        for value, slider_range, int_output, value_step, digits, sensitivity in zip(values, slider_ranges, int_outputs, value_steps, digits_list, sensitivities):
+            float_widget = BoxSlider(slider_scale=2, slider_range=slider_range, int_output=int_output, value_step=value_step, digits=digits, sensitivity=sensitivity)
             float_widget.set_value(value)
             float_widget.edited.connect(self.on_edited)
             self.layout.addWidget(float_widget)
