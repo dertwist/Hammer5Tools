@@ -1,5 +1,5 @@
 import pytest
-from custom_curve import CurvePoint, setup_all_curve_values, sample_curve
+from algorithm import CurvePoint, setup_all_curve_values, sample_curve
 
 # Helper function to manually copy CurvePoint objects
 def copy_curve_point(point):
