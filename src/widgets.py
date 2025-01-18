@@ -148,31 +148,32 @@ class BoxSlider(QWidget):
         self.edit_box.hide()
         self.edit_box.setValidator(QDoubleValidator(self.min_value, self.max_value, self.digits, self))
         self.edit_box.returnPressed.connect(self.finish_edit)
+        self.edit_box.installEventFilter(self)  # Install event filter on edit_box
 
-        self.slider_rect = QRect(0, 0, 100, 20)  # Example dimensions, adjust as needed
+        self.slider_rect = QRect(0, 0, 100, 20)
 
         self.setFixedSize(self.slider_rect.width(), self.slider_rect.height())
         self.installEventFilter(self)
         self.setFocusPolicy(Qt.StrongFocus)
         self.edit_box.setFocusPolicy(Qt.StrongFocus)
 
-        self.set_value(self.value)  # Initialize slider position
+        # Install global event filter
+        QApplication.instance().installEventFilter(self)
 
-    def focusInEvent(self, event: QFocusEvent):
-        super().focusInEvent(event)
-
-    def focusOutEvent(self, event: QFocusEvent):
-        if not self.in_edit_mode:
-            self.finish_edit()  # Finish edit if focus is lost and not in edit mode
-        super().focusOutEvent(event)
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setPen(QPen(QColor(0, 0, 0)))
-        painter.drawRect(self.slider_rect)
-        painter.drawText(self.slider_rect, Qt.AlignCenter, f"{self.value:.{self.digits}f}")
+        self.set_value(self.value)
 
     def eventFilter(self, obj, event):
+        # Handle global mouse press events
+        if event.type() == QEvent.MouseButtonPress and self.in_edit_mode:
+            # Get the clicked widget
+            clicked_widget = QApplication.widgetAt(event.globalPos())
+
+            # Check if click is outside both the edit_box and the main widget
+            if clicked_widget not in (self, self.edit_box):
+                self.finish_edit()
+                return True
+
+        # Handle widget-specific events
         if obj == self:
             if event.type() == QEvent.MouseButtonDblClick:
                 if not self.in_edit_mode:
@@ -197,20 +198,27 @@ class BoxSlider(QWidget):
         self.edit_box.setText(f"{self.value:.{self.digits}f}")
         self.edit_box.setGeometry(self.slider_rect)
         self.edit_box.show()
-        self.edit_box.selectAll()  # Select all text for easier editing
+        self.edit_box.selectAll()
         self.edit_box.setFocus()
         self.update()
 
     def finish_edit(self):
-        if self.in_edit_mode:  # Only finish edit if in edit mode
+        if self.in_edit_mode:
             try:
                 new_value = float(self.edit_box.text())
                 self.set_value(new_value)
             except ValueError:
-                pass  # Ignore invalid input
+                pass
             self.in_edit_mode = False
             self.edit_box.hide()
+            self.setFocus()
             self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setPen(QPen(QColor(0, 0, 0)))
+        painter.drawRect(self.slider_rect)
+        painter.drawText(self.slider_rect, Qt.AlignCenter, f"{self.value:.{self.digits}f}")
 
     def start_drag(self, x):
         if not self.in_edit_mode:
@@ -221,7 +229,8 @@ class BoxSlider(QWidget):
         if not self.in_edit_mode:
             delta = x - self.last_drag_x
             self.last_drag_x = x
-            sensitivity = (self.max_value - self.min_value) / self.slider_rect.width() if self.max_value != self.min_value else 0
+            sensitivity = (
+                                      self.max_value - self.min_value) / self.slider_rect.width() if self.max_value != self.min_value else 0
             new_value = self.value + delta * sensitivity
             self.set_value(new_value)
 
@@ -229,7 +238,7 @@ class BoxSlider(QWidget):
         self.dragging = False
 
     def set_value(self, value):
-        value = float(value)  # Ensure value is a float
+        value = float(value)
         if self.lock_range:
             self.value = max(self.min_value, min(value, self.max_value))
         else:
@@ -239,12 +248,14 @@ class BoxSlider(QWidget):
             self.value = max(0, self.value)
 
         if self.max_value != self.min_value:
-            self.slider_pos = int((self.value - self.min_value) / (self.max_value - self.min_value) * self.slider_rect.width())
+            self.slider_pos = int(
+                (self.value - self.min_value) / (self.max_value - self.min_value) * self.slider_rect.width())
         else:
-            self.slider_pos = 0  # Default position if range is zero
+            self.slider_pos = 0
 
         self.edited.emit(self.value)
         self.update()
+
 class LegacyWidget(QWidget):
     edited = Signal(str)
 
