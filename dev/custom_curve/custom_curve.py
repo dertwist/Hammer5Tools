@@ -1,5 +1,3 @@
-import time
-import numpy as np
 from numba import njit, float64, int32
 from numba.experimental import jitclass
 
@@ -37,7 +35,7 @@ class CurvePoint:
 # coppies the data to another place in memory, and then runs this function on that copy.
 # and it appears that this happens each frame before the yValue is calculated.
 # This is done to preserve the original curve data that originally came from the sound event file.
-@njit
+@njit(nopython=True)
 def _setup_curve_point(point, prev_point, next_point):
     delta_x2 = 0.0
     delta_y2 = 0.0
@@ -94,7 +92,15 @@ def _setup_curve_point(point, prev_point, next_point):
     elif point.modeLeft == 3:
         point.slopeLeft = 0.0
     elif point.modeLeft == 4:
-        point.slopeLeft = np.where(delta_x == 0.0, -1.60305 if delta_y <= 0.0 else -0.0413377, (1.0 / delta_x) * (-1.60305 if delta_y <= 0.0 else -0.0413377))
+        if delta_y <= 0.0:
+            if delta_x == 0.0:
+                point.slopeLeft = -1.60305
+            else:
+                point.slopeLeft = (1.0 / delta_x) * -1.60305
+        elif delta_x == 0.0:
+            point.slopeLeft = -0.0413377
+        else:
+            point.slopeLeft = (1.0 / delta_x) * -0.0413377
 
 
     # Here we are setting the slope for the right side of the curve point.
@@ -105,13 +111,21 @@ def _setup_curve_point(point, prev_point, next_point):
     elif point.modeRight == 3:
         point.slopeRight = point.slopeLeft
     elif point.modeRight == 4:
-        point.slopeRight = np.where(delta_x2 == 0.0, 0.0413377 if delta_y2 <= 0.0 else 1.60305, (1.0 / delta_x2) * (0.0413377 if delta_y2 <= 0.0 else 1.60305))
+        if delta_y <= 0.0:
+            if delta_x == 0.0:
+                point.slopeRight = -1.60305
+            else:
+                point.slopeRight = (1.0 / delta_x) * -1.60305
+        elif delta_x == 0.0:
+            point.slopeRight = -0.0413377
+        else:
+            point.slopeRight = (1.0 / delta_x) * -0.0413377
 
     if point.modeLeft == 3:
         point.slopeLeft = point.slopeRight
 
 # This function essentially performs the entire setup necesary for the curve data before calling "sample_curve"
-@njit
+@njit(nopython=True)
 def setup_all_curve_values(points, totalPoints):
     if totalPoints == 0:
         return
@@ -129,7 +143,7 @@ def setup_all_curve_values(points, totalPoints):
         _setup_curve_point(points[i], prevPoint, nextPoint)
 
 # If anyone wants to help rename some of the local variables, that would be awesome.
-@njit
+@njit(nopython=True)
 def sample_curve(xValue, points, total_points):
     # start_time = time.time()
     # Validate that we were given a list of points, and that there are more than 2 points to sample between.
