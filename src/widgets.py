@@ -159,16 +159,18 @@ class BoxSlider(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setPen(QPen(QColor(0, 0, 0)))
-        painter.drawRect(self.slider_rect)
 
-        slider_width = 5
-        slider_x = self.slider_pos - slider_width // 2
-        painter.fillRect(QRect(slider_x, 0, slider_width, self.height), QColor(100, 100, 255))
+        if not self.in_edit_mode:  # Only draw the slider if not in edit mode
+            painter.setPen(QPen(QColor(0, 0, 0)))
+            painter.drawRect(self.slider_rect)
 
-        # Draw the value overlay
-        painter.setPen(QPen(QColor(0, 0, 0)))
-        painter.drawText(self.slider_rect, Qt.AlignCenter, f"{self.value:.{self.digits}f}")
+            slider_width = 5
+            slider_x = self.slider_pos - slider_width // 2
+            painter.fillRect(QRect(slider_x, 0, slider_width, self.height), QColor(100, 100, 255))
+
+            # Draw the value overlay
+            painter.setPen(QPen(QColor(0, 0, 0)))
+            painter.drawText(self.slider_rect, Qt.AlignCenter, f"{self.value:.{self.digits}f}")
 
     def eventFilter(self, obj, event):
         if obj == self:
@@ -197,22 +199,26 @@ class BoxSlider(QWidget):
 
     def enter_edit_mode(self):
         self.in_edit_mode = True
-        self.edit_box.setText(str(self.value))
+        self.edit_box.setText(f"{self.value:.{self.digits}f}")
         self.edit_box.setGeometry(self.slider_rect)
         self.edit_box.show()
-        self.edit_box.setFocus()
-        self.edit_box.selectAll()
+        self.update()  # Redraw to hide the slider
+
 
     def finish_edit(self):
         try:
             new_value = float(self.edit_box.text())
-            self.set_value(new_value)
+            if self.lock_range:
+                new_value = max(self.min_value, min(new_value, self.max_value))
+            self.set_value(new_value)  # This will also update the display
         except ValueError:
-            pass  # Handle invalid input
+            # If invalid input, restore the previous value and keep edit mode active
+            self.edit_box.setText(f"{self.value:.{self.digits}f}")
+            return
 
         self.in_edit_mode = False
         self.edit_box.hide()
-        self.update()
+        self.update()  # Redraw to show the slider again
 
     def start_drag(self, x):
         self.dragging = True
