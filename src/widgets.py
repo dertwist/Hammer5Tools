@@ -137,23 +137,7 @@ class BoxSlider(QWidget):
     }
     """
 
-    def __init__(self, int_output=False, slider_range=[0, 0], value=0.0,
-                 only_positive=False, lock_range=False, digits=3,
-                 value_step=0.1, slider_scale=5, sensitivity=1):
-        """
-        BoxSlider is a widget with a spin box and slider that are synchronized with each other.
-
-        Args:
-            int_output (bool): Output integer values if True
-            slider_range (list): [min, max] range for the slider
-            value (float): Initial value
-            only_positive (bool): Restrict to positive values only
-            lock_range (bool): Lock values within the slider range
-            digits (int): Number of decimal places to display
-            value_step (float): Step size for value changes
-            slider_scale (int): Base scale factor for slider movement
-            sensitivity (float): Additional multiplier for movement sensitivity
-        """
+    def __init__(self, int_output=False, slider_range=[0, 0], value=0.0, only_positive=False, lock_range=False, digits=3, value_step=0.1, slider_scale=5, sensitivity=1):
         super().__init__()
 
         self.int_output = int_output
@@ -184,8 +168,9 @@ class BoxSlider(QWidget):
         self.edit_box.returnPressed.connect(self.finish_edit)
         self.edit_box.installEventFilter(self)
 
-        self.slider_rect = QRect(0, 0, 100, 24)
-        self.setFixedSize(self.slider_rect.width(), self.slider_rect.height())
+        # Set dynamic size based on parent or specified size
+        self.setFixedSize(self.parentWidget().size() if self.parentWidget() else QSize(100, 24))
+        self.slider_rect = QRect(0, 0, self.width(), self.height())
 
         self.setStyleSheet(self.STYLE)
         self.installEventFilter(self)
@@ -315,6 +300,16 @@ class BoxSlider(QWidget):
         self.value = value
         self.edited.emit(self.value)
         self.update()
+
+    def wheelEvent(self, event):
+        """Handle mouse wheel events for value adjustment."""
+        if not self.in_edit_mode:
+            delta = event.angleDelta().y() / 120  # Standardize delta
+            new_value = self.value + (delta * self.value_step)
+            self.set_value(new_value)
+            event.accept()
+        else:
+            event.ignore()
 
 class LegacyWidget(QWidget):
     edited = Signal(str)
