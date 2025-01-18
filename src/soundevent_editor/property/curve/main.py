@@ -29,10 +29,12 @@ class DataPointItem(QWidget):
         self.parent_widget = parent
         self.values = values
         self.float_widgets = []
+        self.delete_button = None
+        self.widget_map = {}  # Store widget-to-layout mapping
         self.setup_widgets()
 
     def setup_widgets(self):
-        """Setup BoxSlider widgets in the appropriate layouts"""
+        """Setup BoxSlider widgets and delete button with proper mapping"""
         layouts = [
             self.parent_widget.ui.value_01,
             self.parent_widget.ui.value_02,
@@ -42,6 +44,7 @@ class DataPointItem(QWidget):
             self.parent_widget.ui.value_06
         ]
 
+        # Create and map float widgets
         for value, column, layout in zip(self.values, self.COLUMNS, layouts):
             float_widget = BoxSlider(
                 slider_scale=2,
@@ -54,12 +57,14 @@ class DataPointItem(QWidget):
             float_widget.edited.connect(self.on_edited)
             layout.addWidget(float_widget)
             self.float_widgets.append(float_widget)
+            self.widget_map[float_widget] = layout
 
-        # Add delete button to actions layout
-        delete_button = DeleteButton(self)
-        delete_button.set_size(24, 24)
-        delete_button.clicked.connect(self.delete_item)
-        self.parent_widget.ui.actions.addWidget(delete_button)
+        # Create and map delete button
+        self.delete_button = DeleteButton(self)
+        self.delete_button.set_size(24, 24)
+        self.delete_button.clicked.connect(self.delete_item)
+        self.parent_widget.ui.actions.addWidget(self.delete_button)
+        self.widget_map[self.delete_button] = self.parent_widget.ui.actions
 
     def on_edited(self):
         """Handle value editing"""
@@ -70,31 +75,29 @@ class DataPointItem(QWidget):
         return [widget.value for widget in self.float_widgets]
 
     def delete_item(self):
-        """Remove this item from parent"""
+        """Remove this item and its associated widgets from parent"""
         if self.parent_widget:
+            # Remove from parent's datapoint items list
             self.parent_widget.datapoint_items.remove(self)
-            # Clean up only this item's widgets
-            for widget in self.float_widgets:
-                widget.deleteLater()
-            # Remove only this item's widgets from layouts
-            for layout in [
-                self.parent_widget.ui.value_01,
-                self.parent_widget.ui.value_02,
-                self.parent_widget.ui.value_03,
-                self.parent_widget.ui.value_04,
-                self.parent_widget.ui.value_05,
-                self.parent_widget.ui.value_06,
-                self.parent_widget.ui.actions
-            ]:
-                # Find and remove only this item's widget from each layout
-                for i in range(layout.count()):
-                    item = layout.itemAt(i)
-                    if item and item.widget() and item.widget() in self.float_widgets + [self.findChild(DeleteButton)]:
-                        item.widget().deleteLater()
-                        break
-            self.parent_widget.plot_graph()
-        self.deleteLater()
 
+            # Remove all widgets from their respective layouts
+            for widget, layout in self.widget_map.items():
+                layout.removeWidget(widget)
+                widget.deleteLater()
+
+            # Update the graph
+            self.parent_widget.plot_graph()
+
+            # Delete the item itself
+            self.deleteLater()
+
+    def cleanup(self):
+        """Explicit cleanup method for additional cleanup tasks"""
+        for widget in self.widget_map.keys():
+            widget.setParent(None)
+            widget.deleteLater()
+        self.widget_map.clear()
+        self.float_widgets.clear()
 
 class SoundEventEditorPropertyCurve(QWidget):
     edited = Signal()
