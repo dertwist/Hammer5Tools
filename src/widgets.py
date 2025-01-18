@@ -1,5 +1,6 @@
 from src.popup_menu.popup_menu_main import PopupMenu
 from src.smartprop_editor.variable_frame import VariableFrame
+from PySide6.QtCore import QTimer
 from src.widgets_common import *
 from PySide6.QtWidgets import (
     QWidget,
@@ -9,7 +10,7 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
 )
-from PySide6.QtGui import QPainter, QPen, QColor
+from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator
 from PySide6.QtCore import Qt, QRect, QEvent, Signal
 
 
@@ -120,85 +121,121 @@ class FloatWidget(QWidget):
         self.SpinBox.setValue(value)
         self.on_SpinBox_updated()
 
-class SpinBoxSlider(QWidget):
+
+class BoxSlider(QWidget):
     edited = Signal(float)
 
-    def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0,
-                 only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True,
-                 vertical: bool = False, digits: int = 3, value_step: float = 1, slider_scale: int = 5):
-        """SpinBox with an embedded draggable slider."""
+    def __init__(self, value: float = 0.0, min_value: float = 0.0, max_value: float = 1.0, width: int = 100, height: int = 20, int_output: bool = False, only_positive: bool = False, lock_range: bool = False, digits: int = 3, value_step: float = 1, slider_scale: int = 5):
         super().__init__()
 
-        # Variables
-        self.int_output = int_output
         self.value = value
+        self.min_value = min_value
+        self.max_value = max_value
+        self.width = width
+        self.height = height
+        self.int_output = int_output
         self.only_positive = only_positive
+        self.lock_range = lock_range
+        self.digits = digits
+        self.value_step = value_step
         self.slider_scale = slider_scale
-        self.slider_dragging = False
-        self.middle_mouse_pressed = False
+        self.in_edit_mode = False
+        self.dragging = False
 
-        # SpinBox setup
-        self.SpinBox = QDoubleSpinBox()
-        self.SpinBox.setDecimals(digits)
-        self.SpinBox.setSingleStep(value_step)
-        if self.only_positive:
-            self.SpinBox.setMinimum(0)
-        else:
-            self.SpinBox.setMinimum(-99999999)
-        if slider_range == [0, 0]:
-            self.SpinBox.setMaximum(99999999)
-        else:
-            self.SpinBox.setMinimum(slider_range[0])
-            self.SpinBox.setMaximum(slider_range[1])
-        self.SpinBox.setValue(value)
-        self.SpinBox.setToolTip("Hold and drag middle mouse on the arrows area to change value")
+        self.edit_box = QLineEdit(self)
+        self.edit_box.hide()
+        self.edit_box.setValidator(QDoubleValidator(min_value, max_value, digits, self))
+        self.edit_box.returnPressed.connect(self.finish_edit)
 
-        # Layout setup
-        layout = QVBoxLayout() if vertical else QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.SpinBox)
-        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        if spacer_enable:
-            layout.addItem(spacer)
-        self.setLayout(layout)
-        if vertical:
-            self.setFixedWidth(96)
+        self.slider_rect = QRect(0, 0, self.width, self.height)
+        self.slider_pos = int((self.value - self.min_value) / (self.max_value - self.min_value) * self.width)
 
-        self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
-        self.SpinBox.installEventFilter(self)  # For mouse events
+        self.setFixedSize(self.width, self.height)
+        self.installEventFilter(self)
+
+        # Set focus policy to ensure the widget can receive focus
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.edit_box.setFocusPolicy(Qt.StrongFocus)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setPen(QPen(QColor(0, 0, 0)))
+        painter.drawRect(self.slider_rect)
+
+        slider_width = 5
+        slider_x = self.slider_pos - slider_width // 2
+        painter.fillRect(QRect(slider_x, 0, slider_width, self.height), QColor(100, 100, 255))
+
+        # Draw the value overlay
+        painter.setPen(QPen(QColor(0, 0, 0)))
+        painter.drawText(self.slider_rect, Qt.AlignCenter, f"{self.value:.{self.digits}f}")
 
     def eventFilter(self, obj, event):
-        if obj == self.SpinBox:
-            if event.type() == QEvent.MouseButtonPress:
-                if event.button() == Qt.MiddleButton:
-                    self.middle_mouse_pressed = True
-                    self.slider_dragging = True
-                    self.slider_drag_start_value = self.SpinBox.value()
-                    self.slider_drag_start_pos = event.globalPos()
-            elif event.type() == QEvent.MouseButtonRelease:
-                if event.button() == Qt.MiddleButton:
-                    self.middle_mouse_pressed = False
-                    self.slider_dragging = False
-            elif event.type() == QEvent.MouseMove and self.slider_dragging:
-                delta = event.globalPos() - self.slider_drag_start_pos
-                delta_x = delta.x()
-                new_value = self.slider_drag_start_value + delta_x * self.SpinBox.singleStep() * self.slider_scale / 100
-                self.SpinBox.setValue(new_value)
-                self.on_SpinBox_updated(new_value)  # Emit signal while dragging
+        if obj == self:
+            if event.type() == QEvent.MouseButtonDblClick and event.button() == Qt.LeftButton:
+                self.enter_edit_mode()
+                print('Editmode')
+                return True
+
+            elif event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton and not self.in_edit_mode:
+                self.start_drag(event.position().x())
+                return True
+
+            elif event.type() == QEvent.MouseMove and event.buttons() & Qt.LeftButton and self.dragging:
+                self.update_value_by_drag(event.position().x())
+                return True
+
+            elif event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton and self.dragging:
+                self.finish_drag()
+                return True
+
+            elif event.type() == QEvent.FocusOut and self.in_edit_mode:
+                self.finish_edit()
+                return True
 
         return super().eventFilter(obj, event)
 
-    def on_SpinBox_updated(self, value=None):
-        if value is None:
-            value = self.SpinBox.value()
+    def enter_edit_mode(self):
+        self.in_edit_mode = True
+        self.edit_box.setText(str(self.value))
+        self.edit_box.setGeometry(self.slider_rect)
+        self.edit_box.show()
+        self.edit_box.setFocus()
+        self.edit_box.selectAll()
 
-        if self.int_output:
-            value = round(value)
-        self.value = value
-        self.edited.emit(value)
+    def finish_edit(self):
+        try:
+            new_value = float(self.edit_box.text())
+            self.set_value(new_value)
+        except ValueError:
+            pass  # Handle invalid input
+
+        self.in_edit_mode = False
+        self.edit_box.hide()
+        self.update()
+
+    def start_drag(self, x):
+        self.dragging = True
+        self.last_drag_x = x
+
+    def update_value_by_drag(self, x):
+        delta = x - self.last_drag_x
+        self.last_drag_x = x
+        sensitivity = (self.max_value - self.min_value) / self.width
+        new_value = self.value + delta * sensitivity
+        self.set_value(new_value)
+
+    def finish_drag(self):
+        self.dragging = False
 
     def set_value(self, value):
-        self.SpinBox.setValue(value)
+        if self.lock_range:
+            self.value = max(self.min_value, min(value, self.max_value))
+        else:
+            self.value = value
+        self.slider_pos = int((self.value - self.min_value) / (self.max_value - self.min_value) * self.width)
+        self.edited.emit(self.value)
+        self.update()
 
 
 class LegacyWidget(QWidget):
@@ -600,3 +637,40 @@ def on_three_hierarchyitem_clicked(item, column):
 #     app.setStyleSheet(stylesheet)
 #     ErrorInfo('Testhgkhkljhklhklj asf asf asf asf asdf asdf asf asdf ', 'dfaasd').exec()
 #     sys.exit(app.exec())
+
+
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
+import sys
+
+class WidgetsShowcaseWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Widgets Showcase")
+        self.setGeometry(100, 100, 400, 300)
+
+        # Main widget and layout
+        main_widget = QWidget()
+        main_layout = QVBoxLayout(main_widget)
+
+        # Add FloatWidget to the layout
+        self.float_test = FloatWidget(vertical=True)
+        main_layout.addWidget(self.float_test)
+
+
+        self.float_test_2 = FloatWidget(spacer_enable=False)
+        main_layout.addWidget(self.float_test_2)
+
+        self.float_test_3 = BoxSlider()
+        main_layout.addWidget(self.float_test_3)
+
+        # Set the central widget
+        self.setCentralWidget(main_widget)
+
+def main():
+    app = QApplication(sys.argv)
+    window = WidgetsShowcaseWindow()
+    window.show()
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
