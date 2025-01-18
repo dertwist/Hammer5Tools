@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator, QFocusEvent
 from PySide6.QtCore import Qt, QRect, QEvent, Signal
+import math
 
 
 #============================================================<  Generic widgets  >==========================================================
@@ -125,11 +126,24 @@ class FloatWidget(QWidget):
 class BoxSlider(QWidget):
     edited = Signal(float)
 
-    def __init__(self, int_output: bool = False, slider_range: list = [0.0, 1.0], value: float = 0.0,
-                 only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True,
-                 vertical: bool = False, digits: int = 3, value_step: float = 0.1, slider_scale: int = 5):
-        """BoxSlider is a widget with a spin box and slider that are synchronized with each other.
-        This widget gives float or round(float) which is int variable type."""
+    STYLE = """
+    QLineEdit {
+        background-color: #1C1C1C;
+        color: #E3E3E3;
+        border: none;
+        padding: 0px;
+        selection-background-color: #414956;
+        font: 580 10pt "Segoe UI";
+    }
+    """
+
+    def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0,
+                 only_positive: bool = False, lock_range: bool = False, digits: int = 3,
+                 value_step: float = 0.1, slider_scale: int = 5):
+        """
+        BoxSlider is a widget with a spin box and slider that are synchronized with each other.
+        This widget gives float or round(float) which is int variable type.
+        """
         super().__init__()
 
         self.int_output = int_output
@@ -141,43 +155,45 @@ class BoxSlider(QWidget):
         self.value_step = value_step
         self.slider_scale = slider_scale
 
+        # Handle infinity range case
+        if slider_range[0] == 0 and slider_range[1] == 0:
+            self.min_value = -math.inf
+            self.max_value = math.inf
+
         self.in_edit_mode = False
         self.dragging = False
 
+        self.setup_ui()
+        self.set_value(self.value)
+
+    def setup_ui(self):
+        """Initialize the UI components"""
         self.edit_box = QLineEdit(self)
         self.edit_box.hide()
         self.edit_box.setValidator(QDoubleValidator(self.min_value, self.max_value, self.digits, self))
         self.edit_box.returnPressed.connect(self.finish_edit)
-        self.edit_box.installEventFilter(self)  # Install event filter on edit_box
+        self.edit_box.installEventFilter(self)
 
         self.slider_rect = QRect(0, 0, 100, 20)
-
         self.setFixedSize(self.slider_rect.width(), self.slider_rect.height())
+
+        self.setStyleSheet(self.STYLE)
         self.installEventFilter(self)
         self.setFocusPolicy(Qt.StrongFocus)
         self.edit_box.setFocusPolicy(Qt.StrongFocus)
 
-        # Install global event filter
         QApplication.instance().installEventFilter(self)
 
-        self.set_value(self.value)
-
     def eventFilter(self, obj, event):
-        # Handle global mouse press events
         if event.type() == QEvent.MouseButtonPress and self.in_edit_mode:
-            # Get the clicked widget
             clicked_widget = QApplication.widgetAt(event.globalPos())
-
-            # Check if click is outside both the edit_box and the main widget
             if clicked_widget not in (self, self.edit_box):
                 self.finish_edit()
                 return True
 
-        # Handle widget-specific events
         if obj == self:
-            if event.type() == QEvent.MouseButtonDblClick:
-                if not self.in_edit_mode:
-                    self.enter_edit_mode()
+            if event.type() == QEvent.MouseButtonDblClick and not self.in_edit_mode:
+                self.enter_edit_mode()
                 return True
 
             if not self.in_edit_mode:
@@ -193,6 +209,24 @@ class BoxSlider(QWidget):
 
         return super().eventFilter(obj, event)
 
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Draw background
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor("#1C1C1C"))
+        painter.drawRect(self.rect())
+
+        # Draw border
+        painter.setPen(QPen(QColor("#363639")))
+        painter.drawRect(self.slider_rect)
+
+        # Draw text
+        painter.setPen(QColor("#E3E3E3"))
+        value_text = f"{int(self.value) if self.int_output else self.value:.{self.digits}f}"
+        painter.drawText(self.slider_rect, Qt.AlignCenter, value_text)
+
     def enter_edit_mode(self):
         self.in_edit_mode = True
         self.edit_box.setText(f"{self.value:.{self.digits}f}")
@@ -206,6 +240,8 @@ class BoxSlider(QWidget):
         if self.in_edit_mode:
             try:
                 new_value = float(self.edit_box.text())
+                if self.int_output:
+                    new_value = round(new_value)
                 self.set_value(new_value)
             except ValueError:
                 pass
@@ -213,12 +249,6 @@ class BoxSlider(QWidget):
             self.edit_box.hide()
             self.setFocus()
             self.update()
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setPen(QPen(QColor(0, 0, 0)))
-        painter.drawRect(self.slider_rect)
-        painter.drawText(self.slider_rect, Qt.AlignCenter, f"{self.value:.{self.digits}f}")
 
     def start_drag(self, x):
         if not self.in_edit_mode:
@@ -229,9 +259,14 @@ class BoxSlider(QWidget):
         if not self.in_edit_mode:
             delta = x - self.last_drag_x
             self.last_drag_x = x
-            sensitivity = (
-                                      self.max_value - self.min_value) / self.slider_rect.width() if self.max_value != self.min_value else 0
+
+            # Calculate sensitivity based on slider_scale
+            range_width = self.max_value - self.min_value if not math.isinf(self.max_value) else 100
+            sensitivity = ((range_width / self.slider_rect.width()) * self.slider_scale)/4
+
             new_value = self.value + delta * sensitivity
+            if self.int_output:
+                new_value = round(new_value)
             self.set_value(new_value)
 
     def finish_drag(self):
@@ -239,68 +274,18 @@ class BoxSlider(QWidget):
 
     def set_value(self, value):
         value = float(value)
-        if self.lock_range:
-            self.value = max(self.min_value, min(value, self.max_value))
-        else:
-            self.value = value
+        if self.lock_range and not math.isinf(self.max_value):
+            value = max(self.min_value, min(value, self.max_value))
 
         if self.only_positive:
-            self.value = max(0, self.value)
+            value = max(0, value)
 
-        if self.max_value != self.min_value:
-            self.slider_pos = int(
-                (self.value - self.min_value) / (self.max_value - self.min_value) * self.slider_rect.width())
-        else:
-            self.slider_pos = 0
+        if self.int_output:
+            value = round(value)
 
+        self.value = value
         self.edited.emit(self.value)
         self.update()
-
-class LegacyWidget(QWidget):
-    edited = Signal(str)
-
-    def __init__(self, value: str = None, spacer_enable: bool = True):
-        """Initialize the LegacyWidget with a given value."""
-        super().__init__()
-        self.isdict = False
-
-        # Edit line initialization
-        self.edit_line = QLineEdit()
-        self.edit_line.textChanged.connect(self.on_editline_updated)
-
-        # Layout initialization
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.edit_line)
-        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        if spacer_enable:
-            layout.addItem(spacer)
-        self.setLayout(layout)
-
-        # Set initial value
-        self.set_value(value)
-
-    def on_editline_updated(self):
-        """Handle updates to the edit line."""
-        value = self.edit_line.text()
-        try:
-            value = ast.literal_eval(value)
-        except:
-            pass
-        self.edited.emit(value)
-
-    def set_value(self, value):
-        """Set the value of the edit line."""
-        if isinstance(value, dict):
-            self.isdict = True
-            self.edit_line.setText(str(value))
-        elif isinstance(value, str):
-            self.isdict = False
-            self.edit_line.setText(value)
-        else:
-            # raise ValueError("Value must be a string or a dictionary.")
-            self.isdict = False
-            self.edit_line.setText(str(value))
 
 class BoolWidget(QWidget):
     edited = Signal(bool)
