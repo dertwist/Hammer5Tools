@@ -137,9 +137,10 @@ class BoxSlider(QWidget):
     }
     """
 
-    def __init__(self, int_output=False, slider_range=[0, 0], value=0.0, only_positive=False, lock_range=False, digits=3, value_step=0.1, slider_scale=5, sensitivity=1):
+    def __init__(self, int_output=False, slider_range=[0, 0], value=0.0,only_positive=False, lock_range=False, digits=3,value_step=0.1, slider_scale=5, sensitivity=1):
         super().__init__()
 
+        # Initialize properties
         self.int_output = int_output
         self.min_value, self.max_value = slider_range
         self.value = value
@@ -150,36 +151,93 @@ class BoxSlider(QWidget):
         self.slider_scale = slider_scale
         self.sensitivity = sensitivity
 
+        # Handle infinite range
         if slider_range == [0, 0]:
             self.min_value = -math.inf
             self.max_value = math.inf
 
+        # State tracking
         self.in_edit_mode = False
         self.dragging = False
+        self.last_drag_x = 0
+
+        # Size constraints
+        self.min_height = 24
+        self.min_width = 60
+        self.preferred_height = 32
 
         self.setup_ui()
         self.set_value(self.value)
 
     def setup_ui(self):
-        """Initialize the UI components"""
+        """Initialize and configure UI components"""
+        # Configure widget size policy
+        self.setSizePolicy(
+            QSizePolicy.Expanding,  # Horizontal policy
+            QSizePolicy.Preferred  # Vertical policy
+        )
+        self.setMinimumSize(self.min_width, self.min_height)
+
+        # Setup edit box
         self.edit_box = QLineEdit(self)
         self.edit_box.hide()
-        self.edit_box.setValidator(QDoubleValidator(self.min_value, self.max_value, self.digits, self))
+        self.edit_box.setValidator(
+            QDoubleValidator(self.min_value, self.max_value, self.digits, self)
+        )
         self.edit_box.returnPressed.connect(self.finish_edit)
         self.edit_box.installEventFilter(self)
 
-        # Set dynamic size based on parent or specified size
-        self.setFixedSize(self.parentWidget().size() if self.parentWidget() else QSize(100, 24))
-        self.slider_rect = QRect(0, 0, self.width(), self.height())
+        # Configure edit box size policy
+        self.edit_box.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Preferred
+        )
 
+        # Initialize slider rect
+        self.update_slider_rect()
+
+        # Apply styles and event filters
         self.setStyleSheet(self.STYLE)
         self.installEventFilter(self)
         self.setFocusPolicy(Qt.StrongFocus)
         self.edit_box.setFocusPolicy(Qt.StrongFocus)
 
+        # Install global event filter
         QApplication.instance().installEventFilter(self)
 
+    def update_slider_rect(self):
+        """Update the slider rectangle based on current widget size"""
+        padding = 1  # Border padding
+        self.slider_rect = QRect(
+            padding,
+            padding,
+            self.width() - 2 * padding,
+            self.height() - 2 * padding
+        )
+
+    def resizeEvent(self, event):
+        """Handle widget resize events"""
+        super().resizeEvent(event)
+        self.update_slider_rect()
+
+        # Update edit box geometry if visible
+        if self.in_edit_mode:
+            self.edit_box.setGeometry(self.slider_rect)
+
+    def sizeHint(self):
+        """Provide size hint for layout management"""
+        return QSize(
+            max(self.minimumWidth(), 120),  # Preferred width
+            self.preferred_height  # Preferred height
+        )
+
+    def minimumSizeHint(self):
+        """Provide minimum size hint for layout management"""
+        return QSize(self.min_width, self.min_height)
+
     def eventFilter(self, obj, event):
+        """Handle various widget events"""
+        # Handle click outside edit mode
         if event.type() == QEvent.MouseButtonPress and self.in_edit_mode:
             clicked_widget = QApplication.widgetAt(event.globalPos())
             if clicked_widget not in (self, self.edit_box):
@@ -187,10 +245,12 @@ class BoxSlider(QWidget):
                 return True
 
         if obj == self:
+            # Handle double click to enter edit mode
             if event.type() == QEvent.MouseButtonDblClick and not self.in_edit_mode:
                 self.enter_edit_mode()
                 return True
 
+            # Handle dragging events
             if not self.in_edit_mode:
                 if event.type() == QEvent.MouseButtonPress:
                     self.start_drag(event.position().x())
@@ -205,6 +265,7 @@ class BoxSlider(QWidget):
         return super().eventFilter(obj, event)
 
     def paintEvent(self, event):
+        """Draw the widget"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
@@ -223,6 +284,7 @@ class BoxSlider(QWidget):
         painter.drawText(self.slider_rect, Qt.AlignCenter, value_text)
 
     def enter_edit_mode(self):
+        """Enter text editing mode"""
         self.in_edit_mode = True
         self.edit_box.setText(f"{self.value:.{self.digits}f}")
         self.edit_box.setGeometry(self.slider_rect)
@@ -232,6 +294,7 @@ class BoxSlider(QWidget):
         self.update()
 
     def finish_edit(self):
+        """Exit text editing mode"""
         if self.in_edit_mode:
             try:
                 new_value = float(self.edit_box.text())
@@ -246,26 +309,24 @@ class BoxSlider(QWidget):
             self.update()
 
     def start_drag(self, x):
+        """Start drag operation"""
         if not self.in_edit_mode:
             self.dragging = True
             self.last_drag_x = x
 
     def update_value_by_drag(self, x):
+        """Update value based on drag movement"""
         if not self.in_edit_mode:
             delta = x - self.last_drag_x
             self.last_drag_x = x
 
-            # Calculate sensitivity based on slider_scale and sensitivity
+            # Calculate sensitivity based on widget width
             range_width = self.max_value - self.min_value if not math.isinf(self.max_value) else 100
-            adjusted_sensitivity = ((range_width / self.slider_rect.width()) * self.slider_scale) * self.sensitivity
+            adjusted_sensitivity = ((range_width / self.width()) * self.slider_scale) * self.sensitivity
 
-            # Calculate raw new value
+            # Calculate value change
             raw_delta = delta * adjusted_sensitivity
-
-            # Calculate number of steps to move
             steps = round(raw_delta / self.value_step)
-
-            # Apply steps to current value
             new_value = self.value + (steps * self.value_step)
 
             if self.int_output:
@@ -274,25 +335,26 @@ class BoxSlider(QWidget):
             self.set_value(new_value)
 
     def finish_drag(self):
+        """End drag operation"""
         self.dragging = False
 
     def set_value(self, value):
-        """
-        Set the widget's value with range enforcement.
-
-        Args:
-            value: The value to set
-        """
+        """Set widget value with constraints"""
         value = float(value)
+
+        # Apply range constraints
         if not math.isinf(self.max_value) and (self.min_value != 0 or self.max_value != 0 or self.lock_range):
             value = max(self.min_value, min(value, self.max_value))
 
+        # Apply positive-only constraint
         if self.only_positive:
             value = max(0, value)
 
+        # Apply integer constraint
         if self.int_output:
             value = round(value)
 
+        # Snap to step intervals
         if not math.isinf(value):
             steps = round(value / self.value_step)
             value = steps * self.value_step
@@ -302,9 +364,9 @@ class BoxSlider(QWidget):
         self.update()
 
     def wheelEvent(self, event):
-        """Handle mouse wheel events for value adjustment."""
+        """Handle mouse wheel events"""
         if not self.in_edit_mode:
-            delta = event.angleDelta().y() / 120  # Standardize delta
+            delta = event.angleDelta().y() / 120
             new_value = self.value + (delta * self.value_step)
             self.set_value(new_value)
             event.accept()
