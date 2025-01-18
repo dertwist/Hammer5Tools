@@ -17,7 +17,12 @@
 	{
 		base = "amb.soundscapeParent.base"
 		enable_child_events = true
-		soundevent_01 = ["ambient_example.outdoors.birds", "ambient_example.outdoors.airplanes", "ambient_example.outdoors.wind"]
+		soundevent_01 = 
+		[
+			"ambient_example.outdoors.birds",
+			"ambient_example.outdoors.airplanes",
+			"ambient_example.outdoors.wind"
+		]
 	}
 	"ambient_example.outdoors.wind" = 
 	{
@@ -34,7 +39,12 @@
 		randomize_position_max_radius = 3000.0
 		retrigger_interval_min = 11.0
 		retrigger_interval_max = 30.0
-		vsnd_files_track_01 = ["sounds/ambient/dust2/airplane_01.vsnd", "sounds/ambient/dust2/airplane_02.vsnd", "sounds/ambient/dust2/airplane_03.vsnd"]
+		vsnd_files_track_01 = 
+		[
+			"sounds/ambient/dust2/airplane_01.vsnd",
+			"sounds/ambient/dust2/airplane_02.vsnd",
+			"sounds/ambient/dust2/airplane_03.vsnd"
+		]
 	}
 	"ambient_example.outdoors.birds" = 
 	{
@@ -42,7 +52,12 @@
 		volume = 0.5
 		retrigger_interval_min = 1.0
 		retrigger_interval_max = 6.0
-		position = [1264.0, -491.0, 64.0]
+		position = 
+		[
+			1264.0,
+			-491.0,
+			64.0
+		]
 		vsnd_files_track_01 = 
 		[
 			"sounds/bird_01.vsnd",
@@ -50,32 +65,28 @@
 			"sounds/bird_03.vsnd",
 			"sounds/bird_04.vsnd",
 			"sounds/bird_05.vsnd",
-			"sounds/bird_06.vsnd",
+			"sounds/bird_06.vsnd"
 		]
 	}
 	"ambient_example.indoors" = 
 	{
 		base = "amb.soundscapeParent.base"
 		volume = 0.1
-		position = [1136.0, 1392.0, 64.0]
-		vsnd_files_track_01 = ["sounds/interior_01.vsnd"]
-		distance_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-], 
-[
-	500.0,
-	1.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
+		position = 
+		[
+			1136.0,
+			1392.0,
+			64.0
+		]
+		vsnd_files_track_01 = 
+		[
+			"sounds/interior_01.vsnd"
+		]
+		distance_volume_mapping_curve = 
+		[
+			[0.0, 1.0, 0.0, 0.0, 2.0, 3.0],
+			[500.0, 1.0, 0.0, 0.0, 2.0, 3.0]
+		]
 		randomize_position_min_radius = 500.0
 		randomize_position_max_radius = 1000.0
 		randomize_position_hemisphere = false
@@ -84,7 +95,12 @@
 		retrigger_radius = 1000.0
 		enable_child_events = true
 		dsp_preset = "reverb_9_mediumChamber"
-		soundevent_01 = ["ambient_example.indoors.background", "ambient_example.indoors.rockfalls", "ambient_example.indoors.vent"]
+		soundevent_01 = 
+		[
+			"ambient_example.indoors.background",
+			"ambient_example.indoors.rockfalls",
+			"ambient_example.indoors.vent"
+		]
 	}
 	"ambient_example.indoors.background" = 
 	{
@@ -111,32 +127,28 @@
 			"sounds/ambient/dust2/rockfall_05.vsnd",
 			"sounds/ambient/dust2/rockfall_06.vsnd",
 			"sounds/ambient/dust2/rockfall_07.vsnd",
-			"sounds/ambient/dust2/rockfall_08.vsnd",
+			"sounds/ambient/dust2/rockfall_08.vsnd"
 		]
 	}
 	"ambient_example.indoors.vent" = 
 	{
 		base = "amb.looping.atXYZ.base"
 		volume = 0.2
-		position = [1136.0, 1392.0, 64.0]
-		vsnd_files_track_01 = ["sounds/vent_01.vsnd"]
-		distance_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-], 
-[
-	500.0,
-	1.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
+		position = 
+		[
+			1136.0,
+			1392.0,
+			64.0
+		]
+		vsnd_files_track_01 = 
+		[
+			"sounds/vent_01.vsnd"
+		]
+		distance_volume_mapping_curve = 
+		[
+			[0.0, 1.0, 0.0, 0.0, 2.0, 3.0],
+			[500.0, 1.0, 0.0, 0.0, 2.0, 3.0]
+		]
 	}
 	"amb.base" = 
 	{
@@ -147,74 +159,26 @@
 		restrict_source_reverb = true
 		use_distance_unfiltered_stereo_mapping_curve = true
 		use_time_volume_mapping_curve = true
-		distance_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	-0.00394,
-	-0.00394,
-	2.0,
-	3.0,
-], 
-[
-	300.0,
-	0.0,
-	-0.002991,
-	-0.002991,
-	2.0,
-	3.0,
-]]
-		fadetime_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	-1.223776,
-	-1.223776,
-	2.0,
-	3.0,
-], 
-[
-	0.21,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
-		distance_unfiltered_stereo_mapping_curve = [
-[
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-], 
-[
-	300.0,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
-		time_volume_mapping_curve = [
-[
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-], 
-[
-	0.3,
-	1.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
+		distance_volume_mapping_curve = 
+		[
+			[0.0, 1.0, -0.00394, -0.00394, 2.0, 3.0],
+			[300.0, 0.0, -0.002991, -0.002991, 2.0, 3.0]
+		]
+		fadetime_volume_mapping_curve = 
+		[
+			[0.0, 1.0, -1.223776, -1.223776, 2.0, 3.0],
+			[0.21, 0.0, 0.0, 0.0, 2.0, 3.0]
+		]
+		distance_unfiltered_stereo_mapping_curve = 
+		[
+			[0.0, 0.0, 0.0, 0.0, 2.0, 3.0],
+			[300.0, 0.0, 0.0, 0.0, 2.0, 3.0]
+		]
+		time_volume_mapping_curve = 
+		[
+			[0.0, 0.0, 0.0, 0.0, 2.0, 3.0],
+			[0.3, 1.0, 0.0, 0.0, 2.0, 3.0]
+		]
 	}
 	"amb.intermittent.randomAroundPlayer.base" = 
 	{
@@ -232,62 +196,31 @@
 		retrigger_radius = 10000.0
 		position_relative_to_player = true
 		reverb_wet = 1.0
-		distance_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-], 
-[
-	300.0,
-	1.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-]]
-		fadetime_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	-1.223776,
-	-1.223776,
-	2.0,
-	3.0,
-], 
-[
-	0.69,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
-		time_volume_mapping_curve = [
-[
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-], 
-[
-	1.0,
-	1.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
+		distance_volume_mapping_curve = 
+		[
+			[0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+			[300.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+		]
+		fadetime_volume_mapping_curve = 
+		[
+			[0.0, 1.0, -1.223776, -1.223776, 2.0, 3.0],
+			[0.69, 0.0, 0.0, 0.0, 2.0, 3.0]
+		]
+		time_volume_mapping_curve = 
+		[
+			[0.0, 0.0, 0.0, 0.0, 2.0, 3.0],
+			[1.0, 1.0, 0.0, 0.0, 2.0, 3.0]
+		]
 	}
 	"amb.intermittent.atXYZ.base" = 
 	{
 		base = "amb.base"
-		position = [0.0, 0.0, 0.0]
+		position = 
+		[
+			0.0,
+			0.0,
+			0.0
+		]
 		volume = 1.0
 		volume_random_min = -0.3
 		volume_random_max = 0.1
@@ -299,166 +232,80 @@
 		retrigger_interval_max = 10.0
 		use_world_position = false
 		position_relative_to_player = false
-		distance_unfiltered_stereo_mapping_curve = [
-[
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-], 
-[
-	300.0,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
-		distance_volume_mapping_curve = [
-[
-	97.14,
-	1.0,
-	-0.001763,
-	-0.001763,
-	2.0,
-	3.0,
-], 
-[
-	2000.0,
-	0.0,
-	-0.000526,
-	-0.000526,
-	1.0,
-	1.0,
-]]
+		distance_unfiltered_stereo_mapping_curve = 
+		[
+			[0.0, 0.0, 0.0, 0.0, 2.0, 3.0],
+			[300.0, 0.0, 0.0, 0.0, 2.0, 3.0]
+		]
+		distance_volume_mapping_curve = 
+		[
+			[97.14, 1.0, -0.001763, -0.001763, 2.0, 3.0],
+			[2000.0, 0.0, -0.000526, -0.000526, 1.0, 1.0]
+		]
 	}
 	"amb.looping.stereo.base" = 
 	{
 		base = "amb.base"
 		volume = 1.0
 		pitch = 1.0
-		distance_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-], 
-[
-	300.0,
-	1.0,
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-]]
-		fadetime_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	-1.223776,
-	-1.223776,
-	2.0,
-	3.0,
-], 
-[
-	1.0,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
-		time_volume_mapping_curve = [
-[
-	0.0,
-	0.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-], 
-[
-	1.0,
-	1.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
-		distance_unfiltered_stereo_mapping_curve = [
-[
-	0.0,
-	1.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-], 
-[
-	300.0,
-	1.0,
-	0.0,
-	0.0,
-	2.0,
-	3.0,
-]]
+		distance_volume_mapping_curve = 
+		[
+			[0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+			[300.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+		]
+		fadetime_volume_mapping_curve = 
+		[
+			[0.0, 1.0, -1.223776, -1.223776, 2.0, 3.0],
+			[1.0, 0.0, 0.0, 0.0, 2.0, 3.0]
+		]
+		time_volume_mapping_curve = 
+		[
+			[0.0, 0.0, 0.0, 0.0, 2.0, 3.0],
+			[1.0, 1.0, 0.0, 0.0, 2.0, 3.0]
+		]
+		distance_unfiltered_stereo_mapping_curve = 
+		[
+			[0.0, 1.0, 0.0, 0.0, 2.0, 3.0],
+			[300.0, 1.0, 0.0, 0.0, 2.0, 3.0]
+		]
 	}
 	"amb.looping.atXYZ.base" = 
 	{
 		base = "amb.base"
 		volume = 1.0
-		position = [1135.97, 1391.92, 64.03]
+		position = 
+		[
+			1135.97,
+			1391.92,
+			64.03
+		]
 		use_world_position = true
 		position_relative_to_player = false
 		reverb_wet = 1.0
-		distance_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	-0.001763,
-	-0.001763,
-	2.0,
-	3.0,
-], 
-[
-	1500.0,
-	0.0,
-	-0.000667,
-	-0.000667,
-	1.0,
-	1.0,
-]]
+		distance_volume_mapping_curve = 
+		[
+			[0.0, 1.0, -0.001763, -0.001763, 2.0, 3.0],
+			[1500.0, 0.0, -0.000667, -0.000667, 1.0, 1.0]
+		]
 	}
 	"amb.soundscapeParent.base" = 
 	{
 		base = "amb.base"
 		volume = 1.0
-		position = [1135.97, 1391.92, 64.03]
+		position = 
+		[
+			1135.97,
+			1391.92,
+			64.03
+		]
 		use_world_position = true
 		position_relative_to_player = false
 		reverb_wet = 1.0
-		distance_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	-0.001763,
-	-0.001763,
-	2.0,
-	3.0,
-], 
-[
-	1500.0,
-	0.0,
-	-0.000667,
-	-0.000667,
-	1.0,
-	1.0,
-]]
+		distance_volume_mapping_curve = 
+		[
+			[0.0, 1.0, -0.001763, -0.001763, 2.0, 3.0],
+			[1500.0, 0.0, -0.000667, -0.000667, 1.0, 1.0]
+		]
 		override_dsp_preset = true
 		dsp_preset = "reverb_22_outsideOpen"
 		enable_child_events = false
@@ -468,63 +315,31 @@
 	"Radio.Reception" = 
 	{
 		base = "amb.base"
-		vsnd_files_track_01 = ["sounds/ambient/de_train_radio.vsnd"]
-		distance_volume_mapping_curve = [
-[
-	0.0,
-	1.0,
-	0,
-	0,
-	2.0,
-	3.0,
-], 
-[
-	340.0,
-	0.5,
-	0,
-	0,
-	1.0,
-	1.0,
-], 
-[
-	500.0,
-	0.01,
-	0,
-	0,
-	2,
-	3,
-], 
-[
-	25000.0,
-	0.0,
-	0,
-	0,
-	2,
-	3,
-]]
+		vsnd_files_track_01 = 
+		[
+			"sounds/ambient/de_train_radio.vsnd"
+		]
+		distance_volume_mapping_curve = 
+		[
+			[0.0, 1.0, 0, 0, 2.0, 3.0],
+			[340.0, 0.5, 0, 0, 1.0, 1.0],
+			[500.0, 0.01, 0, 0, 2, 3],
+			[25000.0, 0.0, 0, 0, 2, 3]
+		]
 		volume = 10.0
 	}
 	"Radio.Reception2" = 
 	{
 		base = "amb.base"
-		vsnd_files_track_01 = ["sounds/ambient/de_train_radio.vsnd"]
-		distance_volume_mapping_curve = [
-[
-	20.0,
-	3.0,
-	0.03046,
-	0,
-	2,
-	3,
-], 
-[
-	260.0,
-	1.0,
-	0.07298,
-	-0.00416,
-	2,
-	3,
-]]
+		vsnd_files_track_01 = 
+		[
+			"sounds/ambient/de_train_radio.vsnd"
+		]
+		distance_volume_mapping_curve = 
+		[
+			[20.0, 3.0, 0.03046, 0, 2, 3],
+			[260.0, 1.0, 0.07298, -0.00416, 2, 3]
+		]
 		volume = 10.0
 	}
 }
