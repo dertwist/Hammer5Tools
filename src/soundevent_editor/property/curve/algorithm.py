@@ -93,14 +93,9 @@ def _setup_curve_point(point, prev_point, next_point):
         point.slopeLeft = 0.0
     elif point.modeLeft == 4:
         if delta_y <= 0.0:
-            if delta_x == 0.0:
-                point.slopeLeft = -1.60305
-            else:
-                point.slopeLeft = (1.0 / delta_x) * -1.60305
-        elif delta_x == 0.0:
-            point.slopeLeft = -0.0413377
+            point.slopeLeft = -1.60305 if delta_x == 0.0 else (-1.60305 / delta_x)
         else:
-            point.slopeLeft = (1.0 / delta_x) * -0.0413377
+            point.slopeLeft = -0.0413377 if delta_x == 0.0 else (-0.0413377 / delta_x)
 
 
     # Here we are setting the slope for the right side of the curve point.
@@ -111,15 +106,12 @@ def _setup_curve_point(point, prev_point, next_point):
     elif point.modeRight == 3:
         point.slopeRight = point.slopeLeft
     elif point.modeRight == 4:
-        if delta_y <= 0.0:
-            if delta_x == 0.0:
-                point.slopeRight = -1.60305
-            else:
-                point.slopeRight = (1.0 / delta_x) * -1.60305
-        elif delta_x == 0.0:
-            point.slopeRight = -0.0413377
+        if delta_y2 <= 0.0:  # Using delta_y2 here, consistent with C++ code
+            point.slopeRight = 0.0413377 if delta_x2 == 0.0 else (
+                        0.0413377 / delta_x2)  # Fixed: Using 0.0413377 instead of -1.60305
         else:
-            point.slopeRight = (1.0 / delta_x) * -0.0413377
+            point.slopeRight = 1.60305 if delta_x2 == 0.0 else (
+                        1.60305 / delta_x2)  # Fixed: Using 1.60305 instead of -0.0413377
 
     if point.modeLeft == 3:
         point.slopeLeft = point.slopeRight
@@ -150,7 +142,7 @@ def sample_curve(xValue, points, total_points):
     if points is not None and total_points > 1:
         last_point = total_points - 1
         u_var2 = 1
-        u_var1 = 1
+        u_var1 = 0
         u_var3 = last_point
 
         # I believe this logic is looking for which 2 curve points the "xValue" value lies between.
@@ -165,14 +157,14 @@ def sample_curve(xValue, points, total_points):
                 else:
                     u_var2 = cur_point + 1
                 u_var1 = cur_point
+
+            if u_var1 + 1 <= last_point and xValue > points[u_var1].xValue:
+                cur_point = u_var1 + 1
             else:
                 cur_point = u_var1
 
-            if points[u_var1].xValue <= xValue and (u_var1 + 1 <= last_point) and last_point <= u_var1: #Fixed potential IndexError
-                cur_point = u_var1
-
         # This is where the actual sampling begins.
-        left_point = points[cur_point - 1]
+        left_point = points[cur_point -1 if cur_point > 0 else 0]
         right_point = points[cur_point]
 
         delta_x = right_point.xValue - left_point.xValue
