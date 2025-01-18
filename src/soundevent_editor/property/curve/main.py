@@ -3,7 +3,7 @@ import pyqtgraph as pg
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QMessageBox, QLabel
 from PySide6.QtCore import Signal
 from src.widgets import SpinBoxSlider
-from dev.custom_curve.custom_curve import CurvePoint, setup_all_curve_values, sample_curve
+from src.soundevent_editor.property.curve.algorithm import CurvePoint, setup_all_curve_values, sample_curve
 from src.widgets_common import DeleteButton
 from src.common import JsonToKv3
 
