@@ -162,7 +162,7 @@ class BoxSlider(QWidget):
         self.last_drag_x = 0
 
         # Size constraints
-        self.min_height = 24
+        self.min_height = 30
         self.min_width = 60
         self.preferred_height = 32
 
@@ -171,65 +171,37 @@ class BoxSlider(QWidget):
 
     def setup_ui(self):
         """Initialize and configure UI components"""
-        # Configure widget size policy
-        self.setSizePolicy(
-            QSizePolicy.Expanding,  # Horizontal policy
-            QSizePolicy.Preferred  # Vertical policy
-        )
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.setMinimumSize(self.min_width, self.min_height)
 
         # Setup edit box
         self.edit_box = QLineEdit(self)
         self.edit_box.hide()
-        self.edit_box.setValidator(
-            QDoubleValidator(self.min_value, self.max_value, self.digits, self)
-        )
+        self.edit_box.setValidator(QDoubleValidator(self.min_value, self.max_value, self.digits, self))
         self.edit_box.returnPressed.connect(self.finish_edit)
         self.edit_box.installEventFilter(self)
 
-        # Configure edit box size policy
-        self.edit_box.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Preferred
-        )
-
-        # Initialize slider rect
         self.update_slider_rect()
-
-        # Apply styles and event filters
         self.setStyleSheet(self.STYLE)
         self.installEventFilter(self)
         self.setFocusPolicy(Qt.StrongFocus)
         self.edit_box.setFocusPolicy(Qt.StrongFocus)
 
-        # Install global event filter
-        QApplication.instance().installEventFilter(self)
-
     def update_slider_rect(self):
         """Update the slider rectangle based on current widget size"""
-        padding = 1  # Border padding
-        self.slider_rect = QRect(
-            padding,
-            padding,
-            self.width() - 2 * padding,
-            self.height() - 2 * padding
-        )
+        padding = 1
+        self.slider_rect = QRect(padding, padding, self.width() - 2 * padding, self.height() - 2 * padding)
 
     def resizeEvent(self, event):
         """Handle widget resize events"""
         super().resizeEvent(event)
         self.update_slider_rect()
-
-        # Update edit box geometry if visible
         if self.in_edit_mode:
             self.edit_box.setGeometry(self.slider_rect)
 
     def sizeHint(self):
         """Provide size hint for layout management"""
-        return QSize(
-            max(self.minimumWidth(), 120),  # Preferred width
-            self.preferred_height  # Preferred height
-        )
+        return QSize(max(self.minimumWidth(), 120), self.preferred_height)
 
     def minimumSizeHint(self):
         """Provide minimum size hint for layout management"""
@@ -237,32 +209,28 @@ class BoxSlider(QWidget):
 
     def eventFilter(self, obj, event):
         """Handle various widget events"""
-        # Handle click outside edit mode
         if event.type() == QEvent.MouseButtonPress and self.in_edit_mode:
             clicked_widget = QApplication.widgetAt(event.globalPos())
             if clicked_widget not in (self, self.edit_box):
                 self.finish_edit()
                 return True
 
-        if obj == self:
-            # Handle double click to enter edit mode
+        if isinstance(obj, QWidget) and obj == self:
             if event.type() == QEvent.MouseButtonDblClick and not self.in_edit_mode:
                 self.enter_edit_mode()
                 return True
-
-            # Handle dragging events
             if not self.in_edit_mode:
                 if event.type() == QEvent.MouseButtonPress:
-                    self.start_drag(event.position().x())
+                    self.start_drag(event.x())
                     return True
                 elif event.type() == QEvent.MouseMove and self.dragging:
-                    self.update_value_by_drag(event.position().x())
+                    self.update_value_by_drag(event.x())
                     return True
                 elif event.type() == QEvent.MouseButtonRelease and self.dragging:
                     self.finish_drag()
                     return True
 
-        return super().eventFilter(obj, event)
+        return super(BoxSlider, self).eventFilter(obj, event)
 
     def paintEvent(self, event):
         """Draw the widget"""
@@ -320,11 +288,9 @@ class BoxSlider(QWidget):
             delta = x - self.last_drag_x
             self.last_drag_x = x
 
-            # Calculate sensitivity based on widget width
             range_width = self.max_value - self.min_value if not math.isinf(self.max_value) else 100
             adjusted_sensitivity = ((range_width / self.width()) * self.slider_scale) * self.sensitivity
 
-            # Calculate value change
             raw_delta = delta * adjusted_sensitivity
             steps = round(raw_delta / self.value_step)
             new_value = self.value + (steps * self.value_step)
@@ -342,19 +308,15 @@ class BoxSlider(QWidget):
         """Set widget value with constraints"""
         value = float(value)
 
-        # Apply range constraints
         if not math.isinf(self.max_value) and (self.min_value != 0 or self.max_value != 0 or self.lock_range):
             value = max(self.min_value, min(value, self.max_value))
 
-        # Apply positive-only constraint
         if self.only_positive:
             value = max(0, value)
 
-        # Apply integer constraint
         if self.int_output:
             value = round(value)
 
-        # Snap to step intervals
         if not math.isinf(value):
             steps = round(value / self.value_step)
             value = steps * self.value_step
@@ -372,6 +334,7 @@ class BoxSlider(QWidget):
             event.accept()
         else:
             event.ignore()
+
 
 class LegacyWidget(QWidget):
     edited = Signal(str)

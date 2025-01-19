@@ -35,7 +35,7 @@ class CurvePoint:
 # coppies the data to another place in memory, and then runs this function on that copy.
 # and it appears that this happens each frame before the yValue is calculated.
 # This is done to preserve the original curve data that originally came from the sound event file.
-@njit(nopython=True)
+@njit
 def _setup_curve_point(point, prev_point, next_point):
     delta_x2 = 0.0
     delta_y2 = 0.0
@@ -117,7 +117,7 @@ def _setup_curve_point(point, prev_point, next_point):
         point.slopeLeft = point.slopeRight
 
 # This function essentially performs the entire setup necesary for the curve data before calling "sample_curve"
-@njit(nopython=True)
+@njit
 def setup_all_curve_values(points, totalPoints):
     if totalPoints == 0:
         return
@@ -135,7 +135,7 @@ def setup_all_curve_values(points, totalPoints):
         _setup_curve_point(points[i], prevPoint, nextPoint)
 
 # If anyone wants to help rename some of the local variables, that would be awesome.
-@njit(nopython=True)
+@njit
 def sample_curve(xValue, points, total_points):
     # start_time = time.time()
     # Validate that we were given a list of points, and that there are more than 2 points to sample between.
