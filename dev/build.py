@@ -1,11 +1,12 @@
-import zipfile
-import os
-import subprocess
 import time
+import os
+import zipfile
+import subprocess
+import tempfile
 import argparse
 import shutil
-import tempfile
 import base64
+
 
 import sys
 import pkg_resources
@@ -48,6 +49,8 @@ def build_hammer5_tools():
         '--add-data=src/qt_styles;qt_styles/',
         '--exclude-module=PyQt5',
         '--exclude-module=numba',
+        '--exclude-module=scipy',
+        '--exclude-module=pandas',
         '--exclude-module=tabulate',
         '--exclude-module=matplotlib',
         '--exclude-module=PySide6.QtWebEngineWidgets',
