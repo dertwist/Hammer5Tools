@@ -47,6 +47,9 @@ def build_hammer5_tools():
         '--add-data=src/images;images/',
         '--add-data=src/qt_styles;qt_styles/',
         '--exclude-module=PyQt5',
+        '--exclude-module=numba',
+        '--exclude-module=tabulate',
+        '--exclude-module=matplotlib',
         '--exclude-module=PySide6.QtWebEngineWidgets',
         '--exclude-module=PySide6.QtWebEngineCore',
         '--exclude-module=PySide6.QtWebEngine',
@@ -325,7 +328,7 @@ if __name__ == "__main__":
 def main():
     parser = argparse.ArgumentParser(description="Build and archive Hammer 5 Tools and Updater.")
     parser.add_argument('--build-all', action='store_true', help="Build both Hammer 5 Tools and Updater.")
-    parser.add_argument('--build-hammer5', action='store_true', help="Build only Hammer 5 Tools.")
+    parser.add_argument('--build-app', action='store_true', help="Build only Hammer 5 Tools.")
     parser.add_argument('--build-updater', action='store_true', help="Build only Updater.")
     parser.add_argument('--archive', action='store_true', help="Archive the build outputs.")
     parser.add_argument('--installer', action='store_true', help="Create an installer with a GUI.")
@@ -338,7 +341,7 @@ def main():
     print_elapsed_time("Kill process", stage_start_time)
 
     try:
-        if args.build_all or args.build_hammer5:
+        if args.build_all or args.build_app:
             stage_start_time = time.time()
             build_hammer5_tools()
             print_elapsed_time("Hammer 5 Tools Build", stage_start_time)
