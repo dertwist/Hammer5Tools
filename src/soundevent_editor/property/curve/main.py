@@ -97,19 +97,19 @@ class DataPointItem(QWidget):
     def _setup_action_layout(self, layout):
         """Configure the action buttons layout"""
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(6)
 
     def _create_delete_button(self):
         """Create and configure the delete button"""
         button = DeleteButton(self)
-        button.set_size(24, 24)
+        button.set_size(30, 30)
         button.clicked.connect(self.delete_item)
         return button
 
     def _create_duplicate_button(self):
         """Create and configure the duplicate button"""
         button = Button()
-        button.set_size(24, 24)
+        button.set_size(30, 30)
         button.set_icon_paste()
         button.clicked.connect(self.duplicate_item)
         return button
@@ -211,6 +211,7 @@ class SoundEventEditorPropertyCurve(QWidget):
     def setup_graph(self):
         """Setup the graph widget with proper styling"""
         self.graph_widget = pg.PlotWidget()
+        self.graph_widget.setContextMenuPolicy(Qt.NoContextMenu)
         self.graph_widget.setAntialiasing(True)
         self.graph_widget.setBackground(self.BACKGROUND_COLOR)
         self.ui.verticalLayout_4.addWidget(self.graph_widget)
