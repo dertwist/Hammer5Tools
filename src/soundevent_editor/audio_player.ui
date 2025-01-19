@@ -70,6 +70,18 @@
       </property>
       <item>
        <widget class="QLabel" name="time">
+        <property name="minimumSize">
+         <size>
+          <width>86</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>86</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="text">
          <string>00:00 : 00:00</string>
         </property>
