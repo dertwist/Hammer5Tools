@@ -13,8 +13,8 @@ class DataPointItem(QWidget):
 
     # Column configurations with customizable labels
     COLUMNS = [
-        {"name": "distance", "label": "Distance", "step": 10, "digits": 3, "range": [0, 0], "sensitivity": 1.0},
-        {"name": "volume", "label": "Volume", "step": 1, "digits": 3, "range": [0, 0], "sensitivity": 0.2},
+        {"name": "distance", "label": "Distance", "step": 1, "digits": 3, "range": [0, 0], "sensitivity": 1.0},
+        {"name": "volume", "label": "Volume", "step": 0.1, "digits": 3, "range": [0, 0], "sensitivity": 0.2},
         {"name": "slope_left", "label": "Slope Left", "step": 0.001, "digits": 3, "range": [-2, 2],"sensitivity": 0.01},
         {"name": "slope_right", "label": "Slope Right", "step": 0.001, "digits": 3, "range": [-2, 2],"sensitivity": 0.01},
         {"name": "mode_left", "label": "Mode Left", "step": 0.1, "digits": 0, "range": [0, 4], "sensitivity": 1.0},
