@@ -249,7 +249,8 @@ def main():
         root.geometry(f"+{{x}}+{{y}}")
 
     install_dir_var = tk.StringVar()
-    default_install_dir = os.path.expandvars(r"%ProgramFiles%")
+    default_install_dir = r"C:\Portable"
+    os.makedirs(default_install_dir, exist_ok=True)
     install_dir_var.set(default_install_dir)
 
     desktop_shortcut_var = tk.IntVar(value=1)
