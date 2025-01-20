@@ -1,4 +1,3 @@
-
 # This code was originally decompiled C code extracted directly from the Counter Strike 2 executable using Ghidra.
 # Then, it was rewritten with some minor C++ syntax, and then converted into python for the sake of this project.
 # So what you see here is as close as possible to how the machine code that executes inside the CS2, determines the volume from these curves.
@@ -18,18 +17,19 @@ class CurvePoint:
         self.modeLeft = modeLeft
         self.modeRight = modeRight
 
+
 # In the CS2 executable, it seems to take data that exists in one place in memory,
 # coppies the data to another place in memory, and then runs this function on that copy.
 # and it appears that this happens each frame before the yValue is calculated.
 # This is done to preserve the original curve data that originally came from the sound event file.
 def _setup_curve_point(point, prev_point, next_point):
-    delta_x2 = 0.0
-    delta_y2 = 0.0
-    delta_x = 0.0
-    delta_y = 0.0
-    slope2 = 0.0
-    slope3 = 0.0
-    slope = 0.0
+    delta_x2 = 0
+    delta_y2 = 0
+    delta_x = 0
+    delta_y = 0
+    slope2 = 0
+    slope3 = 0
+    slope = 0
 
     first_point = prev_point is None
     last_point = next_point is None
@@ -79,10 +79,14 @@ def _setup_curve_point(point, prev_point, next_point):
         point.slopeLeft = 0.0
     elif point.modeLeft == 4:
         if delta_y <= 0.0:
-            point.slopeLeft = -1.60305 if delta_x == 0.0 else (-1.60305 / delta_x)
+            if delta_x == 0.0:
+                point.slopeLeft = -1.60305
+            else:
+                point.slopeLeft = (1.0 / delta_x) * -1.60305
+        elif delta_x == 0.0:
+            point.slopeLeft = -0.0413377
         else:
-            point.slopeLeft = -0.0413377 if delta_x == 0.0 else (-0.0413377 / delta_x)
-
+            point.slopeLeft = (1.0 / delta_x) * -0.0413377
 
     # Here we are setting the slope for the right side of the curve point.
     if point.modeRight == 0:
@@ -92,15 +96,19 @@ def _setup_curve_point(point, prev_point, next_point):
     elif point.modeRight == 3:
         point.slopeRight = point.slopeLeft
     elif point.modeRight == 4:
-        if delta_y2 <= 0.0:  # Using delta_y2 here, consistent with C++ code
-            point.slopeRight = 0.0413377 if delta_x2 == 0.0 else (
-                        0.0413377 / delta_x2)  # Fixed: Using 0.0413377 instead of -1.60305
+        if delta_y2 <= 0.0:
+            if delta_x2 == 0.0:
+                point.slopeRight = 0.0413377
+            else:
+                point.slopeRight = (1.0 / delta_x2) * 0.0413377
+        elif delta_x2 == 0.0:
+            point.slopeRight = 1.60305
         else:
-            point.slopeRight = 1.60305 if delta_x2 == 0.0 else (
-                        1.60305 / delta_x2)  # Fixed: Using 1.60305 instead of -0.0413377
+            point.slopeRight = (1.0 / delta_x2) * 1.60305
 
     if point.modeLeft == 3:
         point.slopeLeft = point.slopeRight
+
 
 # This function essentially performs the entire setup necesary for the curve data before calling "sample_curve"
 def setup_all_curve_values(points, totalPoints):
@@ -111,22 +119,22 @@ def setup_all_curve_values(points, totalPoints):
         _setup_curve_point(points[0], None, None)
         return
 
-    lastIndex = totalPoints-1
+    lastIndex = totalPoints - 1
 
     for i in range(totalPoints):
-        prevPoint = points[i-1] if i>0 else None
-        nextPoint = points[i+1] if i<lastIndex else None
+        prevPoint = points[i - 1] if i > 0 else None
+        nextPoint = points[i + 1] if i < lastIndex else None
 
         _setup_curve_point(points[i], prevPoint, nextPoint)
 
+
 # If anyone wants to help rename some of the local variables, that would be awesome.
 def sample_curve(xValue, points, total_points):
-    # start_time = time.time()
     # Validate that we were given a list of points, and that there are more than 2 points to sample between.
     if points is not None and total_points > 1:
         last_point = total_points - 1
         u_var2 = 1
-        u_var1 = 0
+        u_var1 = 1
         u_var3 = last_point
 
         # I believe this logic is looking for which 2 curve points the "xValue" value lies between.
@@ -141,14 +149,14 @@ def sample_curve(xValue, points, total_points):
                 else:
                     u_var2 = cur_point + 1
                 u_var1 = cur_point
-
-            if u_var1 + 1 <= last_point and xValue > points[u_var1].xValue:
-                cur_point = u_var1 + 1
             else:
                 cur_point = u_var1
 
+            if points[u_var1].xValue <= xValue and (cur_point := u_var1 + 1) and last_point <= u_var1:
+                cur_point = u_var1
+
         # This is where the actual sampling begins.
-        left_point = points[cur_point -1 if cur_point > 0 else 0]
+        left_point = points[cur_point - 1]
         right_point = points[cur_point]
 
         delta_x = right_point.xValue - left_point.xValue
@@ -168,7 +176,7 @@ def sample_curve(xValue, points, total_points):
         p1 = ((yValue_result + right_point.slopeLeft) * delta_x - (delta_y + delta_y)) * yValue
         p2 = (p1 + (-right_point.slopeLeft - (yValue_result + yValue_result)) * delta_x + delta_y * 3.0)
         calc_yValue = (p2 * yValue + yValue_result * delta_x) * yValue + left_point.yValue
-        # print(f"Calculation time: {(end_time - start_time) * 1000} milliseconds")
+
         return calc_yValue
 
-    return -1.0 # If we reach this point, somthing bad has happened. This should probably be an error log or thrown exception.
+    return -1.0  # If we reach this point, somthing bad has happened. This should probably be an error log or thrown exception.
