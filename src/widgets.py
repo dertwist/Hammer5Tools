@@ -288,12 +288,9 @@ class BoxSlider(QWidget):
             delta = x - self.last_drag_x
             self.last_drag_x = x
 
-            range_width = self.max_value - self.min_value if not math.isinf(self.max_value) else 100
-            adjusted_sensitivity = ((range_width / self.width()) * self.slider_scale) * self.sensitivity
+            adjusted_sensitivity = self.value_step * self.sensitivity * self.slider_scale
 
-            raw_delta = delta * adjusted_sensitivity
-            steps = round(raw_delta / self.value_step)
-            new_value = self.value + (steps * self.value_step)
+            new_value = self.value + (delta * adjusted_sensitivity)
 
             if self.int_output:
                 new_value = round(new_value)
@@ -316,10 +313,6 @@ class BoxSlider(QWidget):
 
         if self.int_output:
             value = round(value)
-
-        if not math.isinf(value):
-            steps = round(value / self.value_step)
-            value = steps * self.value_step
 
         self.value = value
         self.edited.emit(self.value)
