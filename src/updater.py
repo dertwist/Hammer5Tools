@@ -17,7 +17,6 @@ def is_admin():
     except:
         return False
 
-
 def run_as_admin():
     if sys.argv[-1] != 'asadmin':
         script = os.path.abspath(sys.argv[0])
@@ -118,13 +117,12 @@ exit /b 0
     print(Fore.GREEN + f"Batch script created at {batch_path}.")
     return batch_path
 
-def main():
+def main(dev_mode=False):
     """Main function to handle the update process."""
     # Kill the main application if running
     kill_main_app()
 
     # Initialize paths
-    dev_mode = True  # Set to True for testing or development
     update_path = tempfile.mkdtemp(prefix="hammer5tools_update_")
     program_path = os.getcwd() if not dev_mode else os.path.normpath("D:/CG/Projects/Other/Hammer5Tools/hammer5tools")
     updater_name = "Hammer5Tools_Updater.exe"
@@ -164,12 +162,13 @@ def main():
 
 if __name__ == "__main__":
     try:
+        dev_mode = '--dev' in sys.argv
         if os.name == 'nt':
             if sys.argv[-1] != 'asadmin' and not is_admin():
-                main()
+                main(dev_mode)
             else:
-                main()
+                main(dev_mode)
         else:
-            main()
+            main(dev_mode)
     except Exception as e:
         print(Fore.RED + f"An error occurred: {e}")
