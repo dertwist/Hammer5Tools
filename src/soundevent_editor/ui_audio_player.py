@@ -42,7 +42,7 @@ class Ui_Form(object):
         self.time = QLabel(self.content)
         self.time.setObjectName(u"time")
         self.time.setMinimumSize(QSize(86, 0))
-        self.time.setMaximumSize(QSize(80, 16777215))
+        self.time.setMaximumSize(QSize(86, 16777215))
 
         self.horizontalLayout.addWidget(self.time)
 
