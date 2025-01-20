@@ -9,6 +9,26 @@ from tqdm import tqdm
 from colorama import init, Fore
 import subprocess
 import sys
+import ctypes
+
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+
+def run_as_admin():
+    if sys.argv[-1] != 'asadmin':
+        script = os.path.abspath(sys.argv[0])
+        params = ' '.join([script] + sys.argv[1:] + ['asadmin'])
+        try:
+            ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, params, None, 1)
+            sys._exit(0)
+        except Exception as e:
+            print("Error", f"Failed to elevate privileges: {str(e)}")
+            return False
+    return True
 
 # Initialize colorama
 init(autoreset=True)
@@ -144,6 +164,12 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        if os.name == 'nt':
+            if sys.argv[-1] != 'asadmin' and not is_admin():
+                main()
+            else:
+                main()
+        else:
+            main()
     except Exception as e:
         print(Fore.RED + f"An error occurred: {e}")
