@@ -10,12 +10,12 @@
 
 class CurvePoint:
     def __init__(self, xValue, yValue, slopeLeft, slopeRight, modeLeft, modeRight):
-        self.xValue = xValue
-        self.yValue = yValue
-        self.slopeLeft = slopeLeft
-        self.slopeRight = slopeRight
-        self.modeLeft = modeLeft
-        self.modeRight = modeRight
+        self.xValue: float = xValue
+        self.yValue: float = yValue
+        self.slopeLeft: float = slopeLeft
+        self.slopeRight: float = slopeRight
+        self.modeLeft: int = modeLeft
+        self.modeRight: int = modeRight
 
 
 # In the CS2 executable, it seems to take data that exists in one place in memory,
