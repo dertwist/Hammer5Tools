@@ -23,9 +23,9 @@ class Ui_Widget(object):
     def setupUi(self, Widget):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
-        Widget.resize(790, 64)
+        Widget.resize(790, 32)
         Widget.setMinimumSize(QSize(0, 0))
-        Widget.setMaximumSize(QSize(16777215, 64))
+        Widget.setMaximumSize(QSize(16777215, 32))
         Widget.setStyleSheet(u".QWidget {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
@@ -50,63 +50,6 @@ class Ui_Widget(object):
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.frame = QFrame(Widget)
-        self.frame.setObjectName(u"frame")
-        self.frame.setMinimumSize(QSize(0, 32))
-        self.frame.setMaximumSize(QSize(16777215, 32))
-        self.frame.setStyleSheet(u".QFrame {\n"
-"    font: 580 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-left: 0px;\n"
-"    border-right: 0px;\n"
-"	border-top: 0px;\n"
-"    border-color: rgba(50, 50, 50, 255);\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"\n"
-".QFrame::hover {\n"
-"}\n"
-".QFrame::selected {\n"
-"    background-color: #414956;\n"
-"}")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.frame.setLineWidth(0)
-        self.horizontalLayout_2 = QHBoxLayout(self.frame)
-        self.horizontalLayout_2.setSpacing(16)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.layout = QHBoxLayout()
-        self.layout.setObjectName(u"layout")
-        self.layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
-        self.property_class = QLabel(self.frame)
-        self.property_class.setObjectName(u"property_class")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.property_class.sizePolicy().hasHeightForWidth())
-        self.property_class.setSizePolicy(sizePolicy)
-        self.property_class.setStyleSheet(u"border:0px;\n"
-"background-color: rgba(255, 255, 255, 0);\n"
-"font: 8pt \"Segoe UI\";\n"
-"padding-right: 16px;\n"
-"\n"
-"color: rgb(246, 255, 216);")
-
-        self.layout.addWidget(self.property_class)
-
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        self.layout.addItem(self.horizontalSpacer)
-
-
-        self.horizontalLayout_2.addLayout(self.layout)
-
-
-        self.verticalLayout.addWidget(self.frame)
-
         self.frame_2 = QFrame(Widget)
         self.frame_2.setObjectName(u"frame_2")
         self.frame_2.setMinimumSize(QSize(0, 32))
@@ -140,6 +83,9 @@ class Ui_Widget(object):
         self.layout_2.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
         self.property_class_2 = QLabel(self.frame_2)
         self.property_class_2.setObjectName(u"property_class_2")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.property_class_2.sizePolicy().hasHeightForWidth())
         self.property_class_2.setSizePolicy(sizePolicy)
         self.property_class_2.setStyleSheet(u"border:0px;\n"
@@ -287,7 +233,6 @@ class Ui_Widget(object):
 
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Form", None))
-        self.property_class.setText(QCoreApplication.translate("Widget", u"Class", None))
         self.property_class_2.setText(QCoreApplication.translate("Widget", u"Variable name:", None))
         self.comparison.setItemText(0, QCoreApplication.translate("Widget", u"EQUAL", None))
         self.comparison.setItemText(1, QCoreApplication.translate("Widget", u"NOT_EQUAL", None))
