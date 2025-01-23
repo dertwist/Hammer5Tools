@@ -247,6 +247,8 @@ class PropertyFrame(QWidget):
             # Comparison
             elif 'm_VariableComparison' in value_class:
                 property_instance = PropertyComparison(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
+                # self.name = 'Variable Comparison'
+                self.ui.property_class.setText('Variable Comparison')
                 add_instance()
             # Surfaces
 
