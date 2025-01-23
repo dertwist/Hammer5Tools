@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>790</width>
-    <height>64</height>
+    <height>32</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,7 +19,7 @@
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>64</height>
+    <height>32</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -64,108 +64,6 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QFrame" name="frame">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>32</height>
-      </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">.QFrame {
-    font: 580 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 0px;
-    border-left: 0px;
-    border-right: 0px;
-	border-top: 0px;
-    border-color: rgba(50, 50, 50, 255);
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-}
-
-.QFrame::hover {
-}
-.QFrame::selected {
-    background-color: #414956;
-}</string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <property name="lineWidth">
-      <number>0</number>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <property name="spacing">
-       <number>16</number>
-      </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item>
-       <layout class="QHBoxLayout" name="layout">
-        <property name="sizeConstraint">
-         <enum>QLayout::SetFixedSize</enum>
-        </property>
-        <item>
-         <widget class="QLabel" name="property_class">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">border:0px;
-background-color: rgba(255, 255, 255, 0);
-font: 8pt &quot;Segoe UI&quot;;
-padding-right: 16px;
-
-color: rgb(246, 255, 216);</string>
-          </property>
-          <property name="text">
-           <string>Class</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
     <widget class="QFrame" name="frame_2">
      <property name="minimumSize">
       <size>
@@ -199,10 +97,10 @@ color: rgb(246, 255, 216);</string>
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Shape::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Shadow::Raised</enum>
      </property>
      <property name="lineWidth">
       <number>0</number>
@@ -226,7 +124,7 @@ color: rgb(246, 255, 216);</string>
       <item>
        <layout class="QHBoxLayout" name="layout_2">
         <property name="sizeConstraint">
-         <enum>QLayout::SetFixedSize</enum>
+         <enum>QLayout::SizeConstraint::SetFixedSize</enum>
         </property>
         <item>
          <widget class="QLabel" name="property_class_2">
@@ -402,7 +300,7 @@ color: rgb(246, 255, 216);</string>
         <item>
          <spacer name="horizontalSpacer_2">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
