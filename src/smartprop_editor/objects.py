@@ -44,7 +44,7 @@ filters_list = [
     {'Probability': {'_class': 'CSmartPropFilter_Probability', 'm_flProbability': 1}},
     {'SurfaceAngle': {'_class': 'CSmartPropFilter_SurfaceAngle', 'm_flSurfaceSlopeMin': 0, 'm_flSurfaceSlopeMax': 0}},
     {'SurfaceProperties': {'_class': 'CSmartPropFilter_SurfaceProperties', 'm_AllowedSurfaceProperties': [], "m_DisallowedSurfaceProperties": []}},
-    {'VariableValue (VariableComparison)': {'_class': 'CSmartPropFilter_VariableValue', 'm_VariableComparison': {'m_Name': '', 'm_Value': 0, 'm_Comparison': 'EQUAL'}}}
+    {'Variable Comparison': {'_class': 'CSmartPropFilter_VariableValue', 'm_VariableComparison': {'m_Name': '', 'm_Value': 0, 'm_Comparison': 'EQUAL'}}}
 ]
 
 operator_prefix = 'CSmartPropOperation_'
@@ -60,10 +60,10 @@ operators_list = [
     {'CreateRotator': {'_class': "CSmartPropOperation_CreateRotator"}},
     {'CreateLocator': {'_class': "CSmartPropOperation_CreateLocator"}},
     {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': -500, 'm_flTraceLength': 500}},
-    {'SetVariableBool': {'_class': 'CSmartPropOperation_SetVariableBool', 'm_VariableName': None, 'm_VariableValue': None}},
+    # {'SetVariableBool': {'_class': 'CSmartPropOperation_SetVariableBool', 'm_VariableName': None, 'm_VariableValue': None}},
     {'StateSave': {'_class': 'CSmartPropOperation_SaveState', 'm_StateName': 'State'}},
-    {'SetVariableFloat': {'_class': 'CSmartPropOperation_SetVariableFloat', 'm_VariableName': None, 'm_VariableValue': None}},
-    {'SetVariable' : {'_class': 'CSmartPropOperation_SetVariable'}, 'm_TargetName': None, 'm_DataType': None, 'm_Value':None}
+    # {'SetVariableFloat': {'_class': 'CSmartPropOperation_SetVariableFloat', 'm_VariableName': None, 'm_VariableValue': None}},
+    {'SetVariable' : {'_class': 'CSmartPropOperation_SetVariable', 'm_VariableValue': {'m_TargetName': None, 'm_DataType': None, 'm_Value':None}},}
 ]
 
 operators_dict_todo = {
