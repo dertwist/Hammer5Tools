@@ -24,6 +24,7 @@ from src.smartprop_editor.property.comparison import PropertyComparison
 from src.smartprop_editor.property.filtersurface import PropertySurface
 from src.smartprop_editor.property.colormatch import PropertyColorMatch
 from src.smartprop_editor.property.variable import PropertyVariableOutput
+from src.smartprop_editor.property.set_variable import PropertyVariableValue
 
 
 import ast
@@ -175,6 +176,8 @@ class PropertyFrame(QWidget):
             elif 'm_ApplyColorMode' in value_class:
                 property_instance = PropertyCombobox(value=value, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'], filter_types=['ApplyColorMode'])
                 add_instance()
+
+            # Vector3D
             elif 'm_v' in value_class:
                 property_instance = PropertyVector3D(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
                 add_instance()
@@ -231,8 +234,16 @@ class PropertyFrame(QWidget):
                 property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=False, only_variable=True, force_variable=True, placeholder='Variable name', filter_types=['String', 'Int', 'Float', 'Bool'])
                 add_instance()
             elif 'm_VariableValue' in value_class:
-                property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=True)
-                add_instance()
+                if value is None:
+                    property_instance = PropertyVariableValue(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
+                    add_instance()
+                else:
+                    if not 'm_TargetName' in value:
+                        property_instance = PropertyString(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea, expression_bool=True)
+                        add_instance()
+                    else:
+                        property_instance = PropertyVariableValue(value=value, value_class=value_class,variables_scrollArea=self.variables_scrollArea)
+                        add_instance()
             # Comparison
             elif 'm_VariableComparison' in value_class:
                 property_instance = PropertyComparison(value=value, value_class=value_class ,variables_scrollArea=self.variables_scrollArea)
@@ -300,6 +311,11 @@ class PropertyFrame(QWidget):
         elif prop_class == 'SetTintColor':
             classes = ['m_Mode', 'm_ColorChoices', 'm_SelectionMode', 'm_ColorSelection']
             operator_adding_instances(classes)
+
+        elif prop_class == 'SetVariable':
+            classes = ['m_VariableValue']
+            operator_adding_instances(classes)
+
         # Filters
         elif prop_class == 'SurfaceProperties':
             classes = ['m_DisallowedSurfaceProperties', 'm_AllowedSurfaceProperties']
