@@ -22,6 +22,10 @@ from src.widgets import FloatWidget, ComboboxVariablesWidget, BoolWidget
 # There is also a conflict with legacy SetVariableBool and SetVariableFloat which have also m_VariableValue key.
 # I planed to make only one universal property - SetVariable, all related properties SetVariableFloat and SetVariableBool
 
+BOOL_COLOR = '(255, 189, 190)'
+FLOAT_COLOR = '(181, 255, 239)'
+STRING_COLOR = '(255, 209, 153)'
+
 class PropertyVariableValue(QWidget):
     edited = Signal()
 
@@ -41,6 +45,13 @@ class PropertyVariableValue(QWidget):
         self.float_widget = FloatWidget(slider_range=[0,0], int_output=False)
         self.float_widget.edited.connect(self.on_changed)
         self.ui.layout_3.addWidget(self.float_widget)
+
+
+        # init colors
+        self.ui.property_class_4.setStyleSheet(f"color: rgb{STRING_COLOR};")
+        self.ui.property_class.setStyleSheet(f"color: rgb{STRING_COLOR};")
+
+
 
 
         # Bool widget setup
@@ -98,6 +109,9 @@ class PropertyVariableValue(QWidget):
                 self.float_widget.set_value(self.m_Value)
             elif isinstance(self.m_Value, int):
                 self.float_widget.set_value(self.m_Value)
+        if 'm_TargetName' in value:
+            self.m_TargetName = value['m_TargetName']
+            self.variable.combobox.set_variable(self.m_TargetName)
 
         self.on_changed()
 
@@ -106,10 +120,16 @@ class PropertyVariableValue(QWidget):
             self.float_widget.show()
             self.bool_widget.hide()
             self.spacer.show()
+            self.ui.property_class_5.setStyleSheet(f"color: rgb{FLOAT_COLOR};")
+            self.ui.property_class_4.setStyleSheet(f"color: rgb{FLOAT_COLOR};")
+            self.variable.combobox.filter_types = ['Float', 'int']
         elif self.ui.logic_switch.currentText() == 'Bool':
             self.float_widget.hide()
             self.bool_widget.show()
             self.spacer.show()
+            self.ui.property_class_5.setStyleSheet(f"color: rgb{BOOL_COLOR};")
+            self.ui.property_class_4.setStyleSheet(f"color: rgb{BOOL_COLOR};")
+            self.variable.combobox.filter_types = ['Bool']
         self.m_DataType = self.ui.logic_switch.currentText().upper()
     def on_changed(self):
         self.logic_switch()
