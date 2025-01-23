@@ -397,6 +397,8 @@ class BoolWidget(QWidget):
         self.setLayout(layout)
 
         # Set initial value
+        if value is None:
+            value = False
         self.set_value(value)
 
     def on_updated(self):
@@ -405,6 +407,9 @@ class BoolWidget(QWidget):
         # Updating text in the checkbox
         self.set_value(value)
         self.edited.emit(value)
+    def get_value(self):
+        """Getting value form the checkbox"""
+        return self.checkbox.isChecked()
 
     def set_value(self, value):
         """Set value as text for checkbox"""

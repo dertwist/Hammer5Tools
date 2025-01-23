@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>790</width>
-    <height>32</height>
+    <width>786</width>
+    <height>96</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,7 +19,7 @@
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>32</height>
+    <height>96</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -63,6 +63,94 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
+   <item>
+    <widget class="QFrame" name="frame_2">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">.QFrame {
+    font: 580 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+	border-top: 0px;
+    border-color: rgba(50, 50, 50, 255);
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+.QFrame::hover {
+}
+.QFrame::selected {
+    background-color: #414956;
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <property name="spacing">
+       <number>16</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="layout_2">
+        <property name="sizeConstraint">
+         <enum>QLayout::SizeConstraint::SetFixedSize</enum>
+        </property>
+        <item>
+         <widget class="QLabel" name="property_class_4">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">border:0px;
+background-color: rgba(255, 255, 255, 0);
+font: 8pt &quot;Segoe UI&quot;;
+padding-right: 16px;
+</string>
+          </property>
+          <property name="text">
+           <string>Target Name</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item>
     <widget class="QFrame" name="frame">
      <property name="minimumSize">
@@ -142,7 +230,7 @@ padding-right: 16px;
 </string>
           </property>
           <property name="text">
-           <string>Value</string>
+           <string>Type</string>
           </property>
          </widget>
         </item>
@@ -253,6 +341,94 @@ QComboBox QAbstractItemView::item:selected {
             <string>Float</string>
            </property>
           </item>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frame_3">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">.QFrame {
+    font: 580 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 0px;
+    border-left: 0px;
+    border-right: 0px;
+	border-top: 0px;
+    border-color: rgba(50, 50, 50, 255);
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+.QFrame::hover {
+}
+.QFrame::selected {
+    background-color: #414956;
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Raised</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <property name="spacing">
+       <number>16</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="layout_3">
+        <property name="sizeConstraint">
+         <enum>QLayout::SizeConstraint::SetFixedSize</enum>
+        </property>
+        <item>
+         <widget class="QLabel" name="property_class_5">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">border:0px;
+background-color: rgba(255, 255, 255, 0);
+font: 8pt &quot;Segoe UI&quot;;
+padding-right: 16px;
+</string>
+          </property>
+          <property name="text">
+           <string>Value</string>
+          </property>
          </widget>
         </item>
        </layout>
