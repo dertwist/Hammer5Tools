@@ -113,16 +113,25 @@ class PopupMenu(QDialog):
 
     def populate_properties(self, add_once):
         """Populate the menu with property items"""
+        bookmarked_items_list = []
         for item in self.properties:
             for key, value in item.items():
                 element_layout = self.create_property_item(key, value, add_once)
                 if key in self.bookmarked_items:
-                    self.bookmarked_layout.addLayout(element_layout)
+                    bookmarked_items_list.append((key, element_layout))
                 else:
                     self.regular_layout.addLayout(element_layout)
 
+        # Add bookmarked items in order
+        for i, (key, layout) in enumerate(bookmarked_items_list):
+            if i == len(bookmarked_items_list) - 1:  # Last bookmark
+                label = layout.itemAt(0).widget()
+                label.setStyleSheet(self.get_last_bookmark_stylesheet())
+            self.bookmarked_layout.addLayout(layout)
+
         # Show separator if there are bookmarked items
         self.separator.setVisible(bool(self.bookmarked_items))
+
 
     def create_property_item(self, key, value, add_once):
         """Create a single property item layout"""
@@ -190,6 +199,25 @@ class PopupMenu(QDialog):
             QLabel {
                 font: 580 10pt "Segoe UI";
                 border-bottom: 0.5px solid black;  
+                border-radius: 0px; 
+                border-color: rgba(40, 40, 40, 255);
+                padding-top: 8px;
+                padding-bottom: 8px;
+            }
+            QLabel:hover {
+                background-color: #414956;
+            }
+            QLabel[selected="true"] {
+                background-color: #2A2E38;
+            }
+        """
+
+    def get_last_bookmark_stylesheet(self):
+        """Get stylesheet for the last bookmarked item"""
+        return """
+            QLabel {
+                font: 580 10pt "Segoe UI";
+                border-bottom: 0px solid black;  
                 border-radius: 0px; 
                 border-color: rgba(40, 40, 40, 255);
                 padding-top: 8px;
@@ -304,23 +332,12 @@ class PopupMenu(QDialog):
     def search_text_changed(self):
         """Handle search text changes"""
         search_text = self.ui.lineEdit.text().lower()
-        scroll_content = self.ui.scrollArea.widget()
 
-        for i in range(scroll_content.layout().count()):
-            element_layout_item = scroll_content.layout().itemAt(i)
-            if not element_layout_item:
-                continue
+        # Search in bookmarked layout
+        self._search_in_layout(self.bookmarked_layout, search_text)
 
-            element_layout = element_layout_item.layout()
-            if not element_layout:
-                continue
-
-            label = element_layout.itemAt(0).widget()
-            visible = search_text in label.text().lower()
-            label.setVisible(visible)
-
-            if element_layout.count() > 1:
-                element_layout.itemAt(1).widget().setVisible(visible)
+        # Search in regular layout
+        self._search_in_layout(self.regular_layout, search_text)
 
         # Reset selection after filtering
         self.current_selection_index = -1
@@ -328,6 +345,31 @@ class PopupMenu(QDialog):
         if self.visible_labels:
             self.current_selection_index = 0
             self.update_selection_highlighting()
+
+    def _search_in_layout(self, layout, search_text):
+        """Helper method to search in a specific layout"""
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if not item or not item.layout():
+                continue
+
+            element_layout = item.layout()
+            label_item = element_layout.itemAt(0)
+            if not label_item:
+                continue
+
+            label = label_item.widget()
+            if not isinstance(label, QLabel):
+                continue
+
+            visible = search_text in label.text().lower()
+            label.setVisible(visible)
+
+            # Make associated buttons (help, bookmark) visible/invisible
+            for j in range(1, element_layout.count()):
+                widget_item = element_layout.itemAt(j)
+                if widget_item and widget_item.widget():
+                    widget_item.widget().setVisible(visible)
 
     #===============================================================<  Events  >============================================================
 
