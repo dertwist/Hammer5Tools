@@ -1,7 +1,7 @@
 import ast
 
 from src.soundevent_editor.ui_properties_window import Ui_MainWindow
-from src.settings.preferences import settings, debug
+from src.settings.main import settings, debug
 from src.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
 from src.popup_menu.main import PopupMenu
 from src.soundevent_editor.objects import *

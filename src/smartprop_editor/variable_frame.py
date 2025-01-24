@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCursor, QAction
 from src.property.methods import PropertyMethods
 from src.smartprop_editor.element_id import *
-from src.settings.preferences import get_config_bool
+from src.settings.main import get_config_bool
 from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.objects import variables_list
 class VariableFrame(QWidget):

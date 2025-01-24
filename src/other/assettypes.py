@@ -1,5 +1,5 @@
 import os
-from src.settings.preferences import get_cs2_path
+from src.settings.main import get_cs2_path
 import keyvalues3
 from src.common import editor_info
 

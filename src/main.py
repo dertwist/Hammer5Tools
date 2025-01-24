@@ -2,7 +2,7 @@ import ctypes
 from PySide6.QtWidgets import QSystemTrayIcon, QMenu, QMessageBox
 from PySide6.QtGui import QAction
 from about.main import Documentation_Dialog
-from src.settings.preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
+from src.settings.main import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
 from loading_editor.main import Loading_editorMainWindow
 from hotkey_editor.main import HotkeyEditorMainWindow
 from create_addon.create_addon_mian import Create_addon_Dialog

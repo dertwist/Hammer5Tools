@@ -1,5 +1,5 @@
 from src.archive_addon.ui_main import Ui_export_and_import_addon_widget
-from src.settings.preferences import get_cs2_path, get_addon_name, get_config_value
+from src.settings.main import get_cs2_path, get_addon_name, get_config_value
 from PySide6.QtWidgets import QDialog
 from src.common import enable_dark_title_bar
 

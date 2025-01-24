@@ -1,4 +1,4 @@
-from src.settings.preferences import debug
+from src.settings.main import debug
 from src.smartprop_editor.ui_property_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget

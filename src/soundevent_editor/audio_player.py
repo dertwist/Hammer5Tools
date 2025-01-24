@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QLabel, QWidget
 from PySide6.QtCore import QTimer
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import QUrl
-from src.settings.preferences import set_config_bool, get_config_bool
+from src.settings.main import set_config_bool, get_config_bool
 from src.soundevent_editor.ui_audio_player import Ui_Form
 from PySide6.QtGui import QIcon
 
