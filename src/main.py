@@ -10,7 +10,7 @@ from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
 from minor_features.addon_functions import delete_addon, launch_addon
 from minor_features.update_check import check_updates
 from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
-from batch_creator.main import BatchCreatorMainWindow
+from assetgroup_maker.main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
 from src.launch_options.main import LaunchOptionsDialog

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, QSize, QFileSystemWatcher
 from PySide6.QtGui import QIcon, QAction
 from src.preferences import get_addon_dir
-from src.batch_creator.process import StartProcess
+from src.assetgroup_maker.process import StartProcess
 import os
 from PySide6.QtCore import Signal, QSize
 from PySide6.QtGui import QIcon
@@ -90,7 +90,7 @@ from PySide6.QtCore import QFileSystemWatcher, Signal
 from PySide6.QtWidgets import QListWidget, QListWidgetItem
 from src.widgets import exception_handler
 from src.preferences import debug
-from src.batch_creator.process import StartProcess
+from src.assetgroup_maker.process import StartProcess
 from src.qt_styles.qt_global_stylesheet import *
 
 

@@ -3,18 +3,18 @@ import os
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QLineEdit
 from PySide6.QtCore import Qt, QMimeData, QFileSystemWatcher, Signal
 from PySide6.QtGui import QDropEvent, QAction, QIcon, QTextCharFormat, QTextCursor
-from src.batch_creator.ui_main import Ui_BatchCreator_MainWindow
+from src.assetgroup_maker.ui_main import Ui_BatchCreator_MainWindow
 from src.preferences import get_addon_name, get_cs2_path, get_addon_dir, debug
-from src.batch_creator.highlighter import CustomHighlighter
+from src.assetgroup_maker.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
-from src.batch_creator.objects import default_file
-from src.batch_creator.dialog import BatchCreatorProcessDialog
-from src.batch_creator.process import perform_batch_processing
-from src.batch_creator.property.frame import PropertyFrame
-from src.batch_creator.property.objects import default_replacement, default_replacements
-from src.batch_creator.context_menu import ReplacementsContextMenu
+from src.assetgroup_maker.objects import default_file
+from src.assetgroup_maker.dialog import BatchCreatorProcessDialog
+from src.assetgroup_maker.process import perform_batch_processing
+from src.assetgroup_maker.property.frame import PropertyFrame
+from src.assetgroup_maker.property.objects import default_replacement, default_replacements
+from src.assetgroup_maker.context_menu import ReplacementsContextMenu
 from src.preferences import get_config_value, set_config_value
-from src.batch_creator.monitor import MonitoringFileWatcher
+from src.assetgroup_maker.monitor import MonitoringFileWatcher
 from src.widgets import ErrorInfo
 
 class DragDropLineEdit(QLineEdit):

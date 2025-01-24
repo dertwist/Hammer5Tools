@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 )
 from src.widgets import exception_handler
 from src.preferences import debug
-from src.batch_creator.process import StartProcess
+from src.assetgroup_maker.process import StartProcess
 
 
 class NoWheelScrollArea(QScrollArea):
