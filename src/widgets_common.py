@@ -1,13 +1,16 @@
 import ast
-
 from PySide6.QtCore import Signal, Qt, QSize
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, QCheckBox, QVBoxLayout, QToolBox, QToolButton
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, \
+    QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, \
+    QCheckBox, QVBoxLayout, QToolBox, QToolButton
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
 from src.qt_styles.common import *
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider,QTextEdit, QDoubleSpinBox, QFrame, QSpacerItem, QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, QLineEdit, QCheckBox, QVBoxLayout, QToolBox, QToolButton, QGroupBox, QButtonGroup
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QTextEdit, QDoubleSpinBox, QFrame, QSpacerItem, \
+    QSizePolicy, QComboBox, QTreeWidget, QTreeWidgetItem, QDialog, QMessageBox, QPushButton, QApplication, QLabel, \
+    QLineEdit, QCheckBox, QVBoxLayout, QToolBox, QToolButton, QGroupBox, QButtonGroup
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
@@ -97,6 +100,8 @@ class ErrorInfo(QDialog):
         webbrowser.open(discord_feedback_channel)
         # Close the dialog after reporting the issue
         self.close()
+
+
 def exception_handler(func):
     """
     A decorator that wraps the passed in function and logs exceptions should one occur.
@@ -126,8 +131,13 @@ def exception_handler(func):
 
 #================================================================<  Buttons  >==============================================================
 class Button(QPushButton):
-    def __init__(self):
+    def __init__(self, size: int = None, icon: str = None, height: int = None, width: int = None):
         super().__init__()
+        if size is not None:
+            self.set_size(size, size)
+        self.set_size(height, width)
+        if icon is not None:
+            self.set_icon(icon)
         self.setStyleSheet(qt_stylesheet_button)
 
     def set_size(self, height: int = None, width: int = None):
@@ -142,20 +152,32 @@ class Button(QPushButton):
         if height is not None and width is not None:
             icon_size = min(height, width) * 0.6
             self.setIconSize(QSize(icon_size, icon_size))
+
     def set_icon(self, url):
         self.setIcon(QIcon(url))
+
     def set_text(self, text):
         self.setText(text)
+
     def set_icon_delete(self):
         self.set_icon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+
     def set_icon_paste(self):
         self.set_icon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+
     def set_icon_search(self):
         self.set_icon(":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+
     def set_icon_add(self):
         self.set_icon(":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+
     def set_icon_polyline(self):
         self.set_icon(":/icons/polyline_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png")
+
+    def set_icon_question(self):
+        self.set_icon(":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+
+
 class DeleteButton(Button):
     def __init__(self, instance: QWidget = None):
         super().__init__()
