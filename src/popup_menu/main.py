@@ -132,7 +132,6 @@ class PopupMenu(QDialog):
         # Show separator if there are bookmarked items
         self.separator.setVisible(bool(self.bookmarked_items))
 
-
     def create_property_item(self, key, value, add_once):
         """Create a single property item layout"""
         label = QLabel(key)
@@ -338,6 +337,12 @@ class PopupMenu(QDialog):
 
         # Search in regular layout
         self._search_in_layout(self.regular_layout, search_text)
+
+        # Disable separator during search
+        if search_text is '':
+            self.separator.setVisible(True)
+        else:
+            self.separator.setVisible(False)
 
         # Reset selection after filtering
         self.current_selection_index = -1
