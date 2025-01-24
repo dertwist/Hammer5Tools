@@ -1,5 +1,5 @@
 # from src.preferences import get_cs2_path
-from src.minor_features.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
+from src.other.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
 import os
 import subprocess
 import threading
