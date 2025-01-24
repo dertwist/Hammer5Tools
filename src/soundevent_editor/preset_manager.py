@@ -1,12 +1,12 @@
 import sys, os
-from src.preferences import get_addon_name, get_cs2_path
+from src.settings.preferences import get_addon_name
 from src.soundevent_editor.ui_preset_manager import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QApplication
-from src.preferences import settings
+from PySide6.QtWidgets import QMainWindow, QApplication
+from src.settings.preferences import settings
 from src.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
-from src.common import app_dir, Kv3ToJson, JsonToKv3, SoundEventEditor_Preset_Path, enable_dark_title_bar
-from src.widgets import exception_handler, ErrorInfo
+from src.common import Kv3ToJson, JsonToKv3, SoundEventEditor_Preset_Path, enable_dark_title_bar
+from src.widgets import ErrorInfo
 
 
 class SoundEventEditorPresetManagerWindow(QMainWindow):
