@@ -13,7 +13,7 @@ import os
 from PySide6.QtCore import Signal, QSize
 from PySide6.QtGui import QIcon
 from src.preferences import get_addon_dir, debug
-from src.qt_styles.common import *
+from src.styles.common import *
 
 def read_reference_from_file(config_path):
     try:
@@ -91,7 +91,7 @@ from PySide6.QtWidgets import QListWidget, QListWidgetItem
 from src.widgets import exception_handler
 from src.preferences import debug
 from src.assetgroup_maker.process import StartProcess
-from src.qt_styles.qt_global_stylesheet import *
+from src.styles.qt_global_stylesheet import *
 
 
 class MonitoringFileWatcher(QListWidget):

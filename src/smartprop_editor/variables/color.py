@@ -3,7 +3,7 @@ from src.smartprop_editor.variables.ui_color import Ui_Widget
 from PySide6.QtWidgets import QWidget, QColorDialog
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
-from src.qt_styles.qt_global_stylesheet import QT_Stylesheet_global
+from src.styles.qt_global_stylesheet import QT_Stylesheet_global
 import ast
 
 class Var_class_color(QWidget):

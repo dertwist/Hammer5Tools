@@ -1,6 +1,6 @@
 import re
 import  time
-from src.qt_styles.common import qt_stylesheet_smartprop_editor_frame
+from src.styles.common import qt_stylesheet_smartprop_editor_frame
 from src.smartprop_editor.property.ui_float import Ui_Widget
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
