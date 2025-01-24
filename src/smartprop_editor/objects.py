@@ -92,7 +92,7 @@ operators_dict_todo = {
 
 selection_criteria_prefix = "CSmartPropSelectionCriteria_"
 selection_criteria_list = [
-    {"Endcap": {'_class': 'CSmartPropSelectionCriteria_EndCap', 'm_bStart':False, 'm_bEnd': False}},
+    {"EndCap": {'_class': 'CSmartPropSelectionCriteria_EndCap', 'm_bStart':False, 'm_bEnd': False}},
     {"ChoiceWeight": {'_class': 'CSmartPropSelectionCriteria_ChoiceWeight', 'm_flWeight': 0}},
     {"IsValid": {'_class': 'CSmartPropSelectionCriteria_IsValid'}},
     {"LinearLength": {'_class': 'CSmartPropSelectionCriteria_LinearLength', 'm_flLength': 0, 'm_bAllowScale': False, 'm_flMinLength': 0, 'm_flMaxLength': 0}},
