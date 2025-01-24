@@ -1,17 +1,16 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QTreeWidget, QSpacerItem, QSizePolicy
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsPathItem, QFrame, QLineEdit
-from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication, QPainter
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QFrame, QLineEdit
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtCore import Signal
 from src.popup_menu.main import PopupMenu
-from src.preferences import debug, get_addon_dir
+from src.settings.preferences import get_addon_dir
 from src.common import convert_snake_case
 try:
     from src.soundevent_editor.property.curve.ui_main import Ui_CurveWidget
 except:
     pass
-from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button, ComboboxDynamicItems, Spacer, BoxSlider
+from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button, ComboboxDynamicItems, Spacer
 from src.soundevent_editor.common import vsnd_filepath_convert
-from src.soundevent_editor.property.curve.main import SoundEventEditorPropertyCurve
 
 import re, os
 

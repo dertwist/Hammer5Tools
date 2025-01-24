@@ -1,10 +1,10 @@
 import json
 import os
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QLineEdit
-from PySide6.QtCore import Qt, QMimeData, QFileSystemWatcher, Signal
-from PySide6.QtGui import QDropEvent, QAction, QIcon, QTextCharFormat, QTextCursor
+from PySide6.QtCore import Qt, QFileSystemWatcher, Signal
+from PySide6.QtGui import QDropEvent, QTextCharFormat, QTextCursor
 from src.assetgroup_maker.ui_main import Ui_BatchCreator_MainWindow
-from src.preferences import get_addon_name, get_cs2_path, get_addon_dir, debug
+from src.settings.preferences import get_addon_name, get_cs2_path, get_addon_dir, debug
 from src.assetgroup_maker.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
 from src.assetgroup_maker.objects import default_file
@@ -13,7 +13,6 @@ from src.assetgroup_maker.process import perform_batch_processing
 from src.assetgroup_maker.property.frame import PropertyFrame
 from src.assetgroup_maker.property.objects import default_replacement, default_replacements
 from src.assetgroup_maker.context_menu import ReplacementsContextMenu
-from src.preferences import get_config_value, set_config_value
 from src.assetgroup_maker.monitor import MonitoringFileWatcher
 from src.widgets import ErrorInfo
 

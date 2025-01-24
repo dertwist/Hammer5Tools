@@ -1,17 +1,14 @@
 import ast
-import os.path
-import random
 
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication, QTreeWidget
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QApplication, QTreeWidget
 from PySide6.QtCore import Signal
 
 from src.soundevent_editor.objects import mixgroup_objects, dsp_preset_objects, type_objects
 from src.soundevent_editor.property.common import SoundEventEditorPropertyList
 from src.soundevent_editor.property.ui_frame import Ui_Form
-from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
-from src.common import convert_snake_case, JsonToKv3, Kv3ToJson
-from src.preferences import debug, get_addon_dir
+from src.common import convert_snake_case
+from src.settings.preferences import debug
 from src.soundevent_editor.common import vsnd_filepath_convert
 
 
@@ -75,14 +72,11 @@ class SoundEventEditorPropertyFrame(QWidget):
 
         # Widgets import
         from src.soundevent_editor.property.common import (
-            SoundEventEditorPropertyBaseSoundEvent,
             SoundEventEditorPropertyFloat,
-            SoundEventEditorPropertyInt,
             SoundEventEditorPropertyLegacy,
             SoundEventEditorPropertyBool,
             SoundEventEditorPropertyCurve,
             SoundEventEditorPropertyVector3,
-            SoundEventEditorPropertyList,
             SoundEventEditorPropertyFiles,
             SoundEventEditorPropertySoundEvent,
             SoundEventEditorPropertyCombobox,
