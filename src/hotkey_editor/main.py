@@ -4,7 +4,7 @@ from src.hotkey_editor.ui_main import Ui_MainWindow
 from PySide6.QtWidgets import QApplication, QMainWindow, QTreeWidgetItem, QPushButton, QMessageBox
 from src.hotkey_editor.dialog import KeyDialog
 from src.hotkey_editor.objects import *
-from src.settings.preferences import debug, get_addon_name, get_cs2_path
+from src.settings.main import debug, get_addon_name, get_cs2_path
 from src.other.addon_functions import launch_addon, kill_addon
 from src.explorer.main import Explorer
 import os

@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QLineEdit
 from PySide6.QtCore import Qt, QFileSystemWatcher, Signal
 from PySide6.QtGui import QDropEvent, QTextCharFormat, QTextCursor
 from src.assetgroup_maker.ui_main import Ui_BatchCreator_MainWindow
-from src.settings.preferences import get_addon_name, get_cs2_path, get_addon_dir, debug
+from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
 from src.assetgroup_maker.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
 from src.assetgroup_maker.objects import default_file

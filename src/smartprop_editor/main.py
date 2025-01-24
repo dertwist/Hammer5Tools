@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QMenu, QApplication, QHeaderView
 from PySide6.QtGui import QAction, QKeyEvent, QUndoStack
 from PySide6.QtCore import Qt
 from src.smartprop_editor.ui_main import Ui_MainWindow
-from src.settings.preferences import get_addon_name
+from src.settings.main import get_addon_name
 
 from src.smartprop_editor.variable_frame import VariableFrame
 from src.smartprop_editor.objects import variables_list, variable_prefix, elements_list, operators_list, selection_criteria_list, filters_list
@@ -25,7 +25,7 @@ from PySide6.QtGui import QKeySequence
 from PySide6.QtCore import QTimer
 
 from src.explorer.main import Explorer
-from src.settings.preferences import settings
+from src.settings.main import settings
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
 from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *

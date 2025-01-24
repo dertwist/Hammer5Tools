@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Signal, QSize
 from PySide6.QtGui import QIcon
-from src.settings.preferences import get_addon_dir
+from src.settings.main import get_addon_dir
 from src.styles.common import *
 
 def read_reference_from_file(config_path):
@@ -83,7 +83,7 @@ class FileItemWidget(QWidget):
 import os
 from PySide6.QtCore import QFileSystemWatcher, Signal
 from PySide6.QtWidgets import QListWidget, QListWidgetItem
-from src.settings.preferences import debug
+from src.settings.main import debug
 from src.assetgroup_maker.process import StartProcess
 
 

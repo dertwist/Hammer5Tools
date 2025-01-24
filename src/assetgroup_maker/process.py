@@ -3,7 +3,7 @@ import json
 from PySide6.QtCore import Signal, QThread
 
 from src.assetgroup_maker.objects import default_file
-from src.settings.preferences import get_addon_name, get_cs2_path, get_addon_dir, debug
+from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
 
 class StartProcess(QThread):
     finished = Signal()
