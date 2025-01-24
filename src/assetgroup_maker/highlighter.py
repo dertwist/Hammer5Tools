@@ -2,10 +2,24 @@ from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
 from PySide6.QtCore import QRegularExpression
 
 class CustomHighlighter(QSyntaxHighlighter):
-    def __init__(self, parent=None):
+    """
+    A custom syntax highlighter for highlighting specific patterns in text.
+
+    Attributes:
+        highlighting_rules (list): A list of tuples containing regex patterns and their corresponding text formats.
+    """
+
+    def __init__(self, parent=None) -> None:
+        """
+        Initialize the CustomHighlighter with specific highlighting rules.
+
+        Args:
+            parent: The parent widget for the highlighter.
+        """
         super().__init__(parent)
         self.highlighting_rules = []
 
+        # Define text formats
         custom_format = QTextCharFormat()
         custom_format.setForeground(QColor("#C78662"))
 
@@ -21,6 +35,7 @@ class CustomHighlighter(QSyntaxHighlighter):
         asset_name_format = QTextCharFormat()
         asset_name_format.setForeground(QColor("#C78662"))
 
+        # Define keyword patterns
         keyword_patterns = [
             r"\bTextureAmbientOcclusion\b",
             r"\bTextureColor1\b",
@@ -33,9 +48,11 @@ class CustomHighlighter(QSyntaxHighlighter):
             regex = QRegularExpression(pattern)
             self.highlighting_rules.append((regex, keyword_format))
 
+        # Define quoted text pattern
         quoted_text_pattern = QRegularExpression(r'"\s*[^"]+\s*"')
         self.highlighting_rules.append((quoted_text_pattern, quoted_text_format))
 
+        # Define other patterns
         patterns = [
             (r"#\$FOLDER_PATH\$#", folder_path_format),
             (r"#\$ASSET_NAME\$#", asset_name_format)
@@ -45,7 +62,13 @@ class CustomHighlighter(QSyntaxHighlighter):
             regex = QRegularExpression(pattern)
             self.highlighting_rules.append((regex, format))
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text: str) -> None:
+        """
+        Apply syntax highlighting to a block of text.
+
+        Args:
+            text: The text block to be highlighted.
+        """
         for pattern, format in self.highlighting_rules:
             match_iterator = pattern.globalMatch(text)
             while match_iterator.hasNext():

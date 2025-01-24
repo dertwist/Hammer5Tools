@@ -75,7 +75,7 @@ The project uses custom run configurations for different development scenarios:
 
 ## Creating Installer
 
-For the installer program, I used InstallForge  
+For the installer program, I used [InstallForge](https://installforge.net/)  
 The configuration file is `hammer5tools_setup.ifp`
 
 ## Code Structure
