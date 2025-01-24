@@ -1,10 +1,20 @@
-from PySide6.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QHBoxLayout,
+    QSpacerItem,
+    QSizePolicy
+)
 from PySide6.QtGui import QCursor, QKeyEvent
 from PySide6.QtCore import QEvent, Qt, Signal
 from src.popup_menu.ui_main import Ui_PoPupMenu
 from src.widgets_common import Button
 import webbrowser
 from src.settings.main import set_config_value, get_config_value
+
 
 class PopupMenu(QDialog):
     label_clicked = Signal(str)
@@ -14,33 +24,54 @@ class PopupMenu(QDialog):
         self,
         properties: list,
         add_once: bool = False,
+        ignore_list: list = None,
         parent=None,
         help_url: str = None,
         window_name: str = None
     ):
+        """
+        :param properties: list of dict items to populate
+        :param add_once: if True, items are removed permanently after clicking
+        :param ignore_list: can be a list of strings or (key, value) pairs.
+                           If strings, they'll be interpreted as (key, key) pairs.
+                           If pairs, they must be (k, v).
+        :param parent: parent widget
+        :param help_url: URL to be used for help pages
+        :param window_name: used for saving bookmarks uniquely
+        """
         super().__init__(parent)
         self.help_url = help_url
         self.properties = properties
         self.window_name = window_name
         self.ui = Ui_PoPupMenu()
         self.ui.setupUi(self)
+        self.add_once = add_once
+
+        if ignore_list is None:
+            ignore_list = []
+        converted_ignore = set()
+        for item in ignore_list:
+            if isinstance(item, str):
+                converted_ignore.add((item, item))
+            else:
+                k, v = item
+                converted_ignore.add((k, str(v)))
+        self.ignore_items = converted_ignore
+
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
         self.setGeometry(200, 200, 400, 400)
 
-        # Track selection state
+        # States
         self.current_selection_index = -1
         self.visible_labels = []
         self.bookmarked_items = set()
-        self.add_once = add_once
 
         # Keep track of removed items so they won't reappear if add_once is True
-        self.removed_items = set()  # Will store (key, str(value)) pairs
+        self.removed_items = set()
 
         self.setup_ui()
         self.init_bookmarks()
-        self.populate_properties(self.add_once)
-
-    #=============================================================<  Setup  >==========================================================
+        self.populate_properties(add_once)
 
     def setup_ui(self):
         """Initialize UI components and layouts"""
@@ -50,16 +81,13 @@ class PopupMenu(QDialog):
         self.scroll_layout = QVBoxLayout()
         self.scroll_layout.setContentsMargins(0, 0, 2, 0)
 
-        # Create separate sections for bookmarked and regular items
         self.bookmarked_layout = QVBoxLayout()
         self.bookmarked_layout.setContentsMargins(0, 0, 0, 0)
         self.regular_layout = QVBoxLayout()
         self.regular_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Add layouts to main scroll layout
         self.scroll_layout.addLayout(self.bookmarked_layout)
 
-        # Add separator between bookmarked and regular items
         self.separator = QWidget()
         self.separator.setFixedHeight(2)
         self.separator.setStyleSheet("background-color: #363639;")
@@ -105,15 +133,14 @@ class PopupMenu(QDialog):
             self.repopulate_items()
 
     def repopulate_items(self):
-        """Repopulate all items after bookmark changes"""
-        # Clear existing layouts
+        """
+        Repopulate all items after bookmark changes,
+        ensuring removed items remain invisible if add_once is True.
+        """
         self.clear_layout(self.bookmarked_layout)
         self.clear_layout(self.regular_layout)
 
-        # Repopulate items using self.add_once to preserve removed items
         self.populate_properties(self.add_once)
-
-        # Update separator visibility
         self.separator.setVisible(bool(self.bookmarked_items))
 
     def clear_layout(self, layout):
@@ -132,31 +159,27 @@ class PopupMenu(QDialog):
         bookmarked_items_list = []
         for item in self.properties:
             for key, value in item.items():
-                # Skip if item was removed permanently
                 if add_once and (key, str(value)) in self.removed_items:
                     continue
 
-                element_layout = self.create_property_item(key, value, add_once)
+                element_layout = self.create_property_item(key, value)
                 if key in self.bookmarked_items:
                     bookmarked_items_list.append((key, element_layout))
                 else:
                     self.regular_layout.addLayout(element_layout)
 
-        # Add bookmarked items in order
         for i, (key, layout) in enumerate(bookmarked_items_list):
-            # Last bookmark gets special style
             if i == len(bookmarked_items_list) - 1:
                 label = layout.itemAt(0).widget()
                 label.setStyleSheet(self.get_last_bookmark_stylesheet())
             self.bookmarked_layout.addLayout(layout)
 
-        # Show separator if there are bookmarked items
         self.separator.setVisible(bool(self.bookmarked_items))
 
-    def create_property_item(self, key, value, add_once):
+    def create_property_item(self, key, value):
         """Create a single property item layout"""
         label = QLabel(key)
-        label.mousePressEvent = self.create_label_event(label, key, value, add_once)
+        label.mousePressEvent = self.create_label_event(label, key, value)
         label.setStyleSheet(self.get_label_stylesheet())
 
         element_layout = QHBoxLayout()
@@ -183,20 +206,22 @@ class PopupMenu(QDialog):
             button.clicked.connect(lambda: self.add_bookmark(key))
         return button
 
-    def create_label_event(self, label, key, value, add_once):
-        """
-        Create event handler for label clicks.
-        If add_once is True, the item is removed permanently.
-        Otherwise, it signals that an item was added.
-        """
-        if add_once:
-            return lambda event: self.remove_element(label, key, str(value))
-        return lambda event: self.add_property_signal.emit(key, str(value))
+    def create_label_event(self, label, key, value):
+        """Create event handler for label clicks"""
+        def _event(_):
+            if self.add_once and (key, str(value)) in self.ignore_items:
+                # If it's ignored, do not remove or emit
+                return
+            self.add_property_signal.emit(key, str(value))
+            if self.add_once and (key, str(value)) not in self.ignore_items:
+                self.removed_items.add((key, str(value)))
+                self.remove_layout_item(key, label)
+        return _event
 
     #============================================================<  Help Button  >==========================================================
 
     def create_help_button(self, label):
-        """Create help button for property items"""
+        """Create a help button for property items"""
         button = Button(size=32)
         button.set_icon_question()
         button.clicked.connect(lambda: self.open_wiki_page(label=label, url=self.help_url))
@@ -220,12 +245,12 @@ class PopupMenu(QDialog):
         return text.replace(" ", "_")
 
     def get_label_stylesheet(self):
-        """Get stylesheet for labels with proper selection states"""
+        """Stylesheet for labels with normal and selected states"""
         return """
             QLabel {
                 font: 580 10pt "Segoe UI";
-                border-bottom: 0.5px solid black;  
-                border-radius: 0px; 
+                border-bottom: 0.5px solid black;
+                border-radius: 0px;
                 border-color: rgba(40, 40, 40, 255);
                 padding-top: 8px;
                 padding-bottom: 8px;
@@ -239,12 +264,12 @@ class PopupMenu(QDialog):
         """
 
     def get_last_bookmark_stylesheet(self):
-        """Get stylesheet for the last bookmarked item"""
+        """Stylesheet for the last bookmarked item"""
         return """
             QLabel {
                 font: 580 10pt "Segoe UI";
-                border-bottom: 0px solid black;  
-                border-radius: 0px; 
+                border-bottom: 0px solid black;
+                border-radius: 0px;
                 border-color: rgba(40, 40, 40, 255);
                 padding-top: 8px;
                 padding-bottom: 8px;
@@ -257,25 +282,14 @@ class PopupMenu(QDialog):
             }
         """
 
-    #=========================================================<  Layout  >=======================================================
-
-    def remove_element(self, label, key, value):
-        """
-        Remove an element from the menu and record it so it won't be re-added
-        if add_once is True.
-        """
-        self.add_property_signal.emit(key, value)
-
-        # Record the item as removed permanently if add_once is active
-        if self.add_once:
-            self.removed_items.add((key, value))
-
-        # Determine if this was a bookmarked item
-        target_layout = self.bookmarked_layout if key in self.bookmarked_items else self.regular_layout
+    def remove_layout_item(self, key, label):
+        """Remove the layout item from the UI"""
+        target_layout = (
+            self.bookmarked_layout if key in self.bookmarked_items else self.regular_layout
+        )
         if not target_layout:
             return
 
-        # Find and remove the item from the layout
         for i in range(target_layout.count()):
             item = target_layout.itemAt(i)
             if not item or not item.layout():
@@ -283,30 +297,19 @@ class PopupMenu(QDialog):
 
             layout = item.layout()
             label_widget = layout.itemAt(0).widget()
-            if label_widget and label_widget.text() == key:
-                # Remove item from layout
+            if label_widget and label_widget == label:
                 item = target_layout.takeAt(i)
                 if item:
                     self.cleanup_layout_item(item)
-
-                # Update visible labels and selection
-                if label in self.visible_labels:
-                    idx = self.visible_labels.index(label)
-                    self.visible_labels.pop(idx)
-                    if self.current_selection_index >= idx:
-                        self.current_selection_index = max(-1, self.current_selection_index - 1)
-
-                # Force layout updates
-                target_layout.update()
-                self.scroll_layout.update()
-
-                # Update separator visibility if this was a bookmarked item
                 if target_layout == self.bookmarked_layout:
                     self.separator.setVisible(self.bookmarked_layout.count() > 0)
+                self.update_visible_labels()
                 break
 
+    #=========================================================<  Layout Cleanup  >=======================================================
+
     def cleanup_layout_item(self, item):
-        """Clean up layout items and their widgets"""
+        """Clean up layout items and their widgets recursively"""
         if item.layout():
             while item.layout().count():
                 child = item.layout().takeAt(0)
@@ -314,29 +317,38 @@ class PopupMenu(QDialog):
         elif item.widget():
             item.widget().deleteLater()
 
+    #========================================================<  Navigation/Selection  >===================================================
+
     def update_visible_labels(self):
-        """Update the list of visible labels"""
+        """Refresh the list of labels that are currently visible"""
         self.visible_labels.clear()
         scroll_content = self.ui.scrollArea.widget()
         if not scroll_content or not scroll_content.layout():
             return
 
         for i in range(scroll_content.layout().count()):
-            element_layout_item = scroll_content.layout().itemAt(i)
-            if not element_layout_item:
+            row_item = scroll_content.layout().itemAt(i)
+            if not row_item:
                 continue
-
-            element_layout = element_layout_item.layout()
-            if not element_layout:
+            row_layout = row_item.layout()
+            if not row_layout:
                 continue
+            label_item = row_layout.itemAt(0)
+            if label_item:
+                label_widget = label_item.widget()
+                if label_widget and label_widget.isVisible():
+                    self.visible_labels.append(label_widget)
 
-            widget_item = element_layout.itemAt(0)
-            if widget_item:
-                widget = widget_item.widget()
-                if widget and widget.isVisible():
-                    self.visible_labels.append(widget)
+    def navigate_selection(self, direction):
+        """Change the selection index and highlight appropriately"""
+        self.update_visible_labels()
+        if not self.visible_labels:
+            return
 
-    #=============================================================<  Navigation  >==========================================================
+        self.current_selection_index = (self.current_selection_index + direction) % len(self.visible_labels)
+        self.update_selection_highlighting()
+        selected_label = self.visible_labels[self.current_selection_index]
+        self.ui.scrollArea.ensureWidgetVisible(selected_label)
 
     def update_selection_highlighting(self):
         """Update the highlighting of selected items"""
@@ -344,19 +356,6 @@ class PopupMenu(QDialog):
             label.setProperty("selected", i == self.current_selection_index)
             label.style().unpolish(label)
             label.style().polish(label)
-
-    def navigate_selection(self, direction):
-        """Navigate through visible items"""
-        self.update_visible_labels()
-        if not self.visible_labels:
-            return
-
-        self.current_selection_index = (self.current_selection_index + direction) % len(self.visible_labels)
-        self.update_selection_highlighting()
-
-        # Ensure selected item is visible
-        selected_label = self.visible_labels[self.current_selection_index]
-        self.ui.scrollArea.ensureWidgetVisible(selected_label)
 
     def activate_selection(self):
         """Activate the currently selected item"""
@@ -371,20 +370,14 @@ class PopupMenu(QDialog):
     def search_text_changed(self):
         """Handle search text changes"""
         search_text = self.ui.lineEdit.text().lower()
-
-        # Search in bookmarked layout
         self._search_in_layout(self.bookmarked_layout, search_text)
-
-        # Search in regular layout
         self._search_in_layout(self.regular_layout, search_text)
 
-        # Disable separator during search if there's any text
         if search_text == '':
             self.separator.setVisible(bool(self.bookmarked_items))
         else:
             self.separator.setVisible(False)
 
-        # Reset selection after filtering
         self.current_selection_index = -1
         self.update_visible_labels()
         if self.visible_labels:
@@ -392,25 +385,23 @@ class PopupMenu(QDialog):
             self.update_selection_highlighting()
 
     def _search_in_layout(self, layout, search_text):
-        """Helper method to search in a specific layout"""
+        """Search for items in layout based on search_text"""
         for i in range(layout.count()):
             item = layout.itemAt(i)
             if not item or not item.layout():
                 continue
-
             element_layout = item.layout()
             label_item = element_layout.itemAt(0)
             if not label_item:
                 continue
 
-            label = label_item.widget()
-            if not isinstance(label, QLabel):
+            label_widget = label_item.widget()
+            if not isinstance(label_widget, QLabel):
                 continue
 
-            visible = search_text in label.text().lower()
-            label.setVisible(visible)
+            visible = search_text in label_widget.text().lower()
+            label_widget.setVisible(visible)
 
-            # Make associated buttons (help, bookmark) visible/invisible
             for j in range(1, element_layout.count()):
                 widget_item = element_layout.itemAt(j)
                 if widget_item and widget_item.widget():
@@ -427,26 +418,25 @@ class PopupMenu(QDialog):
             Qt.Key_Enter: self.activate_selection,
             Qt.Key_Space: self.activate_selection
         }
-
-        if handler := key_handlers.get(event.key()):
+        handler = key_handlers.get(event.key())
+        if handler:
             handler()
             event.accept()
         else:
             super().keyPressEvent(event)
 
     def event(self, event):
-        """Handle window events"""
+        """Handle window events like losing focus"""
         if event.type() == QEvent.WindowDeactivate:
             self.close()
             return True
         return super().event(event)
 
     def showEvent(self, event):
-        """Handle show events with improved positioning"""
+        """Handle show event with improved positioning"""
         screen_geometry = QApplication.primaryScreen().availableGeometry()
         window_geometry = self.geometry()
 
-        # Calculate the new position
         x = min(
             max(QCursor.pos().x(), screen_geometry.left()),
             screen_geometry.right() - window_geometry.width()
@@ -458,3 +448,17 @@ class PopupMenu(QDialog):
 
         self.move(x, y)
         super().showEvent(event)
+
+    def closeEvent(self, event):
+        """
+        Ensure all resources are cleaned up properly upon closing the window,
+        preventing memory leaks.
+        """
+        self.clear_layout(self.bookmarked_layout)
+        self.clear_layout(self.regular_layout)
+        self.ui.scrollArea.setWidget(None)
+        self.ui = None
+        self.bookmarked_items.clear()
+        self.removed_items.clear()
+        self.visible_labels.clear()
+        super().closeEvent(event)
