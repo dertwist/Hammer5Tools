@@ -457,12 +457,14 @@ class SmartPropEditorMainWindow(QMainWindow):
         operators_and_filters = operators_list + filters_list
         elements_in_popupmenu = []
         exists_classes = []
+        ignore_list = ['SetVariable', 'SaveState']
+
         for i in range(self.modifiers_group_instance.layout.count()):
             widget = self.modifiers_group_instance.layout.itemAt(i).widget()
             if isinstance(widget, PropertyFrame):
                 exists_classes.append(widget.name)
 
-        for class_name in ['SetVariableBool', 'SetVariableFloat', 'SetVariable']:
+        for class_name in ignore_list:
             if class_name in exists_classes:
                 exists_classes.remove(class_name)
 
@@ -473,7 +475,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                 else:
                     elements_in_popupmenu.append(item)
 
-        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True, window_name='SPE_operators')
+
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True, window_name='SPE_operators', ignore_list=ignore_list)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_operator(name, value))
         self.popup_menu.show()
 
