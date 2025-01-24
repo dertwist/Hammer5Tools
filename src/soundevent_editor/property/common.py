@@ -11,6 +11,7 @@ except:
     pass
 from src.widgets import FloatWidget, LegacyWidget, BoolWidget, DeleteButton, Button, ComboboxDynamicItems, Spacer
 from src.soundevent_editor.common import vsnd_filepath_convert
+from src.soundevent_editor.property.curve.main import SoundEventEditorPropertyCurve
 
 import re, os
 
