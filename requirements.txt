@@ -4,7 +4,6 @@ markdown2
 pypresence
 requests
 portalocker
-keyvalues3
 setuptools
 psutil
 py3nvml
@@ -16,6 +15,6 @@ watchdog
 json-stream
 requests
 pyinstaller
-numba
 tabulate
+numpy
 pyqtgraph
