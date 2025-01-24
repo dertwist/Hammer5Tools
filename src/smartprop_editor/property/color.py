@@ -5,7 +5,7 @@ from src.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget, QColorDialog
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
-from src.qt_styles.qt_global_stylesheet import QT_Stylesheet_global
+from src.styles.qt_global_stylesheet import QT_Stylesheet_global
 
 import ast
 import re
