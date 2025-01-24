@@ -53,8 +53,7 @@ For those who want to contribute to the project or build their own tools on top 
 
 ### Project Structure  
 Hammer5Tools/  
-├── src/  
-│ ├── about/ # About dialog and documentation  
+├── src/    
 │ ├── common/ # Shared utilities and constants  
 │ ├── main.py # Application entry point  
 │ └── updater.py # Auto-update functionality  
