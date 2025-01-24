@@ -176,6 +176,10 @@ class Button(QPushButton):
 
     def set_icon_question(self):
         self.set_icon(":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+    def set_icon_bookmark_add(self):
+        self.set_icon(":/icons/bookmark_add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+    def set_icon_bookmark_added(self):
+        self.set_icon(":/icons/bookmark_added_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
 
 
 class DeleteButton(Button):
