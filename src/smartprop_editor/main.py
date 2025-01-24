@@ -310,7 +310,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             for file in files:
                 presets.append({file: os.path.join(root, file)})
 
-        self.popup_menu = PopupMenu(presets, add_once=False)
+        self.popup_menu = PopupMenu(presets, add_once=False, window_name='SPE_elements_presets')
         self.popup_menu.add_property_signal.connect(lambda name, value: self.load_preset(name, value))
         self.popup_menu.show()
 
@@ -435,7 +435,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         __data = Kv3ToJson(__data)
         self.file_deserialization(__data, to_parent=False)
     def add_an_element(self):
-        self.popup_menu = PopupMenu(elements_list, add_once=False)
+        self.popup_menu = PopupMenu(elements_list, add_once=False, window_name='SPE_elements')
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
         self.popup_menu.show()
     def new_element(self, element_class, element_value):
@@ -474,7 +474,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                 else:
                     elements_in_popupmenu.append(item)
 
-        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True, window_name='SPE_operators')
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_operator(name, value))
         self.popup_menu.show()
 
@@ -507,7 +507,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                     pass
                 else:
                     elements_in_popupmenu.append(item)
-        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True, window_name='SPE_selection_criteria')
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_selection_criteria(name, value))
         self.popup_menu.show()
 
