@@ -3,7 +3,7 @@ import shutil
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QProgressDialog
 from PySide6.QtCore import QObject, Signal, QRunnable, QThreadPool, Qt
-from src.preferences import get_cs2_path, get_addon_name, debug
+from src.settings.preferences import get_cs2_path, get_addon_name, debug
 from src.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from src.loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
 from src.explorer.image_viewer import ExplorerImageViewer

@@ -1,4 +1,3 @@
-import sys
 import os
 from PySide6.QtCore import Qt, QSize, QThreadPool, QRunnable, QObject, Signal, QFileSystemWatcher, QPointF
 from PySide6.QtGui import QPixmap, QIcon, QAction, QWheelEvent, QMouseEvent
@@ -14,9 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout
 )
-from src.widgets import exception_handler
-from src.preferences import debug
-from src.assetgroup_maker.process import StartProcess
+from src.settings.preferences import debug
 
 
 class NoWheelScrollArea(QScrollArea):

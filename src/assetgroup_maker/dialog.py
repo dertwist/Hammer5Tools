@@ -1,5 +1,4 @@
 import os
-import json
 import re
 from PySide6.QtWidgets import (
     QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget,
@@ -8,8 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QAction, QFont
 from src.assetgroup_maker.ui_dialog import Ui_BatchCreator_process_Dialog
-from src.preferences import get_addon_name, get_cs2_path, get_addon_dir
-from src.styles.common import qt_stylesheet_button
+from src.settings.preferences import get_addon_dir
 from src.assetgroup_maker.process import perform_batch_processing
 from src.common import enable_dark_title_bar
 from src.widgets_common import ErrorInfo

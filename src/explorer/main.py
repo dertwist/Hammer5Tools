@@ -1,12 +1,12 @@
 import os.path
 import re
-from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QInputDialog, QMessageBox, QLineEdit, QTreeWidgetItem, QPushButton, QHBoxLayout
+from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, \
+    QMessageBox
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtCore import QUrl, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtCore import Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
-from src.preferences import get_config_value, set_config_value, get_cs2_path, get_addon_name, debug
-from PySide6.QtCore import QModelIndex
+from src.settings.preferences import get_config_value, set_config_value, get_cs2_path, get_addon_name, debug
 import shutil
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 smartprop_extensions = ['vsmart', 'vdata']

@@ -1,18 +1,10 @@
-import sys
-from time import process_time_ns
-
 from PySide6.QtWidgets import (
-    QApplication, QTreeWidget, QTreeWidgetItem, QMainWindow, QMenu,
-    QInputDialog, QMessageBox, QToolBar, QPushButton, QFileDialog, QHeaderView
+    QTreeWidget
 )
-from PySide6.QtCore import Qt, Signal, QObject
 import re
 import keyvalues3 as kv3
-import ast
-from src.smartprop_editor.objects import element_prefix
 from src.smartprop_editor.choices import AddChoice, AddOption, AddVariable
-from src.preferences import debug
-from src.common import editor_info, JsonToKv3, Kv3ToJson
+from src.common import editor_info
 from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
 from src.widgets import HierarchyItemModel, exception_handler

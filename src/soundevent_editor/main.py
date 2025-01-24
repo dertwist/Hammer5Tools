@@ -1,15 +1,14 @@
-import ast, os, shutil
+import ast, shutil
 
-from src.preferences import get_addon_name, get_cs2_path, debug
+from src.settings.preferences import get_addon_name, get_cs2_path, debug
 from src.soundevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDialog, QTreeWidget, QIntList, QMessageBox, QApplication, QTreeWidgetItem
+from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
-from PySide6.QtCore import Qt, QUrl
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtCore import Qt
 from src.popup_menu.main import PopupMenu
 from src.widgets import HierarchyItemModel, ErrorInfo
-from src.preferences import settings
+from src.settings.preferences import settings
 from src.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from src.soundevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
 from src.common import *
