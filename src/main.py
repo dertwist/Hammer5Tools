@@ -1,15 +1,15 @@
 import os, threading, portalocker, tempfile, webbrowser, time, socket, logging, ctypes, hashlib, sys, subprocess, datetime
 from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow, QMessageBox, QDialog, QLabel, QMessageBox
 from PySide6.QtGui import QIcon, QAction, QTextCursor
-from documentation.documentation import Documentation_Dialog
+from about.main import Documentation_Dialog
 from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
-from loading_editor.loading_editor_main import Loading_editorMainWindow
+from loading_editor.main import Loading_editorMainWindow
 from hotkey_editor.main import HotkeyEditorMainWindow
 from create_addon.create_addon_mian import Create_addon_Dialog
-from minor_features.steamfixnologon import SteamNoLogoFixThreadClass
-from minor_features.addon_functions import delete_addon, launch_addon
-from minor_features.update_check import check_updates
-from export_and_import_addon.export_and_import_addon import export_and_import_addon_dialog
+from other.steamfixnologon import SteamNoLogoFixThreadClass
+from other.addon_functions import delete_addon, launch_addon
+from other.update_check import check_updates
+from archive_addon.main import export_and_import_addon_dialog
 from assetgroup_maker.main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
@@ -28,11 +28,11 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from ui_main import Ui_MainWindow
-from qt_styles.qt_global_stylesheet import QT_Stylesheet_global
+from styles.qt_global_stylesheet import QT_Stylesheet_global
 from PySide6.QtCore import QTimer
 from PySide6.QtCore import QFileSystemWatcher
 from src.common import enable_dark_title_bar
-from src.minor_features.assettypes import asset_types_modify
+from src.other.assettypes import asset_types_modify
 # Variables
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -472,7 +472,7 @@ if __name__ == "__main__":
     widget.show()
 
     if get_config_bool('DISCORD_STATUS', 'show_status'):
-        from minor_features.discord_status_main import discord_status_clear, update_discord_status
+        from other.discord_status_main import discord_status_clear, update_discord_status
         widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
         widget.discord_thread.start()
     else:

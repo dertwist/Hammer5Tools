@@ -1,4 +1,4 @@
-from src.documentation.ui_documentation_dialog import Ui_documentation_dialog
+from src.about.ui_main import Ui_documentation_dialog
 from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices

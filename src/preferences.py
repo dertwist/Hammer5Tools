@@ -9,9 +9,9 @@ try:
 except:
     pass
 
-from src.minor_features.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
-from src.minor_features.NCM_mode_setup_main import NCM_mode_setup
-from src.minor_features.update_check import check_updates
+from src.other.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
+from src.other.NCM_mode_setup_main import NCM_mode_setup
+from src.other.update_check import check_updates
 from src.common import Presets_Path, enable_dark_title_bar
 
 # Define the application directory

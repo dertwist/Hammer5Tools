@@ -1,7 +1,7 @@
 import time, psutil, subprocess
 from PySide6.QtCore import QThread, Signal
 from src.preferences import get_steam_path, get_cs2_path, get_addon_name, get_config_bool
-from src.minor_features.addon_functions import launch_addon
+from src.other.addon_functions import launch_addon
 
 steam_path = get_steam_path()
 counter_strikke_2_path = get_cs2_path()
