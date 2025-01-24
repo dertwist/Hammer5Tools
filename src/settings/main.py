@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QSettings
 
 try:
-    from src.settings.ui_preferences import Ui_preferences_dialog
+    from src.settings.ui_main import Ui_preferences_dialog
 except:
     pass
 
