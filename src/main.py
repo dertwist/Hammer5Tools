@@ -1,7 +1,7 @@
 import ctypes
 from PySide6.QtWidgets import QSystemTrayIcon, QMenu, QMessageBox
 from PySide6.QtGui import QAction
-from about.main import Documentation_Dialog
+from about.main import AboutDialog
 from src.settings.main import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
 from loading_editor.main import Loading_editorMainWindow
 from hotkey_editor.main import HotkeyEditorMainWindow
@@ -9,7 +9,7 @@ from create_addon.create_addon_mian import Create_addon_Dialog
 from other.steamfixnologon import SteamNoLogoFixThreadClass
 from other.addon_functions import delete_addon, launch_addon
 from other.update_check import check_updates
-from archive_addon.main import export_and_import_addon_dialog
+from archive_addon.main import ExportAndImportAddonDialog
 from assetgroup_maker.main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
@@ -116,7 +116,7 @@ class Widget(QMainWindow):
 
         self._restore_user_prefs()
         if get_config_bool('APP', 'first_launch'):
-            self.open_documentation()
+            self.open_about()
             set_config_bool('APP', 'first_launch', False)
 
         self.addon_watcher = QFileSystemWatcher(self)
@@ -260,7 +260,7 @@ class Widget(QMainWindow):
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
         # self.ui.bluesky_button.clicked.connect(self.open_bluesky)
         self.ui.discord.clicked.connect(self.open_discord)
-        self.ui.documentation_button.clicked.connect(self.open_documentation)
+        self.ui.documentation_button.clicked.connect(self.open_about)
 
     def closeEvent(self, event):
         if settings.value("APP/minimize_to_tray", type=bool, defaultValue=True):
@@ -370,7 +370,7 @@ class Widget(QMainWindow):
         delete_addon(self.ui, cs2_path, get_addon_name)
 
     def open_export_and_import_addon(self):
-        dialog = export_and_import_addon_dialog(self)
+        dialog = ExportAndImportAddonDialog(self)
         dialog.finished.connect(self.refresh_addon_combobox)
         dialog.show()
     def SteamNoLogonFix(self):
@@ -385,8 +385,8 @@ class Widget(QMainWindow):
     def open_discord(self):
         webbrowser.open("https://discord.gg/DvCXEyhssd")
 
-    def open_documentation(self):
-        Documentation_Dialog(app_version, self).show()
+    def open_about(self):
+        AboutDialog(app_version, self).show()
 
 
     def on_tray_icon_activated(self, reason):

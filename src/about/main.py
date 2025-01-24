@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QDialog
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
 from src.common import *
-class Documentation_Dialog(QDialog):
+class AboutDialog(QDialog):
     def __init__(self, version, parent=None):
         super().__init__(parent)
         self.ui = Ui_documentation_dialog()

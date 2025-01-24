@@ -7,12 +7,21 @@ from typing import List, Set
 from tabulate import tabulate
 
 def print_elapsed_time(stage_name: str, start_time: float) -> None:
-    """Prints the elapsed time for a given stage."""
+    """Prints the elapsed time for a given stage.
+
+    Args:
+        stage_name (str): The name of the stage.
+        start_time (float): The start time of the stage.
+    """
     elapsed_time = time.time() - start_time
     print(f"{stage_name} took {elapsed_time:.2f} seconds")
 
 def kill_process(process_name: str) -> None:
-    """Kills a process by its name."""
+    """Kills a process by its name.
+
+    Args:
+        process_name (str): The name of the process to kill.
+    """
     subprocess.run(
         ["taskkill", "/F", "/IM", process_name],
         stdout=subprocess.DEVNULL,
@@ -82,7 +91,14 @@ def build_updater() -> None:
     ], check=True)
 
 def archive_files(folder_path: str, output_path: str, excluded_files: Set[str], excluded_paths: List[str]) -> None:
-    """Archives files from a folder into a zip file, excluding specified files and paths."""
+    """Archives files from a folder into a zip file, excluding specified files and paths.
+
+    Args:
+        folder_path (str): The path to the folder to archive.
+        output_path (str): The path where the zip file will be saved.
+        excluded_files (Set[str]): A set of file names to exclude from the archive.
+        excluded_paths (List[str]): A list of paths to exclude from the archive.
+    """
     def should_exclude(file_name: str, file_path: str) -> bool:
         if file_name in excluded_files:
             return True

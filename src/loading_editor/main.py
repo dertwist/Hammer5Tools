@@ -8,17 +8,20 @@ from src.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from src.loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
 from src.explorer.image_viewer import ExplorerImageViewer
 from src.common import compile
-from src.widgets import ErrorInfo  # Assuming ErrorInfo is defined in src.widgets
+from src.widgets import ErrorInfo
 
 
 class ApplyScreenshotsSignals(QObject):
+    """Signals for the ApplyScreenshotsWorker to communicate progress, errors, and completion."""
     progress = Signal(int)
     error = Signal(str)
     finished = Signal()
 
 
 class ApplyScreenshotsWorker(QRunnable):
-    def __init__(self, game_screenshot_path, content_screenshot_path, delete_existing):
+    """Worker class to handle the application of screenshots in a separate thread."""
+
+    def __init__(self, game_screenshot_path: str, content_screenshot_path: str, delete_existing: bool):
         super().__init__()
         self.game_screenshot_path = game_screenshot_path
         self.content_screenshot_path = content_screenshot_path
@@ -28,32 +31,28 @@ class ApplyScreenshotsWorker(QRunnable):
         self.addon_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
 
     def run(self):
+        """Main execution method for the worker."""
         try:
-            # Step 1: Copy files
             if self._is_aborted:
                 return
             self.copy_files()
             self.signals.progress.emit(20)
 
-            # Step 2: Rename files
             if self._is_aborted:
                 return
             self.rename_files()
             self.signals.progress.emit(40)
 
-            # Step 3: Collect image files
             if self._is_aborted:
                 return
             file_list = self.collect_files()
             self.signals.progress.emit(60)
 
-            # Step 4: Delete old vtex files
             if self._is_aborted:
                 return
             self.delete_old_vtex()
             self.signals.progress.emit(80)
 
-            # Step 5: Process files
             if self._is_aborted:
                 return
             self.process_files(file_list)
@@ -66,31 +65,27 @@ class ApplyScreenshotsWorker(QRunnable):
             self.signals.error.emit(error_message)
 
     def copy_files(self):
+        """Copy files from the game screenshot path to the content screenshot path."""
         debug(f'Copying files from {self.game_screenshot_path} to {self.content_screenshot_path}')
         if os.path.exists(self.content_screenshot_path):
             shutil.rmtree(self.content_screenshot_path, ignore_errors=True)
         shutil.copytree(self.game_screenshot_path, self.content_screenshot_path)
 
     def rename_files(self):
+        """Rename files in the content screenshot path."""
         base_path = self.content_screenshot_path
         for file_images_loop_count, file_name in enumerate(os.listdir(base_path)):
             try:
-                if file_images_loop_count == 0:
-                    file_name_parts = os.path.splitext(file_name)
-                    file_extension = file_name_parts[1]
-                    new_file_name = f"{get_addon_name()}_png{file_extension}"
-                    debug(f'Old name {file_name}, New name {new_file_name}')
-                    os.rename(os.path.join(base_path, file_name), os.path.join(base_path, new_file_name))
-                else:
-                    file_name_parts = os.path.splitext(file_name)
-                    file_extension = file_name_parts[1]
-                    new_file_name = f"{get_addon_name()}_{file_images_loop_count}_png{file_extension}"
-                    debug(f'Old name {file_name}, New name {new_file_name}')
-                    os.rename(os.path.join(base_path, file_name), os.path.join(base_path, new_file_name))
+                file_name_parts = os.path.splitext(file_name)
+                file_extension = file_name_parts[1]
+                new_file_name = f"{get_addon_name()}_{file_images_loop_count}_png{file_extension}" if file_images_loop_count else f"{get_addon_name()}_png{file_extension}"
+                debug(f'Old name {file_name}, New name {new_file_name}')
+                os.rename(os.path.join(base_path, file_name), os.path.join(base_path, new_file_name))
             except Exception as e:
                 print(f"An error occurred while renaming the file: {file_name}. Error: {e}")
 
-    def collect_files(self):
+    def collect_files(self) -> list:
+        """Collect image files from the content folder."""
         debug('Collecting image files from content folder')
         file_list = []
         for root, dirs, files in os.walk(self.content_screenshot_path):
@@ -102,6 +97,7 @@ class ApplyScreenshotsWorker(QRunnable):
         return file_list
 
     def delete_old_vtex(self):
+        """Delete old vtex files."""
         debug('Deleting old vtex files')
         try:
             shutil.rmtree(os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", "1080p"))
@@ -116,18 +112,19 @@ class ApplyScreenshotsWorker(QRunnable):
             except Exception as e:
                 debug(f'Error deleting compiled vtex_c files: {e}')
 
-    def process_files(self, file_list):
+    def process_files(self, file_list: list):
+        """Process each file in the file list."""
         total_files = len(file_list)
         for index, item in enumerate(file_list):
             if self._is_aborted:
                 return
             debug(f'Processing: {item}')
             self.creating_vtex(item)
-            # Update progress (from 80 to 100)
             progress = 80 + int(20 * (index + 1) / total_files)
             self.signals.progress.emit(progress)
 
-    def creating_vtex(self, path):
+    def creating_vtex(self, path: str):
+        """Create a vtex file for the given path."""
         vtex_file = """<!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
         "CDmeVtex"
         {
@@ -184,10 +181,13 @@ class ApplyScreenshotsWorker(QRunnable):
         compile(vtex_path)
 
     def abort(self):
+        """Abort the current operation."""
         self._is_aborted = True
 
 
 class Loading_editorMainWindow(QMainWindow):
+    """Main window for the Loading Editor application."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_Loading_editorMainWindow()
@@ -210,16 +210,15 @@ class Loading_editorMainWindow(QMainWindow):
         self.Svg_Drap_and_Drop_Area = Svg_Drag_and_Drop()
         self.ui.svg_icon_frame.layout().addWidget(self.Svg_Drap_and_Drop_Area)
 
-        # apply_description_button
+        # Connect buttons to their respective methods
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
-        # apply images
         self.ui.apply_screenshots_button.clicked.connect(self.start_apply_screenshots)
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
-
         self.ui.clear_all_button.clicked.connect(self.clear_images)
         self.ui.open_folder_button.clicked.connect(self.open_images_folder)
 
     def start_apply_screenshots(self):
+        """Start the process of applying screenshots."""
         delete_existing = self.ui.delete_existings.isChecked()
 
         worker = ApplyScreenshotsWorker(self.game_screenshot_path, self.content_screenshot_path, delete_existing)
@@ -237,32 +236,39 @@ class Loading_editorMainWindow(QMainWindow):
         # Start the worker
         self.threadpool.start(worker)
 
-    def update_progress(self, value):
+    def update_progress(self, value: int):
+        """Update the progress dialog with the current progress value."""
         self.progress_dialog.setValue(value)
 
-    def show_error(self, error_message):
+    def show_error(self, error_message: str):
+        """Display an error message dialog."""
         self.progress_dialog.close()
         error_dialog = ErrorInfo(text="An error occurred during processing.", details=error_message)
         error_dialog.exec_()
 
     def processing_finished(self):
+        """Handle the completion of the screenshot processing."""
         self.progress_dialog.close()
         QMessageBox.information(self, "Processing Complete", "Screenshots have been processed successfully.")
 
     def clear_images(self):
+        """Clear all images in the game screenshot path."""
         shutil.rmtree(self.game_screenshot_path, ignore_errors=True)
         os.makedirs(self.game_screenshot_path)
 
     def open_images_folder(self):
+        """Open the folder containing the images."""
         os.startfile(self.game_screenshot_path)
 
-    def loading_editor_cs2_description(self, loading_editor_cs2_description_text):
+    def loading_editor_cs2_description(self, loading_editor_cs2_description_text: str):
+        """Write the CS2 description to a file."""
         file_name = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), 'maps', f'{get_addon_name()}.txt')
         with open(file_name, 'w') as f:
             f.write("COMMUNITYMAPCREDITS:\n")
             f.write(loading_editor_cs2_description_text)
 
     def icon_processs(self):
+        """Process the SVG icon."""
         svg_path = self.Svg_Drap_and_Drop_Area.loading_editor_get_svg()
         svg_path = os.path.normpath(svg_path)
         folder_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
@@ -274,6 +280,7 @@ class Loading_editorMainWindow(QMainWindow):
         shutil.copy2(svg_path, svg_dst)
 
     def do_loading_editor_cs2_description(self):
+        """Apply the CS2 description from the UI."""
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
 
 

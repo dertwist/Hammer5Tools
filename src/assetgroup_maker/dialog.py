@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Callable, List, Tuple, Optional
 from PySide6.QtWidgets import (
     QDialog, QFileDialog, QMessageBox, QLabel, QPushButton, QWidget,
     QHBoxLayout, QListWidgetItem, QApplication, QListWidget, QMenu
@@ -14,7 +15,20 @@ from src.widgets_common import ErrorInfo
 
 
 class BatchCreatorProcessDialog(QDialog):
-    def __init__(self, process, current_file, parent=None, process_all=None, collect_replacements=None, viewport=None):
+    """
+    Dialog for batch processing of files with options for customization.
+
+    Attributes:
+        process_data (dict): Configuration data for the processing.
+        current_file (str): The current file being processed.
+        process_all (Callable): Function to process all files.
+        collect_replacements (Callable): Function to collect replacement data.
+        viewport (QWidget): The viewport widget for displaying content.
+    """
+
+    def __init__(self, process: dict, current_file: str, parent: Optional[QWidget] = None,
+                 process_all: Optional[Callable] = None, collect_replacements: Optional[Callable] = None,
+                 viewport: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.ui = Ui_BatchCreator_process_Dialog()
         self.ui.setupUi(self)
@@ -33,7 +47,8 @@ class BatchCreatorProcessDialog(QDialog):
         self.connect_signals()
         self.update_previews()
 
-    def initialize_ui(self):
+    def initialize_ui(self) -> None:
+        """Initialize the UI components with the current process data."""
         try:
             self.ui.algorithm_select_comboBox.setCurrentIndex(int(self.process_data.get('algorithm', 0)))
             self.ui.load_from_the_folder_checkBox.setChecked(self.process_data.get('load_from_the_folder', False))
@@ -54,7 +69,8 @@ class BatchCreatorProcessDialog(QDialog):
         except KeyError as e:
             QMessageBox.critical(self, "Initialization Error", f"Missing configuration: {e}")
 
-    def connect_signals(self):
+    def connect_signals(self) -> None:
+        """Connect UI signals to their respective slots."""
         self.ui.algorithm_select_comboBox.currentIndexChanged.connect(self.on_algorithm_changed)
         self.ui.load_from_the_folder_checkBox.stateChanged.connect(self.on_load_from_folder_toggled)
         self.ui.output_to_the_folder_checkBox.stateChanged.connect(self.on_output_to_folder_toggled)
@@ -68,7 +84,8 @@ class BatchCreatorProcessDialog(QDialog):
         # Initially set context menu policy
         self.update_context_menu_policy(self.process_data.get('load_from_the_folder', False))
 
-    def update_context_menu_policy(self, load_from_folder):
+    def update_context_menu_policy(self, load_from_folder: bool) -> None:
+        """Update the context menu policy based on the load_from_folder state."""
         if load_from_folder:
             self.ui.Input_files_preview_scrollarea.setContextMenuPolicy(Qt.NoContextMenu)
             try:
@@ -79,11 +96,13 @@ class BatchCreatorProcessDialog(QDialog):
             self.ui.Input_files_preview_scrollarea.setContextMenuPolicy(Qt.CustomContextMenu)
             self.ui.Input_files_preview_scrollarea.customContextMenuRequested.connect(self.show_context_menu)
 
-    def on_algorithm_changed(self, index):
+    def on_algorithm_changed(self, index: int) -> None:
+        """Handle changes in the algorithm selection."""
         self.process_data['algorithm'] = index
         self.update_previews()
 
-    def on_load_from_folder_toggled(self, state):
+    def on_load_from_folder_toggled(self, state: int) -> None:
+        """Handle toggling of the load from folder checkbox."""
         is_checked = bool(state)
         self.process_data['load_from_the_folder'] = is_checked
         self.ui.select_files_to_process_button.setEnabled(not is_checked)
@@ -91,21 +110,25 @@ class BatchCreatorProcessDialog(QDialog):
         self.update_context_menu_policy(is_checked)
         self.update_previews()
 
-    def on_output_to_folder_toggled(self, state):
+    def on_output_to_folder_toggled(self, state: int) -> None:
+        """Handle toggling of the output to folder checkbox."""
         is_checked = bool(state)
         self.process_data['output_to_the_folder'] = is_checked
         self.ui.choose_output_button.setEnabled(not is_checked)
         self.update_previews()
 
-    def on_ignore_extensions_changed(self, text):
+    def on_ignore_extensions_changed(self, text: str) -> None:
+        """Handle changes in the ignore extensions line edit."""
         self.process_data['ignore_extensions'] = text
         self.update_previews()
 
-    def on_ignore_files_changed(self, text):
+    def on_ignore_files_changed(self, text: str) -> None:
+        """Handle changes in the ignore files line edit."""
         self.process_data['ignore_list'] = text
         self.update_previews()
 
-    def select_files_to_process(self):
+    def select_files_to_process(self) -> None:
+        """Open a file dialog to select files for processing."""
         file_paths, _ = QFileDialog.getOpenFileNames(
             self, "Select Files to Process", "", "All Files (*)"
         )
@@ -113,7 +136,8 @@ class BatchCreatorProcessDialog(QDialog):
             addon_dir = get_addon_dir()
             self._validate_and_add_files(file_paths, addon_dir, from_paste=False)
 
-    def choose_output_directory(self):
+    def choose_output_directory(self) -> None:
+        """Open a directory dialog to select the output directory."""
         default_output = os.path.join(
             self.parent_window.cs2_path, 'content', 'csgo_addons', self.parent_window.addon_name
         )
@@ -124,11 +148,13 @@ class BatchCreatorProcessDialog(QDialog):
             self.process_data['custom_output'] = os.path.abspath(selected_directory)
             self.update_previews()
 
-    def process_all_files(self):
+    def process_all_files(self) -> None:
+        """Invoke the process_all function if callable."""
         if callable(self.process_all):
             self.process_all()
 
-    def update_previews(self):
+    def update_previews(self) -> None:
+        """Update the previews of input and output files."""
         processed_files = perform_batch_processing(
             file_path=self.current_file,
             process=self.process_data,
@@ -173,16 +199,14 @@ class BatchCreatorProcessDialog(QDialog):
             output_text = f'Output folder: {self.process_data.get("custom_output", "")}'
         self.ui.output_folder.setText(output_text)
 
-    def create_preview_item(self, file_name):
+    def create_preview_item(self, file_name: str) -> QWidget:
+        """Create a preview item widget for a given file name."""
         label = QLabel(file_name)
         remove_button = QPushButton('Ignore')
         qt_stylesheet_button = """
             /* QPushButton default and hover styles */
             QPushButton {
-
                 font: 580 8pt "Segoe UI";
-
-
                 border: 2px solid black;
                 border-radius: 2px;
                 border-color: rgba(80, 80, 80, 255);
@@ -204,7 +228,6 @@ class BatchCreatorProcessDialog(QDialog):
                 margin: 1 px;
                 margin-left: 2px;
                 margin-right: 2px;
-
             }"""
 
         remove_button.setStyleSheet(qt_stylesheet_button)
@@ -213,7 +236,7 @@ class BatchCreatorProcessDialog(QDialog):
         remove_button.setFont(font)
         remove_button.setMaximumWidth(64)
 
-        def ignore_file():
+        def ignore_file() -> None:
             current_ignore_list = self.process_data.get('ignore_list', '')
             updated_ignore_list = f"{current_ignore_list},{file_name}".strip(',')
             self.process_data['ignore_list'] = updated_ignore_list
@@ -231,7 +254,8 @@ class BatchCreatorProcessDialog(QDialog):
         container.setLayout(layout)
         return container
 
-    def paste_files_from_clipboard(self):
+    def paste_files_from_clipboard(self) -> None:
+        """Paste file paths from the clipboard and add them to the process list."""
         clipboard = QApplication.clipboard()
         clipboard_text = clipboard.text().strip()
 
@@ -244,7 +268,8 @@ class BatchCreatorProcessDialog(QDialog):
 
         self._validate_and_add_files(raw_paths, addon_dir, from_paste=True)
 
-    def _validate_and_add_files(self, paths, addon_dir, from_paste=True):
+    def _validate_and_add_files(self, paths: List[str], addon_dir: str, from_paste: bool = True) -> Tuple[List[str], List[Tuple[str, str]]]:
+        """Validate and add files to the process list."""
         added_files = []
         skipped_files = []
         error_files = []
@@ -276,7 +301,7 @@ class BatchCreatorProcessDialog(QDialog):
 
         if error_files:
             error_message = "The following files do not have extensions:\n" + "\n".join(error_files)
-            ErrorInfo("Wrong format",str(error_message)).exec_()
+            ErrorInfo("Wrong format", str(error_message)).exec_()
 
         if added_files:
             self.process_data.setdefault('custom_files', []).extend(added_files)
@@ -284,8 +309,8 @@ class BatchCreatorProcessDialog(QDialog):
 
         return added_files, skipped_files
 
-
-    def show_context_menu(self, position: QPoint):
+    def show_context_menu(self, position: QPoint) -> None:
+        """Show the context menu at the given position."""
         sender = self.sender()
         if isinstance(sender, QListWidget):
             menu = QMenu(self)
@@ -304,7 +329,8 @@ class BatchCreatorProcessDialog(QDialog):
 
             menu.exec_(sender.mapToGlobal(position))
 
-    def delete_selected_items(self):
+    def delete_selected_items(self) -> None:
+        """Delete selected items from the input preview list."""
         input_preview = self.ui.Input_files_preview_scrollarea
         selected_items = input_preview.selectedItems()
         if not selected_items:
@@ -318,7 +344,8 @@ class BatchCreatorProcessDialog(QDialog):
 
         self.update_previews()
 
-    def clear_all_items(self):
+    def clear_all_items(self) -> None:
+        """Clear all items from the input preview list."""
         confirmation = QMessageBox.question(
             self,
             "Clear All Items",
