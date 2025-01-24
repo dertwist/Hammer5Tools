@@ -9,7 +9,7 @@ from PySide6.QtGui import QKeyEvent
 from src.hotkey_editor.dialog import KeyDialog
 from src.hotkey_editor.objects import *
 from src.preferences import debug, get_addon_name, get_cs2_path
-from src.minor_features.addon_functions import launch_addon, kill_addon
+from src.other.addon_functions import launch_addon, kill_addon
 from src.explorer.main import Explorer
 import os
 import datetime

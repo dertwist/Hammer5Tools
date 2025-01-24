@@ -19,7 +19,7 @@ from src.smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.commands import DeleteTreeItemCommand
 
-from src.find_and_replace.main import FindAndReplaceDialog
+from src.replace_dialog.main import FindAndReplaceDialog
 
 from PySide6.QtGui import QKeySequence
 from PySide6.QtCore import QTimer
