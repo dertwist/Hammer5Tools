@@ -5,7 +5,6 @@
     </a>
 </p>
 
-
 <p align="center">
     <a href="https://github.com/dertwist/Hammer5Tools/releases/latest">
         <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/download.svg" height="45" alt="Download">
@@ -18,91 +17,120 @@
     </a>
 </p>
 
+# Essential Tools for Counter-Strike 2 Mapping
+
+| ![image](https://i.imgur.com/7znAlv4.jpeg) Loading Editor | ![image](https://i.imgur.com/HMmbQgR.png) SoundEvent Editor | ![image](https://i.imgur.com/kFjGhI7.png) SmartProp Editor |
+| --------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------- |
+| ![image](https://i.imgur.com/D9v7e6w.png) Hotkey Editor   | ![image](https://i.imgur.com/cRFsq49.png) AssetGroup Maker  |
+
+### Tools Overview
+
+|       Tool       | Description                                                               |
+|:----------------:| :------------------------------------------------------------------------ |
+|  Loading Editor  | Add images, descriptions, and icons to loading screens.                   |
+|SoundEvent Editor | Edit in-game sounds easily.                                               |
+|  Hotkey Editor   | Customize, edit, and manage new keyboard shortcuts.                       |
+| AssetGroup Maker | Edit multiple files at once, ideal for large modular sets.                |
+| SmartProp Editor | Simplifies creating smart props.      
 
 
-# Essential Tools for Counter-Strike 2 Mapping:
+# Developer Documentation
 
-| ![image](https://i.imgur.com/7znAlv4.jpeg) Loading Editor | ![image](https://i.imgur.com/HMmbQgR.png) SoundEvent Editor | ![image](https://i.imgur.com/kFjGhI7.png)  SmartProp Editor |
-| ----------- | ----------- | ----------- |
-| ![image](https://i.imgur.com/D9v7e6w.png) Hotkey Editor | ![image](https://i.imgur.com/cRFsq49.png) AssetGroup Maker |
+This text provides a complete overview of the Hammer5Tools project, covering its setup and structure. Whether you’re building tools on top of this foundation or maintaining the existing code, this guide will help you get started.
 
-### Tools Overview:
+---
 
-|        Tool       | Description                                                  |
-|:-----------------:|:-------------------------------------------------------------|
-| Loading Editor    | Add images, descriptions, and icons to loading screens.      |
-| SoundEvent Editor | Edit in-game sounds easily.                                  |
-| Hotkey Editor     | Customize and add new keyboard shortcuts.                    |
-| AssetGroup Maker      | Edit multiple files at once. Perfect for large modular sets. |
-| SmartProp Editor  | Simplifies smartprops creation.                              |
+## 2. Setup
 
+### Prerequisites
+- Python 3.10+ (3.12 recommended)  
+- PySide6 for the GUI framework  
+- All requirements declared in the `requirements.txt` file  
+- An IDE with Python support (PyCharm recommended)
 
+### 1.2 Installation Steps
 
+1.  **Clone the Repository:**
 
+    ```shell
+    git clone https://github.com/dertwist/Hammer5Tools.git
+    ```
+    
+    ```shell
+    cd Hammer5Tools
+    ```
 
+2.  **(Optional) Create and Activate a Virtual Environment:**
 
-#  Developer Documentation  
-For those who want to contribute to the project or build their own tools on top of this project.
+    ```shell
+    python -m venv venv source ./venv/Scripts/activate
+    ```
 
-## Setup  
+    It is recommended to use a virtual environment to manage project dependencies.
 
-### Prerequisites  
-- Python with PySide6 for the GUI framework  
-- IDE with Python support (PyCharm recommended)  
-- All requirements in the **requirements.txt** file
+3.  **Install Dependencies:**
 
-### Project Structure  
+    ```shell
+    pip install -r requirements.txt
+    ```
+---
+
+## 3. Project Structure
+
 Hammer5Tools/  
 ├── src/    
 │ ├── common/ # Shared utilities and constants  
 │ ├── main.py # Application entry point  
 │ └── updater.py # Auto-update functionality  
 ├── dev/  
-│ └── build.py # Build configuration  
+│ └── build.py # Build file  
 └── .run/ # Run configurations (PyCharm)
 
 
-### Build Configuration  
-The project uses custom run configurations for different development scenarios:  
+- **common/**: Contains helper functions, tools, and shared logic used in multiple parts of the application.  
+- **main.py**: Launches the overall UI and integrates the available tool modules.  
+- **updater.py**: Handles auto-update features, ensuring the user always has the latest version.
 
-1. **Development Mode:**  
-   Gives access to button show debug info. The option prints additional information to the console, for example, dictionary properties values.  
-   ```python src/main.py --dev  ```    
-  
-2. Build Process:  
-```python dev/build.py --build-all --archive ```
+---
 
-## Creating Installer
+## 4. Build Configuration
 
-For the installer program, I used [InstallForge](https://installforge.net/)  
-The configuration file is `hammer5tools_setup.ifp`
+The project uses a custom build script and supports multiple run modes:
 
-## Code Structure
+1. **Development Mode**  
+   - Adds debugging utilities and detailed console logs.  
+   - Launch by running:  
+     ```shell
+     python src/main.py --dev
+     ```
+   - Useful for diagnosing problems or stepping through new features.
 
-Each tool has its own module and adds to the `main.py` file. Most of the tools are related to the current addon, so they are removed and added again after changing the addon.
+2. **Build Process**  
+   - Creates a distributable archive of the Hammer5Tools suite.  
+   - Execute:
+     ```shell
+     python dev/build.py --build-all --archive
+     ```
+   - This process compiles relevant data and ensures everything is packaged consistently for distribution.
 
-### Tool Modules
+---
 
-1.  **Loading Editor**  
-    Handles loading screen customization
-    
-    -   **Screenshots applying:** Moves all images from the `screenshots` folder in the game to the content and creates `.vtex` files for each screenshot. Then compiles all.
-    -   **Icon apply:** Copies and renames the `.svg` file from the window to the `csgo_content`.
-    -   **Apply description:** Adds a `.txt` file near the `.vmap` file of the selected addon (e.g., for the current addon `de_dust2`, the program will create `de_dust2.txt` with the path `maps/de_dust2.vmap` in the game).
-    -   All these operations use the current addon name for creation files and their names.
-2.  **SoundEvent Editor**  
-    Loads the `soundevents_addon.vsndevts` and edits that file.  
-    The structure of this editor is:
-    
-    -   Main window
-    -   Explorer
-    -   Soundevents (tree elements list, list of all elements in the `soundevents_addon.vsndevts`)
-    -   Property editor window
-3.  **Hotkey Editor**  
-    The editor for hotkey configurations.
-    
-4.  **AssetGroup Maker**  
-    Batch processing for asset files.
-    
-5.  **SmartProp Editor**  
-    Smartprop creation.
+## 6. Creating an Installer
+
+Hammer5Tools uses [InstallForge](https://installforge.net/) for generating installers.  
+Refer to the `hammer5tools_setup.ifp` configuration file within the project for settings related to the installer.
+
+---
+
+## 7. Contributing
+
+- Follow existing style conventions for Python code and PySide6 UI elements.  
+- Add new tools in their own module directory under `src/`.  
+- Update `main.py` to link newly created tools to the main interface.
+
+---
+
+## 8. Append
+
+- Refer to `requirements.txt` for a full list of project dependencies.
+- For advanced debugging, leverage the `--dev` flag or additional logs within individual tool modules.
