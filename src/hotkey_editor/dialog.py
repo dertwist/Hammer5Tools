@@ -2,7 +2,7 @@ from src.hotkey_editor.ui_dialog import Ui_Dialog
 from PySide6.QtWidgets import QDialog
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtCore import Qt
-from src.settings.preferences import debug
+from src.settings.main import debug
 from src.common import enable_dark_title_bar
 class KeyDialog(QDialog):
     def __init__(self, parent=None):

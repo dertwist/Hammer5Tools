@@ -3,7 +3,7 @@ from src.smartprop_editor.property.ui_float import Ui_Widget
 from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
 from PySide6.QtCore import Signal
 from src.widgets import Spacer, ComboboxVariablesWidget
-from src.settings.preferences import debug
+from src.settings.main import debug
 
 
 class PropertyVariableOutput(QWidget):

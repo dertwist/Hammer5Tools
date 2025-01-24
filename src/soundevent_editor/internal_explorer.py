@@ -4,7 +4,7 @@ import vpk
 from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QMessageBox
 from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess, QThread, Signal
 from PySide6.QtMultimedia import QMediaPlayer
-from src.settings.preferences import get_cs2_path, get_addon_dir, debug
+from src.settings.main import get_cs2_path, get_addon_dir, debug
 from src.common import SoundEventEditor_sounds_path, Decompiler_path, SoundEventEditor_path
 from src.widgets import exception_handler
 @exception_handler

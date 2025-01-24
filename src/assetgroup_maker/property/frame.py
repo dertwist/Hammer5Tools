@@ -7,7 +7,7 @@ from src.assetgroup_maker.property.common import PropertyReplacement
 from src.assetgroup_maker.property.ui_frame import Ui_Form
 from src.property.methods import PropertyMethods
 from src.common import convert_snake_case
-from src.settings.preferences import debug
+from src.settings.main import debug
 
 
 class PropertyFrame(QWidget):

@@ -8,7 +8,7 @@ from src.soundevent_editor.property.common import SoundEventEditorPropertyList
 from src.soundevent_editor.property.ui_frame import Ui_Form
 from src.property.methods import PropertyMethods
 from src.common import convert_snake_case
-from src.settings.preferences import debug
+from src.settings.main import debug
 from src.soundevent_editor.common import vsnd_filepath_convert
 
 

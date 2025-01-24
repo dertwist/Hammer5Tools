@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout
 )
-from src.settings.preferences import debug
+from src.settings.main import debug
 
 
 class NoWheelScrollArea(QScrollArea):
