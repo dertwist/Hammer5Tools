@@ -1,17 +1,22 @@
-from PySide6.QtWidgets import QMenu
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction
-
-from PySide6.QtWidgets import QMenu, QLineEdit, QPlainTextEdit, QTextEdit
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QMenu, QLineEdit, QPlainTextEdit, QTextEdit, QWidget
+from PySide6.QtCore import Qt, QPoint
+from PySide6.QtGui import QAction, QCursor
 
 class ReplacementsContextMenu:
-    def __init__(self, parent, widget):
+    """
+    A context menu for inserting placeholders into text widgets.
+
+    Attributes:
+        parent (QWidget): The parent widget for the context menu.
+        widget (QWidget): The widget where the context menu will be used.
+    """
+
+    def __init__(self, parent: QWidget, widget: QWidget) -> None:
         self.parent = parent
         self.widget = widget
         self._setup_actions()
 
-    def _setup_actions(self):
+    def _setup_actions(self) -> None:
         """Initialize actions for the context menu."""
         self.folder_path_action = QAction("Insert Folder Path", self.parent)
         self.folder_path_action.triggered.connect(lambda: self.insert_placeholder("#$FOLDER_PATH$#"))
@@ -19,7 +24,7 @@ class ReplacementsContextMenu:
         self.asset_name_action = QAction("Insert Asset Name", self.parent)
         self.asset_name_action.triggered.connect(lambda: self.insert_placeholder("#$ASSET_NAME$#"))
 
-    def show(self, position):
+    def show(self, position: QPoint) -> None:
         """Display custom context menu at the given position."""
         menu = self.widget.createStandardContextMenu()
         menu.setStyleSheet("""
@@ -35,9 +40,9 @@ class ReplacementsContextMenu:
         menu.addSeparator()
         menu.addAction(self.folder_path_action)
         menu.addAction(self.asset_name_action)
-        menu.exec(self.widget.mapToGlobal(position))
+        menu.exec(QCursor.pos())
 
-    def insert_placeholder(self, placeholder):
+    def insert_placeholder(self, placeholder: str) -> None:
         """Insert or replace a placeholder text in the editor."""
         try:
             if isinstance(self.widget, (QPlainTextEdit, QTextEdit)):
