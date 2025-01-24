@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QMenu, QApplication
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor, QAction
 
-from src.popup_menu.popup_menu_main import PopupMenu
+from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.element_id import update_value_ElementID, get_ElementID_key
 
 from src.smartprop_editor.property.legacy import PropertyLegacy

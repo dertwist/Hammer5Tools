@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QListWidgetItem, QMenu, QDia
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from src.popup_menu.popup_menu_main import PopupMenu
+from src.popup_menu.main import PopupMenu
 from src.widgets import HierarchyItemModel, ErrorInfo
 from src.preferences import settings
 from src.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow

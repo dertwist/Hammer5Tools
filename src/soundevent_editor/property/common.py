@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QTreeWi
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsPathItem, QFrame, QLineEdit
 from PySide6.QtGui import QPainterPath, QPen, QColor, QGuiApplication, QPainter
 from PySide6.QtCore import Qt, Signal
-from src.popup_menu.popup_menu_main import PopupMenu
+from src.popup_menu.main import PopupMenu
 from src.preferences import debug, get_addon_dir
 from src.common import convert_snake_case
 try:
