@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QScro
 from PySide6.QtGui import QCursor, QIcon, QKeyEvent
 from PySide6.QtCore import QEvent, Qt, Signal, QSize
 from src.popup_menu.ui_main import Ui_PoPupMenu
+from src.widgets_common import Button
 import webbrowser
 
 class PopupMenu(QDialog):
@@ -71,8 +72,8 @@ class PopupMenu(QDialog):
 
     def create_help_button(self, label):
         """Create help button for property items"""
-        button = QToolButton()
-        button.setIcon(QIcon(":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        button = Button(size=32)
+        button.set_icon_question()
         button.clicked.connect(lambda: self.open_wiki_page(label=label, url=self.help_url))
         return button
     def open_wiki_page(self, label=None, url=None):
