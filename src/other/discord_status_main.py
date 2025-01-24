@@ -2,7 +2,7 @@ import time
 import psutil
 import pygetwindow as gw
 from pypresence import Presence
-from src.preferences import get_config_value, get_config_bool
+from src.settings.preferences import get_config_value, get_config_bool
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

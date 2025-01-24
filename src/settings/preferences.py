@@ -2,10 +2,10 @@ import os
 import subprocess
 import winreg as reg
 from PySide6.QtWidgets import QDialog
-from PySide6.QtCore import QSettings, Signal
+from PySide6.QtCore import QSettings
 
 try:
-    from src.ui_preferences import Ui_preferences_dialog
+    from src.settings.ui_preferences import Ui_preferences_dialog
 except:
     pass
 
