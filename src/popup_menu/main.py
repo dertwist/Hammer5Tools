@@ -24,6 +24,7 @@ class PopupMenu(QDialog):
         self.current_selection_index = -1
         self.visible_labels = []
         self.bookmarked_items = set()
+        self.add_once = add_once
 
         self.setup_ui()
         self.init_bookmarks()
@@ -233,35 +234,49 @@ class PopupMenu(QDialog):
     #=========================================================<  Layout  >=======================================================
 
     def remove_element(self, label, key, value):
-        """Remove an element from the menu"""
+        """Remove an element from the menu and update the layout."""
         self.add_property_signal.emit(key, value)
-        scroll_content = self.ui.scrollArea.widget()
 
-        # Update selection indices after removal
-        label_index = self.visible_labels.index(label) if label in self.visible_labels else -1
+        # Find the layout containing the label (either bookmarked or regular)
+        target_layout = None
+        if key in self.bookmarked_items:
+            target_layout = self.bookmarked_layout
+        else:
+            target_layout = self.regular_layout
 
-        for i in range(scroll_content.layout().count()):
-            element_layout_item = scroll_content.layout().itemAt(i)
-            if not element_layout_item:
+        if not target_layout:
+            return
+
+        # Find and remove the item from the appropriate layout
+        for i in range(target_layout.count()):
+            item = target_layout.itemAt(i)
+            if not item or not item.layout():
                 continue
 
-            element_layout = element_layout_item.layout()
-            if not element_layout:
-                continue
+            layout = item.layout()
+            label_widget = layout.itemAt(0).widget()
 
-            current_label = element_layout.itemAt(0).widget()
-            if current_label.text() == key:
-                # Remove the item
-                item = scroll_content.layout().takeAt(i)
+            if label_widget and label_widget.text() == key:
+                # Remove item from layout
+                item = target_layout.takeAt(i)
                 if item:
                     self.cleanup_layout_item(item)
 
-                # Update selection if needed
-                if label_index != -1:
-                    self.visible_labels.pop(label_index)
-                    if self.current_selection_index >= label_index:
+                # Update visible labels and selection
+                if label in self.visible_labels:
+                    idx = self.visible_labels.index(label)
+                    self.visible_labels.pop(idx)
+                    if self.current_selection_index >= idx:
                         self.current_selection_index = max(-1, self.current_selection_index - 1)
-                    self.update_selection_highlighting()
+
+                # Force layout updates
+                target_layout.update()
+                self.scroll_layout.update()
+
+                # Update separator visibility if needed
+                if target_layout == self.bookmarked_layout:
+                    self.separator.setVisible(self.bookmarked_layout.count() > 0)
+
                 break
 
     def cleanup_layout_item(self, item):
@@ -339,7 +354,7 @@ class PopupMenu(QDialog):
         self._search_in_layout(self.regular_layout, search_text)
 
         # Disable separator during search
-        if search_text is '':
+        if search_text == '':
             self.separator.setVisible(True)
         else:
             self.separator.setVisible(False)
