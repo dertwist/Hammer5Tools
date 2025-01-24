@@ -523,26 +523,63 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.update_tree_item_value()
 
     def add_an_operator(self):
-        operators_and_filters = operators_list + filters_list
-        elements_in_popupmenu = []
-        exists_classes = []
-        ignore_list = ["SetVariable", "SaveState"]
+        """
+        Combines operators and filters, determines which classes already exist,
+        excludes duplicates unless an item is forced, and then displays a popup
+        menu to add new operators.
+        """
 
+        # Combine operator and filter dictionaries from existing lists
+        operators_and_filters = operators_list + filters_list
+
+        # Elements we will display in the popup menu
+        elements_in_popupmenu = []
+
+        # Operator classes that already exist in the layout
+        exists_classes = []
+
+        # These item names should be forced into the final list even if they already exist
+        force_items_names = ["SetVariable", "SaveState"]
+
+        # Gather the dictionaries for forced items
+        force_items = []
+        for item in operators_and_filters:
+            for key in item.keys():
+                if key in force_items_names:
+                    force_items.append(item)
+
+        # Collect the classes currently in the layout
         for i in range(self.modifiers_group_instance.layout.count()):
             widget = self.modifiers_group_instance.layout.itemAt(i).widget()
             if isinstance(widget, PropertyFrame):
                 exists_classes.append(widget.name)
 
-        for class_name in ignore_list:
+        # Remove forced items from the exists_classes list
+        # so they can appear again in the popup
+        for class_name in force_items_names:
             if class_name in exists_classes:
                 exists_classes.remove(class_name)
 
+        # For every item in operators_and_filters, add it if its key isn't in exists_classes
         for item in operators_and_filters:
-            for key, value in item.items():
+            for key in item.keys():
                 if key not in exists_classes:
-                    elements_in_popupmenu.append(item)
+                    # Avoid duplicates in the final list
+                    if item not in elements_in_popupmenu:
+                        elements_in_popupmenu.append(item)
 
-        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True, window_name="SPE_operators", ignore_list=ignore_list)
+        # Ensure force items appear in the final list
+        for item in force_items:
+            if item not in elements_in_popupmenu:
+                elements_in_popupmenu.append(item)
+
+        # Create and display the popup menu
+        self.popup_menu = PopupMenu(
+            elements_in_popupmenu,
+            add_once=True,
+            window_name="SPE_operators",
+            ignore_list=force_items_names
+        )
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_operator(name, value))
         self.popup_menu.show()
 
