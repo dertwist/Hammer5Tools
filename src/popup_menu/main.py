@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QScrollArea, QLabel, QToolButton, QHBoxLayout, QSpacerItem, QSizePolicy
 from PySide6.QtGui import QCursor, QIcon, QKeyEvent
 from PySide6.QtCore import QEvent, Qt, Signal, QSize
-from src.popup_menu.ui_popup_menu import Ui_PoPupMenu
+from src.popup_menu.ui_main import Ui_PoPupMenu
 import webbrowser
 
 class PopupMenu(QDialog):

@@ -5,7 +5,7 @@ from src.smartprop_editor.property.ui_filtersurface import Ui_Widget
 from PySide6.QtWidgets import QWidget, QColorDialog, QTreeWidgetItem, QMenu
 from PySide6.QtCore import Signal, Qt
 from src.qt_styles.qt_global_stylesheet import QT_Stylesheet_global
-from src.popup_menu.popup_menu_main import PopupMenu
+from src.popup_menu.main import PopupMenu
 
 
 class PropertySurface(QWidget):

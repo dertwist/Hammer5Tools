@@ -16,7 +16,7 @@ from src.smartprop_editor.vsmart import VsmartOpen, VsmartSave
 from src.smartprop_editor.property_frame import PropertyFrame
 from src.smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from src.smartprop_editor.choices import AddChoice, AddVariable, AddOption
-from src.popup_menu.popup_menu_main import PopupMenu
+from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.commands import DeleteTreeItemCommand
 
 from src.find_and_replace.main import FindAndReplaceDialog
