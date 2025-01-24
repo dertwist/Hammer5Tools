@@ -1,9 +1,8 @@
 def fix_no_active_selection_with_w_or_s():
     """
     Explanation:
-    In order to start at the first item when W or S is pressed and there's no
-    active selection, we can slightly modify the 'navigate_selection' method to
-    set 'self.current_selection_index' to 0 if it's still -1.
+    In the original code, we allowed navigating selection with W/S keys or arrow keys.
+    This version removes keyboard-based item selection entirely.
     """
 
 import webbrowser
@@ -133,7 +132,7 @@ class PropertyItemWidget(QWidget):
 class PopupMenu(QDialog):
     """
     A popup menu that displays a list of property items, supports bookmarking,
-    searching, keyboard navigation, and helpful links.
+    searching, and helpful links. Keyboard-based selection is removed for clarity.
     """
     label_clicked = Signal(str)
     add_property_signal = Signal(str, str)
@@ -160,8 +159,6 @@ class PopupMenu(QDialog):
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
         self.setGeometry(200, 200, 400, 400)
 
-        self.current_selection_index = -1
-        self.visible_labels = []
         self.bookmarked_items = set()
         self.removed_items = set()
 
@@ -190,15 +187,12 @@ class PopupMenu(QDialog):
     def _setup_ui(self):
         """
         Create separate layouts, plus a search bar at the top and a separator widget.
-        Also installs an event filter on the lineEdit to capture arrow keys.
+        Also removes keyboard navigation for clarity.
         """
-        # Make sure arrow keys and W/S get handled by the event filter rather than moving the cursor
         self.ui.lineEdit.setFocusPolicy(Qt.StrongFocus)
-        self.ui.lineEdit.installEventFilter(self)
         self.ui.lineEdit.textChanged.connect(self._search_text_changed)
         self.ui.lineEdit.setFocus()
 
-        # Scroll container layout
         self.scroll_layout = QVBoxLayout()
         self.scroll_layout.setContentsMargins(0, 0, 2, 0)
 
@@ -208,7 +202,6 @@ class PopupMenu(QDialog):
         self.regular_layout = QVBoxLayout()
         self.regular_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Separator line
         self.separator = QWidget()
         self.separator.setFixedHeight(2)
         self.separator.setStyleSheet("background-color: #363639;")
@@ -224,26 +217,6 @@ class PopupMenu(QDialog):
         scroll_content = QWidget()
         scroll_content.setLayout(self.scroll_layout)
         self.ui.scrollArea.setWidget(scroll_content)
-
-    def eventFilter(self, obj, event):
-        """
-        Capture arrow keys, plus W/S, from self.ui.lineEdit so that
-        up/down navigates items instead of moving the cursor.
-        If there's no active selection, set current_selection_index to 0.
-        """
-        if obj == self.ui.lineEdit and event.type() == QEvent.KeyPress:
-            if event.key() in (Qt.Key_Up, Qt.Key_W, Qt.Key_Down, Qt.Key_S):
-                # If there's no active selection at all, start with the first element
-                if self.current_selection_index < 0 and self.visible_labels:
-                    self.current_selection_index = 0
-                    self._update_selection_highlighting()
-
-                if event.key() in (Qt.Key_Up, Qt.Key_W):
-                    self.navigate_selection(-1)
-                else:
-                    self.navigate_selection(1)
-                return True
-        return super().eventFilter(obj, event)
 
     def _init_bookmarks(self):
         """
@@ -307,7 +280,6 @@ class PopupMenu(QDialog):
             self.bookmarked_layout.addWidget(wdg)
 
         self.separator.setVisible(len(bookmarked_list) > 0)
-        self._update_visible_labels()
 
     def _on_property_clicked(self, key, val, remove_item, label):
         """
@@ -318,7 +290,6 @@ class PopupMenu(QDialog):
         if remove_item:
             self.removed_items.add((key, val))
             self._remove_layout_item(label)
-        self._update_visible_labels()
 
     def _remove_layout_item(self, label):
         """
@@ -359,77 +330,6 @@ class PopupMenu(QDialog):
                             if cl:
                                 queue.append(cl)
 
-    def _update_visible_labels(self):
-        """
-        Gathers visible labels in BFS order for keyboard navigation.
-        """
-        self.visible_labels.clear()
-        self.current_selection_index = -1
-
-        scroll_widget = self.ui.scrollArea.widget()
-        if not scroll_widget:
-            return
-
-        queue = [scroll_widget.layout()]
-        while queue:
-            current_layout = queue.pop(0)
-            if not current_layout:
-                continue
-
-            for i in range(current_layout.count()):
-                itm = current_layout.itemAt(i)
-                if itm is None:
-                    continue
-                child_wdg = itm.widget()
-                child_lay = itm.layout()
-
-                if child_lay:
-                    queue.append(child_lay)
-                elif child_wdg and isinstance(child_wdg, PropertyItemWidget):
-                    if child_wdg.isVisible():
-                        self.visible_labels.append(child_wdg.label)
-
-        # Automatically select first visible label if any exist
-        if self.visible_labels:
-            self.current_selection_index = 0
-            self._update_selection_highlighting()
-
-    def navigate_selection(self, delta):
-        """
-        Moves selection up/down among visible labels.
-        If no selection yet (index == -1), start at 0.
-        """
-        if not self.visible_labels:
-            return
-
-        if self.current_selection_index < 0:
-            self.current_selection_index = 0
-        else:
-            self.current_selection_index = (self.current_selection_index + delta) % len(self.visible_labels)
-
-        self._update_selection_highlighting()
-        label = self.visible_labels[self.current_selection_index]
-        self.ui.scrollArea.ensureWidgetVisible(label)
-
-    def _update_selection_highlighting(self):
-        """
-        Update label highlight based on current selection index.
-        """
-        for idx, label in enumerate(self.visible_labels):
-            label.setProperty("selected", idx == self.current_selection_index)
-            label.style().unpolish(label)
-            label.style().polish(label)
-            label.update()
-
-    def activate_selection(self):
-        """
-        Simulate clicking the currently selected label.
-        """
-        if 0 <= self.current_selection_index < len(self.visible_labels):
-            label = self.visible_labels[self.current_selection_index]
-            if label.mousePressEvent:
-                label.mousePressEvent(None)
-
     def _search_text_changed(self):
         """
         Triggered when the search text changes. Hide or show item widgets based on match.
@@ -440,8 +340,6 @@ class PopupMenu(QDialog):
 
         # Show separator only if search field is empty and there are bookmarked items
         self.separator.setVisible(len(text) == 0 and bool(self.bookmarked_items))
-
-        self._update_visible_labels()
 
     def _search_layout_iterative(self, layout, search_text):
         """
@@ -466,27 +364,11 @@ class PopupMenu(QDialog):
 
     def keyPressEvent(self, event: QKeyEvent):
         """
-        Keyboard handling for navigation and activation when the dialog
-        (not the lineEdit) has focus.
+        Overrides the main widget's keyPressEvent only to close or pass
+        the event along. Keyboard-based item selection is removed.
         """
-        handlers = {
-            Qt.Key_Down: lambda: self.navigate_selection(1),
-            Qt.Key_Up: lambda: self.navigate_selection(-1),
-            Qt.Key_S: lambda: self.navigate_selection(1),
-            Qt.Key_W: lambda: self.navigate_selection(-1),
-            Qt.Key_Return: self.activate_selection,
-            Qt.Key_Enter: self.activate_selection,
-            Qt.Key_Space: self.activate_selection
-        }
-        func = handlers.get(event.key())
-        if func:
-            # If there's no active selection at all, start at first element
-            if self.current_selection_index < 0 and self.visible_labels:
-                self.current_selection_index = 0
-                self._update_selection_highlighting()
-
-            func()
-            event.accept()
+        if event.key() in [Qt.Key_Escape]:
+            self.close()
         else:
             super().keyPressEvent(event)
 
@@ -531,7 +413,6 @@ class PopupMenu(QDialog):
         self.ui = None
         self.bookmarked_items.clear()
         self.removed_items.clear()
-        self.visible_labels.clear()
         super().closeEvent(evt)
 
     @staticmethod
