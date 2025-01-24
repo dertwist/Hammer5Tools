@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Optional, Dict, List
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QLineEdit
 from PySide6.QtCore import Qt, QFileSystemWatcher, Signal
 from PySide6.QtGui import QDropEvent, QTextCharFormat, QTextCursor
@@ -17,24 +18,25 @@ from src.assetgroup_maker.monitor import MonitoringFileWatcher
 from src.widgets import ErrorInfo
 
 class DragDropLineEdit(QLineEdit):
+    """A QLineEdit that supports drag-and-drop for file paths."""
     fileDropped = Signal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QMainWindow] = None):
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.setPlaceholderText('Path to vmdl, vmat, vsmart')
 
-    def dragEnterEvent(self, event):
+    def dragEnterEvent(self, event: QDropEvent):
         mime_data = event.mimeData()
         if mime_data.hasUrls():
             event.acceptProposedAction()
         else:
             event.ignore()
 
-    def dragMoveEvent(self, event):
+    def dragMoveEvent(self, event: QDropEvent):
         event.acceptProposedAction()
 
-    def dropEvent(self, event):
+    def dropEvent(self, event: QDropEvent):
         mime_data = event.mimeData()
         if mime_data.hasUrls():
             for url in mime_data.urls():
@@ -46,18 +48,19 @@ class DragDropLineEdit(QLineEdit):
             event.ignore()
 
 class BatchCreatorMainWindow(QMainWindow):
-    def __init__(self, parent=None, update_title=None):
+    """Main window for the Batch Creator application."""
+    def __init__(self, parent: Optional[QMainWindow] = None, update_title: Optional[callable] = None):
         super().__init__(parent)
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
         self.update_title = update_title
 
-        self.current_file = None
-        self.process_data = default_file['process'].copy()
-        self.created_files = []
-        self.monitoring_running_state = True
-        self.search_results = []
-        self.current_search_index = -1
+        self.current_file: Optional[str] = None
+        self.process_data: Dict = default_file['process'].copy()
+        self.created_files: List[str] = []
+        self.monitoring_running_state: bool = True
+        self.search_results: List[int] = []
+        self.current_search_index: int = -1
 
         self.addon_name = get_addon_name()
         self.cs2_path = get_cs2_path()
@@ -130,6 +133,7 @@ class BatchCreatorMainWindow(QMainWindow):
     # ============================================================<  Referencing  >==========================================================
 
     def replace_reference_editline(self):
+        """Replace the reference edit line with a drag-and-drop enabled line edit."""
         parent_layout = self.ui.frame_8.layout()
 
         # Create new DragDropLineEdit
@@ -140,6 +144,7 @@ class BatchCreatorMainWindow(QMainWindow):
         parent_layout.insertWidget(1, self.ui.reference_editline)
 
     def select_reference(self):
+        """Open a file dialog to select a reference file."""
         file_dialog = QFileDialog(self)
         file_dialog.setWindowTitle("Select Reference File")
         file_dialog.setFileMode(QFileDialog.ExistingFile)
@@ -150,7 +155,8 @@ class BatchCreatorMainWindow(QMainWindow):
                 selected_file = selected_files[0]
                 self.set_reference(selected_file)
 
-    def set_reference(self, ref):
+    def set_reference(self, ref: str):
+        """Set the reference file path."""
         try:
             ref = os.path.relpath(ref, self.explorer_directory)
             self.ui.reference_editline.setText(str(ref))
@@ -176,7 +182,7 @@ class BatchCreatorMainWindow(QMainWindow):
         else:
             debug(f"Reference file does not exist: {reference_path}")
 
-    def on_reference_file_changed(self, path):
+    def on_reference_file_changed(self, path: str):
         """Reload the reference content when the file changes."""
         if os.path.exists(path):
             # Reload the reference content
@@ -216,10 +222,12 @@ class BatchCreatorMainWindow(QMainWindow):
     # ============================================================<  Replacements  >=========================================================
 
     def init_replacements_editor(self):
+        """Initialize the replacements editor."""
         self.ui.new_replacement_button.clicked.connect(lambda: self.new_replacement())
         self.replacements_layout = self.ui.replacements_layout.layout()
 
-    def new_replacement(self, __data: dict = None):
+    def new_replacement(self, __data: Optional[Dict] = None):
+        """Create a new replacement entry."""
         if __data is None:
             __data = default_replacement
         widget_instance = PropertyFrame(widget_list=self.replacements_layout, _data=__data)
@@ -228,13 +236,13 @@ class BatchCreatorMainWindow(QMainWindow):
             index = 0
         self.replacements_layout.insertWidget(index, widget_instance)
 
-    def populate_replacements(self, replacements: dict = None):
+    def populate_replacements(self, replacements: Optional[Dict] = None):
         """Create replacements from dict input."""
         if replacements:
             for key, value in replacements.items():
                 self.new_replacement(value)
 
-    def collect_replacements(self):
+    def collect_replacements(self) -> Dict:
         """Collect replacements into a dictionary."""
         _data = {}
         for index in range(self.replacements_layout.count()):
@@ -245,7 +253,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 _data.update(value)
         return _data
 
-    def get_property_value(self, index):
+    def get_property_value(self, index: int) -> Dict:
         """Get dictionary value from widget instance frame."""
         widget_instance = self.replacements_layout.itemAt(index).widget()
         if isinstance(widget_instance, PropertyFrame):
@@ -277,7 +285,7 @@ class BatchCreatorMainWindow(QMainWindow):
         else:
             event.ignore()
 
-    def load_file_content(self, file_path):
+    def load_file_content(self, file_path: str):
         """Load content from a file into the editor."""
         try:
             self.highlighter = CustomHighlighter(self.ui.kv3_QplainTextEdit.document())
@@ -371,7 +379,7 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.dockWidget.setWindowTitle("Explorer")
         self.update_editor_visibility()
 
-    def get_relative_path(self, file_path):
+    def get_relative_path(self, file_path: str) -> str:
         """Get the path relative to the addon folder."""
         root_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
         return os.path.relpath(file_path, root_directory)
@@ -398,7 +406,6 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.warning(self, "Invalid Path", "Select a valid folder.")
             return
 
-
         directory_path = os.path.dirname(os.path.normpath(selected_path))
         if not os.path.exists(directory_path):
             QMessageBox.warning(self, "Invalid Path", "The directory does not exist.")
@@ -407,7 +414,7 @@ class BatchCreatorMainWindow(QMainWindow):
         batch_file_path = os.path.join(directory_path, f"{file_name}.hbat")
         self.write_json_file(batch_file_path, default_file)
 
-    def write_json_file(self, file_path, data):
+    def write_json_file(self, file_path: str, data: Dict):
         """Write data to a JSON file."""
         try:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -450,8 +457,7 @@ class BatchCreatorMainWindow(QMainWindow):
         else:
             QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
 
-
-    def confirm_open_anyway(self):
+    def confirm_open_anyway(self) -> bool:
         """Confirm opening a file with an unsupported extension."""
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Warning)
@@ -462,7 +468,7 @@ class BatchCreatorMainWindow(QMainWindow):
         response = msg_box.exec()
         return response == QMessageBox.AcceptRole
 
-    def load_file(self, file_path):
+    def load_file(self, file_path: str):
         """Load a file's content into the editor."""
         try:
             self.current_file = file_path
@@ -495,7 +501,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 parent=self,
                 process_all=self.process_all_files,
                 collect_replacements=self.collect_replacements,
-                viewport = self.ui.kv3_QplainTextEdit
+                viewport=self.ui.kv3_QplainTextEdit
             )
             self.process_dialog.show()
 

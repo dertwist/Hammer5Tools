@@ -1,24 +1,39 @@
 import os
 import json
+from typing import Optional, Dict, List, Tuple, Set
 from PySide6.QtCore import Signal, QThread
-
 from src.assetgroup_maker.objects import default_file
 from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
 
+
 class StartProcess(QThread):
+    """Thread to handle the start of a processing task."""
+
     finished = Signal()
 
-    def __init__(self, filepath, parent=None):
+    def __init__(self, filepath: str, parent=None):
+        """
+        Initialize the StartProcess thread.
+
+        :param filepath: Path to the file to be processed.
+        :param parent: Optional parent for the thread.
+        """
         super().__init__(parent)
         self.filepath = filepath
         self.stop_thread = False
 
-    def update_reference_content(self, reference):
+    def update_reference_content(self, reference: str) -> str:
+        """
+        Update the content from a reference file.
+
+        :param reference: Reference file path.
+        :return: Content of the reference file or an empty string if not found.
+        """
         reference_path = os.path.join(get_addon_dir(), reference)
         try:
             with open(reference_path, 'r') as file:
-                __data = file.read()
-            return __data
+                data = file.read()
+            return data
         except FileNotFoundError:
             debug(f"Reference file not found: {reference_path}")
             return ""
@@ -26,13 +41,19 @@ class StartProcess(QThread):
             debug(f"Error reading reference file {reference_path}: {e}")
             return ""
 
-    def load_file(self, filepath):
+    def load_file(self, filepath: str) -> Tuple[Dict, Dict, str]:
+        """
+        Load a JSON file and extract process, replacements, and content.
+
+        :param filepath: Path to the JSON file.
+        :return: Tuple containing process, replacements, and content.
+        """
         try:
             with open(filepath, 'r') as file:
-                __data = json.load(file)
-            process = __data.get('process', {})
-            replacements = __data.get('replacements', {})
-            content = __data.get('file', {}).get('content', '')
+                data = json.load(file)
+            process = data.get('process', {})
+            replacements = data.get('replacements', {})
+            content = data.get('file', {}).get('content', '')
             return process, replacements, content
         except FileNotFoundError:
             debug(f"File to load not found: {filepath}")
@@ -45,6 +66,7 @@ class StartProcess(QThread):
             return {}, {}, ""
 
     def run(self):
+        """Execute the processing task."""
         try:
             if self.stop_thread:
                 return
@@ -66,7 +88,7 @@ class StartProcess(QThread):
                 process=process,
                 preview=False,
                 replacements=replacements,
-                content_template=content  # Assuming 'content' is intended as 'content_template'
+                content_template=content
             )
 
             self.finished.emit()
@@ -75,11 +97,23 @@ class StartProcess(QThread):
             debug(f"Error in StartProcess: {e}")
 
     def stop(self):
+        """Stop the processing thread."""
         self.stop_thread = True
         self.quit()
         self.wait()
 
-def perform_batch_processing(file_path, process, preview, replacements, content_template=None):
+
+def perform_batch_processing(file_path: str, process: Dict, preview: bool, replacements: Dict, content_template: Optional[str] = None) -> List[str]:
+    """
+    Perform batch processing of files based on the provided process configuration.
+
+    :param file_path: Path to the file being processed.
+    :param process: Process configuration dictionary.
+    :param preview: Flag to indicate if this is a preview operation.
+    :param replacements: Dictionary of replacements to apply.
+    :param content_template: Optional content template for file creation.
+    :return: List of created file paths.
+    """
     base_directory = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
     if not os.path.isdir(base_directory):
         debug(f"Base directory does not exist: {base_directory}")
@@ -131,30 +165,45 @@ def perform_batch_processing(file_path, process, preview, replacements, content_
             created_files=created_files,
             replacements=replacements,
             reference=reference,
-            content_template=content_template,  # Ensure content_template is passed here
+            content_template=content_template,
             load_from_the_folder=load_from_the_folder,
             base_directory=base_directory
         )
         return created_files
 
-def execute_file_creation(files, output_path, relative_path, extension, created_files,
-                          replacements, reference, content_template, load_from_the_folder,
-                          base_directory=None):
+
+def execute_file_creation(files: List[str], output_path: str, relative_path: str, extension: str, created_files: List[str],
+                          replacements: Dict, reference: Optional[str], content_template: Optional[str], load_from_the_folder: bool,
+                          base_directory: Optional[str] = None):
+    """
+    Execute the creation of files based on the provided parameters.
+
+    :param files: List of files to process.
+    :param output_path: Path to the output directory.
+    :param relative_path: Relative path for file creation.
+    :param extension: File extension for created files.
+    :param created_files: List to store paths of created files.
+    :param replacements: Dictionary of replacements to apply.
+    :param reference: Optional reference file path.
+    :param content_template: Content template for file creation.
+    :param load_from_the_folder: Flag to indicate if files should be loaded from the folder.
+    :param base_directory: Optional base directory for relative path calculation.
+    """
     if content_template is None:
         debug("Content template is missing. Skipping file creation.")
         return
 
     for file_name in files:
-        __data_replacements = content_template
+        data_replacements = content_template
         if replacements:
             for key, replacement in replacements.items():
                 old, new = replacement.get('replacement', ['', ''])
                 if old:
-                    __data_replacements = __data_replacements.replace(old, new)
+                    data_replacements = data_replacements.replace(old, new)
 
         if load_from_the_folder:
-            __data = __data_replacements.replace("#$FOLDER_PATH$#", relative_path)
-            __data = __data.replace("#$ASSET_NAME$#", file_name)
+            data = data_replacements.replace("#$FOLDER_PATH$#", relative_path)
+            data = data.replace("#$ASSET_NAME$#", file_name)
             output_file_path = os.path.join(output_path, f"{file_name}.{extension}")
         else:
             original_dir = os.path.dirname(file_name)
@@ -162,8 +211,8 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
 
             dynamic_relative_path = os.path.relpath(original_dir, base_directory).replace('\\', '/')
 
-            __data = __data_replacements.replace("#$FOLDER_PATH$#", dynamic_relative_path)
-            __data = __data.replace("#$ASSET_NAME$#", base_name)
+            data = data_replacements.replace("#$FOLDER_PATH$#", dynamic_relative_path)
+            data = data.replace("#$ASSET_NAME$#", base_name)
             output_file_path = os.path.join(output_path, f"{base_name}.{extension}")
 
         output_path_resolved = os.path.abspath(output_file_path)
@@ -173,7 +222,7 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
             try:
                 os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
                 with open(output_file_path, 'w') as output_file:
-                    output_file.write(__data)
+                    output_file.write(data)
                 debug(f"File created: {output_file_path}")
                 created_files.append(output_file_path)
             except PermissionError as e:
@@ -183,10 +232,27 @@ def execute_file_creation(files, output_path, relative_path, extension, created_
         else:
             debug(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
 
-def get_basename_without_extension(file_path):
+
+def get_basename_without_extension(file_path: str) -> str:
+    """
+    Get the base name of a file without its extension.
+
+    :param file_path: Path to the file.
+    :return: Base name without extension.
+    """
     return os.path.splitext(os.path.basename(file_path))[0]
 
-def preview_processing_files(files, base_directory, extension, process):
+
+def preview_processing_files(files: List[str], base_directory: str, extension: str, process: Dict) -> Tuple[List[str], Optional[List[str]], str, str]:
+    """
+    Preview the processing of files without actual creation.
+
+    :param files: List of files to process.
+    :param base_directory: Base directory for file processing.
+    :param extension: File extension for created files.
+    :param process: Process configuration dictionary.
+    :return: Tuple containing base names, optional file list, extension, and base directory.
+    """
     if process.get('load_from_the_folder'):
         files_list_out = []
         for root, _, files_in_dir in os.walk(base_directory):
@@ -201,13 +267,36 @@ def preview_processing_files(files, base_directory, extension, process):
         return [get_basename_without_extension(f) for f in files], None, extension, base_directory
 
 
-def extract_base_names(names):
+def extract_base_names(names: List[str]) -> Set[str]:
+    """
+    Extract base names from a list of file names.
+
+    :param names: List of file names.
+    :return: Set of base names.
+    """
     return set(os.path.basename(name) for name in names)
 
-def extract_base_names_underscore(names):
+
+def extract_base_names_underscore(names: List[str]) -> Set[str]:
+    """
+    Extract base names from a list of file names, removing underscores.
+
+    :param names: List of file names.
+    :return: Set of base names with underscores removed.
+    """
     return set(name.rsplit('_', 1)[0] if '_' in name else name for name in names)
 
-def search_files(directory, algorithm, ignore_extensions, process):
+
+def search_files(directory: str, algorithm: int, ignore_extensions: List[str], process: Dict) -> Set[str]:
+    """
+    Search for files in a directory based on the provided algorithm and ignore list.
+
+    :param directory: Directory to search for files.
+    :param algorithm: Algorithm to use for file searching.
+    :param ignore_extensions: List of extensions to ignore.
+    :param process: Process configuration dictionary.
+    :return: Set of found file base names.
+    """
     ignore_list = [item.strip() for item in process.get('ignore_list', '').split(',')]
     files_found = []
     for root, _, files_in_dir in os.walk(directory):
@@ -222,4 +311,4 @@ def search_files(directory, algorithm, ignore_extensions, process):
         return extract_base_names_underscore(files_found)
     else:
         debug(f"Unknown algorithm: {algorithm}")
-        return []
+        return set()
