@@ -1,6 +1,5 @@
-from src.preferences import debug
+from src.settings.preferences import debug
 from src.smartprop_editor.ui_property_frame import Ui_Form
-import time
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal

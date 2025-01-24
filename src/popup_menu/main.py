@@ -1,10 +1,10 @@
-from PySide6.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QScrollArea, QLabel, QToolButton, QHBoxLayout, QSpacerItem, QSizePolicy
-from PySide6.QtGui import QCursor, QIcon, QKeyEvent
-from PySide6.QtCore import QEvent, Qt, Signal, QSize, QRect
+from PySide6.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QLabel, QHBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtGui import QCursor, QKeyEvent
+from PySide6.QtCore import QEvent, Qt, Signal
 from src.popup_menu.ui_main import Ui_PoPupMenu
 from src.widgets_common import Button
 import webbrowser
-from src.preferences import set_config_value, get_config_value
+from src.settings.preferences import set_config_value, get_config_value
 
 class PopupMenu(QDialog):
     label_clicked = Signal(str)

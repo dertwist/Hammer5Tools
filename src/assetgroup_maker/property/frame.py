@@ -1,16 +1,13 @@
 import ast
-import os.path
-import random
 
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication, QTreeWidget
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QApplication, QTreeWidget
 from PySide6.QtCore import Signal
 
 from src.assetgroup_maker.property.common import PropertyReplacement
 from src.assetgroup_maker.property.ui_frame import Ui_Form
-from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
-from src.common import convert_snake_case, JsonToKv3, Kv3ToJson
-from src.preferences import debug, get_addon_dir
+from src.common import convert_snake_case
+from src.settings.preferences import debug
 
 
 class PropertyFrame(QWidget):

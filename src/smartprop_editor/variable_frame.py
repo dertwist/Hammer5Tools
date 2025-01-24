@@ -1,11 +1,11 @@
 from src.smartprop_editor.ui_variable_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget, QMenu, QApplication
-from PySide6.QtCore import Qt, Signal, QMimeData
-from PySide6.QtGui import QCursor, QDrag, QAction
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QCursor, QAction
 from src.property.methods import PropertyMethods
 from src.smartprop_editor.element_id import *
-from src.preferences import get_config_bool
+from src.settings.preferences import get_config_bool
 from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.objects import variables_list
 class VariableFrame(QWidget):

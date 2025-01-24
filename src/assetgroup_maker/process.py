@@ -1,11 +1,9 @@
 import os
 import json
-from pathlib import Path
 from PySide6.QtCore import Signal, QThread
-from PySide6.QtWidgets import QMessageBox
 
 from src.assetgroup_maker.objects import default_file
-from src.preferences import get_addon_name, get_cs2_path, get_addon_dir, debug
+from src.settings.preferences import get_addon_name, get_cs2_path, get_addon_dir, debug
 
 class StartProcess(QThread):
     finished = Signal()

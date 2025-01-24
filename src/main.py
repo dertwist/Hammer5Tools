@@ -1,8 +1,8 @@
-import os, threading, portalocker, tempfile, webbrowser, time, socket, logging, ctypes, hashlib, sys, subprocess, datetime
-from PySide6.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QMainWindow, QMessageBox, QDialog, QLabel, QMessageBox
-from PySide6.QtGui import QIcon, QAction, QTextCursor
+import ctypes
+from PySide6.QtWidgets import QSystemTrayIcon, QMenu, QMessageBox
+from PySide6.QtGui import QAction
 from about.main import Documentation_Dialog
-from preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
+from src.settings.preferences import PreferencesDialog, get_steam_path, get_cs2_path, get_addon_name, set_addon_name, get_config_bool, set_config_bool, get_config_value, set_config_value, settings, debug
 from loading_editor.main import Loading_editorMainWindow
 from hotkey_editor.main import HotkeyEditorMainWindow
 from create_addon.create_addon_mian import Create_addon_Dialog
@@ -14,8 +14,7 @@ from assetgroup_maker.main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
 from src.launch_options.main import LaunchOptionsDialog
-import argparse
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QCheckBox, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QLabel, QCheckBox
 import sys
 import os
 import threading
@@ -32,7 +31,7 @@ from styles.qt_global_stylesheet import QT_Stylesheet_global
 from PySide6.QtCore import QTimer
 from PySide6.QtCore import QFileSystemWatcher
 from src.common import enable_dark_title_bar
-from src.other.assettypes import asset_types_modify
+
 # Variables
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()

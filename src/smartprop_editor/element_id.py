@@ -1,7 +1,7 @@
 import ast
 from multiprocessing.util import debug
 
-from src.preferences import debug
+from src.settings.preferences import debug
 
 global m_nElementID
 m_nElementID = 0
