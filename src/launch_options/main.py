@@ -4,7 +4,7 @@ import os, subprocess
 import winreg as reg
 from src.preferences import get_addon_name, get_config_value, get_config_bool, set_config_value
 from src.launch_options.ui_main import Ui_preferences_dialog
-from src.minor_features.addon_functions import assemble_commands
+from src.other.addon_functions import assemble_commands
 from src.common import *
 from src.common import enable_dark_title_bar
 

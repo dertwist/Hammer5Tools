@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, Signal
 from src.common import convert_snake_case
 from src.assetgroup_maker.context_menu import ReplacementsContextMenu
 from src.assetgroup_maker.highlighter import CustomHighlighter
-from src.qt_styles.common import *
+from src.styles.common import *
 try:
     from src.soundevent_editor.property.curve.ui_main import Ui_CurveWidget
 except:
