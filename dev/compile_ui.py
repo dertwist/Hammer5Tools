@@ -1,27 +1,68 @@
 import os
 import subprocess
 import threading
+from typing import List
 
-def compile_ui(file, output_file):
-    subprocess.run(['pyside6-uic', file, '-o', output_file])
-    print(file,output_file)
+def compile_ui(file: str, output_file: str) -> None:
+    """
+    Compiles a .ui file into a Python file using PySide6.
 
-# Function to compile UI files with progress report
-def compile_with_progress(file, output_file):
+    Args:
+        file (str): The path to the .ui file.
+        output_file (str): The path where the compiled Python file will be saved.
+    """
+    subprocess.run(['pyside6-uic', file, '-o', output_file], check=True)
+    print(f"Compiled {file} to {output_file}")
+
+def compile_with_progress(file: str, output_file: str) -> None:
+    """
+    Compiles a .ui file with progress reporting.
+
+    Args:
+        file (str): The path to the .ui file.
+        output_file (str): The path where the compiled Python file will be saved.
+    """
     print(f'Compiling {file}...')
     compile_ui(file, output_file)
     print(f'{file} compiled successfully.')
 
-# Search for UI files in the project directory and compile them using PySide6
-for root, dirs, files in os.walk('../'):
-    for file in files:
-        if file.endswith('.ui') and file != 'ui_input.ui':
-            filename = os.path.basename(file)
-            filename = os.path.splitext(filename)[0]
-            output_file = os.path.join(root, f'ui_{filename}.py')
+def find_ui_files(directory: str) -> List[str]:
+    """
+    Searches for .ui files in the given directory and its subdirectories.
 
-            # Create a thread for each UI file compilation
-            thread = threading.Thread(target=compile_with_progress, args=(os.path.join(root, file), output_file))
-            thread.start()
+    Args:
+        directory (str): The root directory to search for .ui files.
 
-subprocess.run(['pyside6-rcc', '.\\src\\resources.qrc', '-o', '.\\src\\resources_rc.py'])
+    Returns:
+        List[str]: A list of paths to .ui files.
+    """
+    ui_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.ui') and file != 'ui_input.ui':
+                ui_files.append(os.path.join(root, file))
+    return ui_files
+
+def main() -> None:
+    """
+    Main function to compile all .ui files found in the project directory.
+    """
+    ui_files = find_ui_files('../')
+    threads = []
+
+    for file in ui_files:
+        filename = os.path.basename(file)
+        filename = os.path.splitext(filename)[0]
+        output_file = os.path.join(os.path.dirname(file), f'ui_{filename}.py')
+
+        thread = threading.Thread(target=compile_with_progress, args=(file, output_file))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    subprocess.run(['pyside6-rcc', './src/resources.qrc', '-o', './src/resources_rc.py'], check=True)
+
+if __name__ == "__main__":
+    main()
