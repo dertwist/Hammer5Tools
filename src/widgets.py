@@ -1,4 +1,4 @@
-from src.popup_menu.popup_menu_main import PopupMenu
+from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.variable_frame import VariableFrame
 from PySide6.QtCore import QTimer
 from src.widgets_common import *

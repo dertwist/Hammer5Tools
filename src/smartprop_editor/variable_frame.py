@@ -6,7 +6,7 @@ from PySide6.QtGui import QCursor, QDrag, QAction
 from src.property.methods import PropertyMethods
 from src.smartprop_editor.element_id import *
 from src.preferences import get_config_bool
-from src.popup_menu.popup_menu_main import PopupMenu
+from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.objects import variables_list
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
