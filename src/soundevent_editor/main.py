@@ -303,7 +303,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             for file in files:
                 presets.append({file: os.path.join(root, file)})
 
-        self.soundevent_preset_menu = PopupMenu(properties=list(presets))
+        self.soundevent_preset_menu = PopupMenu(properties=list(presets), window_name='soundevent_preset_menu')
         self.soundevent_preset_menu.add_property_signal.connect(lambda name, value: self.new_soundevent_preset(name, value))
         self.soundevent_preset_menu.show()
 
