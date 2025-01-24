@@ -4,15 +4,17 @@ from PySide6.QtCore import QEvent, Qt, Signal, QSize
 from src.popup_menu.ui_main import Ui_PoPupMenu
 from src.widgets_common import Button
 import webbrowser
+from src.preferences import set_config_value, get_config_value
 
 class PopupMenu(QDialog):
     label_clicked = Signal(str)
     add_property_signal = Signal(str, str)
 
-    def __init__(self, properties: list, add_once: bool = False, parent=None, help_url: str = None):
+    def __init__(self, properties: list, add_once: bool = False, parent=None, help_url: str = None, window_name: str = None):
         super().__init__(parent)
         self.help_url = help_url
         self.properties = properties
+        self.window_name = window_name
         self.ui = Ui_PoPupMenu()
         self.ui.setupUi(self)
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
@@ -21,9 +23,13 @@ class PopupMenu(QDialog):
         # Track selection state
         self.current_selection_index = -1
         self.visible_labels = []
+        self.bookmarked_items = set()
 
         self.setup_ui()
+        self.init_bookmarks()
         self.populate_properties(add_once)
+
+    #=============================================================<  Setup  >==========================================================
 
     def setup_ui(self):
         """Initialize UI components and layouts"""
@@ -32,11 +38,76 @@ class PopupMenu(QDialog):
 
         self.scroll_layout = QVBoxLayout()
         self.scroll_layout.setContentsMargins(0, 0, 2, 0)
+
+        # Create separate sections for bookmarked and regular items
+        self.bookmarked_layout = QVBoxLayout()
+        self.bookmarked_layout.setContentsMargins(0, 0, 0, 0)
+        self.regular_layout = QVBoxLayout()
+        self.regular_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Add layouts to main scroll layout
+        self.scroll_layout.addLayout(self.bookmarked_layout)
+
+        # Add separator between bookmarked and regular items
+        self.separator = QWidget()
+        self.separator.setFixedHeight(20)
+        self.separator.setStyleSheet("background-color: #202020;")
+        self.separator.setVisible(False)
+        self.scroll_layout.addWidget(self.separator)
+
+        self.scroll_layout.addLayout(self.regular_layout)
         self.scroll_layout.addSpacerItem(QSpacerItem(20, 30, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         scroll_content = QWidget()
         scroll_content.setLayout(self.scroll_layout)
         self.ui.scrollArea.setWidget(scroll_content)
+
+    #=============================================================<  Bookmarks  >==========================================================
+
+    def init_bookmarks(self):
+        """Initialize bookmarks from saved settings"""
+        if self.window_name:
+            saved_bookmarks = get_config_value(f'Bookmarks',{self.window_name})
+            if saved_bookmarks:
+                self.bookmarked_items = set(saved_bookmarks.split(','))
+
+    def save_bookmarks(self):
+        """Save bookmarks to settings"""
+        if self.window_name:
+            bookmarks_str = ','.join(self.bookmarked_items)
+            set_config_value(f'Bookmarks', {self.window_name},bookmarks_str)
+
+    def add_bookmark(self, key):
+        """Add an item to bookmarks"""
+        if self.window_name:
+            self.bookmarked_items.add(key)
+            self.save_bookmarks()
+            self.repopulate_items()
+
+    def remove_bookmark(self, key):
+        """Remove an item from bookmarks"""
+        if self.window_name:
+            self.bookmarked_items.discard(key)
+            self.save_bookmarks()
+            self.repopulate_items()
+
+    def repopulate_items(self):
+        """Repopulate all items after bookmark changes"""
+        # Clear existing layouts
+        self.clear_layout(self.bookmarked_layout)
+        self.clear_layout(self.regular_layout)
+
+        # Repopulate items
+        self.populate_properties(False)
+
+        # Update separator visibility
+        self.separator.setVisible(bool(self.bookmarked_items))
+
+    def clear_layout(self, layout):
+        """Clear all items from a layout"""
+        while layout.count():
+            item = layout.takeAt(0)
+            self.cleanup_layout_item(item)
 
     #=============================================================<  Properties  >==========================================================
 
@@ -45,7 +116,13 @@ class PopupMenu(QDialog):
         for item in self.properties:
             for key, value in item.items():
                 element_layout = self.create_property_item(key, value, add_once)
-                self.scroll_layout.insertLayout(self.scroll_layout.count() - 1, element_layout)
+                if key in self.bookmarked_items:
+                    self.bookmarked_layout.addLayout(element_layout)
+                else:
+                    self.regular_layout.addLayout(element_layout)
+
+        # Show separator if there are bookmarked items
+        self.separator.setVisible(bool(self.bookmarked_items))
 
     def create_property_item(self, key, value, add_once):
         """Create a single property item layout"""
@@ -60,7 +137,22 @@ class PopupMenu(QDialog):
         if self.help_url:
             element_layout.addWidget(self.create_help_button(key))
 
+        if self.window_name:
+            bookmark_button = self.create_bookmark_button(key)
+            element_layout.addWidget(bookmark_button)
+
         return element_layout
+
+    def create_bookmark_button(self, key):
+        """Create bookmark button for property items"""
+        button = Button(size=32)
+        if key in self.bookmarked_items:
+            button.set_icon_bookmark_added()
+            button.clicked.connect(lambda: self.remove_bookmark(key))
+        else:
+            button.set_icon_bookmark_add()
+            button.clicked.connect(lambda: self.add_bookmark(key))
+        return button
 
     def create_label_event(self, label, key, value, add_once):
         """Create event handler for label clicks"""
@@ -76,6 +168,7 @@ class PopupMenu(QDialog):
         button.set_icon_question()
         button.clicked.connect(lambda: self.open_wiki_page(label=label, url=self.help_url))
         return button
+
     def open_wiki_page(self, label=None, url=None):
         if url is None:
             url = ''
@@ -87,6 +180,7 @@ class PopupMenu(QDialog):
             webbrowser.open(full_url)
         except Exception as e:
             pass
+
     def clean_spaces(self, text: str) -> str:
         return text.replace(" ", "_")
 

@@ -83,7 +83,7 @@ class PropertySurface(QWidget):
                 else:
                     elements_in_popupmenu.append(item)
 
-        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True)
+        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True, window_name='SPE_Property_filtersurface')
         self.popup_menu.add_property_signal.connect(lambda name, value: self.add_surface(name, value))
         self.popup_menu.show()
 
