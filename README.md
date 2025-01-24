@@ -36,11 +36,12 @@
 
 # Developer Documentation
 
-This text provides a complete overview of the Hammer5Tools project, covering its setup and structure. Whether you’re building tools on top of this foundation or maintaining the existing code, this guide will help you get started.
+This text provides a complete overview of the Hammer5Tools project, covering its setup and structure.  
+Whether you’re building tools on top of this foundation or maintaining the existing code, this guide will help you get started.
 
 ---
 
-## 2. Setup
+## 1. Setup
 
 ### Prerequisites
 - Python 3.10+ (3.12 recommended)  
@@ -75,7 +76,7 @@ This text provides a complete overview of the Hammer5Tools project, covering its
     ```
 ---
 
-## 3. Project Structure
+## 2. Project Structure
 
 Hammer5Tools/  
 ├── src/    
@@ -93,7 +94,7 @@ Hammer5Tools/
 
 ---
 
-## 4. Build Configuration
+## 3. Build Configuration
 
 The project uses a custom build script and supports multiple run modes:
 
@@ -115,22 +116,7 @@ The project uses a custom build script and supports multiple run modes:
 
 ---
 
-## 6. Creating an Installer
+## 4. Creating an Installer
 
 Hammer5Tools uses [InstallForge](https://installforge.net/) for generating installers.  
 Refer to the `hammer5tools_setup.ifp` configuration file within the project for settings related to the installer.
-
----
-
-## 7. Contributing
-
-- Follow existing style conventions for Python code and PySide6 UI elements.  
-- Add new tools in their own module directory under `src/`.  
-- Update `main.py` to link newly created tools to the main interface.
-
----
-
-## 8. Append
-
-- Refer to `requirements.txt` for a full list of project dependencies.
-- For advanced debugging, leverage the `--dev` flag or additional logs within individual tool modules.
