@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QApplication, QDialog, QWidget, QVBoxLayout, QScrollArea, QLabel, QToolButton, QHBoxLayout, QSpacerItem, QSizePolicy
 from PySide6.QtGui import QCursor, QIcon, QKeyEvent
-from PySide6.QtCore import QEvent, Qt, Signal, QSize
+from PySide6.QtCore import QEvent, Qt, Signal, QSize, QRect
 from src.popup_menu.ui_main import Ui_PoPupMenu
 from src.widgets_common import Button
 import webbrowser
@@ -50,8 +50,8 @@ class PopupMenu(QDialog):
 
         # Add separator between bookmarked and regular items
         self.separator = QWidget()
-        self.separator.setFixedHeight(20)
-        self.separator.setStyleSheet("background-color: #202020;")
+        self.separator.setFixedHeight(2)
+        self.separator.setStyleSheet("background-color: #363639;")
         self.separator.setVisible(False)
         self.scroll_layout.addWidget(self.separator)
 
@@ -67,7 +67,7 @@ class PopupMenu(QDialog):
     def init_bookmarks(self):
         """Initialize bookmarks from saved settings"""
         if self.window_name:
-            saved_bookmarks = get_config_value(f'Bookmarks',{self.window_name})
+            saved_bookmarks = get_config_value(f'Bookmarks', self.window_name)
             if saved_bookmarks:
                 self.bookmarked_items = set(saved_bookmarks.split(','))
 
@@ -75,7 +75,7 @@ class PopupMenu(QDialog):
         """Save bookmarks to settings"""
         if self.window_name:
             bookmarks_str = ','.join(self.bookmarked_items)
-            set_config_value(f'Bookmarks', {self.window_name},bookmarks_str)
+            set_config_value(f'Bookmarks', self.window_name, bookmarks_str)
 
     def add_bookmark(self, key):
         """Add an item to bookmarks"""
@@ -355,6 +355,13 @@ class PopupMenu(QDialog):
         return super().event(event)
 
     def showEvent(self, event):
-        """Handle show events"""
-        self.move(QCursor.pos())
+        """Handle show events with improved positioning"""
+        screen_geometry = QApplication.primaryScreen().availableGeometry()
+        window_geometry = self.geometry()
+
+        # Calculate the new position
+        x = min(max(QCursor.pos().x(), screen_geometry.left()), screen_geometry.right() - window_geometry.width())
+        y = min(max(QCursor.pos().y(), screen_geometry.top()), screen_geometry.bottom() - window_geometry.height())
+
+        self.move(x, y)
         super().showEvent(event)
