@@ -5,8 +5,8 @@ import random
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QApplication, QTreeWidget
 from PySide6.QtCore import Signal
 
-from src.batch_creator.property.common import PropertyReplacement
-from src.batch_creator.property.ui_frame import Ui_Form
+from src.assetgroup_maker.property.common import PropertyReplacement
+from src.assetgroup_maker.property.ui_frame import Ui_Form
 from src.widgets import FloatWidget
 from src.property.methods import PropertyMethods
 from src.common import convert_snake_case, JsonToKv3, Kv3ToJson
