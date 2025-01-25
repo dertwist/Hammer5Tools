@@ -290,7 +290,8 @@ QTabBar::tab:selected {
          <string/>
         </property>
         <property name="styleSheet">
-         <string notr="true">padding: 5px;</string>
+         <string notr="true">padding: 5px;
+font: 580 10pt &quot;Segoe UI&quot;;</string>
         </property>
         <property name="text">
          <string>Settings</string>
@@ -319,14 +320,15 @@ QTabBar::tab:selected {
          <string/>
         </property>
         <property name="styleSheet">
-         <string notr="true">padding: 5px;</string>
+         <string notr="true">padding: 5px; 
+font: 580 10pt &quot;Segoe UI&quot;;</string>
         </property>
         <property name="text">
-         <string>Help</string>
+         <string>About</string>
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
-          <normaloff>:/icons/developer_guide_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/developer_guide_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+          <normaloff>:/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -346,7 +348,7 @@ QTabBar::tab:selected {
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>12</width>
+          <width>24</width>
           <height>6</height>
          </size>
         </property>
@@ -505,7 +507,7 @@ QTabBar::tab:selected {
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>12</width>
+          <width>24</width>
           <height>6</height>
          </size>
         </property>
@@ -548,7 +550,7 @@ QTabBar::tab:selected {
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Addon Folder Selection&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Used to choose the folder that should be oppened in the &lt;span style=&quot; font-style:italic;&quot;&gt;Open Game/Content Addons Folder.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">font: 580 10pt &quot;Segoe UI&quot;;</string>
         </property>
         <property name="currentText">
          <string/>
@@ -580,7 +582,8 @@ QTabBar::tab:selected {
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Fix No Steam Logon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This script restarts Steam and launches the current addon.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
-         <string notr="true">padding: 5px;</string>
+         <string notr="true">padding: 5px;
+font: 580 10pt &quot;Segoe UI&quot;;</string>
         </property>
         <property name="text">
          <string>Restart Steam</string>
