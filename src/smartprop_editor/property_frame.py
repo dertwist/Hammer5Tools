@@ -400,7 +400,7 @@ class PropertyFrame(QWidget):
                 if new_value:
                     self.value.update(new_value)
         except Exception as error:
-            print(error)
+            pass
         self.edited.emit()
 
     def update_self(self):
