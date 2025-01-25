@@ -257,7 +257,7 @@
            <bool>true</bool>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+           <enum>QAbstractItemView::SelectionMode::ContiguousSelection</enum>
           </property>
           <property name="uniformRowHeights">
            <bool>true</bool>
