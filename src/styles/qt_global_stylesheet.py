@@ -59,7 +59,7 @@ QGroupBox::indicator:unchecked {
         border: 2px solid black;
         border-radius: 2px;
         border-color: rgba(80, 80, 80, 255);
-        height:22px;
+        height:20px;
         padding-top: 2px;
         padding-bottom:2px;
         padding-left: 4px;
