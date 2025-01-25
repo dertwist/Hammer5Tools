@@ -10,14 +10,10 @@ class AboutDialog(QDialog):
         self.ui.setupUi(self)
         self.ui.version.setText(f"Version: {version}")
         enable_dark_title_bar(self)
-        self.ui.report_a_bug_button.clicked.connect(self.open_report_bug_link)
         self.ui.request_a_new_feature_button.clicked.connect(self.open_request_a_new_feature)
         self.ui.open_documentation_button.clicked.connect(self.open_documentation)
 
-    def open_report_bug_link(self):
-        QDesktopServices.openUrl(QUrl(discord_feedback_channel))
-
     def open_request_a_new_feature(self):
-        QDesktopServices.openUrl(QUrl("https://discord.gg/xygJgM7ZyP"))
+        QDesktopServices.openUrl(QUrl(discord_feedback_channel))
     def open_documentation(self):
         QDesktopServices.openUrl(QUrl("https://twist-1.gitbook.io/hammer5tools"))
