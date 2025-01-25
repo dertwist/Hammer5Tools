@@ -182,7 +182,7 @@ class Ui_MainWindow(object):
         self.tree_hierarchy_widget.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.tree_hierarchy_widget.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.tree_hierarchy_widget.setAlternatingRowColors(True)
-        self.tree_hierarchy_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.tree_hierarchy_widget.setSelectionMode(QAbstractItemView.SelectionMode.ContiguousSelection)
         self.tree_hierarchy_widget.setUniformRowHeights(True)
         self.tree_hierarchy_widget.setAllColumnsShowFocus(False)
         self.tree_hierarchy_widget.setWordWrap(False)
