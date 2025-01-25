@@ -1,10 +1,3 @@
-def fix_no_active_selection_with_w_or_s():
-    """
-    Explanation:
-    In the original code, we allowed navigating selection with W/S keys or arrow keys.
-    This version removes keyboard-based item selection entirely.
-    """
-
 import webbrowser
 from PySide6.QtWidgets import (
     QApplication,
@@ -22,12 +15,13 @@ from PySide6.QtCore import QEvent, Qt, Signal
 from src.popup_menu.ui_main import Ui_PoPupMenu
 from src.widgets_common import Button
 from src.settings.main import set_config_value, get_config_value
+from src.popup_menu.common import _label_stylesheet, _bookmark_bottom_style
 
 
 class PropertyItemWidget(QWidget):
     """
     Represents an individual property entry in the popup menu.
-    Allows toggling bookmarks, showing help, and emitting item click signals.
+    Allows toggling bookmarks, showing help, and emitting item-click signals.
     """
     property_clicked = Signal(str, str, bool, object)
 
@@ -44,6 +38,10 @@ class PropertyItemWidget(QWidget):
         parent=None
     ):
         super().__init__(parent)
+        # Store references to prevent garbage collection or unintended deletions
+        self._parent = parent
+        self._popup_menu = popup_menu
+
         self.key = key
         self.value = value
         self.help_url = help_url
@@ -51,40 +49,45 @@ class PropertyItemWidget(QWidget):
         self.add_once = add_once
         self.ignore_items = ignore_items or set()
         self.bookmarked_items = bookmarked_items or set()
-        self.popup_menu = popup_menu
+
         self._setup_ui()
         self._apply_styles()
 
     def _setup_ui(self):
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        # Main layout for this property widget
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
 
+        # Label that displays the property name/key
         self.label = QLabel(self.key, self)
         self.label.mousePressEvent = self._on_label_clicked
-        layout.addWidget(self.label)
+        self._layout.addWidget(self.label)
 
+        # Optional help button
         if self.help_url:
-            help_button = Button(size=32)
-            help_button.set_icon_question()
-            help_button.clicked.connect(self._on_help_clicked)
-            layout.addWidget(help_button)
+            self.help_button = Button(size=32)
+            self.help_button.set_icon_question()
+            self.help_button.clicked.connect(self._on_help_clicked)
+            self._layout.addWidget(self.help_button)
 
+        # Optional bookmark button
         if self.window_name:
-            bookmark_button = Button(size=32)
+            self.bookmark_button = Button(size=32)
             if self.key in self.bookmarked_items:
-                bookmark_button.set_icon_bookmark_added()
+                self.bookmark_button.set_icon_bookmark_added()
             else:
-                bookmark_button.set_icon_bookmark_add()
-            bookmark_button.clicked.connect(self._toggle_bookmark)
-            layout.addWidget(bookmark_button)
+                self.bookmark_button.set_icon_bookmark_add()
+            self.bookmark_button.clicked.connect(self._toggle_bookmark)
+            self._layout.addWidget(self.bookmark_button)
 
     def _apply_styles(self):
-        self.label.setStyleSheet(self._label_stylesheet())
+        # Apply a global stylesheet to the label
+        self.label.setStyleSheet(_label_stylesheet())
 
     def _on_label_clicked(self, event):
         """
-        If 'add_once' is set, skip if already ignored,
-        or remove it if newly added.
+        Called when the user clicks the property label.
+        Signals the parent that this property was selected.
         """
         if self.add_once and (self.key, str(self.value)) in self.ignore_items:
             return
@@ -92,41 +95,44 @@ class PropertyItemWidget(QWidget):
         self.property_clicked.emit(self.key, str(self.value), remove_item, self.label)
 
     def _on_help_clicked(self):
+        """
+        Open the help URL in a web browser. The label name is appended
+        to the URL's fragment identifier.
+        """
         base_url = "https://developer.valvesoftware.com/wiki/"
         cleaned_label = self.key.replace(" ", "_") or "Workflow"
         url = f"{base_url}{self.help_url or ''}#{cleaned_label}"
         webbrowser.open(url)
 
     def _toggle_bookmark(self):
+        """
+        Add or remove the key from the bookmarks set, then refresh the parent's UI.
+        """
         if self.key in self.bookmarked_items:
             self.bookmarked_items.remove(self.key)
+            self.bookmark_button.set_icon_bookmark_add()
         else:
             self.bookmarked_items.add(self.key)
+            self.bookmark_button.set_icon_bookmark_added()
 
         if self.window_name:
             set_config_value('Bookmarks', self.window_name, ','.join(self.bookmarked_items))
 
-        if self.popup_menu:
-            self.popup_menu.repopulate_items()
+        if self._popup_menu:
+            self._popup_menu.repopulate_items()
 
-    @staticmethod
-    def _label_stylesheet():
-        return """
-            QLabel {
-                font: 580 10pt "Segoe UI";
-                border-bottom: 0.5px solid black;
-                border-radius: 0px;
-                border-color: rgba(40, 40, 40, 255);
-                padding-top: 8px;
-                padding-bottom: 8px;
-            }
-            QLabel:hover {
-                background-color: #414956;
-            }
-            QLabel[selected="true"] {
-                background-color: #2A2E38;
-            }
+    def cleanup(self):
         """
+        Explicit cleanup method to break circular references
+        and ensure child widgets are properly deleted.
+        """
+        if hasattr(self, 'help_button'):
+            self.help_button.deleteLater()
+        if hasattr(self, 'bookmark_button'):
+            self.bookmark_button.deleteLater()
+        self.label.deleteLater()
+        self._popup_menu = None
+        self._parent = None
 
 
 class PopupMenu(QDialog):
@@ -147,32 +153,39 @@ class PopupMenu(QDialog):
         window_name=None
     ):
         super().__init__(parent)
+        # Store configuration parameters
         self.properties = properties
         self.help_url = help_url
         self.window_name = window_name
+
+        # Set up the UI from the generated .ui file
         self.ui = Ui_PoPupMenu()
         self.ui.setupUi(self)
 
+        # Mark whether properties should be added once and potential ignore list
         self.add_once = add_once
         self.ignore_items = self._convert_ignore_list(ignore_list)
 
+        # Remove title bar and set initial geometry
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_DeleteOnClose)  # Ensure full cleanup on close
         self.setGeometry(200, 200, 400, 400)
 
+        # Track sets for bookmarked and removed items
         self.bookmarked_items = set()
         self.removed_items = set()
 
-        # Setup UI, load bookmarks, and populate items
+        # Set up the internal layouts, read stored bookmarks, and populate
         self._setup_ui()
         self._init_bookmarks()
         self._populate_properties()
 
-        # Track if the menu has begun closing to avoid recursive calls
+        # Track if the menu is closing to avoid duplicate calls
         self._is_closing = False
 
     def _convert_ignore_list(self, ignore_list):
         """
-        Convert ignore_list to a consistent set of (key, value) pairs.
+        Convert ignore_list to a consistent set of (key, value) pairs if needed.
         """
         ignore = set()
         if ignore_list:
@@ -186,7 +199,8 @@ class PopupMenu(QDialog):
 
     def _setup_ui(self):
         """
-        Create separate layouts, plus a search bar at the top and a separator widget.
+        Create separate layouts for bookmarked vs. regular items,
+        plus a search bar at the top, and a separator widget.
         Also removes keyboard navigation for clarity.
         """
         self.ui.lineEdit.setFocusPolicy(Qt.StrongFocus)
@@ -196,17 +210,21 @@ class PopupMenu(QDialog):
         self.scroll_layout = QVBoxLayout()
         self.scroll_layout.setContentsMargins(0, 0, 2, 0)
 
+        # Layout for bookmarked items at the top
         self.bookmarked_layout = QVBoxLayout()
         self.bookmarked_layout.setContentsMargins(0, 0, 0, 0)
 
+        # Layout for regular (non-bookmarked) items below
         self.regular_layout = QVBoxLayout()
         self.regular_layout.setContentsMargins(0, 0, 0, 0)
 
+        # Visual separator between bookmarked and regular items
         self.separator = QWidget()
         self.separator.setFixedHeight(2)
         self.separator.setStyleSheet("background-color: #363639;")
         self.separator.hide()
 
+        # Add layouts to our scroll layout
         self.scroll_layout.addLayout(self.bookmarked_layout)
         self.scroll_layout.addWidget(self.separator)
         self.scroll_layout.addLayout(self.regular_layout)
@@ -214,9 +232,10 @@ class PopupMenu(QDialog):
             QSpacerItem(20, 30, QSizePolicy.Minimum, QSizePolicy.Expanding)
         )
 
-        scroll_content = QWidget()
-        scroll_content.setLayout(self.scroll_layout)
-        self.ui.scrollArea.setWidget(scroll_content)
+        # Store the scrollable content in self.container for safe cleanup later
+        self.container = QWidget()
+        self.container.setLayout(self.scroll_layout)
+        self.ui.scrollArea.setWidget(self.container)
 
     def _init_bookmarks(self):
         """
@@ -239,20 +258,25 @@ class PopupMenu(QDialog):
 
     def _clear_layout(self, layout):
         """
-        Iteratively remove and delete all widgets from a layout.
+        Recursively remove all widgets from a layout, cleaning them up.
         """
-        while layout.count():
+        while layout and layout.count():
             item = layout.takeAt(0)
-            self._cleanup_layout_item(item)
+            if item.widget():
+                widget = item.widget()
+                if isinstance(widget, PropertyItemWidget):
+                    widget.cleanup()
+                widget.deleteLater()
 
     def _populate_properties(self):
         """
         Create PropertyItemWidgets for each property, separating
-        bookmarked vs. regular items.
+        bookmarked vs. regular items for distinct layouts.
         """
         bookmarked_list = []
         for mapping in self.properties:
             for key, val in mapping.items():
+                # If add_once is set, skip items that have already been removed
                 if self.add_once and (key, str(val)) in self.removed_items:
                     continue
 
@@ -274,9 +298,10 @@ class PopupMenu(QDialog):
                 else:
                     self.regular_layout.addWidget(item_widget)
 
+        # Add bookmarked items after collecting them in a list
         for idx, wdg in enumerate(bookmarked_list):
             if idx == len(bookmarked_list) - 1:
-                wdg.label.setStyleSheet(self._bookmark_bottom_style())
+                wdg.label.setStyleSheet(_bookmark_bottom_style())
             self.bookmarked_layout.addWidget(wdg)
 
         self.separator.setVisible(len(bookmarked_list) > 0)
@@ -309,26 +334,15 @@ class PopupMenu(QDialog):
 
     def _cleanup_layout_item(self, item):
         """
-        Non-recursive BFS approach to safely delete widgets or layouts inside an item.
+        Safely clean up a layout item by calling its cleanup() method, then deleting it.
         """
-        wdg = item.widget()
-        if wdg:
-            wdg.deleteLater()
-        else:
-            child_layout = item.layout()
-            if child_layout:
-                queue = [child_layout]
-                while queue:
-                    current_layout = queue.pop()
-                    while current_layout.count():
-                        cn_item = current_layout.takeAt(0)
-                        cn_wdg = cn_item.widget()
-                        if cn_wdg:
-                            cn_wdg.deleteLater()
-                        else:
-                            cl = cn_item.layout()
-                            if cl:
-                                queue.append(cl)
+        if not item:
+            return
+        widget = item.widget()
+        if widget and isinstance(widget, PropertyItemWidget):
+            widget.cleanup()
+        if widget:
+            widget.deleteLater()
 
     def _search_text_changed(self):
         """
@@ -343,7 +357,7 @@ class PopupMenu(QDialog):
 
     def _search_layout_iterative(self, layout, search_text):
         """
-        Iteratively traverse a layout to show/hide items matching the search text.
+        Recursively traverse a layout's items and hide/show them based on matching text.
         """
         queue = [layout]
         while queue:
@@ -367,15 +381,14 @@ class PopupMenu(QDialog):
         Overrides the main widget's keyPressEvent only to close or pass
         the event along. Keyboard-based item selection is removed.
         """
-        if event.key() in [Qt.Key_Escape]:
+        if event.key() == Qt.Key_Escape:
             self.close()
         else:
             super().keyPressEvent(event)
 
     def event(self, evt):
         """
-        Close the menu when focus is lost.
-        Avoid re-entrant calls if the dialog is already closing.
+        Close the menu when focus is lost. Avoid re-entrant calls if already closing.
         """
         if evt.type() == QEvent.WindowDeactivate and not self._is_closing:
             self._is_closing = True
@@ -385,7 +398,7 @@ class PopupMenu(QDialog):
 
     def showEvent(self, evt):
         """
-        Position and show the popup near the cursor.
+        Automatically position and show the popup near the cursor.
         """
         screen_geo = QApplication.primaryScreen().availableGeometry()
         win_geo = self.geometry()
@@ -398,7 +411,8 @@ class PopupMenu(QDialog):
 
     def closeEvent(self, evt):
         """
-        Thoroughly clean up to prevent resource leaks.
+        Ensure we don't re-enter close steps multiple times. Cleans layouts
+        and breaks references for a smoother shutdown and to avoid crashes.
         """
         if self._is_closing:
             super().closeEvent(evt)
@@ -407,32 +421,15 @@ class PopupMenu(QDialog):
         self._is_closing = True
         self._clear_layout(self.bookmarked_layout)
         self._clear_layout(self.regular_layout)
+
+        # Clean up the scroll area contents
         if self.ui and self.ui.scrollArea:
             self.ui.scrollArea.setWidget(None)
+            self.container.deleteLater()
 
+        # Clear references for safety
         self.ui = None
         self.bookmarked_items.clear()
         self.removed_items.clear()
-        super().closeEvent(evt)
 
-    @staticmethod
-    def _bookmark_bottom_style():
-        """
-        Special style for the last bookmarked item.
-        """
-        return """
-            QLabel {
-                font: 580 10pt "Segoe UI";
-                border-bottom: 0px solid black;
-                border-radius: 0px;
-                border-color: rgba(40, 40, 40, 255);
-                padding-top: 8px;
-                padding-bottom: 8px;
-            }
-            QLabel:hover {
-                background-color: #414956;
-            }
-            QLabel[selected="true"] {
-                background-color: #2A2E38;
-            }
-        """
+        super().closeEvent(evt)
