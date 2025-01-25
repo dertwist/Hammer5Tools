@@ -501,7 +501,7 @@ class ComboboxVariables(ComboboxDynamicItems):
         else:
             return self.currentText()
 class ComboboxVariablesWidget(QWidget):
-    def __init__(self, parent=None, variables_layout=None, filter_types=None, variable_type=None):
+    def __init__(self, parent=None, variables_layout=None, filter_types: list = None, variable_type: str = None):
         """Combobox variables widget with search and add buttons that dynamically show or hide the add button."""
         super().__init__(parent)
 

@@ -38,7 +38,7 @@ class PropertyVariableOutput(QWidget):
 
 
         # Variable
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, variable_type='Float', filter_types=['Float', 'Int'])
         # self.variable.setFixedWidth(256)
         self.variable.setMaximumHeight(24)
         self.variable.search_button.set_size(width=24, height=24)
