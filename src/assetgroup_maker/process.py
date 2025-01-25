@@ -103,7 +103,8 @@ class StartProcess(QThread):
         self.wait()
 
 
-def perform_batch_processing(file_path: str, process: Dict, preview: bool, replacements: Dict, content_template: Optional[str] = None) -> List[str]:
+def perform_batch_processing(file_path: str, process: Dict, preview: bool, replacements: Dict,
+                             content_template: Optional[str] = None) -> List[str]:
     """
     Perform batch processing of files based on the provided process configuration.
 
@@ -134,9 +135,11 @@ def perform_batch_processing(file_path: str, process: Dict, preview: bool, repla
     load_from_the_folder = bool(process.get('load_from_the_folder'))
     output_to_the_folder = bool(process.get('output_to_the_folder'))
 
+    # Gather input files
     if load_from_the_folder:
         files_to_process = search_files(batch_directory, algorithm, ignore_extensions, process)
     else:
+        # Use a custom list if not loading from folder
         files_to_process = process.get('custom_files', [])
 
     created_files = []
@@ -172,8 +175,9 @@ def perform_batch_processing(file_path: str, process: Dict, preview: bool, repla
         return created_files
 
 
-def execute_file_creation(files: List[str], output_path: str, relative_path: str, extension: str, created_files: List[str],
-                          replacements: Dict, reference: Optional[str], content_template: Optional[str], load_from_the_folder: bool,
+def execute_file_creation(files: List[str], output_path: str, relative_path: str, extension: str,
+                          created_files: List[str], replacements: Dict, reference: Optional[str],
+                          content_template: Optional[str], load_from_the_folder: bool,
                           base_directory: Optional[str] = None):
     """
     Execute the creation of files based on the provided parameters.
@@ -202,15 +206,17 @@ def execute_file_creation(files: List[str], output_path: str, relative_path: str
                     data_replacements = data_replacements.replace(old, new)
 
         if load_from_the_folder:
+            # For folder-based processing, #$ASSET_NAME$# is the actual file name,
+            # while #$FOLDER_PATH$# is the relative path to the base directory.
             data = data_replacements.replace("#$FOLDER_PATH$#", relative_path)
             data = data.replace("#$ASSET_NAME$#", file_name)
             output_file_path = os.path.join(output_path, f"{file_name}.{extension}")
         else:
+            # For custom file lists, figure out any subfolder from the original path
             original_dir = os.path.dirname(file_name)
             base_name = os.path.splitext(os.path.basename(file_name))[0]
 
             dynamic_relative_path = os.path.relpath(original_dir, base_directory).replace('\\', '/')
-
             data = data_replacements.replace("#$FOLDER_PATH$#", dynamic_relative_path)
             data = data.replace("#$ASSET_NAME$#", base_name)
             output_file_path = os.path.join(output_path, f"{base_name}.{extension}")
@@ -218,19 +224,28 @@ def execute_file_creation(files: List[str], output_path: str, relative_path: str
         output_path_resolved = os.path.abspath(output_file_path)
         reference_path_resolved = os.path.abspath(reference) if reference else None
 
-        if output_path_resolved != reference_path_resolved:
-            try:
-                os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
-                with open(output_file_path, 'w') as output_file:
-                    output_file.write(data)
-                debug(f"File created: {output_file_path}")
-                created_files.append(output_file_path)
-            except PermissionError as e:
-                debug(f"Permission denied: {output_file_path}\n{e}")
-            except Exception as e:
-                debug(f"Failed to create file {output_file_path}\n{e}")
-        else:
-            debug(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
+        # Adjust the path check to be case-insensitive on Windows
+        if reference_path_resolved:
+            if os.name == 'nt':  # Windows
+                if output_path_resolved.lower() == reference_path_resolved.lower():
+                    debug(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
+                    continue
+            else:
+                # On non-Windows, paths are case-sensitive, so comparing them directly is sufficient
+                if output_path_resolved == reference_path_resolved:
+                    debug(f"Skipped writing to the reference file to prevent infinite loop: {output_file_path}")
+                    continue
+
+        try:
+            os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+            with open(output_file_path, 'w') as output_file:
+                output_file.write(data)
+            debug(f"File created: {output_file_path}")
+            created_files.append(output_file_path)
+        except PermissionError as e:
+            debug(f"Permission denied: {output_file_path}\n{e}")
+        except Exception as e:
+            debug(f"Failed to create file {output_file_path}\n{e}")
 
 
 def get_basename_without_extension(file_path: str) -> str:
@@ -243,7 +258,8 @@ def get_basename_without_extension(file_path: str) -> str:
     return os.path.splitext(os.path.basename(file_path))[0]
 
 
-def preview_processing_files(files: List[str], base_directory: str, extension: str, process: Dict) -> Tuple[List[str], Optional[List[str]], str, str]:
+def preview_processing_files(files: List[str], base_directory: str, extension: str,
+                             process: Dict) -> Tuple[List[str], Optional[List[str]], str, str]:
     """
     Preview the processing of files without actual creation.
 
@@ -281,7 +297,7 @@ def extract_base_names_underscore(names: List[str]) -> Set[str]:
     """
     Extract base names from a list of file names, removing underscores.
 
-    :param names: List of file names.
+    :param nwames: List of file names.
     :return: Set of base names with underscores removed.
     """
     return set(name.rsplit('_', 1)[0] if '_' in name else name for name in names)
