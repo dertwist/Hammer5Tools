@@ -51,31 +51,34 @@ QGroupBox::indicator:unchecked {
 }
 
 /* ========================================================== */
-QPushButton {
+    QPushButton {
 
-    font: 700 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    height:18px;
-    padding-top: 2px;
-    padding-bottom:2px;
-    padding-left: 4px;
-    padding-right: 4px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-}
-QPushButton:hover {
-    background-color: #414956;
-    color: white;
-}
-QPushButton:pressed {
-    background-color: red;
-    background-color: #1C1C1C;
-    margin: 1 px;
-    margin-left: 2px;
-    margin-right: 2px;
-}
+        font: 700 10pt "Segoe UI";
+    
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }
 /* ========================================================== */
 
 
@@ -100,12 +103,14 @@ QToolButton {
 
     font: 700 10pt "Segoe UI";
     border: 2px solid black;
-    border-radius: 4px;
+    border: 2px solid black;
+    border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-    height:18px;
-    padding: 4px;
-    padding-left: 6px;
-    padding-right: 6px;
+    height:22px;
+    padding-top: 2px;
+    padding-bottom:2px;
+    padding-left: 4px;
+    padding-right: 4px;
     color: #E3E3E3;
     background-color: #1C1C1C;
 }
@@ -119,9 +124,9 @@ QToolButton:pressed {
     margin: 1 px;
     margin-left: 2px;
     margin-right: 2px;
-    font: 580 9pt "Segoe UI";
 
 }
+
 
 
 
@@ -174,6 +179,11 @@ QTabBar::tab:selected {
     height:20px;
     color: #E3E3E3;
     background-color: #1d1d1f;
+
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+        border-bottom: 0px solid black;
 }
 
 /* ========================================================== */
@@ -238,83 +248,81 @@ QDockWidget DockTitleWidget QToolButton::menu-indicator {
 
 /* ========================================================== */
 
-QComboBox {
-    font: 700 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    height: 18px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-    padding-left: 5px;
-}
+    QComboBox {
 
-QComboBox:hover {
-    background-color: #414956;
-    color: white;
-}
+        font: 700 10pt "Segoe UI";
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:26px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QComboBox:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QComboBox:pressed {
 
-QComboBox:pressed {
-    background-color: #2E2F30;
-    color: white;
-}
-
-QComboBox:item {
+    }
+    QComboBox:item {
     font: 600 12pt "Segoe UI";
     color: #E3E3E3;
     padding-left: 5px;
     background-color: #1C1C1C;
     border-style: none;
-}
-
-QComboBox::drop-down {
-    color: #E3E3E3;
-    padding: 2px;
-    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
-    border-bottom: 0px solid black;
-    border-top: 0px solid black;
-    border-right: 0px;
-    border-left: 2px solid;
-    margin-left: 5px;
-    padding: 5px;
-    width: 7px;
-    border-color: rgba(80, 80, 80, 255);
-    background-color: #1C1C1C;
-}
-
-
-QComboBox QAbstractItemView {
-    border: 2px solid gray;
-    border-color: rgba(80, 80, 80, 255);
-    selection-background-color: #414956;
-    background-color: #1C1C1C;
-}
-
-
-QComboBox QAbstractItemView::item {
-    height: 16px; /* Set the height of each item */
-    padding: 4px; /* Add padding to each item */
-    padding-left: 5px;
-    padding-right: 5px;
-    color: #ff8a8a8a;
-    border-style: none;
-    border-bottom: 0.5px solid black;
-    border-color: rgba(255, 255, 255, 10);
-}
-
-
-QComboBox QAbstractItemView::item:selected {
-    height: 16px; /* Set the height of each item */
-    padding: 4px; /* Add padding to each item */
-    padding-left: 5px;
-    padding-right: 5px;
-    background-color: #414956;
-    color: white;
-    border: none; /* Remove border */
-    outline: none; /* Remove outline */
-}
+    }
+    
+    QComboBox::drop-down {
+        color: #E3E3E3;
+        padding: 2px;
+        background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
+        border-bottom: 0px solid black;
+        border-top: 0px solid black;
+        border-right: 0px;
+        border-left: 2px solid;
+        margin-left: 5px;
+        padding: 5px;
+        width: 7px;
+        border-color: rgba(80, 80, 80, 255);
+        background-color: #1C1C1C;
+    }
+    
+    
+    QComboBox QAbstractItemView {
+        border: 2px solid gray;
+        border-color: rgba(80, 80, 80, 255);
+        selection-background-color: #414956;
+        background-color: #1C1C1C;
+    }
+    
+    
+    QComboBox QAbstractItemView::item {
+        height: 16px; /* Set the height of each item */
+        padding: 4px; /* Add padding to each item */
+        padding-left: 5px;
+        padding-right: 5px;
+        color: #ff8a8a8a;
+        border-style: none;
+        border-bottom: 0.5px solid black;
+        border-color: rgba(255, 255, 255, 10);
+    }
+    
+    
+    QComboBox QAbstractItemView::item:selected {
+        height: 16px; /* Set the height of each item */
+        padding: 4px; /* Add padding to each item */
+        padding-left: 5px;
+        padding-right: 5px;
+        background-color: #414956;
+        color: white;
+        border: none; /* Remove border */
+        outline: none; /* Remove outline */
+    }
 
 /* ========================================================== */
 
@@ -398,15 +406,17 @@ QTextBrowser:pressed {
 
 QCheckBox {
     font: 700 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    height:14px;
-    padding-top: 2px;
-    padding-bottom:2px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-    padding-left: 4px;
+
+            border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
 }
 
 QCheckBox::indicator:unchecked {
