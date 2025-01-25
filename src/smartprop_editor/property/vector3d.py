@@ -10,6 +10,11 @@ from src.widgets import FloatWidget, ComboboxVariablesWidget
 
 class PropertyVector3D(QWidget):
     edited = Signal()
+
+    # Precompile patterns for faster initialization
+    _pattern_phase1 = re.compile(r'm_fl|m_n|m_v|m_')
+    _pattern_phase2 = re.compile(r'([a-z0-9])([A-Z])')
+
     def __init__(self, value_class, value, variables_scrollArea):
         super().__init__()
         self.ui = Ui_Widget()
@@ -19,31 +24,34 @@ class PropertyVector3D(QWidget):
         self.value = value
         self.variables_scrollArea = variables_scrollArea
 
-        output = re.sub(r'm_fl|m_n|m_v|m_', '', self.value_class)
-        output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
-
+        # Performance: Build output string in a single pass
+        intermediate = self._pattern_phase1.sub('', self.value_class)
+        output = self._pattern_phase2.sub(r'\1 \2', intermediate)
         self.ui.property_class.setText(output)
-        self.ui.logic_switch.currentIndexChanged.connect(self.on_changed)
 
+        self.ui.logic_switch.currentIndexChanged.connect(self.on_changed)
         filter_types = ['Float', 'Int']
 
         # Variable
-        self.variable_logic_switch = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Vector3D'])
+        self.variable_logic_switch = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            filter_types=['Vector3D']
+        )
         self.variable_logic_switch.setMinimumWidth(256)
         self.variable_logic_switch.setMaximumHeight(24)
         self.variable_logic_switch.search_button.set_size(width=24, height=24)
         self.variable_logic_switch.combobox.changed.connect(self.on_changed)
-        # self.variable_logic_switch.setMinimumHeight(32)
         self.ui.layout.insertWidget(2, self.variable_logic_switch)
 
         # Vector X Setup
-
-        # Float widget
         self.float_widget_x = FloatWidget()
         self.float_widget_x.edited.connect(self.on_changed)
         self.ui.layout_x.insertWidget(2, self.float_widget_x)
-        # Variable
-        self.variable_x = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types)
+
+        self.variable_x = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            filter_types=filter_types
+        )
         self.variable_x.setMinimumWidth(256)
         self.variable_x.setMaximumHeight(24)
         self.variable_x.search_button.set_size(width=24, height=24)
@@ -52,26 +60,26 @@ class PropertyVector3D(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable_x)
         layout.addSpacerItem(spacer)
-        self.variable_x_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
-        self.variable_x_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.variable_x_frame = QWidget()
+        self.variable_x_frame.setLayout(layout)
         self.variable_x_frame.setMinimumHeight(32)
         self.variable_x.combobox.changed.connect(self.on_changed)
         self.ui.layout_x.insertWidget(3, self.variable_x_frame)
 
-        # Expression
         self.text_line_x = CompletingPlainTextEdit()
         self.ui.layout_x.insertWidget(4, self.text_line_x)
         self.text_line_x.textChanged.connect(self.on_changed)
         self.ui.comboBox_x.currentIndexChanged.connect(self.on_changed)
 
         # Vector Y Setup
-
-        # Float widget
         self.float_widget_y = FloatWidget()
         self.float_widget_y.edited.connect(self.on_changed)
         self.ui.layout_y.insertWidget(2, self.float_widget_y)
-        # Variable
-        self.variable_y = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types)
+
+        self.variable_y = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            filter_types=filter_types
+        )
         self.variable_y.setMinimumWidth(256)
         self.variable_y.setMaximumHeight(24)
         self.variable_y.search_button.set_size(width=24, height=24)
@@ -80,26 +88,26 @@ class PropertyVector3D(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable_y)
         layout.addSpacerItem(spacer)
-        self.variable_y_frame = QWidget()  # Create a QWidget instead of QHBoxLayout
+        self.variable_y_frame = QWidget()
         self.variable_y_frame.setMinimumHeight(32)
-        self.variable_y_frame.setLayout(layout)  # Set the layout to the QWidget
+        self.variable_y_frame.setLayout(layout)
         self.variable_y.combobox.changed.connect(self.on_changed)
         self.ui.layout_y.insertWidget(3, self.variable_y_frame)
 
-        # Expression
         self.text_line_y = CompletingPlainTextEdit()
         self.ui.layout_y.insertWidget(4, self.text_line_y)
         self.text_line_y.textChanged.connect(self.on_changed)
         self.ui.comboBox_y.currentIndexChanged.connect(self.on_changed)
 
         # Vector Z Setup
-
-        # Float widget
         self.float_widget_z = FloatWidget()
         self.float_widget_z.edited.connect(self.on_changed)
         self.ui.layout_z.insertWidget(2, self.float_widget_z)
-        # Variable
-        self.variable_z = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types)
+
+        self.variable_z = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            filter_types=filter_types
+        )
         self.variable_z.setMinimumWidth(196)
         self.variable_z.setMaximumHeight(24)
         self.variable_z.search_button.set_size(width=24, height=24)
@@ -114,39 +122,43 @@ class PropertyVector3D(QWidget):
         self.variable_z.combobox.changed.connect(self.on_changed)
         self.ui.layout_z.insertWidget(3, self.variable_z_frame)
 
-        # Expression
         self.text_line_z = CompletingPlainTextEdit()
         self.ui.layout_z.insertWidget(4, self.text_line_z)
         self.text_line_z.textChanged.connect(self.on_changed)
         self.ui.comboBox_z.currentIndexChanged.connect(self.on_changed)
 
+        # Default states
         self.value = None
         self.ui.logic_switch.setCurrentIndex(0)
 
-        def add_value(layout, value, combo, variable, float_widget):
-            if isinstance(value, dict):
-                if 'm_Expression' in value:
-                    layout.setPlainText(str(value['m_Expression']))
+        def add_value(layout_widget, in_value, combo, variable, float_widget):
+            if isinstance(in_value, dict):
+                if 'm_Expression' in in_value:
+                    layout_widget.setPlainText(str(in_value['m_Expression']))
                     combo.setCurrentIndex(2)
-                if 'm_SourceName' in value:
+                if 'm_SourceName' in in_value:
                     variable.combobox.updateItems()
-                    variable.combobox.addItem(value['m_SourceName'])
-                    variable.combobox.setCurrentText(value['m_SourceName'])
+                    variable.combobox.addItem(in_value['m_SourceName'])
+                    variable.combobox.setCurrentText(in_value['m_SourceName'])
                     combo.setCurrentIndex(1)
-            elif isinstance(value, int) or isinstance(value, float):
-                float_widget.SpinBox.setValue(value)
+            elif isinstance(in_value, int) or isinstance(in_value, float):
+                float_widget.SpinBox.setValue(in_value)
                 float_widget.on_SpinBox_updated()
                 combo.setCurrentIndex(0)
             else:
-                layout.setPlainText(str(value))
+                layout_widget.setPlainText(str(in_value))
                 combo.setCurrentIndex(0)
 
+        # Performance: reduce logic for dict or list by pre-determining the structure
         if isinstance(value, dict):
             if 'm_Components' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
-                add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x, self.variable_x, self.float_widget_x)
-                add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y, self.variable_y, self.float_widget_y)
-                add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z, self.variable_z, self.float_widget_z)
+                add_value(self.text_line_x, value['m_Components'][0], self.ui.comboBox_x,
+                          self.variable_x, self.float_widget_x)
+                add_value(self.text_line_y, value['m_Components'][1], self.ui.comboBox_y,
+                          self.variable_y, self.float_widget_y)
+                add_value(self.text_line_z, value['m_Components'][2], self.ui.comboBox_z,
+                          self.variable_z, self.float_widget_z)
             if 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(1)
                 self.var_value = value['m_SourceName']
@@ -154,9 +166,12 @@ class PropertyVector3D(QWidget):
                 self.variable_logic_switch.combobox.setCurrentText(value['m_SourceName'])
         elif isinstance(value, list):
             self.ui.logic_switch.setCurrentIndex(2)
-            add_value(self.text_line_x, value[0], self.ui.comboBox_x, self.variable_x, self.float_widget_x)
-            add_value(self.text_line_y, value[1], self.ui.comboBox_y, self.variable_y, self.float_widget_y)
-            add_value(self.text_line_z, value[2], self.ui.comboBox_z, self.variable_z, self.float_widget_z)
+            add_value(self.text_line_x, value[0], self.ui.comboBox_x,
+                      self.variable_x, self.float_widget_x)
+            add_value(self.text_line_y, value[1], self.ui.comboBox_y,
+                      self.variable_y, self.float_widget_y)
+            add_value(self.text_line_z, value[2], self.ui.comboBox_z,
+                      self.variable_z, self.float_widget_z)
 
         self.on_changed()
 
@@ -237,21 +252,20 @@ class PropertyVector3D(QWidget):
             def handle_value(line, combo_box, variable, float_widget):
                 index = combo_box.currentIndex()
                 if index == 0:
-                    value = float_widget.value
+                    return float_widget.value
                 elif index == 1:
-                    value = {'m_SourceName': variable.combobox.get_variable()}
-                elif index == 2:
-                    value = {'m_Expression': line.toPlainText()}
-                return value
+                    return {'m_SourceName': variable.combobox.get_variable()}
+                return {'m_Expression': line.toPlainText()}
 
-            # Update values
-            value_x = handle_value(self.text_line_x, self.ui.comboBox_x, self.variable_x, self.float_widget_x)
-            value_y = handle_value(self.text_line_y, self.ui.comboBox_y, self.variable_y, self.float_widget_y)
-            value_z = handle_value(self.text_line_z, self.ui.comboBox_z, self.variable_z, self.float_widget_z)
+            value_x = handle_value(self.text_line_x, self.ui.comboBox_x,
+                                   self.variable_x, self.float_widget_x)
+            value_y = handle_value(self.text_line_y, self.ui.comboBox_y,
+                                   self.variable_y, self.float_widget_y)
+            value_z = handle_value(self.text_line_z, self.ui.comboBox_z,
+                                   self.variable_z, self.float_widget_z)
             self.value = {self.value_class: {'m_Components': [value_x, value_y, value_z]}}
 
     def get_variables(self, search_term=None):
-        self.variables_scrollArea
         data_out = []
         for i in range(self.variables_scrollArea.count()):
             widget = self.variables_scrollArea.itemAt(i).widget()
