@@ -178,7 +178,8 @@ class Ui_MainWindow(object):
         self.preferences_button = QPushButton(self.centralwidget)
         self.preferences_button.setObjectName(u"preferences_button")
         self.preferences_button.setMinimumSize(QSize(128, 0))
-        self.preferences_button.setStyleSheet(u"padding: 5px;")
+        self.preferences_button.setStyleSheet(u"padding: 5px;\n"
+"font: 580 10pt \"Segoe UI\";")
         icon9 = QIcon()
         icon9.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.preferences_button.setIcon(icon9)
@@ -189,15 +190,16 @@ class Ui_MainWindow(object):
         self.documentation_button = QPushButton(self.centralwidget)
         self.documentation_button.setObjectName(u"documentation_button")
         self.documentation_button.setMinimumSize(QSize(96, 0))
-        self.documentation_button.setStyleSheet(u"padding: 5px;")
+        self.documentation_button.setStyleSheet(u"padding: 5px; \n"
+"font: 580 10pt \"Segoe UI\";")
         icon10 = QIcon()
-        icon10.addFile(u":/icons/developer_guide_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon10.addFile(u":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.documentation_button.setIcon(icon10)
         self.documentation_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.documentation_button)
 
-        self.horizontalSpacer_3 = QSpacerItem(12, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer_3 = QSpacerItem(24, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer_3)
 
@@ -260,7 +262,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.Launch_Addon_Button)
 
-        self.horizontalSpacer = QSpacerItem(12, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacer = QSpacerItem(24, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer)
 
@@ -283,14 +285,15 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.open_addons_folder_downlist.sizePolicy().hasHeightForWidth())
         self.open_addons_folder_downlist.setSizePolicy(sizePolicy)
         self.open_addons_folder_downlist.setMinimumSize(QSize(22, 0))
-        self.open_addons_folder_downlist.setStyleSheet(u"")
+        self.open_addons_folder_downlist.setStyleSheet(u"font: 580 10pt \"Segoe UI\";")
 
         self.horizontalLayout_2.addWidget(self.open_addons_folder_downlist)
 
         self.FixNoSteamLogon_Button = QPushButton(self.centralwidget)
         self.FixNoSteamLogon_Button.setObjectName(u"FixNoSteamLogon_Button")
         self.FixNoSteamLogon_Button.setMinimumSize(QSize(156, 0))
-        self.FixNoSteamLogon_Button.setStyleSheet(u"padding: 5px;")
+        self.FixNoSteamLogon_Button.setStyleSheet(u"padding: 5px;\n"
+"font: 580 10pt \"Segoe UI\";")
         icon16 = QIcon()
         icon16.addFile(u":/icons/bolt_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.FixNoSteamLogon_Button.setIcon(icon16)
@@ -337,7 +340,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.documentation_button.setToolTip("")
 #endif // QT_CONFIG(tooltip)
-        self.documentation_button.setText(QCoreApplication.translate("MainWindow", u"Help", None))
+        self.documentation_button.setText(QCoreApplication.translate("MainWindow", u"About", None))
 #if QT_CONFIG(tooltip)
         self.export_and_import_addon_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Archive addon</span></p><p>Create an archive on from game and content folders.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
