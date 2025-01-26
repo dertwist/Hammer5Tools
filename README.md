@@ -36,7 +36,7 @@
 
 # Developer Documentation
 
-This text provides a complete overview of the Hammer5Tools project, covering its setup and structure.  
+This part provides a complete overview of the Hammer5Tools project, covering its setup and structure.  
 Whether you’re building tools on top of this foundation or maintaining the existing code, this guide will help you get started.
 
 ---
