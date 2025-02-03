@@ -23,7 +23,7 @@ class NoWheelScrollArea(QScrollArea):
         event.ignore()
 
 
-class AdvancedImageViewer(QMainWindow):
+class Viewport(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.panning = False
@@ -201,7 +201,7 @@ class AdvancedImageViewer(QMainWindow):
             QApplication.restoreOverrideCursor()
 
 
-class ExplorerImageViewer(QMainWindow):
+class ImageExplorer(QMainWindow):
     def __init__(self, tree_directory=None):
         super().__init__()
         self.setWindowTitle("Explorer")
@@ -222,7 +222,7 @@ class ExplorerImageViewer(QMainWindow):
         self.tree_view.setRootIndex(self.file_model.index(root_path))
         self.tree_view.clicked.connect(self.on_item_click)
 
-        self.image_viewer = AdvancedImageViewer()
+        self.image_viewer = Viewport()
 
         splitter.addWidget(self.tree_view)
         splitter.addWidget(self.image_viewer)
