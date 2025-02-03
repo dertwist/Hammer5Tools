@@ -5,7 +5,7 @@ import sys
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
     QWidget, QLabel, QLineEdit, QCheckBox, QSpacerItem,
-    QSizePolicy, QFrame, QStyle, QFileDialog
+    QSizePolicy, QFrame, QScrollArea, QStyle, QFileDialog
 )
 from src.settings.common import *
 from src.common import enable_dark_title_bar, Presets_Path
@@ -40,7 +40,6 @@ class ActionButtonsPanel(QFrame):
         self.check_update_button = Button()
         self.check_update_button.set_icon_sync()
         h_layout_bottom.addWidget(self.check_update_button)
-
 
 class PreferencesDialog(QDialog):
     def __init__(self, app_version, parent=None):
@@ -77,15 +76,29 @@ class PreferencesDialog(QDialog):
         divider.setStyleSheet("background-color: #323232; border: none;")
         return divider
 
+    def wrap_in_scroll_area(self, widget):
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(widget)
+        # Assuming scroll_area is your QScrollArea instance
+        scroll_area.setObjectName("customScrollArea")
+        scroll_area.setStyleSheet("""
+            QScrollArea#customScrollArea {
+                border: none;
+            }
+        """)
+        return scroll_area
+
     def create_general_tab(self):
-        self.general_tab = QWidget()
-        layout = QVBoxLayout(self.general_tab)
+        # Create the general tab content widget
+        general_tab_content = QWidget()
+        layout = QVBoxLayout(general_tab_content)
         layout.setContentsMargins(10, 10, 10, 10)
 
         # ------------- Paths Subcategory -------------
-        label_paths_header = QLabel("Paths", self.general_tab)
+        label_paths_header = QLabel("Paths", general_tab_content)
         layout.addWidget(label_paths_header)
-        self.frame_paths = QFrame(self.general_tab)
+        self.frame_paths = QFrame(general_tab_content)
         layout_paths = QHBoxLayout(self.frame_paths)
         archive_label = QLabel("Archive path:", self.frame_paths)
         archive_label.setMinimumWidth(130)
@@ -100,12 +113,12 @@ class PreferencesDialog(QDialog):
         layout.addWidget(self.frame_paths)
 
         # Add divider after Paths Subcategory
-        layout.addWidget(self.create_divider(self.general_tab))
+        layout.addWidget(self.create_divider(general_tab_content))
 
         # ------------- Discord Status Subcategory -------------
-        label_discord_header = QLabel("Discord Status", self.general_tab)
+        label_discord_header = QLabel("Discord Status", general_tab_content)
         layout.addWidget(label_discord_header)
-        self.frame_discord = QFrame(self.general_tab)
+        self.frame_discord = QFrame(general_tab_content)
         layout_discord = QVBoxLayout(self.frame_discord)
         row_status = QHBoxLayout()
         self.checkBox_show_in_hammer_discord_status = QCheckBox("Show hammer status in Discord", self.frame_discord)
@@ -125,12 +138,12 @@ class PreferencesDialog(QDialog):
         layout.addWidget(self.frame_discord)
 
         # Add divider after Discord Status Subcategory
-        layout.addWidget(self.create_divider(self.general_tab))
+        layout.addWidget(self.create_divider(general_tab_content))
 
         # ------------- Other Subcategory -------------
-        label_other_header = QLabel("Other", self.general_tab)
+        label_other_header = QLabel("Other", general_tab_content)
         layout.addWidget(label_other_header)
-        self.frame_other = QFrame(self.general_tab)
+        self.frame_other = QFrame(general_tab_content)
         layout_other = QVBoxLayout(self.frame_other)
         self.launch_addon_after_nosteamlogon_fix = QCheckBox("Start Hammer editor after Steam restarting", self.frame_other)
         self.launch_addon_after_nosteamlogon_fix.setStyleSheet(qt_stylesheet_checkbox)
@@ -146,33 +159,35 @@ class PreferencesDialog(QDialog):
         layout.addWidget(self.frame_other)
 
         layout.addStretch()
-
-        self.tabWidget.addTab(self.general_tab, "General")
+        # Wrap the general tab content in a scroll area
+        general_scroll = self.wrap_in_scroll_area(general_tab_content)
+        self.tabWidget.addTab(general_scroll, "General")
 
     def create_smartprop_tab(self):
-        self.smartprop_tab = QWidget()
-        layout = QVBoxLayout(self.smartprop_tab)
+        smartprop_content = QWidget()
+        layout = QVBoxLayout(smartprop_content)
         layout.setContentsMargins(10, 10, 10, 10)
-        frame_smart = QFrame(self.smartprop_tab)
+        frame_smart = QFrame(smartprop_content)
         h_layout_smart = QHBoxLayout(frame_smart)
-        self.spe_display_id_with_variable_class = QCheckBox("Display ID with variable class (Reopen file)", self.smartprop_tab)
+        self.spe_display_id_with_variable_class = QCheckBox("Display ID with variable class (Reopen file)", smartprop_content)
         self.spe_display_id_with_variable_class.setStyleSheet(qt_stylesheet_checkbox)
         h_layout_smart.addWidget(self.spe_display_id_with_variable_class)
         layout.addWidget(frame_smart)
         layout.addSpacerItem(QSpacerItem(20, 80, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        self.tabWidget.addTab(self.smartprop_tab, "SmartProp Editor")
+        smartprop_scroll = self.wrap_in_scroll_area(smartprop_content)
+        self.tabWidget.addTab(smartprop_scroll, "SmartProp Editor")
 
     def create_assetgroupmaker_tab(self):
-        self.assetgroupmaker_tab = QWidget()
-        layout = QVBoxLayout(self.assetgroupmaker_tab)
+        assetgroupmaker_content = QWidget()
+        layout = QVBoxLayout(assetgroupmaker_content)
         layout.setContentsMargins(10, 10, 10, 10)
 
         # ------------- Monitor Subcategory -------------
-        label_monitor_header = QLabel("Monitor", self.assetgroupmaker_tab)
+        label_monitor_header = QLabel("Monitor", assetgroupmaker_content)
         layout.addWidget(label_monitor_header)
-        frame_monitor = QFrame(self.assetgroupmaker_tab)
+        frame_monitor = QFrame(assetgroupmaker_content)
         layout_monitor = QHBoxLayout(frame_monitor)
-        monitor_label = QLabel("Folders to monitor:", self.assetgroupmaker_tab)
+        monitor_label = QLabel("Folders to monitor:", assetgroupmaker_content)
         monitor_label.setMinimumWidth(130)
         layout_monitor.addWidget(monitor_label)
         self.assetgroupmaker_lineedit_monitor = QLineEdit(frame_monitor)
@@ -180,11 +195,11 @@ class PreferencesDialog(QDialog):
         layout.addWidget(frame_monitor)
 
         # Divider
-        layout.addWidget(self.create_divider(self.assetgroupmaker_tab))
+        layout.addWidget(self.create_divider(assetgroupmaker_content))
 
         layout.addSpacerItem(QSpacerItem(20, 80, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        self.tabWidget.addTab(self.assetgroupmaker_tab, "AssetGroupMaker")
-
+        assetgroupmaker_scroll = self.wrap_in_scroll_area(assetgroupmaker_content)
+        self.tabWidget.addTab(assetgroupmaker_scroll, "AssetGroupMaker")
 
     def create_bottom_panel(self):
         # Use the new ActionButtonsPanel for the bottom buttons
@@ -202,7 +217,7 @@ class PreferencesDialog(QDialog):
         self.spe_display_id_with_variable_class.setChecked(get_config_bool('SmartPropEditor', 'display_id_with_variable_class', False))
         self.action_buttons_panel.version_label.setText(f"Version: {self.app_version}")
 
-        # Populate the monitor editline; default to empty if not set
+        # Populate the monitor editline; default to provided value if not set
         self.assetgroupmaker_lineedit_monitor.setText(get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
 
     def connect_signals(self):
