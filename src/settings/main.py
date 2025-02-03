@@ -14,6 +14,7 @@ from src.other.update_check import check_updates
 from src.widgets_common import Button  # Using the internal Button class
 from src.styles.common import qt_stylesheet_checkbox
 
+
 class ActionButtonsPanel(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -41,6 +42,7 @@ class ActionButtonsPanel(QFrame):
         self.check_update_button.set_icon_sync()
         h_layout_bottom.addWidget(self.check_update_button)
 
+
 class PreferencesDialog(QDialog):
     def __init__(self, app_version, parent=None):
         super().__init__(parent)
@@ -48,7 +50,7 @@ class PreferencesDialog(QDialog):
         enable_dark_title_bar(self)
 
         # Set the minimum size and window title
-        self.setMinimumSize(700, 300)
+        self.setMinimumSize(830, 300)
         self.setWindowTitle('Settings')
 
         self.main_layout = QVBoxLayout(self)
@@ -61,6 +63,7 @@ class PreferencesDialog(QDialog):
         self.create_general_tab()
         self.create_smartprop_tab()
         self.create_assetgroupmaker_tab()
+        self.create_sound_event_editor_tab()
         self.create_bottom_panel()
 
         self.populate_preferences()
@@ -121,7 +124,7 @@ class PreferencesDialog(QDialog):
         self.frame_discord = QFrame(general_tab_content)
         layout_discord = QVBoxLayout(self.frame_discord)
         row_status = QHBoxLayout()
-        self.checkBox_show_in_hammer_discord_status = QCheckBox("Show hammer status in Discord", self.frame_discord)
+        self.checkBox_show_in_hammer_discord_status = QCheckBox("Show status", self.frame_discord)
         self.checkBox_show_in_hammer_discord_status.setStyleSheet(qt_stylesheet_checkbox)
         row_status.addWidget(self.checkBox_show_in_hammer_discord_status)
         self.checkBox_hide_project_name_discord_status = QCheckBox("Hide project name", self.frame_discord)
@@ -201,6 +204,25 @@ class PreferencesDialog(QDialog):
         assetgroupmaker_scroll = self.wrap_in_scroll_area(assetgroupmaker_content)
         self.tabWidget.addTab(assetgroupmaker_scroll, "AssetGroupMaker")
 
+    def create_sound_event_editor_tab(self):
+        # Create the SoundEventEditor tab with AudioPlayer subcategory
+        sound_editor_content = QWidget()
+        layout = QVBoxLayout(sound_editor_content)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        label_audio_header = QLabel("AudioPlayer", sound_editor_content)
+        layout.addWidget(label_audio_header)
+        self.frame_audio = QFrame(sound_editor_content)
+        layout_audio = QHBoxLayout(self.frame_audio)
+        self.checkBox_play_on_click = QCheckBox("Play on Click", self.frame_audio)
+        self.checkBox_play_on_click.setStyleSheet(qt_stylesheet_checkbox)
+        layout_audio.addWidget(self.checkBox_play_on_click)
+        layout.addWidget(self.frame_audio)
+
+        layout.addStretch()
+        sound_editor_scroll = self.wrap_in_scroll_area(sound_editor_content)
+        self.tabWidget.addTab(sound_editor_scroll, "SoundEventEditor")
+
     def create_bottom_panel(self):
         # Use the new ActionButtonsPanel for the bottom buttons
         self.action_buttons_panel = ActionButtonsPanel(self)
@@ -219,6 +241,8 @@ class PreferencesDialog(QDialog):
 
         # Populate the monitor editline; default to provided value if not set
         self.assetgroupmaker_lineedit_monitor.setText(get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
+        # Populate SoundEventEditor preference
+        self.checkBox_play_on_click.setChecked(get_config_bool('SoundEventEditor', 'play_on_click', True))
 
     def connect_signals(self):
         self.preferences_lineedit_archive_path.textChanged.connect(
@@ -251,6 +275,10 @@ class PreferencesDialog(QDialog):
         self.action_buttons_panel.open_presets_folder_button.clicked.connect(self.open_presets_folder)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
         self.browse_archive_button.clicked.connect(self.browse_archive)
+        # Connect SoundEventEditor signal
+        self.checkBox_play_on_click.toggled.connect(
+            lambda: set_config_bool('SoundEventEditor', 'play_on_click', self.checkBox_play_on_click.isChecked())
+        )
 
     def browse_archive(self):
         # Open a folder selection dialog and update the archive path
@@ -293,3 +321,10 @@ class PreferencesDialog(QDialog):
                 print(f"{app_name} not found in startup")
             except Exception as e:
                 print(f"Failed to remove {app_name} from startup: {e}")
+
+if __name__ == "__main__":
+    # Example usage for testing PreferencesDialog
+    app = QApplication(sys.argv)
+    dialog = PreferencesDialog(app_version="1.0.0")
+    dialog.show()
+    sys.exit(app.exec())

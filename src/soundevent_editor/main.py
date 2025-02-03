@@ -1,6 +1,6 @@
 import ast, shutil
 
-from src.settings.main import get_addon_name, get_cs2_path, debug
+from src.settings.main import get_addon_name, get_cs2_path, debug, get_config_bool
 from src.soundevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem
@@ -143,10 +143,13 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.audio_player_widget = AudioPlayer()
         self.ui.explorer_layout_widget.layout().insertWidget(1,self.audio_player_widget)
     def play_sound(self, file_path):
-        self.audio_player_widget.deleteLater()
-        self.add_player()
-        self.audio_player_widget.set_audiopath(file_path)
-        self.audio_player_widget.play_sound()
+        if get_config_bool('SoundEventEditor', 'play_on_click'):
+            self.audio_player_widget.deleteLater()
+            self.add_player()
+            self.audio_player_widget.set_audiopath(file_path)
+            self.audio_player_widget.play_sound()
+        else:
+            pass
     #     if self.audio_player is not None:
     #         self.audio_player.deleteLater()
     #     self.audio_player = QMediaPlayer()
