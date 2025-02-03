@@ -19,7 +19,7 @@ from PySide6.QtSvgWidgets import QSvgWidget
 
 from src.settings.main import get_cs2_path, get_addon_name, debug
 from src.loading_editor.ui_main import Ui_Loading_editorMainWindow
-from src.loading_editor.viewport import ExplorerImageViewer
+from src.loading_editor.viewport import ImageExplorer
 from src.common import compile
 from src.widgets import ErrorInfo
 
@@ -80,6 +80,16 @@ class SvgPreviewWidget(QWidget):
         if not self.file_path or not self.file_path.lower().endswith('.svg'):
             raise ValueError("The file is not an SVG file.")
         return self.file_path
+
+    def load_svg(self, svg_path: str):
+        """
+        Load an SVG icon from the specified path and update the widget.
+        """
+        if os.path.exists(svg_path) and svg_path.lower().endswith('.svg'):
+            self.file_path = svg_path
+            self.svg_preview.load(svg_path)
+            self.info_label.hide()
+            self.svg_preview.show()
 
 
 class ApplyScreenshotsSignals(QObject):
@@ -326,15 +336,17 @@ class Loading_editorMainWindow(QMainWindow):
         if not os.path.exists(self.game_screenshot_path):
             os.makedirs(self.game_screenshot_path)
 
-        explorer_view = ExplorerImageViewer(tree_directory=self.game_screenshot_path)
+        explorer_view = ImageExplorer(tree_directory=self.game_screenshot_path)
         explorer_view.setStyleSheet("padding:0")
         self.ui.explorer.layout().addWidget(explorer_view)
+        # Add the image viewer from explorer to the preview area
         self.ui.screenshot_preview.layout().addWidget(explorer_view.image_viewer)
         self.ui.splitter_2.setSizes([200, 100])
 
         self.svg_preview_widget = SvgPreviewWidget()
         self.ui.svg_icon_frame.layout().addWidget(self.svg_preview_widget)
 
+        # Connect UI actions to their methods
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
         self.ui.apply_screenshots_button.clicked.connect(self.start_apply_screenshots)
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
@@ -342,6 +354,37 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.open_folder_button.clicked.connect(self.open_images_folder)
 
         self.unified_dialog = UnifiedProcessingDialog(self)
+
+        # Load existing icon and description if available
+        self.load_existing_icon()
+        self.load_existing_description()
+
+    def load_existing_icon(self):
+        """
+        Load an existing SVG icon if it exists in the designated folder.
+        """
+        folder_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
+        svg_icon_filename = f"map_icon_{get_addon_name()}.svg"
+        svg_path = os.path.join(folder_path, svg_icon_filename)
+        if os.path.exists(svg_path):
+            debug(f"Loading existing SVG icon from {svg_path}")
+            self.svg_preview_widget.load_svg(svg_path)
+
+    def load_existing_description(self):
+        """
+        Load an existing description from disk if available.
+        """
+        description_file = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "maps", f"{get_addon_name()}.txt")
+        if os.path.exists(description_file):
+            try:
+                with open(description_file, "r") as f:
+                    lines = f.readlines()
+                # Assuming the first line is a header, load the remaining text
+                description = "".join(lines[1:]).strip() if len(lines) > 1 else ""
+                self.ui.PlainTextEdit_Description_2.setPlainText(description)
+                debug(f"Loaded existing description from {description_file}")
+            except Exception as e:
+                debug(f"Error loading description: {e}")
 
     def start_apply_screenshots(self):
         try:
@@ -396,6 +439,8 @@ class Loading_editorMainWindow(QMainWindow):
 
     def loading_editor_cs2_description(self, description_text: str):
         file_name = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "maps", f"{get_addon_name()}.txt")
+        # Ensure that the directory exists before writing the file
+        os.makedirs(os.path.dirname(file_name), exist_ok=True)
         with open(file_name, "w") as f:
             f.write("COMMUNITYMAPCREDITS:\n")
             f.write(description_text)
