@@ -441,7 +441,7 @@ font: 580 10pt &quot;Segoe UI&quot;;</string>
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:700;&quot;&gt;Addon selection&lt;/span&gt;&lt;/p&gt;&lt;p&gt;In the Addon selection, all tools apply changes to the addon selected in this section.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">font: 700 10pt &quot;Segoe UI&quot;;</string>
         </property>
        </widget>
       </item>
@@ -477,7 +477,8 @@ font: 580 10pt &quot;Segoe UI&quot;;</string>
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Addon launch&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Launches the current addon selected in the addon selection.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
-         <string notr="true">padding: 5px;</string>
+         <string notr="true">padding: 5px;
+font: 700 10pt &quot;Segoe UI&quot;;</string>
         </property>
         <property name="text">
          <string>Edit map</string>
