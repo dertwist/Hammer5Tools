@@ -45,12 +45,14 @@ def validate_reference_file(reference_path: str) -> bool:
             if b'\0' in sample:
                 debug(f"Reference file is binary: {reference_path}")
                 return False
-            f.seek(0)
             # Attempt to decode using UTF-8
-            content = f.read().decode('utf-8', errors='replace')
-            if not content.strip():
-                debug(f"Reference file is empty: {reference_path}")
-                return False
+            content = sample.decode('utf-8', errors='replace')
+            if not any(char for char in content if not char.isspace()):
+                f.seek(1024)
+                remaining_content = f.read().decode('utf-8', errors='replace')
+                if not any(char for char in remaining_content if not char.isspace()):
+                    debug(f"Reference file is empty or contains only whitespace: {reference_path}")
+                    return False
         return True
     except Exception as e:
         debug(f"Error validating reference file {reference_path}: {e}")
@@ -299,7 +301,8 @@ class MonitoringFileWatcher(QListWidget):
         self.config_references[config_path] = reference_path
         if reference_path not in self.reference_configs:
             self.reference_configs[reference_path] = set()
-            self.file_system_watcher.addPath(reference_path)
+            if reference_path not in self.file_system_watcher.files():
+                self.file_system_watcher.addPath(reference_path)
         self.reference_configs[reference_path].add(config_path)
 
     def untrack_reference(self, config_path: str):
