@@ -28,6 +28,35 @@ def read_reference_from_file(config_path: str) -> Optional[str]:
     return None
 
 
+def validate_reference_file(reference_path: str) -> bool:
+    """
+    Validates the referenced file.
+    - Must exist
+    - Must not be binary (checked via presence of null bytes in first 1024 bytes)
+    - Must not be empty (after decoding as UTF-8)
+    Returns True if valid, else False.
+    """
+    if not os.path.exists(reference_path):
+        debug(f"Reference file does not exist: {reference_path}")
+        return False
+    try:
+        with open(reference_path, 'rb') as f:
+            sample = f.read(1024)
+            if b'\0' in sample:
+                debug(f"Reference file is binary: {reference_path}")
+                return False
+            f.seek(0)
+            # Attempt to decode using UTF-8
+            content = f.read().decode('utf-8', errors='replace')
+            if not content.strip():
+                debug(f"Reference file is empty: {reference_path}")
+                return False
+        return True
+    except Exception as e:
+        debug(f"Error validating reference file {reference_path}: {e}")
+        return False
+
+
 class FileItemWidget(QWidget):
     """
     Widget representing a file item with options to open or process the file.
@@ -107,6 +136,7 @@ class FileItemWidget(QWidget):
 class MonitoringFileWatcher(QListWidget):
     """
     Widget to monitor file changes and manage file processing, enforcing an exact folder match.
+    It collects only .hbat files under allowed folders and validates referenced files before processing.
     """
     open_file = Signal(str)
 
@@ -164,18 +194,14 @@ class MonitoringFileWatcher(QListWidget):
         allowed_folders_str = get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops"
         allowed_folders = [fld.strip() for fld in allowed_folders_str.split(',') if fld.strip()]
 
-        print(allowed_folders)
-
         # If no allowed folders are set, permit all files
         if not allowed_folders:
             return True
 
-        # Convert to absolute for comparison
         addon_dir = os.path.abspath(get_addon_dir())
         file_path_abs = os.path.abspath(file_path)
-        print(file_path_abs)
         # If the file isn't under the addon's directory, disallow
-        if not os.path.commonpath([file_path_abs, addon_dir]) == addon_dir:
+        if os.path.commonpath([file_path_abs, addon_dir]) != addon_dir:
             return False
 
         # Convert path to relative from addon's dir
@@ -184,10 +210,8 @@ class MonitoringFileWatcher(QListWidget):
         if not segments:
             return False
 
-        # Top folder is the first path segment
         top_folder = segments[0]
-
-        # We require an exact match of top_folder in the allowed_folders list
+        # Require an exact match of top_folder in allowed_folders
         return top_folder in allowed_folders
 
     def collect_hbat_files(self) -> list:
@@ -211,23 +235,15 @@ class MonitoringFileWatcher(QListWidget):
         current_files = set(self.file_widgets.keys())
         found_files = set(self.collect_hbat_files())
 
-        # Calculate new and removed
         new_files = found_files - current_files
         removed_files = current_files - found_files
 
-        # Add new
         for path in new_files:
             self.add_file_widget(path)
-
-        # Remove old
         for path in removed_files:
             self.remove_file_widget(path)
-
-        # Update references for existing
         for path in (found_files & current_files):
             self.update_reference(path)
-
-        # Add watchers for directories containing these files
         for path in found_files:
             directory = os.path.dirname(path)
             self.add_directory_watch(directory)
@@ -246,7 +262,7 @@ class MonitoringFileWatcher(QListWidget):
         widget.open_requested.connect(self.open_file.emit)
         widget.process_requested.connect(self.start_processing)
 
-        # Track references and watch file
+        # Track reference only if valid; add file watcher for directory but not the file itself
         self.update_reference(path)
         self.file_system_watcher.addPath(path)
 
@@ -264,22 +280,22 @@ class MonitoringFileWatcher(QListWidget):
 
     def update_reference(self, config_path: str):
         """
-        Update the reference path for a .hbat file, if it has one.
+        Update the reference path for a .hbat file. Validate the referenced file:
+        It must exist, be non-binary, and non-empty.
         """
         reference_path = read_reference_from_file(config_path)
-        if reference_path:
+        if reference_path and validate_reference_file(reference_path):
             self.track_reference(config_path, reference_path)
         else:
             self.untrack_reference(config_path)
 
     def track_reference(self, config_path: str, reference_path: str):
         """
-        Track a reference path for a configuration file, watch it too.
+        Track a reference path for a configuration file and watch it.
         """
         old_reference = self.config_references.get(config_path)
         if old_reference and old_reference != reference_path:
             self.untrack_reference(config_path)
-
         self.config_references[config_path] = reference_path
         if reference_path not in self.reference_configs:
             self.reference_configs[reference_path] = set()
@@ -288,7 +304,7 @@ class MonitoringFileWatcher(QListWidget):
 
     def untrack_reference(self, config_path: str):
         """
-        Untrack a reference path for a config file if present.
+        Untrack a reference path for a configuration file.
         """
         reference_path = self.config_references.pop(config_path, None)
         if reference_path:
@@ -305,8 +321,6 @@ class MonitoringFileWatcher(QListWidget):
         Handle directory change events.
         """
         self.update_file_list()
-
-        # Watch any new subdirectories
         for dirpath, dirnames, _ in os.walk(self.root_path):
             for dirname in dirnames:
                 full_dir_path = os.path.join(dirpath, dirname)
@@ -314,24 +328,22 @@ class MonitoringFileWatcher(QListWidget):
 
     def on_file_changed(self, path: str):
         """
-        Handle file change events (modified, renamed, or removed).
+        Handle file change events. As .hbat files are not directly watched for changes,
+        changes are handled via directory events or changes in referenced files.
         """
         debug(f"File changed: {path}")
         if os.path.exists(path):
-            # If it still exists, update references and re-run processes
             if path in self.file_widgets:
                 self.update_reference(path)
                 _, widget = self.file_widgets[path]
                 self.stop_processing(path)
                 self.start_processing(path)
             elif path in self.reference_configs:
-                # If it's a referenced file, re-process all configs that depend on it
                 configs = self.reference_configs[path]
                 for config_path in configs:
                     self.stop_processing(config_path)
                     self.start_processing(config_path)
         else:
-            # If it's gone, remove from watchers
             if path in self.file_widgets:
                 self.remove_file_widget(path)
             elif path in self.reference_configs:
@@ -345,7 +357,7 @@ class MonitoringFileWatcher(QListWidget):
 
     def start_processing(self, config_path: str):
         """
-        Start processing a config file with StartProcess.
+        Start processing a config file using StartProcess.
         """
         if config_path in self.process_threads:
             debug(f"Processing already started for: {config_path}")
@@ -367,7 +379,7 @@ class MonitoringFileWatcher(QListWidget):
 
     def on_process_finished(self, config_path: str):
         """
-        Once processing completes, clean up references to the thread.
+        Clean up a finished processing thread.
         """
         self.process_threads.pop(config_path, None)
         debug(f"Finished processing: {config_path}")
