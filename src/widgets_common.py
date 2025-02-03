@@ -131,8 +131,10 @@ def exception_handler(func):
 
 #================================================================<  Buttons  >==============================================================
 class Button(QPushButton):
-    def __init__(self, size: int = None, icon: str = None, height: int = None, width: int = None):
+    def __init__(self, size: int = None, icon: str = None, height: int = None, width: int = None, text: str = None):
         super().__init__()
+        if text is not None:
+            self.set_text(text)
         if size is not None:
             self.set_size(size, size)
         self.set_size(height, width)
@@ -180,7 +182,12 @@ class Button(QPushButton):
         self.set_icon(":/icons/bookmark_add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
     def set_icon_bookmark_added(self):
         self.set_icon(":/icons/bookmark_added_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
-
+    def set_icon_folder_open(self):
+        self.set_icon(":/icons/folder_open.svg")
+    def set_icon_sync(self):
+        self.set_icon(":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+    def set_icon_info(self):
+        self.set_icon(":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
 
 class DeleteButton(Button):
     def __init__(self, instance: QWidget = None):
