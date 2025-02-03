@@ -16,20 +16,31 @@ def set_config_value(section, key, value):
 def set_config_bool(section, key, bool_value):
     set_config_value(section, key, bool_value)
 
-def get_config_value(section, key):
-    return settings.value(f"{section}/{key}")
+
+def get_config_value(section, key, default=None):
+    config_key = f"{section}/{key}"
+    try:
+        value = settings.value(config_key, defaultValue=default)
+    except Exception as error:
+        if default is None:
+            raise ValueError(f"Error retrieving configuration for '{config_key}': {error}") from error
+        return default
+
+    return value
+
 
 def get_config_bool(section, key, default: bool = None):
-    if default is None:
-        try:
-            return settings.value(f"{section}/{key}", type=bool)
-        except:
-            raise ValueError
-    else:
-        try:
-            return settings.value(f"{section}/{key}", type=bool)
-        except:
-            return default
+    config_key = f"{section}/{key}"
+    try:
+        value = settings.value(config_key, defaultValue=default, type=bool)
+    except Exception as error:
+        if default is None:
+            raise ValueError(f"Error retrieving boolean configuration for '{config_key}': {error}") from error
+        return default
+
+    if value is None and default is None:
+        raise ValueError(f"Boolean configuration for '{config_key}' not found.")
+    return value
 
 def default_settings():
     if not os.path.exists(settings.fileName()):
