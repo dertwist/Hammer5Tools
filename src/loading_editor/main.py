@@ -9,58 +9,109 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QVBoxLayout,
     QProgressBar,
-    QPushButton
+    QPushButton,
+    QLabel,
+    QWidget
 )
-from PySide6.QtCore import QObject, Signal, QRunnable, QThreadPool, Qt
+from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool
 from PySide6.QtGui import QPixmap
+from PySide6.QtSvgWidgets import QSvgWidget
+
 from src.settings.main import get_cs2_path, get_addon_name, debug
 from src.loading_editor.ui_main import Ui_Loading_editorMainWindow
-from src.loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
 from src.explorer.image_viewer import ExplorerImageViewer
 from src.common import compile
 from src.widgets import ErrorInfo
 
+
+class SvgPreviewWidget(QWidget):
+    """
+    A widget that supports drag and drop for SVG files.
+    Initially, a placeholder is shown. When an SVG file is dropped,
+    the placeholder is hidden and the SVG preview is displayed.
+    """
+    def __init__(self):
+        super().__init__()
+        self.setAcceptDrops(True)
+        self.file_path = None
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.svg_preview = QSvgWidget(self)
+        self.svg_preview.setFixedSize(200, 200)
+        self.svg_preview.setStyleSheet("border: none;")
+        self.svg_preview.hide()
+        layout.addWidget(self.svg_preview, alignment=Qt.AlignCenter)
+
+        self.info_label = QLabel("Drag and drop an SVG file", self)
+        self.info_label.setAlignment(Qt.AlignCenter)
+        self.info_label.setStyleSheet("margin: 0px; border: 0px; color: gray; font-size: 13px;")
+        layout.addWidget(self.info_label, alignment=Qt.AlignCenter)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            if all(url.toLocalFile().lower().endswith('.svg') for url in urls):
+                event.acceptProposedAction()
+            else:
+                event.ignore()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            for url in urls:
+                file_path = url.toLocalFile()
+                if file_path.lower().endswith('.svg'):
+                    self.file_path = file_path
+                    self.svg_preview.load(file_path)
+                    self.info_label.hide()
+                    self.svg_preview.show()
+                    break
+            else:
+                self.info_label.setText("Only SVG files are accepted.")
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def get_svg_path(self):
+        if not self.file_path or not self.file_path.lower().endswith('.svg'):
+            raise ValueError("The file is not an SVG file.")
+        return self.file_path
+
+
 class ApplyScreenshotsSignals(QObject):
-    """Signals for the ApplyScreenshotsWorker to communicate progress, errors, and logging."""
     progress = Signal(int)
     error = Signal(str)
     finished = Signal()
     log = Signal(str)
 
+
 class ApplyScreenshotsWorker(QRunnable):
-    """
-    Worker class to process screenshots directly from the game's screenshot folder,
-    rename them using the established convention, downscale them using Qt's QPixmap,
-    and create vtex files for 1080p, 720p, and 360p resolutions.
-    Also emits log messages to update the unified processing dialog.
-    """
     def __init__(self, game_screenshot_path: str, delete_existing: bool):
         super().__init__()
         self.game_screenshot_path = game_screenshot_path
         self.delete_existing = delete_existing
         self.signals = ApplyScreenshotsSignals()
         self._is_aborted = False
-        # The addon path remains as before.
         self.addon_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
 
     def run(self):
-        """Main execution method for the worker."""
         try:
             if self._is_aborted:
                 return
 
-            # Delete the "res" folder before processing.
             res_folder = os.path.join(self.addon_path, "res")
             if os.path.exists(res_folder):
                 shutil.rmtree(res_folder)
                 debug(f"Deleted res folder at {res_folder}")
                 self.signals.log.emit(f"Deleted res folder at {res_folder}")
 
-            # Clean resolution folders (delete all files in each resolution folder)
             self.clean_resolution_folders()
             self.signals.log.emit("Cleaned resolution folders.")
-
-            file_list = self.collect_files()  # List of tuples: (full_file_path, new_base_name)
+            file_list = self.collect_files()
             self.signals.progress.emit(40)
 
             if self._is_aborted:
@@ -81,10 +132,6 @@ class ApplyScreenshotsWorker(QRunnable):
             self.signals.log.emit(f"Error occurred: {error_message}")
 
     def clean_resolution_folders(self):
-        """
-        Deletes all files in each resolution folder (1080p, 720p, and 360p)
-        before any new files are processed.
-        """
         resolutions = ["1080p", "720p", "360p"]
         base_folder = os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots")
         for res in resolutions:
@@ -105,13 +152,6 @@ class ApplyScreenshotsWorker(QRunnable):
                 self.signals.log.emit(f"Created folder {target_folder}")
 
     def collect_files(self) -> list:
-        """
-        Collect image files from the game screenshot folder.
-        For each file, compute a new base name using the established naming convention:
-           - For the first file: "{addon}_png"
-           - Subsequent files: "{addon}_{index}_png"
-        Returns a list of tuples: (original_file_full_path, new_base_name)
-        """
         self.signals.log.emit("Collecting image files from game screenshot folder")
         file_list = []
         try:
@@ -129,13 +169,12 @@ class ApplyScreenshotsWorker(QRunnable):
         return file_list
 
     def delete_old_vtex(self):
-        """Delete old vtex files from the 1080p resolution folder."""
         self.signals.log.emit("Deleting old vtex files")
         try:
             shutil.rmtree(os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", "1080p"))
             self.signals.log.emit("Deleted old vtex files from primary location")
         except Exception as e:
-            debug(f'Error deleting old vtex files: {e}')
+            debug(f"Error deleting old vtex files: {e}")
             self.signals.log.emit(f"Error deleting old vtex files: {e}")
         if self.delete_existing:
             self.signals.log.emit("Deleting compiled vtex_c files because delete_existing is True")
@@ -144,11 +183,10 @@ class ApplyScreenshotsWorker(QRunnable):
                                            "panorama", "images", "map_icons", "screenshots", "1080p"))
                 self.signals.log.emit("Deleted compiled vtex_c files from game location")
             except Exception as e:
-                debug(f'Error deleting compiled vtex_c files: {e}')
+                debug(f"Error deleting compiled vtex_c files: {e}")
                 self.signals.log.emit(f"Error deleting compiled vtex_c files: {e}")
 
     def process_files(self, file_list: list):
-        """Process each file, downscale it for multiple resolutions and create corresponding vtex files."""
         total_files = len(file_list)
         for index, (original_file, new_base_name) in enumerate(file_list):
             if self._is_aborted:
@@ -160,11 +198,6 @@ class ApplyScreenshotsWorker(QRunnable):
             self.signals.progress.emit(progress)
 
     def creating_vtex(self, original_file_path: str, new_base_name: str):
-        """
-        For the given image, create downscaled versions for 1080p, 720p, and 360p resolutions,
-        saving each as a PNG file with the new base name, and generate a corresponding vtex file.
-        Uses Qt's QPixmap for downscaling.
-        """
         resolutions = {
             "1080p": 1080,
             "720p": 720,
@@ -249,14 +282,11 @@ class ApplyScreenshotsWorker(QRunnable):
             self.signals.log.emit(f"Compiled vtex file {vtex_path}")
 
     def abort(self):
-        """Abort the current operation."""
         self._is_aborted = True
         self.signals.log.emit("Abort signal received. Terminating processing.")
 
+
 class UnifiedProcessingDialog(QDialog):
-    """
-    A unified processing dialog that combines a progress bar and a console log area.
-    """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Processing")
@@ -269,7 +299,6 @@ class UnifiedProcessingDialog(QDialog):
         self.log_text = QPlainTextEdit(self)
         self.log_text.setReadOnly(True)
         layout.addWidget(self.log_text)
-        # This button will serve as Cancel during processing, and as Finish when processing is complete.
         self.cancel_button = QPushButton("Cancel", self)
         layout.addWidget(self.cancel_button)
 
@@ -280,47 +309,41 @@ class UnifiedProcessingDialog(QDialog):
         self.log_text.appendPlainText(message)
 
     def reset(self):
-        """Reset the dialog for new processing: clear log, reset progress and restore Cancel button."""
         self.progress_bar.setValue(0)
         self.log_text.clear()
         self.cancel_button.setText("Cancel")
-        self.cancel_button.setStyleSheet("")  # Remove any custom style
+        self.cancel_button.setStyleSheet("")
+
 
 class Loading_editorMainWindow(QMainWindow):
-    """Main window for the Loading Editor application."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_Loading_editorMainWindow()
         self.ui.setupUi(self)
 
         self.threadpool = QThreadPool()
-
         self.game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "screenshots")
         if not os.path.exists(self.game_screenshot_path):
             os.makedirs(self.game_screenshot_path)
 
-        # Explorer initialization.
         explorer_view = ExplorerImageViewer(tree_directory=self.game_screenshot_path)
         explorer_view.setStyleSheet("padding:0")
         self.ui.explorer.layout().addWidget(explorer_view)
         self.ui.screenshot_preview.layout().addWidget(explorer_view.image_viewer)
         self.ui.splitter_2.setSizes([200, 100])
 
-        self.Svg_Drap_and_Drop_Area = Svg_Drag_and_Drop()
-        self.ui.svg_icon_frame.layout().addWidget(self.Svg_Drap_and_Drop_Area)
+        self.svg_preview_widget = SvgPreviewWidget()
+        self.ui.svg_icon_frame.layout().addWidget(self.svg_preview_widget)
 
-        # Connect UI buttons.
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
         self.ui.apply_screenshots_button.clicked.connect(self.start_apply_screenshots)
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
         self.ui.clear_all_button.clicked.connect(self.clear_images)
         self.ui.open_folder_button.clicked.connect(self.open_images_folder)
 
-        # Initialize unified processing dialog.
         self.unified_dialog = UnifiedProcessingDialog(self)
 
     def start_apply_screenshots(self):
-        """Start processing screenshots directly from the game folder."""
         try:
             file_count = len([f for f in os.listdir(self.game_screenshot_path)
                               if os.path.isfile(os.path.join(self.game_screenshot_path, f))])
@@ -337,7 +360,6 @@ class Loading_editorMainWindow(QMainWindow):
             if reply == QMessageBox.Cancel:
                 return
 
-        # Reset the processing dialog before applying screenshots.
         self.unified_dialog.reset()
 
         worker = ApplyScreenshotsWorker(self.game_screenshot_path, self.ui.delete_existings.isChecked())
@@ -351,20 +373,14 @@ class Loading_editorMainWindow(QMainWindow):
         self.threadpool.start(worker)
 
     def show_error(self, error_message: str):
-        """Show error message."""
         self.unified_dialog.append_log("Error: " + error_message)
         error_dialog = ErrorInfo(text="An error occurred during processing.", details=error_message)
         error_dialog.exec_()
 
     def processing_finished(self):
-        """Called when processing is finished."""
-        # Remove the qt message box info and update the unified dialog button.
         self.unified_dialog.append_log("Processing complete.")
-        # Change cancel button to finish.
         self.unified_dialog.cancel_button.setText("Finish")
-        # Set green background for finish button.
         self.unified_dialog.cancel_button.setStyleSheet("background-color: green; color: white;")
-        # Disconnect the previous abort callback and connect to close the dialog.
         try:
             self.unified_dialog.cancel_button.clicked.disconnect()
         except Exception:
@@ -372,24 +388,20 @@ class Loading_editorMainWindow(QMainWindow):
         self.unified_dialog.cancel_button.clicked.connect(self.unified_dialog.close)
 
     def clear_images(self):
-        """Clear images in game screenshot folder."""
         shutil.rmtree(self.game_screenshot_path, ignore_errors=True)
         os.makedirs(self.game_screenshot_path)
 
     def open_images_folder(self):
-        """Open game screenshots folder."""
         os.startfile(self.game_screenshot_path)
 
-    def loading_editor_cs2_description(self, loading_editor_cs2_description_text: str):
-        """Apply CS2 description."""
+    def loading_editor_cs2_description(self, description_text: str):
         file_name = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "maps", f"{get_addon_name()}.txt")
         with open(file_name, "w") as f:
             f.write("COMMUNITYMAPCREDITS:\n")
-            f.write(loading_editor_cs2_description_text)
+            f.write(description_text)
 
     def icon_processs(self):
-        """Process SVG icon."""
-        svg_path = self.Svg_Drap_and_Drop_Area.loading_editor_get_svg()
+        svg_path = self.svg_preview_widget.get_svg_path()
         svg_path = os.path.normpath(svg_path)
         folder_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
         os.makedirs(folder_path, exist_ok=True)
@@ -399,8 +411,8 @@ class Loading_editorMainWindow(QMainWindow):
         shutil.copy2(svg_path, svg_dst)
 
     def do_loading_editor_cs2_description(self):
-        """Apply CS2 description."""
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
