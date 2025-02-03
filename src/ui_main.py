@@ -238,7 +238,7 @@ class Ui_MainWindow(object):
         self.ComboBoxSelectAddon = QComboBox(self.centralwidget)
         self.ComboBoxSelectAddon.setObjectName(u"ComboBoxSelectAddon")
         self.ComboBoxSelectAddon.setMinimumSize(QSize(220, 0))
-        self.ComboBoxSelectAddon.setStyleSheet(u"")
+        self.ComboBoxSelectAddon.setStyleSheet(u"font: 700 10pt \"Segoe UI\";")
 
         self.horizontalLayout_2.addWidget(self.ComboBoxSelectAddon)
 
@@ -253,7 +253,8 @@ class Ui_MainWindow(object):
         self.Launch_Addon_Button.setObjectName(u"Launch_Addon_Button")
         self.Launch_Addon_Button.setEnabled(True)
         self.Launch_Addon_Button.setMinimumSize(QSize(128, 0))
-        self.Launch_Addon_Button.setStyleSheet(u"padding: 5px;")
+        self.Launch_Addon_Button.setStyleSheet(u"padding: 5px;\n"
+"font: 700 10pt \"Segoe UI\";")
         icon14 = QIcon()
         icon14.addFile(u":/icons/icons/hammer_icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.Launch_Addon_Button.setIcon(icon14)
