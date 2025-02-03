@@ -48,7 +48,7 @@ from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
 from src.launch_options.main import LaunchOptionsDialog
 from styles.qt_global_stylesheet import QT_Stylesheet_global
-from src.common import enable_dark_title_bar, app_version
+from src.common import enable_dark_title_bar, app_version, default_commands
 
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -317,7 +317,7 @@ class Widget(QMainWindow):
         self.updateLaunchAddonButton()
 
     def updateLaunchAddonButton(self):
-        commands = get_config_value("LAUNCH", "commands")
+        commands = get_config_value("LAUNCH", "commands", default_commands)
         if commands and "-asset" in commands:
             self.ui.Launch_Addon_Button.setText("Edit map")
         else:
