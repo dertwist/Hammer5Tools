@@ -1,32 +1,46 @@
 import os
 import shutil
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QProgressDialog
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QMessageBox,
+    QDialog,
+    QPlainTextEdit,
+    QVBoxLayout,
+    QProgressBar,
+    QPushButton
+)
 from PySide6.QtCore import QObject, Signal, QRunnable, QThreadPool, Qt
+from PySide6.QtGui import QPixmap
 from src.settings.main import get_cs2_path, get_addon_name, debug
 from src.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from src.loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
 from src.explorer.image_viewer import ExplorerImageViewer
 from src.common import compile
 from src.widgets import ErrorInfo
-from PIL import Image  # Added for downscaling
 
 class ApplyScreenshotsSignals(QObject):
-    """Signals for the ApplyScreenshotsWorker to communicate progress, errors, and completion."""
+    """Signals for the ApplyScreenshotsWorker to communicate progress, errors, and logging."""
     progress = Signal(int)
     error = Signal(str)
     finished = Signal()
+    log = Signal(str)
 
 class ApplyScreenshotsWorker(QRunnable):
-    """Worker class to handle the application of screenshots in a separate thread."""
-
-    def __init__(self, game_screenshot_path: str, content_screenshot_path: str, delete_existing: bool):
+    """
+    Worker class to process screenshots directly from the game's screenshot folder,
+    rename them using the established convention, downscale them using Qt's QPixmap,
+    and create vtex files for 1080p, 720p, and 360p resolutions.
+    Also emits log messages to update the unified processing dialog.
+    """
+    def __init__(self, game_screenshot_path: str, delete_existing: bool):
         super().__init__()
         self.game_screenshot_path = game_screenshot_path
-        self.content_screenshot_path = content_screenshot_path
         self.delete_existing = delete_existing
         self.signals = ApplyScreenshotsSignals()
         self._is_aborted = False
+        # The addon path remains as before.
         self.addon_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
 
     def run(self):
@@ -34,23 +48,25 @@ class ApplyScreenshotsWorker(QRunnable):
         try:
             if self._is_aborted:
                 return
-            self.copy_files()
-            self.signals.progress.emit(20)
 
-            if self._is_aborted:
-                return
-            self.rename_files()
+            # Delete the "res" folder before processing.
+            res_folder = os.path.join(self.addon_path, "res")
+            if os.path.exists(res_folder):
+                shutil.rmtree(res_folder)
+                debug(f"Deleted res folder at {res_folder}")
+                self.signals.log.emit(f"Deleted res folder at {res_folder}")
+
+            # Clean resolution folders (delete all files in each resolution folder)
+            self.clean_resolution_folders()
+            self.signals.log.emit("Cleaned resolution folders.")
+
+            file_list = self.collect_files()  # List of tuples: (full_file_path, new_base_name)
             self.signals.progress.emit(40)
 
             if self._is_aborted:
                 return
-            file_list = self.collect_files()
-            self.signals.progress.emit(60)
-
-            if self._is_aborted:
-                return
             self.delete_old_vtex()
-            self.signals.progress.emit(80)
+            self.signals.progress.emit(60)
 
             if self._is_aborted:
                 return
@@ -62,179 +78,216 @@ class ApplyScreenshotsWorker(QRunnable):
             import traceback
             error_message = traceback.format_exc()
             self.signals.error.emit(error_message)
+            self.signals.log.emit(f"Error occurred: {error_message}")
 
-    def copy_files(self):
-        """Copy files from the game screenshot path to the content screenshot path."""
-        debug(f'Copying files from {self.game_screenshot_path} to {self.content_screenshot_path}')
-        if os.path.exists(self.content_screenshot_path):
-            shutil.rmtree(self.content_screenshot_path, ignore_errors=True)
-        shutil.copytree(self.game_screenshot_path, self.content_screenshot_path)
-
-    def rename_files(self):
-        """Rename files in the content screenshot path."""
-        base_path = self.content_screenshot_path
-        for file_images_loop_count, file_name in enumerate(os.listdir(base_path)):
-            try:
-                file_name_parts = os.path.splitext(file_name)
-                file_extension = file_name_parts[1]
-                new_file_name = (f"{get_addon_name()}_{file_images_loop_count}_png{file_extension}"
-                                 if file_images_loop_count else f"{get_addon_name()}_png{file_extension}")
-                debug(f'Old name {file_name}, New name {new_file_name}')
-                os.rename(os.path.join(base_path, file_name), os.path.join(base_path, new_file_name))
-            except Exception as e:
-                print(f"An error occurred while renaming the file: {file_name}. Error: {e}")
+    def clean_resolution_folders(self):
+        """
+        Deletes all files in each resolution folder (1080p, 720p, and 360p)
+        before any new files are processed.
+        """
+        resolutions = ["1080p", "720p", "360p"]
+        base_folder = os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots")
+        for res in resolutions:
+            target_folder = os.path.join(base_folder, res)
+            if os.path.exists(target_folder):
+                for filename in os.listdir(target_folder):
+                    file_path = os.path.join(target_folder, filename)
+                    try:
+                        if os.path.isfile(file_path) or os.path.islink(file_path):
+                            os.remove(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                        self.signals.log.emit(f"Deleted {file_path}")
+                    except Exception as e:
+                        self.signals.log.emit(f"Failed to delete {file_path}: {e}")
+            else:
+                os.makedirs(target_folder, exist_ok=True)
+                self.signals.log.emit(f"Created folder {target_folder}")
 
     def collect_files(self) -> list:
-        """Collect image files from the content folder."""
-        debug('Collecting image files from content folder')
+        """
+        Collect image files from the game screenshot folder.
+        For each file, compute a new base name using the established naming convention:
+           - For the first file: "{addon}_png"
+           - Subsequent files: "{addon}_{index}_png"
+        Returns a list of tuples: (original_file_full_path, new_base_name)
+        """
+        self.signals.log.emit("Collecting image files from game screenshot folder")
         file_list = []
-        for root, dirs, files in os.walk(self.content_screenshot_path):
-            for file_name in files:
-                full_file_path = os.path.join(root, file_name)
-                relative_path = os.path.relpath(full_file_path, self.addon_path)
-                file_list.append(relative_path)
-        debug(f'File list: {file_list}')
+        try:
+            files = sorted([f for f in os.listdir(self.game_screenshot_path)
+                            if os.path.isfile(os.path.join(self.game_screenshot_path, f))])
+        except Exception as e:
+            debug(f"Error listing files: {e}")
+            self.signals.log.emit(f"Error listing files: {e}")
+            files = []
+        for idx, file_name in enumerate(files):
+            original_path = os.path.join(self.game_screenshot_path, file_name)
+            new_base_name = f"{get_addon_name()}_png" if idx == 0 else f"{get_addon_name()}_{idx}_png"
+            file_list.append((original_path, new_base_name))
+        self.signals.log.emit(f"Collected file list: {file_list}")
         return file_list
 
     def delete_old_vtex(self):
-        """Delete old vtex files."""
-        debug('Deleting old vtex files')
+        """Delete old vtex files from the 1080p resolution folder."""
+        self.signals.log.emit("Deleting old vtex files")
         try:
             shutil.rmtree(os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", "1080p"))
+            self.signals.log.emit("Deleted old vtex files from primary location")
         except Exception as e:
             debug(f'Error deleting old vtex files: {e}')
-
+            self.signals.log.emit(f"Error deleting old vtex files: {e}")
         if self.delete_existing:
-            debug('Deleting compiled vtex_c files because delete_existing is True')
+            self.signals.log.emit("Deleting compiled vtex_c files because delete_existing is True")
             try:
                 shutil.rmtree(os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(),
                                            "panorama", "images", "map_icons", "screenshots", "1080p"))
+                self.signals.log.emit("Deleted compiled vtex_c files from game location")
             except Exception as e:
                 debug(f'Error deleting compiled vtex_c files: {e}')
+                self.signals.log.emit(f"Error deleting compiled vtex_c files: {e}")
 
     def process_files(self, file_list: list):
-        """Process each file in the file list."""
+        """Process each file, downscale it for multiple resolutions and create corresponding vtex files."""
         total_files = len(file_list)
-        for index, item in enumerate(file_list):
+        for index, (original_file, new_base_name) in enumerate(file_list):
             if self._is_aborted:
+                self.signals.log.emit("Processing aborted.")
                 return
-            debug(f'Processing: {item}')
-            self.creating_vtex(item)
-            progress = 80 + int(20 * (index + 1) / total_files)
+            self.signals.log.emit(f"Processing file: {original_file} as {new_base_name}")
+            self.creating_vtex(original_file, new_base_name)
+            progress = 60 + int(40 * (index + 1) / total_files)
             self.signals.progress.emit(progress)
 
-    def creating_vtex(self, relative_path: str):
+    def creating_vtex(self, original_file_path: str, new_base_name: str):
         """
-        Create vtex files for the given image for 1080p, 720p, and 360p resolutions.
-        It downscales the input image for each resolution and writes a corresponding vtex file.
+        For the given image, create downscaled versions for 1080p, 720p, and 360p resolutions,
+        saving each as a PNG file with the new base name, and generate a corresponding vtex file.
+        Uses Qt's QPixmap for downscaling.
         """
-        # Define the resolutions to process and their maximum heights.
         resolutions = {
             "1080p": 1080,
             "720p": 720,
             "360p": 360,
         }
-
-        # Absolute path to the original image (input from content folder)
-        original_image_path = os.path.join(self.addon_path, relative_path)
-        try:
-            original_image = Image.open(original_image_path)
-        except Exception as e:
-            debug(f'Error opening image {original_image_path}: {e}')
+        pixmap = QPixmap(original_file_path)
+        if pixmap.isNull():
+            msg = f"Error loading image {original_file_path} with QPixmap."
+            debug(msg)
+            self.signals.log.emit(msg)
             return
 
-        name, _ = os.path.splitext(os.path.basename(relative_path))
-
-        # Template for the vtex file content.
         vtex_template = """<!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
-        "CDmeVtex"
+"CDmeVtex"
+{
+    "m_inputTextureArray" "element_array"
+    [
+        "CDmeInputTexture"
         {
-            "m_inputTextureArray" "element_array"
+            "m_name" "string" "SheetTexture"
+            "m_fileName" "string" "%%PATH%%"
+            "m_colorSpace" "string" "linear"
+            "m_typeString" "string" "2D"
+            "m_imageProcessorArray" "element_array"
             [
-                "CDmeInputTexture"
-                {
-                    "m_name" "string" "SheetTexture"
-                    "m_fileName" "string" "%%PATH%%"
-                    "m_colorSpace" "string" "linear"
-                    "m_typeString" "string" "2D"
-                    "m_imageProcessorArray" "element_array"
-                    [
-                    ]
-                }
             ]
-            "m_outputTypeString" "string" "2D"
-            "m_outputFormat" "string" "BC7"
-            "m_outputClearColor" "vector4" "0 0 0 0"
-            "m_nOutputMinDimension" "int" "0"
-            "m_nOutputMaxDimension" "int" "2048"
-            "m_textureOutputChannelArray" "element_array"
-            [
-                "CDmeTextureOutputChannel"
-                {
-                    "m_inputTextureArray" "string_array"
-                    [
-                        "SheetTexture"
-                    ]
-                    "m_srcChannels" "string" "rgba"
-                    "m_dstChannels" "string" "rgba"
-                    "m_mipAlgorithm" "CDmeImageProcessor"
-                    {
-                        "m_algorithm" "string" ""
-                        "m_stringArg" "string" ""
-                        "m_vFloat4Arg" "vector4" "0 0 0 0"
-                    }
-                    "m_outputColorSpace" "string" "linear"
-                }
-            ]
-            "m_vClamp" "vector3" "0 0 0"
-            "m_bNoLod" "bool" "1"
         }
-        """
-
+    ]
+    "m_outputTypeString" "string" "2D"
+    "m_outputFormat" "string" "BC7"
+    "m_outputClearColor" "vector4" "0 0 0 0"
+    "m_nOutputMinDimension" "int" "0"
+    "m_nOutputMaxDimension" "int" "2048"
+    "m_textureOutputChannelArray" "element_array"
+    [
+        "CDmeTextureOutputChannel"
+        {
+            "m_inputTextureArray" "string_array"
+            [
+                "SheetTexture"
+            ]
+            "m_srcChannels" "string" "rgba"
+            "m_dstChannels" "string" "rgba"
+            "m_mipAlgorithm" "CDmeImageProcessor"
+            {
+                "m_algorithm" "string" ""
+                "m_stringArg" "string" ""
+                "m_vFloat4Arg" "vector4" "0 0 0 0"
+            }
+            "m_outputColorSpace" "string" "linear"
+        }
+    ]
+    "m_vClamp" "vector3" "0 0 0"
+    "m_bNoLod" "bool" "1"
+}
+"""
         for res_folder, max_height in resolutions.items():
-            # Define the target folder for both the downscaled image and the vtex file.
             target_folder = os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", res_folder)
             os.makedirs(target_folder, exist_ok=True)
 
-            # Downscale the image if necessary based on max_height
-            img = original_image.copy()
-            orig_width, orig_height = img.size
-            if orig_height > max_height:
-                scale = max_height / orig_height
-                new_width = int(orig_width * scale)
-                new_height = int(orig_height * scale)
-                img = img.resize((new_width, new_height), Image.LANCZOS)
-            # Save the downscaled image as PNG in the target folder.
-            output_image_path = os.path.join(target_folder, f'{name}.png')
-            try:
-                img.save(output_image_path)
-            except Exception as e:
-                debug(f'Error saving downscaled image {output_image_path}: {e}')
+            scaled_pixmap = pixmap.scaledToHeight(max_height, Qt.SmoothTransformation)
+            output_image_path = os.path.join(target_folder, f"{new_base_name}.png")
+            if not scaled_pixmap.save(output_image_path, "PNG"):
+                err_msg = f"Error saving downscaled image {output_image_path}"
+                debug(err_msg)
+                self.signals.log.emit(err_msg)
                 continue
 
-            # Prepare the vtex file content by replacing the placeholder with the relative path of the downscaled image.
-            relative_image_path = os.path.relpath(output_image_path, self.addon_path).replace('\\', '/')
-            vtex_content = vtex_template.replace('%%PATH%%', relative_image_path)
-
-            # Define the vtex file path.
-            vtex_path = os.path.join(target_folder, f'{name}.vtex')
+            relative_image_path = os.path.relpath(output_image_path, self.addon_path).replace("\\", "/")
+            vtex_content = vtex_template.replace("%%PATH%%", relative_image_path)
+            vtex_path = os.path.join(target_folder, f"{new_base_name}.vtex")
             try:
-                with open(vtex_path, 'w') as file:
+                with open(vtex_path, "w") as file:
                     file.write(vtex_content)
+                self.signals.log.emit(f"Created vtex file at {vtex_path}")
             except Exception as e:
-                debug(f'Error writing vtex file {vtex_path}: {e}')
+                err_msg = f"Error writing vtex file {vtex_path}: {e}"
+                debug(err_msg)
+                self.signals.log.emit(err_msg)
                 continue
-
-            # Call the compile function on the newly created vtex file.
             compile(vtex_path)
+            self.signals.log.emit(f"Compiled vtex file {vtex_path}")
 
     def abort(self):
         """Abort the current operation."""
         self._is_aborted = True
+        self.signals.log.emit("Abort signal received. Terminating processing.")
+
+class UnifiedProcessingDialog(QDialog):
+    """
+    A unified processing dialog that combines a progress bar and a console log area.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Processing")
+        self.setMinimumSize(880, 300)
+        layout = QVBoxLayout(self)
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(100)
+        layout.addWidget(self.progress_bar)
+        self.log_text = QPlainTextEdit(self)
+        self.log_text.setReadOnly(True)
+        layout.addWidget(self.log_text)
+        # This button will serve as Cancel during processing, and as Finish when processing is complete.
+        self.cancel_button = QPushButton("Cancel", self)
+        layout.addWidget(self.cancel_button)
+
+    def update_progress(self, value: int):
+        self.progress_bar.setValue(value)
+
+    def append_log(self, message: str):
+        self.log_text.appendPlainText(message)
+
+    def reset(self):
+        """Reset the dialog for new processing: clear log, reset progress and restore Cancel button."""
+        self.progress_bar.setValue(0)
+        self.log_text.clear()
+        self.cancel_button.setText("Cancel")
+        self.cancel_button.setStyleSheet("")  # Remove any custom style
 
 class Loading_editorMainWindow(QMainWindow):
     """Main window for the Loading Editor application."""
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_Loading_editorMainWindow()
@@ -242,12 +295,11 @@ class Loading_editorMainWindow(QMainWindow):
 
         self.threadpool = QThreadPool()
 
-        self.game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), 'screenshots')
-        self.content_screenshot_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), 'screenshots')
+        self.game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "screenshots")
         if not os.path.exists(self.game_screenshot_path):
             os.makedirs(self.game_screenshot_path)
 
-        # Explorer init
+        # Explorer initialization.
         explorer_view = ExplorerImageViewer(tree_directory=self.game_screenshot_path)
         explorer_view.setStyleSheet("padding:0")
         self.ui.explorer.layout().addWidget(explorer_view)
@@ -257,22 +309,24 @@ class Loading_editorMainWindow(QMainWindow):
         self.Svg_Drap_and_Drop_Area = Svg_Drag_and_Drop()
         self.ui.svg_icon_frame.layout().addWidget(self.Svg_Drap_and_Drop_Area)
 
-        # Connect buttons to their respective methods
+        # Connect UI buttons.
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
         self.ui.apply_screenshots_button.clicked.connect(self.start_apply_screenshots)
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
         self.ui.clear_all_button.clicked.connect(self.clear_images)
         self.ui.open_folder_button.clicked.connect(self.open_images_folder)
 
+        # Initialize unified processing dialog.
+        self.unified_dialog = UnifiedProcessingDialog(self)
+
     def start_apply_screenshots(self):
-        """Start the process of applying screenshots."""
-        # Count files in game screenshot path and warn if more than 10.
+        """Start processing screenshots directly from the game folder."""
         try:
-            file_count = len([f for f in os.listdir(self.game_screenshot_path) if os.path.isfile(os.path.join(self.game_screenshot_path, f))])
+            file_count = len([f for f in os.listdir(self.game_screenshot_path)
+                              if os.path.isfile(os.path.join(self.game_screenshot_path, f))])
         except Exception as e:
             debug(f"Error counting files: {e}")
             file_count = 0
-
         if file_count > 10:
             reply = QMessageBox.warning(
                 self,
@@ -283,68 +337,69 @@ class Loading_editorMainWindow(QMainWindow):
             if reply == QMessageBox.Cancel:
                 return
 
-        delete_existing = self.ui.delete_existings.isChecked()
+        # Reset the processing dialog before applying screenshots.
+        self.unified_dialog.reset()
 
-        worker = ApplyScreenshotsWorker(self.game_screenshot_path, self.content_screenshot_path, delete_existing)
-        worker.signals.progress.connect(self.update_progress)
+        worker = ApplyScreenshotsWorker(self.game_screenshot_path, self.ui.delete_existings.isChecked())
+        worker.signals.progress.connect(self.unified_dialog.update_progress)
         worker.signals.error.connect(self.show_error)
         worker.signals.finished.connect(self.processing_finished)
+        worker.signals.log.connect(self.unified_dialog.append_log)
+        self.unified_dialog.cancel_button.clicked.connect(worker.abort)
 
-        # Create a progress dialog
-        self.progress_dialog = QProgressDialog("Processing screenshots...", "Cancel", 0, 100, self)
-        self.progress_dialog.setWindowTitle("Processing")
-        self.progress_dialog.setWindowModality(Qt.WindowModal)
-        self.progress_dialog.canceled.connect(worker.abort)
-        self.progress_dialog.show()
-
-        # Start the worker
+        self.unified_dialog.show()
         self.threadpool.start(worker)
 
-    def update_progress(self, value: int):
-        """Update the progress dialog with the current progress value."""
-        self.progress_dialog.setValue(value)
-
     def show_error(self, error_message: str):
-        """Display an error message dialog."""
-        self.progress_dialog.close()
+        """Show error message."""
+        self.unified_dialog.append_log("Error: " + error_message)
         error_dialog = ErrorInfo(text="An error occurred during processing.", details=error_message)
         error_dialog.exec_()
 
     def processing_finished(self):
-        """Handle the completion of the screenshot processing."""
-        self.progress_dialog.close()
-        QMessageBox.information(self, "Processing Complete", "Screenshots have been processed successfully.")
+        """Called when processing is finished."""
+        # Remove the qt message box info and update the unified dialog button.
+        self.unified_dialog.append_log("Processing complete.")
+        # Change cancel button to finish.
+        self.unified_dialog.cancel_button.setText("Finish")
+        # Set green background for finish button.
+        self.unified_dialog.cancel_button.setStyleSheet("background-color: green; color: white;")
+        # Disconnect the previous abort callback and connect to close the dialog.
+        try:
+            self.unified_dialog.cancel_button.clicked.disconnect()
+        except Exception:
+            pass
+        self.unified_dialog.cancel_button.clicked.connect(self.unified_dialog.close)
 
     def clear_images(self):
-        """Clear all images in the game screenshot path."""
+        """Clear images in game screenshot folder."""
         shutil.rmtree(self.game_screenshot_path, ignore_errors=True)
         os.makedirs(self.game_screenshot_path)
 
     def open_images_folder(self):
-        """Open the folder containing the images."""
+        """Open game screenshots folder."""
         os.startfile(self.game_screenshot_path)
 
     def loading_editor_cs2_description(self, loading_editor_cs2_description_text: str):
-        """Write the CS2 description to a file."""
-        file_name = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), 'maps', f'{get_addon_name()}.txt')
-        with open(file_name, 'w') as f:
+        """Apply CS2 description."""
+        file_name = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "maps", f"{get_addon_name()}.txt")
+        with open(file_name, "w") as f:
             f.write("COMMUNITYMAPCREDITS:\n")
             f.write(loading_editor_cs2_description_text)
 
     def icon_processs(self):
-        """Process the SVG icon."""
+        """Process SVG icon."""
         svg_path = self.Svg_Drap_and_Drop_Area.loading_editor_get_svg()
         svg_path = os.path.normpath(svg_path)
         folder_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
         os.makedirs(folder_path, exist_ok=True)
-
         svg_dst = os.path.join(folder_path, f"map_icon_{get_addon_name()}.svg")
         if os.path.exists(svg_dst):
             os.remove(svg_dst)
         shutil.copy2(svg_path, svg_dst)
 
     def do_loading_editor_cs2_description(self):
-        """Apply the CS2 description from the UI."""
+        """Apply CS2 description."""
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
 
 if __name__ == "__main__":
