@@ -39,6 +39,7 @@ def default_settings():
         set_config_value('DISCORD_STATUS', 'show_status', True)
         set_config_value('DISCORD_STATUS', 'show_project_name', False)
         set_config_value('LAUNCH', 'ncm_mode', False)
+        set_config_value('AssetGroupMaker', 'monitor_folders', 'models, materials, smartprops')
         set_config_bool('LAUNCH', 'ncm_mode_setup', False)
         set_config_bool('APP', 'minimize_message_shown', True)
         set_config_bool('APP', 'start_with_system', False)
