@@ -23,7 +23,7 @@ class ActionButtonsPanel(QFrame):
         h_layout_bottom = QHBoxLayout(self)
         h_layout_bottom.setContentsMargins(9, 9, 9, 9)
 
-        # Create buttons with the internal Button class
+        # Create buttons using the internal Button class
         self.open_settings_folder_button = Button(text=" Settings")
         self.open_settings_folder_button.set_icon_folder_open()
         h_layout_bottom.addWidget(self.open_settings_folder_button)
@@ -166,10 +166,25 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_tab = QWidget()
         layout = QVBoxLayout(self.assetgroupmaker_tab)
         layout.setContentsMargins(10, 10, 10, 10)
-        label = QLabel("AssetGroupMaker functionality not implemented.", self.assetgroupmaker_tab)
-        layout.addWidget(label)
+
+        # ------------- Monitor Subcategory -------------
+        label_monitor_header = QLabel("Monitor", self.assetgroupmaker_tab)
+        layout.addWidget(label_monitor_header)
+        frame_monitor = QFrame(self.assetgroupmaker_tab)
+        layout_monitor = QHBoxLayout(frame_monitor)
+        monitor_label = QLabel("Folders to monitor:", self.assetgroupmaker_tab)
+        monitor_label.setMinimumWidth(130)
+        layout_monitor.addWidget(monitor_label)
+        self.assetgroupmaker_lineedit_monitor = QLineEdit(frame_monitor)
+        layout_monitor.addWidget(self.assetgroupmaker_lineedit_monitor)
+        layout.addWidget(frame_monitor)
+
+        # Divider
+        layout.addWidget(self.create_divider(self.assetgroupmaker_tab))
+
         layout.addSpacerItem(QSpacerItem(20, 80, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.tabWidget.addTab(self.assetgroupmaker_tab, "AssetGroupMaker")
+
 
     def create_bottom_panel(self):
         # Use the new ActionButtonsPanel for the bottom buttons
@@ -186,6 +201,9 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.setChecked(get_config_bool('APP', 'minimize_to_tray', True))
         self.spe_display_id_with_variable_class.setChecked(get_config_bool('SmartPropEditor', 'display_id_with_variable_class', False))
         self.action_buttons_panel.version_label.setText(f"Version: {self.app_version}")
+
+        # Populate the monitor editline; default to empty if not set
+        self.assetgroupmaker_lineedit_monitor.setText(get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
 
     def connect_signals(self):
         self.preferences_lineedit_archive_path.textChanged.connect(
@@ -210,6 +228,10 @@ class PreferencesDialog(QDialog):
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_config_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
         )
+        # Connect the monitor editline's text change to update configuration
+        self.assetgroupmaker_lineedit_monitor.textChanged.connect(
+            lambda: set_config_value('AssetGroupMaker', 'monitor_folders', self.assetgroupmaker_lineedit_monitor.text())
+        )
         self.action_buttons_panel.open_settings_folder_button.clicked.connect(self.open_settings_folder)
         self.action_buttons_panel.open_presets_folder_button.clicked.connect(self.open_presets_folder)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
@@ -224,7 +246,6 @@ class PreferencesDialog(QDialog):
 
     def open_settings_folder(self):
         subprocess.Popen(f'explorer "{os.getcwd()}"')
-
 
     def open_presets_folder(self):
         os.startfile(Presets_Path)
