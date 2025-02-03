@@ -30,16 +30,13 @@ from ui_main import Ui_MainWindow
 from styles.qt_global_stylesheet import QT_Stylesheet_global
 from PySide6.QtCore import QTimer
 from PySide6.QtCore import QFileSystemWatcher
-from src.common import enable_dark_title_bar
+from src.common import enable_dark_title_bar, app_version
 
 # Variables
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
 stop_discord_thread = threading.Event()
 LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
-
-# Versions
-app_version = '4.0.0'
 
 
 class DevWidget(QWidget):
