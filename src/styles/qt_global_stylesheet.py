@@ -53,7 +53,7 @@ QGroupBox::indicator:unchecked {
 /* ========================================================== */
     QPushButton {
 
-        font: 700 10pt "Segoe UI";
+        font: 580 10pt "Segoe UI";
     
 
         border: 2px solid black;
@@ -83,7 +83,7 @@ QGroupBox::indicator:unchecked {
 
 
 QToolTip {
-    font: 600 10pt "Segoe UI";
+    font: 580 10pt "Segoe UI";
     border: 2px solid black;
     border-radius: 4px;
     border-color: rgba(80, 80, 80, 255);
@@ -101,7 +101,7 @@ QToolTip {
 
 QToolButton {
 
-    font: 700 10pt "Segoe UI";
+    font: 580 10pt "Segoe UI";
     border: 2px solid black;
     border: 2px solid black;
     border-radius: 2px;
@@ -405,7 +405,7 @@ QTextBrowser:pressed {
 /* ========================================================== */
 
 QCheckBox {
-    font: 700 10pt "Segoe UI";
+    font: 580 10pt "Segoe UI";
 
             border: 2px solid black;
         border-radius: 2px;
