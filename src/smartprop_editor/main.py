@@ -539,7 +539,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         exists_classes = []
 
         # These item names should be forced into the final list even if they already exist
-        force_items_names = ["SetVariable", "SaveState"]
+        force_items_names = ["SetVariable", "SaveState", 'Comment']
 
         # Gather the dictionaries for forced items
         force_items = []
