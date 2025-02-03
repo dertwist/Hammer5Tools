@@ -68,6 +68,9 @@ def debug(value):
         print(value)
 
 def get_cs2_path():
+    """
+    Retrieves the CS2 installation path without saving it back to the settings.
+    """
     def cs2_exe_exists(cs2_path):
         cs2_exe_path = os.path.join(cs2_path, "game", "bin", "win64", "cs2.exe")
         return os.path.exists(cs2_exe_path)
@@ -86,7 +89,6 @@ def get_cs2_path():
         if cs2_path:
             cs2_path = os.path.normpath(cs2_path)
             if cs2_exe_exists(cs2_path):
-                set_config_value('PATHS', 'Cs2', cs2_path)
                 return cs2_path
             else:
                 cs2_path = None
@@ -94,6 +96,9 @@ def get_cs2_path():
     return cs2_path
 
 def get_steam_path():
+    """
+    Retrieves the Steam installation path without saving it back to the settings.
+    """
     try:
         steam_path = get_config_value('PATHS', 'steam')
         if not steam_path:
@@ -101,7 +106,8 @@ def get_steam_path():
         return steam_path
     except:
         steam_path = get_steam_install_path()
-        set_config_value('PATHS', 'steam', steam_path)
+        if not steam_path:
+            raise ValueError("Cannot find Steam path, and none set in config.")
         return steam_path
 
 def get_addon_dir():
