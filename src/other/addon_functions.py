@@ -52,12 +52,9 @@ def __launch_addon():
     cs2_launch_commands = f'"{cs2_exe_path}" {commands}'
 
     ncm_mode = get_config_bool("LAUNCH", "ncm_mode", default=False)
-    ncm_mode_setup_done = get_config_bool("LAUNCH", "ncm_mode_setup", default=False)
 
     if ncm_mode:
-        if not ncm_mode_setup_done:
-            NCM_mode_setup(cs2_path)
-            set_config_bool("LAUNCH", "ncm_mode_setup", True)
+        NCM_mode_setup(cs2_path)
         launch_command = f'{cs2_launch_commands} -nocustomermachine'
     else:
         launch_command = cs2_launch_commands
