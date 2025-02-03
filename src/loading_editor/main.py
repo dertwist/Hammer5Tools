@@ -9,14 +9,13 @@ from src.loading_editor.svg_drag_and_drop import Svg_Drag_and_Drop
 from src.explorer.image_viewer import ExplorerImageViewer
 from src.common import compile
 from src.widgets import ErrorInfo
-
+from PIL import Image  # Added for downscaling
 
 class ApplyScreenshotsSignals(QObject):
     """Signals for the ApplyScreenshotsWorker to communicate progress, errors, and completion."""
     progress = Signal(int)
     error = Signal(str)
     finished = Signal()
-
 
 class ApplyScreenshotsWorker(QRunnable):
     """Worker class to handle the application of screenshots in a separate thread."""
@@ -78,7 +77,8 @@ class ApplyScreenshotsWorker(QRunnable):
             try:
                 file_name_parts = os.path.splitext(file_name)
                 file_extension = file_name_parts[1]
-                new_file_name = f"{get_addon_name()}_{file_images_loop_count}_png{file_extension}" if file_images_loop_count else f"{get_addon_name()}_png{file_extension}"
+                new_file_name = (f"{get_addon_name()}_{file_images_loop_count}_png{file_extension}"
+                                 if file_images_loop_count else f"{get_addon_name()}_png{file_extension}")
                 debug(f'Old name {file_name}, New name {new_file_name}')
                 os.rename(os.path.join(base_path, file_name), os.path.join(base_path, new_file_name))
             except Exception as e:
@@ -123,9 +123,30 @@ class ApplyScreenshotsWorker(QRunnable):
             progress = 80 + int(20 * (index + 1) / total_files)
             self.signals.progress.emit(progress)
 
-    def creating_vtex(self, path: str):
-        """Create a vtex file for the given path."""
-        vtex_file = """<!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
+    def creating_vtex(self, relative_path: str):
+        """
+        Create vtex files for the given image for 1080p, 720p, and 360p resolutions.
+        It downscales the input image for each resolution and writes a corresponding vtex file.
+        """
+        # Define the resolutions to process and their maximum heights.
+        resolutions = {
+            "1080p": 1080,
+            "720p": 720,
+            "360p": 360,
+        }
+
+        # Absolute path to the original image (input from content folder)
+        original_image_path = os.path.join(self.addon_path, relative_path)
+        try:
+            original_image = Image.open(original_image_path)
+        except Exception as e:
+            debug(f'Error opening image {original_image_path}: {e}')
+            return
+
+        name, _ = os.path.splitext(os.path.basename(relative_path))
+
+        # Template for the vtex file content.
+        vtex_template = """<!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
         "CDmeVtex"
         {
             "m_inputTextureArray" "element_array"
@@ -169,21 +190,47 @@ class ApplyScreenshotsWorker(QRunnable):
             "m_bNoLod" "bool" "1"
         }
         """
-        vtex_file = vtex_file.replace('%%PATH%%', path.replace('\\', '/'))
-        name = os.path.basename(path)
-        name = os.path.splitext(name)[0]
-        vtex_path = os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", "1080p", f'{name}.vtex')
-        os.makedirs(os.path.dirname(vtex_path), exist_ok=True)
 
-        with open(vtex_path, 'w') as file:
-            file.write(vtex_file)
+        for res_folder, max_height in resolutions.items():
+            # Define the target folder for both the downscaled image and the vtex file.
+            target_folder = os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", res_folder)
+            os.makedirs(target_folder, exist_ok=True)
 
-        compile(vtex_path)
+            # Downscale the image if necessary based on max_height
+            img = original_image.copy()
+            orig_width, orig_height = img.size
+            if orig_height > max_height:
+                scale = max_height / orig_height
+                new_width = int(orig_width * scale)
+                new_height = int(orig_height * scale)
+                img = img.resize((new_width, new_height), Image.LANCZOS)
+            # Save the downscaled image as PNG in the target folder.
+            output_image_path = os.path.join(target_folder, f'{name}.png')
+            try:
+                img.save(output_image_path)
+            except Exception as e:
+                debug(f'Error saving downscaled image {output_image_path}: {e}')
+                continue
+
+            # Prepare the vtex file content by replacing the placeholder with the relative path of the downscaled image.
+            relative_image_path = os.path.relpath(output_image_path, self.addon_path).replace('\\', '/')
+            vtex_content = vtex_template.replace('%%PATH%%', relative_image_path)
+
+            # Define the vtex file path.
+            vtex_path = os.path.join(target_folder, f'{name}.vtex')
+            try:
+                with open(vtex_path, 'w') as file:
+                    file.write(vtex_content)
+            except Exception as e:
+                debug(f'Error writing vtex file {vtex_path}: {e}')
+                continue
+
+            # Call the compile function on the newly created vtex file.
+            compile(vtex_path)
 
     def abort(self):
         """Abort the current operation."""
         self._is_aborted = True
-
 
 class Loading_editorMainWindow(QMainWindow):
     """Main window for the Loading Editor application."""
@@ -219,6 +266,23 @@ class Loading_editorMainWindow(QMainWindow):
 
     def start_apply_screenshots(self):
         """Start the process of applying screenshots."""
+        # Count files in game screenshot path and warn if more than 10.
+        try:
+            file_count = len([f for f in os.listdir(self.game_screenshot_path) if os.path.isfile(os.path.join(self.game_screenshot_path, f))])
+        except Exception as e:
+            debug(f"Error counting files: {e}")
+            file_count = 0
+
+        if file_count > 10:
+            reply = QMessageBox.warning(
+                self,
+                "Warning",
+                "Antall filer er mer enn 10. Vennligst bekreft at dette er ønskelig.",
+                QMessageBox.Ok | QMessageBox.Cancel
+            )
+            if reply == QMessageBox.Cancel:
+                return
+
         delete_existing = self.ui.delete_existings.isChecked()
 
         worker = ApplyScreenshotsWorker(self.game_screenshot_path, self.content_screenshot_path, delete_existing)
@@ -282,7 +346,6 @@ class Loading_editorMainWindow(QMainWindow):
     def do_loading_editor_cs2_description(self):
         """Apply the CS2 description from the UI."""
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
