@@ -33,18 +33,14 @@ def enable_dark_title_bar(window):
         print(f"Failed to set dark mode title bar: {e}")
 
 #===============================================================<  Variables  >=============================================================
+# Versions
+app_version = '4.0.0'
+
 editor_info = {
     'editor_info':
     {
-    'Info': 'Hammer5Tools by Twist',
-    'GitHub': 'https://github.com/dertwist/Hammer5Tools',
-    'Discord_Server': 'https://discord.gg/DvCXEyhssd',
-    'social_links': {
-        'Steam': 'https://steamcommunity.com/id/der_twist',
-        'Twitter': 'https://twitter.com/der_twist',
-        'Bluesky': 'https://bsky.app/profile/der-twist.bsky.social',
-        'ArtStation': 'https://www.artstation.com/nucky3d',
-    }
+    'name': 'Hammer 5 Tools',
+    'version' : f'{app_version}'
     }
     }
 
