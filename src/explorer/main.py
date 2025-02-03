@@ -123,9 +123,8 @@ class Explorer(QMainWindow):
         self.model.setRootPath(tree_directory)
         try:
             self.rootpath = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
-        except Exception as e:
-            error_dialog = ErrorInfo(text="Initialization Error", details=str(e))
-            error_dialog.exec_()
+        except:
+            pass
             self.rootpath = tree_directory
         if not os.path.exists(tree_directory):
             os.makedirs(tree_directory)
