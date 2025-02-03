@@ -15,13 +15,11 @@ from PySide6.QtWidgets import (
     QVBoxLayout
 )
 from src.settings.main import debug
-
+from src.loading_editor.preview import preview_image
 
 class NoWheelScrollArea(QScrollArea):
     def wheelEvent(self, event: QWheelEvent):
-        # Prevent zooming with mouse wheel over the scroll area
         event.ignore()
-
 
 class Viewport(QMainWindow):
     def __init__(self, parent=None):
@@ -36,43 +34,35 @@ class Viewport(QMainWindow):
         self.setupUI()
 
     def setupUI(self):
-        # Create a container so we do not repeatedly set different central widgets
         self.container = QWidget(self)
         self.setCentralWidget(self.container)
 
-        # Use a vertical layout to hold both placeholder_label and scroll_area
         layout = QVBoxLayout(self.container)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Placeholder label displayed when no image is selected
         self.placeholder_label = QLabel(self.container)
         self.placeholder_label.setAlignment(Qt.AlignCenter)
         self.placeholder_label.setText("Select image in the screenshots")
         self.placeholder_label.setStyleSheet("color: gray; font-size: 13px;")
 
-        # Image label for displaying pictures when available
         self.image_label = QLabel(self.container)
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setScaledContents(False)
 
-        # Scroll area that holds the image label
         self.scroll_area = NoWheelScrollArea(self.container)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.image_label)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        # Add both widgets to the layout
         layout.addWidget(self.placeholder_label)
         layout.addWidget(self.scroll_area)
 
-        # Show placeholder by default, hide scroll area
         self.placeholder_label.show()
         self.scroll_area.hide()
 
     def set_placeholder_text(self):
-        # Show placeholder, hide scroll area
         self.placeholder_label.setText("Select image in the screenshots")
         self.placeholder_label.setStyleSheet("color: gray; font-size: 16px;")
         self.placeholder_label.show()
@@ -80,7 +70,6 @@ class Viewport(QMainWindow):
         self.image_label.clear()
 
     def clear_placeholder_text(self):
-        # Hide placeholder, show scroll area
         self.placeholder_label.hide()
         self.placeholder_label.clear()
         self.placeholder_label.setStyleSheet("")
@@ -154,7 +143,6 @@ class Viewport(QMainWindow):
                 self.image_label.setPixmap(scaled_pixmap)
                 self.image_label.adjustSize()
 
-                # Adjust scroll bars if mouse_pos was provided
                 if mouse_pos:
                     new_size = self.image_label.size()
                     delta_size = new_size - old_size
@@ -200,6 +188,19 @@ class Viewport(QMainWindow):
             self.panning = False
             QApplication.restoreOverrideCursor()
 
+    def processAndPreviewImage(self, image_path, svg_icon_path, description_text, output_path, viewport_size=(1280, 720)):
+        preview_image(image_path, svg_icon_path, description_text, output_path, viewport_size)
+        self.showImage(output_path)
+        self.fitToWindow()
+
+if __name__ == "__main__":
+    from PySide6.QtWidgets import QApplication
+    import sys
+
+    app = QApplication(sys.argv)
+    explorer = ImageExplorer()
+    explorer.show()
+    sys.exit(app.exec())
 
 class ImageExplorer(QMainWindow):
     def __init__(self, tree_directory=None):
@@ -307,10 +308,8 @@ class ImageExplorer(QMainWindow):
             except Exception as e:
                 debug(f"Error removing file '{file_path}': {e}")
 
-
 class ThumbnailWorkerSignals(QObject):
     result = Signal(str, QIcon)
-
 
 class ThumbnailWorker(QRunnable):
     def __init__(self, file_path):
@@ -333,7 +332,6 @@ class ThumbnailWorker(QRunnable):
                 debug(f"Failed to generate thumbnail for: {self.file_path}")
         except Exception as e:
             debug(f"Error generating thumbnail for '{self.file_path}': {e}")
-
 
 class QFileSystemModelWithThumbnails(QFileSystemModel):
     def __init__(self, parent=None):
@@ -376,3 +374,13 @@ class QFileSystemModelWithThumbnails(QFileSystemModel):
             index = self.index(file_path)
             self.dataChanged.emit(index, index, [Qt.DecorationRole])
             debug(f"Updated thumbnail for changed file: {file_path}")
+
+if __name__ == "__main__":
+    # Example usage for testing ImageExplorer
+    from PySide6.QtWidgets import QApplication
+    import sys
+
+    app = QApplication(sys.argv)
+    explorer = ImageExplorer()
+    explorer.show()
+    sys.exit(app.exec())
