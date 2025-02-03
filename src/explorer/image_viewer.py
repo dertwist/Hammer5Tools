@@ -1,6 +1,7 @@
 import os
+import shutil
 from PySide6.QtCore import Qt, QSize, QThreadPool, QRunnable, QObject, Signal, QFileSystemWatcher, QPointF
-from PySide6.QtGui import QPixmap, QIcon, QAction, QWheelEvent, QMouseEvent
+from PySide6.QtGui import QPixmap, QIcon, QAction, QWheelEvent, QMouseEvent, QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -204,6 +205,8 @@ class ExplorerImageViewer(QMainWindow):
     def __init__(self, tree_directory=None):
         super().__init__()
         self.setWindowTitle("Explorer")
+        root_path = tree_directory if tree_directory else os.path.expanduser("~")
+        self.root_directory = root_path  # Save the root path for copying files
 
         splitter = QSplitter(self)
 
@@ -211,7 +214,6 @@ class ExplorerImageViewer(QMainWindow):
         self.tree_view.setIconSize(QSize(64, 64))
 
         self.file_model = QFileSystemModelWithThumbnails(self)
-        root_path = tree_directory if tree_directory else os.path.expanduser("~")
         self.file_model.setRootPath(root_path)
         self.file_model.setNameFilters(["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tga"])
         self.file_model.setNameFilterDisables(False)
@@ -234,6 +236,46 @@ class ExplorerImageViewer(QMainWindow):
 
         self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree_view.customContextMenuRequested.connect(self.openContextMenu)
+
+        # Enable drag and drop support
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            valid_extensions = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
+            for url in event.mimeData().urls():
+                if url.isLocalFile() and os.path.splitext(url.toLocalFile())[1].lower() in valid_extensions:
+                    event.acceptProposedAction()
+                    return
+        event.ignore()
+
+    def dropEvent(self, event: QDropEvent):
+        if event.mimeData().hasUrls():
+            valid_extensions = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
+            copied_files = []
+            for url in event.mimeData().urls():
+                if url.isLocalFile():
+                    source_file = url.toLocalFile()
+                    ext = os.path.splitext(source_file)[1].lower()
+                    if ext in valid_extensions:
+                        destination_file = os.path.join(self.root_directory, os.path.basename(source_file))
+                        try:
+                            shutil.copy(source_file, destination_file)
+                            copied_files.append(destination_file)
+                            debug(f"Copied file {source_file} to {destination_file}")
+                        except Exception as e:
+                            debug(f"Error copying file '{source_file}': {e}")
+            if copied_files:
+                # Refresh the model to show new files
+                self.file_model.refresh()
+                # Optionally, display the first copied image
+                self.image_viewer.showImage(copied_files[0])
+                self.image_viewer.fitToWindow()
+                event.acceptProposedAction()
+            else:
+                event.ignore()
+        else:
+            event.ignore()
 
     def on_item_click(self, index):
         file_path = self.file_model.filePath(index)
