@@ -19,7 +19,7 @@ from PySide6.QtSvgWidgets import QSvgWidget
 
 from src.settings.main import get_cs2_path, get_addon_name, debug
 from src.loading_editor.ui_main import Ui_Loading_editorMainWindow
-from src.explorer.image_viewer import ExplorerImageViewer
+from src.loading_editor.viewport import ExplorerImageViewer
 from src.common import compile
 from src.widgets import ErrorInfo
 
