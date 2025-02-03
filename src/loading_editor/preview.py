@@ -1,183 +1,197 @@
-import sys
 import os
-from PySide6.QtCore import QRectF, QSize, Qt
-from PySide6.QtGui import QImage, QPixmap, QPainter, QFont, QColor
-from PySide6.QtWidgets import (QApplication, QGraphicsScene, QGraphicsPixmapItem,
-                               QGraphicsBlurEffect)
+import sys
+import tempfile
+import random
+
+from PySide6.QtCore import Qt, QRectF, QSize
+from PySide6.QtGui import (
+    QImage,
+    QPixmap,
+    QPainter,
+    QColor,
+    QFont,
+    QFontMetrics,
+    QPen,
+    QBrush,
+    QLinearGradient
+)
 from PySide6.QtSvg import QSvgRenderer
 
-def apply_blur_to_pixmap(pixmap, blur_radius=5):
-    """
-    Apply a blur effect to a QPixmap using QGraphicsBlurEffect.
-    """
-    # Create a scene and add the pixmap item with a blur effect.
-    scene = QGraphicsScene()
-    item = QGraphicsPixmapItem(pixmap)
-    blur = QGraphicsBlurEffect()
-    blur.setBlurRadius(blur_radius)
-    item.setGraphicsEffect(blur)
-    scene.addItem(item)
 
-    # Render the scene to a new QPixmap.
-    result = QPixmap(pixmap.size())
-    result.fill(Qt.transparent)
-    painter = QPainter(result)
-    scene.render(painter, QRectF(0, 0, pixmap.width(), pixmap.height()),
-                 QRectF(0, 0, pixmap.width(), pixmap.height()))
+def blur_qimage_region(image, rect, radius=5):
+    # Validate rectangle dimensions and boundaries
+    left, top, width_rect, height_rect = rect
+    if (width_rect <= 0 or height_rect <= 0 or
+            left + width_rect > image.width() or
+            top + height_rect > image.height()):
+        return image
+
+    # Extract the region to blur as a QPixmap
+    region_pixmap = QPixmap.fromImage(image.copy(left, top, width_rect, height_rect))
+
+    # Create a scaled-down size for the blur effect
+    scaled_down_size = QSize(region_pixmap.width() // 10, region_pixmap.height() // 10)
+    # Scale down and then up to simulate a blur
+    blurred = region_pixmap.scaled(scaled_down_size, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+    blurred = blurred.scaled(region_pixmap.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+
+    # Paste the blurred region back onto the original image
+    painter = QPainter(image)
+    painter.drawPixmap(left, top, blurred)
     painter.end()
-    return result
 
-def load_svg_as_pixmap(svg_path, target_width):
-    """
-    Load an SVG file and render it to a QPixmap with the specified target width,
-    maintaining its aspect ratio.
-    """
-    if not os.path.exists(svg_path):
-        print(f"SVG icon not found: {svg_path}")
+    return image
+
+
+def load_svg_as_qpixmap(svg_path, target_width):
+    if not svg_path or not os.path.isfile(svg_path):
         return None
 
     renderer = QSvgRenderer(svg_path)
-    # Calculate target height using the viewBox size of the SVG.
-    default_size = renderer.defaultSize()
-    if default_size.width() == 0:
-        default_size.setWidth(target_width)
-    scale_factor = target_width / default_size.width()
-    target_height = int(default_size.height() * scale_factor)
+    if not renderer.isValid():
+        return None
 
-    pixmap = QPixmap(target_width, target_height)
+    original_size = renderer.defaultSize()
+    if original_size.width() == 0 or original_size.height() == 0:
+        return None
+
+    scale_factor = target_width / original_size.width()
+    scaled_width = int(original_size.width() * scale_factor)
+    scaled_height = int(original_size.height() * scale_factor)
+
+    pixmap = QPixmap(scaled_width, scaled_height)
     pixmap.fill(Qt.transparent)
 
     painter = QPainter(pixmap)
     renderer.render(painter)
     painter.end()
+
     return pixmap
 
-def preview_image(image_path, svg_icon_path, description_text, output_path, viewport_size=(1280, 720)):
-    """
-    Processes the image by resizing to a 16:9 viewport, creating a blurred overlay area,
-    and overlaying an SVG icon with accompanying text using Qt APIs.
 
-    Steps:
-      0. Rescale the image to a 16:9 viewport.
-      1. Create a blurred rectangle area within the image with specific offsets:
-           - left: 87% of width, right: 4% from the right, top: 5% of height, bottom: 5% from the bottom.
-      2. Overlay on top of this blurred rectangle:
-           - the SVG icon (converted to pixmap)
-           - below the icon, draw the label "Casual"
-      3. Draw a gray divider below the icon and text.
-      4. Write the text "test" below the divider.
-      5. Write the text "A community map created by:" followed by the provided description.
-    """
-    # Step 0: Load and resize the image to the viewport size.
+def preview_image(image_path, svg_icon_path, description_text, output_path, viewport_size=(1280, 720)):
     if not os.path.exists(image_path):
         print(f"Input image not found: {image_path}")
         return
+
+    # Load image and scale while preserving aspect ratio
     image = QImage(image_path)
     if image.isNull():
-        print(f"Failed to load image: {image_path}")
+        print(f"Error: unable to load {image_path}")
         return
-    image = image.scaled(QSize(*viewport_size), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-    pixmap = QPixmap.fromImage(image)
-    width, height = pixmap.width(), pixmap.height()
+    image = image.scaled(viewport_size[0], viewport_size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
-    # Step 1: Define the blurred rectangle area using percentage offsets.
-    rect_left   = int(width * 0.87)
-    rect_top    = int(height * 0.05)
-    rect_right  = int(width * (1 - 0.04))   # 4% from right edge => width * 0.96
-    rect_bottom = int(height * (1 - 0.05))    # 5% from bottom edge => height * 0.95
+    width = image.width()
+    height = image.height()
+
+    # Define rectangular region on the right side for the blur overlay.
+    rect_left = int(width * 0.70)
+    rect_top = int(height * 0.05)
+    rect_right = int(width * 0.98)
+    rect_bottom = int(height * 0.95)
     region_width = rect_right - rect_left
     region_height = rect_bottom - rect_top
 
-    if region_width <= 0 or region_height <= 0:
-        print("Invalid rectangle dimensions calculated.")
-        return
+    # Apply blur on the defined region if dimensions are valid
+    if region_width > 0 and region_height > 0:
+        image = blur_qimage_region(image, (rect_left, rect_top, region_width, region_height), radius=5)
 
-    # Crop the rectangle region
-    region_pixmap = pixmap.copy(rect_left, rect_top, region_width, region_height)
-    # Apply blur to the rectangle region
-    blurred_pixmap = apply_blur_to_pixmap(region_pixmap, blur_radius=5)
-
-    # Draw the blurred region back onto the main pixmap.
+    # Convert the QImage to QPixmap for overlay drawing
+    pixmap = QPixmap.fromImage(image)
     painter = QPainter(pixmap)
-    painter.drawPixmap(rect_left, rect_top, blurred_pixmap)
+    painter.setRenderHint(QPainter.Antialiasing)
 
-    # Step 2: Load the SVG icon as a pixmap.
-    # Set maximum icon width to 80% of the blurred region's width.
-    max_icon_width = int(region_width * 0.8)
-    icon_pixmap = load_svg_as_pixmap(svg_icon_path, max_icon_width)
-    if icon_pixmap is None:
-        painter.end()
-        return
+    # Draw semi-transparent overlay on the blurred region
+    overlay_rect = QRectF(rect_left, rect_top, region_width, region_height)
+    overlay_color = QColor(0, 0, 0, 120)
+    painter.fillRect(overlay_rect, overlay_color)
 
-    # Calculate position: center horizontally within the blurred rectangle.
-    icon_x = rect_left + (region_width - icon_pixmap.width()) // 2
-    icon_padding_top = 10
-    icon_y = rect_top + icon_padding_top
-    painter.drawPixmap(icon_x, icon_y, icon_pixmap)
+    # Setup for UI overlay elements
+    padding = 10
+    current_y = rect_top + padding
 
-    # Set up fonts for drawing text.
-    try:
-        # Attempt to load a nice sans-serif font.
-        font = QFont("Arial", 20)
-        font_small = QFont("Arial", 16)
-    except Exception:
-        font = painter.font()
-        font_small = painter.font()
+    # 1. Draw random status text
+    status_text_options = ["Accepting", "Checking", "Testing"]
+    status_text = random.choice(status_text_options)
+    status_font = QFont("Arial", 12)
+    painter.setFont(status_font)
+    painter.setPen(Qt.white)
+    fm_status = QFontMetrics(status_font)
+    text_width = fm_status.horizontalAdvance(status_text)
+    text_height = fm_status.height()
+    status_x = rect_left + (region_width - text_width) // 2
+    painter.drawText(status_x, current_y + text_height, status_text)
+    current_y += text_height + padding
 
-    # Step 2.2: Draw label "Casual" under the icon.
-    label_text = "Casual"
-    painter.setFont(font)
-    painter.setPen(QColor("white"))
-    metrics = painter.fontMetrics()
-    text_width = metrics.horizontalAdvance(label_text)
-    text_height = metrics.height()
-    label_x = rect_left + (region_width - text_width) // 2
-    label_y = icon_y + icon_pixmap.height() + 5  # slight padding below icon
-    painter.drawText(label_x, label_y + text_height, label_text)
+    # 2. Draw optional SVG icon if provided
+    if svg_icon_path:
+        max_icon_width = int(region_width * 0.8)
+        icon_pix = load_svg_as_qpixmap(svg_icon_path, max_icon_width)
+        if icon_pix:
+            icon_x = rect_left + (region_width - icon_pix.width()) // 2
+            painter.drawPixmap(icon_x, current_y, icon_pix)
+            current_y += icon_pix.height() + padding
+        else:
+            current_y += padding
+    else:
+        current_y += padding
 
-    # Step 3: Draw a gray divider below the label text.
-    divider_padding = 10
-    divider_y = label_y + text_height + divider_padding
-    divider_thickness = 2
-    painter.setPen(QColor("gray"))
-    painter.drawLine(rect_left + 5, divider_y, rect_right - 5, divider_y)
+    # 3. Draw add-on name ("Addon Name")
+    addon_font = QFont("Arial", 20, QFont.Bold)
+    painter.setFont(addon_font)
+    addon_text = "Addon Name"
+    fm_addon = QFontMetrics(addon_font)
+    addon_text_width = fm_addon.horizontalAdvance(addon_text)
+    addon_text_height = fm_addon.height()
+    addon_x = rect_left + (region_width - addon_text_width) // 2
+    painter.drawText(addon_x, current_y + addon_text_height, addon_text)
+    current_y += addon_text_height + padding
 
-    # Step 4: Draw the text "test" below the divider.
-    test_padding = 10
-    test_y = divider_y + test_padding + text_height
-    painter.setPen(QColor("white"))
-    painter.drawText(rect_left + 10, test_y, "test")
+    # 4. Draw game mode ("Game Mode")
+    gamemode_font = QFont("Arial", 16)
+    painter.setFont(gamemode_font)
+    game_mode_text = "Game Mode"
+    fm_gamemode = QFontMetrics(gamemode_font)
+    gamemode_text_width = fm_gamemode.horizontalAdvance(game_mode_text)
+    gamemode_text_height = fm_gamemode.height()
+    gamemode_x = rect_left + (region_width - gamemode_text_width) // 2
+    painter.drawText(gamemode_x, current_y + gamemode_text_height, game_mode_text)
+    current_y += gamemode_text_height + padding
 
-    # Step 5: Draw "A community map created by:" and the description.
-    base_text = "A community map created by:"
-    combined_text = f"{base_text} {description_text}"
-    desc_padding = 10
-    desc_y = test_y + text_height + desc_padding
-    painter.setFont(font_small)
-    painter.drawText(rect_left + 10, desc_y, combined_text)
+    # 5. Draw divider line
+    divider_y = current_y + padding // 2
+    pen = QPen(QColor("gray"))
+    pen.setWidth(2)
+    painter.setPen(pen)
+    painter.drawLine(rect_left + padding, divider_y, rect_left + region_width - padding, divider_y)
+    current_y = divider_y + padding
+
+    # 6. Draw game mode description text
+    desc_font = QFont("Arial", 14)
+    painter.setFont(desc_font)
+    painter.setPen(Qt.white)
+    fm_desc = QFontMetrics(desc_font)
+    desc_text = description_text
+    desc_text_width = fm_desc.horizontalAdvance(desc_text)
+    desc_x = rect_left + (region_width - desc_text_width) // 2
+    painter.drawText(desc_x, current_y + fm_desc.height(), desc_text)
+    current_y += fm_desc.height() + padding
+
+    # 7. Draw loading gradient line at the bottom of the overlay
+    gradient_height = 8
+    gradient_rect_top = rect_bottom - gradient_height - padding
+    gradient_rect = QRectF(rect_left + padding, gradient_rect_top, region_width - 2 * padding, gradient_height)
+    gradient = QLinearGradient(gradient_rect.topLeft(), gradient_rect.topRight())
+    gradient.setColorAt(0.0, QColor(0, 255, 0, 150))
+    gradient.setColorAt(0.5, QColor(255, 255, 0, 150))
+    gradient.setColorAt(1.0, QColor(255, 0, 0, 150))
+    painter.fillRect(gradient_rect, QBrush(gradient))
 
     painter.end()
 
-    # Save the processed image.
-    if not pixmap.save(output_path):
-        print(f"Error saving processed image to: {output_path}")
+    # Save the processed image
+    final_image = pixmap.toImage()
+    if not final_image.save(output_path):
+        print(f"Failed to save processed image to {output_path}")
     else:
         print(f"Processed image saved to: {output_path}")
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    # Example usage:
-    input_image = "input_image.jpg"  # Path to the input image file
-    svg_icon = "icon.svg"            # Path to the SVG icon file
-    description = "Your Organization Name"
-    output_image = "processed_image_qt.png"
-
-    if not os.path.exists(input_image):
-        print(f"Input image not found: {input_image}")
-        sys.exit(1)
-    if not os.path.exists(svg_icon):
-        print(f"SVG icon not found: {svg_icon}")
-        sys.exit(1)
-
-    preview_image(input_image, svg_icon, description, output_image)
-    sys.exit(0)
