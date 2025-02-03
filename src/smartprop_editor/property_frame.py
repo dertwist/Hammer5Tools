@@ -21,6 +21,7 @@ from src.smartprop_editor.property.filtersurface import PropertySurface
 from src.smartprop_editor.property.colormatch import PropertyColorMatch
 from src.smartprop_editor.property.variable import PropertyVariableOutput
 from src.smartprop_editor.property.set_variable import PropertyVariableValue
+from src.smartprop_editor.property.comment import PropertyComment
 
 import ast
 
@@ -477,6 +478,12 @@ class PropertyFrame(QWidget):
                     force_variable=True,
                     placeholder='Variable name',
                     filter_types=['String', 'Int', 'Float', 'Bool']
+                )
+                add_instance()
+            elif 'm_Comment' in value_class:
+                property_instance = PropertyComment(
+                    value=val,
+                    value_class=value_class,
                 )
                 add_instance()
             elif 'm_VariableValue' in value_class:

@@ -456,7 +456,7 @@ QPlainTextEdit {
 
     font: 700 10pt "Segoe UI";
     border: 2px solid black;
-    border-radius: 4px;
+    border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
     height:18px;
     padding: 4px;
