@@ -18,3 +18,4 @@ pyinstaller
 tabulate
 numpy
 pyqtgraph
+cairosvg
