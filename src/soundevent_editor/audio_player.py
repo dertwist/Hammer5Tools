@@ -1,10 +1,11 @@
+import os
+import tempfile
 from PySide6.QtWidgets import QLabel, QWidget
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtCore import QUrl
+from PySide6.QtGui import QIcon
 from src.settings.main import set_config_bool, get_config_bool
 from src.soundevent_editor.ui_audio_player import Ui_Form
-from PySide6.QtGui import QIcon
 
 class AudioPlayer(QWidget):
     def __init__(self, parent=None, file_path: str = None):
@@ -16,8 +17,9 @@ class AudioPlayer(QWidget):
         self.audio_output = QAudioOutput()
         self.audio_player.setAudioOutput(self.audio_output)
 
-        self.duration = "00:00"
         self.filepath = None
+        self.temp_file_name = None
+        self.duration = "00:00"
 
         self.init_ui()
         self.setup_connections()
@@ -35,7 +37,6 @@ class AudioPlayer(QWidget):
         self.timer = QTimer(self)
         self.timer.setInterval(1000)
 
-        # Set initial icon and text for play/pause button
         self.update_play_button_icon()
 
     def setup_connections(self):
@@ -45,7 +46,7 @@ class AudioPlayer(QWidget):
         self.audio_player.positionChanged.connect(self.update_position)
         self.audio_player.durationChanged.connect(self.update_duration)
         self.audio_player.mediaStatusChanged.connect(self.handle_media_status)
-        self.audio_player.playbackStateChanged.connect(self.update_play_button_icon)  # Connect state change to update method
+        self.audio_player.playbackStateChanged.connect(self.update_play_button_icon)
         self.timer.timeout.connect(self.update_time_labels)
 
     def toggle_play_pause(self):
@@ -55,9 +56,9 @@ class AudioPlayer(QWidget):
             self.play_sound()
 
     def play_sound(self):
-        if self.filepath:
+        if self.temp_file_name and os.path.exists(self.temp_file_name):
             if self.audio_player.playbackState() == QMediaPlayer.StoppedState:
-                self.audio_player.setSource(self.filepath)
+                pass
             self.audio_player.play()
             self.timer.start()
 
@@ -75,15 +76,32 @@ class AudioPlayer(QWidget):
         self.ui.play_button.setIcon(icon)
 
     def set_audiopath(self, path):
-        self.filepath = QUrl.fromLocalFile(path)
+        try:
+            with open(path, "rb") as source_file:
+                data = source_file.read()
+
+            if self.temp_file_name and os.path.exists(self.temp_file_name):
+                os.remove(self.temp_file_name)
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                tmp.write(data)
+                tmp.flush()
+                self.temp_file_name = tmp.name
+
+            self.audio_player.setSource(QUrl.fromLocalFile(self.temp_file_name))
+            self.filepath = path
+
+        except Exception as e:
+            print(f"Error loading file '{path}': {e}")
+            self.temp_file_name = None
+            self.filepath = None
 
     def toggle_loop(self, state):
         self.loop_enabled = self.ui.loop_checkbox.isChecked()
-        set_config_bool('SoundEventEditor', 'AudioPlayerLoop', self.ui.loop_checkbox.isChecked())
+        set_config_bool('SoundEventEditor', 'AudioPlayerLoop', self.loop_enabled)
 
     def seek_position(self, position):
         self.audio_player.setPosition(position)
-        # Play if the audio was paused
         if self.audio_player.playbackState() != QMediaPlayer.PlayingState:
             self.play_sound()
 
@@ -101,6 +119,7 @@ class AudioPlayer(QWidget):
         self.ui.time.setText(f"{self.format_time(current_time)} : {self.duration}")
 
     def handle_media_status(self, status):
+        from PySide6.QtMultimedia import QMediaPlayer
         if status == QMediaPlayer.EndOfMedia:
             if self.loop_enabled:
                 self.audio_player.setPosition(0)
@@ -112,3 +131,10 @@ class AudioPlayer(QWidget):
         seconds = (ms // 1000) % 60
         minutes = (ms // (1000 * 60)) % 60
         return f"{minutes:02}:{seconds:02}"
+
+    def closeEvent(self, event):
+        self.pause_sound()
+
+        if self.temp_file_name and os.path.exists(self.temp_file_name):
+            os.remove(self.temp_file_name)
+        super().closeEvent(event)
