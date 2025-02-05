@@ -13,7 +13,7 @@ from src.widgets import FloatWidget, ComboboxVariablesWidget, BoolWidget
 #       m_DataType = "FLOAT"
 #       m_Value = 1.000000
 # }
-# TODO: SetVariable property
+
 # The SetVariable property should output m_Variable.
 # The widget must include a combobox to select the variable type,
 # and a specialized widget for each variable type.
