@@ -91,7 +91,7 @@ def build_updater() -> None:
     ], check=True)
 
 def archive_files(folder_path: str, output_path: str, excluded_files: Set[str], excluded_paths: List[str]) -> None:
-    """Archives files from a folder into a zip file, excluding specified files and paths.
+    """Archives files from a folder into a zip file with maximum compression, excluding specified files and paths.
 
     Args:
         folder_path (str): The path to the folder to archive.
@@ -107,15 +107,29 @@ def archive_files(folder_path: str, output_path: str, excluded_files: Set[str], 
                 return True
         return False
 
-    with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for root, _, files in os.walk(folder_path):
             for file in files:
                 file_path = os.path.join(root, file)
                 rel_path = os.path.relpath(file_path, folder_path)
                 if should_exclude(file, rel_path):
                     continue
-                archive.write(file_path, rel_path)
+                try:
+                    archive.write(file_path, rel_path)
+                except OSError as e:
+                    print(f"Warning: Could not add file {file_path}: {e}")
+
+    original_size = sum(os.path.getsize(os.path.join(root, file))
+                       for root, _, files in os.walk(folder_path)
+                       for file in files
+                       if not should_exclude(file, os.path.join(root, file)))
+    compressed_size = os.path.getsize(output_path)
+    compression_ratio = (1 - compressed_size / original_size) * 100 if original_size > 0 else 0
+
     print(f"Archived files to {output_path}")
+    print(f"Original size: {original_size / 1024 / 1024:.2f} MB")
+    print(f"Compressed size: {compressed_size / 1024 / 1024:.2f} MB")
+    print(f"Compression ratio: {compression_ratio:.1f}%")
 
 def main() -> None:
     """Main function to parse arguments and execute build and packaging tasks."""
