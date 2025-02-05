@@ -137,7 +137,8 @@ class BoxSlider(QWidget):
     }
     """
 
-    def __init__(self, int_output=False, slider_range=[0, 0], value=0.0,only_positive=False, lock_range=False, digits=3,value_step=0.1, slider_scale=5, sensitivity=1):
+    def __init__(self, int_output=False, slider_range=[0, 0], value=0.0, only_positive=False, lock_range=False,
+                 digits=3, value_step=0.1, slider_scale=5, sensitivity=1):
         super().__init__()
 
         # Initialize properties
@@ -209,6 +210,11 @@ class BoxSlider(QWidget):
 
     def eventFilter(self, obj, event):
         """Handle various widget events"""
+        # Allow exiting edit mode when the edit_box loses focus
+        if obj == self.edit_box and event.type() == QEvent.FocusOut and self.in_edit_mode:
+            self.finish_edit()
+            return False
+
         if event.type() == QEvent.MouseButtonPress and self.in_edit_mode:
             clicked_widget = QApplication.widgetAt(event.globalPos())
             if clicked_widget not in (self, self.edit_box):
@@ -265,7 +271,9 @@ class BoxSlider(QWidget):
         """Exit text editing mode"""
         if self.in_edit_mode:
             try:
-                new_value = float(self.edit_box.text())
+                # Replace comma with dot to address keyboard input issues
+                text = self.edit_box.text().replace(',', '.')
+                new_value = float(text)
                 if self.int_output:
                     new_value = round(new_value)
                 self.set_value(new_value)
