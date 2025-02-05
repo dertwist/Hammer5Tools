@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -26,9 +27,7 @@ from src.widgets import ErrorInfo
 
 class SvgPreviewWidget(QWidget):
     """
-    A widget that supports drag and drop for SVG files.
-    Initially, a placeholder is shown. When an SVG file is dropped,
-    the placeholder is hidden and the SVG preview is displayed.
+    A widget for drag and drop of SVG files. Displays a placeholder until an SVG is dropped.
     """
     def __init__(self):
         super().__init__()
@@ -46,7 +45,7 @@ class SvgPreviewWidget(QWidget):
 
         self.info_label = QLabel("Drag and drop an SVG file", self)
         self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setStyleSheet("margin: 0px; border: 0px; color: gray; font-size: 13px;")
+        self.info_label.setStyleSheet("color: gray; font-size: 13px;")
         layout.addWidget(self.info_label, alignment=Qt.AlignCenter)
 
     def dragEnterEvent(self, event):
@@ -54,15 +53,12 @@ class SvgPreviewWidget(QWidget):
             urls = event.mimeData().urls()
             if all(url.toLocalFile().lower().endswith('.svg') for url in urls):
                 event.acceptProposedAction()
-            else:
-                event.ignore()
-        else:
-            event.ignore()
+                return
+        event.ignore()
 
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
-            urls = event.mimeData().urls()
-            for url in urls:
+            for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
                 if file_path.lower().endswith('.svg'):
                     self.file_path = file_path
@@ -82,9 +78,6 @@ class SvgPreviewWidget(QWidget):
         return self.file_path
 
     def load_svg(self, svg_path: str):
-        """
-        Load an SVG icon from the specified path and update the widget.
-        """
         if os.path.exists(svg_path) and svg_path.lower().endswith('.svg'):
             self.file_path = svg_path
             self.svg_preview.load(svg_path)
@@ -189,9 +182,9 @@ class ApplyScreenshotsWorker(QRunnable):
         if self.delete_existing:
             self.signals.log.emit("Deleting compiled vtex_c files because delete_existing is True")
             try:
-                shutil.rmtree(os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(),"panorama", "images", "map_icons", "screenshots", "1080p"))
-                shutil.rmtree(os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(),"panorama", "images", "map_icons", "screenshots", "720p"))
-                shutil.rmtree(os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(),"panorama", "images", "map_icons", "screenshots", "360p"))
+                base = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons", "screenshots")
+                for res in ["1080p", "720p", "360p"]:
+                    shutil.rmtree(os.path.join(base, res))
                 self.signals.log.emit("Deleted compiled vtex_c files from game location")
             except Exception as e:
                 debug(f"Error deleting compiled vtex_c files: {e}")
@@ -221,7 +214,8 @@ class ApplyScreenshotsWorker(QRunnable):
             self.signals.log.emit(msg)
             return
 
-        vtex_template = """<!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
+        vtex_template = (
+            """<!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
 "CDmeVtex"
 {
     "m_inputTextureArray" "element_array"
@@ -265,10 +259,10 @@ class ApplyScreenshotsWorker(QRunnable):
     "m_bNoLod" "bool" "1"
 }
 """
+        )
         for res_folder, max_height in resolutions.items():
             target_folder = os.path.join(self.addon_path, "panorama", "images", "map_icons", "screenshots", res_folder)
             os.makedirs(target_folder, exist_ok=True)
-
             scaled_pixmap = pixmap.scaledToHeight(max_height, Qt.SmoothTransformation)
             output_image_path = os.path.join(target_folder, f"{new_base_name}.png")
             if not scaled_pixmap.save(output_image_path, "PNG"):
@@ -334,20 +328,17 @@ class Loading_editorMainWindow(QMainWindow):
 
         self.threadpool = QThreadPool()
         self.game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "screenshots")
-        if not os.path.exists(self.game_screenshot_path):
-            os.makedirs(self.game_screenshot_path)
+        os.makedirs(self.game_screenshot_path, exist_ok=True)
 
         explorer_view = ImageExplorer(tree_directory=self.game_screenshot_path)
         explorer_view.setStyleSheet("padding:0")
         self.ui.explorer.layout().addWidget(explorer_view)
-        # Add the image viewer from explorer to the preview area
         self.ui.screenshot_preview.layout().addWidget(explorer_view.image_viewer)
         self.ui.splitter_2.setSizes([200, 100])
 
         self.svg_preview_widget = SvgPreviewWidget()
         self.ui.svg_icon_frame.layout().addWidget(self.svg_preview_widget)
 
-        # Connect UI actions to their methods
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
         self.ui.apply_screenshots_button.clicked.connect(self.start_apply_screenshots)
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
@@ -356,14 +347,10 @@ class Loading_editorMainWindow(QMainWindow):
 
         self.unified_dialog = UnifiedProcessingDialog(self)
 
-        # Load existing icon and description if available
         self.load_existing_icon()
         self.load_existing_description()
 
     def load_existing_icon(self):
-        """
-        Load an existing SVG icon if it exists in the designated folder.
-        """
         folder_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
         svg_icon_filename = f"map_icon_{get_addon_name()}.svg"
         svg_path = os.path.join(folder_path, svg_icon_filename)
@@ -372,18 +359,14 @@ class Loading_editorMainWindow(QMainWindow):
             self.svg_preview_widget.load_svg(svg_path)
 
     def load_existing_description(self):
-        """
-        Load an existing description from disk if available.
-        """
         description_file = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "maps", f"{get_addon_name()}.txt")
         if os.path.exists(description_file):
             try:
                 with open(description_file, "r") as f:
                     lines = f.readlines()
-                # Assuming the first line is a header, load the remaining text
                 description = "".join(lines[1:]).strip() if len(lines) > 1 else ""
                 self.ui.PlainTextEdit_Description_2.setPlainText(description)
-                debug(f"Loaded existing description from {description_file}")
+                debug(f"Loaded description from {description_file}")
             except Exception as e:
                 debug(f"Error loading description: {e}")
 
@@ -394,25 +377,17 @@ class Loading_editorMainWindow(QMainWindow):
         except Exception as e:
             debug(f"Error counting files: {e}")
             file_count = 0
+
         if file_count > 10:
-            reply = QMessageBox.warning(
-                self,
-                "Warning",
-                "The number of files is more than 10. Please confirm that this is desirable.",
-                QMessageBox.Ok | QMessageBox.Cancel
-            )
-            if reply == QMessageBox.Cancel:
-                return
+            QMessageBox.warning(self, "Warning", "The number of files is more than 10")
 
         self.unified_dialog.reset()
-
         worker = ApplyScreenshotsWorker(self.game_screenshot_path, self.ui.delete_existings.isChecked())
         worker.signals.progress.connect(self.unified_dialog.update_progress)
         worker.signals.error.connect(self.show_error)
         worker.signals.finished.connect(self.processing_finished)
         worker.signals.log.connect(self.unified_dialog.append_log)
         self.unified_dialog.cancel_button.clicked.connect(worker.abort)
-
         self.unified_dialog.show()
         self.threadpool.start(worker)
 
@@ -433,22 +408,20 @@ class Loading_editorMainWindow(QMainWindow):
 
     def clear_images(self):
         shutil.rmtree(self.game_screenshot_path, ignore_errors=True)
-        os.makedirs(self.game_screenshot_path)
+        os.makedirs(self.game_screenshot_path, exist_ok=True)
 
     def open_images_folder(self):
         os.startfile(self.game_screenshot_path)
 
     def loading_editor_cs2_description(self, description_text: str):
         file_name = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "maps", f"{get_addon_name()}.txt")
-        # Ensure that the directory exists before writing the file
         os.makedirs(os.path.dirname(file_name), exist_ok=True)
         with open(file_name, "w") as f:
             f.write("COMMUNITYMAPCREDITS:\n")
             f.write(description_text)
 
     def icon_processs(self):
-        svg_path = self.svg_preview_widget.get_svg_path()
-        svg_path = os.path.normpath(svg_path)
+        svg_path = os.path.normpath(self.svg_preview_widget.get_svg_path())
         folder_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
         os.makedirs(folder_path, exist_ok=True)
         svg_dst = os.path.join(folder_path, f"map_icon_{get_addon_name()}.svg")
