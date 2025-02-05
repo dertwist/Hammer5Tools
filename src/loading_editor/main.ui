@@ -270,7 +270,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     }</string>
               </property>
               <property name="text">
-               <string>Delete previous</string>
+               <string>Delete existing</string>
               </property>
               <property name="icon">
                <iconset resource="../resources.qrc">
@@ -281,6 +281,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <width>20</width>
                 <height>20</height>
                </size>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>

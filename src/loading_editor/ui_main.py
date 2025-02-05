@@ -179,6 +179,7 @@ class Ui_Loading_editorMainWindow(object):
         icon2.addFile(u":/icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.delete_existings.setIcon(icon2)
         self.delete_existings.setIconSize(QSize(20, 20))
+        self.delete_existings.setChecked(True)
 
         self.horizontalLayout_2.addWidget(self.delete_existings)
 
@@ -454,7 +455,7 @@ class Ui_Loading_editorMainWindow(object):
 #if QT_CONFIG(tooltip)
         self.delete_existings.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Deletes all existing screenshots on the loading screen.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.delete_existings.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete previous", None))
+        self.delete_existings.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete existing", None))
 #if QT_CONFIG(tooltip)
         self.apply_screenshots_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
