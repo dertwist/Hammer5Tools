@@ -2,12 +2,14 @@ import os
 import json
 from pathlib import Path
 from collections import defaultdict
-from typing import Optional, Dict, Set, Tuple, List
+from typing import Optional, Dict, Tuple, List
+
 from PySide6.QtWidgets import (
     QWidget, QLabel, QPushButton, QHBoxLayout, QMenu, QListWidget, QListWidgetItem, QApplication
 )
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtCore import Signal, QSize, QFileSystemWatcher, QTimer
+
 from src.settings.main import get_addon_dir, debug
 from src.styles.common import qt_stylesheet_button, qt_stylesheet_widgetlist
 from src.assetgroup_maker.process import StartProcess
@@ -141,7 +143,8 @@ class FileItemWidget(QWidget):
 class MonitoringFileWatcher(QListWidget):
     """
     Widget to monitor file changes and manage file processing, enforcing an exact folder match.
-    It collects only .hbat files under allowed folders and validates referenced files before processing.
+    It collects all .hbat files under the root path from allowed folders, validates referenced files before processing,
+    and uses a 3-second debounce delay for updates.
     """
     open_file = Signal(str)
 
@@ -151,12 +154,11 @@ class MonitoringFileWatcher(QListWidget):
         self.file_system_watcher = QFileSystemWatcher()
         self.file_widgets: Dict[str, Tuple[QListWidgetItem, FileItemWidget]] = {}
         self.config_references: Dict[str, str] = {}
-        self.reference_configs: Dict[str, Set[str]] = {}
+        self.reference_configs: Dict[str, set] = {}
         self.process_threads: Dict[str, StartProcess] = {}
-        self.watched_directories: Set[str] = set()
-        self.allowed_folders: Set[str] = set()
+        self.watched_directories: set = set()
 
-        # Debounce directory change events to reduce frequency of scans
+        # Debounce delay set to 3000ms (3 seconds)
         self.debounce_timer = QTimer()
         self.debounce_timer.setSingleShot(True)
         self.debounce_timer.timeout.connect(self.update_file_list)
@@ -172,14 +174,10 @@ class MonitoringFileWatcher(QListWidget):
             debug("Invalid root path provided to MonitoringFileWatcher.")
             return
 
-        # Cache allowed folders from config and normalize them to lower-case for quick lookups.
-        allowed_str = get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops"
-        self.allowed_folders = {fld.strip() for fld in allowed_str.split(',') if fld.strip()}
-
-        # Instead of watching every subdirectory, watch the root; additional directories will be added later if necessary.
+        # Watch the root directory; additional directories will be added later if necessary.
         self.add_directory_watch(str(self.root_path))
         self.update_file_list()
-        self.file_system_watcher.directoryChanged.connect(lambda _: self.debounce_timer.start(500))
+        self.file_system_watcher.directoryChanged.connect(lambda _: self.debounce_timer.start(3000))
         self.file_system_watcher.fileChanged.connect(self.on_file_changed)
 
     def add_directory_watch(self, directory: str):
@@ -200,27 +198,26 @@ class MonitoringFileWatcher(QListWidget):
 
     def is_file_in_allowed_folder(self, file_path: str) -> bool:
         """
-        Verify that the file is in one of the allowed monitoring folders, matching exactly on the top-level folder.
+        Check if the file is in one of the allowed folders.
+        Allowed folders are retrieved from configuration 'AssetGroupMaker/monitor_folders'.
+        Only files whose relative path (from the add-on directory) contains one of the allowed folder names are accepted.
         """
-        allowed = list(self.allowed_folders)
-        if not allowed:
-            return True
-
-        addon_dir = Path(get_addon_dir()).resolve()
-        file_path_abs = Path(file_path).resolve()
-        if addon_dir not in file_path_abs.parents and addon_dir != file_path_abs.parent:
+        allowed = get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops"
+        allowed_set = {x.strip().lower() for x in allowed.split(',')}
+        try:
+            relative_path = os.path.relpath(file_path, get_addon_dir())
+        except Exception as e:
+            debug(f"Error obtaining relative path for {file_path}: {e}")
             return False
-
-        relative = file_path_abs.relative_to(addon_dir)
-        if not relative.parts:
-            return False
-
-        top_folder = relative.parts[0]
-        return top_folder in allowed
+        path_parts = relative_path.split(os.sep)
+        for folder in path_parts:
+            if folder.lower() in allowed_set:
+                return True
+        return False
 
     def collect_hbat_files(self) -> List[str]:
         """
-        Collect all .hbat files under the root path that are in allowed folders.
+        Collect all .hbat files under the root path from allowed folders.
         Uses os.scandir for a faster directory traversal.
         """
         collected_files = []
@@ -232,19 +229,18 @@ class MonitoringFileWatcher(QListWidget):
                         entry_path = Path(entry.path)
                         if entry.is_dir(follow_symlinks=False):
                             scan_dir(entry_path)
-                        elif entry.is_file() and entry.name.lower().endswith('.hbat'):
-                            if self.is_file_in_allowed_folder(str(entry_path)):
-                                collected_files.append(str(entry_path))
+                        elif entry.is_file() and entry.name.lower().endswith('.hbat') and self.is_file_in_allowed_folder(str(entry_path)):
+                            collected_files.append(str(entry_path))
             except OSError as e:
                 debug(f"Error scanning directory {path}: {e}")
 
         scan_dir(self.root_path)
-        debug(f"Collected {len(collected_files)} .hbat files after filtering allowed folders.")
+        debug(f"Collected {len(collected_files)} .hbat files in allowed folders.")
         return collected_files
 
     def update_file_list(self):
         """
-        Update the list of file widgets based on current .hbat files in allowed folders.
+        Update the list of file widgets based on current .hbat files in allowed folders of the project.
         """
         current_files = set(self.file_widgets.keys())
         found_files = set(self.collect_hbat_files())
@@ -339,7 +335,7 @@ class MonitoringFileWatcher(QListWidget):
         """
         Handle directory change events using debouncing to minimize rescans.
         """
-        self.debounce_timer.start(500)
+        self.debounce_timer.start(3000)
 
     def on_file_changed(self, path: str):
         """
