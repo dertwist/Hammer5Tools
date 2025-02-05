@@ -1,11 +1,13 @@
 import os
 import json
-from typing import Optional, Dict, Set, Tuple
+from pathlib import Path
+from collections import defaultdict
+from typing import Optional, Dict, Set, Tuple, List
 from PySide6.QtWidgets import (
-    QWidget, QLabel, QPushButton, QHBoxLayout, QMenu, QListWidget, QListWidgetItem
+    QWidget, QLabel, QPushButton, QHBoxLayout, QMenu, QListWidget, QListWidgetItem, QApplication
 )
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtCore import Signal, QSize, QFileSystemWatcher
+from PySide6.QtCore import Signal, QSize, QFileSystemWatcher, QTimer
 from src.settings.main import get_addon_dir, debug
 from src.styles.common import qt_stylesheet_button, qt_stylesheet_widgetlist
 from src.assetgroup_maker.process import StartProcess
@@ -22,7 +24,7 @@ def read_reference_from_file(config_path: str) -> Optional[str]:
             process = data.get('process', {})
             reference = process.get('reference', '')
             if reference:
-                return os.path.join(get_addon_dir(), reference)
+                return str(Path(get_addon_dir()) / reference)
     except Exception as e:
         debug(f"Error reading {config_path}: {e}")
     return None
@@ -31,26 +33,25 @@ def read_reference_from_file(config_path: str) -> Optional[str]:
 def validate_reference_file(reference_path: str) -> bool:
     """
     Validates the referenced file.
-    - Must exist
-    - Must not be binary (checked via presence of null bytes in first 1024 bytes)
-    - Must not be empty (after decoding as UTF-8)
+    - Must exist.
+    - Must not be binary (checked via presence of null bytes in first 1024 bytes).
+    - Must not be empty (after decoding as UTF-8).
     Returns True if valid, else False.
     """
-    if not os.path.exists(reference_path):
+    ref_path = Path(reference_path)
+    if not ref_path.exists():
         debug(f"Reference file does not exist: {reference_path}")
         return False
     try:
-        with open(reference_path, 'rb') as f:
+        with ref_path.open('rb') as f:
             sample = f.read(1024)
             if b'\0' in sample:
                 debug(f"Reference file is binary: {reference_path}")
                 return False
-            # Attempt to decode using UTF-8
             content = sample.decode('utf-8', errors='replace')
             if not any(char for char in content if not char.isspace()):
-                f.seek(1024)
-                remaining_content = f.read().decode('utf-8', errors='replace')
-                if not any(char for char in remaining_content if not char.isspace()):
+                remaining = f.read()
+                if not any(char for char in remaining.decode('utf-8', errors='replace') if not char.isspace()):
                     debug(f"Reference file is empty or contains only whitespace: {reference_path}")
                     return False
         return True
@@ -78,12 +79,14 @@ class FileItemWidget(QWidget):
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
 
-        relative_path = os.path.relpath(self.file_path, get_addon_dir())
+        addon_dir = get_addon_dir()
+        relative_path = os.path.relpath(self.file_path, addon_dir)
         path_parts = relative_path.split(os.sep)
         text = os.sep.join(path_parts[-2:]) if len(path_parts) >= 2 else relative_path
 
         self.label = QLabel(text)
         self.setToolTip(self.file_path)
+
         self.play_button = QPushButton()
         self.open_button = QPushButton()
 
@@ -144,36 +147,44 @@ class MonitoringFileWatcher(QListWidget):
 
     def __init__(self, root_path: str):
         super().__init__()
-        self.root_path = root_path
+        self.root_path: Path = Path(root_path)
         self.file_system_watcher = QFileSystemWatcher()
         self.file_widgets: Dict[str, Tuple[QListWidgetItem, FileItemWidget]] = {}
         self.config_references: Dict[str, str] = {}
         self.reference_configs: Dict[str, Set[str]] = {}
         self.process_threads: Dict[str, StartProcess] = {}
         self.watched_directories: Set[str] = set()
+        self.allowed_folders: Set[str] = set()
+
+        # Debounce directory change events to reduce frequency of scans
+        self.debounce_timer = QTimer()
+        self.debounce_timer.setSingleShot(True)
+        self.debounce_timer.timeout.connect(self.update_file_list)
 
         self.initialize_watcher()
         self.setStyleSheet(qt_stylesheet_widgetlist)
 
     def initialize_watcher(self):
         """
-        Initialize the file system watcher for the root path.
+        Initialize the file system watcher for the root path using optimized scanning.
         """
-        if not self.root_path or not os.path.isdir(self.root_path):
+        if not self.root_path.exists() or not self.root_path.is_dir():
             debug("Invalid root path provided to MonitoringFileWatcher.")
             return
 
-        # Add all directories under the root_path
-        for dirpath, _, _ in os.walk(self.root_path):
-            self.add_directory_watch(dirpath)
+        # Cache allowed folders from config and normalize them to lower-case for quick lookups.
+        allowed_str = get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops"
+        self.allowed_folders = {fld.strip() for fld in allowed_str.split(',') if fld.strip()}
 
+        # Instead of watching every subdirectory, watch the root; additional directories will be added later if necessary.
+        self.add_directory_watch(str(self.root_path))
         self.update_file_list()
-        self.file_system_watcher.directoryChanged.connect(self.on_directory_changed)
+        self.file_system_watcher.directoryChanged.connect(lambda _: self.debounce_timer.start(500))
         self.file_system_watcher.fileChanged.connect(self.on_file_changed)
 
     def add_directory_watch(self, directory: str):
         """
-        Add a directory to the file system watcher.
+        Add a directory to the file system watcher if not already watched.
         """
         if directory not in self.watched_directories:
             self.file_system_watcher.addPath(directory)
@@ -189,44 +200,45 @@ class MonitoringFileWatcher(QListWidget):
 
     def is_file_in_allowed_folder(self, file_path: str) -> bool:
         """
-        Verify that the file is in one of the allowed monitoring folders, matching exactly.
-        Allowed folders come from 'monitor_folders' (comma-separated) under AssetGroupMaker,
-        in the format 'folder' or 'addon_name/folder'. The top-level folder must match exactly.
+        Verify that the file is in one of the allowed monitoring folders, matching exactly on the top-level folder.
         """
-        allowed_folders_str = get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops"
-        allowed_folders = [fld.strip() for fld in allowed_folders_str.split(',') if fld.strip()]
-
-        # If no allowed folders are set, permit all files
-        if not allowed_folders:
+        allowed = list(self.allowed_folders)
+        if not allowed:
             return True
 
-        addon_dir = os.path.abspath(get_addon_dir())
-        file_path_abs = os.path.abspath(file_path)
-        # If the file isn't under the addon's directory, disallow
-        if os.path.commonpath([file_path_abs, addon_dir]) != addon_dir:
+        addon_dir = Path(get_addon_dir()).resolve()
+        file_path_abs = Path(file_path).resolve()
+        if addon_dir not in file_path_abs.parents and addon_dir != file_path_abs.parent:
             return False
 
-        # Convert path to relative from addon's dir
-        relative_path = os.path.relpath(file_path_abs, addon_dir)
-        segments = relative_path.split(os.sep)
-        if not segments:
+        relative = file_path_abs.relative_to(addon_dir)
+        if not relative.parts:
             return False
 
-        top_folder = segments[0]
-        # Require an exact match of top_folder in allowed_folders
-        return top_folder in allowed_folders
+        top_folder = relative.parts[0]
+        return top_folder in allowed
 
-    def collect_hbat_files(self) -> list:
+    def collect_hbat_files(self) -> List[str]:
         """
         Collect all .hbat files under the root path that are in allowed folders.
+        Uses os.scandir for a faster directory traversal.
         """
         collected_files = []
-        for dirpath, _, filenames in os.walk(self.root_path):
-            for filename in filenames:
-                if filename.lower().endswith('.hbat'):
-                    full_path = os.path.join(dirpath, filename)
-                    if self.is_file_in_allowed_folder(full_path):
-                        collected_files.append(full_path)
+
+        def scan_dir(path: Path):
+            try:
+                with os.scandir(path) as it:
+                    for entry in it:
+                        entry_path = Path(entry.path)
+                        if entry.is_dir(follow_symlinks=False):
+                            scan_dir(entry_path)
+                        elif entry.is_file() and entry.name.lower().endswith('.hbat'):
+                            if self.is_file_in_allowed_folder(str(entry_path)):
+                                collected_files.append(str(entry_path))
+            except OSError as e:
+                debug(f"Error scanning directory {path}: {e}")
+
+        scan_dir(self.root_path)
         debug(f"Collected {len(collected_files)} .hbat files after filtering allowed folders.")
         return collected_files
 
@@ -244,10 +256,12 @@ class MonitoringFileWatcher(QListWidget):
             self.add_file_widget(path)
         for path in removed_files:
             self.remove_file_widget(path)
-        for path in (found_files & current_files):
+        for path in found_files & current_files:
             self.update_reference(path)
-        for path in found_files:
-            directory = os.path.dirname(path)
+
+        # Add new directories from found files if not already watched.
+        for file_path in found_files:
+            directory = os.path.dirname(file_path)
             self.add_directory_watch(directory)
 
     def add_file_widget(self, path: str):
@@ -264,9 +278,11 @@ class MonitoringFileWatcher(QListWidget):
         widget.open_requested.connect(self.open_file.emit)
         widget.process_requested.connect(self.start_processing)
 
-        # Track reference only if valid; add file watcher for directory but not the file itself
+        # Watch the file for changes but only add if not already watched.
+        if path not in self.file_system_watcher.files():
+            self.file_system_watcher.addPath(path)
+        # Initial reference update.
         self.update_reference(path)
-        self.file_system_watcher.addPath(path)
 
     def remove_file_widget(self, path: str):
         """
@@ -282,8 +298,8 @@ class MonitoringFileWatcher(QListWidget):
 
     def update_reference(self, config_path: str):
         """
-        Update the reference path for a .hbat file. Validate the referenced file:
-        It must exist, be non-binary, and non-empty.
+        Update the reference path for a .hbat file. Validate the referenced file
+        and track it if valid.
         """
         reference_path = read_reference_from_file(config_path)
         if reference_path and validate_reference_file(reference_path):
@@ -295,8 +311,8 @@ class MonitoringFileWatcher(QListWidget):
         """
         Track a reference path for a configuration file and watch it.
         """
-        old_reference = self.config_references.get(config_path)
-        if old_reference and old_reference != reference_path:
+        old_ref = self.config_references.get(config_path)
+        if old_ref and old_ref != reference_path:
             self.untrack_reference(config_path)
         self.config_references[config_path] = reference_path
         if reference_path not in self.reference_configs:
@@ -321,18 +337,14 @@ class MonitoringFileWatcher(QListWidget):
 
     def on_directory_changed(self, path: str):
         """
-        Handle directory change events.
+        Handle directory change events using debouncing to minimize rescans.
         """
-        self.update_file_list()
-        for dirpath, dirnames, _ in os.walk(self.root_path):
-            for dirname in dirnames:
-                full_dir_path = os.path.join(dirpath, dirname)
-                self.add_directory_watch(full_dir_path)
+        self.debounce_timer.start(500)
 
     def on_file_changed(self, path: str):
         """
-        Handle file change events. As .hbat files are not directly watched for changes,
-        changes are handled via directory events or changes in referenced files.
+        Handle file change events.
+        For .hbat files or reference files, trigger appropriate updates.
         """
         debug(f"File changed: {path}")
         if os.path.exists(path):
@@ -350,8 +362,8 @@ class MonitoringFileWatcher(QListWidget):
             if path in self.file_widgets:
                 self.remove_file_widget(path)
             elif path in self.reference_configs:
-                configs = self.reference_configs.pop(path, None)
-                for config_path in configs or []:
+                configs = self.reference_configs.pop(path, set())
+                for config_path in configs:
                     self.config_references.pop(config_path, None)
                     self.stop_processing(config_path)
                 if path in self.file_system_watcher.files():
@@ -361,6 +373,7 @@ class MonitoringFileWatcher(QListWidget):
     def start_processing(self, config_path: str):
         """
         Start processing a config file using StartProcess.
+        Avoid duplicate processing threads.
         """
         if config_path in self.process_threads:
             debug(f"Processing already started for: {config_path}")
@@ -392,8 +405,11 @@ class MonitoringFileWatcher(QListWidget):
         Gracefully close all running threads and disconnect signals.
         """
         debug("Closing MonitoringFileWatcher.")
-        self.file_system_watcher.directoryChanged.disconnect(self.on_directory_changed)
-        self.file_system_watcher.fileChanged.disconnect(self.on_file_changed)
+        try:
+            self.file_system_watcher.directoryChanged.disconnect()
+            self.file_system_watcher.fileChanged.disconnect()
+        except Exception as e:
+            debug(f"Error disconnecting signals: {e}")
         for thread in list(self.process_threads.values()):
             if thread.isRunning():
                 thread.stop()
@@ -402,12 +418,9 @@ class MonitoringFileWatcher(QListWidget):
 
 
 if __name__ == "__main__":
-    # For testing purposes, create an instance if needed.
-    from PySide6.QtWidgets import QApplication
     import sys
-
     app = QApplication(sys.argv)
-    root = os.getcwd()  # Replace with an appropriate root path if desired
+    root = os.getcwd()
     watcher = MonitoringFileWatcher(root)
     watcher.show()
     sys.exit(app.exec())

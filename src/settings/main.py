@@ -190,7 +190,7 @@ class PreferencesDialog(QDialog):
         layout.addWidget(label_monitor_header)
         frame_monitor = QFrame(assetgroupmaker_content)
         layout_monitor = QHBoxLayout(frame_monitor)
-        monitor_label = QLabel("Folders to monitor:", assetgroupmaker_content)
+        monitor_label = QLabel("Folders to monitor (restart program to apply changes):", assetgroupmaker_content)
         monitor_label.setMinimumWidth(130)
         layout_monitor.addWidget(monitor_label)
         self.assetgroupmaker_lineedit_monitor = QLineEdit(frame_monitor)
