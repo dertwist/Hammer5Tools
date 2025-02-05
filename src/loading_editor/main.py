@@ -189,8 +189,9 @@ class ApplyScreenshotsWorker(QRunnable):
         if self.delete_existing:
             self.signals.log.emit("Deleting compiled vtex_c files because delete_existing is True")
             try:
-                shutil.rmtree(os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(),
-                                           "panorama", "images", "map_icons", "screenshots", "1080p"))
+                shutil.rmtree(os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(),"panorama", "images", "map_icons", "screenshots", "1080p"))
+                shutil.rmtree(os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(),"panorama", "images", "map_icons", "screenshots", "720p"))
+                shutil.rmtree(os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(),"panorama", "images", "map_icons", "screenshots", "360p"))
                 self.signals.log.emit("Deleted compiled vtex_c files from game location")
             except Exception as e:
                 debug(f"Error deleting compiled vtex_c files: {e}")
@@ -397,7 +398,7 @@ class Loading_editorMainWindow(QMainWindow):
             reply = QMessageBox.warning(
                 self,
                 "Warning",
-                "Antall filer er mer enn 10. Vennligst bekreft at dette er ønskelig.",
+                "The number of files is more than 10. Please confirm that this is desirable.",
                 QMessageBox.Ok | QMessageBox.Cancel
             )
             if reply == QMessageBox.Cancel:
