@@ -33,10 +33,11 @@ def build_hammer5_tools() -> None:
     subprocess.run([
         'pyinstaller',
         '--name=Hammer5Tools',
-        '--noupx', '--distpath=hammer5tools',
+        '--noupx',
+        '--distpath=hammer5tools',
         '--noconfirm',
         '--onefile',
-        '--windowed',
+        # '--windowed',
         '--strip',
         '--optimize=2',
         '--icon=src/appicon.ico',
@@ -49,45 +50,7 @@ def build_hammer5_tools() -> None:
         '--exclude-module=pandas',
         '--exclude-module=tabulate',
         '--exclude-module=matplotlib',
-        '--exclude-module=PySide6.QtWebEngineWidgets',
-        '--exclude-module=PySide6.QtWebEngineCore',
-        '--exclude-module=PySide6.QtWebEngine',
-        '--exclude-module=PySide6.QtMultimediaWidgets',
-        '--exclude-module=PySide6.QtCharts',
-        '--exclude-module=PySide6.QtSql',
-        '--exclude-module=PySide6.QtTest',
-        '--exclude-module=PySide6.QtQml',
-        '--exclude-module=PySide6.QtQuick',
-        '--exclude-module=PySide6.QtQuickWidgets',
-        '--exclude-module=PySide6.QtPositioning',
-        '--exclude-module=PySide6.QtLocation',
-        '--exclude-module=PySide6.QtBluetooth',
-        '--exclude-module=PySide6.QtNfc',
-        '--exclude-module=PySide6.QtRemoteObjects',
-        '--exclude-module=PySide6.QtTextToSpeech',
-        '--exclude-module=PySide6.QtWebSockets',
-        '--exclude-module=PySide6.QtSensors',
-        '--hidden-import=tqdm',
         'src/main.py'
-    ], check=True)
-
-def build_updater() -> None:
-    """Builds the Hammer 5 Tools Updater using PyInstaller."""
-    subprocess.run([
-        'pyinstaller',
-        '--name=Hammer5Tools_Updater',
-        '--onefile',
-        '--optimize=2',
-        '--icon=src/appicon.ico',
-        '--exclude-module=PySide6',
-        '--exclude-module=PyQt5',
-        '--exclude-module=pandas',
-        '--exclude-module=numpy',
-        '--hidden-import=psutil',
-        '--hidden-import=colorama',
-        '--hidden-import=tqdm',
-        '--distpath=hammer5tools',
-        'src/updater.py'
     ], check=True)
 
 def archive_files(folder_path: str, output_path: str, excluded_files: Set[str], excluded_paths: List[str]) -> None:
@@ -133,10 +96,9 @@ def archive_files(folder_path: str, output_path: str, excluded_files: Set[str], 
 
 def main() -> None:
     """Main function to parse arguments and execute build and packaging tasks."""
-    parser = argparse.ArgumentParser(description="Build and archive Hammer 5 Tools and Updater.")
-    parser.add_argument('--build-all', action='store_true', help="Build both Hammer 5 Tools and Updater.")
+    parser = argparse.ArgumentParser(description="Build and archive Hammer 5 Tools.")
+    parser.add_argument('--build-all', action='store_true', help="Build Hammer 5 Tools.")
     parser.add_argument('--build-app', action='store_true', help="Build only Hammer 5 Tools.")
-    parser.add_argument('--build-updater', action='store_true', help="Build only Updater.")
     parser.add_argument('--archive', action='store_true', help="Archive the build outputs.")
     args = parser.parse_args()
 
@@ -154,12 +116,6 @@ def main() -> None:
             build_hammer5_tools()
             elapsed_time = time.time() - stage_start_time
             results.append(["Hammer 5 Tools Build", f"{elapsed_time:.2f} seconds"])
-
-        if args.build_all or args.build_updater:
-            stage_start_time = time.time()
-            build_updater()
-            elapsed_time = time.time() - stage_start_time
-            results.append(["Updater Build", f"{elapsed_time:.2f} seconds"])
     except subprocess.CalledProcessError as e:
         print(f"Error during build: {e}")
         return
