@@ -37,7 +37,7 @@ def build_hammer5_tools() -> None:
         '--distpath=hammer5tools',
         '--noconfirm',
         '--onefile',
-        # '--windowed',
+        '--windowed',
         '--strip',
         '--optimize=2',
         '--icon=src/appicon.ico',
