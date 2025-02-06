@@ -2,7 +2,6 @@ PySide6
 packaging
 markdown2
 pypresence
-requests
 portalocker
 setuptools
 psutil
@@ -13,7 +12,6 @@ colorama
 pygetwindow
 watchdog
 json-stream
-requests
 pyinstaller
 tabulate
 numpy

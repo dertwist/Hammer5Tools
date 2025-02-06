@@ -1,69 +1,96 @@
 import sys
-import os
+import json
 import webbrowser
-
-import requests
-import psutil
 import markdown2
 from packaging import version
 
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
-    QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame
+    QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame, QMessageBox
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl, QEventLoop
 from PySide6.QtGui import QIcon
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+
+from src.updater.script import perform_update
 
 DIALOG_WIDTH = 600
 DIALOG_HEIGHT = 700
 
+def qt_get(url):
+    """
+    Performs a synchronous HTTP GET request using QNetworkAccessManager.
+    Returns a tuple (data, error_string). Data is returned as bytes if successful.
+    """
+    manager = QNetworkAccessManager()
+    request = QNetworkRequest(QUrl(url))
+    reply = manager.get(request)
+
+    # Create a local event loop to wait for reply to finish
+    loop = QEventLoop()
+    reply.finished.connect(loop.quit)
+    loop.exec()
+
+    if reply.error() != QNetworkReply.NetworkError.NoError:
+        error_str = reply.errorString()
+        reply.deleteLater()
+        return None, error_str
+
+    data = reply.readAll().data()  # bytes data
+    reply.deleteLater()
+    return data, None
 
 def check_updates(repo_url, current_version, silent):
     parts = repo_url.rstrip('/').split('/')
     owner = parts[-2]
     repo = parts[-1]
     api_url = f"https://api.github.com/repos/{owner}/{repo}/releases"
-    response = requests.get(api_url)
 
-    if response.status_code == 200:
-        releases = response.json()[:10]
-        if not releases:
-            print("No releases found.")
-            return
+    data, error = qt_get(api_url)
+    if error:
+        print(f"Failed to fetch releases. Error: {error}")
+        return
 
-        valid_releases = []
-        for release in releases:
-            try:
-                if release.get("prerelease", False) or release.get("draft", False):
-                    continue
-                _ = version.parse(release['tag_name'].lstrip('v'))
-                valid_releases.append(release)
-            except Exception:
+    try:
+        releases = json.loads(data.decode('utf-8'))[:10]
+    except Exception as e:
+        print(f"Error parsing JSON: {e}")
+        return
+
+    if not releases:
+        print("No releases found.")
+        return
+
+    valid_releases = []
+    for release in releases:
+        try:
+            if release.get("prerelease", False) or release.get("draft", False):
                 continue
+            _ = version.parse(release['tag_name'].lstrip('v'))
+            valid_releases.append(release)
+        except Exception:
+            continue
 
-        if not valid_releases:
-            print("No valid releases found.")
-            return
+    if not valid_releases:
+        print("No valid releases found.")
+        return
 
-        latest_release = valid_releases[0]
-        latest_version = latest_release['tag_name'].lstrip('v')
+    latest_release = valid_releases[0]
+    latest_version = latest_release['tag_name'].lstrip('v')
 
-        if version.parse(current_version) < version.parse(latest_version):
-            print(f"A new version is available: {latest_version}. You are using version: {current_version}.")
-            show_update_notification(latest_release, valid_releases, owner, repo)
-        else:
-            if not silent:
-                show_update_check_result_notification(latest_release, valid_releases, owner, repo)
+    if version.parse(current_version) < version.parse(latest_version):
+        print(f"A new version is available: {latest_version}. You are using version: {current_version}.")
+        show_update_notification(latest_release, valid_releases, owner, repo)
     else:
-        print(f"Failed to fetch releases. Status code: {response.status_code}")
-
+        if not silent:
+            show_update_check_result_notification(latest_release, valid_releases, owner, repo)
 
 def show_update_notification(latest_release, releases, owner, repo):
     dialog = QDialog()
     dialog.setWindowIcon(QIcon.fromTheme(":/icons/appicon.ico"))
     dialog.setWindowTitle("Updater")
-
     layout = QVBoxLayout(dialog)
+
     latest_version = latest_release['tag_name'].lstrip('v')
     header = QLabel(f"<h2>New version available: {latest_version}</h2>")
     header.setTextFormat(Qt.RichText)
@@ -117,17 +144,15 @@ def show_update_notification(latest_release, releases, owner, repo):
     button_layout.addWidget(ok_button)
 
     layout.addLayout(button_layout)
-    # Set default resolution to 700x1100
     dialog.resize(DIALOG_WIDTH, DIALOG_HEIGHT)
     dialog.exec()
-
 
 def show_update_check_result_notification(latest_release, releases, owner, repo):
     dialog = QDialog()
     dialog.setWindowIcon(QIcon.fromTheme(":/icons/appicon.ico"))
     dialog.setWindowTitle("Updater")
-
     layout = QVBoxLayout(dialog)
+
     latest_version = latest_release['tag_name'].lstrip('v')
     header = QLabel(f"<h2>You have the latest version: {latest_version}</h2>")
     header.setTextFormat(Qt.RichText)
@@ -172,6 +197,17 @@ def show_update_check_result_notification(latest_release, releases, owner, repo)
     change_log_button.clicked.connect(lambda: webbrowser.open(api_url))
     button_layout.addWidget(change_log_button)
 
+    force_update_button = QPushButton("Force Update")
+    def handle_force_update():
+        confirmation = QMessageBox.question(dialog, "Force Update Confirmation",
+                                            "You are about to force update even though you have the latest version.\n"
+                                            "This will reinstall the update. Proceed?",
+                                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if confirmation == QMessageBox.Yes:
+            show_install_dialog()
+    force_update_button.clicked.connect(handle_force_update)
+    button_layout.addWidget(force_update_button)
+
     ok_button = QPushButton("OK")
     ok_button.clicked.connect(dialog.accept)
     button_layout.addWidget(ok_button)
@@ -180,35 +216,13 @@ def show_update_check_result_notification(latest_release, releases, owner, repo)
     dialog.resize(DIALOG_WIDTH, DIALOG_HEIGHT)
     dialog.exec()
 
-
 def show_install_dialog():
-    dialog = QDialog()
-    dialog.setWindowTitle("Installation Confirmation")
+    reply = QMessageBox.question(None, "Installation Confirmation",
+                                 "During update installation, Hammer5Tools will be closed.\n"
+                                 "Do you wish to continue?",
+                                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+    if reply == QMessageBox.Yes:
+        handle_installation()
 
-    layout = QVBoxLayout(dialog)
-    label = QLabel("During update installation, Hammer5Tools will be closed. Are you ready?")
-    layout.addWidget(label)
-
-    button_layout = QHBoxLayout()
-    button_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
-
-    yes_button = QPushButton("Yes")
-    yes_button.clicked.connect(lambda: handle_installation(dialog))
-    button_layout.addWidget(yes_button)
-
-    no_button = QPushButton("No")
-    no_button.clicked.connect(dialog.reject)
-    button_layout.addWidget(no_button)
-
-    layout.addLayout(button_layout)
-    dialog.resize(DIALOG_WIDTH, DIALOG_HEIGHT)
-    dialog.exec()
-
-
-def handle_installation(dialog):
-    dialog.accept()
-    psutil.Popen(['Hammer5Tools_Updater.exe'])
-    QApplication.quit()
-    QApplication.instance().quit()
-    QApplication.exit(1)
-    sys.exit(0)
+def handle_installation():
+    perform_update()

@@ -41,7 +41,7 @@ from hotkey_editor.main import HotkeyEditorMainWindow
 from create_addon.create_addon_mian import Create_addon_Dialog
 from other.steamfixnologon import SteamNoLogoFixThreadClass
 from other.addon_functions import delete_addon, launch_addon
-from other.update_check import check_updates
+from src.updater.check import check_updates
 from archive_addon.main import ExportAndImportAddonDialog
 from assetgroup_maker.main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
