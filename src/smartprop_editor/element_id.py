@@ -90,7 +90,7 @@ def update_value_ElementID(value:dict, force=False):
     return value
 def get_ElementID_key(value:dict):
     """Get m_nElementID key from dict"""
-    debug(f'get_ElementID_key {value.get('m_nElementID')}')
+    debug(f'get_ElementID_key {value.get("m_nElementID")}')
     return value.get('m_nElementID', set_ElementID(force=True))
 def get_ElementID_last():
     """Get last ElementID"""
