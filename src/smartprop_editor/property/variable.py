@@ -57,7 +57,7 @@ class PropertyVariableOutput(QWidget):
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.variable.combobox.set_variable(value['m_SourceName'])
-                debug(f'Loaded value in variable widget: dict {value['m_SourceName']}')
+                debug(f'Loaded value in variable widget: dict {value["m_SourceName"]}')
 
         elif isinstance(value, str):
             self.variable.combobox.set_variable(value)
