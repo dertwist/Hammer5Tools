@@ -19,3 +19,10 @@ tabulate
 numpy
 pyqtgraph
 cairosvg
+lz4
+parsimonious
+urllib3
+idna
+certifi
+pefile
+altgraph
