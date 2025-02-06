@@ -1,16 +1,14 @@
-import os
 import subprocess
 import sys
 
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
     QWidget, QLabel, QLineEdit, QCheckBox, QSpacerItem,
-    QSizePolicy, QFrame, QScrollArea, QStyle, QFileDialog
+    QSizePolicy, QFrame, QScrollArea, QFileDialog
 )
 from src.settings.common import *
 from src.common import enable_dark_title_bar, Presets_Path
-from src.other.NCM_mode_setup_main import NCM_mode_setup
-from src.other.update_check import check_updates
+from src.updater.check import check_updates
 from src.widgets_common import Button  # Using the internal Button class
 from src.styles.common import qt_stylesheet_checkbox
 

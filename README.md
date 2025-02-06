@@ -102,7 +102,7 @@ The project uses a custom build script and supports multiple run modes:
    - Adds debugging utilities and detailed console logs.  
    - Launch by running:  
      ```shell
-     python src/main.py --dev
+     python src/script.py --dev
      ```
    - Useful for diagnosing problems or stepping through new features.
 
