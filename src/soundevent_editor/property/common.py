@@ -83,8 +83,10 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
 
         """
         super().__init__(parent, label_text, value)
-        float_value  = 0
+        float_value = 0.0
         if isinstance(value, float):
+            float_value = value
+        elif isinstance(value,int):
             float_value = value
         self.float_widget_instance = FloatWidget(slider_range=slider_range, only_positive=only_positive, value=float_value, spacer_enable=False)
         self.float_widget_instance.edited.connect(self.on_property_update)
