@@ -1,5 +1,5 @@
 ###############################################################################
-# main.py (excerpt with bookmark toggle fix for immediate UI feedback)
+# script.py (excerpt with bookmark toggle fix for immediate UI feedback)
 ###############################################################################
 
 import webbrowser
