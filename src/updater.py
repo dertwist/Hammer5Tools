@@ -14,7 +14,7 @@ import ctypes
 def is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
+    except Exception:
         return False
 
 def run_as_admin():
@@ -25,26 +25,26 @@ def run_as_admin():
             ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, params, None, 1)
             sys._exit(0)
         except Exception as e:
-            print("Error", f"Failed to elevate privileges: {str(e)}")
+            print("Error:", f"Failed to elevate privileges: {str(e)}")
             return False
     return True
 
-# Initialize colorama
 init(autoreset=True)
 
-def kill_main_app(app_name='Hammer5Tools.exe'):
-    """Kills the specified main application if it's running."""
-    processes = [process for process in psutil.process_iter() if process.name() == app_name]
-    if processes:
-        for process in processes:
-            process.kill()
-            print(Fore.GREEN + f'{app_name} process killed successfully.')
-    else:
-        print(Fore.YELLOW + f'{app_name} process not found.')
+def kill_main_app():
+    """
+    This function is intentionally left empty.
+    The main application will now be terminated via the PowerShell script.
+    """
+    pass
 
 def download_and_extract(url, target_path):
-    """Downloads a zip file from the given URL and extracts it to the target path."""
-    response = requests.get(url, stream=True)
+    try:
+        response = requests.get(url, stream=True)
+    except Exception as e:
+        print(Fore.RED + f"Error downloading update: {e}")
+        return False
+
     if response.status_code == 200:
         total_size = int(response.headers.get('content-length', 0))
         zip_file = io.BytesIO()
@@ -54,89 +54,93 @@ def download_and_extract(url, target_path):
                 zip_file.write(data)
                 pbar.update(len(data))
 
-        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-            zip_ref.extractall(target_path)
-        print(Fore.GREEN + 'Download and extraction successful.')
-    else:
-        print(Fore.RED + f'Failed to download update. HTTP Status Code: {response.status_code}')
-        return False
-    return True
+        try:
+            with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+                zip_ref.extractall(target_path)
+            print(Fore.GREEN + 'Download and extraction successful.')
+            return True
+        except Exception as e:
+            print(Fore.RED + f"Error extracting update: {e}")
+            return False
 
-def create_batch_script(update_path, program_path, updater_name):
-    """
-    Creates a batch script to handle the self-update.
-    The script:
-    1. Waits for the Python script to exit.
-    2. Deletes old files.
-    3. Moves updated files to their locations.
-    4. Restarts the updated updater.
-    """
-    batch_path = os.path.join(tempfile.gettempdir(), "self_update.bat")
-    with open(batch_path, 'w') as f:
-        f.write(f"""
-@echo off
-setlocal enabledelayedexpansion
+    print(Fore.RED + f'Failed to download update. HTTP Status Code: {response.status_code}')
+    return False
 
-:: Wait for the Python updater to exit
-echo Waiting for Python updater to close...
-set RETRY_COUNT=10
-:WAIT
-timeout /t 1 >nul
-tasklist | find /i "{os.path.basename(sys.executable)}" >nul
-if not errorlevel 1 (
-    set /a RETRY_COUNT-=1
-    if !RETRY_COUNT! gtr 0 goto WAIT
-    echo Failed to wait for the updater to exit.
-    exit /b 1
-)
+def create_powershell_script(update_path, program_path, updater_name):
+    psscript_path = os.path.join(tempfile.gettempdir(), "self_update.ps1")
+    script_content = f'''\
+# PowerShell Self-Update Script
+Write-Output "Waiting for Python updater to close..."
+$retryCount = 10
+while ($retryCount -gt 0 -and (Get-Process -Name "python" -ErrorAction SilentlyContinue)) {{
+    Start-Sleep -Seconds 1
+    $retryCount--
+}}
+if ($retryCount -le 0) {{
+    Write-Error "Failed to wait for the updater to exit."
+    exit 1
+}}
 
-:: Perform the update
-echo Performing file updates...
+Write-Output "Attempting to kill main application..."
+$processName = "Hammer5Tools"
+$processes = Get-Process | Where-Object {{ $_.ProcessName -eq $processName }}
+if ($processes) {{
+    foreach ($process in $processes) {{
+        try {{
+            $process | Stop-Process -Force
+            Write-Output "Successfully terminated process with ID: $($process.Id)"
+        }} catch {{
+            Write-Error "Failed to terminate process with ID: $($process.Id)"
+        }}
+    }}
+}} else {{
+    Write-Output "No running instances of $processName found."
+}}
 
-:: Delete the old updater
-if exist "{os.path.join(program_path, updater_name)}" del "{os.path.join(program_path, updater_name)}"
+Write-Output "Performing file updates..."
 
-:: Move new updater to the program path
-move "{os.path.join(update_path, updater_name)}" "{os.path.join(program_path, updater_name)}"
+# Delete the old updater if it exists
+$oldUpdater = Join-Path -Path "{program_path}" -ChildPath "{updater_name}"
+if (Test-Path $oldUpdater) {{
+    Remove-Item $oldUpdater -Force
+}}
 
-:: Move other updated files
-xcopy /E /Y /Q "{update_path}\\*" "{program_path}\\"
+# Move new updater to the program path
+$sourceUpdater = Join-Path -Path "{update_path}" -ChildPath "{updater_name}"
+Move-Item -Path $sourceUpdater -Destination "{program_path}" -Force
 
-:: Cleanup
-echo Cleaning up temporary files...
-rd /S /Q "{update_path}"
+# Move other updated files
+Copy-Item -Path (Join-Path "{update_path}" "*") -Destination "{program_path}" -Recurse -Force
 
-:: Restart the updated application
-echo Restarting the application...
-start "" "{os.path.join(program_path, "Hammer5Tools")}"
+Write-Output "Cleaning up temporary files..."
+Remove-Item -Path "{update_path}" -Recurse -Force
 
-:: Delete the batch script
-del "%~f0"
-exit /b 0
-        """)
-    print(Fore.GREEN + f"Batch script created at {batch_path}.")
-    return batch_path
+Write-Output "Restarting the application..."
+Start-Process -FilePath (Join-Path "{program_path}" "Hammer5Tools.exe")
+
+# Remove this PowerShell script
+Remove-Item -Path $MyInvocation.MyCommand.Path -Force
+exit 0
+'''
+    try:
+        with open(psscript_path, 'w', encoding='utf-8') as f:
+            f.write(script_content)
+        print(Fore.GREEN + f"PowerShell script created at {psscript_path}.")
+        return psscript_path
+    except Exception as e:
+        print(Fore.RED + f"Failed to create PowerShell script: {e}")
+        return None
 
 def main(dev_mode=False):
-    """Main function to handle the update process."""
-    # Kill the main application if running
-    kill_main_app()
-
-    # Initialize paths
     update_path = tempfile.mkdtemp(prefix="hammer5tools_update_")
     program_path = os.getcwd() if not dev_mode else os.path.normpath("D:/CG/Projects/Other/Hammer5Tools/hammer5tools")
     updater_name = "Hammer5Tools_Updater.exe"
-
-    # Update URL
     update_url = 'https://github.com/dertwist/Hammer5Tools/releases/latest/download/Hammer5Tools.zip'
 
-    # Download and extract the update
     if not download_and_extract(update_url, update_path):
         return
 
-    # Remove old preset
     preset_hammer5tools = os.path.join(program_path, 'presets', 'hammer5tools')
-
     try:
         shutil.rmtree(preset_hammer5tools)
         print(Fore.GREEN + f"Successfully removed preset: {preset_hammer5tools}")
@@ -147,15 +151,15 @@ def main(dev_mode=False):
     except Exception as e:
         print(Fore.RED + f"An error occurred while removing preset: {e}")
 
-    # Create batch script to handle file operations
-    batch_script = create_batch_script(update_path, program_path, updater_name)
+    ps_script = create_powershell_script(update_path, program_path, updater_name)
+    if not ps_script:
+        return
 
-    # Run the batch script and exit Python
     try:
-        print(Fore.CYAN + "Launching batch script for update...")
-        subprocess.Popen(batch_script, shell=True)
+        print(Fore.CYAN + "Launching PowerShell script for update...")
+        subprocess.Popen(["powershell.exe", "-ExecutionPolicy", "Bypass", "-File", ps_script], shell=True)
     except Exception as e:
-        print(Fore.RED + f"Failed to launch batch script: {e}")
+        print(Fore.RED + f"Failed to launch PowerShell script: {e}")
     finally:
         print(Fore.CYAN + "Exiting Python script.")
         sys.exit()
@@ -163,11 +167,8 @@ def main(dev_mode=False):
 if __name__ == "__main__":
     try:
         dev_mode = '--dev' in sys.argv
-        if os.name == 'nt':
-            if sys.argv[-1] != 'asadmin' and not is_admin():
-                main(dev_mode)
-            else:
-                main(dev_mode)
+        if os.name == 'nt' and not is_admin():
+            run_as_admin()
         else:
             main(dev_mode)
     except Exception as e:
