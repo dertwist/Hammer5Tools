@@ -15,8 +15,8 @@ class DataPointItem(QWidget):
     COLUMNS = [
         {"name": "distance", "label": "Distance", "step": 1, "digits": 3, "range": [0, 0], "sensitivity": 1.0},
         {"name": "volume", "label": "Volume", "step": 0.1, "digits": 3, "range": [0, 0], "sensitivity": 0.2},
-        {"name": "slope_left", "label": "Slope Left", "step": 0.001, "digits": 3, "range": [-2, 2],"sensitivity": 0.01},
-        {"name": "slope_right", "label": "Slope Right", "step": 0.001, "digits": 3, "range": [-2, 2],"sensitivity": 0.01},
+        {"name": "slope_left", "label": "Slope Left", "step": 0.001, "digits": 3, "range": [-10, 10],"sensitivity": 0.01},
+        {"name": "slope_right", "label": "Slope Right", "step": 0.001, "digits": 3, "range": [-10, 10],"sensitivity": 0.01},
         {"name": "mode_left", "label": "Mode Left", "step": 0.1, "digits": 0, "range": [0, 4], "sensitivity": 1.0},
         {"name": "mode_right", "label": "Mode Right", "step": 0.1, "digits": 0, "range": [0, 4], "sensitivity": 1.0}
     ]
