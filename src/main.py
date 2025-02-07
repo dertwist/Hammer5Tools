@@ -1,13 +1,11 @@
-import ctypes
 import sys
 import os
+import ctypes
 import threading
-import tempfile
 import webbrowser
 import time
 import argparse
 
-import portalocker
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -17,10 +15,17 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QLabel,
-    QCheckBox
+    QCheckBox,
 )
 from PySide6.QtGui import QIcon, QAction
-from PySide6.QtCore import Qt, QTimer, QFileSystemWatcher, QPropertyAnimation, QPoint
+from PySide6.QtCore import (
+    Qt,
+    QTimer,
+    QPropertyAnimation,
+    QPoint,
+    QFileSystemWatcher,
+)
+from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
 from about.main import AboutDialog
 from src.settings.main import (
@@ -50,11 +55,36 @@ from src.launch_options.main import LaunchOptionsDialog
 from styles.qt_global_stylesheet import QT_Stylesheet_global
 from src.common import enable_dark_title_bar, app_version, default_commands
 
+# Global paths
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
 stop_discord_thread = threading.Event()
-LOCK_FILE = os.path.join(tempfile.gettempdir(), 'hammer5tools.lock')
+INSTANCE_KEY = "Hammer5ToolsInstance"
 
+def activate_existing_window(hwnd):
+    """
+    Activate and redraw an existing window identified by hwnd
+    using Win32 API calls.
+    """
+    SW_RESTORE = 9
+    ctypes.windll.user32.ShowWindow(hwnd, SW_RESTORE)
+    ctypes.windll.user32.UpdateWindow(hwnd)
+    ctypes.windll.user32.SetForegroundWindow(hwnd)
+
+def restore_window(hwnd):
+    """
+    Force restoration of window using Win32 API.
+    """
+    SW_NORMAL = 1
+    SW_RESTORE = 9
+    SW_SHOW = 5
+    ctypes.windll.user32.ShowWindow(hwnd, SW_NORMAL)
+    time.sleep(0.1)
+    ctypes.windll.user32.ShowWindow(hwnd, SW_RESTORE)
+    ctypes.windll.user32.ShowWindow(hwnd, SW_SHOW)
+    ctypes.windll.user32.SetForegroundWindow(hwnd)
+    ctypes.windll.user32.BringWindowToTop(hwnd)
+    ctypes.windll.user32.SwitchToThisWindow(hwnd, True)
 
 class DevWidget(QWidget):
     def __init__(self, parent=None):
@@ -72,14 +102,13 @@ class DevWidget(QWidget):
         layout.addWidget(self.checkBox_debug_info)
         self.setLayout(layout)
 
-
 class Notification(QMessageBox):
     def __init__(self, parent=None):
         super(Notification, self).__init__(parent)
         self.setWindowTitle("Hammer 5 Tools")
         self.setTextFormat(Qt.RichText)
         self.setIcon(QMessageBox.Warning)
-        self.setText("Another instance of the program is running")
+        self.setText("Another instance of the program is already running")
         self.setStandardButtons(QMessageBox.Ok)
         self.buttonClicked.connect(self.bring_to_front)
         self.hwnd = ctypes.windll.user32.FindWindowW(None, "Hammer 5 Tools")
@@ -88,14 +117,15 @@ class Notification(QMessageBox):
         if self.hwnd:
             ctypes.windll.user32.SetForegroundWindow(self.hwnd)
 
-
 class Widget(QMainWindow):
     def __init__(self, parent=None, dev_mode=False):
         super().__init__(parent)
-        from ui_main import Ui_MainWindow  # Import here to ensure proper dependency resolution
+        from ui_main import Ui_MainWindow  # Ensure proper dependency resolution
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         enable_dark_title_bar(self)
+
+        # Setup tray icon early so that restoration has a fallback.
         self.setup_tray_icon()
         self.setup_tabs()
         self.populate_addon_combobox()
@@ -123,19 +153,22 @@ class Widget(QMainWindow):
             self.dev_widget = DevWidget(self)
             self.ui.centralwidget.layout().addWidget(self.dev_widget)
 
-        try:
-            check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
-        except Exception as e:
-            print(f"Error checking updates: {e}")
-
+        QTimer.singleShot(100, self.deferred_update_check)
         self._restore_user_prefs()
         if get_config_bool('APP', 'first_launch'):
             self.open_about()
             set_config_bool('APP', 'first_launch', False)
 
+        # Setup filesystem watcher for addon folder.
         self.addon_watcher = QFileSystemWatcher(self)
         self.addon_watcher.addPath(os.path.join(cs2_path, "content", "csgo_addons"))
         self.addon_watcher.directoryChanged.connect(self.refresh_addon_combobox)
+
+    def deferred_update_check(self):
+        try:
+            check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
+        except Exception as e:
+            print(f"Error checking updates: {e}")
 
     def update_title(self, status=None, file_path=None, text=None):
         base_title = "Hammer 5 Tools"
@@ -151,7 +184,7 @@ class Widget(QMainWindow):
         self.title_reset_timer.start(5000)
 
     def reset_title(self):
-        self.setWindowTitle("Hammer 5 Tools")
+        self.setWindowTitle(self.default_title)
 
     def current_tab(self, set_flag):
         if set_flag:
@@ -170,11 +203,24 @@ class Widget(QMainWindow):
         self.tray_icon = QSystemTrayIcon(QIcon.fromTheme(":/icons/appicon.ico"), self)
         self.tray_icon.setToolTip("Hammer5Tools")
         self.tray_menu = QMenu()
-        self.tray_menu.addAction(QAction("Show", self, triggered=self.show))
-        self.tray_menu.addAction(QAction("Exit", self, triggered=self.exit_application))
+        show_action = QAction("Show", self, triggered=self.show_from_tray)
+        exit_action = QAction("Exit", self, triggered=self.exit_application)
+        self.tray_menu.addAction(show_action)
+        self.tray_menu.addAction(exit_action)
         self.tray_icon.setContextMenu(self.tray_menu)
         self.tray_icon.activated.connect(self.on_tray_icon_activated)
         self.tray_icon.show()
+
+    def on_tray_icon_activated(self, reason):
+        if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
+            self.show_from_tray()
+
+    def show_from_tray(self):
+        self.showNormal()
+        self.raise_()
+        self.activateWindow()
+        hwnd = self.winId().__int__()
+        restore_window(hwnd)
 
     def setup_tabs(self):
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
@@ -227,20 +273,11 @@ class Widget(QMainWindow):
             "BatchCreator_MainWindow",
             "LoadingEditorMainWindow",
         ]
-        if any(getattr(self, tool, None) for tool in tools):
-            pass
-        else:
+        if not any(getattr(self, tool, None) for tool in tools):
             self.selected_addon_name()
 
     def animate_launch_button(self):
-        """
-        Creates a gradient overlay effect behind the button text by placing
-        the overlay below the text. The animation moves from left to right,
-        and then the overlay is removed. Duration: ~1.2 seconds.
-        """
         button = self.ui.Launch_Addon_Button
-
-        # Create overlay child widget
         overlay = QWidget(button)
         overlay.setObjectName("launchOverlay")
         overlay.setAttribute(Qt.WA_StyledBackground, True)
@@ -259,27 +296,17 @@ class Widget(QMainWindow):
             }
             """
         )
-
         button_width = button.width()
         button_height = button.height()
-
-        # Position the overlay just to the left of the entire button
         overlay.setGeometry(-button_width, 0, button_width, button_height)
-
-        # Show overlay, then move it behind the button's text
         overlay.show()
         overlay.lower()
-
-        # Animate from left to right
         animation = QPropertyAnimation(overlay, b"pos", self)
         animation.setDuration(1200)
         animation.setStartValue(QPoint(-button_width, 0))
         animation.setEndValue(QPoint(button_width, 0))
-
-        # Remove overlay after animation completes
         def on_animation_finished():
             overlay.deleteLater()
-
         animation.finished.connect(on_animation_finished)
         animation.start()
 
@@ -292,12 +319,8 @@ class Widget(QMainWindow):
         self.ui.Launch_Addon_Button.clicked.connect(self.launch_addon_action)
         self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)
         self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
-
         addon = get_addon_name()
-        combo_items = [
-            self.ui.ComboBoxSelectAddon.itemText(i)
-            for i in range(self.ui.ComboBoxSelectAddon.count())
-        ]
+        combo_items = [self.ui.ComboBoxSelectAddon.itemText(i) for i in range(self.ui.ComboBoxSelectAddon.count())]
         if addon not in combo_items:
             self.refresh_addon_combobox()
             self.selected_addon_name()
@@ -340,50 +363,43 @@ class Widget(QMainWindow):
                 self.SoundEventEditorMainWindow.deleteLater()
         except Exception as e:
             print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
-
         try:
             if hasattr(self, 'SmartPropEditorMainWindow') and self.SmartPropEditorMainWindow:
                 self.SmartPropEditorMainWindow.closeEvent(self.event)
                 self.SmartPropEditorMainWindow.deleteLater()
         except Exception as e:
-            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
-
+            print(f"Error while cleaning up SmartPropEditorMainWindow: {e}")
         try:
             if hasattr(self, 'BatchCreator_MainWindow') and self.BatchCreator_MainWindow:
                 self.BatchCreator_MainWindow.close()
         except Exception as e:
             print('Error while cleaning up BatchCreator_MainWindow:', e)
-
         try:
             if hasattr(self, 'LoadingEditorMainWindow') and self.LoadingEditorMainWindow:
                 self.LoadingEditorMainWindow.close()
                 self.LoadingEditorMainWindow.deleteLater()
         except Exception as e:
-            print('Error while cleaning up Loading_editorMainWindow:', e)
-
+            print('Error while cleaning up LoadingEditorMainWindow:', e)
         try:
             self.BatchCreator_MainWindow = BatchCreatorMainWindow(update_title=self.update_title)
             self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
         except Exception as e:
             print('Error while setting up BatchCreator_MainWindow:', e)
-
         try:
             self.SoundEventEditorMainWindow = SoundEventEditorMainWindow(update_title=self.update_title)
             self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWindow)
         except Exception as e:
-            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
-
+            print(f"Error while setting up SoundEventEditorMainWidget: {e}")
         try:
             self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(update_title=self.update_title)
             self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
         except Exception as e:
-            print(f"Error while cleaning up SmartPropEditorMainWindow: {e}")
-
+            print(f"Error while setting up SmartPropEditorMainWindow: {e}")
         try:
             self.LoadingEditorMainWindow = Loading_editorMainWindow()
             self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
         except Exception as e:
-            print(f"Error while cleaning up Loading_editorMainWindow: {e}")
+            print(f"Error while setting up LoadingEditorMainWindow: {e}")
 
     def open_addons_folder(self):
         addon_name = self.ui.ComboBoxSelectAddon.currentText()
@@ -445,10 +461,6 @@ class Widget(QMainWindow):
     def open_about(self):
         AboutDialog(app_version, self).show()
 
-    def on_tray_icon_activated(self, reason):
-        if reason == QSystemTrayIcon.DoubleClick:
-            self.show()
-
     def show_minimize_message_once(self):
         if get_config_bool('APP', 'minimize_message_shown'):
             self.tray_icon.showMessage(
@@ -481,8 +493,6 @@ class Widget(QMainWindow):
             pass
         self.current_tab(True)
         QApplication.quit()
-        QApplication.instance().quit()
-        QApplication.exit(1)
         sys.exit(0)
 
     def _restore_user_prefs(self):
@@ -497,33 +507,54 @@ class Widget(QMainWindow):
         self.settings.setValue("MainWindow/geometry", self.saveGeometry())
         self.settings.setValue("MainWindow/windowState", self.saveState())
 
-
 def DiscordStatusMain_do():
     from other.discord_status import update_discord_status
     while not stop_discord_thread.is_set():
         update_discord_status()
         time.sleep(1)
 
+def start_instance_server(widget):
+    """
+    Start the QLocalServer to accept connections from any subsequent instance.
+    When a new connection is received, read the message and bring the window to front.
+    """
+    server = QLocalServer()
+    if server.listen(INSTANCE_KEY):
+        server.newConnection.connect(lambda: handle_new_connection(server, widget))
+    return server
+
+def handle_new_connection(server, widget):
+    client_connection = server.nextPendingConnection()
+    if client_connection:
+        client_connection.waitForReadyRead(1000)
+        msg = bytes(client_connection.readAll()).decode().strip()
+        # If the message is "show", restore the window.
+        if msg == "show":
+            widget.show_from_tray()
+        client_connection.disconnectFromServer()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
     args, unknown = parser.parse_known_args()
 
-    lock_file = open(LOCK_FILE, 'w')
-    try:
-        portalocker.lock(lock_file, portalocker.LOCK_EX | portalocker.LOCK_NB)
-    except portalocker.LockException:
-        app = QApplication(sys.argv)
-        widget = Notification()
-        app.setStyleSheet(QT_Stylesheet_global)
-        widget.show()
-        sys.exit(app.exec())
+    # Instance management via QLocalSocket/QLocalServer.
+    existing_socket = QLocalSocket()
+    existing_socket.connectToServer(INSTANCE_KEY)
+    if existing_socket.waitForConnected(500):
+        # Another instance is already running. Send a message to show the window.
+        existing_socket.write(b"show")
+        existing_socket.flush()
+        existing_socket.waitForBytesWritten(500)
+        sys.exit(0)
 
+    # No instance running, so create the server.
     app = QApplication(sys.argv)
     app.setStyleSheet(QT_Stylesheet_global)
     widget = Widget(dev_mode=args.dev)
     widget.show()
+    instance_server = start_instance_server(widget)
+
     if get_config_bool('DISCORD_STATUS', 'show_status'):
         from other.discord_status import discord_status_clear, update_discord_status
         widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
