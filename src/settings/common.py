@@ -1,7 +1,7 @@
 import os
 from PySide6.QtCore import QSettings
 
-from src.other.get_cs2_path_from_registry import get_counter_strike_path_from_registry, get_steam_install_path
+from src.other.get_cs2_path import get_counter_strike_path_from_registry, get_steam_install_path
 
 # Define the application directory
 app_dir = os.getcwd()
