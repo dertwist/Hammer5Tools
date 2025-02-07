@@ -4,6 +4,7 @@ import os
 import subprocess
 import threading
 import keyvalues3 as kv3
+from keyvalues3.textwriter import KV3EncoderOptions
 import ctypes
 import re, unicodedata, random, string
 #======================================================<  Copied from preferences.py file  >===================================================
@@ -129,8 +130,14 @@ def Kv3ToJson(input):
         input = '<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{' + input + '\n}'
     output = kv3.textreader.KV3TextReader().parse(input).value
     return output
-def JsonToKv3(input):
+def JsonToKv3(input, disable_line_value_length_limit_keys: list = None):
     if isinstance(input, dict) or isinstance(input, list):
-        return kv3.textwriter.encode(input)
+        options = KV3EncoderOptions(
+            serialize_enums_as_ints=False,
+            no_header=False,
+            disable_line_value_length_limit_keys=disable_line_value_length_limit_keys
+        )
+
+        return kv3.textwriter.encode(input, options=options)
     else:
         raise ValueError('[JsonToKv3] Invalid input type: Input should be a dictionary')

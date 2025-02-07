@@ -81,7 +81,6 @@ class PreferencesDialog(QDialog):
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(widget)
-        # Assuming scroll_area is your QScrollArea instance
         scroll_area.setObjectName("customScrollArea")
         scroll_area.setStyleSheet("""
             QScrollArea#customScrollArea {
@@ -168,12 +167,31 @@ class PreferencesDialog(QDialog):
         smartprop_content = QWidget()
         layout = QVBoxLayout(smartprop_content)
         layout.setContentsMargins(10, 10, 10, 10)
-        frame_smart = QFrame(smartprop_content)
-        h_layout_smart = QHBoxLayout(frame_smart)
-        self.spe_display_id_with_variable_class = QCheckBox("Display ID with variable class (Reopen file)", smartprop_content)
+
+        # ------------- Interface Subcategory -------------
+        label_interface_header = QLabel("Interface", smartprop_content)
+        layout.addWidget(label_interface_header)
+        frame_interface = QFrame(smartprop_content)
+        layout_interface = QVBoxLayout(frame_interface)
+        self.spe_display_id_with_variable_class = QCheckBox("Display ID with variable class (Reopen file)", frame_interface)
         self.spe_display_id_with_variable_class.setStyleSheet(qt_stylesheet_checkbox)
-        h_layout_smart.addWidget(self.spe_display_id_with_variable_class)
-        layout.addWidget(frame_smart)
+        layout_interface.addWidget(self.spe_display_id_with_variable_class)
+        layout.addWidget(frame_interface)
+
+        # Divider between subcategories
+        layout.addWidget(self.create_divider(smartprop_content))
+
+        # ------------- Format Subcategory -------------
+        label_format_header = QLabel("Format", smartprop_content)
+        layout.addWidget(label_format_header)
+        frame_format = QFrame(smartprop_content)
+        layout_format = QVBoxLayout(frame_format)
+        self.spe_export_properties = QCheckBox("Export properties in one line", frame_format)
+        self.spe_export_properties.setStyleSheet(qt_stylesheet_checkbox)
+        self.spe_export_properties.setChecked(True)
+        layout_format.addWidget(self.spe_export_properties)
+        layout.addWidget(frame_format)
+
         layout.addSpacerItem(QSpacerItem(20, 80, QSizePolicy.Minimum, QSizePolicy.Expanding))
         smartprop_scroll = self.wrap_in_scroll_area(smartprop_content)
         self.tabWidget.addTab(smartprop_scroll, "SmartProp Editor")
@@ -235,6 +253,7 @@ class PreferencesDialog(QDialog):
         self.checkBox_start_with_system.setChecked(get_config_bool('APP', 'start_with_system'))
         self.checkBox_close_to_tray.setChecked(get_config_bool('APP', 'minimize_to_tray', True))
         self.spe_display_id_with_variable_class.setChecked(get_config_bool('SmartPropEditor', 'display_id_with_variable_class', False))
+        self.spe_export_properties.setChecked(get_config_bool('SmartPropEditor', 'export_properties_in_one_line', True))
         self.action_buttons_panel.version_label.setText(f"Version: {self.app_version}")
 
         # Populate the monitor editline; default to provided value if not set
@@ -265,7 +284,10 @@ class PreferencesDialog(QDialog):
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_config_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
         )
-        # Connect the monitor editline's text change to update configuration
+        # Connect new bool property for export properties
+        self.spe_export_properties.toggled.connect(
+            lambda: set_config_bool('SmartPropEditor', 'export_properties_in_one_line', self.spe_export_properties.isChecked())
+        )
         self.assetgroupmaker_lineedit_monitor.textChanged.connect(
             lambda: set_config_value('AssetGroupMaker', 'monitor_folders', self.assetgroupmaker_lineedit_monitor.text())
         )
@@ -273,13 +295,11 @@ class PreferencesDialog(QDialog):
         self.action_buttons_panel.open_presets_folder_button.clicked.connect(self.open_presets_folder)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
         self.browse_archive_button.clicked.connect(self.browse_archive)
-        # Connect SoundEventEditor signal
         self.checkBox_play_on_click.toggled.connect(
             lambda: set_config_bool('SoundEventEditor', 'play_on_click', self.checkBox_play_on_click.isChecked())
         )
 
     def browse_archive(self):
-        # Open a folder selection dialog and update the archive path
         selected_dir = QFileDialog.getExistingDirectory(self, "Select Archive Path", os.getcwd())
         if selected_dir:
             self.preferences_lineedit_archive_path.setText(selected_dir)
@@ -321,7 +341,6 @@ class PreferencesDialog(QDialog):
                 print(f"Failed to remove {app_name} from startup: {e}")
 
 if __name__ == "__main__":
-    # Example usage for testing PreferencesDialog
     app = QApplication(sys.argv)
     dialog = PreferencesDialog(app_version="1.0.0")
     dialog.show()
