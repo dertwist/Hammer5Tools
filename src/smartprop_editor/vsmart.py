@@ -4,9 +4,11 @@ from PySide6.QtWidgets import (
 import re
 import keyvalues3 as kv3
 from src.smartprop_editor.choices import AddChoice, AddOption, AddVariable
-from src.common import editor_info
+from src.common import editor_info, JsonToKv3
+from src.smartprop_editor._common import disable_line_value_length_limit_keys
 from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
+from src.settings.main import get_config_bool
 from src.widgets import HierarchyItemModel, exception_handler
 class VsmartOpen:
     def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
@@ -152,7 +154,12 @@ class VsmartSave:
             out_data.update({'m_Choices': self.choices_data})
         converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
         out_data.update(converted_data)
-        kv3.write(out_data, self.filename)
+        if get_config_bool('SmartPropEditor', 'export_properties_in_one_line', True):
+            k3_data = JsonToKv3(out_data, disable_line_value_length_limit_keys=disable_line_value_length_limit_keys)
+        else:
+            k3_data = JsonToKv3(out_data)
+        with open(self.filename, 'w') as file:
+            file.write(k3_data)
 
     def tree_to_vsmart(self, item, data):
         """Convert tree structure to json"""
