@@ -39,7 +39,7 @@ from src.settings.main import (
 from loading_editor.main import Loading_editorMainWindow
 from hotkey_editor.main import HotkeyEditorMainWindow
 from create_addon.create_addon_mian import Create_addon_Dialog
-from other.steamfixnologon import SteamNoLogoFixThreadClass
+from other.steam_restart import SteamNoLogoFixThreadClass
 from other.addon_functions import delete_addon, launch_addon
 from src.updater.check import check_updates
 from archive_addon.main import ExportAndImportAddonDialog
@@ -461,7 +461,7 @@ class Widget(QMainWindow):
 
     def exit_application(self):
         try:
-            from other.discord_status_main import discord_status_clear
+            from other.discord_status import discord_status_clear
             discord_status_clear()
         except Exception:
             pass
@@ -499,7 +499,7 @@ class Widget(QMainWindow):
 
 
 def DiscordStatusMain_do():
-    from other.discord_status_main import update_discord_status
+    from other.discord_status import update_discord_status
     while not stop_discord_thread.is_set():
         update_discord_status()
         time.sleep(1)
@@ -525,7 +525,7 @@ if __name__ == "__main__":
     widget = Widget(dev_mode=args.dev)
     widget.show()
     if get_config_bool('DISCORD_STATUS', 'show_status'):
-        from other.discord_status_main import discord_status_clear, update_discord_status
+        from other.discord_status import discord_status_clear, update_discord_status
         widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
         widget.discord_thread.start()
     else:

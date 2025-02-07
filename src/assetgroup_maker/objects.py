@@ -9,6 +9,6 @@ default_file = {
             'load_from_the_folder': True,
             'output_to_the_folder': True,
             'algorithm': 0,
-            'ignore_extensions': 'blend,vmdl,vmat,vsmart, blend1'
+            'ignore_extensions': 'blend,blend1,vmdl,vmat,vsmart'
         }
     }
