@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QMessageBox
-from src.other.NCM_mode_setup_main import NCM_mode_setup
+from src.other.ncm_setup import NCM_mode_setup
 from src.other.assettypes import asset_types_modify
 from src.settings.main import get_addon_name, get_cs2_path, get_config_bool, set_config_bool, get_config_value, \
     set_config_value

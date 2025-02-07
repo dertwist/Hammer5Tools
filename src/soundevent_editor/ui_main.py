@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.2
+## Created by: Qt User Interface Compiler version 6.8.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -143,7 +143,7 @@ class Ui_MainWindow(object):
         self.hierarchy_widget.header().setCascadingSectionResizes(False)
         self.hierarchy_widget.header().setMinimumSectionSize(45)
         self.hierarchy_widget.header().setDefaultSectionSize(135)
-        self.hierarchy_widget.header().setProperty("showSortIndicator", False)
+        self.hierarchy_widget.header().setProperty(u"showSortIndicator", False)
         self.hierarchy_widget.header().setStretchLastSection(True)
 
         self.verticalLayout_3.addWidget(self.hierarchy_widget)

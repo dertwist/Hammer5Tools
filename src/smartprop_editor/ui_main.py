@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.2
+## Created by: Qt User Interface Compiler version 6.8.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -192,7 +192,7 @@ class Ui_MainWindow(object):
         self.tree_hierarchy_widget.header().setCascadingSectionResizes(False)
         self.tree_hierarchy_widget.header().setMinimumSectionSize(20)
         self.tree_hierarchy_widget.header().setDefaultSectionSize(135)
-        self.tree_hierarchy_widget.header().setProperty("showSortIndicator", False)
+        self.tree_hierarchy_widget.header().setProperty(u"showSortIndicator", False)
         self.tree_hierarchy_widget.header().setStretchLastSection(True)
 
         self.verticalLayout_3.addWidget(self.tree_hierarchy_widget)
@@ -807,7 +807,7 @@ class Ui_MainWindow(object):
         self.choices_tree_widget.header().setCascadingSectionResizes(False)
         self.choices_tree_widget.header().setMinimumSectionSize(150)
         self.choices_tree_widget.header().setDefaultSectionSize(180)
-        self.choices_tree_widget.header().setProperty("showSortIndicator", True)
+        self.choices_tree_widget.header().setProperty(u"showSortIndicator", True)
 
         self.verticalLayout.addWidget(self.choices_tree_widget)
 
