@@ -86,6 +86,16 @@ def restore_window(hwnd):
     ctypes.windll.user32.BringWindowToTop(hwnd)
     ctypes.windll.user32.SwitchToThisWindow(hwnd, True)
 
+def allocate_console():
+    """
+    Allocate a console window for a GUI application built with --windowed.
+    This allows console output if '--console' flag is provided.
+    """
+    if not ctypes.windll.kernel32.GetConsoleWindow():
+        ctypes.windll.kernel32.AllocConsole()
+        sys.stdout = open("CONOUT$", "w")
+        sys.stderr = open("CONOUT$", "w")
+
 class DevWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -536,7 +546,12 @@ def handle_new_connection(server, widget):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
+    parser.add_argument('--console', action='store_true', help='Enable console output for debug purposes')
     args, unknown = parser.parse_known_args()
+
+    # Allocate a console window if requested (works when built with --windowed)
+    if args.console:
+        allocate_console()
 
     # Instance management via QLocalSocket/QLocalServer.
     existing_socket = QLocalSocket()
