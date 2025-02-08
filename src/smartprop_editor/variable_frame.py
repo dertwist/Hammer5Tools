@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCursor, QAction
 from src.property.methods import PropertyMethods
 from src.smartprop_editor.element_id import *
-from src.settings.main import get_config_bool
+from src.settings.main import get_settings_bool
 from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.objects import variables_list
 class VariableFrame(QWidget):
@@ -37,7 +37,7 @@ class VariableFrame(QWidget):
         # ID Handling
         update_value_ElementID(self.var_value)
         self.element_id = get_ElementID(self.var_value)
-        if get_config_bool('SmartPropEditor', 'display_id_with_variable_class', default=False):
+        if get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', default=False):
             self.ui.id_display.setText(str(self.element_id))
         else:
             self.ui.id_display.deleteLater()

@@ -2,7 +2,7 @@ import time
 import psutil
 import pygetwindow as gw
 from pypresence import Presence
-from src.settings.main import get_config_value, get_config_bool
+from src.settings.main import get_settings_value, get_settings_bool
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -50,8 +50,8 @@ def update_discord_status():
     if RPC is not None:
         try:
             substring = "Hammer - ["
-            custom_display_text = get_config_value(DISCORD_STATUS, CUSTOM_STATUS_KEY)
-            hide_window_name = get_config_bool(DISCORD_STATUS, SHOW_PROJECT_NAME_KEY)
+            custom_display_text = get_settings_value(DISCORD_STATUS, CUSTOM_STATUS_KEY)
+            hide_window_name = get_settings_bool(DISCORD_STATUS, SHOW_PROJECT_NAME_KEY)
 
             for proc in psutil.process_iter(['pid', 'name']):
                 if substring.lower() in proc.info['name'].lower():
