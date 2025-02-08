@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QMessageBox
 from src.other.ncm_setup import NCM_mode_setup
 from src.other.assettypes import asset_types_modify
-from src.settings.main import get_addon_name, get_cs2_path, get_config_bool, set_config_bool, get_config_value, \
-    set_config_value
+from src.settings.main import get_addon_name, get_cs2_path, get_settings_bool, set_settings_bool, get_settings_value, \
+    set_settings_value
 import shutil, psutil
 from src.common import *
 from src.widgets import exception_handler
@@ -40,10 +40,10 @@ def __launch_addon():
     addon_name = get_addon_name()
     cs2_path = get_cs2_path()
 
-    commands = get_config_value("LAUNCH", "commands")
+    commands = get_settings_value("LAUNCH", "commands")
     if not commands:
         commands = default_commands
-        set_config_value("LAUNCH", "commands", commands)
+        set_settings_value("LAUNCH", "commands", commands)
 
     commands = assemble_commands(commands, addon_name)
 
@@ -51,7 +51,7 @@ def __launch_addon():
 
     cs2_launch_commands = f'"{cs2_exe_path}" {commands}'
 
-    ncm_mode = get_config_bool("LAUNCH", "ncm_mode", default=False)
+    ncm_mode = get_settings_bool("LAUNCH", "ncm_mode", default=False)
 
     if ncm_mode:
         NCM_mode_setup(cs2_path)

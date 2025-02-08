@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QLabel, QWidget
 from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtGui import QIcon
-from src.settings.main import set_config_bool, get_config_bool
+from src.settings.main import set_settings_bool, get_settings_bool
 from src.soundevent_editor.ui_audio_player import Ui_Form
 
 class AudioPlayer(QWidget):
@@ -31,7 +31,7 @@ class AudioPlayer(QWidget):
         self.current_time_label = QLabel("00:00")
         self.total_time_label = QLabel("00:00")
 
-        self.loop_enabled = get_config_bool('SoundEventEditor', 'AudioPlayerLoop', default=False)
+        self.loop_enabled = get_settings_bool('SoundEventEditor', 'AudioPlayerLoop', default=False)
         self.ui.loop_checkbox.setChecked(self.loop_enabled)
 
         self.timer = QTimer(self)
@@ -98,7 +98,7 @@ class AudioPlayer(QWidget):
 
     def toggle_loop(self, state):
         self.loop_enabled = self.ui.loop_checkbox.isChecked()
-        set_config_bool('SoundEventEditor', 'AudioPlayerLoop', self.loop_enabled)
+        set_settings_bool('SoundEventEditor', 'AudioPlayerLoop', self.loop_enabled)
 
     def seek_position(self, position):
         self.audio_player.setPosition(position)

@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemMo
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
-from src.settings.main import get_config_value, set_config_value, get_cs2_path, get_addon_name, debug
+from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, debug
 from src.widgets_common import ErrorInfo
 
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
@@ -165,7 +165,7 @@ class Explorer(QMainWindow):
 
     def select_last_opened_path(self):
         try:
-            last_opened_path = get_config_value(self.editor_name + '_explorer_lath_path', self.addon)
+            last_opened_path = get_settings_value(self.editor_name + '_explorer_lath_path', self.addon)
             if last_opened_path:
                 last_opened_index = self.model.index(last_opened_path)
                 self.tree.selectionModel().select(last_opened_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
@@ -175,7 +175,7 @@ class Explorer(QMainWindow):
             error_dialog.exec_()
 
     def save_current_path(self, path):
-        set_config_value(self.editor_name + '_explorer_lath_path', self.addon, path)
+        set_settings_value(self.editor_name + '_explorer_lath_path', self.addon, path)
 
     def on_directory_changed(self, current, previous):
         current_path = self.model.filePath(current)

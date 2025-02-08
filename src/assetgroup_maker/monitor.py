@@ -13,7 +13,7 @@ from PySide6.QtCore import Signal, QSize, QFileSystemWatcher, QTimer
 from src.settings.main import get_addon_dir, debug
 from src.styles.common import qt_stylesheet_button, qt_stylesheet_widgetlist
 from src.assetgroup_maker.process import StartProcess
-from src.settings.common import get_config_value
+from src.settings.common import get_settings_value
 
 
 def read_reference_from_file(config_path: str) -> Optional[str]:
@@ -202,7 +202,7 @@ class MonitoringFileWatcher(QListWidget):
         Allowed folders are retrieved from configuration 'AssetGroupMaker/monitor_folders'.
         Only files whose relative path (from the add-on directory) contains one of the allowed folder names are accepted.
         """
-        allowed = get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops"
+        allowed = get_settings_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops"
         allowed_set = {x.strip().lower() for x in allowed.split(',')}
         try:
             relative_path = os.path.relpath(file_path, get_addon_dir())

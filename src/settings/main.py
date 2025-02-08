@@ -245,65 +245,65 @@ class PreferencesDialog(QDialog):
         self.main_layout.addWidget(self.action_buttons_panel)
 
     def populate_preferences(self):
-        self.preferences_lineedit_archive_path.setText(get_config_value('PATHS', 'archive'))
-        self.checkBox_show_in_hammer_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_status'))
-        self.checkBox_hide_project_name_discord_status.setChecked(get_config_bool('DISCORD_STATUS', 'show_project_name'))
-        self.editline_custom_discord_status.setText(get_config_value('DISCORD_STATUS', 'custom_status'))
-        self.launch_addon_after_nosteamlogon_fix.setChecked(get_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix'))
-        self.checkBox_start_with_system.setChecked(get_config_bool('APP', 'start_with_system'))
-        self.checkBox_close_to_tray.setChecked(get_config_bool('APP', 'minimize_to_tray', True))
-        self.spe_display_id_with_variable_class.setChecked(get_config_bool('SmartPropEditor', 'display_id_with_variable_class', False))
-        self.spe_export_properties.setChecked(get_config_bool('SmartPropEditor', 'export_properties_in_one_line', True))
+        self.preferences_lineedit_archive_path.setText(get_settings_value('PATHS', 'archive'))
+        self.checkBox_show_in_hammer_discord_status.setChecked(get_settings_bool('DISCORD_STATUS', 'show_status'))
+        self.checkBox_hide_project_name_discord_status.setChecked(get_settings_bool('DISCORD_STATUS', 'show_project_name'))
+        self.editline_custom_discord_status.setText(get_settings_value('DISCORD_STATUS', 'custom_status'))
+        self.launch_addon_after_nosteamlogon_fix.setChecked(get_settings_bool('OTHER', 'launch_addon_after_nosteamlogon_fix'))
+        self.checkBox_start_with_system.setChecked(get_settings_bool('APP', 'start_with_system'))
+        self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', True))
+        self.spe_display_id_with_variable_class.setChecked(get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', False))
+        self.spe_export_properties.setChecked(get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True))
         self.action_buttons_panel.version_label.setText(f"Version: {self.app_version}")
 
         # Populate the monitor editline; default to provided value if not set
-        self.assetgroupmaker_lineedit_monitor.setText(get_config_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
+        self.assetgroupmaker_lineedit_monitor.setText(get_settings_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
         # Populate SoundEventEditor preference
-        self.checkBox_play_on_click.setChecked(get_config_bool('SoundEventEditor', 'play_on_click', True))
+        self.checkBox_play_on_click.setChecked(get_settings_bool('SoundEventEditor', 'play_on_click', True))
 
     def connect_signals(self):
         self.preferences_lineedit_archive_path.textChanged.connect(
-            lambda: set_config_value('PATHS', 'archive', self.preferences_lineedit_archive_path.text())
+            lambda: set_settings_value('PATHS', 'archive', self.preferences_lineedit_archive_path.text())
         )
         self.checkBox_show_in_hammer_discord_status.toggled.connect(
-            lambda: set_config_bool('DISCORD_STATUS', 'show_status', self.checkBox_show_in_hammer_discord_status.isChecked())
+            lambda: set_settings_bool('DISCORD_STATUS', 'show_status', self.checkBox_show_in_hammer_discord_status.isChecked())
         )
         self.checkBox_hide_project_name_discord_status.toggled.connect(
-            lambda: set_config_bool('DISCORD_STATUS', 'show_project_name', self.checkBox_hide_project_name_discord_status.isChecked())
+            lambda: set_settings_bool('DISCORD_STATUS', 'show_project_name', self.checkBox_hide_project_name_discord_status.isChecked())
         )
         self.editline_custom_discord_status.textChanged.connect(
-            lambda: set_config_value('DISCORD_STATUS', 'custom_status', self.editline_custom_discord_status.text())
+            lambda: set_settings_value('DISCORD_STATUS', 'custom_status', self.editline_custom_discord_status.text())
         )
         self.launch_addon_after_nosteamlogon_fix.toggled.connect(
-            lambda: set_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix', self.launch_addon_after_nosteamlogon_fix.isChecked())
+            lambda: set_settings_bool('OTHER', 'launch_addon_after_nosteamlogon_fix', self.launch_addon_after_nosteamlogon_fix.isChecked())
         )
         self.checkBox_start_with_system.toggled.connect(self.start_with_system)
         self.checkBox_close_to_tray.toggled.connect(
-            lambda: set_config_bool('APP', 'minimize_to_tray', self.checkBox_close_to_tray.isChecked())
+            lambda: set_settings_bool('APP', 'minimize_to_tray', self.checkBox_close_to_tray.isChecked())
         )
         self.spe_display_id_with_variable_class.toggled.connect(
-            lambda: set_config_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
+            lambda: set_settings_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
         )
         # Connect new bool property for export properties
         self.spe_export_properties.toggled.connect(
-            lambda: set_config_bool('SmartPropEditor', 'export_properties_in_one_line', self.spe_export_properties.isChecked())
+            lambda: set_settings_bool('SmartPropEditor', 'export_properties_in_one_line', self.spe_export_properties.isChecked())
         )
         self.assetgroupmaker_lineedit_monitor.textChanged.connect(
-            lambda: set_config_value('AssetGroupMaker', 'monitor_folders', self.assetgroupmaker_lineedit_monitor.text())
+            lambda: set_settings_value('AssetGroupMaker', 'monitor_folders', self.assetgroupmaker_lineedit_monitor.text())
         )
         self.action_buttons_panel.open_settings_folder_button.clicked.connect(self.open_settings_folder)
         self.action_buttons_panel.open_presets_folder_button.clicked.connect(self.open_presets_folder)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
         self.browse_archive_button.clicked.connect(self.browse_archive)
         self.checkBox_play_on_click.toggled.connect(
-            lambda: set_config_bool('SoundEventEditor', 'play_on_click', self.checkBox_play_on_click.isChecked())
+            lambda: set_settings_bool('SoundEventEditor', 'play_on_click', self.checkBox_play_on_click.isChecked())
         )
 
     def browse_archive(self):
         selected_dir = QFileDialog.getExistingDirectory(self, "Select Archive Path", os.getcwd())
         if selected_dir:
             self.preferences_lineedit_archive_path.setText(selected_dir)
-            set_config_value('PATHS', 'archive', selected_dir)
+            set_settings_value('PATHS', 'archive', selected_dir)
 
     def open_settings_folder(self):
         subprocess.Popen(f'explorer "{os.getcwd()}"')
