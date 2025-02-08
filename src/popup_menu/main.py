@@ -18,7 +18,7 @@ from PySide6.QtGui import QCursor, QKeyEvent
 from PySide6.QtCore import QEvent, Qt, Signal
 from src.popup_menu.ui_main import Ui_PoPupMenu
 from src.widgets_common import Button
-from src.settings.main import set_config_value, get_config_value
+from src.settings.main import set_settings_value, get_settings_value
 from src.popup_menu.common import _label_stylesheet, _bookmark_bottom_style
 
 
@@ -118,7 +118,7 @@ class PropertyItemWidget(QWidget):
 
         # Persist the updated bookmarks
         if self.window_name:
-            set_config_value('Bookmarks', self.window_name, ','.join(self.bookmarked_items))
+            set_settings_value('Bookmarks', self.window_name, ','.join(self.bookmarked_items))
 
         # Immediately refresh the popup menu's layout to reflect the new bookmark status
         if self._popup_menu:
@@ -234,7 +234,7 @@ class PopupMenu(QDialog):
     def _init_bookmarks(self):
         """Load saved bookmarks from config."""
         if self.window_name:
-            saved = get_config_value('Bookmarks', self.window_name)
+            saved = get_settings_value('Bookmarks', self.window_name)
             if saved:
                 self.bookmarked_items = set(saved.split(','))
 

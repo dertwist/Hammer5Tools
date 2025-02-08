@@ -11,7 +11,7 @@ from PySide6.QtGui import QIcon, QStandardItemModel, QStandardItem
 from PySide6.QtCore import Qt
 
 from src.archive_addon.ui_main import Ui_export_and_import_addon_widget
-from src.settings.main import get_cs2_path, get_addon_name, get_config_value
+from src.settings.main import get_cs2_path, get_addon_name, get_settings_value
 from src.common import enable_dark_title_bar
 
 cs2_path = get_cs2_path()
@@ -194,7 +194,7 @@ class ExportAndImportAddonDialog(QDialog):
         if reply == QMessageBox.Yes:
             addon_name = get_addon_name()
 
-            archive_path = get_config_value('PATHS', 'archive')
+            archive_path = get_settings_value('PATHS', 'archive')
             game_source_path = os.path.join(cs2_path, 'game', 'csgo_addons', addon_name)
             content_source_path = os.path.join(cs2_path, 'content', 'csgo_addons', addon_name)
             destination_path = os.path.join(archive_path, addon_name + '.zip')

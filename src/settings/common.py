@@ -10,14 +10,14 @@ settings_file = os.path.join(app_dir, 'settings.ini')
 # Initialize settings to use settings.ini in the program folder
 settings = QSettings(settings_file, QSettings.IniFormat)
 
-def set_config_value(section, key, value):
+def set_settings_value(section, key, value):
     settings.setValue(f"{section}/{key}", value)
 
-def set_config_bool(section, key, bool_value):
-    set_config_value(section, key, bool_value)
+def set_settings_bool(section, key, bool_value):
+    set_settings_value(section, key, bool_value)
 
 
-def get_config_value(section, key, default=None):
+def get_settings_value(section, key, default=None):
     config_key = f"{section}/{key}"
     try:
         value = settings.value(config_key, defaultValue=default)
@@ -29,7 +29,7 @@ def get_config_value(section, key, default=None):
     return value
 
 
-def get_config_bool(section, key, default: bool = None):
+def get_settings_bool(section, key, default: bool = None):
     config_key = f"{section}/{key}"
     try:
         value = settings.value(config_key, defaultValue=default, type=bool)
@@ -45,18 +45,18 @@ def get_config_bool(section, key, default: bool = None):
 def default_settings():
     if not os.path.exists(settings.fileName()):
         desktop_user_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        set_config_value('PATHS', 'archive', desktop_user_path)
-        set_config_value('DISCORD_STATUS', 'custom_status', 'Doing stuff')
-        set_config_value('DISCORD_STATUS', 'show_status', True)
-        set_config_value('DISCORD_STATUS', 'show_project_name', False)
-        set_config_value('LAUNCH', 'ncm_mode', False)
-        set_config_value('AssetGroupMaker', 'monitor_folders', 'models, materials, smartprops')
-        set_config_bool('SoundEventEditor', 'play_on_click', True)
-        set_config_bool('LAUNCH', 'ncm_mode_setup', False)
-        set_config_bool('APP', 'minimize_message_shown', True)
-        set_config_bool('APP', 'start_with_system', False)
-        set_config_bool('APP', 'first_launch', True)
-        set_config_bool('APP', 'minimize_to_tray', True)
+        set_settings_value('PATHS', 'archive', desktop_user_path)
+        set_settings_value('DISCORD_STATUS', 'custom_status', 'Doing stuff')
+        set_settings_value('DISCORD_STATUS', 'show_status', True)
+        set_settings_value('DISCORD_STATUS', 'show_project_name', False)
+        set_settings_value('LAUNCH', 'ncm_mode', False)
+        set_settings_value('AssetGroupMaker', 'monitor_folders', 'models, materials, smartprops')
+        set_settings_bool('SoundEventEditor', 'play_on_click', True)
+        set_settings_bool('LAUNCH', 'ncm_mode_setup', False)
+        set_settings_bool('APP', 'minimize_message_shown', True)
+        set_settings_bool('APP', 'start_with_system', False)
+        set_settings_bool('APP', 'first_launch', True)
+        set_settings_bool('APP', 'minimize_to_tray', True)
         settings.sync()
 
 default_settings()
@@ -74,7 +74,7 @@ def get_cs2_path():
         cs2_exe_path = os.path.join(cs2_path, "game", "bin", "win64", "cs2.exe")
         return os.path.exists(cs2_exe_path)
 
-    cs2_path = get_config_value('PATHS', 'Cs2')
+    cs2_path = get_settings_value('PATHS', 'Cs2')
 
     if cs2_path:
         cs2_path = os.path.normpath(cs2_path)
@@ -99,7 +99,7 @@ def get_steam_path():
     Retrieves the Steam installation path without saving it back to the settings.
     """
     try:
-        steam_path = get_config_value('PATHS', 'steam')
+        steam_path = get_settings_value('PATHS', 'steam')
         if not steam_path:
             raise ValueError("Steam path not found or empty")
         return steam_path
@@ -121,7 +121,7 @@ def get_addon_dir():
         raise
 
 def get_addon_name():
-    return get_config_value('LAUNCH', 'addon')
+    return get_settings_value('LAUNCH', 'addon')
 
 def set_addon_name(addon_name_set):
-    return set_config_value('LAUNCH', 'addon', addon_name_set)
+    return set_settings_value('LAUNCH', 'addon', addon_name_set)

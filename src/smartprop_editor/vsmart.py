@@ -8,7 +8,7 @@ from src.common import editor_info, JsonToKv3
 from src.smartprop_editor._common import disable_line_value_length_limit_keys
 from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
-from src.settings.main import get_config_bool
+from src.settings.main import get_settings_bool
 from src.widgets import HierarchyItemModel, exception_handler
 class VsmartOpen:
     def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
@@ -154,7 +154,7 @@ class VsmartSave:
             out_data.update({'m_Choices': self.choices_data})
         converted_data = self.tree_to_vsmart((self.tree.invisibleRootItem()), {})
         out_data.update(converted_data)
-        if get_config_bool('SmartPropEditor', 'export_properties_in_one_line', True):
+        if get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True):
             k3_data = JsonToKv3(out_data, disable_line_value_length_limit_keys=disable_line_value_length_limit_keys)
         else:
             k3_data = JsonToKv3(out_data)

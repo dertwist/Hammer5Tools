@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDialog, QMessageBox
 import shutil, os, re
-from src.settings.main import get_cs2_path, get_config_value, set_config_value
+from src.settings.main import get_cs2_path, get_settings_value, set_settings_value
 from src.create_addon.ui_create_addon_dialog import Ui_Create_addon_Dialog
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtCore import QRegularExpression
@@ -26,15 +26,15 @@ class Create_addon_Dialog(QDialog):
                 folder_path = os.path.join(presets_path, folder_name)
                 if os.path.isdir(folder_path):
                     self.ui.presets_comobox.addItem(folder_name)
-            if not get_config_value('PRESETS', 'preset_name'):
-                set_config_value('PRESETS', 'preset_name', self.ui.presets_comobox.itemText(0))
-        self.ui.presets_comobox.setCurrentText(get_config_value('PRESETS', 'preset_name'))
+            if not get_settings_value('PRESETS', 'preset_name'):
+                set_settings_value('PRESETS', 'preset_name', self.ui.presets_comobox.itemText(0))
+        self.ui.presets_comobox.setCurrentText(get_settings_value('PRESETS', 'preset_name'))
         self.ui.presets_comobox.currentIndexChanged.connect(self.set_preset_name_on_change)
 
     def set_preset_name_on_change(self, index):
-        set_config_value('PRESETS', 'preset_name', self.ui.presets_comobox.itemText(index))
+        set_settings_value('PRESETS', 'preset_name', self.ui.presets_comobox.itemText(index))
     def create_addon(self):
-        preset = get_config_value('PRESETS', 'preset_name')
+        preset = get_settings_value('PRESETS', 'preset_name')
         presets_path = Presets_Path
         cs2_path = get_cs2_path()
         new_addon_name = self.ui.lineEdit_addon_name.text()
