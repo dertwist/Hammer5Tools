@@ -1,6 +1,6 @@
 import time, psutil, subprocess
 from PySide6.QtCore import QThread, Signal
-from src.settings.main import get_steam_path, get_cs2_path, get_addon_name, get_config_bool
+from src.settings.main import get_steam_path, get_cs2_path, get_addon_name, get_settings_bool
 from src.other.addon_functions import launch_addon
 
 steam_path = get_steam_path()
@@ -35,7 +35,7 @@ class SteamNoLogoFixThreadClass(QThread):
 
         # Launch the addon
         try:
-            launch_addon_after_nosteamlogon_fix = get_config_bool('OTHER', 'launch_addon_after_nosteamlogon_fix')
+            launch_addon_after_nosteamlogon_fix = get_settings_bool('OTHER', 'launch_addon_after_nosteamlogon_fix')
             print(launch_addon_after_nosteamlogon_fix)
             if launch_addon_after_nosteamlogon_fix:
                 launch_addon()
