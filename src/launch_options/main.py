@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QDialog
-from src.settings.main import get_addon_name, get_config_value, set_config_value
+from src.settings.main import get_addon_name, get_settings_value, set_settings_value
 from src.launch_options.ui_main import Ui_preferences_dialog
 from src.other.addon_functions import assemble_commands
 from src.common import *
@@ -11,10 +11,10 @@ class LaunchOptionsDialog(QDialog):
         self.ui = Ui_preferences_dialog()
         self.ui.setupUi(self)
         enable_dark_title_bar(self)
-        self.commands = get_config_value("LAUNCH", "commands")
+        self.commands = get_settings_value("LAUNCH", "commands")
         if not self.commands:
             self.commands = default_commands
-            set_config_value("LAUNCH", "commands", self.commands)
+            set_settings_value("LAUNCH", "commands", self.commands)
         self.populate_widgets()
         self.__connections()
         self.on_update()
@@ -88,7 +88,7 @@ class LaunchOptionsDialog(QDialog):
     def on_update(self):
         """Adding commands to the settings"""
         self.commands = self.assemble_commands()
-        set_config_value("LAUNCH", "commands", self.commands)
+        set_settings_value("LAUNCH", "commands", self.commands)
         self.preview()
 
     def preview(self):
