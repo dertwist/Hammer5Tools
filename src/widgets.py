@@ -34,7 +34,11 @@ class FloatWidget(QWidget):
     edited = Signal(float)
 
     def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0, only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True, vertical: bool = False, digits: int = 3, value_step: float = 1, slider_scale: int = 5):
-        """Float widget is a widget with spin box and slider that are synchronized with each other. This widget gives float or round(float) which is int variable type."""
+        """Float widget is a widget with a spin box and a slider that are synchronized.
+           The widget returns a float value (or a rounded integer if int_output is True).
+           If lock_range is enabled and slider_range is provided (non [0,0]), the user cannot
+           set values below slider_range[0] or above slider_range[1].
+        """
         super().__init__()
 
         # Variables
@@ -42,6 +46,8 @@ class FloatWidget(QWidget):
         self.value = value
         self.only_positive = only_positive
         self.slider_scale = slider_scale
+        self.lock_range = lock_range
+        self.slider_range = slider_range
 
         # SpinBox setup
         self.SpinBox = QDoubleSpinBox()
@@ -53,24 +59,25 @@ class FloatWidget(QWidget):
             self.SpinBox.setMinimum(-99999999)
         self.SpinBox.setMaximum(99999999)
         self.SpinBox.setValue(value)
+        # If lock_range is enabled and a valid slider_range is provided, enforce boundaries on the spinbox.
+        if (self.slider_range[0] != 0 or self.slider_range[1] != 0) and self.lock_range:
+            self.SpinBox.setMinimum(self.slider_range[0])
+            self.SpinBox.setMaximum(self.slider_range[1])
 
         # Slider setup
         self.Slider = QSlider()
         self.Slider.setOrientation(Qt.Vertical if vertical else Qt.Horizontal)
-        # Range
-        if slider_range[0] == 0 and slider_range[1] == 0:
-            value = self.SpinBox.value()
-            self.Slider.setMaximum(abs(value) * self.slider_scale * 100 + 1000)
-            if only_positive:
+        # Range setup: if slider_range is default (0,0) then use dynamic scaling.
+        if self.slider_range[0] == 0 and self.slider_range[1] == 0:
+            value_current = self.SpinBox.value()
+            self.Slider.setMaximum(abs(value_current) * self.slider_scale * 100 + 1000)
+            if self.only_positive:
                 self.Slider.setMinimum(0)
             else:
-                self.Slider.setMinimum(-abs(value) * self.slider_scale * 100 - 1000)
+                self.Slider.setMinimum(-abs(value_current) * self.slider_scale * 100 - 1000)
         else:
-            if only_positive:
-                self.Slider.setMinimum(0)
-            else:
-                self.Slider.setMinimum(slider_range[0] * 100)
-            self.Slider.setMaximum(slider_range[1] * 100)
+            self.Slider.setMinimum(self.slider_range[0] * 100)
+            self.Slider.setMaximum(self.slider_range[1] * 100)
         self.Slider.valueChanged.connect(self.on_Slider_updated)
 
         # Layout setup
@@ -82,34 +89,37 @@ class FloatWidget(QWidget):
         else:
             layout.addWidget(self.SpinBox)
             layout.addWidget(self.Slider)
-        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
         if spacer_enable:
-            layout.addItem(spacer)
+            layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         self.setLayout(layout)
         if vertical:
             self.setFixedWidth(96)
         self.on_SpinBox_updated()
         self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
 
-    # Colors
+    # Method to change text color if needed
     def set_color(self, color):
         self.SpinBox.setStyleSheet(f"color: {color};")
 
-    # Updating
+    # Handler when the spinbox value is updated
     def on_SpinBox_updated(self):
         value = self.SpinBox.value()
         if self.int_output:
             value = round(value)
-        if value > self.Slider.maximum() / 100 or value < self.Slider.minimum() / 100:
-            if self.only_positive:
-                self.Slider.setMinimum(0)
-            else:
-                self.Slider.setMinimum(-abs(value) * self.slider_scale * 100 - 1000)
-            self.Slider.setMaximum(abs(value) * self.slider_scale * 100 + 1000)
+        # Adjust slider range only if lock_range is not enabled and using dynamic scaling.
+        if not self.lock_range:
+            if value > self.Slider.maximum() / 100 or value < self.Slider.minimum() / 100:
+                if self.only_positive:
+                    self.Slider.setMinimum(0)
+                else:
+                    self.Slider.setMinimum(-abs(value) * self.slider_scale * 100 - 1000)
+                self.Slider.setMaximum(abs(value) * self.slider_scale * 100 + 1000)
+        # Otherwise, when lock_range is True, slider range remains fixed as set in __init__
         self.Slider.setValue(value * 100)
         self.value = value
         self.edited.emit(value)
 
+    # Handler when the slider is updated
     def on_Slider_updated(self):
         value = self.Slider.value() / 100
         if self.int_output:
@@ -118,6 +128,7 @@ class FloatWidget(QWidget):
         self.value = value
         self.edited.emit(value)
 
+    # Programmatically set the value
     def set_value(self, value):
         self.SpinBox.setValue(value)
         self.on_SpinBox_updated()

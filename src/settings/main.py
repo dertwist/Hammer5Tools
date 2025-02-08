@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import os
 
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
@@ -11,6 +12,7 @@ from src.common import enable_dark_title_bar, Presets_Path
 from src.updater.check import check_updates
 from src.widgets_common import Button  # Using the internal Button class
 from src.styles.common import qt_stylesheet_checkbox
+from src.widgets import FloatWidget  # Using the internal FloatWidget for float properties
 
 
 class ActionButtonsPanel(QFrame):
@@ -221,11 +223,12 @@ class PreferencesDialog(QDialog):
         self.tabWidget.addTab(assetgroupmaker_scroll, "AssetGroupMaker")
 
     def create_sound_event_editor_tab(self):
-        # Create the SoundEventEditor tab with AudioPlayer subcategory
+        # Create the SoundEventEditor tab with AudioPlayer subcategory and Internal Sounds subcategory
         sound_editor_content = QWidget()
         layout = QVBoxLayout(sound_editor_content)
         layout.setContentsMargins(10, 10, 10, 10)
 
+        # ------------- AudioPlayer Subcategory -------------
         label_audio_header = QLabel("AudioPlayer", sound_editor_content)
         layout.addWidget(label_audio_header)
         self.frame_audio = QFrame(sound_editor_content)
@@ -234,6 +237,23 @@ class PreferencesDialog(QDialog):
         self.checkBox_play_on_click.setStyleSheet(qt_stylesheet_checkbox)
         layout_audio.addWidget(self.checkBox_play_on_click)
         layout.addWidget(self.frame_audio)
+
+        # ------------- Internal Sounds Subcategory -------------
+        layout.addWidget(self.create_divider(sound_editor_content))
+        label_internal = QLabel("Internal Sounds", sound_editor_content)
+        layout.addWidget(label_internal)
+        self.frame_internal_sounds = QFrame(sound_editor_content)
+        layout_internal = QVBoxLayout(self.frame_internal_sounds)
+        # Removed "Use cache" property as requested.
+        # Maximum cache size property using FloatWidget (float property, default 400)
+        row_cache_size = QHBoxLayout()
+        label_max_cache = QLabel("Maximum cache size:", self.frame_internal_sounds)
+        label_max_cache.setMinimumWidth(130)
+        row_cache_size.addWidget(label_max_cache)
+        self.floatWidget_max_cache_size = FloatWidget(self.frame_internal_sounds, slider_range=[50,4000], lock_range=True, spacer_enable=False, digits=0, only_positive=True, value=400)
+        row_cache_size.addWidget(self.floatWidget_max_cache_size)
+        layout_internal.addLayout(row_cache_size)
+        layout.addWidget(self.frame_internal_sounds)
 
         layout.addStretch()
         sound_editor_scroll = self.wrap_in_scroll_area(sound_editor_content)
@@ -258,8 +278,13 @@ class PreferencesDialog(QDialog):
 
         # Populate the monitor editline; default to provided value if not set
         self.assetgroupmaker_lineedit_monitor.setText(get_settings_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
-        # Populate SoundEventEditor preference
+        # Populate SoundEventEditor preferences
         self.checkBox_play_on_click.setChecked(get_settings_bool('SoundEventEditor', 'play_on_click', True))
+        try:
+            max_cache = float(get_settings_value('SoundEventEditor', 'max_cache_size') or 400)
+        except ValueError:
+            max_cache = 400
+        self.floatWidget_max_cache_size.set_value(max_cache)
 
     def connect_signals(self):
         self.preferences_lineedit_archive_path.textChanged.connect(
@@ -284,7 +309,6 @@ class PreferencesDialog(QDialog):
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
         )
-        # Connect new bool property for export properties
         self.spe_export_properties.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'export_properties_in_one_line', self.spe_export_properties.isChecked())
         )
@@ -297,6 +321,10 @@ class PreferencesDialog(QDialog):
         self.browse_archive_button.clicked.connect(self.browse_archive)
         self.checkBox_play_on_click.toggled.connect(
             lambda: set_settings_bool('SoundEventEditor', 'play_on_click', self.checkBox_play_on_click.isChecked())
+        )
+        # Connect using the FloatWidget's "edited" signal instead of "valueChanged"
+        self.floatWidget_max_cache_size.edited.connect(
+            lambda val: set_settings_value('SoundEventEditor', 'max_cache_size', str(val))
         )
 
     def browse_archive(self):
@@ -339,6 +367,7 @@ class PreferencesDialog(QDialog):
                 print(f"{app_name} not found in startup")
             except Exception as e:
                 print(f"Failed to remove {app_name} from startup: {e}")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

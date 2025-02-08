@@ -1,12 +1,14 @@
 from src.property.methods import QDrag
 import os
 import vpk
+import time
 from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QMessageBox
 from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess, QThread, Signal
 from PySide6.QtMultimedia import QMediaPlayer
-from src.settings.main import get_cs2_path, get_addon_dir, debug
+from src.settings.main import get_cs2_path, get_addon_dir, debug, get_settings_value
 from src.common import SoundEventEditor_sounds_path, Decompiler_path, SoundEventEditor_path
 from src.widgets import exception_handler
+
 @exception_handler
 class VPKLoaderThread(QThread):
     vpk_loaded = Signal(list)
@@ -24,10 +26,11 @@ class VPKLoaderThread(QThread):
                 self.vpk_loaded.emit(folders)
         except Exception as e:
             self.vpk_loaded.emit([])
+
 @exception_handler
 class InternalSoundFileExplorer(QTreeWidget):
     play_sound = Signal(str)
-    def __init__(self, audio_player:QMediaPlayer):
+    def __init__(self, audio_player: QMediaPlayer):
         super().__init__()
         self.setHeaderHidden(True)
         self.setDragEnabled(True)
@@ -43,6 +46,37 @@ class InternalSoundFileExplorer(QTreeWidget):
         debug(f'Playing audio {file_path}')
         self.play_sound.emit(file_path)
 
+    def maintain_cache_size(self, cache_path, max_cache_bytes):
+        """
+        Check if cache folder exceeds the allowed size and delete oldest files if necessary.
+        """
+        if not os.path.isdir(cache_path):
+            return
+        total_size = 0
+        file_list = []
+        for root, dirs, files in os.walk(cache_path):
+            for file in files:
+                full_path = os.path.join(root, file)
+                try:
+                    file_size = os.path.getsize(full_path)
+                    total_size += file_size
+                    mod_time = os.path.getmtime(full_path)
+                    file_list.append((full_path, mod_time, file_size))
+                except Exception:
+                    continue
+        if total_size <= max_cache_bytes:
+            return
+        # Sort files by modification time (oldest first)
+        file_list.sort(key=lambda x: x[1])
+        while total_size > max_cache_bytes and file_list:
+            file_to_remove, mod_time, file_size = file_list.pop(0)
+            try:
+                os.remove(file_to_remove)
+                total_size -= file_size
+                debug(f"Removed cached file: {file_to_remove}")
+            except Exception as e:
+                debug(f"Failed to remove {file_to_remove}: {e}")
+
     def play_audio_file(self, path):
         internal_audiopath = os.path.join('sounds', path.replace('vsnd', 'vsnd_c')).replace('/', '\\')
 
@@ -51,6 +85,15 @@ class InternalSoundFileExplorer(QTreeWidget):
 
         local_audiopath_wav = os.path.abspath(local_audiopath_wav)
         local_audiopath_mp3 = os.path.abspath(local_audiopath_mp3)
+
+        try:
+            max_cache_mb = float(get_settings_value('SoundEventEditor', 'max_cache_size', 400))
+        except ValueError:
+            max_cache_mb = 400
+        max_cache_bytes = max_cache_mb * 1024 * 1024
+
+        # Before using the cache, ensure the cache folder size is maintained.
+        self.maintain_cache_size(SoundEventEditor_sounds_path, max_cache_bytes)
 
         if os.path.exists(local_audiopath_wav):
             self._play_audio_file(local_audiopath_wav)
@@ -77,7 +120,7 @@ class InternalSoundFileExplorer(QTreeWidget):
                 ]
             )
         except Exception as e:
-            print(e)
+            debug(e)
             pass
 
     @exception_handler
@@ -157,6 +200,8 @@ class InternalSoundFileExplorer(QTreeWidget):
 
 if __name__ == "__main__":
     app = QApplication([])
-    explorer = InternalSoundFileExplorer()
+    # QMediaPlayer instance required for audio playback.
+    player = QMediaPlayer()
+    explorer = InternalSoundFileExplorer(player)
     explorer.show()
     app.exec()
