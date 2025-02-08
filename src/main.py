@@ -34,10 +34,10 @@ from src.settings.main import (
     get_cs2_path,
     get_addon_name,
     set_addon_name,
-    get_config_bool,
-    set_config_bool,
-    get_config_value,
-    set_config_value,
+    get_settings_bool,
+    set_settings_bool,
+    get_settings_value,
+    set_settings_value,
     settings,
     debug
 )
@@ -105,27 +105,12 @@ class DevWidget(QWidget):
         label = QLabel("Development Mode Active", self)
         layout.addWidget(label)
         self.checkBox_debug_info = QCheckBox("Enable Debug Info", self)
-        self.checkBox_debug_info.setChecked(get_config_bool('OTHER', 'debug_info', False))
+        self.checkBox_debug_info.setChecked(get_settings_bool('OTHER', 'debug_info', False))
         self.checkBox_debug_info.toggled.connect(
-            lambda: set_config_bool('OTHER', 'debug_info', self.checkBox_debug_info.isChecked())
+            lambda: set_settings_bool('OTHER', 'debug_info', self.checkBox_debug_info.isChecked())
         )
         layout.addWidget(self.checkBox_debug_info)
         self.setLayout(layout)
-
-class Notification(QMessageBox):
-    def __init__(self, parent=None):
-        super(Notification, self).__init__(parent)
-        self.setWindowTitle("Hammer 5 Tools")
-        self.setTextFormat(Qt.RichText)
-        self.setIcon(QMessageBox.Warning)
-        self.setText("Another instance of the program is already running")
-        self.setStandardButtons(QMessageBox.Ok)
-        self.buttonClicked.connect(self.bring_to_front)
-        self.hwnd = ctypes.windll.user32.FindWindowW(None, "Hammer 5 Tools")
-
-    def bring_to_front(self):
-        if self.hwnd:
-            ctypes.windll.user32.SetForegroundWindow(self.hwnd)
 
 class Widget(QMainWindow):
     def __init__(self, parent=None, dev_mode=False):
@@ -165,9 +150,9 @@ class Widget(QMainWindow):
 
         QTimer.singleShot(100, self.deferred_update_check)
         self._restore_user_prefs()
-        if get_config_bool('APP', 'first_launch'):
+        if get_settings_bool('APP', 'first_launch'):
             self.open_about()
-            set_config_bool('APP', 'first_launch', False)
+            set_settings_bool('APP', 'first_launch', False)
 
         # Setup filesystem watcher for addon folder.
         self.addon_watcher = QFileSystemWatcher(self)
@@ -199,12 +184,12 @@ class Widget(QMainWindow):
     def current_tab(self, set_flag):
         if set_flag:
             try:
-                set_config_value('APP', 'current_tab', str(self.ui.MainWindowTools_tabs.currentIndex()))
+                set_settings_value('APP', 'current_tab', str(self.ui.MainWindowTools_tabs.currentIndex()))
             except Exception:
                 pass
         else:
             try:
-                current_tab = int(get_config_value('APP', 'current_tab'))
+                current_tab = int(get_settings_value('APP', 'current_tab'))
                 self.ui.MainWindowTools_tabs.setCurrentIndex(current_tab)
             except Exception:
                 pass
@@ -350,7 +335,7 @@ class Widget(QMainWindow):
         self.updateLaunchAddonButton()
 
     def updateLaunchAddonButton(self):
-        commands = get_config_value("LAUNCH", "commands", default_commands)
+        commands = get_settings_value("LAUNCH", "commands", default_commands)
         if commands and "-asset" in commands:
             self.ui.Launch_Addon_Button.setText("Edit map")
         else:
@@ -472,14 +457,14 @@ class Widget(QMainWindow):
         AboutDialog(app_version, self).show()
 
     def show_minimize_message_once(self):
-        if get_config_bool('APP', 'minimize_message_shown'):
+        if get_settings_bool('APP', 'minimize_message_shown'):
             self.tray_icon.showMessage(
                 "Hammer5Tools",
                 "Application minimized to tray.",
                 QSystemTrayIcon.Information,
                 2000
             )
-            set_config_bool('APP', 'minimize_message_shown', False)
+            set_settings_bool('APP', 'minimize_message_shown', False)
 
     def exit_application(self):
         try:
@@ -570,7 +555,7 @@ if __name__ == "__main__":
     widget.show()
     instance_server = start_instance_server(widget)
 
-    if get_config_bool('DISCORD_STATUS', 'show_status'):
+    if get_settings_bool('DISCORD_STATUS', 'show_status'):
         from other.discord_status import discord_status_clear, update_discord_status
         widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
         widget.discord_thread.start()
