@@ -158,7 +158,7 @@ class MonitoringFileWatcher(QListWidget):
         self.process_threads: Dict[str, StartProcess] = {}
         self.watched_directories: set = set()
 
-        # Debounce delay set to 3000ms (3 seconds)
+        # Debounce timer for update delays (3 seconds)
         self.debounce_timer = QTimer()
         self.debounce_timer.setSingleShot(True)
         self.debounce_timer.timeout.connect(self.update_file_list)
@@ -260,6 +260,24 @@ class MonitoringFileWatcher(QListWidget):
             directory = os.path.dirname(file_path)
             self.add_directory_watch(directory)
 
+    def track_new_file(self, file_path: str) -> bool:
+        """
+        Public method to allow external modules (like the assetgroup maker main file or src.explorer)
+        to add a new file to tracking immediately.
+        Returns True if the file was added, False otherwise.
+        """
+        file_path = str(Path(file_path))
+        if not file_path.lower().endswith('.hbat'):
+            return False
+
+        if not self.is_file_in_allowed_folder(file_path):
+            return False
+
+        if file_path not in self.file_widgets:
+            self.add_file_widget(file_path)
+            return True
+        return False
+
     def add_file_widget(self, path: str):
         """
         Add a file widget for a new .hbat file.
@@ -274,7 +292,7 @@ class MonitoringFileWatcher(QListWidget):
         widget.open_requested.connect(self.open_file.emit)
         widget.process_requested.connect(self.start_processing)
 
-        # Watch the file for changes but only add if not already watched.
+        # Watch the file for changes if not already watched.
         if path not in self.file_system_watcher.files():
             self.file_system_watcher.addPath(path)
         # Initial reference update.
@@ -402,6 +420,7 @@ class MonitoringFileWatcher(QListWidget):
         """
         debug("Closing MonitoringFileWatcher.")
         try:
+            self.debounce_timer.stop()
             self.file_system_watcher.directoryChanged.disconnect()
             self.file_system_watcher.fileChanged.disconnect()
         except Exception as e:
