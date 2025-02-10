@@ -61,7 +61,6 @@ from src.common import (
     SmartPropEditor_Preset_Path
 )
 
-
 cs2_path = get_cs2_path()
 
 class SmartPropEditorMainWindow(QMainWindow):
@@ -752,7 +751,12 @@ class SmartPropEditorMainWindow(QMainWindow):
     # ======================================[Save File]========================================
     def save_file(self, external=False):
         if external:
-            pass
+            if not self.opened_file:
+                filename = None
+                external = True
+            else:
+                filename = self.opened_file
+                external = False
         else:
             if self.opened_file:
                 filename = self.opened_file
@@ -1106,31 +1110,52 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             return JsonToKv3(item_data) if item_data else None
 
+    # ---------------------------------- Updated paste_item method ----------------------------------
     def paste_item(self, tree, data_input=None, paste_to_parent=False):
+        """
+        Improved paste functionality:
+         - If paste_to_parent is True, paste the first element of the serialized data
+           as a sibling (same level) of the currently selected item, preserving its hierarchy.
+         - Otherwise, paste as a child of the current item.
+        """
         if data_input is None:
             data_input = QApplication.clipboard().text()
         try:
             obj = Kv3ToJson(self.fix_format(data_input))
-            if "m_Children" in obj:
-                self.file_deserialization(obj, to_parent=paste_to_parent)
-            else:
-                tree_item = self.deserialize_hierarchy_item(obj)
-                if paste_to_parent:
-                    if tree.currentItem() and tree.currentItem().parent():
-                        tree.currentItem().parent().addChild(tree_item)
-                    else:
-                        tree.invisibleRootItem().addChild(tree_item)
+            if paste_to_parent:
+                # Determine the target parent for pasting as a sibling of the selected item.
+                if tree.currentItem() and tree.currentItem().parent() is not None:
+                    parent_item = tree.currentItem().parent()
                 else:
+                    parent_item = tree.invisibleRootItem()
+                if "m_Children" in obj and obj["m_Children"]:
+                    # Paste the first element in the serialized structure preserving its children.
+                    new_item = self.deserialize_hierarchy_item(obj["m_Children"][0])
+                    parent_item.addChild(new_item)
+                    try:
+                        new_item.setText(0, unique_counter_name(new_item, tree))
+                    except Exception:
+                        pass
+                else:
+                    new_item = self.deserialize_hierarchy_item(obj)
+                    parent_item.addChild(new_item)
+                    try:
+                        new_item.setText(0, unique_counter_name(new_item, tree))
+                    except Exception:
+                        pass
+            else:
+                if "m_Children" in obj:
+                    self.file_deserialization(obj, to_parent=False)
+                else:
+                    tree_item = self.deserialize_hierarchy_item(obj)
                     if tree.currentItem():
                         tree.currentItem().addChild(tree_item)
                     else:
                         tree.invisibleRootItem().addChild(tree_item)
-
-                try:
-                    tree_item.setText(0, unique_counter_name(tree_item, tree))
-                except:
-                    pass
-
+                    try:
+                        tree_item.setText(0, unique_counter_name(tree_item, tree))
+                    except Exception:
+                        pass
         except Exception as error:
             error_message = str(error)
             error_dialog = ErrorInfo(
