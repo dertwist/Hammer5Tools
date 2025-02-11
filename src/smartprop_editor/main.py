@@ -32,7 +32,8 @@ from src.smartprop_editor.objects import (
     selection_criteria_list,
     filters_list
 )
-from src.smartprop_editor.vsmart import VsmartOpen, VsmartSave
+from src.smartprop_editor.vsmart import VsmartOpen, VsmartSave, serialization_hierarchy_items, \
+    deserialize_hierarchy_item
 from src.smartprop_editor.property_frame import PropertyFrame
 from src.smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from src.smartprop_editor.choices import AddChoice, AddVariable, AddOption
@@ -62,6 +63,11 @@ from src.common import (
 )
 
 cs2_path = get_cs2_path()
+
+#TODO Future improvement: Implement a node view for elements.
+# In the node view, users will click on a node to edit its properties, triggering a context menu similar to that found in the Hammer editor (using, for example, Alt+Enter) or just show and hide properties in the viewport.
+# The node view should be arranged vertically. All node-related information will be stored within the elements themselves.
+# Nodes that are not connected via the Child input (i.e. isolated nodes) will be automatically attached as children of the root.
 
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
@@ -645,6 +651,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.update_tree_item_value()
 
     # ======================================[Explorer]========================================
+    #TODO Split Explorer seciton to another file explorer.py
     def explorer_status(self):
         if self.opened_file == "":
             self.ui.dockWidget_10.setWindowTitle("Explorer")
@@ -677,6 +684,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             file.write(blank_vsmart)
 
     # ======================================[Open File]========================================
+    #TODO Split the Open File section to another file vsmart.py
     def open_file(self, external=False):
         if external:
             filename, _ = QFileDialog.getOpenFileName(
@@ -749,6 +757,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.explorer_status()
 
     # ======================================[Save File]========================================
+    # TODO Split the Save File section to another file vsmart.py
     def save_file(self, external=False):
         if external:
             if not self.opened_file:
@@ -830,6 +839,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                 self.update_title("saved", filename)
 
     # ======================================[Choices Context Menu]========================================
+    #TODO Split hte Choices to another file choices.py. The new way to initialize choices would be to create another tab beside Hierarchy tab
     def open_MenuChoices(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
@@ -867,14 +877,17 @@ class SmartPropEditorMainWindow(QMainWindow):
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
 
     # ======================================[Variables Actions]========================================
+    #TODO I need to figure out how to implement multiselect functional to variables
+    #TODO Split the variables to another file variables.py
+    #TODO Improve the smartprop_editor structure
     def add_variable(
-        self,
-        name,
-        var_class,
-        var_value,
-        var_visible_in_editor,
-        var_display_name,
-        index: int = None
+            self,
+            name,
+            var_class,
+            var_value,
+            var_visible_in_editor,
+            var_display_name,
+            index: int = None
     ):
         variable = VariableFrame(
             name=name,
@@ -970,7 +983,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         clipboard = QApplication.clipboard()
         clipboard_text = clipboard.text()
         clipboard_data = clipboard_text.split(";;")
-
+        #TODO change the variables format from generic to Kv3 or at least JSON
         if clipboard_data[0] == "hammer5tools:smartprop_editor_var":
             visible_in_editor = bool(strtobool(clipboard_data[4]))
             display_name = clipboard_data[5]
@@ -1041,7 +1054,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         menu.addSeparator()
 
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.tree_hierarchy_widget)))
+        remove_action.triggered.connect(
+            lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.tree_hierarchy_widget)))
         remove_action.setShortcut(QKeySequence("Delete"))
 
         duplicate_action = menu.addAction("Duplicate")
@@ -1103,7 +1117,7 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         item_data = None
         for tree_item in selected_items:
-            item_data = self.serialization_hierarchy_items(item=tree_item)
+            item_data = serialization_hierarchy_items(item=tree_item)
         if copy_to_clipboard and item_data:
             clipboard = QApplication.clipboard()
             clipboard.setText(JsonToKv3(item_data))
@@ -1130,14 +1144,14 @@ class SmartPropEditorMainWindow(QMainWindow):
                     parent_item = tree.invisibleRootItem()
                 if "m_Children" in obj and obj["m_Children"]:
                     # Paste the first element in the serialized structure preserving its children.
-                    new_item = self.deserialize_hierarchy_item(obj["m_Children"][0])
+                    new_item = deserialize_hierarchy_item(obj["m_Children"][0])
                     parent_item.addChild(new_item)
                     try:
                         new_item.setText(0, unique_counter_name(new_item, tree))
                     except Exception:
                         pass
                 else:
-                    new_item = self.deserialize_hierarchy_item(obj)
+                    new_item = deserialize_hierarchy_item(obj)
                     parent_item.addChild(new_item)
                     try:
                         new_item.setText(0, unique_counter_name(new_item, tree))
@@ -1147,7 +1161,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                 if "m_Children" in obj:
                     self.file_deserialization(obj, to_parent=False)
                 else:
-                    tree_item = self.deserialize_hierarchy_item(obj)
+                    tree_item = deserialize_hierarchy_item(obj)
                     if tree.currentItem():
                         tree.currentItem().addChild(tree_item)
                     else:
@@ -1180,54 +1194,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         data = self.copy_item(tree=tree, copy_to_clipboard=False)
         if data:
             self.paste_item(tree, data, paste_to_parent=True)
-
-    # ======================================[Tree item serialization and deserialization]========================================
-    def serialization_hierarchy_items(self, item, data=None):
-        """Convert tree structure to json."""
-        if data is None:
-            data = {"m_Children": []}
-        value_row = item.text(1)
-        parent_data = ast.literal_eval(value_row)
-        parent_data["m_sLabel"] = item.text(0)
-        if item.childCount() > 0:
-            parent_data["m_Children"] = []
-
-        data["m_Children"].append(parent_data)
-
-        if item.childCount() > 0:
-            for index in range(item.childCount()):
-                child = item.child(index)
-                key = child.text(0)
-                value_row = child.text(1)
-                child_data = ast.literal_eval(value_row)
-                child_data["m_sLabel"] = key
-                if child.childCount() > 0:
-                    child_data["m_Children"] = []
-                    self.serialization_hierarchy_items(child, child_data)
-                parent_data["m_Children"].append(child_data)
-
-        return data
-
-    def deserialize_hierarchy_item(self, m_Children):
-        item_value = {}
-        for key in m_Children:
-            if key != "m_Children":
-                item_value.update({key: m_Children[key]})
-
-        item_value = update_child_ElementID_value(item_value, force=True)
-        name = item_value.get("m_sLabel", get_clean_class_name_value(item_value))
-
-        tree_item = HierarchyItemModel(
-            _data=item_value,
-            _name=name,
-            _id=get_ElementID_key(item_value),
-            _class=get_clean_class_name_value(item_value)
-        )
-
-        for child_data in m_Children.get("m_Children", []):
-            child_item = self.deserialize_hierarchy_item(child_data)
-            tree_item.addChild(child_item)
-        return tree_item
 
     # ======================================[Window State]========================================
     def _restore_user_prefs(self):
