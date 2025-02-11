@@ -155,3 +155,17 @@ class DeleteTreeItemCommand(QUndoCommand):
         }
 
 # End of DeleteTreeItemCommand class
+
+
+
+
+class GroupElementsCommand(QUndoCommand):
+    def __init__(self, tree):
+        super().__init__()
+        self.tree = tree
+    def redo(self):
+        print('test')
+    def undo(self):
+        print('ds')
+
+# End of DeleteTreeItemCommand class
