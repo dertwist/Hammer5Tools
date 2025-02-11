@@ -10,6 +10,58 @@ from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
 from src.settings.main import get_settings_bool
 from src.widgets import HierarchyItemModel, exception_handler
+
+
+# ======================================[Tree item serialization and deserialization]========================================
+def serialization_hierarchy_items(item, data=None):
+    """Convert tree structure to json."""
+    if data is None:
+        data = {"m_Children": []}
+    value_row = item.text(1)
+    parent_data = ast.literal_eval(value_row)
+    parent_data["m_sLabel"] = item.text(0)
+    if item.childCount() > 0:
+        parent_data["m_Children"] = []
+
+    data["m_Children"].append(parent_data)
+
+    if item.childCount() > 0:
+        for index in range(item.childCount()):
+            child = item.child(index)
+            key = child.text(0)
+            value_row = child.text(1)
+            child_data = ast.literal_eval(value_row)
+            child_data["m_sLabel"] = key
+            if child.childCount() > 0:
+                child_data["m_Children"] = []
+                serialization_hierarchy_items(child, child_data)
+            parent_data["m_Children"].append(child_data)
+
+    return data
+
+
+def deserialize_hierarchy_item(m_Children):
+    item_value = {}
+    for key in m_Children:
+        if key != "m_Children":
+            item_value.update({key: m_Children[key]})
+
+    item_value = update_child_ElementID_value(item_value, force=True)
+    name = item_value.get("m_sLabel", get_clean_class_name_value(item_value))
+
+    tree_item = HierarchyItemModel(
+        _data=item_value,
+        _name=name,
+        _id=get_ElementID_key(item_value),
+        _class=get_clean_class_name_value(item_value)
+    )
+
+    for child_data in m_Children.get("m_Children", []):
+        child_item = deserialize_hierarchy_item(child_data)
+        tree_item.addChild(child_item)
+    return tree_item
+
+
 class VsmartOpen:
     def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
         self.filename = filename
