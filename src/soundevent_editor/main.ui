@@ -568,7 +568,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="reload_button">
+         <widget class="QPushButton" name="load_button">
           <property name="toolTip">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reload soundevents_addon.vsndevts Ctrl + R&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
@@ -605,11 +605,11 @@
     }</string>
           </property>
           <property name="text">
-           <string>Reload</string>
+           <string>Load</string>
           </property>
           <property name="icon">
            <iconset resource="../resources.qrc">
-            <normaloff>:/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+            <normaloff>:/icons/description_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/description_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
           </property>
           <property name="iconSize">
            <size>
