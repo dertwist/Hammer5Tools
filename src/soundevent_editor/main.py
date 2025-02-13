@@ -481,15 +481,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def copy_item(self, tree, copy_to_clipboard=True):
         """Coping Tree item"""
-        # Gathering selected items
-        selected_indexes = tree.selectedIndexes()
-        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
-
-        # Remove the same items
-        selected_items = list(set(selected_items))
-
-        for tree_item in selected_items:
-            item_data = self.serialization_hierarchy_items(item=tree_item)
+        item_data = self.serialization_hierarchy_items(tree)
         # Output
         if copy_to_clipboard:
             clipboard = QApplication.clipboard()
@@ -503,25 +495,9 @@ class SoundEventEditorMainWindow(QMainWindow):
             data_input = QApplication.clipboard().text()
         try:
             input = Kv3ToJson(data_input)
-            if 'm_Children' in input:
-                for key in input['m_Children']:
-                    tree_item = self.deserialize_hierarchy_item(key)
-                    try:
-                        if paste_to_parent:
-                            tree.currentItem().parent().addChild(tree_item)
-                        else:
-                            tree.currentItem().addChild(tree_item)
-                    except:
-                        tree.invisibleRootItem().addChild(tree_item)
-            else:
-                tree_item = self.deserialize_hierarchy_item(input)
-                try:
-                    if paste_to_parent:
-                        tree.currentItem().parent().addChild(tree_item)
-                    else:
-                        tree.currentItem().addChild(tree_item)
-                except:
-                    tree.invisibleRootItem().addChild(tree_item)
+            tree_items = self.deserialize_hierarchy_items(input)
+            for tree_item in tree_items:
+                tree.invisibleRootItem().addChild(tree_item)
         except Exception as error:
             error_message = str(error)
             error_dialog = ErrorInfo(text="Wrong format of the pasting content", details=error_message)
@@ -546,49 +522,39 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     # ======================================[Tree item serialization and deserialization]========================================
 
-    def serialization_hierarchy_items(self, item, data=None):
+    def serialization_hierarchy_items(self, tree, data=None):
         """Convert tree structure to json"""
         if data is None:
-            data = {'m_Children': []}
-        value_row = item.text(1)
-        parent_data = ast.literal_eval(value_row)
-        # Label form tree element name
-        parent_data['m_sLabel'] = item.text(0)
-        if item.childCount() > 0:
-            parent_data['m_Children'] = []
-        data['m_Children'].append(parent_data)
-        if item.childCount() > 0:
-            for index in range(item.childCount()):
-                child = item.child(index)
-                key = child.text(0)
-                value_row = child.text(1)
-
-                child_data = ast.literal_eval(value_row)
-                child_data['m_sLabel'] = key
-
-                if child.childCount() > 0:
-                    child_data['m_Children'] = []
-                    self.serialization_hierarchy_items(child, child_data)
-
-                parent_data['m_Children'].append(child_data)
+            data = {}
+        for item in tree.selectedItems():
+            value_row = item.text(1)
+            name_row = item.text(0)
+            parent_data = ast.literal_eval(value_row)
+            data.update({name_row:parent_data})
 
         return data
 
-    def deserialize_hierarchy_item(self, m_Children=HierarchyItemModel):
-        item_value = {}
+    def deserialize_hierarchy_items(self, data):
+        tree_items = []
+        names = set()
+        root = self.ui.hierarchy_widget.invisibleRootItem()
+        for i in range(root.childCount()):
+            tree_item = root.child(i)
+            names.add(tree_item.text(0))
 
-        # If there is a dict with child element, copy all expect child key in a new variable, and process it.
-        for key in m_Children:
-            if key == 'm_Children':
-                pass
-            else:
-                item_value.update({key: m_Children[key]})
-        # Get tree item name
-        name = item_value.get('m_sLabel', 'None')
-
-        # New element
-        tree_item = HierarchyItemModel(_data=item_value, _name=name)
-        return tree_item
+        name_counters = {}
+        for key, value in data.items():
+            base_name = key
+            counter = name_counters.get(base_name, 0)
+            candidate = base_name if counter == 0 else f"{base_name}_{counter:02d}"
+            while candidate in names:
+                counter += 1
+                candidate = f"{base_name}_{counter:02d}"
+            name_counters[base_name] = counter + 1
+            tree_item = HierarchyItemModel(_data=value, _name=candidate)
+            tree_items.append(tree_item)
+            names.add(candidate)
+        return tree_items
 
     #===========================================================<  Preset Manager  >========================================================
     def OpenPresetManager(self):
