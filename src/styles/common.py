@@ -323,7 +323,7 @@ QTabBar::tab {
     border-radius: 0px;
     border-top-right-radius: 0px;
     border-top-left-radius: 0px;
-    padding: 4px;
+    padding: 2px;
     padding-left:8px;
     padding-right: 8px;
 
@@ -344,23 +344,14 @@ QTabBar::tab {
 }
 QTabBar::tab:selected {
     border-radius: 0px;
-    border-top-right-radius: 7px;
-    border-top-left-radius: 7px;
 
-    border-top: 2px solid gray;
-    border-left: 2px solid gray;
-    border-right: 2px solid gray;
-    border-bottom: 0px solid black;
-
-    font: 580 10pt "Segoe UI";
     border-color: rgba(80, 80, 80, 180);
-    height:20px;
     color: #E3E3E3;
     background-color: #1d1d1f;
+    border-top: 0px solid gray;
 
     border: 2px solid black;
     border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
-        border-bottom: 0px solid black;
 }
 """
