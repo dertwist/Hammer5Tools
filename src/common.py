@@ -1,8 +1,9 @@
 # from src.preferences import get_cs2_path
 from src.other.get_cs2_path import get_counter_strike_path_from_registry, get_steam_install_path
+from src.styles.common import qt_stylesheet_tabbar
 import os
 import subprocess
-from PySide6.QtWidgets import QTabBar
+from PySide6.QtWidgets import QTabBar, QDockWidget
 import threading
 import keyvalues3 as kv3
 from keyvalues3.textwriter import KV3EncoderOptions
@@ -65,54 +66,7 @@ default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/'
 
 def set_qdock_tab_style(findChildren):
     for tab_bar in findChildren(QTabBar):
-        tab_bar.setStyleSheet("""
-        QTabBar::tab {
-            background-color: #323232;
-            color: #9A9F91;
-            border-radius: 0px;
-            border-top-right-radius: 0px;
-            border-top-left-radius: 0px;
-            padding: 4px;
-            padding-left:8px;
-            padding-right: 8px;
-
-            border-top: 2px solid gray;
-            border-bottom: 0px solid black;
-
-            font: 580 10pt "Segoe UI";
-            border-left: 2px solid darkgray;
-            border-top: 0px solid darkgray;
-            border-color: #151515;
-            border-right: 2px solid rgba(80, 80, 80, 80);
-
-
-
-            color: #E3E3E3;
-            background-color: #151515;
-
-        }
-        QTabBar::tab:selected {
-            border-radius: 0px;
-            border-top-right-radius: 7px;
-            border-top-left-radius: 7px;
-
-            border-top: 2px solid gray;
-            border-left: 2px solid gray;
-            border-right: 2px solid gray;
-            border-bottom: 0px solid black;
-
-            font: 580 10pt "Segoe UI";
-            border-color: rgba(80, 80, 80, 180);
-            height:20px;
-            color: #E3E3E3;
-            background-color: #1d1d1f;
-
-            border: 2px solid black;
-            border-radius: 2px;
-            border-color: rgba(80, 80, 80, 255);
-                border-bottom: 0px solid black;
-        }
-        """)
+        tab_bar.setStyleSheet(qt_stylesheet_tabbar)
 
 #===========================================================<  generic functions  >=========================================================
 def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=False):

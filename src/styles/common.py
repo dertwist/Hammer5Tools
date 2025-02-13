@@ -315,3 +315,52 @@ QLabel {
 background-color: None;
 }
 """
+
+qt_stylesheet_tabbar = """
+QTabBar::tab {
+    background-color: #323232;
+    color: #9A9F91;
+    border-radius: 0px;
+    border-top-right-radius: 0px;
+    border-top-left-radius: 0px;
+    padding: 4px;
+    padding-left:8px;
+    padding-right: 8px;
+
+    border-top: 2px solid gray;
+    border-bottom: 0px solid black;
+
+    font: 580 10pt "Segoe UI";
+    border-left: 2px solid darkgray;
+    border-top: 0px solid darkgray;
+    border-color: #151515;
+    border-right: 2px solid rgba(80, 80, 80, 80);
+
+
+
+    color: #E3E3E3;
+    background-color: #151515;
+
+}
+QTabBar::tab:selected {
+    border-radius: 0px;
+    border-top-right-radius: 7px;
+    border-top-left-radius: 7px;
+
+    border-top: 2px solid gray;
+    border-left: 2px solid gray;
+    border-right: 2px solid gray;
+    border-bottom: 0px solid black;
+
+    font: 580 10pt "Segoe UI";
+    border-color: rgba(80, 80, 80, 180);
+    height:20px;
+    color: #E3E3E3;
+    background-color: #1d1d1f;
+
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+        border-bottom: 0px solid black;
+}
+"""
