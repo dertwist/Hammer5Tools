@@ -1,13 +1,13 @@
 from src.smartprop_editor.ui_variable_frame import Ui_Form
-
 from PySide6.QtWidgets import QWidget, QMenu, QApplication
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtGui import QCursor, QAction
 from src.property.methods import PropertyMethods
 from src.smartprop_editor.element_id import *
 from src.settings.main import get_settings_bool
 from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.objects import variables_list
+
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
 
@@ -44,13 +44,16 @@ class VariableFrame(QWidget):
             self.ui.id_display_label.deleteLater()
 
         # UI Setup
+        # Instead of connecting textChanged signal to update_self, we install an event filter
         self.ui.variable_name.setText(name)
         self.ui.varialbe_display_name.setText(var_display_name)
         self.ui.variable_class.setText(var_class)
         self.ui.visible_in_editor.setChecked(self.var_visible_in_editor)
         self.ui.visible_in_editor.clicked.connect(self.update_self)
         self.ui.varialbe_display_name.textChanged.connect(self.update_self)
-        self.ui.variable_name.textChanged.connect(self.update_self)
+        # Install event filter on variable_name to enforce uniqueness on focus out
+        self.ui.variable_name.installEventFilter(self)
+
         self.widget_list = widget_list
 
         self.ui.change_class.clicked.connect(self.call_class_select_menu)
@@ -197,11 +200,40 @@ class VariableFrame(QWidget):
     def update_self(self):
         self.var_visible_in_editor = self.ui.visible_in_editor.isChecked()
         self.var_display_name = self.ui.varialbe_display_name.text()
-        self.name = self.ui.variable_name.text()
+
+    def _make_unique(self, name):
+        existing_names = []
+        count = self.widget_list.count()
+        for i in range(count):
+            widget = self.widget_list.itemAt(i).widget()
+            if widget is not self and hasattr(widget, "name"):
+                existing_names.append(widget.name)
+
+        if name not in existing_names:
+            return name
+        else:
+            suffix = 1
+            unique_name = f"{name}_{suffix}"
+            while unique_name in existing_names:
+                suffix += 1
+                unique_name = f"{name}_{suffix}"
+            return unique_name
 
     def init_ui(self):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
+
+    def eventFilter(self, obj, event):
+        """
+        Enforce unique name when the variable name editing line loses focus.
+        """
+        if obj == self.ui.variable_name and event.type() == QEvent.FocusOut:
+            new_name = self.ui.variable_name.text()
+            unique_name = self._make_unique(new_name)
+            if unique_name != new_name:
+                self.ui.variable_name.setText(unique_name)
+            self.name = unique_name
+        return super().eventFilter(obj, event)
 
     mousePressEvent = PropertyMethods.mousePressEvent
     mouseMoveEvent = PropertyMethods.mouseMoveEvent
