@@ -38,7 +38,7 @@ from src.smartprop_editor.property_frame import PropertyFrame
 from src.smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from src.smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from src.popup_menu.main import PopupMenu
-from src.smartprop_editor.commands import DeleteTreeItemCommand
+from src.smartprop_editor.commands import DeleteTreeItemCommand, GroupElementsCommand
 from src.replace_dialog.main import FindAndReplaceDialog
 from src.explorer.main import Explorer
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
@@ -337,6 +337,11 @@ class SmartPropEditorMainWindow(QMainWindow):
                     self.new_item_with_replacement(QApplication.clipboard().text())
                     return True
 
+                # Paste with replacement (Ctrl + G)
+                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_G:
+                    self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget))
+                    return True
+
                 # Move Up (Ctrl + Up)
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Up:
                     self.move_tree_item(self.ui.tree_hierarchy_widget, -1)
@@ -502,6 +507,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.show()
 
     def new_element(self, element_class, element_value):
+        #TODO add focus to created element
         element_value = ast.literal_eval(element_value)
         update_value_ElementID(element_value)
         new_element_item = HierarchyItemModel(
@@ -1061,6 +1067,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         duplicate_action = menu.addAction("Duplicate")
         duplicate_action.triggered.connect(lambda: self.duplicate_hierarchy_items(self.ui.tree_hierarchy_widget))
         duplicate_action.setShortcut(QKeySequence("Ctrl+D"))
+
+        grouping_action = menu.addAction("Group selected")
+        grouping_action.triggered.connect(lambda: self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget)))
+        grouping_action.setShortcut(QKeySequence("Ctrl+G"))
 
         menu.addSeparator()
 
