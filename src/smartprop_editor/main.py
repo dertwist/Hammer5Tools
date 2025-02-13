@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
     QMenu,
     QApplication,
     QHeaderView,
-    QTreeWidget
+    QTreeWidget,
+    QTabBar
 )
 from PySide6.QtGui import (
     QAction,
@@ -60,7 +61,8 @@ from src.common import (
     Kv3ToJson,
     JsonToKv3,
     get_cs2_path,
-    SmartPropEditor_Preset_Path
+    SmartPropEditor_Preset_Path,
+    set_qdock_tab_style
 )
 
 cs2_path = get_cs2_path()
@@ -114,14 +116,21 @@ class SmartPropEditorMainWindow(QMainWindow):
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
 
-        # Restore user prefs
-        self._restore_user_prefs()
-
         # Initialize file explorer
         self.init_explorer()
 
+        # Restore user prefs
+        self._restore_user_prefs()
+
         # Initialize button signals
         self.buttons()
+
+        # Group dockwidgets
+        self.tabifyDockWidget(self.ui.dockWidget_4, self.ui.dockWidget_2)
+        # Set focus to hierarchy dockwidget
+        self.ui.dockWidget_4.raise_()
+
+        set_qdock_tab_style(self.findChildren)
 
         self.undo_stack = QUndoStack(self)
 
