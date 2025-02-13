@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QLabel,
     QCheckBox,
+    QDockWidget,
+    QTabWidget
 )
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import (
@@ -159,6 +161,12 @@ class Widget(QMainWindow):
         self.addon_watcher.addPath(os.path.join(cs2_path, "content", "csgo_addons"))
         self.addon_watcher.directoryChanged.connect(self.refresh_addon_combobox)
 
+        for dock in self.findChildren(QDockWidget):
+            dock.show()
+        for child in self.findChildren(QMainWindow):
+            for dock in child.findChildren(QDockWidget):
+                dock.show()
+
     def deferred_update_check(self):
         try:
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
@@ -216,6 +224,13 @@ class Widget(QMainWindow):
         self.activateWindow()
         hwnd = self.winId().__int__()
         restore_window(hwnd)
+
+        for dock in self.findChildren(QDockWidget):
+            dock.show()
+        for child in self.findChildren(QMainWindow):
+            for dock in child.findChildren(QDockWidget):
+                dock.show()
+
 
     def setup_tabs(self):
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
@@ -345,6 +360,12 @@ class Widget(QMainWindow):
         if settings.value("APP/minimize_to_tray", type=bool, defaultValue=True):
             event.ignore()
             self.hide()
+
+            for dock in self.findChildren(QDockWidget):
+                dock.hide()
+            for child in self.findChildren(QMainWindow):
+                for dock in child.findChildren(QDockWidget):
+                    dock.hide()
             settings.setValue("APP/minimize_to_tray", True)
             self.show_minimize_message_once()
         else:
