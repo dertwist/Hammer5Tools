@@ -132,7 +132,7 @@ class Ui_MainWindow(object):
         self.hierarchy_widget.setDragDropMode(QAbstractItemView.DragDropMode.NoDragDrop)
         self.hierarchy_widget.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.hierarchy_widget.setAlternatingRowColors(True)
-        self.hierarchy_widget.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.hierarchy_widget.setSelectionMode(QAbstractItemView.SelectionMode.ContiguousSelection)
         self.hierarchy_widget.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
         self.hierarchy_widget.setUniformRowHeights(True)
         self.hierarchy_widget.setAllColumnsShowFocus(False)
