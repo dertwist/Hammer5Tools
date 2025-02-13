@@ -362,9 +362,9 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.output_button)
 
-        self.reload_button = QPushButton(self.frame_4)
-        self.reload_button.setObjectName(u"reload_button")
-        self.reload_button.setStyleSheet(u"\n"
+        self.load_button = QPushButton(self.frame_4)
+        self.load_button.setObjectName(u"load_button")
+        self.load_button.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
@@ -395,11 +395,11 @@ class Ui_MainWindow(object):
 "\n"
 "    }")
         icon10 = QIcon()
-        icon10.addFile(u":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.reload_button.setIcon(icon10)
-        self.reload_button.setIconSize(QSize(20, 20))
+        icon10.addFile(u":/icons/description_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.load_button.setIcon(icon10)
+        self.load_button.setIconSize(QSize(20, 20))
 
-        self.horizontalLayout_2.addWidget(self.reload_button)
+        self.horizontalLayout_2.addWidget(self.load_button)
 
 
         self.verticalLayout_10.addWidget(self.frame_4)
@@ -460,11 +460,11 @@ class Ui_MainWindow(object):
         self.output_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
 #endif // QT_CONFIG(shortcut)
 #if QT_CONFIG(tooltip)
-        self.reload_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Reload soundevents_addon.vsndevts Ctrl + R</p></body></html>", None))
+        self.load_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Reload soundevents_addon.vsndevts Ctrl + R</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.reload_button.setText(QCoreApplication.translate("MainWindow", u"Reload", None))
+        self.load_button.setText(QCoreApplication.translate("MainWindow", u"Load", None))
 #if QT_CONFIG(shortcut)
-        self.reload_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+Shift+S", None))
+        self.load_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+Shift+S", None))
 #endif // QT_CONFIG(shortcut)
     # retranslateUi
 

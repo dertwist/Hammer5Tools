@@ -1,9 +1,10 @@
 import ast, shutil
 
+from build.lib.settings.common import get_addon_dir
 from src.settings.main import get_addon_name, get_cs2_path, debug, get_settings_bool
 from src.soundevent_editor.ui_main import Ui_MainWindow
 from src.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem
+from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem, QFileDialog
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
 from PySide6.QtCore import Qt
 from src.popup_menu.main import PopupMenu
@@ -93,7 +94,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         debug(f"self.filepath_sounds : {self.filepath_sounds}")
 
         # Init LoadSoundEvents
-        self.load_soundevents()
+        self.load_soundevents(self.filepath_vsndevts)
         # Init PropertiesWindow
         self.PropertiesWindowInit()
 
@@ -111,7 +112,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         # Connections
         self.ui.open_preset_manager_button.clicked.connect(self.OpenPresetManager)
-        self.ui.reload_button.clicked.connect(self.load_soundevents)
+        self.ui.load_button.clicked.connect(self.load_soundevents)
         self.ui.output_button.clicked.connect(self.open_soundevnets_file)
         self.ui.save_file_button.clicked.connect(self.save_soundevents)
 
@@ -164,7 +165,7 @@ class SoundEventEditorMainWindow(QMainWindow):
     def open_soundevnets_file(self):
         os.startfile(self.filepath_vsndevts)
     @exception_handler
-    def load_soundevents(self):
+    def load_soundevents(self, filepath=None):
         """Load soundevents. If there is no soundevents file, ask the user if they want to copy it from the CS2 addon template folder."""
         # Cleanup
         try:
@@ -172,8 +173,15 @@ class SoundEventEditorMainWindow(QMainWindow):
             self.ui.hierarchy_widget.clear()
         except:
             pass
-        if os.path.exists(self.filepath_vsndevts):
-            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+        if filepath is not None:
+            filepath = self.filepath_vsndevts
+        else:
+            base_dir = os.path.join(get_addon_dir(), 'soundevents')
+            print(base_dir)
+            filepath, _ = QFileDialog.getOpenFileName(self,"Select a Soundevents file",base_dir,"Soundevents Files (*.vsndevts)")
+        if os.path.exists(filepath):
+            LoadSoundEvents(tree=self.ui.hierarchy_widget, path=filepath)
+            self.filepath_vsndevts = filepath
         else:
             msg_box = QMessageBox()
             msg_box.setIcon(QMessageBox.Warning)
