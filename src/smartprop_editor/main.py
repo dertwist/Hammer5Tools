@@ -11,7 +11,8 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMenu,
     QApplication,
-    QHeaderView
+    QHeaderView,
+    QTreeWidget
 )
 from PySide6.QtGui import (
     QAction,
@@ -320,6 +321,11 @@ class SmartPropEditorMainWindow(QMainWindow):
                 # Copy (Ctrl + C)
                 if event.matches(QKeySequence.Copy):
                     self.copy_item(self.ui.tree_hierarchy_widget)
+                    return True
+
+                # Cut (Ctrl + X)
+                if event.matches(QKeySequence.Cut):
+                    self.cut_item(self.ui.tree_hierarchy_widget)
                     return True
 
                 # Paste (Ctrl + V)
@@ -1078,6 +1084,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         copy_action.setShortcut(QKeySequence.Copy)
         copy_action.triggered.connect(lambda: self.copy_item(self.ui.tree_hierarchy_widget))
 
+        copy_action = menu.addAction("Cut")
+        copy_action.setShortcut(QKeySequence.Cut)
+        copy_action.triggered.connect(lambda: self.cut_item(self.ui.tree_hierarchy_widget))
+
         paste_action = menu.addAction("Paste")
         paste_action.setShortcut(QKeySequence.Paste)
         paste_action.triggered.connect(lambda: self.paste_item(self.ui.tree_hierarchy_widget))
@@ -1133,6 +1143,11 @@ class SmartPropEditorMainWindow(QMainWindow):
             clipboard.setText(JsonToKv3(item_data))
         else:
             return JsonToKv3(item_data) if item_data else None
+
+    def cut_item(self, tree: QTreeWidget):
+        self.copy_item(tree)
+        self.undo_stack.push(DeleteTreeItemCommand(tree))
+
 
     # ---------------------------------- Updated paste_item method ----------------------------------
     def paste_item(self, tree, data_input=None, paste_to_parent=False):
