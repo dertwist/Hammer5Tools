@@ -513,7 +513,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.popup_menu.show()
 
     def new_element(self, element_class, element_value):
-        #TODO add focus to created element
         element_value = ast.literal_eval(element_value)
         update_value_ElementID(element_value)
         new_element_item = HierarchyItemModel(
@@ -527,6 +526,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             parent = self.ui.tree_hierarchy_widget.currentItem()
         parent.addChild(new_element_item)
+        if self.ui.tree_hierarchy_widget.currentItem() is not None:
+            self.ui.tree_hierarchy_widget.setCurrentItem(new_element_item)
+            self.ui.tree_hierarchy_widget.setFocus()
 
     # ======================================[Properties operator]========================================
     def new_operator(self, element_class, element_value):
