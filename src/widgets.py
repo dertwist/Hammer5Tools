@@ -533,6 +533,14 @@ class ComboboxVariablesWidget(QWidget):
 
         if variable_name is None:
             self.variable_name = "new_var"
+        else:
+            self.variable_name = variable_name
+            self.variable_name = self.variable_name.replace('m_v', '')
+            self.variable_name = self.variable_name.replace('m_fl', '')
+            self.variable_name = self.variable_name.replace('m_s', '')
+            self.variable_name = self.variable_name.replace('m_n', '')
+            self.variable_name = self.variable_name.replace('m_b', '')
+            self.variable_name = self.variable_name.replace('m_', '')
         self.variable_type = variable_type if variable_type is not None else (
             filter_types[0] if isinstance(filter_types, list) and filter_types else 'String')
         self.variables_layout = variables_layout
