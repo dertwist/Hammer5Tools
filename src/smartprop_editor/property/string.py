@@ -57,7 +57,7 @@ class PropertyString(QWidget):
         self.text_line.completion_tail = ''
 
         # Variable
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types, variable_name=self.value_class)
         self.variable.setFixedWidth(256)
         self.variable.setMaximumHeight(24)
         self.variable.search_button.set_size(width=24, height=24)
