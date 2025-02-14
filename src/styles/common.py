@@ -1,3 +1,22 @@
+from PySide6.QtWidgets import (
+    QApplication,
+    QWidget,
+    QLabel,
+    QTreeView,
+    QCheckBox,
+    QPushButton,
+    QComboBox,
+    QFrame,
+    QPlainTextEdit,
+    QListWidget,
+    QListView,
+    QTabBar,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout
+)
+import sys
+
 qt_stylesheet_colors = {
     'background_neutral': '#151515',
     'background_Primary': '#1C1C1C',
@@ -355,3 +374,76 @@ QTabBar::tab:selected {
     border-color: rgba(80, 80, 80, 255);
 }
 """
+
+
+
+
+def apply_stylesheets(parent: QWidget) -> None:
+    """
+    Applies registered QT stylesheets to all child widgets of the given parent.
+
+    The mapping below associates widget types with the corresponding internal stylesheet.
+    """
+    widget_styles = {
+        # For QLabel, defaulting to 'label' style from qt_stylesheet_classes.
+        QLabel: qt_stylesheet_classes.get('label'),
+        QTreeView: qt_stylesheet_classes.get('tree'),
+        QCheckBox: qt_stylesheet_checkbox,
+        QPushButton: qt_stylesheet_button,
+        QComboBox: qt_stylesheet_combobox,
+        QFrame: qt_stylesheet_smartprop_editor_frame,
+        QPlainTextEdit: qt_stylesheet_plain_text_batch_inline,
+        QListWidget: qt_stylesheet_widgetlist,
+        QListView: qt_stylesheet_widgetlist,
+        QTabBar: qt_stylesheet_tabbar
+    }
+    for widget_type, style in widget_styles.items():
+        # Find all children of this widget type and apply the stylesheet.
+        for child in parent.findChildren(widget_type):
+            child.setStyleSheet(style)
+
+
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("QT Stylesheet Application Example")
+        main_layout = QVBoxLayout(self)
+
+        # Create examples of various widgets.
+        label = QLabel("This is a label", self)
+        tree_view = QTreeView(self)
+        checkbox = QCheckBox("Check me!", self)
+        button = QPushButton("Press me!", self)
+        combobox = QComboBox(self)
+        combobox.addItems(["Option 1", "Option 2", "Option 3"])
+        frame = QFrame(self)
+        plain_text = QPlainTextEdit("Editable text", self)
+        list_widget = QListWidget(self)
+        list_widget.addItems(["List Item 1", "List Item 2"])
+        tab_bar = QTabBar(self)
+        tab_bar.addTab("Tab 1")
+        tab_bar.addTab("Tab 2")
+
+        # Adding widgets to layout. A grid layout to showcase multiple widgets.
+        grid_layout = QGridLayout()
+        grid_layout.addWidget(label, 0, 0)
+        grid_layout.addWidget(tree_view, 0, 1)
+        grid_layout.addWidget(checkbox, 1, 0)
+        grid_layout.addWidget(button, 1, 1)
+        grid_layout.addWidget(combobox, 2, 0)
+        grid_layout.addWidget(frame, 2, 1)
+        grid_layout.addWidget(plain_text, 3, 0)
+        grid_layout.addWidget(list_widget, 3, 1)
+        grid_layout.addWidget(tab_bar, 4, 0, 1, 2)
+
+        main_layout.addLayout(grid_layout)
+
+        # Apply the defined stylesheets to all child widgets.
+        apply_stylesheets(self)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.resize(800, 600)
+    window.show()
+    sys.exit(app.exec_())
