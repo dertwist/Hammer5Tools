@@ -413,6 +413,7 @@ class BatchCreatorMainWindow(QMainWindow):
 
         batch_file_path = os.path.join(directory_path, f"{file_name}.hbat")
         self.write_json_file(batch_file_path, default_file)
+        self.explorer.select_tree_item(batch_file_path)
 
     def write_json_file(self, file_path: str, data: Dict):
         """Write data to a JSON file."""

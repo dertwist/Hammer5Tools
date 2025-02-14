@@ -693,7 +693,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             if os.path.splitext(filename)[1] == "":
                 current_folder = filename
             else:
-                current_folder = self.tree_directory
+                current_folder = os.path.dirname(filename)
         except:
             current_folder = self.tree_directory
 
@@ -702,9 +702,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         while os.path.exists(os.path.join(current_folder, new_file_name)):
             counter += 1
             new_file_name = f"new_smartprop_{counter:02}.{extension}"
-
-        with open(os.path.join(current_folder, new_file_name), "w") as file:
+        filepath = os.path.join(current_folder, new_file_name)
+        with open(filepath, "w") as file:
             file.write(blank_vsmart)
+        self.mini_explorer.select_tree_item(filepath)
 
     # ======================================[Open File]========================================
     #TODO Split the Open File section to another file vsmart.py
