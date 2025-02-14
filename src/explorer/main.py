@@ -164,6 +164,7 @@ class Explorer(QMainWindow):
         self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
     def select_tree_item(self, path):
         last_opened_index = self.model.index(path)
+        self.tree.selectionModel().clear()
         self.tree.selectionModel().select(last_opened_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
         self.tree.scrollTo(last_opened_index)
 
