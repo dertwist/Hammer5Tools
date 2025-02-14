@@ -162,14 +162,16 @@ class Explorer(QMainWindow):
         self.frame = QFrame(self)
         self.frame.setLayout(self.layout)
         self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
+    def select_tree_item(self, path):
+        last_opened_index = self.model.index(path)
+        self.tree.selectionModel().select(last_opened_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+        self.tree.scrollTo(last_opened_index)
 
     def select_last_opened_path(self):
         try:
             last_opened_path = get_settings_value(self.editor_name + '_explorer_lath_path', self.addon)
             if last_opened_path:
-                last_opened_index = self.model.index(last_opened_path)
-                self.tree.selectionModel().select(last_opened_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
-                self.tree.scrollTo(last_opened_index)
+                self.select_tree_item(last_opened_path)
         except Exception as e:
             error_dialog = ErrorInfo(text="Selection Error", details=str(e))
             error_dialog.exec_()
@@ -322,6 +324,7 @@ class Explorer(QMainWindow):
         else:
             try:
                 shutil.copyfile(file_path_from_clipboard, new_file_name)
+                self.select_tree_item(new_file_name)
                 return True
             except shutil.Error as e:
                 error_dialog = ErrorInfo(text="Paste Error", details=str(e))
@@ -409,3 +412,4 @@ class Explorer(QMainWindow):
         QDir(parent_path).mkdir(QFileInfo(new_folder_path).fileName())
         new_folder_index = self.model.index(new_folder_path)
         self.tree.edit(new_folder_index)
+        self.select_tree_item(new_folder_path)
