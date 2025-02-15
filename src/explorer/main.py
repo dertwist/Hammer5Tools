@@ -105,6 +105,9 @@ class CustomFileSystemModel(QFileSystemModel):
                     del self._cache[old_path]
                 self._cache[new_path] = value
                 self.dataChanged.emit(index, index)
+                # Added call to update selection after renaming action
+                if self.parent() is not None and hasattr(self.parent(), 'select_tree_item'):
+                    self.parent().select_tree_item(new_path)
                 return True
         return super().setData(index, value, role)
 
@@ -119,7 +122,7 @@ class Explorer(QMainWindow):
 
     def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None, use_internal_player: bool = True):
         super().__init__(parent)
-        self.model = CustomFileSystemModel()
+        self.model = CustomFileSystemModel(self)
         self.model.setRootPath(tree_directory)
         try:
             self.rootpath = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
