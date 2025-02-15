@@ -820,7 +820,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                 }
 
                 if var_key_value[4] in (None, ""):
-                    var_dict.update({"m_ParameterName": var_key_value[0]})
+                    var_dict.pop("m_ParameterName", None)
                 else:
                     var_dict.update({"m_ParameterName": var_key_value[4]})
 
