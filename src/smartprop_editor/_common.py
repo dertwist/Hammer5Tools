@@ -11,7 +11,7 @@ disable_line_value_length_limit_keys = [
     "m_VariableValue", "m_TargetName", "m_VariableComparison", "m_AllowedSurfaceProperties", 'm_nPickMode',
     "m_DisallowedSurfaceProperties", 'm_Components', 'm_flMinLength', 'm_flMaxLength', 'm_flRandomScaleMin',
     'm_flRandomScaleMax', 'm_flMaxLength', 'm_flMinLength', 'm_vRandomRotationMin', 'm_vRandomRotationMax',
-    'm_flLength', 'm_vStart', 'm_vEnd', 'm_MaterialGroupName', 'm_bEnabled'
+    'm_flLength', 'm_vStart', 'm_vEnd', 'm_MaterialGroupName', 'm_bEnabled', 'm_flSpacing'
 ]
 def get_clean_class_name(input):
     if element_prefix in input:
