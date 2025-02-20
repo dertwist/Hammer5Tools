@@ -1,3 +1,4 @@
+from src.common import JsonToKv3
 from src.smartprop_editor.ui_variable_frame import Ui_Form
 from PySide6.QtWidgets import QWidget, QMenu, QApplication
 from PySide6.QtCore import Qt, Signal, QEvent
@@ -253,7 +254,20 @@ class VariableFrame(QWidget):
             self.deleteLater()
         elif action == copy_action:
             clipboard = QApplication.clipboard()
-            clipboard.setText(f"hammer5tools:smartprop_editor_var;;{self.name};;{self.var_class};;{self.var_value};;{self.var_visible_in_editor};;{self.var_display_name}")
+            m_variable = {'_class': f'CSmartPropVariable_{self.var_class}', 'm_VariableName':self.name, 'm_bExposeAsParameter': self.var_visible_in_editor}
+            if self.var_display_name is not None:
+                m_variable.update({'m_ParameterName': self.var_display_name})
+            if self.var_default is not None:
+                m_variable.update({'m_DefaultValue': self.var_default})
+            if self.var_min is not None:
+                m_variable.update({'m_flParamaterMinValue': self.var_min})
+            if self.var_max is not None:
+                m_variable.update({'m_flParamaterMaxValue': self.var_max})
+            if self.var_model is not None:
+                m_variable.update({'m_sModelName': self.var_model})
+            m_data = {'m_Variables': []}
+            m_data['m_Variables'].append(m_variable)
+            clipboard.setText(JsonToKv3(m_data))
         elif action == duplicate_action:
             __data = [self.name, self.var_class, self.var_value, self.var_visible_in_editor, self.var_display_name]
             __index = self.widget_list.indexOf(self)

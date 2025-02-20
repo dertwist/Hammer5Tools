@@ -23,6 +23,7 @@ from PySide6.QtGui import (
 )
 from PySide6.QtCore import Qt, QTimer
 
+from keyvalues3 import kv3_to_json
 from src.smartprop_editor.ui_main import Ui_MainWindow
 from src.settings.main import get_addon_name, settings
 from src.smartprop_editor.variable_frame import VariableFrame
@@ -929,6 +930,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.variables_scrollArea.insertWidget(index, variable)
 
     def duplicate_variable(self, __data, __index):
+        update_child_ElementID_value(__data, force=True)
         self.add_variable(__data[0], __data[1], __data[2], __data[3], __data[4], __index)
 
     def add_new_variable(self):
@@ -1004,26 +1006,53 @@ class SmartPropEditorMainWindow(QMainWindow):
         context_menu.exec_(event.globalPos())
 
     def paste_variable(self):
+        """
+        Deserializes variable data from clipboard and creates new variables.
+        Handles the complete variable data structure including optional parameters.
+        """
         clipboard = QApplication.clipboard()
-        clipboard_text = clipboard.text()
-        clipboard_data = clipboard_text.split(";;")
-        #TODO change the variables format from generic to Kv3 or at least JSON
-        if clipboard_data[0] == "hammer5tools:smartprop_editor_var":
-            visible_in_editor = bool(strtobool(clipboard_data[4]))
-            display_name = clipboard_data[5]
-            if display_name == "None":
-                display_name = ""
-            var_value = ast.literal_eval(clipboard_data[3])
-            update_value_ElementID(var_value, force=True)
-            self.add_variable(
-                clipboard_data[1],
-                clipboard_data[2],
-                var_value,
-                visible_in_editor,
-                display_name
-            )
-        else:
-            ErrorInfo(text="Clipboard data format is not valid.", details=clipboard_data).exec()
+        try:
+            m_data = kv3_to_json(clipboard.text())
+            if not isinstance(m_data, dict):
+                ErrorInfo(text="Clipboard data format is not valid.", details=m_data).exec()
+                return
+
+            if 'm_Variables' not in m_data:
+                ErrorInfo(text="No variables found in clipboard data.").exec()
+                return
+
+            for variable in m_data['m_Variables']:
+                # Extract required fields
+                _class = variable.get('_class', '')
+                if not _class.startswith('CSmartPropVariable_'):
+                    continue
+
+                var_class = _class.replace('CSmartPropVariable_', '')
+                var_name = variable.get('m_VariableName', '')
+                var_visible = variable.get('m_bExposeAsParameter', False)
+
+                # Create value dictionary with optional parameters
+                var_value = {
+                    'default': variable.get('m_DefaultValue'),
+                    'min': variable.get('m_flParamaterMinValue'),
+                    'max': variable.get('m_flParamaterMaxValue'),
+                    'model': variable.get('m_sModelName')
+                }
+
+                # Update ElementID for the new variable
+                update_value_ElementID(var_value, force=True)
+
+                # Create new variable with extracted data
+                self.add_variable(
+                    name=var_name,
+                    var_class=var_class,
+                    var_value=var_value,
+                    var_visible_in_editor=var_visible,
+                    var_display_name=variable.get('m_ParameterName')
+                )
+
+        except Exception as e:
+            ErrorInfo(text="Failed to paste variable data.", details=str(e)).exec()
 
     # ======================================[Tree widget hierarchy filter]========================================
     def search_hierarchy(self, filter_text, parent_item):
