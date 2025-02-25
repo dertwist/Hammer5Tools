@@ -1,17 +1,18 @@
 import subprocess
 import sys
 import os
+import ast
 
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
     QWidget, QLabel, QLineEdit, QCheckBox, QSpacerItem,
-    QSizePolicy, QFrame, QScrollArea, QFileDialog
+    QSizePolicy, QFrame, QScrollArea, QFileDialog, QComboBox
 )
 from src.settings.common import *
 from src.common import enable_dark_title_bar, Presets_Path
 from src.updater.check import check_updates
 from src.widgets_common import Button  # Using the internal Button class
-from src.styles.common import qt_stylesheet_checkbox
+from src.styles.common import qt_stylesheet_checkbox, qt_stylesheet_combobox
 from src.widgets import FloatWidget  # Using the internal FloatWidget for float properties
 
 
@@ -23,21 +24,16 @@ class ActionButtonsPanel(QFrame):
     def setup_ui(self):
         h_layout_bottom = QHBoxLayout(self)
         h_layout_bottom.setContentsMargins(9, 9, 9, 9)
-
         # Create buttons using the internal Button class
         self.open_settings_folder_button = Button(text=" Settings")
         self.open_settings_folder_button.set_icon_folder_open()
         h_layout_bottom.addWidget(self.open_settings_folder_button)
-
         self.open_presets_folder_button = Button(text=" Presets")
         self.open_presets_folder_button.set_icon_folder_open()
         h_layout_bottom.addWidget(self.open_presets_folder_button)
-
         h_layout_bottom.addStretch()
-
         self.version_label = QLabel("", self)
         h_layout_bottom.addWidget(self.version_label)
-
         self.check_update_button = Button()
         self.check_update_button.set_icon_sync()
         h_layout_bottom.addWidget(self.check_update_button)
@@ -48,24 +44,20 @@ class PreferencesDialog(QDialog):
         super().__init__(parent)
         self.app_version = app_version
         enable_dark_title_bar(self)
-
         # Set the minimum size and window title
         self.setMinimumSize(830, 300)
         self.setWindowTitle('Settings')
-
         self.main_layout = QVBoxLayout(self)
         self.tabWidget = QTabWidget(self)
         # Set background color of tab widget to #1c1c1c
         self.tabWidget.setStyleSheet("background-color: #1c1c1c;")
         self.main_layout.addWidget(self.tabWidget)
-
         # Create tabs and bottom action panel
         self.create_general_tab()
         self.create_smartprop_tab()
         self.create_assetgroupmaker_tab()
         self.create_sound_event_editor_tab()
         self.create_bottom_panel()
-
         self.populate_preferences()
         self.connect_signals()
 
@@ -96,7 +88,6 @@ class PreferencesDialog(QDialog):
         general_tab_content = QWidget()
         layout = QVBoxLayout(general_tab_content)
         layout.setContentsMargins(10, 10, 10, 10)
-
         # ------------- Paths Subcategory -------------
         label_paths_header = QLabel("Paths", general_tab_content)
         layout.addWidget(label_paths_header)
@@ -113,10 +104,8 @@ class PreferencesDialog(QDialog):
         self.browse_archive_button.set_size(27)
         layout_paths.addWidget(self.browse_archive_button)
         layout.addWidget(self.frame_paths)
-
         # Add divider after Paths Subcategory
         layout.addWidget(self.create_divider(general_tab_content))
-
         # ------------- Discord Status Subcategory -------------
         label_discord_header = QLabel("Discord Status", general_tab_content)
         layout.addWidget(label_discord_header)
@@ -138,10 +127,8 @@ class PreferencesDialog(QDialog):
         row_custom.addWidget(self.editline_custom_discord_status)
         layout_discord.addLayout(row_custom)
         layout.addWidget(self.frame_discord)
-
         # Add divider after Discord Status Subcategory
         layout.addWidget(self.create_divider(general_tab_content))
-
         # ------------- Other Subcategory -------------
         label_other_header = QLabel("Other", general_tab_content)
         layout.addWidget(label_other_header)
@@ -159,7 +146,6 @@ class PreferencesDialog(QDialog):
         row_app.addWidget(self.checkBox_close_to_tray)
         layout_other.addLayout(row_app)
         layout.addWidget(self.frame_other)
-
         layout.addStretch()
         # Wrap the general tab content in a scroll area
         general_scroll = self.wrap_in_scroll_area(general_tab_content)
@@ -169,7 +155,6 @@ class PreferencesDialog(QDialog):
         smartprop_content = QWidget()
         layout = QVBoxLayout(smartprop_content)
         layout.setContentsMargins(10, 10, 10, 10)
-
         # ------------- Interface Subcategory -------------
         label_interface_header = QLabel("Interface", smartprop_content)
         layout.addWidget(label_interface_header)
@@ -179,10 +164,8 @@ class PreferencesDialog(QDialog):
         self.spe_display_id_with_variable_class.setStyleSheet(qt_stylesheet_checkbox)
         layout_interface.addWidget(self.spe_display_id_with_variable_class)
         layout.addWidget(frame_interface)
-
         # Divider between subcategories
         layout.addWidget(self.create_divider(smartprop_content))
-
         # ------------- Format Subcategory -------------
         label_format_header = QLabel("Format", smartprop_content)
         layout.addWidget(label_format_header)
@@ -193,7 +176,6 @@ class PreferencesDialog(QDialog):
         self.spe_export_properties.setChecked(True)
         layout_format.addWidget(self.spe_export_properties)
         layout.addWidget(frame_format)
-
         layout.addSpacerItem(QSpacerItem(20, 80, QSizePolicy.Minimum, QSizePolicy.Expanding))
         smartprop_scroll = self.wrap_in_scroll_area(smartprop_content)
         self.tabWidget.addTab(smartprop_scroll, "SmartProp Editor")
@@ -202,7 +184,6 @@ class PreferencesDialog(QDialog):
         assetgroupmaker_content = QWidget()
         layout = QVBoxLayout(assetgroupmaker_content)
         layout.setContentsMargins(10, 10, 10, 10)
-
         # ------------- Monitor Subcategory -------------
         label_monitor_header = QLabel("Monitor", assetgroupmaker_content)
         layout.addWidget(label_monitor_header)
@@ -214,10 +195,55 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_lineedit_monitor = QLineEdit(frame_monitor)
         layout_monitor.addWidget(self.assetgroupmaker_lineedit_monitor)
         layout.addWidget(frame_monitor)
-
-        # Divider
+        # Divider before Default File Subcategory
         layout.addWidget(self.create_divider(assetgroupmaker_content))
-
+        # ------------- Default File Subcategory -------------
+        label_default_file = QLabel("Default File", assetgroupmaker_content)
+        layout.addWidget(label_default_file)
+        frame_default_file = QFrame(assetgroupmaker_content)
+        layout_default_file = QVBoxLayout(frame_default_file)
+        # Extension editline
+        row_ext = QHBoxLayout()
+        label_ext = QLabel("Extension:", frame_default_file)
+        label_ext.setMinimumWidth(130)
+        row_ext.addWidget(label_ext)
+        self.assetgroupmaker_edit_extension = QLineEdit(frame_default_file)
+        row_ext.addWidget(self.assetgroupmaker_edit_extension)
+        layout_default_file.addLayout(row_ext)
+        # Ignore List editline
+        row_ignore = QHBoxLayout()
+        label_ignore = QLabel("Ignore List:", frame_default_file)
+        label_ignore.setMinimumWidth(130)
+        row_ignore.addWidget(label_ignore)
+        self.assetgroupmaker_edit_ignore_list = QLineEdit(frame_default_file)
+        row_ignore.addWidget(self.assetgroupmaker_edit_ignore_list)
+        layout_default_file.addLayout(row_ignore)
+        # Algorithm combobox
+        row_algo = QHBoxLayout()
+        label_algo = QLabel("Algorithm:", frame_default_file)
+        label_algo.setMinimumWidth(130)
+        row_algo.addWidget(label_algo)
+        self.assetgroupmaker_combo_algorithm = QComboBox(frame_default_file)
+        self.assetgroupmaker_combo_algorithm.setStyleSheet(qt_stylesheet_combobox)
+        # Add the two algorithm options:
+        self.assetgroupmaker_combo_algorithm.addItem("Process without interpretation", 0)
+        self.assetgroupmaker_combo_algorithm.addItem("Remove underscore from the end", 1)
+        self.assetgroupmaker_combo_algorithm.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.assetgroupmaker_combo_algorithm.setMinimumWidth(200)
+        row_algo.addWidget(self.assetgroupmaker_combo_algorithm)
+        row_algo.addStretch()
+        layout_default_file.addLayout(row_algo)
+        # Ignore Extensions editline
+        row_ignore_ext = QHBoxLayout()
+        label_ignore_ext = QLabel("Ignore Extensions:", frame_default_file)
+        label_ignore_ext.setMinimumWidth(130)
+        row_ignore_ext.addWidget(label_ignore_ext)
+        self.assetgroupmaker_edit_ignore_ext = QLineEdit(frame_default_file)
+        row_ignore_ext.addWidget(self.assetgroupmaker_edit_ignore_ext)
+        layout_default_file.addLayout(row_ignore_ext)
+        layout.addWidget(frame_default_file)
+        # Divider after Default File Subcategory
+        layout.addWidget(self.create_divider(assetgroupmaker_content))
         layout.addSpacerItem(QSpacerItem(20, 80, QSizePolicy.Minimum, QSizePolicy.Expanding))
         assetgroupmaker_scroll = self.wrap_in_scroll_area(assetgroupmaker_content)
         self.tabWidget.addTab(assetgroupmaker_scroll, "AssetGroupMaker")
@@ -227,7 +253,6 @@ class PreferencesDialog(QDialog):
         sound_editor_content = QWidget()
         layout = QVBoxLayout(sound_editor_content)
         layout.setContentsMargins(10, 10, 10, 10)
-
         # ------------- AudioPlayer Subcategory -------------
         label_audio_header = QLabel("AudioPlayer", sound_editor_content)
         layout.addWidget(label_audio_header)
@@ -237,24 +262,27 @@ class PreferencesDialog(QDialog):
         self.checkBox_play_on_click.setStyleSheet(qt_stylesheet_checkbox)
         layout_audio.addWidget(self.checkBox_play_on_click)
         layout.addWidget(self.frame_audio)
-
         # ------------- Internal Sounds Subcategory -------------
         layout.addWidget(self.create_divider(sound_editor_content))
         label_internal = QLabel("Internal Sounds", sound_editor_content)
         layout.addWidget(label_internal)
         self.frame_internal_sounds = QFrame(sound_editor_content)
         layout_internal = QVBoxLayout(self.frame_internal_sounds)
-        # Removed "Use cache" property as requested.
         # Maximum cache size property using FloatWidget (float property, default 400)
         row_cache_size = QHBoxLayout()
         label_max_cache = QLabel("Maximum cache size:", self.frame_internal_sounds)
         label_max_cache.setMinimumWidth(130)
         row_cache_size.addWidget(label_max_cache)
-        self.floatWidget_max_cache_size = FloatWidget(self.frame_internal_sounds, slider_range=[50,4000], lock_range=True, spacer_enable=False, digits=0, only_positive=True, value=400)
+        self.floatWidget_max_cache_size = FloatWidget(self.frame_internal_sounds,
+                                                       slider_range=[50, 4000],
+                                                       lock_range=True,
+                                                       spacer_enable=False,
+                                                       digits=0,
+                                                       only_positive=True,
+                                                       value=400)
         row_cache_size.addWidget(self.floatWidget_max_cache_size)
         layout_internal.addLayout(row_cache_size)
         layout.addWidget(self.frame_internal_sounds)
-
         layout.addStretch()
         sound_editor_scroll = self.wrap_in_scroll_area(sound_editor_content)
         self.tabWidget.addTab(sound_editor_scroll, "SoundEventEditor")
@@ -275,9 +303,21 @@ class PreferencesDialog(QDialog):
         self.spe_display_id_with_variable_class.setChecked(get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', False))
         self.spe_export_properties.setChecked(get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True))
         self.action_buttons_panel.version_label.setText(f"Version: {self.app_version}")
-
         # Populate the monitor editline; default to provided value if not set
         self.assetgroupmaker_lineedit_monitor.setText(get_settings_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
+        # Populate Default File Subcategory fields
+        try:
+            default_file = ast.literal_eval(get_settings_value('AssetGroupMaker', 'default_file') or "{}")
+            process = default_file.get('process', {})
+        except Exception:
+            process = {}
+        self.assetgroupmaker_edit_extension.setText(process.get('extension', 'vmdl'))
+        self.assetgroupmaker_edit_ignore_list.setText(process.get('ignore_list', ''))
+        algo = process.get('algorithm', 0)
+        # Set combobox current index based on stored algorithm value
+        index = 0 if algo == 0 else 1
+        self.assetgroupmaker_combo_algorithm.setCurrentIndex(index)
+        self.assetgroupmaker_edit_ignore_ext.setText(process.get('ignore_extensions', 'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr'))
         # Populate SoundEventEditor preferences
         self.checkBox_play_on_click.setChecked(get_settings_bool('SoundEventEditor', 'play_on_click', True))
         try:
@@ -285,6 +325,17 @@ class PreferencesDialog(QDialog):
         except ValueError:
             max_cache = 400
         self.floatWidget_max_cache_size.set_value(max_cache)
+
+    def update_default_file_setting(self):
+        # Collect current settings from Default File subcategory fields (removed folder options)
+        process = {
+            'extension': self.assetgroupmaker_edit_extension.text(),
+            'ignore_list': self.assetgroupmaker_edit_ignore_list.text(),
+            'algorithm': self.assetgroupmaker_combo_algorithm.currentData(),
+            'ignore_extensions': self.assetgroupmaker_edit_ignore_ext.text()
+        }
+        default_file = {'process': process}
+        set_settings_value('AssetGroupMaker', 'default_file', str(default_file))
 
     def connect_signals(self):
         self.preferences_lineedit_archive_path.textChanged.connect(
@@ -315,6 +366,11 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_lineedit_monitor.textChanged.connect(
             lambda: set_settings_value('AssetGroupMaker', 'monitor_folders', self.assetgroupmaker_lineedit_monitor.text())
         )
+        # Connect Default File subcategory widgets to update_default_file_setting
+        self.assetgroupmaker_edit_extension.textChanged.connect(self.update_default_file_setting)
+        self.assetgroupmaker_edit_ignore_list.textChanged.connect(self.update_default_file_setting)
+        self.assetgroupmaker_combo_algorithm.currentIndexChanged.connect(self.update_default_file_setting)
+        self.assetgroupmaker_edit_ignore_ext.textChanged.connect(self.update_default_file_setting)
         self.action_buttons_panel.open_settings_folder_button.clicked.connect(self.open_settings_folder)
         self.action_buttons_panel.open_presets_folder_button.clicked.connect(self.open_presets_folder)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)

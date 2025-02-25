@@ -2,8 +2,8 @@ import os
 import json
 from typing import Optional, Dict, List, Tuple, Set
 from PySide6.QtCore import Signal, QThread
-from src.assetgroup_maker.objects import default_file
 from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
+from src.assetgroup_maker.objects import get_default_file
 
 
 class StartProcess(QThread):
@@ -126,8 +126,8 @@ def perform_batch_processing(file_path: str, process: Dict, preview: bool, repla
 
     relative_batch_path = os.path.relpath(batch_directory, base_directory).replace('\\', '/')
 
-    algorithm = int(process.get('algorithm', default_file['process']['algorithm']))
-    file_extension = process.get('extension', default_file['process']['extension'])
+    algorithm = int(process.get('algorithm', get_default_file()['process']['algorithm']))
+    file_extension = process.get('extension', get_default_file()['process']['extension'])
     ignore_extensions = [ext.strip() for ext in process.get('ignore_extensions', '').split(',')]
     reference = process.get('reference')
     reference = os.path.join(get_addon_dir(), reference) if reference else None

@@ -8,7 +8,6 @@ from src.assetgroup_maker.ui_main import Ui_BatchCreator_MainWindow
 from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
 from src.assetgroup_maker.highlighter import CustomHighlighter
 from src.explorer.main import Explorer
-from src.assetgroup_maker.objects import default_file
 from src.assetgroup_maker.dialog import BatchCreatorProcessDialog
 from src.assetgroup_maker.process import perform_batch_processing
 from src.assetgroup_maker.property.frame import PropertyFrame
@@ -16,6 +15,12 @@ from src.assetgroup_maker.property.objects import default_replacement, default_r
 from src.assetgroup_maker.context_menu import ReplacementsContextMenu
 from src.assetgroup_maker.monitor import MonitoringFileWatcher
 from src.widgets import ErrorInfo
+from src.assetgroup_maker.objects import get_default_file
+
+class QuickVmdlFile():
+    pass
+class QuickConfigFile():
+    pass
 
 class DragDropLineEdit(QLineEdit):
     """A QLineEdit that supports drag-and-drop for file paths."""
@@ -54,9 +59,10 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
         self.update_title = update_title
+        print(type(get_default_file()))
 
         self.current_file: Optional[str] = None
-        self.process_data: Dict = default_file['process'].copy()
+        self.process_data: Dict = get_default_file()['process'].copy()
         self.created_files: List[str] = []
         self.monitoring_running_state: bool = True
         self.search_results: List[int] = []
@@ -412,7 +418,7 @@ class BatchCreatorMainWindow(QMainWindow):
             return
 
         batch_file_path = os.path.join(directory_path, f"{file_name}.hbat")
-        self.write_json_file(batch_file_path, default_file)
+        self.write_json_file(batch_file_path, get_default_file())
         self.explorer.select_tree_item(batch_file_path)
 
     def write_json_file(self, file_path: str, data: Dict):
@@ -482,7 +488,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 self.process_data = data.get('process', {})
                 self.ui.reference_editline.setText(self.process_data.get('reference', ''))
                 self.ui.kv3_QplainTextEdit.setPlainText(content)
-                self.ui.extension_lineEdit.setText(self.process_data.get('extension', default_file['process']['extension']))
+                self.ui.extension_lineEdit.setText(self.process_data.get('extension', get_default_file()['process']['extension']))
                 self.populate_replacements(data.get('replacements', default_replacements))
                 self.update_explorer_title()
                 debug(f"File opened from: {file_path}")
