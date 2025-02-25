@@ -29,6 +29,7 @@ ENCODING_BINARY_BLOCK_LZ4 = Format("binarylz4", UUID("6847348a-63a1-4f5c-a197-53
 ENCODING_TEXT = Encoding("text", UUID("e21c7f3c-8a33-41c5-9977-a76d3a32aa0d"))
 
 FORMAT_GENERIC = Format("generic", UUID("7412167c-06e9-4698-aff2-e63eb59037e7"))
+FORMAT_VMDL = Format("modeldoc36", UUID("972dada4-b828-45a4-bb93-7795cf0585da"))
 
 @dataclasses.dataclass(frozen=True)
 class KV3Header:
