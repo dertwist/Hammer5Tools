@@ -1,5 +1,5 @@
 import copy
-from src.common import JsonToKv3
+from src.common import JsonToKv3, Kv3ToJson
 import os, json
 from src.assetgroup_maker.objects import DEFAULT_VMDL, get_default_file
 from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
@@ -24,6 +24,8 @@ class QuickConfigFile:
     def create_config_file(self):
         normalized_path = self.filepath.replace(os.path.sep, '/')
         rel_path = os.path.relpath(self.filepath, get_addon_dir()).replace(os.path.sep, '/')
+        with open(self.filepath, 'r') as file:
+            source_model = Kv3ToJson(file.read())
         parent_dir = os.path.dirname(self.filepath)
         parent_name = os.path.basename(parent_dir)
         output_dir = os.path.dirname(parent_dir)
@@ -47,8 +49,8 @@ class QuickConfigFile:
             "replacements": {
                 "0": {
                     "replacement": [
-                        f"filename = \"{rel_path}\"",
-                        f"filename = \"{os.path.dirname(rel_path)}/#$ASSET_NAME$#.fbx\""
+                        f"filename = \"{source_model['rootNode']['children'][1]['children'][0]['filename']}\"",
+                        f"filename = \"{os.path.dirname(source_model['rootNode']['children'][1]['children'][0]['filename'])}/#$ASSET_NAME$#.fbx\""
                     ]
                 }
             },
