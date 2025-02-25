@@ -17,11 +17,6 @@ from src.assetgroup_maker.monitor import MonitoringFileWatcher
 from src.widgets import ErrorInfo
 from src.assetgroup_maker.objects import get_default_file
 
-class QuickVmdlFile():
-    pass
-class QuickConfigFile():
-    pass
-
 class DragDropLineEdit(QLineEdit):
     """A QLineEdit that supports drag-and-drop for file paths."""
     fileDropped = Signal(str)
@@ -59,7 +54,6 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
         self.update_title = update_title
-        print(type(get_default_file()))
 
         self.current_file: Optional[str] = None
         self.process_data: Dict = get_default_file()['process'].copy()
