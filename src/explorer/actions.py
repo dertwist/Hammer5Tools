@@ -23,18 +23,53 @@ class QuickConfigFile:
 
     def create_config_file(self):
         normalized_path = self.filepath.replace(os.path.sep, '/')
-        rel_path = os.path.relpath(self.filepath, get_addon_dir()).replace(os.path.sep, '/')
-        with open(self.filepath, 'r') as file:
-            source_model = Kv3ToJson(file.read())
+
+        try:
+            rel_path = os.path.relpath(self.filepath, get_addon_dir()).replace(os.path.sep, '/')
+        except Exception as e:
+            debug(f"Error computing relative path: {e}")
+            return
+
+        try:
+            with open(self.filepath, 'r') as file:
+                file_content = file.read()
+        except Exception as e:
+            debug(f"Error reading file '{self.filepath}': {e}")
+            return
+
+        try:
+            source_model = Kv3ToJson(file_content)
+        except Exception as e:
+            debug(f"Error converting file content to JSON: {e}")
+            return
+
+        # Determine file paths based on the current file's directory.
         parent_dir = os.path.dirname(self.filepath)
         parent_name = os.path.basename(parent_dir)
         output_dir = os.path.dirname(parent_dir)
         output_file = os.path.join(output_dir, f"{parent_name}.hbat")
+
         default_config = get_default_file()
+        extension = default_config.get("process", {}).get("extension", "vmdl")
+        reference = rel_path.replace('/', '\\')
+        try:
+            children = source_model.get('rootNode', {}).get('children', [])
+            if len(children) > 1:
+                child = children[1]
+                grand_children = child.get('children', [])
+                if grand_children:
+                    extracted_filename = grand_children[0].get('filename', '')
+                else:
+                    raise ValueError("No grandchild found in source model")
+            else:
+                raise ValueError("Not enough children in source model")
+        except Exception as e:
+            debug(f"Error extracting filename from source model: {e}")
+            return
         new_config = {
             "process": {
-                "extension": default_config.get("process", {}).get("extension", "vmdl"),
-                "reference": f"{rel_path.replace('/', '\\')}",
+                "extension": extension,
+                "reference": reference,
                 "ignore_list": default_config.get("process", {}).get("ignore_list", ""),
                 "custom_files": default_config.get("process", {}).get("custom_files", []),
                 "custom_output": default_config.get("process", {}).get("custom_output", "relative_path"),
@@ -49,14 +84,14 @@ class QuickConfigFile:
             "replacements": {
                 "0": {
                     "replacement": [
-                        f"filename = \"{source_model['rootNode']['children'][1]['children'][0]['filename']}\"",
-                        f"filename = \"{os.path.dirname(source_model['rootNode']['children'][1]['children'][0]['filename'])}/#$ASSET_NAME$#.fbx\""
+                        f"filename = \"{extracted_filename}\"",
+                        f"filename = \"{os.path.dirname(extracted_filename)}/#$ASSET_NAME$#.{extension}\""
                     ]
                 }
             },
             "file": {
                 "content": default_config.get("file", {}).get("content", "")
-            },
+            }
         }
         try:
             with open(output_file, 'w') as file:
