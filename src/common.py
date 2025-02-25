@@ -139,14 +139,18 @@ def Kv3ToJson(input):
         input = '<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{' + input + '\n}'
     output = kv3.textreader.KV3TextReader().parse(input).value
     return output
-def JsonToKv3(input, disable_line_value_length_limit_keys: list = None):
+def JsonToKv3(input, disable_line_value_length_limit_keys: list = None, format=None):
+    if format == 'vmdl':
+        format_option = kv3.FORMAT_VMDL
+    else:
+        format_option = kv3.FORMAT_GENERIC
     if isinstance(input, dict) or isinstance(input, list):
+        kv3_file = kv3.KV3File(value=input, format=format_option)
         options = KV3EncoderOptions(
             serialize_enums_as_ints=False,
             no_header=False,
-            disable_line_value_length_limit_keys=disable_line_value_length_limit_keys
+            disable_line_value_length_limit_keys=disable_line_value_length_limit_keys,
         )
-
-        return kv3.textwriter.encode(input, options=options)
+        return kv3.textwriter.encode(kv3_file, options=options)
     else:
-        raise ValueError('[JsonToKv3] Invalid input type: Input should be a dictionary')
+        raise ValueError('[JsonToKv3] Invalid input type: Input should be a dictionary or list')

@@ -5,12 +5,17 @@ from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemMo
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
+
 from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, debug
 from src.widgets_common import ErrorInfo
+from src.explorer.actions import QuickVmdlFile, QuickConfigFile
 
+# Supported file extensions
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 smartprop_extensions = ['vsmart', 'vdata']
 generic_extensions = ['vpost', 'vsndevts', 'rect', 'keybindings', 'kv3']
+model_extensions = ['obj', 'fbx', 'dmx']
+
 file_icons = {
     '.vsmart': '://icons/assettypes/vsmart_sm.png',
     '.vdata': '://icons/assettypes/vdata_sm.png',
@@ -93,7 +98,6 @@ class CustomFileSystemModel(QFileSystemModel):
             old_path = self.filePath(index)
             file_info = QFileInfo(old_path)
             file_dir = file_info.dir()
-            old_base_name = file_info.completeBaseName()
             extension = file_info.suffix()
             debug(f'Renaming file value: {value}')
             new_name = value.replace('.' + extension, '') + ('.' + extension if extension else '')
@@ -105,7 +109,7 @@ class CustomFileSystemModel(QFileSystemModel):
                     del self._cache[old_path]
                 self._cache[new_path] = value
                 self.dataChanged.emit(index, index)
-                # Added call to update selection after renaming action
+                # Update selection after renaming action
                 if self.parent() is not None and hasattr(self.parent(), 'select_tree_item'):
                     self.parent().select_tree_item(new_path)
                 return True
@@ -127,7 +131,6 @@ class Explorer(QMainWindow):
         try:
             self.rootpath = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
         except:
-            pass
             self.rootpath = tree_directory
         if not os.path.exists(tree_directory):
             os.makedirs(tree_directory)
@@ -165,6 +168,7 @@ class Explorer(QMainWindow):
         self.frame = QFrame(self)
         self.frame.setLayout(self.layout)
         self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
+
     def select_tree_item(self, path):
         last_opened_index = self.model.index(path)
         self.tree.selectionModel().clear()
@@ -268,12 +272,27 @@ class Explorer(QMainWindow):
         copy_relative_path_action = QAction("Copy relative path", self)
         copy_relative_path_action.triggered.connect(lambda: self.copy_relative_path(index, True))
         menu.addAction(copy_relative_path_action)
+
         file_path = self.model.filePath(index)
-        file_extension = file_path.split('.')[-1]
+        file_extension = file_path.split('.')[-1].lower()
+
+        # Additional actions for audio files
         if file_extension in audio_extensions:
             copy_audio_path_action = QAction("Copy Audio Path", self)
             copy_audio_path_action.triggered.connect(lambda: self.copy_audio_path(index, True))
             menu.addAction(copy_audio_path_action)
+
+        # Add QuickConfigFile action for VMDL files
+        if file_extension == "vmdl":
+            quick_config_action = QAction("Quick Batch File", self)
+            quick_config_action.triggered.connect(lambda: QuickConfigFile(file_path))
+            menu.addAction(quick_config_action)
+
+        # Add QuickVmdlFile action for model files (obj, fbx, dmx)
+        if file_extension in model_extensions:
+            quick_vmdl_action = QAction("Quick VMDL File", self)
+            quick_vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
+            menu.addAction(quick_vmdl_action)
 
     def duplicate_file(self, index):
         file_path = self.model.filePath(index)
