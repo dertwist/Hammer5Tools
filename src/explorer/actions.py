@@ -85,7 +85,7 @@ class QuickConfigFile:
                 "0": {
                     "replacement": [
                         f"filename = \"{extracted_filename}\"",
-                        f"filename = \"{os.path.dirname(extracted_filename)}/#$ASSET_NAME$#.{extension}\""
+                        f"filename = \"{os.path.dirname(extracted_filename)}/#$ASSET_NAME$#{os.path.splitext(extracted_filename)[1]}\""
                     ]
                 }
             },
