@@ -4,6 +4,9 @@
     <file>appicon.ico</file>
   </qresource>
   <qresource prefix="/">
+    <file>icons/attachment.png</file>
+    <file>icons/link_off.png</file>
+    <file>icons/add_link.png</file>
     <file>icons/vertical_line.png</file>
     <file>icons/vertical_line.svg</file>
     <file>icons/folder_open.svg</file>
