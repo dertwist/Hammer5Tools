@@ -930,7 +930,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.variables_scrollArea.insertWidget(index, variable)
 
     def duplicate_variable(self, __data, __index):
-        update_child_ElementID_value(__data, force=True)
+        __data[2] = update_value_ElementID(__data[2], force=True)
         self.add_variable(__data[0], __data[1], __data[2], __data[3], __data[4], __index)
 
     def add_new_variable(self):
