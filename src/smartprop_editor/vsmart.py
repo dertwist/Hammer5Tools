@@ -42,6 +42,7 @@ def serialization_hierarchy_items(item, data=None):
 
 
 def deserialize_hierarchy_item(m_Children):
+    # TODO Update m_bReferenceObject and m_bReference
     item_value = {}
     for key in m_Children:
         if key != "m_Children":

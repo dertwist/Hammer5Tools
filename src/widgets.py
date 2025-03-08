@@ -771,7 +771,7 @@ class ComboboxTreeChild(ComboboxDynamicItems):
 #==============================================================<  Tree widgets  >===========================================================
 
 class HierarchyItemModel(QTreeWidgetItem):
-    def __init__(self, _name="New Hierarchy Item", _data=None, _class=None, _id=None, parent=None):
+    def __init__(self, _name="New Hierarchy Item", _data=None, _class=None, _id=None, _reference=None, _reference_object=None, parent=None):
         super().__init__(parent)
 
         # Set text for name, data, class, and id
@@ -782,6 +782,10 @@ class HierarchyItemModel(QTreeWidgetItem):
             self.setText(2, str(_class))
         if _id is not None:
             self.setText(3, str(_id))
+        if _reference is not None:
+            self.setText(4, str(_reference))
+        if _reference_object is not None:
+            self.setText(5, str(_reference_object))
 
         # Initially set editable flags only on the first column
         self.setFlags(self.flags() | Qt.ItemIsEditable)
