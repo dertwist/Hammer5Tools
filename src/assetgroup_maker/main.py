@@ -414,6 +414,8 @@ class BatchCreatorMainWindow(QMainWindow):
             return
 
         batch_file_path = os.path.join(directory_path, f"{file_name}.hbat")
+        self.monitoring_list.track_new_file(batch_file_path)
+
         self.write_json_file(batch_file_path, get_default_file())
         self.explorer.select_tree_item(batch_file_path)
 
