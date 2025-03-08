@@ -780,7 +780,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.explorer_status()
 
     # ======================================[Save File]========================================
-    # TODO Split the Save File section to another file vsmart.py
     def save_file(self, external=False):
         if external:
             if not self.opened_file:
@@ -795,50 +794,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                 filename = None
                 external = True
 
-        def save_variables():
-            variables_ = []
-            raw_variables = self.get_variables(self.ui.variables_scrollArea)
-            for var_key, var_key_value in raw_variables.items():
-                var_default = (var_key_value[2])["default"]
-                if var_default is None:
-                    var_default = ""
-                var_min = (var_key_value[2])["min"]
-                var_max = (var_key_value[2])["max"]
-                var_model = (var_key_value[2])["model"]
-                var_class = var_key_value[1]
-                var_id = (var_key_value[2])["m_nElementID"]
-
-                var_dict = {
-                    "_class": variable_prefix + var_class,
-                    "m_VariableName": var_key_value[0],
-                    "m_bExposeAsParameter": var_key_value[3],
-                    "m_DefaultValue": var_default,
-                    "m_nElementID": var_id
-                }
-
-                if var_key_value[4] in (None, ""):
-                    var_dict.pop("m_ParameterName", None)
-                else:
-                    var_dict.update({"m_ParameterName": var_key_value[4]})
-
-                if var_min is not None:
-                    if var_class == "Float":
-                        var_dict.update({"m_flParamaterMinValue": var_min})
-                    elif var_class == "Int":
-                        var_dict.update({"m_nParamaterMinValue": var_min})
-
-                if var_max is not None:
-                    if var_class == "Float":
-                        var_dict.update({"m_flParamaterMaxValue": var_max})
-                    elif var_class == "Int":
-                        var_dict.update({"m_nParamaterMaxValue": var_max})
-
-                if var_model is not None:
-                    var_dict.update({"m_sModelName": var_model})
-
-                variables_.append(var_dict)
-            return variables_
-
         if external:
             filename, _ = QFileDialog.getSaveFileName(
                 None,
@@ -846,21 +801,19 @@ class SmartPropEditorMainWindow(QMainWindow):
                 os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()),
                 "VSmart Files (*.vsmart);;All Files (*)"
             )
-
-        var_data = save_variables()
+        self.get_variables(self.ui.variables_scrollArea)
         if filename:
             VsmartSaveInstance = VsmartSave(
                 filename=filename,
                 tree=self.ui.tree_hierarchy_widget,
-                var_data=var_data,
-                choices_tree=self.ui.choices_tree_widget
+                choices_tree=self.ui.choices_tree_widget,
+                variables_layout=self.ui.variables_scrollArea
             )
             self.opened_file = VsmartSaveInstance.filename
             if self.update_title:
                 self.update_title("saved", filename)
 
     # ======================================[Choices Context Menu]========================================
-    #TODO Split hte Choices to another file choices.py. The new way to initialize choices would be to create another tab beside Hierarchy tab
     def open_MenuChoices(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
@@ -898,9 +851,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
 
     # ======================================[Variables Actions]========================================
-    #TODO I need to figure out how to implement multiselect functional to variables
-    #TODO Split the variables to another file variables.py
-    #TODO Improve the smartprop_editor structure
     def add_variable(
             self,
             name,
