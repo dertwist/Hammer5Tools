@@ -22,6 +22,10 @@ from src.smartprop_editor.property.colormatch import PropertyColorMatch
 from src.smartprop_editor.property.variable import PropertyVariableOutput
 from src.smartprop_editor.property.set_variable import PropertyVariableValue
 from src.smartprop_editor.property.comment import PropertyComment
+from PySide6.QtGui import QCursor
+from src.widgets import HierarchyItemModel
+from src.smartprop_editor.element_id import get_ElementID_key, set_ElementID
+import uuid
 
 import ast
 
@@ -127,13 +131,20 @@ class PropertyFrame(QWidget):
         self.ui.property_class.setAcceptDrops(False)
         self.variables_scrollArea = variables_scrollArea
         self.element = element
-        if not reference_bar:
+        if reference_bar:
+            self.ui.ReferenceID_Search.clicked.connect(self.ReferenceIDSearch)
+            self.ui.ReferenceID_Clear.clicked.connect(self.ReferenceIDClear)
+            self.ui.ReferenceID.textChanged.connect(self.on_edited)
+            self.ui.Reference_Enable.stateChanged.connect(self.on_edited)
+        else:
             self.ui.ReferenceID.deleteLater()
             self.ui.Reference_Enable.deleteLater()
             self.ui.ReferenceID_Clear.deleteLater()
             self.ui.ReferenceID_Search.deleteLater()
         if tree_hierarchy is None:
-            raise ValueError
+            raise ValueError("tree_hierarchy cannot be None - a valid hierarchy structure is required")
+        else:
+            self.tree_hierarchy = tree_hierarchy
 
         # Use ast.literal_eval only if not already a dict
         if not isinstance(value, dict):
@@ -144,78 +155,6 @@ class PropertyFrame(QWidget):
         self.value = value
 
         self.layout = self.ui.layout
-
-        #===========================================================<  Referencing  >=========================================================
-        # The concept of referencing in this system involves two distinct entities: the "reference" and the "reference object."
-        # A "reference" is any element within the hierarchy, while the "referenced object" is the element that provides the data.
-        # When an element functions as a reference object, it inherits all data from the reference and then
-        # selectively overrides those values with its own, except for specific keys that must remain unique.
-        #
-        # For example:
-        # Referenced Object:
-        # {
-        #    _class: "CSmartPropElement_Model",
-        #    m_bEnabled: true,
-        #    m_nElementID: 5,
-        #    m_MaterialGroupName: "Default",
-        #    m_Scale: [1, 1, 1],
-        #    m_sModelName: "Test_01",
-        #    m_sLabel: "Model Test"
-        # }
-        #
-        # Reference Object:
-        # {
-        #    _class: "CSmartPropElement_Model",
-        #    m_bEnabled: true,
-        #    m_nElementID: 6,
-        #    m_sModelName: "model_final",
-        #    m_sLabel: "Model Final"
-        # }
-        #
-        # Result for the Reference Object (after saving/processing):
-        # {
-        #    _class: "CSmartPropElement_Model",
-        #    m_bEnabled: true,
-        #    m_Scale: [1, 1, 1],
-        #    m_MaterialGroupName: "Default",
-        #    m_nElementID: 6,
-        #    m_sModelName: "model_final",
-        #    m_sLabel: "Model Final"
-        # }
-        #
-        # The boolean flag m_bReferenceObject (True/False) indicates whether this element serves as a reference
-        # object that overrides data inherited from a referenced object. When set to True, the element cannot
-        # be used as a reference by other elements.
-        #
-        # The m_nReferenceID stores the ID of the referenced element (note that duplicate IDs may result in conflicting issues).
-        #
-        # Non-processed reference objects will be saved in the m_ReferenceObjects list.
-        # The m_sReferenceObjectID stores the ID of the non-processed reference object.
-        # The ID is formatted as "Class_ElementID_###", where "#" represents a random ASCII symbol.
-        #
-        # The saving algorithm operates as follows:
-        # The program copies all reference objects to the m_ReferenceObjects list, along with m_Variables, m_Choices, and m_Children.
-        # m_ReferenceObjects Structure:
-        # m_ReferenceObjects: {
-        #     "Class_ElementID_###": {Reference Object data}
-        # }
-        # Initially, the reference object includes the m_sReferenceObjectID key with the non-processed reference ID.
-        # Subsequently, the program locates the reference element by m_nReferenceID,
-        # retrieves data from the reference, and compares it to the reference object's data.
-        # Keys in the reference object take precedence over those in the reference.
-        # After comparing and merging the data, the program writes the updated data to the reference object,
-        # while also storing these keys:
-        # m_bReferenceObject
-        # m_sReferenceObjectID
-        # m_nReferenceID
-        #
-        # While opening a file:
-        # The program locates each reference object (by m_sReferenceObjectID) and replaces its data with the non-processed version.
-        #
-        # Visual Indicators:
-        # - References are displayed in green.
-        # - Reference objects are displayed in blue.
-
 
         #===========================================================<  Element ID  >========================================================
         update_value_ElementID(self.value)
@@ -374,6 +313,55 @@ class PropertyFrame(QWidget):
                     data_out.append({widget.name: {widget.var_class}})
         return data_out
 
+    def update_reference_values(self):
+        """
+        Updates the reference values in the property frame.
+
+        Returns:
+            dict: Dictionary containing reference values
+
+        Raises:
+            RuntimeError: If UI components are not available
+        """
+        try:
+            if not self.ui or not hasattr(self.ui, 'Reference_Enable'):
+                raise RuntimeError("Reference_Enable widget not available")
+
+            reference_state = False
+            try:
+                reference_state = bool(self.ui.Reference_Enable.checkState())
+            except RuntimeError:
+                # Handle case where widget was deleted
+                pass
+
+            reference_values = {
+                'm_bReferenceObject': reference_state
+            }
+
+            # Only add reference IDs if reference is enabled
+            if reference_state:
+                try:
+                    reference_values['m_sReferenceObjectID'] = self.ReferenceObjectIDGet()
+                except (ValueError, RuntimeError) as e:
+                    debug(f"Failed to get ReferenceObjectID: {e}")
+                    reference_values['m_sReferenceObjectID'] = ""
+
+                try:
+                    reference_values['m_nReferenceID'] = self.ReferenceIDGet()
+                except (ValueError, RuntimeError) as e:
+                    debug(f"Failed to get ReferenceID: {e}")
+                    reference_values['m_nReferenceID'] = 0
+
+            return reference_values
+
+        except Exception as e:
+            debug(f"Error updating reference values: {e}")
+            return {
+                'm_bReferenceObject': False,
+                'm_sReferenceObjectID': "",
+                'm_nReferenceID': 0
+            }
+
     def on_edited(self):
         debug('Property frame was edited')
         if self.ui.variable_display.text() != '':
@@ -384,8 +372,15 @@ class PropertyFrame(QWidget):
         self.value = {
             '_class': f'{self.name_prefix}_{self.name}',
             'm_bEnabled': enabled,
-            'm_nElementID': self.element_id
+            'm_nElementID': self.element_id,
         }
+
+        try:
+            reference_values = self.update_reference_values()
+            self.value.update(reference_values)
+        except Exception as e:
+            debug(f"Failed to update reference values: {e}")
+
 
         try:
             for index in range(self.ui.layout.count()):
@@ -448,3 +443,131 @@ class PropertyFrame(QWidget):
         self.value = None
         self.edited.emit()
         self.deleteLater()
+    # ===========================================================<  Referencing  >=========================================================
+    # The concept of referencing in this system involves two distinct entities: the "reference" and the "reference object."
+    # A "reference" is any element within the hierarchy, while the "referenced object" is the element that provides the data.
+    # When an element functions as a reference object, it inherits all data from the reference and then
+    # selectively overrides those values with its own, except for specific keys that must remain unique.
+    #
+    # For example:
+    # Referenced Object:
+    # {
+    #    _class: "CSmartPropElement_Model",
+    #    m_bEnabled: true,
+    #    m_nElementID: 5,
+    #    m_MaterialGroupName: "Default",
+    #    m_Scale: [1, 1, 1],
+    #    m_sModelName: "Test_01",
+    #    m_sLabel: "Model Test"
+    # }
+    #
+    # Reference Object:
+    # {
+    #    _class: "CSmartPropElement_Model",
+    #    m_bEnabled: true,
+    #    m_nElementID: 6,
+    #    m_sModelName: "model_final",
+    #    m_sLabel: "Model Final"
+    # }
+    #
+    # Result for the Reference Object (after saving/processing):
+    # {
+    #    _class: "CSmartPropElement_Model",
+    #    m_bEnabled: true,
+    #    m_Scale: [1, 1, 1],
+    #    m_MaterialGroupName: "Default",
+    #    m_nElementID: 6,
+    #    m_sModelName: "model_final",
+    #    m_sLabel: "Model Final"
+    # }
+    #
+    # The boolean flag m_bReferenceObject (True/False) indicates whether this element serves as a reference
+    # object that overrides data inherited from a referenced object. When set to True, the element cannot
+    # be used as a reference by other elements.
+    #
+    # The m_nReferenceID stores the ID of the referenced element (note that duplicate IDs may result in conflicting issues).
+    #
+    # Non-processed reference objects will be saved in the m_ReferenceObjects list.
+    # The m_sReferenceObjectID stores the ID of the non-processed reference object.
+    # The ID is formatted as "Class_ElementID_###", where "#" represents a random ASCII symbol.
+    #
+    # The saving algorithm operates as follows:
+    # The program copies all reference objects to the m_ReferenceObjects list, along with m_Variables, m_Choices, and m_Children.
+    # m_ReferenceObjects Structure:
+    # m_ReferenceObjects: {
+    #     "Class_ElementID_###": {Reference Object data}
+    # }
+    # Initially, the reference object includes the m_sReferenceObjectID key with the non-processed reference ID.
+    # Subsequently, the program locates the reference element by m_nReferenceID,
+    # retrieves data from the reference, and compares it to the reference object's data.
+    # Keys in the reference object take precedence over those in the reference.
+    # After comparing and merging the data, the program writes the updated data to the reference object,
+    # while also storing these keys:
+    # m_bReferenceObject
+    # m_sReferenceObjectID
+    # m_nReferenceID
+    #
+    # While opening a file:
+    # The program locates each reference object (by m_sReferenceObjectID) and replaces its data with the non-processed version.
+    #
+    # Visual Indicators:
+    # - References are displayed in green.
+    # - Reference objects are displayed in blue.
+    def ReferenceIDSearch(self):
+        """
+        Create and display a popup menu with all hierarchy items from the tree_hierarchy.
+        Items with m_bReferenceObject set to True are excluded.
+        Each menu item displays in the format: [Class]-[Label]-[ElementID].
+        """
+
+        # Helper function to recursively collect all items from the tree
+        def collect_tree_items(parent_item):
+            items = []
+            for i in range(parent_item.childCount()):
+                item = parent_item.child(i)
+                # Add the current item
+                items.append(item)
+                # Recursively add all children
+                if item.childCount() > 0:
+                    items.extend(collect_tree_items(item))
+            return items
+
+        # Collect all items from the tree hierarchy
+        root_item = self.tree_hierarchy.invisibleRootItem()
+        all_items = collect_tree_items(root_item)
+
+        # Create a list of property dictionaries for the PopupMenu
+        properties = []
+        for item in all_items:
+            item: HierarchyItemModel = item
+            if item.text(5) == 'True':
+                pass
+            else:
+                label = item.text(0)
+                class_name = item.text(2)
+                element_id = item.text(3)
+                display_text = f"{label} | {class_name} | {element_id}"
+
+                properties.append({display_text: element_id})
+
+        # Create and show the popup menu
+        self.hierarchy_menu = PopupMenu(properties=properties, window_name='hierarchy_item_menu')
+        self.hierarchy_menu.add_property_signal.connect(self.on_hierarchy_item_selected)
+        self.hierarchy_menu.show()
+
+    def on_hierarchy_item_selected(self, name, element_id):
+        """Handle the selection of a hierarchy item from the popup menu."""
+        self.ui.ReferenceID.setText(str(element_id))
+    def ReferenceIDClear(self):
+        self.ui.ReferenceID.clear()
+    def ReferenceObjectIDGet(self):
+        _id = str(uuid.uuid5(uuid.NAMESPACE_DNS, self.value.get('m_sLabel', self.name)))
+        return _id
+    def ReferenceIDGet(self):
+        value = self.ui.ReferenceID.text().strip()
+        print(value)
+        print(self.ui.ReferenceID)
+        print(self.ui.ReferenceID.text())
+        if not value:
+            raise ValueError("ReferenceID cannot be empty")
+        return int(value)
