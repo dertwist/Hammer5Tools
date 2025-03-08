@@ -675,7 +675,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.update_tree_item_value()
 
     # ======================================[Explorer]========================================
-    #TODO Split Explorer seciton to another file explorer.py
     def explorer_status(self):
         if self.opened_file == "":
             self.ui.dockWidget_10.setWindowTitle("Explorer")
@@ -709,7 +708,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.mini_explorer.select_tree_item(filepath)
 
     # ======================================[Open File]========================================
-    #TODO Split the Open File section to another file vsmart.py
     def open_file(self, external=False):
         if external:
             filename, _ = QFileDialog.getOpenFileName(
@@ -787,10 +785,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         if external:
             if not self.opened_file:
                 filename = None
-                external = True
             else:
                 filename = self.opened_file
-                external = False
         else:
             if self.opened_file:
                 filename = self.opened_file
