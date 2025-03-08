@@ -149,11 +149,10 @@ class PropertyFrame(QWidget):
             self.ui.ReferenceID_Search.clicked.connect(self.ReferenceIDSearch)
             self.ui.ReferenceID_Clear.clicked.connect(self.ReferenceIDClear)
             self.ui.ReferenceID.textChanged.connect(self.on_edited)
-            self.ui.Reference_Enable.stateChanged.connect(self.on_edited)
 
         else:
             self.ui.ReferenceID.deleteLater()
-            self.ui.Reference_Enable.deleteLater()
+            self.ui.ReferenceID_Label.deleteLater()
             self.ui.ReferenceID_Clear.deleteLater()
             self.ui.ReferenceID_Search.deleteLater()
 
@@ -317,55 +316,17 @@ class PropertyFrame(QWidget):
         return data_out
 
     def update_reference_values(self):
-        """
-        Updates the reference values in the property frame.
-
-        Returns:
-            dict: Dictionary containing reference values
-
-        Raises:
-            RuntimeError: If UI components are not available
-        """
         try:
-            if not self.ui or not hasattr(self.ui, 'Reference_Enable'):
-                raise RuntimeError("Reference_Enable widget not available")
-
-            reference_state = False
-            try:
-                reference_state = bool(self.ui.Reference_Enable.checkState())
-            except RuntimeError:
-                # Handle case where widget was deleted
-                pass
-
-            # Only add reference IDs if reference is enabled
-            if reference_state:
+            if self.ReferenceIDGet() is not None:
                 reference_values = {
-                    'm_bReferenceObject': reference_state
+                    'm_nReferenceID': self.ReferenceIDGet(),
+                    'm_sReferenceObjectID': self.ReferenceObjectIDGet()
                 }
-
-                try:
-                    reference_values['m_sReferenceObjectID'] = self.ReferenceObjectIDGet()
-                except (ValueError, RuntimeError) as e:
-                    debug(f"Failed to get ReferenceObjectID: {e}")
-                    reference_values['m_sReferenceObjectID'] = ""
-
-                try:
-                    reference_values['m_nReferenceID'] = self.ReferenceIDGet()
-                except (ValueError, RuntimeError) as e:
-                    debug(f"Failed to get ReferenceID: {e}")
-                    reference_values['m_nReferenceID'] = 0
-
+                print(reference_values)
                 return reference_values
-            else:
-                return {}
-
-        except Exception as e:
-            debug(f"Error updating reference values: {e}")
-            return {
-                'm_bReferenceObject': False,
-                'm_sReferenceObjectID': "",
-                'm_nReferenceID': 0
-            }
+            return {}
+        except:
+            return {}
 
     def on_edited(self):
         debug('Property frame was edited')
@@ -380,11 +341,8 @@ class PropertyFrame(QWidget):
             'm_nElementID': self.element_id,
         }
 
-        try:
-            reference_values = self.update_reference_values()
-            self.value.update(reference_values)
-        except Exception as e:
-            debug(f"Failed to update reference values: {e}")
+        reference_values = self.update_reference_values()
+        self.value.update(reference_values)
 
 
         try:
@@ -570,9 +528,6 @@ class PropertyFrame(QWidget):
         return _id
     def ReferenceIDGet(self):
         value = self.ui.ReferenceID.text().strip()
-        print(value)
-        print(self.ui.ReferenceID)
-        print(self.ui.ReferenceID.text())
         if not value:
             raise ValueError("ReferenceID cannot be empty")
         return int(value)
