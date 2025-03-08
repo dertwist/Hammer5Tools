@@ -243,7 +243,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                 widget_list=self.ui.properties_layout,
                 value=data,
                 variables_scrollArea=self.ui.variables_scrollArea,
-                element=True
+                element=True,
+                reference_bar=True
             )
             property_instance.edited.connect(self.update_tree_item_value)
             self.ui.properties_layout.insertWidget(0, property_instance)
