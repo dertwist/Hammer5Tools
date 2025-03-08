@@ -244,7 +244,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                 value=data,
                 variables_scrollArea=self.ui.variables_scrollArea,
                 element=True,
-                reference_bar=True
+                reference_bar=True,
+                tree_hierarchy=self.ui.tree_hierarchy_widget
             )
             property_instance.edited.connect(self.update_tree_item_value)
             self.ui.properties_layout.insertWidget(0, property_instance)
