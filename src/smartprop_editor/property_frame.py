@@ -119,7 +119,7 @@ class PropertyFrame(QWidget):
         ]
     }
 
-    def __init__(self, value, widget_list, variables_scrollArea, element=False):
+    def __init__(self, value, widget_list, variables_scrollArea, element=False, reference_bar=False):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -127,6 +127,11 @@ class PropertyFrame(QWidget):
         self.ui.property_class.setAcceptDrops(False)
         self.variables_scrollArea = variables_scrollArea
         self.element = element
+        if not reference_bar:
+            self.ui.ReferenceID.deleteLater()
+            self.ui.Reference_Enable.deleteLater()
+            self.ui.ReferenceID_Clear.deleteLater()
+            self.ui.ReferenceID_Search.deleteLater()
 
         # Use ast.literal_eval only if not already a dict
         if not isinstance(value, dict):
