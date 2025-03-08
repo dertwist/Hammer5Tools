@@ -257,7 +257,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                     prop_instance = PropertyFrame(
                         widget_list=self.modifiers_group_instance.layout,
                         value=entry,
-                        variables_scrollArea=self.ui.variables_scrollArea
+                        variables_scrollArea=self.ui.variables_scrollArea,
+                        tree_hierarchy=self.ui.tree_hierarchy_widget
                     )
                     prop_instance.edited.connect(self.update_tree_item_value)
                     self.modifiers_group_instance.layout.insertWidget(0, prop_instance)
@@ -267,7 +268,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                     prop_instance = PropertyFrame(
                         widget_list=self.selection_criteria_group_instance.layout,
                         value=entry,
-                        variables_scrollArea=self.ui.variables_scrollArea
+                        variables_scrollArea=self.ui.variables_scrollArea,
+                        tree_hierarchy=self.ui.tree_hierarchy_widget
                     )
                     prop_instance.edited.connect(self.update_tree_item_value)
                     self.selection_criteria_group_instance.layout.insertWidget(0, prop_instance)
@@ -550,7 +552,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         operator_instance = PropertyFrame(
             widget_list=self.modifiers_group_instance.layout,
             value=element_value,
-            variables_scrollArea=self.ui.variables_scrollArea
+            variables_scrollArea=self.ui.variables_scrollArea,
+            tree_hierarchy=self.ui.tree_hierarchy_widget
         )
         operator_instance.edited.connect(self.update_tree_item_value)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
@@ -626,7 +629,8 @@ class SmartPropEditorMainWindow(QMainWindow):
             operator_instance = PropertyFrame(
                 widget_list=self.modifiers_group_instance.layout,
                 value=ast.literal_eval(clipboard_data[2]),
-                variables_scrollArea=self.ui.variables_scrollArea
+                variables_scrollArea=self.ui.variables_scrollArea,
+                tree_hierarchy=self.ui.tree_hierarchy_widget
             )
             operator_instance.edited.connect(self.update_tree_item_value)
             self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
@@ -656,7 +660,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         operator_instance = PropertyFrame(
             widget_list=self.selection_criteria_group_instance.layout,
             value=element_value,
-            variables_scrollArea=self.ui.variables_scrollArea
+            variables_scrollArea=self.ui.variables_scrollArea,
+            tree_hierarchy=self.ui.tree_hierarchy_widget
         )
         operator_instance.edited.connect(self.update_tree_item_value)
         self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
@@ -671,7 +676,8 @@ class SmartPropEditorMainWindow(QMainWindow):
             operator_instance = PropertyFrame(
                 widget_list=self.selection_criteria_group_instance.layout,
                 value=ast.literal_eval(clipboard_data[2]),
-                variables_scrollArea=self.ui.variables_scrollArea
+                variables_scrollArea=self.ui.variables_scrollArea,
+                tree_hierarchy=self.ui.tree_hierarchy_widget
             )
             operator_instance.edited.connect(self.update_tree_item_value)
             self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
