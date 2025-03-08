@@ -10,6 +10,7 @@ from src.smartprop_editor.element_id import *
 from src.smartprop_editor._common import *
 from src.settings.main import get_settings_bool
 from src.widgets import HierarchyItemModel, exception_handler
+from src.smartprop_editor.objects import variable_prefix
 
 
 # ======================================[Tree item serialization and deserialization]========================================
@@ -186,13 +187,83 @@ class VsmartOpen:
 
 
 class VsmartSave:
-    def __init__(self, filename, tree=None, var_data=None, choices_tree=QTreeWidget):
+    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_layout=None):
         self.filename = filename
         self.tree = tree
-        self.var_data = var_data
+        self.variables_layout = variables_layout
+        self.var_data = self.save_variables()
         self.choices_tree = choices_tree
         self.choices_data = self.choices(self.choices_tree.invisibleRootItem())
         self.save_file()
+    def get_variables(self, layout, only_names=False):
+        if only_names:
+            data_out = {}
+            for i in range(layout.count()):
+                widget = layout.itemAt(i).widget()
+                if widget:
+                    item_ = {i: [widget.name, widget.var_class, widget.var_display_name]}
+                    data_out.update(item_)
+            return data_out
+        else:
+            data_out = {}
+            for i in range(layout.count()):
+                widget = layout.itemAt(i).widget()
+                if widget:
+                    item_ = {
+                        i: [
+                            widget.name,
+                            widget.var_class,
+                            widget.var_value,
+                            widget.var_visible_in_editor,
+                            widget.var_display_name
+                        ]
+                    }
+                    data_out.update(item_)
+            return data_out
+
+    def save_variables(self):
+        variables_ = []
+        raw_variables = self.get_variables(self.variables_layout)
+        for var_key, var_key_value in raw_variables.items():
+            var_default = (var_key_value[2])["default"]
+            if var_default is None:
+                var_default = ""
+            var_min = (var_key_value[2])["min"]
+            var_max = (var_key_value[2])["max"]
+            var_model = (var_key_value[2])["model"]
+            var_class = var_key_value[1]
+            var_id = (var_key_value[2])["m_nElementID"]
+
+            var_dict = {
+                "_class": variable_prefix + var_class,
+                "m_VariableName": var_key_value[0],
+                "m_bExposeAsParameter": var_key_value[3],
+                "m_DefaultValue": var_default,
+                "m_nElementID": var_id
+            }
+
+            if var_key_value[4] in (None, ""):
+                var_dict.pop("m_ParameterName", None)
+            else:
+                var_dict.update({"m_ParameterName": var_key_value[4]})
+
+            if var_min is not None:
+                if var_class == "Float":
+                    var_dict.update({"m_flParamaterMinValue": var_min})
+                elif var_class == "Int":
+                    var_dict.update({"m_nParamaterMinValue": var_min})
+
+            if var_max is not None:
+                if var_class == "Float":
+                    var_dict.update({"m_flParamaterMaxValue": var_max})
+                elif var_class == "Int":
+                    var_dict.update({"m_nParamaterMaxValue": var_max})
+
+            if var_model is not None:
+                var_dict.update({"m_sModelName": var_model})
+
+            variables_.append(var_dict)
+        return variables_
 
     @exception_handler
     def save_file(self):
