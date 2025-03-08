@@ -393,6 +393,11 @@ class Ui_Form(object):
 
         self.property_class_3 = QLineEdit(self.frame)
         self.property_class_3.setObjectName(u"property_class_3")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(128)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.property_class_3.sizePolicy().hasHeightForWidth())
+        self.property_class_3.setSizePolicy(sizePolicy)
         self.property_class_3.setMaximumSize(QSize(16777215, 16777215))
         self.property_class_3.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.property_class_3.setStyleSheet(u"QLineEdit {\n"
@@ -422,6 +427,80 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.property_class_3)
 
+        self.ReferenceID_Label = QLineEdit(self.frame)
+        self.ReferenceID_Label.setObjectName(u"ReferenceID_Label")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.ReferenceID_Label.sizePolicy().hasHeightForWidth())
+        self.ReferenceID_Label.setSizePolicy(sizePolicy1)
+        self.ReferenceID_Label.setMinimumSize(QSize(64, 0))
+        self.ReferenceID_Label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.ReferenceID_Label.setStyleSheet(u"QLineEdit {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border-top: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #242424;\n"
+"}\n"
+"\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.ReferenceID_Label.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
+        self.ReferenceID_Label.setMaxLength(32)
+        self.ReferenceID_Label.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
+        self.ReferenceID_Label.setReadOnly(True)
+
+        self.horizontalLayout.addWidget(self.ReferenceID_Label)
+
+        self.ReferenceID = QLineEdit(self.frame)
+        self.ReferenceID.setObjectName(u"ReferenceID")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.ReferenceID.sizePolicy().hasHeightForWidth())
+        self.ReferenceID.setSizePolicy(sizePolicy2)
+        self.ReferenceID.setMaximumSize(QSize(72, 16777215))
+        self.ReferenceID.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.ReferenceID.setStyleSheet(u"QLineEdit {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border-top: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #242424;\n"
+"}\n"
+"\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.ReferenceID.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
+        self.ReferenceID.setMaxLength(32)
+        self.ReferenceID.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.ReferenceID.setReadOnly(True)
+
+        self.horizontalLayout.addWidget(self.ReferenceID)
+
         self.ReferenceID_Clear = QToolButton(self.frame)
         self.ReferenceID_Clear.setObjectName(u"ReferenceID_Clear")
         self.ReferenceID_Clear.setEnabled(True)
@@ -447,82 +526,6 @@ class Ui_Form(object):
         self.ReferenceID_Clear.setIconSize(QSize(24, 24))
 
         self.horizontalLayout.addWidget(self.ReferenceID_Clear)
-
-        self.Reference_Enable = QCheckBox(self.frame)
-        self.Reference_Enable.setObjectName(u"Reference_Enable")
-        self.Reference_Enable.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.Reference_Enable.setStyleSheet(u"QCheckBox::indicator:checked {\n"
-"image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
-"   \n"
-"	height:16px;\n"
-"	width:16px;\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:unchecked {\n"
-"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
-"	height:16px;\n"
-"	width:16px;\n"
-"}\n"
-"\n"
-"\n"
-"QCheckBox {\n"
-"    font: 580  8pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:14px;\n"
-"    padding-top: 2px;\n"
-"    padding-bottom:2px;\n"
-"    color: #E3E3E3;\n"
-"    padding-left: 4px;\n"
-"background-color: #242424;\n"
-"}\n"
-"QCheckBox:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QCheckBox{\n"
-"	padding-left:5px;\n"
-"	border-left: 0px solid black;\n"
-"border-right: 0px solid black;\n"
-"border-top: 0px solid black;\n"
-"}")
-        self.Reference_Enable.setChecked(False)
-        self.Reference_Enable.setAutoRepeat(False)
-        self.Reference_Enable.setAutoExclusive(False)
-        self.Reference_Enable.setTristate(False)
-
-        self.horizontalLayout.addWidget(self.Reference_Enable)
-
-        self.ReferenceID = QLineEdit(self.frame)
-        self.ReferenceID.setObjectName(u"ReferenceID")
-        self.ReferenceID.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.ReferenceID.setStyleSheet(u"QLineEdit {\n"
-"    font-size: 8pt;\n"
-"    font-family: \"Segoe UI\";\n"
-"    border-top: 0px;\n"
-"    border-left: 0px;\n"
-"    border-right: 0px;\n"
-"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"}\n"
-"\n"
-"QLineEdit:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"\n"
-"QLineEdit::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        self.ReferenceID.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
-        self.ReferenceID.setMaxLength(32)
-        self.ReferenceID.setReadOnly(True)
-
-        self.horizontalLayout.addWidget(self.ReferenceID)
 
         self.ReferenceID_Search = QToolButton(self.frame)
         self.ReferenceID_Search.setObjectName(u"ReferenceID_Search")
@@ -714,16 +717,17 @@ class Ui_Form(object):
         self.property_class_3.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.property_class_3.setText("")
-        self.ReferenceID_Clear.setText("")
 #if QT_CONFIG(tooltip)
-        self.Reference_Enable.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p><span style=\" font-weight:400;\">Enable set</span></p></body></html>", None))
+        self.ReferenceID_Label.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.Reference_Enable.setText("")
+        self.ReferenceID_Label.setText(QCoreApplication.translate("Form", u"Reference:", None))
+        self.ReferenceID_Label.setPlaceholderText(QCoreApplication.translate("Form", u"ReferenceID", None))
 #if QT_CONFIG(tooltip)
         self.ReferenceID.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.ReferenceID.setText("")
-        self.ReferenceID.setPlaceholderText(QCoreApplication.translate("Form", u"ReferenceID", None))
+        self.ReferenceID.setPlaceholderText(QCoreApplication.translate("Form", u"ID", None))
+        self.ReferenceID_Clear.setText("")
         self.ReferenceID_Search.setText("")
         self.delete_button.setText(QCoreApplication.translate("Form", u"Delete", None))
         self.copy_button.setText(QCoreApplication.translate("Form", u"Copy", None))
