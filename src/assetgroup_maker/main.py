@@ -109,9 +109,11 @@ class BatchCreatorMainWindow(QMainWindow):
             item = self.monitoring_list.item(index)
             widget = self.monitoring_list.itemWidget(item)
             if widget:
-                file_name = os.path.basename(widget.file_path).lower()
-                # Show or hide the item based on whether it matches the search term
-                item.setHidden(search_term not in file_name)
+                full_path = widget.file_path
+                parent_dir = os.path.basename(os.path.dirname(full_path))
+                basename = os.path.basename(full_path)
+                search_name = os.path.join(parent_dir, basename).lower()
+                item.setHidden(search_term not in search_name)
 
     def connect_signals(self):
         """Connect UI signals to their respective slots."""
