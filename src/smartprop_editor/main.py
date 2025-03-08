@@ -22,6 +22,7 @@ from PySide6.QtGui import (
     QKeySequence
 )
 from PySide6.QtCore import Qt, QTimer
+from src.settings.main import get_settings_value, get_settings_bool
 
 from keyvalues3 import kv3_to_json
 from src.smartprop_editor.ui_main import Ui_MainWindow
@@ -75,7 +76,8 @@ cs2_path = get_cs2_path()
 
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
-        super().__init__(parent)
+        super().__init__()
+        self.parent = parent
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
@@ -322,7 +324,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
             # Realtime save
             if self.realtime_save:
-                self.realtime_save_timer.start(5)
+                time = int(get_settings_value('SmartPropEditor', 'realtime_saving_delay', 5))
+                self.realtime_save_timer.start(time)
 
     # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
@@ -685,6 +688,12 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def realtime_save_action(self):
         self.realtime_save = self.ui.realtime_save_checkbox.isChecked()
+        if get_settings_bool('SmartPropEditor', 'enable_transparency_window', True):
+            if self.realtime_save:
+                transparency = float(get_settings_value('SmartPropEditor', 'transparency_window', 70))/100
+                self.parent.setWindowOpacity(transparency)
+            else:
+                self.parent.setWindowOpacity(1)
 
     def create_new_file(self):
         from src.smartprop_editor.blank_vsmart import blank_vsmart

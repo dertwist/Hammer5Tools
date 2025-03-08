@@ -407,7 +407,7 @@ class Widget(QMainWindow):
         except Exception as e:
             print(f"Error while setting up SoundEventEditorMainWidget: {e}")
         try:
-            self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(update_title=self.update_title)
+            self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(update_title=self.update_title, parent=self)
             self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
         except Exception as e:
             print(f"Error while setting up SmartPropEditorMainWindow: {e}")
