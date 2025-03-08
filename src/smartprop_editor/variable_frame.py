@@ -225,15 +225,25 @@ class VariableFrame(QWidget):
         self.customContextMenuRequested.connect(self.show_context_menu)
 
     def eventFilter(self, obj, event):
-        """
-        Enforce unique name when the variable name editing line loses focus.
+        """Enforce unique name when the variable name editing line loses focus.
+        Also warns if variable name starts with a number or special symbol.
         """
         if obj == self.ui.variable_name and event.type() == QEvent.FocusOut:
             new_name = self.ui.variable_name.text()
+            if new_name and (new_name[0].isdigit() or (not new_name[0].isalpha() and new_name[0] != '_')):
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self,
+                    "Invalid Variable Name",
+                    "It is not recommended to use numbers or special symbols at the start of variable name"
+                )
+
+            # Continue with existing unique name logic
             unique_name = self._make_unique(new_name)
             if unique_name != new_name:
                 self.ui.variable_name.setText(unique_name)
             self.name = unique_name
+
         return super().eventFilter(obj, event)
 
     mousePressEvent = PropertyMethods.mousePressEvent
