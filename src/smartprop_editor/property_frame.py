@@ -131,16 +131,6 @@ class PropertyFrame(QWidget):
         self.ui.property_class.setAcceptDrops(False)
         self.variables_scrollArea = variables_scrollArea
         self.element = element
-        if reference_bar:
-            self.ui.ReferenceID_Search.clicked.connect(self.ReferenceIDSearch)
-            self.ui.ReferenceID_Clear.clicked.connect(self.ReferenceIDClear)
-            self.ui.ReferenceID.textChanged.connect(self.on_edited)
-            self.ui.Reference_Enable.stateChanged.connect(self.on_edited)
-        else:
-            self.ui.ReferenceID.deleteLater()
-            self.ui.Reference_Enable.deleteLater()
-            self.ui.ReferenceID_Clear.deleteLater()
-            self.ui.ReferenceID_Search.deleteLater()
         if tree_hierarchy is None:
             raise ValueError("tree_hierarchy cannot be None - a valid hierarchy structure is required")
         else:
@@ -153,6 +143,19 @@ class PropertyFrame(QWidget):
         self.name_prefix, self.name = value['_class'].split('_', 1)
         del value['_class']
         self.value = value
+
+        if reference_bar:
+            self.ui.ReferenceID.setText(str(self.value.get('m_nReferenceID', '')))
+            self.ui.ReferenceID_Search.clicked.connect(self.ReferenceIDSearch)
+            self.ui.ReferenceID_Clear.clicked.connect(self.ReferenceIDClear)
+            self.ui.ReferenceID.textChanged.connect(self.on_edited)
+            self.ui.Reference_Enable.stateChanged.connect(self.on_edited)
+
+        else:
+            self.ui.ReferenceID.deleteLater()
+            self.ui.Reference_Enable.deleteLater()
+            self.ui.ReferenceID_Clear.deleteLater()
+            self.ui.ReferenceID_Search.deleteLater()
 
         self.layout = self.ui.layout
 
@@ -334,12 +337,12 @@ class PropertyFrame(QWidget):
                 # Handle case where widget was deleted
                 pass
 
-            reference_values = {
-                'm_bReferenceObject': reference_state
-            }
-
             # Only add reference IDs if reference is enabled
             if reference_state:
+                reference_values = {
+                    'm_bReferenceObject': reference_state
+                }
+
                 try:
                     reference_values['m_sReferenceObjectID'] = self.ReferenceObjectIDGet()
                 except (ValueError, RuntimeError) as e:
@@ -352,7 +355,9 @@ class PropertyFrame(QWidget):
                     debug(f"Failed to get ReferenceID: {e}")
                     reference_values['m_nReferenceID'] = 0
 
-            return reference_values
+                return reference_values
+            else:
+                return {}
 
         except Exception as e:
             debug(f"Error updating reference values: {e}")
