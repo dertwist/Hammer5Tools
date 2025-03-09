@@ -326,7 +326,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
             # Realtime save
             if self.realtime_save:
-                time = int(get_settings_value('SmartPropEditor', 'realtime_saving_delay', 5))
+                raw_delay = get_settings_value('SmartPropEditor', 'realtime_saving_delay', 5)
+                time = int(float(raw_delay))
                 self.realtime_save_timer.start(time)
 
     # ======================================[Event Filter]========================================
