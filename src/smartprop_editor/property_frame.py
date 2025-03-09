@@ -234,6 +234,10 @@ class PropertyFrame(QWidget):
                 pass
             elif value_class == 'm_nElementID':
                 pass
+            elif value_class == 'm_nReferenceID':
+                pass
+            elif value_class == 'm_sReferenceObjectID':
+                pass
             elif 'm_nScaleMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NONE','SCALE_END_TO_FIT','SCALE_EQUALLY','SCALE_MAXIMAIZE'], filter_types=['ScaleMode']); add_instance()
             elif 'm_CoordinateSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace']); add_instance()
             elif 'm_DirectionSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['DirectionSpace']); add_instance()
@@ -407,75 +411,6 @@ class PropertyFrame(QWidget):
         self.edited.emit()
         self.deleteLater()
     # ===========================================================<  Referencing  >=========================================================
-    # The concept of referencing in this system involves two distinct entities: the "reference" and the "reference object."
-    # A "reference" is any element within the hierarchy, while the "referenced object" is the element that provides the data.
-    # When an element functions as a reference object, it inherits all data from the reference and then
-    # selectively overrides those values with its own, except for specific keys that must remain unique.
-    #
-    # For example:
-    # Referenced Object:
-    # {
-    #    _class: "CSmartPropElement_Model",
-    #    m_bEnabled: true,
-    #    m_nElementID: 5,
-    #    m_MaterialGroupName: "Default",
-    #    m_Scale: [1, 1, 1],
-    #    m_sModelName: "Test_01",
-    #    m_sLabel: "Model Test"
-    # }
-    #
-    # Reference Object:
-    # {
-    #    _class: "CSmartPropElement_Model",
-    #    m_bEnabled: true,
-    #    m_nElementID: 6,
-    #    m_sModelName: "model_final",
-    #    m_sLabel: "Model Final"
-    # }
-    #
-    # Result for the Reference Object (after saving/processing):
-    # {
-    #    _class: "CSmartPropElement_Model",
-    #    m_bEnabled: true,
-    #    m_Scale: [1, 1, 1],
-    #    m_MaterialGroupName: "Default",
-    #    m_nElementID: 6,
-    #    m_sModelName: "model_final",
-    #    m_sLabel: "Model Final"
-    # }
-    #
-    # The boolean flag m_bReferenceObject (True/False) indicates whether this element serves as a reference
-    # object that overrides data inherited from a referenced object. When set to True, the element cannot
-    # be used as a reference by other elements.
-    #
-    # The m_nReferenceID stores the ID of the referenced element (note that duplicate IDs may result in conflicting issues).
-    #
-    # Non-processed reference objects will be saved in the m_ReferenceObjects list.
-    # The m_sReferenceObjectID stores the ID of the non-processed reference object.
-    # The ID is formatted as "Class_ElementID_###", where "#" represents a random ASCII symbol.
-    #
-    # The saving algorithm operates as follows:
-    # The program copies all reference objects to the m_ReferenceObjects list, along with m_Variables, m_Choices, and m_Children.
-    # m_ReferenceObjects Structure:
-    # m_ReferenceObjects: {
-    #     "Class_ElementID_###": {Reference Object data}
-    # }
-    # Initially, the reference object includes the m_sReferenceObjectID key with the non-processed reference ID.
-    # Subsequently, the program locates the reference element by m_nReferenceID,
-    # retrieves data from the reference, and compares it to the reference object's data.
-    # Keys in the reference object take precedence over those in the reference.
-    # After comparing and merging the data, the program writes the updated data to the reference object,
-    # while also storing these keys:
-    # m_bReferenceObject
-    # m_sReferenceObjectID
-    # m_nReferenceID
-    #
-    # While opening a file:
-    # The program locates each reference object (by m_sReferenceObjectID) and replaces its data with the non-processed version.
-    #
-    # Visual Indicators:
-    # - References are displayed in green.
-    # - Reference objects are displayed in blue.
     def ReferenceIDSearch(self):
         """
         Create and display a popup menu with all hierarchy items from the tree_hierarchy.
@@ -524,7 +459,7 @@ class PropertyFrame(QWidget):
     def ReferenceIDClear(self):
         self.ui.ReferenceID.clear()
     def ReferenceObjectIDGet(self):
-        _id = str(uuid.uuid5(uuid.NAMESPACE_DNS, self.value.get('m_sLabel', self.name)))
+        _id = str(uuid.uuid4())
         return _id
     def ReferenceIDGet(self):
         value = self.ui.ReferenceID.text().strip()
