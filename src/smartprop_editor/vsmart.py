@@ -36,14 +36,16 @@ def merge_reference_data(reference_data: dict, ref_object_data: dict) -> dict:
 
     Unique keys: m_nElementID, m_sReferenceObjectID, m_nReferenceID.
 
-    For list-type keys such as "m_Modifiers" and "m_SelectionCriteria":
-    - Combine lists from both reference and reference object
-    - For m_Modifiers, append reference object's modifiers to reference's modifiers
+    For list-type keys containing elements with IDs (like m_Modifiers, m_SelectionCriteria):
+    - If an element with the same ID exists in both lists, the reference object's element
+      overwrites the reference's element key by key.
+    - If an element exists only in the reference object, it's added to the merged list.
+    - If an element exists only in the reference, it's included in the merged list.
 
     For other keys, if the reference object's value is None then the reference's value is used.
     """
     unique_keys = ["m_nElementID", "m_sReferenceObjectID", "m_nReferenceID"]
-    list_keys = ["m_Modifiers", "m_SelectionCriteria"]
+    list_keys_with_elements = ["m_Modifiers", "m_SelectionCriteria"]
 
     # Start with a copy of the reference data
     merged_data = dict(reference_data)
@@ -53,22 +55,46 @@ def merge_reference_data(reference_data: dict, ref_object_data: dict) -> dict:
         # Always use the reference object's values for unique keys
         if k in unique_keys:
             merged_data[k] = v
-        # Special handling for list-type keys (m_Modifiers, m_SelectionCriteria)
-        elif k in list_keys:
+        # Special handling for list-type keys containing elements with IDs
+        elif k in list_keys_with_elements:
             ref_value = reference_data.get(k, [])
             if isinstance(v, list) and isinstance(ref_value, list):
-                # For m_Modifiers and m_SelectionCriteria, combine both lists
-                # First add all items from the reference
-                combined_list = ref_value.copy()  # Use copy to avoid reference issues
+                # Create a dictionary of elements from the reference, keyed by their ID
+                ref_elements_by_id = {}
+                for elem in ref_value:
+                    if isinstance(elem, dict) and "m_nElementID" in elem:
+                        ref_elements_by_id[elem["m_nElementID"]] = elem
 
-                # Then add items from the reference object that aren't already in the list
-                # This is a simple append since modifiers and criteria are typically unique
-                for item in v:
-                    combined_list.append(item)
+                # Start with an empty result list
+                merged_list = []
 
-                merged_data[k] = combined_list
+                # Process elements from the reference object
+                for elem in v:
+                    if isinstance(elem, dict) and "m_nElementID" in elem:
+                        elem_id = elem["m_nElementID"]
+                        # If this element exists in the reference, merge them
+                        if elem_id in ref_elements_by_id:
+                            # Start with the reference element and update with ref object's values
+                            merged_elem = dict(ref_elements_by_id[elem_id])
+                            for elem_k, elem_v in elem.items():
+                                merged_elem[elem_k] = elem_v
+                            merged_list.append(merged_elem)
+                            # Remove this element from the reference dictionary
+                            del ref_elements_by_id[elem_id]
+                        else:
+                            # Element only exists in ref object, add it directly
+                            merged_list.append(elem)
+                    else:
+                        # Element doesn't have an ID, add it directly
+                        merged_list.append(elem)
+
+                # Add any remaining elements from the reference
+                for elem in ref_elements_by_id.values():
+                    merged_list.append(elem)
+
+                merged_data[k] = merged_list
             else:
-                # If not both lists, use the reference object's value
+                # If either value is not a list, use the reference object's value
                 merged_data[k] = v
         else:
             # For other keys, if ref object's value is None then inherit reference's value
