@@ -1136,18 +1136,25 @@ class SmartPropEditorMainWindow(QMainWindow):
         tree.scrollToItem(selected_items[-1] if direction > 0 else selected_items[0])
 
     def copy_item(self, tree, copy_to_clipboard=True):
-        selected_indexes = tree.selectedIndexes()
-        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
-        selected_items = list(set(selected_items))
+            selected_indexes = tree.selectedIndexes()
+            selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
+            selected_items = list(set(selected_items))
+            root_data = {"m_Children": []}
 
-        item_data = None
-        for tree_item in selected_items:
-            item_data = serialization_hierarchy_items(item=tree_item)
-        if copy_to_clipboard and item_data:
-            clipboard = QApplication.clipboard()
-            clipboard.setText(JsonToKv3(item_data))
-        else:
-            return JsonToKv3(item_data) if item_data else None
+            for tree_item in selected_items:
+                item_data = serialization_hierarchy_items(item=tree_item)
+                if item_data and "m_Children" in item_data:
+                    root_data["m_Children"].extend(item_data["m_Children"])
+
+            if root_data["m_Children"]:
+                if copy_to_clipboard:
+                    clipboard = QApplication.clipboard()
+                    clipboard.setText(JsonToKv3(root_data))
+                    return None
+                else:
+                    return JsonToKv3(root_data)
+            else:
+                return None
 
     def cut_item(self, tree: QTreeWidget):
         self.copy_item(tree)
@@ -1221,9 +1228,40 @@ class SmartPropEditorMainWindow(QMainWindow):
                     parent.takeChild(idx)
 
     def duplicate_hierarchy_items(self, tree):
-        data = self.copy_item(tree=tree, copy_to_clipboard=False)
-        if data:
-            self.paste_item(tree, data, paste_to_parent=True)
+        """Duplicate all selected items in the hierarchy tree."""
+        selected_indexes = tree.selectedIndexes()
+        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
+        selected_items = list(set(selected_items))
+
+        if not selected_items:
+            return
+
+        parent_to_items = {}
+        for item in selected_items:
+            parent = item.parent() or tree.invisibleRootItem()
+            if parent not in parent_to_items:
+                parent_to_items[parent] = []
+            parent_to_items[parent].append(item)
+
+        tree.clearSelection()
+
+        for parent, items in parent_to_items.items():
+            for item in items:
+                item_data = serialization_hierarchy_items(item=item)
+
+                if item_data and "m_Children" in item_data and item_data["m_Children"]:
+                    new_item = deserialize_hierarchy_item(item_data["m_Children"][0])
+                    parent.addChild(new_item)
+
+                    try:
+                        new_item.setText(0, unique_counter_name(new_item, tree))
+                    except Exception:
+                        pass
+
+                    new_item.setSelected(True)
+
+        if tree.selectedItems():
+            tree.scrollToItem(tree.selectedItems()[0])
 
     # ======================================[Window State]========================================
     def _restore_user_prefs(self):
