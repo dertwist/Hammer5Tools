@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'aexplorer.ui'
+## Form generated from reading UI file 'browser.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.8.2
 ##
@@ -54,7 +54,7 @@ class Ui_MainWindow(object):
         self.actionClear_All_Favorites.setIcon(icon3)
         self.actionOpen_current_path_in_Explorer = QAction(MainWindow)
         self.actionOpen_current_path_in_Explorer.setObjectName(u"actionOpen_current_path_in_Explorer")
-        self.actionOpen_current_path_in_Explorer.setIcon(icon3)
+        self.actionOpen_current_path_in_Explorer.setIcon(icon1)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_5 = QHBoxLayout(self.centralwidget)
