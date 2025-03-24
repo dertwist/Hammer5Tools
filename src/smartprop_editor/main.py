@@ -26,6 +26,8 @@ from PySide6.QtGui import (
     QKeySequence,
     QAction
 )
+from styles.common import qt_stylesheet_button
+
 from src.explorer.browser import FileBrowser
 from PySide6.QtCore import Qt, QTimer
 from src.settings.main import get_settings_value, get_settings_bool
@@ -51,6 +53,7 @@ from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.commands import DeleteTreeItemCommand, GroupElementsCommand
 from src.replace_dialog.main import FindAndReplaceDialog
 from src.explorer.main import Explorer
+from src.styles.common import qt_stylesheet_toolbutton
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
 from src.smartprop_editor.element_id import (
     update_value_ElementID,
@@ -144,6 +147,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.dockWidget_4.raise_()
 
         set_qdock_tab_style(self.findChildren)
+        self.ui.paste_variable_button.setStyleSheet(qt_stylesheet_toolbutton)
+        self.ui.add_new_variable_button.setStyleSheet(qt_stylesheet_toolbutton)
 
         self.undo_stack = QUndoStack(self)
 
