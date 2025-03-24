@@ -19,14 +19,47 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QDesktopServices, QIcon, QAction, QDrag
 
 from src.explorer.ui_browser import Ui_MainWindow
-from src.explorer.common import get_file_icon  # hypothetical function for extension-based icons
 from src.settings.main import get_settings_value, set_settings_value
+from src.explorer.common import *
+
+import os
+from PySide6.QtGui import QIcon
+
+def get_file_icon(path=None, is_folder=False):
+    """
+    Return a QIcon based on whether the item is a folder or determined by file extension.
+    This is a simplified example; adapt as necessary for your project.
+    """
+    if is_folder:
+        # Return folder icon
+        return QIcon.fromTheme("folder") or QIcon(":/icons/folder.png")
+
+    if not path:
+        # Fallback generic file icon
+        return QIcon.fromTheme("text-x-generic") or QIcon(":/icons/file.png")
+
+    # Extract file extension
+    _, extension = os.path.splitext(path)
+    extension = extension.lower()
+
+    # Example simplified logic:
+    if extension in [".png", ".jpg", ".jpeg", ".gif"]:
+        return QIcon.fromTheme("image-x-generic") or QIcon(":/icons/image.png")
+    elif extension in [".txt", ".log"]:
+        return QIcon.fromTheme("text-x-generic") or QIcon(":/icons/text.png")
+    elif extension in [".py"]:
+        return QIcon.fromTheme("text-x-python") or QIcon(":/icons/python.png")
+    else:
+        # Fallback generic file icon
+        return QIcon.fromTheme("text-x-generic") or QIcon(":/icons/file.png")
 
 
 def get_editor_or_default(editor_value):
     # Fallback, if no editor is specified, store under some default name:
     return editor_value if editor_value else "Hammer5Tools"
 
+
+from src.explorer.common import CustomFileSystemModel
 
 class FileBrowser(QMainWindow):
     file_opened = Signal(str)
@@ -37,6 +70,11 @@ class FileBrowser(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setWindowTitle("File Browser")
+
+        # Initialize the custom file system model (currently not used with QTreeWidget)
+        self.file_system_model = CustomFileSystemModel(self)
+        # Removed: QTreeWidget does not support setModel() so we omit this call.
+        # self.ui.filetree.setModel(self.file_system_model)
 
         # Store incoming arguments for root, extension, and editor.
         # They will be read from settings if not provided in the constructor.
@@ -77,6 +115,69 @@ class FileBrowser(QMainWindow):
         self.loadFileTree()
         self.setupContextMenus()
         self.setupDragAndDrop()
+
+    def setupFileTree(self):
+        self.ui.filetree.setHeaderLabels(["Name", "Size", "Modified"])
+        self.ui.filetree.setColumnWidth(0, 300)
+        self.ui.filetree.setSortingEnabled(True)
+
+    def populateFileTree(self, directory, parent_item):
+        try:
+            if self.isCacheValid(directory):
+                cached_entries = self.file_cache[directory]
+                for entry, metadata in cached_entries.items():
+                    full_path = os.path.join(directory, entry)
+                    item = QTreeWidgetItem(parent_item)
+                    display_name = entry
+                    item.setText(0, display_name)
+                    item.setData(0, Qt.UserRole, full_path)
+                    self.tree_item_index[full_path] = item
+                    # Set icon based on extension/folder
+                    if metadata is None or not metadata.get("is_file", False):
+                        item.setIcon(0, get_file_icon(None, is_folder=True))
+                        placeholder = QTreeWidgetItem(item)
+                        placeholder.setText(0, "Loading...")
+                        item.setData(0, Qt.UserRole + 1, "directory")
+                    else:
+                        size = self.formatFileSize(metadata.get("size", 0))
+                        item.setText(1, size)
+                        item.setText(2, metadata.get("modified", ""))
+                        item.setIcon(0, get_file_icon(full_path, is_folder=False))
+            else:
+                entries = os.listdir(directory)
+                entries.sort(key=lambda x: (not os.path.isdir(os.path.join(directory, x)), x.lower()))
+                dir_cache = {}
+                for entry in entries:
+                    full_path = os.path.join(directory, entry)
+                    file_info = QFileInfo(full_path)
+                    item = QTreeWidgetItem(parent_item)
+                    display_name = entry
+                    item.setText(0, display_name)
+                    item.setData(0, Qt.UserRole, full_path)
+                    self.tree_item_index[full_path] = item
+
+                    if file_info.isFile():
+                        size = self.formatFileSize(file_info.size())
+                        modified = file_info.lastModified().toString("yyyy-MM-dd hh:mm:ss")
+                        item.setText(1, size)
+                        item.setText(2, modified)
+                        item.setIcon(0, get_file_icon(full_path, is_folder=False))
+                        dir_cache[entry] = {
+                            "size": file_info.size(),
+                            "modified": modified,
+                            "is_file": True,
+                        }
+                    else:
+                        item.setIcon(0, get_file_icon(None, is_folder=True))
+                        placeholder = QTreeWidgetItem(item)
+                        placeholder.setText(0, "Loading...")
+                        item.setData(0, Qt.UserRole + 1, "directory")
+                        dir_cache[entry] = None
+                self.file_cache[directory] = dir_cache
+                self.cache_timestamps[directory] = time.time()
+                self.dir_mtimes[directory] = os.path.getmtime(directory)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", str(e))
 
     def loadConfig(self):
         """
@@ -560,7 +661,8 @@ class FileBrowser(QMainWindow):
         else:
             directory = self.ui.path.text().strip() or os.getcwd()
 
-        filename, ok = QInputDialog.getText(self, "Create New File", "Enter filename:", text="newfile.txt")
+        filename, ok = QInputDialog.getText(self, "Create New File", "Enter filename:", text="newfile")
+        filename = filename + self.extension
         if not ok or not filename:
             return
 
@@ -648,7 +750,6 @@ class FileBrowser(QMainWindow):
             self.openFileWithDefaultApp(file_path)
 
     def openRecentItem(self, item):
-        # The item in the list has data = dict or string? We stored a dict with "path" and "display"
         path_info = item.data(Qt.UserRole)
         if not path_info:
             return
@@ -661,7 +762,6 @@ class FileBrowser(QMainWindow):
                 self.openFileWithDefaultApp(file_path)
         else:
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
-            # remove from recent
             self._removePathFromList(self.recent_files, file_path)
             self.populateRecentList()
             self.saveConfig()
@@ -679,7 +779,6 @@ class FileBrowser(QMainWindow):
                 self.openFileWithDefaultApp(file_path)
         else:
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
-            # remove from favorites
             self._removePathFromList(self.favorite_paths, file_path)
             self.populateFavoritesList()
             self.saveConfig()
@@ -888,7 +987,6 @@ class FileBrowser(QMainWindow):
         self.saveConfig()
 
     def _removePathFromList(self, items_list, file_path):
-        # items_list is a list of { 'display': ..., 'path': ... }
         for idx, info in enumerate(items_list):
             if info.get("path") == file_path:
                 items_list.pop(idx)
@@ -907,7 +1005,6 @@ class FileBrowser(QMainWindow):
     def populateRecentList(self):
         self.ui.recent_list.clear()
 
-        # Remove invalid files on the fly
         valid_items = []
         for item in self.recent_files:
             if not isinstance(item, dict):
@@ -928,7 +1025,6 @@ class FileBrowser(QMainWindow):
     def populateFavoritesList(self):
         self.ui.favorites_list.clear()
 
-        # Remove invalid files on the fly
         valid_items = []
         for item in self.favorite_paths:
             if not isinstance(item, dict):
@@ -947,14 +1043,6 @@ class FileBrowser(QMainWindow):
             self.ui.favorites_list.item(list_item_index).setToolTip(path_info["path"])
 
     def _computeDisplayName(self, path_str):
-        """
-        Example:
-         Path to file:
-           "C:/Personal/Projects/Hammer5Tools/build/Hammer5Tools_Updater/Analysis-00.toc"
-         Display name:
-           "Hammer5Tools_Updater/Analysis-00.toc"
-        We take the last directory name + filename if possible.
-        """
         norm_path = os.path.normpath(path_str)
         parts = norm_path.split(os.sep)
         if len(parts) >= 2:
@@ -969,7 +1057,6 @@ class FileBrowser(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    # Example usage: FileBrowser(root="C:/", extension=".txt", editor="Notepad")
     window = FileBrowser()
     window.show()
     sys.exit(app.exec())
