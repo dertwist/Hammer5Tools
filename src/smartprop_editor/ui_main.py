@@ -51,12 +51,12 @@ class Ui_MainWindow(object):
         icon3 = QIcon()
         icon3.addFile(u":/valve_common/icons/tools/common/save.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.action_savefile.setIcon(icon3)
-        self.actionExplorer = QAction(MainWindow)
-        self.actionExplorer.setObjectName(u"actionExplorer")
+        self.actionFileBrowser = QAction(MainWindow)
+        self.actionFileBrowser.setObjectName(u"actionFileBrowser")
         icon4 = QIcon()
         icon4.addFile(u":/valve_common/icons/tools/common/find.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.actionExplorer.setIcon(icon4)
-        self.actionExplorer.setMenuRole(QAction.MenuRole.NoRole)
+        self.actionFileBrowser.setIcon(icon4)
+        self.actionFileBrowser.setMenuRole(QAction.MenuRole.NoRole)
         self.action_realtime_save = QAction(MainWindow)
         self.action_realtime_save.setObjectName(u"action_realtime_save")
         self.action_realtime_save.setCheckable(True)
@@ -106,7 +106,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 690, 700))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 674, 700))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -258,7 +258,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 283, 327))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 299, 338))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -289,30 +289,7 @@ class Ui_MainWindow(object):
         self.paste_variable_button = QToolButton(self.frame)
         self.paste_variable_button.setObjectName(u"paste_variable_button")
         self.paste_variable_button.setMaximumSize(QSize(28, 28))
-        self.paste_variable_button.setStyleSheet(u"QToolButton {\n"
-"\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:18px;\n"
-"    padding: 3px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QToolButton:pressed {\n"
-"    background-color: red;\n"
-"    background-color: #1C1C1C;\n"
-"    margin: 1 px;\n"
-"    margin-left: 2px;\n"
-"    margin-right: 2px;\n"
-"    font: 580 9pt \"Segoe UI\";\n"
-"\n"
-"}")
+        self.paste_variable_button.setStyleSheet(u"")
         icon7 = QIcon()
         icon7.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.paste_variable_button.setIcon(icon7)
@@ -323,30 +300,7 @@ class Ui_MainWindow(object):
         self.add_new_variable_button = QToolButton(self.frame)
         self.add_new_variable_button.setObjectName(u"add_new_variable_button")
         self.add_new_variable_button.setMaximumSize(QSize(28, 28))
-        self.add_new_variable_button.setStyleSheet(u"QToolButton {\n"
-"\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:18px;\n"
-"    padding: 3px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QToolButton:pressed {\n"
-"    background-color: red;\n"
-"    background-color: #1C1C1C;\n"
-"    margin: 1 px;\n"
-"    margin-left: 2px;\n"
-"    margin-right: 2px;\n"
-"    font: 580 9pt \"Segoe UI\";\n"
-"\n"
-"}")
+        self.add_new_variable_button.setStyleSheet(u"")
         icon8 = QIcon()
         icon8.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_new_variable_button.setIcon(icon8)
@@ -525,8 +479,37 @@ class Ui_MainWindow(object):
 
         self.dockWidget.setWidget(self.dockWidgetContents)
         MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget)
+        self.dockWidget_2 = QDockWidget(MainWindow)
+        self.dockWidget_2.setObjectName(u"dockWidget_2")
+        self.dockWidget_2.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.dockWidgetContents_3 = QWidget()
+        self.dockWidgetContents_3.setObjectName(u"dockWidgetContents_3")
+        self.verticalLayout = QVBoxLayout(self.dockWidgetContents_3)
+        self.verticalLayout.setSpacing(0)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.choices_tree_widget = QTreeWidget(self.dockWidgetContents_3)
+        self.choices_tree_widget.setObjectName(u"choices_tree_widget")
+        self.choices_tree_widget.setDragEnabled(False)
+        self.choices_tree_widget.setDragDropMode(QAbstractItemView.DragDropMode.NoDragDrop)
+        self.choices_tree_widget.setAlternatingRowColors(True)
+        self.choices_tree_widget.setUniformRowHeights(True)
+        self.choices_tree_widget.header().setVisible(True)
+        self.choices_tree_widget.header().setCascadingSectionResizes(False)
+        self.choices_tree_widget.header().setMinimumSectionSize(150)
+        self.choices_tree_widget.header().setDefaultSectionSize(180)
+        self.choices_tree_widget.header().setProperty(u"showSortIndicator", True)
+
+        self.verticalLayout.addWidget(self.choices_tree_widget)
+
+        self.dockWidget_2.setWidget(self.dockWidgetContents_3)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_2)
+        self.toolBar = QToolBar(MainWindow)
+        self.toolBar.setObjectName(u"toolBar")
+        MainWindow.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolBar)
         self.dockWidget_10 = QDockWidget(MainWindow)
         self.dockWidget_10.setObjectName(u"dockWidget_10")
+        self.dockWidget_10.setEnabled(True)
         self.dockWidget_10.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.dockWidget_10.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
         self.explorer_layout_widget = QWidget()
@@ -785,36 +768,8 @@ class Ui_MainWindow(object):
 
         self.dockWidget_10.setWidget(self.explorer_layout_widget)
         MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget_10)
-        self.dockWidget_2 = QDockWidget(MainWindow)
-        self.dockWidget_2.setObjectName(u"dockWidget_2")
-        self.dockWidget_2.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidgetContents_3 = QWidget()
-        self.dockWidgetContents_3.setObjectName(u"dockWidgetContents_3")
-        self.verticalLayout = QVBoxLayout(self.dockWidgetContents_3)
-        self.verticalLayout.setSpacing(0)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.choices_tree_widget = QTreeWidget(self.dockWidgetContents_3)
-        self.choices_tree_widget.setObjectName(u"choices_tree_widget")
-        self.choices_tree_widget.setDragEnabled(False)
-        self.choices_tree_widget.setDragDropMode(QAbstractItemView.DragDropMode.NoDragDrop)
-        self.choices_tree_widget.setAlternatingRowColors(True)
-        self.choices_tree_widget.setUniformRowHeights(True)
-        self.choices_tree_widget.header().setVisible(True)
-        self.choices_tree_widget.header().setCascadingSectionResizes(False)
-        self.choices_tree_widget.header().setMinimumSectionSize(150)
-        self.choices_tree_widget.header().setDefaultSectionSize(180)
-        self.choices_tree_widget.header().setProperty(u"showSortIndicator", True)
 
-        self.verticalLayout.addWidget(self.choices_tree_widget)
-
-        self.dockWidget_2.setWidget(self.dockWidgetContents_3)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_2)
-        self.toolBar = QToolBar(MainWindow)
-        self.toolBar.setObjectName(u"toolBar")
-        MainWindow.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolBar)
-
-        self.toolBar.addAction(self.actionExplorer)
+        self.toolBar.addAction(self.actionFileBrowser)
         self.toolBar.addAction(self.action_realtime_save)
         self.toolBar.addSeparator()
         self.toolBar.addAction(self.action_newfile)
@@ -835,7 +790,7 @@ class Ui_MainWindow(object):
         self.action_openfile.setText(QCoreApplication.translate("MainWindow", u"Open File", None))
         self.action_savefile_as.setText(QCoreApplication.translate("MainWindow", u"Save as", None))
         self.action_savefile.setText(QCoreApplication.translate("MainWindow", u"Save", None))
-        self.actionExplorer.setText(QCoreApplication.translate("MainWindow", u"Explorer", None))
+        self.actionFileBrowser.setText(QCoreApplication.translate("MainWindow", u"File Explorer", None))
         self.action_realtime_save.setText(QCoreApplication.translate("MainWindow", u"Realtime save", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
         self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select an element in the hierarchy", None))
@@ -859,6 +814,12 @@ class Ui_MainWindow(object):
         self.add_new_variable_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Create variable</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.add_new_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
+        self.dockWidget_2.setWindowTitle(QCoreApplication.translate("MainWindow", u"Choices", None))
+        ___qtreewidgetitem1 = self.choices_tree_widget.headerItem()
+        ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
+        ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
+        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Label", None));
+        self.toolBar.setWindowTitle(QCoreApplication.translate("MainWindow", u"toolBar", None))
         self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
 #if QT_CONFIG(tooltip)
         self.open_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><br/></p></body></html>", None))
@@ -893,11 +854,5 @@ class Ui_MainWindow(object):
         self.open_file_as_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+O", None))
 #endif // QT_CONFIG(shortcut)
         self.realtime_save_checkbox.setText(QCoreApplication.translate("MainWindow", u"Realtime save", None))
-        self.dockWidget_2.setWindowTitle(QCoreApplication.translate("MainWindow", u"Choices", None))
-        ___qtreewidgetitem1 = self.choices_tree_widget.headerItem()
-        ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
-        ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
-        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Label", None));
-        self.toolBar.setWindowTitle(QCoreApplication.translate("MainWindow", u"toolBar", None))
     # retranslateUi
 
