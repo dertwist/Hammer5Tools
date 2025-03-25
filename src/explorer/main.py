@@ -206,15 +206,19 @@ class Explorer(QMainWindow):
             self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(source_index))
 
     def add_recent_file(self, path):
+        if not path:
+            return
+        normalized_path = os.path.normpath(path)
         recent = self.load_recent_files()
-        if path in recent:
-            recent.remove(path)
-        recent.insert(0, path)
+        normalized_recent = [os.path.normpath(p) for p in recent if p]
+        if normalized_path in normalized_recent:
+            index = normalized_recent.index(normalized_path)
+            recent.pop(index)
+        recent.insert(0, normalized_path)
         if len(recent) > 30:
             recent = recent[:30]
         set_settings_value(self.editor_name + '_recent_files', self.addon, recent)
         self.recent_files = recent
-
     def load_recent_files(self):
         rf = get_settings_value(self.editor_name + '_recent_files', self.addon)
         if rf is None:
@@ -227,11 +231,15 @@ class Explorer(QMainWindow):
     def select_tree_item(self, path):
         self.add_recent_file(path)
         source_index = self.model.index(path)
-        if source_index.isValid():
-            proxy_index = self.filter_proxy_model.mapFromSource(source_index)
-            self.tree.selectionModel().clear()
-            self.tree.selectionModel().select(proxy_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
-            self.tree.scrollTo(proxy_index)
+        if not source_index.isValid():
+            debug("select_tree_item: invalid path - %s" % path)
+            return
+        proxy_index = self.filter_proxy_model.mapFromSource(source_index)
+        selection_model = self.tree.selectionModel()
+        selection_model.clear()
+        selection_model.select(proxy_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+        self.tree.setCurrentIndex(proxy_index)
+        self.tree.scrollTo(proxy_index)
 
     def select_last_opened_path(self):
         try:
@@ -516,6 +524,7 @@ class Explorer(QMainWindow):
 
     def open_recent_files_dialog(self):
         dialog = QDialog(self)
+        dialog.setMinimumWidth(500)
         dialog.setWindowTitle("Recent Files")
         layout = QVBoxLayout(dialog)
         filter_edit = QLineEdit(dialog)
@@ -523,9 +532,14 @@ class Explorer(QMainWindow):
         layout.addWidget(filter_edit)
         list_widget = QListWidget(dialog)
         for path in self.recent_files:
-            relative_path = os.path.relpath(path, self.tree_directory)
-            item = QListWidgetItem(relative_path)
-            list_widget.addItem(item)
+            if path:
+                try:
+                    relative_path = os.path.relpath(path, self.tree_directory)
+                    item = QListWidgetItem(relative_path)
+                    list_widget.addItem(item)
+                except Exception as e:
+                    # Log or ignore invalid paths
+                    debug(f"Skipping invalid recent file path: {path} ({e})")
         layout.addWidget(list_widget)
         button_layout = QHBoxLayout()
         ok_button = QPushButton("OK", dialog)
@@ -533,16 +547,19 @@ class Explorer(QMainWindow):
         button_layout.addWidget(ok_button)
         button_layout.addWidget(cancel_button)
         layout.addLayout(button_layout)
+
         def on_item_double_clicked(item):
             selected_relative = item.text()
             full_path = os.path.join(self.tree_directory, selected_relative)
             if os.path.exists(full_path):
                 self.select_tree_item(full_path)
             dialog.accept()
+
         def filter_items(text):
             for index in range(list_widget.count()):
                 item = list_widget.item(index)
                 item.setHidden(text.lower() not in item.text().lower())
+
         filter_edit.textChanged.connect(filter_items)
         list_widget.itemDoubleClicked.connect(on_item_double_clicked)
         ok_button.clicked.connect(lambda: dialog.accept())
@@ -554,7 +571,9 @@ class Explorer(QMainWindow):
         if current_index.isValid():
             source_index = self.filter_proxy_model.mapToSource(current_index)
             return self.model.filePath(source_index)
-        return None
+        else:
+            error_dialog = ErrorInfo(text="No file selected", details="Please select a file.")
+            error_dialog.exec_()
 
     def closeEvent(self, event):
         tree_state = self.tree.saveState()
