@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, QUrl, QDir, QFileInfo, QMimeData, QTimer
 from PySide6.QtWidgets import (QMainWindow, QApplication, QMessageBox,
                                QFileDialog, QTreeWidgetItem, QMenu, QInputDialog)
 from PySide6.QtGui import QDesktopServices, QIcon, QAction, QDrag
-from src.explorer.ui_browser import Ui_MainWindow
+from src.explorer.ui_aexplorer import Ui_MainWindow
 
 class ExplorerMainWindow(QMainWindow):
     def __init__(self, parent=None):
