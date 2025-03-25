@@ -1,10 +1,10 @@
 import os
 import re
 import shutil
-from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QMessageBox, QFrame
+from PySide6.QtWidgets import QMainWindow, QTreeView, QVBoxLayout, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QMessageBox, QFrame, QToolButton, QLineEdit, QHBoxLayout, QDialog, QPushButton, QListWidget, QListWidgetItem
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel
+from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel
 
 from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, debug
 from src.widgets_common import ErrorInfo
@@ -126,6 +126,7 @@ class Explorer(QMainWindow):
 
     def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None, use_internal_player: bool = True):
         super().__init__(parent)
+        # Main file system model
         self.model = CustomFileSystemModel(self)
         self.model.setRootPath(tree_directory)
         try:
@@ -137,16 +138,49 @@ class Explorer(QMainWindow):
         self.use_internal_player = use_internal_player
         if not self.use_internal_player:
             self.audio_player = None
+
+        # Initialize recent files list for this editor and addon
+        self.recent_files = []
+
+        # Create filter proxy model and set filter column to file name
+        self.filter_proxy = QSortFilterProxyModel(self)
+        self.filter_proxy.setSourceModel(self.model)
+        self.filter_proxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.filter_proxy.setFilterKeyColumn(CustomFileSystemModel.NAME_COLUMN)
+        # Enable dynamic sorting/filtering and recursive filtering
+        self.filter_proxy.setDynamicSortFilter(True)
+        self.filter_proxy.setRecursiveFilteringEnabled(True)
+
+        # Create filter editline and toolbuttons in a horizontal layout.
+        # Layout order: Filter Editline (expanding) | Goto (icon-only) | Recent (icon-only)
+        self.filter_edit = QLineEdit(self)
+        self.filter_edit.setPlaceholderText("Filter files...")
+        self.filter_edit.textChanged.connect(lambda text: self.filter_proxy.setFilterWildcard(text))
+
+        self.goto_btn = QToolButton(self)
+        self.goto_btn.setIcon(QIcon("://icons/folder.svg"))
+        self.goto_btn.setToolTip("Goto")
+        self.goto_btn.clicked.connect(self.show_goto_dialog)
+
+        self.recent_btn = QToolButton(self)
+        self.recent_btn.setIcon(QIcon("://icons/clock.svg"))
+        self.recent_btn.setToolTip("Recent Files")
+        self.recent_btn.clicked.connect(self.show_recent_files_dialog)
+
+        self.top_layout = QHBoxLayout()
+        self.top_layout.addWidget(self.filter_edit, 1)
+        self.top_layout.addWidget(self.goto_btn)
+        self.top_layout.addWidget(self.recent_btn)
+
+        # Create file tree view and set proxy model as its model
         self.tree = QTreeView(self)
-        self.tree.setModel(self.model)
-        self.tree.setRootIndex(self.model.index(tree_directory))
+        self.tree.setModel(self.filter_proxy)
+        # Set the root index into the proxy model
+        self.tree.setRootIndex(self.filter_proxy.mapFromSource(self.model.index(tree_directory)))
         self.tree.setSortingEnabled(True)
         for column in range(self.model.columnCount()):
             if column not in (CustomFileSystemModel.NAME_COLUMN, CustomFileSystemModel.SIZE_COLUMN):
                 self.tree.setColumnHidden(column, True)
-        self.layout = QVBoxLayout(self)
-        self.layout.addWidget(self.tree)
-        self.layout.setContentsMargins(0, 0, 0, 0)
         self.tree.setItemDelegateForColumn(CustomFileSystemModel.SIZE_COLUMN, QStyledItemDelegate())
         self.tree.header().setStretchLastSection(False)
         self.tree.header().setSectionResizeMode(CustomFileSystemModel.NAME_COLUMN, QHeaderView.Stretch)
@@ -161,19 +195,32 @@ class Explorer(QMainWindow):
         self.tree.customContextMenuRequested.connect(self.open_context_menu)
         self.tree.viewport().installEventFilter(self)
         self.tree.installEventFilter(self)
+
+        # Overall layout: top_layout (editline and toolbuttons), then file tree view
+        self.layout = QVBoxLayout()
+        self.layout.addLayout(self.top_layout)
+        self.layout.addWidget(self.tree)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        self.frame = QFrame(self)
+        self.frame.setLayout(self.layout)
+        self.setCentralWidget(self.frame)
+
         self.addon = addon
         self.editor_name = editor_name
         self.tree_directory = tree_directory
         self.select_last_opened_path()
-        self.frame = QFrame(self)
-        self.frame.setLayout(self.layout)
         self.tree.selectionModel().currentChanged.connect(self.on_directory_changed)
 
+    # Updated to work with proxy model mapping
     def select_tree_item(self, path):
-        last_opened_index = self.model.index(path)
+        source_index = self.model.index(path)
+        if not source_index.isValid():
+            return
+        proxy_index = self.filter_proxy.mapFromSource(source_index)
         self.tree.selectionModel().clear()
-        self.tree.selectionModel().select(last_opened_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
-        self.tree.scrollTo(last_opened_index)
+        self.tree.selectionModel().select(proxy_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+        self.tree.scrollTo(proxy_index)
 
     def select_last_opened_path(self):
         try:
@@ -188,9 +235,11 @@ class Explorer(QMainWindow):
         set_settings_value(self.editor_name + '_explorer_lath_path', self.addon, path)
 
     def on_directory_changed(self, current, previous):
-        current_path = self.model.filePath(current)
+        current_source = self.filter_proxy.mapToSource(current)
+        current_path = self.model.filePath(current_source)
         self.save_current_path(current_path)
         if not os.path.isdir(current_path):
+            self.add_recent_file(current_path)
             self.play_audio_file(current_path)
 
     def play_audio_file(self, file_path):
@@ -226,16 +275,17 @@ class Explorer(QMainWindow):
         index = self.tree.indexAt(position)
         menu = QMenu()
         if index.isValid():
-            if self.model.isDir(index):
-                self.add_folder_actions(menu, index)
+            source_index = self.filter_proxy.mapToSource(index)
+            if self.model.isDir(source_index):
+                self.add_folder_actions(menu, source_index)
             else:
-                self.add_file_actions(menu, index)
+                self.add_file_actions(menu, source_index)
         else:
             create_folder_action = QAction("Create Folder", self)
-            create_folder_action.triggered.connect(lambda: self.create_folder(self.tree.rootIndex()))
+            create_folder_action.triggered.connect(lambda: self.create_folder(self.model.index(self.tree_directory)))
             menu.addAction(create_folder_action)
             paste_action = QAction("Paste File", self)
-            paste_action.triggered.connect(lambda: self.paste_file(index))
+            paste_action.triggered.connect(lambda: self.paste_file(self.model.index(self.tree_directory)))
             menu.addAction(paste_action)
         menu.exec_(self.tree.viewport().mapToGlobal(position))
 
@@ -409,7 +459,7 @@ class Explorer(QMainWindow):
         indexes = self.tree.selectionModel().selectedIndexes()
         if not indexes:
             return
-        paths = [self.model.filePath(index) for index in indexes if index.column() == CustomFileSystemModel.NAME_COLUMN]
+        paths = [self.model.filePath(self.filter_proxy.mapToSource(index)) for index in indexes if index.column() == CustomFileSystemModel.NAME_COLUMN]
         reply = QMessageBox.question(self, 'Remove Items', "Are you sure you want to remove the selected items?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             for path in paths:
@@ -434,5 +484,75 @@ class Explorer(QMainWindow):
             counter += 1
         QDir(parent_path).mkdir(QFileInfo(new_folder_path).fileName())
         new_folder_index = self.model.index(new_folder_path)
-        self.tree.edit(new_folder_index)
+        self.tree.edit(self.filter_proxy.mapFromSource(new_folder_index))
         self.select_tree_item(new_folder_path)
+
+    # Add the given file_path to the recent files list (limit to 10 items)
+    def add_recent_file(self, file_path):
+        if file_path not in self.recent_files:
+            self.recent_files.insert(0, file_path)
+            if len(self.recent_files) > 10:
+                self.recent_files.pop()
+
+    # Displays a dialog allowing the user to input a path and then focus on that file/folder
+    def show_goto_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Goto")
+        layout = QVBoxLayout(dialog)
+        editline = QLineEdit(dialog)
+        editline.setPlaceholderText("Enter full path...")
+        layout.addWidget(editline)
+        btn_layout = QHBoxLayout()
+        ok_btn = QPushButton("OK", dialog)
+        cancel_btn = QPushButton("Cancel", dialog)
+        btn_layout.addWidget(ok_btn)
+        btn_layout.addWidget(cancel_btn)
+        layout.addLayout(btn_layout)
+
+        def on_ok():
+            path = editline.text().strip()
+            if path and os.path.exists(path):
+                self.select_tree_item(path)
+            dialog.accept()
+
+        ok_btn.clicked.connect(on_ok)
+        cancel_btn.clicked.connect(dialog.reject)
+        dialog.exec_()
+
+    # Displays a dialog with a list of recent files for this editor+addon.
+    def show_recent_files_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Recent Files")
+        layout = QVBoxLayout(dialog)
+        list_widget = QListWidget(dialog)
+        for file_path in self.recent_files:
+            item = QListWidgetItem(file_path)
+            list_widget.addItem(item)
+        layout.addWidget(list_widget)
+        btn_layout = QHBoxLayout()
+        ok_btn = QPushButton("OK", dialog)
+        cancel_btn = QPushButton("Cancel", dialog)
+        btn_layout.addWidget(ok_btn)
+        btn_layout.addWidget(cancel_btn)
+        layout.addLayout(btn_layout)
+
+        def on_ok():
+            current_item = list_widget.currentItem()
+            if current_item:
+                selected_path = current_item.text()
+                if os.path.exists(selected_path):
+                    self.select_tree_item(selected_path)
+            dialog.accept()
+
+        ok_btn.clicked.connect(on_ok)
+        cancel_btn.clicked.connect(dialog.reject)
+        dialog.exec_()
+
+if __name__ == "__main__":
+    import sys
+    from PySide6.QtWidgets import QApplication
+    app = QApplication(sys.argv)
+    # For demonstration, use current directory as tree_directory and dummy addon/editor name
+    explorer = Explorer(tree_directory=os.getcwd(), addon="default", editor_name="demo_editor")
+    explorer.show()
+    sys.exit(app.exec())
