@@ -127,7 +127,7 @@ class FileBrowser(QMainWindow):
         self.ui.favorites_list.itemClicked.connect(lambda item: self.focusOnFileInTree(item.data(Qt.UserRole)["path"]))
 
         # Connect Explorer tree signals in place of ui.filetree signals.
-        self.explorer.tree.itemDoubleClicked.connect(self.treeItemDoubleClicked)
+        self.explorer.tree.doubleClicked.connect(self.treeItemDoubleClicked)
         # If Explorer emits additional signals (like expanded), connect accordingly.
 
     def setupContextMenus(self):
@@ -249,7 +249,7 @@ class FileBrowser(QMainWindow):
 
     def createNewFile(self):
         # Determine the directory: if a tree item is selected, use its path.
-        selected_item = self.explorer.tree.currentItem()
+        selected_item = self.explorer.tree.currentItem() if hasattr(self.explorer.tree, 'currentItem') else None
         if selected_item:
             selected_path = selected_item.data(0, Qt.UserRole)
             directory = selected_path if os.path.isdir(selected_path) else os.path.dirname(selected_path)
@@ -291,7 +291,7 @@ class FileBrowser(QMainWindow):
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
 
     def addToFavorites(self):
-        selected = self.explorer.tree.currentItem()
+        selected = self.explorer.tree.currentItem() if hasattr(self.explorer.tree, 'currentItem') else None
         if selected:
             file_path = selected.data(0, Qt.UserRole)
             if file_path and os.path.exists(file_path) and not self._inFavorites(file_path):
@@ -323,8 +323,8 @@ class FileBrowser(QMainWindow):
         directory = self.ui.path.text().strip() or os.getcwd()
         QDesktopServices.openUrl(QUrl.fromLocalFile(directory))
 
-    def treeItemDoubleClicked(self, item, column):
-        file_path = item.data(0, Qt.UserRole)
+    def treeItemDoubleClicked(self, index):
+        file_path = self.explorer.model.filePath(index)
         if not file_path:
             return
         if os.path.isdir(file_path):
