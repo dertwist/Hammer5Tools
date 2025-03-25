@@ -393,10 +393,9 @@ class BatchCreatorMainWindow(QMainWindow):
             QMessageBox.warning(self, "Invalid Path", "Select a valid folder.")
             return
 
-        model = self.explorer.tree.model()
-        file_path = model.filePath(index)
+        file_path = self.explorer.get_current_path()
 
-        if not model.isDir(index):
+        if not os.path.isdir(file_path):
             QMessageBox.warning(self, "Invalid Selection", "Please select a folder.")
             return
 
@@ -446,21 +445,20 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_title('saved', self.current_file)
 
     def open_file(self):
-        """Open a file selected in the explorer."""
-        indexes = self.explorer.tree.selectionModel().selectedIndexes()
-        if indexes:
-            index = indexes[0]
-            file_path = self.explorer.model.filePath(index)
-            if not self.explorer.model.isDir(index):
-                if os.path.splitext(file_path)[1] != ".hbat":
-                    if not self.confirm_open_anyway():
-                        return
-                self.load_file(file_path)
-                self.update_title('opened', file_path)
+            file_path = self.explorer.get_current_path()
+            if file_path:
+                # Check if it's a file and not a folder
+                if not os.path.isdir(file_path):
+                    ext = os.path.splitext(file_path)[1]
+                    if ext != ".hbat":
+                        if not self.confirm_open_anyway():
+                            return
+                    self.load_file(file_path)
+                    self.update_title('opened', file_path)
+                else:
+                    QMessageBox.information(self, "Folder Selected", "You have selected a folder. Please select a file to open.")
             else:
-                QMessageBox.information(self, "Folder Selected", "You have selected a folder. Please select a file to open.")
-        else:
-            QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
+                QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
 
     def confirm_open_anyway(self) -> bool:
         """Confirm opening a file with an unsupported extension."""

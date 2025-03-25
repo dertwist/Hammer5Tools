@@ -102,8 +102,7 @@ class HotkeyEditorMainWindow(QMainWindow):
     def set_current(self, explorer_path=True):
         path_keybindings = os.path.join(get_cs2_path(), 'game', 'core', 'tools', 'keybindings')
         if explorer_path:
-            index = self.explorer_instance.tree.selectionModel().selectedIndexes()[0]
-            source = self.explorer_instance.model.filePath(index)
+            source = self.explorer_instance.get_current_path()
         else:
             source = self.opened_file
 
@@ -203,8 +202,8 @@ class HotkeyEditorMainWindow(QMainWindow):
         debug(self.selected_preset)
 
 
-        index = self.explorer_instance.tree.selectionModel().selectedIndexes()[0]
-        filename = self.explorer_instance.model.filePath(index)
+        filename = self.explorer_instance.get_current_path()
+        self.explorer_instance.add_recent_file(filename)
         try:
             self.data.update(kv3.read(filename).value)
         except Exception as error:
