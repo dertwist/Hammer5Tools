@@ -3,7 +3,7 @@ import sys
 import json
 import shutil
 import re
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt, QUrl, QSortFilterProxyModel, QRegularExpression
 from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog, QInputDialog, QMenu
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 
@@ -27,18 +27,10 @@ class FileBrowser(QMainWindow):
         self.ui.setupUi(self)
         self.setWindowTitle("File Browser")
 
-        # Instead of initializing the FileTreeManager, we now initialize Explorer
-        # Explorer is expected to provide a QTreeView via its "tree" property and
-        # similar helper functions as FileTreeManager.
+        # Instead of initializing the FileTreeManager, we now initialize Explorer.
         self.explorer = Explorer(parent=self, tree_directory=root, addon=None, editor_name=editor)
-        # Embed the Explorer widget into the designated container in the UI.
-        # For example, if Ui_MainWindow has a layout placeholder "filetree_container":
         self.ui.filetree_container.layout().addWidget(self.explorer.tree)
 
-        # Use the Explorer's tree in lieu of ui.filetree from now on.
-        # (Adjust any additional adapter code as needed.)
-
-        # Store incoming arguments or load from settings.
         self.root = root
         self.extension = extension
         self.editor = editor
@@ -49,6 +41,18 @@ class FileBrowser(QMainWindow):
         self.path_history = []
         self.current_path_index = -1
         self.max_history = 50
+
+        # Set up a QSortFilterProxyModel for filtering the Explorer's model
+        self.filterProxyModel = QSortFilterProxyModel(self)
+        self.filterProxyModel.setSourceModel(self.explorer.model)
+        self.filterProxyModel.setDynamicSortFilter(True)
+        # We will filter by name only, i.e. column 0 in the underlying model
+        self.filterProxyModel.setFilterKeyColumn(0)
+        # Ensure we ignore case
+        self.filterProxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
+
+        # Make the tree in Explorer use our filterProxyModel
+        self.explorer.tree.setModel(self.filterProxyModel)
 
         self.loadConfig()
         # Override the path field if root is provided:
@@ -84,8 +88,6 @@ class FileBrowser(QMainWindow):
                 self.favorite_paths = []
             if last_path and os.path.exists(last_path):
                 self.ui.path.setText(last_path)
-                # Delegate cache usage to Explorer if needed.
-                # For example, if Explorer has an add_to_cache_queue method:
                 if hasattr(self.explorer, 'add_to_cache_queue'):
                     self.explorer.add_to_cache_queue(last_path)
         except Exception as e:
@@ -123,15 +125,16 @@ class FileBrowser(QMainWindow):
         self.ui.actionOpen_current_path_in_Explorer.triggered.connect(self.openCurrentPath)
         self.ui.recent_list.itemDoubleClicked.connect(self.openRecentItem)
         self.ui.favorites_list.itemDoubleClicked.connect(self.openFavoriteItem)
-        self.ui.recent_list.itemClicked.connect(lambda item: self.focusOnFileInTree(item.data(Qt.UserRole)["path"]))
-        self.ui.favorites_list.itemClicked.connect(lambda item: self.focusOnFileInTree(item.data(Qt.UserRole)["path"]))
-
+        self.ui.recent_list.itemClicked.connect(
+            lambda item: self.focusOnFileInTree(item.data(Qt.UserRole)["path"])
+        )
+        self.ui.favorites_list.itemClicked.connect(
+            lambda item: self.focusOnFileInTree(item.data(Qt.UserRole)["path"])
+        )
         # Connect Explorer tree signals in place of ui.filetree signals.
         self.explorer.tree.doubleClicked.connect(self.treeItemDoubleClicked)
-        # If Explorer emits additional signals (like expanded), connect accordingly.
 
     def setupContextMenus(self):
-        # Configure context menus on the Explorer tree instead of the original filetree widget.
         self.explorer.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.explorer.tree.customContextMenuRequested.connect(self.showFileTreeContextMenu)
         self.ui.recent_list.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -143,7 +146,6 @@ class FileBrowser(QMainWindow):
         self.explorer.tree.setDragEnabled(True)
         self.explorer.tree.setAcceptDrops(True)
         self.explorer.tree.setDropIndicatorShown(True)
-        # Assuming the Explorer tree supports internal drag‐drop movement:
         self.explorer.tree.setDragDropMode(self.explorer.tree.DragDropMode.DragDrop)
         self.ui.favorites_list.setDragEnabled(True)
         self.ui.recent_list.setDragEnabled(True)
@@ -167,17 +169,19 @@ class FileBrowser(QMainWindow):
     def loadFileTree(self):
         directory = self.ui.path.text().strip() or os.getcwd()
         self.addToPathHistory(directory)
-        # Delegates the loading to Explorer. If Explorer does not expose a load method,
-        # update the tree model's root index manually.
-        if not self.ui.filter.text():
-            # If Explorer has a load method, use it.
-            if hasattr(self.explorer, 'load'):
-                self.explorer.load(directory)
-            else:
-                self.explorer.model.setRootPath(directory)
-                self.explorer.tree.setRootIndex(self.explorer.model.index(directory))
+
+        # Update the root index in the source model
+        dirIndex = self.explorer.model.index(directory)
+        if dirIndex.isValid():
+            # Map the source model index through the proxy
+            proxyIndex = self.filterProxyModel.mapFromSource(dirIndex)
+            self.explorer.tree.setRootIndex(proxyIndex)
         else:
-            self.applyFilter()
+            # Fallback if invalid directory
+            QMessageBox.warning(self, "Invalid Directory", f"Directory does not exist:\n{directory}")
+
+        # After setting the root, apply any current filter
+        self.applyFilter()
 
     def addToPathHistory(self, path):
         if self.path_history and self.path_history[-1] == path:
@@ -189,54 +193,22 @@ class FileBrowser(QMainWindow):
             self.current_path_index = len(self.path_history) - 1
 
     def applyFilter(self):
-        filter_text = self.ui.filter.text().lower()
+        filter_text = self.ui.filter.text().strip()
         include_subdir = self.ui.subdir.isChecked()
-        current_path = self.ui.path.text().strip() or os.getcwd()
-        # Clear the Explorer tree (if supported)
-        if hasattr(self.explorer, 'clear'):
-            self.explorer.clear()
-        # When no filter is applied, simply load the directory.
-        if not filter_text:
-            self.loadFileTree()
-            if self.lastFocusedFile and os.path.exists(self.lastFocusedFile):
-                self.focusOnFileInTree(self.lastFocusedFile)
-            return
-        # If Explorer provides filtering/search functionality,
-        # then use that instead of the old filetree_manager methods.
-        if include_subdir:
-            # For deep search; assuming explorer has a perform_deep_search method.
-            if hasattr(self.explorer, 'perform_deep_search'):
-                matches = self.explorer.perform_deep_search(current_path, filter_text)
-            else:
-                matches = []
+
+        # For Qt 6, we can do this to filter recursively
+        if hasattr(self.filterProxyModel, 'setRecursiveFilteringEnabled'):
+            self.filterProxyModel.setRecursiveFilteringEnabled(include_subdir)
+
+        # Use wildcards or a RegularExpression-based search
+        if filter_text:
+            # Example: match anywhere in the filename
+            pattern = f".*{re.escape(filter_text)}.*"
+            regex = QRegularExpression(pattern, QRegularExpression.CaseInsensitiveOption)
+            self.filterProxyModel.setFilterRegularExpression(regex)
         else:
-            if hasattr(self.explorer, 'perform_shallow_search'):
-                matches = self.explorer.perform_shallow_search(current_path, filter_text)
-            else:
-                matches = []
-        # Repopulate the Explorer tree with the matching items.
-        # (You may need to adjust this section depending on Explorer's API.)
-        for full_path, rel_path in matches:
-            # Create a temporary tree widget item and add it into the Explorer tree.
-            # This example assumes that Explorer.tree is a QTreeWidget.
-            from PySide6.QtWidgets import QTreeWidgetItem
-            item = QTreeWidgetItem(self.explorer.tree)
-            item.setText(0, rel_path)
-            item.setData(0, Qt.UserRole, full_path)
-            item.setToolTip(0, full_path)
-            if os.path.isdir(full_path):
-                # Assume Explorer handles icons internally; otherwise add your icon.
-                pass
-            else:
-                try:
-                    from PySide6.QtCore import QFileInfo
-                    file_info = QFileInfo(full_path)
-                    size = self.explorer.format_file_size(file_info.size()) if hasattr(self.explorer, 'format_file_size') else ""
-                    modified = file_info.lastModified().toString("yyyy-MM-dd hh:mm:ss")
-                    item.setText(1, size)
-                    item.setText(2, modified)
-                except Exception:
-                    pass
+            # Clear any filter
+            self.filterProxyModel.setFilterRegularExpression(QRegularExpression())
 
     def navigateUp(self):
         current_path = self.ui.path.text().strip()
@@ -248,17 +220,27 @@ class FileBrowser(QMainWindow):
             self.loadFileTree()
 
     def createNewFile(self):
-        # Determine the directory: if a tree item is selected, use its path.
-        selected_item = self.explorer.tree.currentItem() if hasattr(self.explorer.tree, 'currentItem') else None
-        if selected_item:
-            selected_path = selected_item.data(0, Qt.UserRole)
-            directory = selected_path if os.path.isdir(selected_path) else os.path.dirname(selected_path)
-        else:
+        selected_index = self.explorer.tree.currentIndex()
+        # We must map through the proxy to the underlying model
+        source_index = self.filterProxyModel.mapToSource(selected_index)
+        selected_path = self.explorer.model.filePath(source_index) if source_index.isValid() else None
+
+        directory = None
+        if selected_path and os.path.isdir(selected_path):
+            directory = selected_path
+        elif selected_path and os.path.isfile(selected_path):
+            directory = os.path.dirname(selected_path)
+
+        if not directory:
             directory = self.ui.path.text().strip() or os.getcwd()
+
         filename, ok = QInputDialog.getText(self, "Create New File", "Enter filename:", text="newfile")
-        filename = f"{filename}.{self.extension}"
         if not ok or not filename:
             return
+
+        if self.extension:
+            filename = f"{filename}.{self.extension}"
+
         file_path = os.path.join(directory, filename)
         if os.path.exists(file_path):
             reply = QMessageBox.question(self, "File Exists", f"File {filename} already exists. Overwrite?",
@@ -269,9 +251,6 @@ class FileBrowser(QMainWindow):
             with open(file_path, "w") as f:
                 f.write("")
             self.addToRecent(file_path)
-            # If the Explorer holds any cache information, refresh it.
-            if hasattr(self.explorer, 'cache_timestamps') and directory in self.explorer.cache_timestamps:
-                del self.explorer.cache_timestamps[directory]
             self.loadFileTree()
             self.focusOnFileInTree(file_path)
         except Exception as e:
@@ -291,14 +270,22 @@ class FileBrowser(QMainWindow):
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
 
     def addToFavorites(self):
-        selected = self.explorer.tree.currentItem() if hasattr(self.explorer.tree, 'currentItem') else None
-        if selected:
-            file_path = selected.data(0, Qt.UserRole)
-            if file_path and os.path.exists(file_path) and not self._inFavorites(file_path):
-                display_name = self._computeDisplayName(file_path)
-                self.favorite_paths.append({"display": display_name, "path": file_path})
-                self.populateFavoritesList()
-                self.saveConfig()
+        selected_index = self.explorer.tree.currentIndex()
+        source_index = self.filterProxyModel.mapToSource(selected_index)
+        file_path = self.explorer.model.filePath(source_index) if source_index.isValid() else None
+
+        if file_path and os.path.exists(file_path) and not self._inFavorites(file_path):
+            display_name = self._computeDisplayName(file_path)
+            self.favorite_paths.append({"display": display_name, "path": file_path})
+            self.populateFavoritesList()
+            self.saveConfig()
+
+    def addToFavoritesFromPath(self, file_path):
+        if file_path and os.path.exists(file_path) and not self._inFavorites(file_path):
+            display_name = self._computeDisplayName(file_path)
+            self.favorite_paths.append({"display": display_name, "path": file_path})
+            self.populateFavoritesList()
+            self.saveConfig()
 
     def addToRecent(self, file_path):
         self._removePathFromList(self.recent_files, file_path)
@@ -323,8 +310,10 @@ class FileBrowser(QMainWindow):
         directory = self.ui.path.text().strip() or os.getcwd()
         QDesktopServices.openUrl(QUrl.fromLocalFile(directory))
 
-    def treeItemDoubleClicked(self, index):
-        file_path = self.explorer.model.filePath(index)
+    def treeItemDoubleClicked(self, proxied_index):
+        # Convert from proxy to source
+        src_index = self.filterProxyModel.mapToSource(proxied_index)
+        file_path = self.explorer.model.filePath(src_index)
         if not file_path:
             return
         if os.path.isdir(file_path):
@@ -339,7 +328,6 @@ class FileBrowser(QMainWindow):
             return
         file_path = path_info["path"]
         if os.path.exists(file_path):
-            # Focus the file in the Explorer tree on double-click.
             self.focusOnFileInTree(file_path)
         else:
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
@@ -353,7 +341,6 @@ class FileBrowser(QMainWindow):
             return
         file_path = path_info["path"]
         if os.path.exists(file_path):
-            # Focus the file in the Explorer tree on double-click.
             self.focusOnFileInTree(file_path)
         else:
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
@@ -365,23 +352,17 @@ class FileBrowser(QMainWindow):
         if not os.path.exists(file_path):
             return
         self.lastFocusedFile = file_path
-        # Delegate focus logic to the Explorer
-        if hasattr(self.explorer, 'select_tree_item'):
-            self.explorer.select_tree_item(file_path)
-        else:
-            # Fallback: try to find and select the item manually.
-            if self.explorer.tree.findItems(os.path.basename(file_path), Qt.MatchRecursive):
-                item = self.explorer.tree.findItems(os.path.basename(file_path), Qt.MatchRecursive)[0]
-                self.explorer.tree.setCurrentItem(item)
-                self.explorer.tree.scrollToItem(item)
-            else:
-                directory = os.path.dirname(file_path)
-                if directory != self.ui.path.text():
-                    self.ui.path.setText(directory)
-                    self.loadFileTree()
-                # If Explorer has a method to expand a partial path, use it.
-                if hasattr(self.explorer, 'expand_partial_path'):
-                    self.explorer.expand_partial_path(file_path)
+
+        # Convert path to a model index
+        src_index = self.explorer.model.index(file_path)
+        if not src_index.isValid():
+            return
+
+        # Map to proxy
+        proxy_index = self.filterProxyModel.mapFromSource(src_index)
+        if proxy_index.isValid():
+            self.explorer.tree.setCurrentIndex(proxy_index)
+            self.explorer.tree.scrollTo(proxy_index)
 
     def _computeDisplayName(self, path_str):
         norm_path = os.path.normpath(path_str)
@@ -408,7 +389,6 @@ class FileBrowser(QMainWindow):
         if not path_info:
             return
         file_path = path_info["path"]
-        # Use QMenu to create our custom context menu
         menu = QMenu(self.ui.recent_list)
         open_action = menu.addAction("Open with Default Program")
         open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
@@ -428,7 +408,6 @@ class FileBrowser(QMainWindow):
         if not path_info:
             return
         file_path = path_info["path"]
-        # Use QMenu to create our custom context menu
         menu = QMenu(self.ui.favorites_list)
         open_action = menu.addAction("Open with Default Program")
         open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
@@ -475,19 +454,22 @@ class FileBrowser(QMainWindow):
             self.ui.favorites_list.item(list_index).setToolTip(path_info["path"])
 
     def showFileTreeContextMenu(self, position):
-        # Use the Explorer's tree instead of ui.filetree.
-        item = self.explorer.tree.itemAt(position)
-        if not item:
+        # Because we are using a proxy, we must convert the proxy index to the source model's index
+        proxy_index = self.explorer.tree.indexAt(position)
+        if not proxy_index.isValid():
             return
-        file_path = item.data(0, Qt.UserRole)
+        src_index = self.filterProxyModel.mapToSource(proxy_index)
+
+        file_path = self.explorer.model.filePath(src_index)
         if not file_path or not os.path.exists(file_path):
             return
-        # Create the context menu based on the current file.
-        menu = self.explorer.tree.createStandardContextMenu()  # Alternatively, build your own menu.
+
+        menu = QMenu(self.explorer.tree)
         open_action = menu.addAction("Open")
         open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
         fav_action = menu.addAction("Add to Favorites")
         fav_action.triggered.connect(lambda: self.addToFavoritesFromPath(file_path))
+
         if os.path.isdir(file_path):
             root_action = menu.addAction("Set as Root")
             root_action.triggered.connect(lambda: self.setPathAsRoot(file_path))
@@ -511,6 +493,7 @@ class FileBrowser(QMainWindow):
             if any(file_path.lower().endswith(ext) for ext in model_extensions):
                 vmdl_action = menu.addAction("Quick VMDL File")
                 vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
+
         menu.exec_(self.explorer.tree.mapToGlobal(position))
 
     def setPathAsRoot(self, path):
@@ -532,13 +515,6 @@ class FileBrowser(QMainWindow):
         self._removePathFromList(self.favorite_paths, file_path)
         self.populateFavoritesList()
         self.saveConfig()
-
-    def addToFavoritesFromPath(self, file_path):
-        if file_path and os.path.exists(file_path) and not self._inFavorites(file_path):
-            display_name = self._computeDisplayName(file_path)
-            self.favorite_paths.append({"display": display_name, "path": file_path})
-            self.populateFavoritesList()
-            self.saveConfig()
 
     def duplicateFile(self, file_path):
         base_name = os.path.basename(file_path)
