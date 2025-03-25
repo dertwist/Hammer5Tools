@@ -10,10 +10,6 @@ from src.settings.main import get_settings_value, set_settings_value, get_cs2_pa
 from src.widgets_common import ErrorInfo
 from src.explorer.actions import QuickVmdlFile, QuickConfigFile
 
-
-#TODO Create advanced project file explorer
-#TODO Add ability to open the advanced explorer through "simple"
-
 # Supported file extensions
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 smartprop_extensions = ['vsmart', 'vdata']

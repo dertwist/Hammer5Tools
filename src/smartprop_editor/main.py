@@ -74,8 +74,6 @@ cs2_path = get_cs2_path()
 # The node view should be arranged vertically. All node-related information will be stored within the elements themselves.
 # Nodes that are not connected via the Child input (i.e. isolated nodes) will be automatically attached as children of the root.
 
-#TODO Add bulk element creation using asset.
-
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
         super().__init__()
