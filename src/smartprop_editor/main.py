@@ -736,7 +736,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         else:
             filename = self.mini_explorer.get_current_path()
             self.mini_explorer.add_recent_file(filename)
-
         self.opened_file = filename
         vsmart_instance = VsmartOpen(
             filename=filename,
