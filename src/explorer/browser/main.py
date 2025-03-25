@@ -3,7 +3,7 @@ import sys
 import json
 import shutil
 import re
-from PySide6.QtCore import Qt, QUrl, QSortFilterProxyModel, QRegularExpression
+from PySide6.QtCore import Qt, QUrl, QSortFilterProxyModel, QRegularExpression, Signal
 from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog, QInputDialog, QMenu
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 from src.explorer.main import Explorer
@@ -16,14 +16,13 @@ def get_editor_or_default(editor_value):
     return editor_value if editor_value else "Hammer5Tools"
 
 class FileBrowser(QMainWindow):
+    openfile_signal = Signal(str)
+
     def __init__(self, parent=None, root=None, extension=None, editor=None):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setWindowTitle("File Browser")
-
-        self.explorer = Explorer(parent=self, tree_directory=root, addon=None, editor_name=editor)
-        self.ui.filetree_container.layout().addWidget(self.explorer.tree)
 
         self.root = root
         self.extension = extension
@@ -36,20 +35,23 @@ class FileBrowser(QMainWindow):
         self.current_path_index = -1
         self.max_history = 50
 
+        self.explorer = Explorer(
+            parent=self,
+            tree_directory=root if root and os.path.exists(root) else os.getcwd(),
+            addon=None,
+            editor_name=get_editor_or_default(editor)
+        )
+        self.ui.filetree_container.layout().addWidget(self.explorer.frame)
+
         self.filterProxyModel = QSortFilterProxyModel(self)
         self.filterProxyModel.setSourceModel(self.explorer.model)
         self.filterProxyModel.setDynamicSortFilter(True)
         self.filterProxyModel.setFilterKeyColumn(0)
         self.filterProxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-
         self.explorer.tree.setModel(self.filterProxyModel)
 
         self.loadConfig()
-        if self.root:
-            self.ui.path.setText(self.root)
-        if not self.ui.path.text():
-            self.ui.path.setText(os.getcwd())
-
+        self.ui.path.setText(self.root if self.root and os.path.exists(self.root) else os.getcwd())
         self.ui.subdir.setChecked(True)
 
         self.connectSignals()
@@ -69,18 +71,23 @@ class FileBrowser(QMainWindow):
             last_path = get_settings_value(f"{editor_key}_FileBrowser", "LastPath")
             recent_str = get_settings_value(f"{editor_key}_FileBrowser", "RecentFiles", default="[]")
             favorites_str = get_settings_value(f"{editor_key}_FileBrowser", "FavoriteFiles", default="[]")
+
             try:
-                self.recent_files = json.loads(recent_str)
-            except:
+                self.recent_files = json.loads(recent_str) if recent_str else []
+                if not isinstance(self.recent_files, list):
+                    self.recent_files = []
+            except Exception:
                 self.recent_files = []
+
             try:
-                self.favorite_paths = json.loads(favorites_str)
-            except:
+                self.favorite_paths = json.loads(favorites_str) if favorites_str else []
+                if not isinstance(self.favorite_paths, list):
+                    self.favorite_paths = []
+            except Exception:
                 self.favorite_paths = []
+
             if last_path and os.path.exists(last_path):
                 self.ui.path.setText(last_path)
-                if hasattr(self.explorer, 'add_to_cache_queue'):
-                    self.explorer.add_to_cache_queue(last_path)
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to load configuration:\n{str(e)}")
 
@@ -90,13 +97,13 @@ class FileBrowser(QMainWindow):
             self.recent_files = self.recent_files[:self.max_recent]
             recents_data = json.dumps(self.recent_files)
             favorites_data = json.dumps(self.favorite_paths)
-            set_settings_value(f"{editor_key}\\FileBrowser", "RecentFiles", recents_data)
-            set_settings_value(f"{editor_key}\\FileBrowser", "FavoriteFiles", favorites_data)
-            set_settings_value(f"{editor_key}\\FileBrowser", "LastPath", self.ui.path.text())
+            set_settings_value(f"{editor_key}_FileBrowser", "RecentFiles", recents_data)
+            set_settings_value(f"{editor_key}_FileBrowser", "FavoriteFiles", favorites_data)
+            set_settings_value(f"{editor_key}_FileBrowser", "LastPath", self.ui.path.text())
             if self.root:
-                set_settings_value(f"{editor_key}\\FileBrowser", "Root", self.root)
+                set_settings_value(f"{editor_key}_FileBrowser", "Root", self.root)
             if self.extension:
-                set_settings_value(f"{editor_key}\\FileBrowser", "Extension", self.extension)
+                set_settings_value(f"{editor_key}_FileBrowser", "Extension", self.extension)
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to save configuration:\n{str(e)}")
 
@@ -119,9 +126,11 @@ class FileBrowser(QMainWindow):
         self.ui.favorites_list.itemDoubleClicked.connect(self.openFavoriteItem)
         self.ui.recent_list.itemClicked.connect(
             lambda item: self.setParentFolderAsRootAndFocusFile(item.data(Qt.UserRole)["path"])
+            if item and item.data(Qt.UserRole) and "path" in item.data(Qt.UserRole) else None
         )
         self.ui.favorites_list.itemClicked.connect(
             lambda item: self.setParentFolderAsRootAndFocusFile(item.data(Qt.UserRole)["path"])
+            if item and item.data(Qt.UserRole) and "path" in item.data(Qt.UserRole) else None
         )
         self.explorer.tree.doubleClicked.connect(self.treeItemDoubleClicked)
 
@@ -133,6 +142,9 @@ class FileBrowser(QMainWindow):
         self.ui.filter.clear()
         self.filterProxyModel.setFilterRegularExpression(QRegularExpression())
         directory = self.ui.path.text().strip() or os.getcwd()
+        if not os.path.exists(directory):
+            directory = os.getcwd()
+            self.ui.path.setText(directory)
         dirIndex = self.explorer.model.index(directory)
         if dirIndex.isValid():
             proxyIndex = self.filterProxyModel.mapFromSource(dirIndex)
@@ -173,15 +185,17 @@ class FileBrowser(QMainWindow):
 
     def loadFileTree(self):
         directory = self.ui.path.text().strip() or os.getcwd()
+        if not os.path.exists(directory):
+            QMessageBox.warning(self, "Invalid Directory", f"Directory does not exist:\n{directory}")
+            directory = os.getcwd()
+            self.ui.path.setText(directory)
         self.addToPathHistory(directory)
-
         dirIndex = self.explorer.model.index(directory)
         if dirIndex.isValid():
             proxyIndex = self.filterProxyModel.mapFromSource(dirIndex)
             self.explorer.tree.setRootIndex(proxyIndex)
         else:
             QMessageBox.warning(self, "Invalid Directory", f"Directory does not exist:\n{directory}")
-
         self.applyFilter()
 
     def addToPathHistory(self, path):
@@ -196,10 +210,8 @@ class FileBrowser(QMainWindow):
     def applyFilter(self):
         filter_text = self.ui.filter.text().strip()
         include_subdir = self.ui.subdir.isChecked()
-
         if hasattr(self.filterProxyModel, 'setRecursiveFilteringEnabled'):
             self.filterProxyModel.setRecursiveFilteringEnabled(include_subdir)
-
         if filter_text:
             pattern = f".*{re.escape(filter_text)}.*"
             regex = QRegularExpression(pattern, QRegularExpression.CaseInsensitiveOption)
@@ -207,6 +219,8 @@ class FileBrowser(QMainWindow):
         else:
             self.filterProxyModel.setFilterRegularExpression(QRegularExpression())
             directory = self.ui.path.text().strip() or os.getcwd()
+            if not os.path.exists(directory):
+                directory = os.getcwd()
             dirIndex = self.explorer.model.index(directory)
             if dirIndex.isValid():
                 proxyIndex = self.filterProxyModel.mapFromSource(dirIndex)
@@ -223,25 +237,22 @@ class FileBrowser(QMainWindow):
 
     def createNewFile(self):
         selected_index = self.explorer.tree.currentIndex()
-        source_index = self.filterProxyModel.mapToSource(selected_index)
-        selected_path = self.explorer.model.filePath(source_index) if source_index.isValid() else None
-
+        selected_path = None
+        if selected_index.isValid():
+            source_index = self.filterProxyModel.mapToSource(selected_index)
+            selected_path = self.explorer.model.filePath(source_index) if source_index.isValid() else None
         directory = None
-        if selected_path and os.path.isdir(selected_path):
-            directory = selected_path
-        elif selected_path and os.path.isfile(selected_path):
-            directory = os.path.dirname(selected_path)
-
+        if selected_path:
+            directory = selected_path if os.path.isdir(selected_path) else os.path.dirname(selected_path)
         if not directory:
             directory = self.ui.path.text().strip() or os.getcwd()
-
+        if not os.path.exists(directory):
+            directory = os.getcwd()
         filename, ok = QInputDialog.getText(self, "Create New File", "Enter filename:", text="newfile")
         if not ok or not filename:
             return
-
-        if self.extension:
+        if self.extension and not filename.lower().endswith(f".{self.extension.lower()}"):
             filename = f"{filename}.{self.extension}"
-
         file_path = os.path.join(directory, filename)
         if os.path.exists(file_path):
             reply = QMessageBox.question(self, "File Exists", f"File {filename} already exists. Overwrite?",
@@ -258,10 +269,11 @@ class FileBrowser(QMainWindow):
             QMessageBox.warning(self, "Error", f"Failed to create file:\n{str(e)}")
 
     def openFile(self):
-        starting_dir = self.ui.path.text().strip() or os.getcwd()
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open File", starting_dir)
-        if file_name:
-            self.openFileWithDefaultApp(file_name)
+        indexes = self.explorer.tree.selectionModel().selectedIndexes()
+        if indexes:
+            file_name = self.explorer.model.filePath(indexes[0])
+            if file_name:
+                self.openfile_signal.emit(file_name)
 
     def openFileWithDefaultApp(self, file_path):
         if os.path.exists(file_path):
@@ -272,9 +284,10 @@ class FileBrowser(QMainWindow):
 
     def addToFavorites(self):
         selected_index = self.explorer.tree.currentIndex()
+        if not selected_index.isValid():
+            return
         source_index = self.filterProxyModel.mapToSource(selected_index)
         file_path = self.explorer.model.filePath(source_index) if source_index.isValid() else None
-
         if file_path and os.path.exists(file_path) and not self._inFavorites(file_path):
             display_name = self._computeDisplayName(file_path)
             self.favorite_paths.append({"display": display_name, "path": file_path})
@@ -309,12 +322,16 @@ class FileBrowser(QMainWindow):
 
     def openCurrentPath(self):
         directory = self.ui.path.text().strip() or os.getcwd()
+        if not os.path.exists(directory):
+            directory = os.getcwd()
         QDesktopServices.openUrl(QUrl.fromLocalFile(directory))
 
     def treeItemDoubleClicked(self, proxied_index):
+        if not proxied_index.isValid():
+            return
         src_index = self.filterProxyModel.mapToSource(proxied_index)
         file_path = self.explorer.model.filePath(src_index)
-        if not file_path:
+        if not file_path or not os.path.exists(file_path):
             return
         if os.path.isdir(file_path):
             self.ui.path.setText(file_path)
@@ -323,8 +340,10 @@ class FileBrowser(QMainWindow):
             self.openFileWithDefaultApp(file_path)
 
     def openRecentItem(self, item):
+        if not item:
+            return
         path_info = item.data(Qt.UserRole)
-        if not path_info:
+        if not path_info or not isinstance(path_info, dict) or "path" not in path_info:
             return
         file_path = path_info["path"]
         if os.path.exists(file_path):
@@ -336,8 +355,10 @@ class FileBrowser(QMainWindow):
             self.saveConfig()
 
     def openFavoriteItem(self, item):
+        if not item:
+            return
         path_info = item.data(Qt.UserRole)
-        if not path_info:
+        if not path_info or not isinstance(path_info, dict) or "path" not in path_info:
             return
         file_path = path_info["path"]
         if os.path.exists(file_path):
@@ -349,63 +370,63 @@ class FileBrowser(QMainWindow):
             self.saveConfig()
 
     def setParentFolderAsRootAndFocusFile(self, file_path):
-        if not os.path.exists(file_path):
+        if not file_path or not os.path.exists(file_path):
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
             return
-
         parent_dir = os.path.dirname(file_path)
-        self.ui.path.setText(parent_dir)
-        self.loadFileTree()
-        self.focusOnFileInTree(file_path)
+        if parent_dir and os.path.exists(parent_dir):
+            self.ui.path.setText(parent_dir)
+            self.loadFileTree()
+            self.focusOnFileInTree(file_path)
 
     def focusOnFileInTree(self, file_path):
-        if not os.path.exists(file_path):
+        if not file_path or not os.path.exists(file_path):
             return
         self.lastFocusedFile = file_path
-
         src_index = self.explorer.model.index(file_path)
         if not src_index.isValid():
             return
-
         proxy_index = self.filterProxyModel.mapFromSource(src_index)
         if proxy_index.isValid():
             self.explorer.tree.setCurrentIndex(proxy_index)
             self.explorer.tree.scrollTo(proxy_index)
 
     def _computeDisplayName(self, path_str):
+        if not path_str:
+            return "Unknown"
         norm_path = os.path.normpath(path_str)
         parts = norm_path.split(os.sep)
-        if len(parts) >= 2:
-            return parts[-2] + os.sep + parts[-1]
-        else:
-            return parts[-1] if parts else path_str
+        return (parts[-2] + os.sep + parts[-1]) if len(parts) >= 2 else (parts[-1] if parts else path_str)
 
     def _removePathFromList(self, items_list, file_path):
+        if not items_list or not file_path:
+            return
         for idx, info in enumerate(items_list):
-            if info.get("path") == file_path:
+            if isinstance(info, dict) and info.get("path") == file_path:
                 items_list.pop(idx)
                 break
 
     def _inFavorites(self, file_path):
-        return any(x for x in self.favorite_paths if x["path"] == file_path)
+        if not file_path:
+            return False
+        return any(x for x in self.favorite_paths if isinstance(x, dict) and x.get("path") == file_path)
 
     def showRecentContextMenu(self, position):
         item = self.ui.recent_list.itemAt(position)
         if not item:
             return
         path_info = item.data(Qt.UserRole)
-        if not path_info:
+        if not path_info or not isinstance(path_info, dict) or "path" not in path_info:
             return
         file_path = path_info["path"]
+        if not file_path or not os.path.exists(file_path):
+            self._removeFromRecentAndRefresh(file_path)
+            return
         menu = QMenu(self.ui.recent_list)
-        open_action = menu.addAction("Open with Default Program")
-        open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
-        copy_action = menu.addAction("Copy Path to Clipboard")
-        copy_action.triggered.connect(lambda: self.copyFile(file_path))
-        explorer_action = menu.addAction("Open in Explorer")
-        explorer_action.triggered.connect(lambda: self.openContainingFolder(file_path))
-        remove_action = menu.addAction("Remove from List")
-        remove_action.triggered.connect(lambda: self._removeFromRecentAndRefresh(file_path))
+        menu.addAction("Open with Default Program", lambda: self.openFileWithDefaultApp(file_path))
+        menu.addAction("Copy Path to Clipboard", lambda: self.copyFile(file_path))
+        menu.addAction("Open in Explorer", lambda: self.openContainingFolder(file_path))
+        menu.addAction("Remove from List", lambda: self._removeFromRecentAndRefresh(file_path))
         menu.exec_(self.ui.recent_list.mapToGlobal(position))
 
     def showFavoritesContextMenu(self, position):
@@ -413,30 +434,22 @@ class FileBrowser(QMainWindow):
         if not item:
             return
         path_info = item.data(Qt.UserRole)
-        if not path_info:
+        if not path_info or not isinstance(path_info, dict) or "path" not in path_info:
             return
         file_path = path_info["path"]
+        if not file_path or not os.path.exists(file_path):
+            self._removeFromFavoritesAndRefresh(file_path)
+            return
         menu = QMenu(self.ui.favorites_list)
-        open_action = menu.addAction("Open with Default Program")
-        open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
-        copy_action = menu.addAction("Copy Path to Clipboard")
-        copy_action.triggered.connect(lambda: self.copyFile(file_path))
-        explorer_action = menu.addAction("Open in Explorer")
-        explorer_action.triggered.connect(lambda: self.openContainingFolder(file_path))
-        remove_action = menu.addAction("Remove from List")
-        remove_action.triggered.connect(lambda: self._removeFromFavoritesAndRefresh(file_path))
+        menu.addAction("Open with Default Program", lambda: self.openFileWithDefaultApp(file_path))
+        menu.addAction("Copy Path to Clipboard", lambda: self.copyFile(file_path))
+        menu.addAction("Open in Explorer", lambda: self.openContainingFolder(file_path))
+        menu.addAction("Remove from List", lambda: self._removeFromFavoritesAndRefresh(file_path))
         menu.exec_(self.ui.favorites_list.mapToGlobal(position))
 
     def populateRecentList(self):
         self.ui.recent_list.clear()
-        valid_items = []
-        for item in self.recent_files:
-            if not isinstance(item, dict):
-                continue
-            path_value = item.get("path")
-            if path_value and os.path.exists(path_value):
-                valid_items.append(item)
-        self.recent_files = valid_items
+        self.recent_files = [item for item in self.recent_files if isinstance(item, dict) and item.get("path") and os.path.exists(item.get("path"))]
         for path_info in self.recent_files:
             display_name = path_info.get("display", "")
             list_index = self.ui.recent_list.count()
@@ -446,14 +459,7 @@ class FileBrowser(QMainWindow):
 
     def populateFavoritesList(self):
         self.ui.favorites_list.clear()
-        valid_items = []
-        for item in self.favorite_paths:
-            if not isinstance(item, dict):
-                continue
-            path_value = item.get("path")
-            if path_value and os.path.exists(path_value):
-                valid_items.append(item)
-        self.favorite_paths = valid_items
+        self.favorite_paths = [item for item in self.favorite_paths if isinstance(item, dict) and item.get("path") and os.path.exists(item.get("path"))]
         for path_info in self.favorite_paths:
             display_name = path_info.get("display", "")
             list_index = self.ui.favorites_list.count()
@@ -466,41 +472,28 @@ class FileBrowser(QMainWindow):
         if not proxy_index.isValid():
             return
         src_index = self.filterProxyModel.mapToSource(proxy_index)
-
+        if not src_index.isValid():
+            return
         file_path = self.explorer.model.filePath(src_index)
         if not file_path or not os.path.exists(file_path):
             return
-
         menu = QMenu(self.explorer.tree)
-        open_action = menu.addAction("Open")
-        open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
-        fav_action = menu.addAction("Add to Favorites")
-        fav_action.triggered.connect(lambda: self.addToFavoritesFromPath(file_path))
-
+        menu.addAction("Open", lambda: self.openFileWithDefaultApp(file_path))
+        menu.addAction("Add to Favorites", lambda: self.addToFavoritesFromPath(file_path))
         if os.path.isdir(file_path):
-            root_action = menu.addAction("Set as Root")
-            root_action.triggered.connect(lambda: self.setPathAsRoot(file_path))
-            exp_action = menu.addAction("Open in Explorer")
-            exp_action.triggered.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(file_path)))
+            menu.addAction("Set as Root", lambda: self.setPathAsRoot(file_path))
+            menu.addAction("Open in Explorer", lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(file_path)))
         if os.path.isfile(file_path):
-            cont_action = menu.addAction("Open Containing Folder")
-            cont_action.triggered.connect(lambda: self.openContainingFolder(file_path))
-            dup_action = menu.addAction("Duplicate File")
-            dup_action.triggered.connect(lambda: self.duplicateFileAndRefresh(file_path))
-            copy_action = menu.addAction("Copy File")
-            copy_action.triggered.connect(lambda: self.copyFile(file_path))
-            rel_action = menu.addAction("Copy Relative Path")
-            rel_action.triggered.connect(lambda: self.copyRelativePath(file_path))
+            menu.addAction("Open Containing Folder", lambda: self.openContainingFolder(file_path))
+            menu.addAction("Duplicate File", lambda: self.duplicateFileAndRefresh(file_path))
+            menu.addAction("Copy File", lambda: self.copyFile(file_path))
+            menu.addAction("Copy Relative Path", lambda: self.copyRelativePath(file_path))
             if file_path.lower().endswith(tuple(audio_extensions)):
-                audio_action = menu.addAction("Copy Audio Path")
-                audio_action.triggered.connect(lambda: self.copyAudioPath(file_path))
+                menu.addAction("Copy Audio Path", lambda: self.copyAudioPath(file_path))
             if file_path.lower().endswith(".vmdl"):
-                batch_action = menu.addAction("Quick Batch File")
-                batch_action.triggered.connect(lambda: QuickConfigFile(file_path))
+                menu.addAction("Quick Batch File", lambda: QuickConfigFile(file_path))
             if any(file_path.lower().endswith(ext) for ext in model_extensions):
-                vmdl_action = menu.addAction("Quick VMDL File")
-                vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
-
+                menu.addAction("Quick VMDL File", lambda: QuickVmdlFile(file_path))
         menu.exec_(self.explorer.tree.mapToGlobal(position))
 
     def setPathAsRoot(self, path):
@@ -556,8 +549,7 @@ class FileBrowser(QMainWindow):
 
     def copyAudioPath(self, file_path):
         base = self.root if self.root else os.getcwd()
-        rel = os.path.relpath(file_path, base)
-        rel = rel.replace("\\", "/").lower()
+        rel = os.path.relpath(file_path, base).replace("\\", "/").lower()
         root_part, _ = os.path.splitext(rel)
         QGuiApplication.clipboard().setText(root_part + ".vsnd")
 

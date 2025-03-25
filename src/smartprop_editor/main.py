@@ -144,6 +144,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.add_new_variable_button.setStyleSheet(qt_stylesheet_toolbutton)
 
         self.undo_stack = QUndoStack(self)
+    def connect_actions(self):
+        """Connecting existing features and functions with actions"""
 
 
     def open_preset_manager(self):
@@ -178,7 +180,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             self.ui.toolBar.hide()
         else:
             self.ui.dockWidget_10.hide()
-            self.ui.dockWidget_10.deleteLater()
 
     def buttons(self):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
