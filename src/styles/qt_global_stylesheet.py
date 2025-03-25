@@ -807,7 +807,7 @@ QMenuBar::item {
     padding-left: 12px;
     padding-right: 12px; 
     padding-bottom: 2px;
-    padding-top: 0px;
+    padding-top: 2px;
     
 }
 
