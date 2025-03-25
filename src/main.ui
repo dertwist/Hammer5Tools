@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1097</width>
-    <height>670</height>
+    <width>1194</width>
+    <height>889</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,9 +27,6 @@
    <set>QMainWindow::DockOption::AllowTabbedDocks|QMainWindow::DockOption::AnimatedDocks</set>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <property name="styleSheet">
-    <string notr="true"/>
-   </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <property name="leftMargin">
      <number>9</number>
@@ -63,10 +60,51 @@ QTabWidget::pane {
     border-color: #363639;
     background-color: #1d1d1f;
 }
-</string>
+/* ========================================================== */
+QTabBar::tab {
+    background-color: #323232;
+    color: #9A9F91;
+    border-radius: 0px;
+    border-top-right-radius: 0px;
+    border-top-left-radius: 0px;
+    padding: 4px;
+    padding-left:48px;
+    padding-right: 48px;
+
+    border-top: 2px solid gray;
+    border-bottom: 0px solid black;
+
+    font: 700 10pt &quot;Segoe UI&quot;;
+    border-left: 2px solid darkgray;
+    border-top: 0px solid darkgray;
+    border-color: #151515;
+    border-right: 2px solid rgba(80, 80, 80, 80);
+
+
+
+    color: #E3E3E3;
+    background-color: #151515;
+
+}
+QTabBar::tab:selected {
+    border-radius: 0px;
+    border-top-right-radius: 7px;
+    border-top-left-radius: 7px;
+
+    border-top: 2px solid gray;
+    border-left: 2px solid gray;
+    border-right: 2px solid gray;
+    border-bottom: 0px solid black;
+
+    font: 700 10pt &quot;Segoe UI&quot;;
+    border-color: rgba(80, 80, 80, 180);
+    height:20px;
+    color: #E3E3E3;
+    background-color: #1d1d1f;
+}</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="tabsClosable">
        <bool>false</bool>
