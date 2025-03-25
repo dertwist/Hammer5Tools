@@ -488,42 +488,23 @@ class ExplorerMainWindow(QMainWindow):
             self.loadFileTree()
 
     def createNewFile(self):
-        # Determine the target directory based on the selected file tree item
-        selected_item = self.ui.filetree.currentItem()
-        if selected_item:
-            selected_path = selected_item.data(0, Qt.UserRole)
-            if selected_path and os.path.isdir(selected_path):
-                directory = selected_path
-            else:
-                directory = os.path.dirname(selected_path)
-        else:
-            directory = self.ui.path.text().strip() or os.getcwd()
-
+        directory = self.ui.path.text().strip() or os.getcwd()
         filename, ok = QInputDialog.getText(self, "Create New File", "Enter filename:", text="newfile.txt")
         if not ok or not filename:
             return
-
         file_path = os.path.join(directory, filename)
         if os.path.exists(file_path):
-            reply = QMessageBox.question(
-                self,
-                "File Exists",
-                f"File {filename} already exists. Overwrite?",
-                QMessageBox.Yes | QMessageBox.No
-            )
+            reply = QMessageBox.question(self, "File Exists",
+                                         f"File {filename} already exists. Overwrite?",
+                                         QMessageBox.Yes | QMessageBox.No)
             if reply == QMessageBox.No:
                 return
-
         try:
             with open(file_path, 'w') as f:
                 f.write("")
-
             self.addToRecent(file_path)
-
-            # Invalidate cache for newly modified directory
             if directory in self.cache_timestamps:
                 del self.cache_timestamps[directory]
-
             self.loadFileTree()
             self.focusOnFileInTree(file_path)
         except Exception as e:
