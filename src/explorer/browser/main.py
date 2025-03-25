@@ -339,16 +339,14 @@ class FileBrowser(QMainWindow):
             return
         file_path = path_info["path"]
         if os.path.exists(file_path):
-            if os.path.isdir(file_path):
-                self.ui.path.setText(file_path)
-                self.loadFileTree()
-            else:
-                self.openFileWithDefaultApp(file_path)
+            # Focus the file in the Explorer tree on double-click.
+            self.focusOnFileInTree(file_path)
         else:
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
             self._removePathFromList(self.recent_files, file_path)
             self.populateRecentList()
             self.saveConfig()
+
 
     def openFavoriteItem(self, item):
         path_info = item.data(Qt.UserRole)
@@ -356,11 +354,8 @@ class FileBrowser(QMainWindow):
             return
         file_path = path_info["path"]
         if os.path.exists(file_path):
-            if os.path.isdir(file_path):
-                self.ui.path.setText(file_path)
-                self.loadFileTree()
-            else:
-                self.openFileWithDefaultApp(file_path)
+            # Focus the file in the Explorer tree on double-click.
+            self.focusOnFileInTree(file_path)
         else:
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
             self._removePathFromList(self.favorite_paths, file_path)
@@ -405,6 +400,45 @@ class FileBrowser(QMainWindow):
 
     def _inFavorites(self, file_path):
         return any(x for x in self.favorite_paths if x["path"] == file_path)
+
+    def showRecentContextMenu(self, position):
+        item = self.ui.recent_list.itemAt(position)
+        if not item:
+            return
+        path_info = item.data(Qt.UserRole)
+        if not path_info:
+            return
+        file_path = path_info["path"]
+        # Create our own QMenu instead of using createStandardContextMenu()
+        menu = QMenu(self.ui.recent_list)
+        open_action = menu.addAction("Open with Default Program")
+        open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
+        copy_action = menu.addAction("Copy Path to Clipboard")
+        copy_action.triggered.connect(lambda: self.copyFile(file_path))
+        explorer_action = menu.addAction("Open in Explorer")
+        explorer_action.triggered.connect(lambda: self.openContainingFolder(file_path))
+        remove_action = menu.addAction("Remove from List")
+        remove_action.triggered.connect(lambda: self._removeFromRecentAndRefresh(file_path))
+        menu.exec_(self.ui.recent_list.mapToGlobal(position))
+
+    def showFavoritesContextMenu(self, position):
+        item = self.ui.favorites_list.itemAt(position)
+        if not item:
+            return
+        path_info = item.data(Qt.UserRole)
+        if not path_info:
+            return
+        file_path = path_info["path"]
+        menu = QMenu(self.ui.favorites_list)
+        open_action = menu.addAction("Open with Default Program")
+        open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
+        copy_action = menu.addAction("Copy Path to Clipboard")
+        copy_action.triggered.connect(lambda: self.copyFile(file_path))
+        explorer_action = menu.addAction("Open in Explorer")
+        explorer_action.triggered.connect(lambda: self.openContainingFolder(file_path))
+        remove_action = menu.addAction("Remove from List")
+        remove_action.triggered.connect(lambda: self._removeFromFavoritesAndRefresh(file_path))
+        menu.exec_(self.ui.favorites_list.mapToGlobal(position))
 
     def populateRecentList(self):
         self.ui.recent_list.clear()
