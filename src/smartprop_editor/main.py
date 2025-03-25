@@ -706,8 +706,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         from src.smartprop_editor.blank_vsmart import blank_vsmart
         extension = "vsmart"
         try:
-            index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
-            filename = self.mini_explorer.model.filePath(index)
+            filename = self.mini_explorer.get_current_path()
             if os.path.splitext(filename)[1] == "":
                 current_folder = filename
             else:
@@ -735,8 +734,8 @@ class SmartPropEditorMainWindow(QMainWindow):
                 "VSmart Files (*.vsmart);;All Files (*)"
             )
         else:
-            index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
-            filename = self.mini_explorer.model.filePath(index)
+            filename = self.mini_explorer.get_current_path()
+            self.mini_explorer.add_recent_file(filename)
 
         self.opened_file = filename
         vsmart_instance = VsmartOpen(
