@@ -100,7 +100,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="../resources.qrc">
+              <iconset resource="../../resources.qrc">
                <normaloff>:/valve_common/icons/tools/common/arrow_right_up.png</normaloff>:/valve_common/icons/tools/common/arrow_right_up.png</iconset>
              </property>
             </widget>
@@ -116,7 +116,15 @@
          </widget>
         </item>
         <item>
-         <widget class="QTreeWidget" name="filetree"/>
+         <widget class="QFrame" name="filetree_container">
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_5"/>
+         </widget>
         </item>
         <item>
          <widget class="QGroupBox" name="groupBox_2">
@@ -130,7 +138,7 @@
               <string>Add to Favorites</string>
              </property>
              <property name="icon">
-              <iconset resource="../resources.qrc">
+              <iconset resource="../../resources.qrc">
                <normaloff>:/valve_common/icons/tools/common/bookmark.png</normaloff>:/valve_common/icons/tools/common/bookmark.png</iconset>
              </property>
             </widget>
@@ -141,7 +149,7 @@
               <string>New File</string>
              </property>
              <property name="icon">
-              <iconset resource="../resources.qrc">
+              <iconset resource="../../resources.qrc">
                <normaloff>:/valve_common/icons/tools/common/new.png</normaloff>:/valve_common/icons/tools/common/new.png</iconset>
              </property>
             </widget>
@@ -152,7 +160,7 @@
               <string>Open File</string>
              </property>
              <property name="icon">
-              <iconset resource="../resources.qrc">
+              <iconset resource="../../resources.qrc">
                <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
              </property>
             </widget>
@@ -197,7 +205,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionNew_file">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/new.png</normaloff>:/valve_common/icons/tools/common/new.png</iconset>
    </property>
    <property name="text">
@@ -206,7 +214,7 @@
   </action>
   <action name="actionOpen_file">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
    </property>
    <property name="text">
@@ -215,7 +223,7 @@
   </action>
   <action name="actionAdd_To_Favorites">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/bookmark.png</normaloff>:/valve_common/icons/tools/common/bookmark.png</iconset>
    </property>
    <property name="text">
@@ -224,7 +232,7 @@
   </action>
   <action name="actionClear_All_Recent">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/clear_list_sm.png</normaloff>:/valve_common/icons/tools/common/clear_list_sm.png</iconset>
    </property>
    <property name="text">
@@ -233,7 +241,7 @@
   </action>
   <action name="actionClear_All_Favorites">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/clear_list_sm.png</normaloff>:/valve_common/icons/tools/common/clear_list_sm.png</iconset>
    </property>
    <property name="text">
@@ -242,7 +250,7 @@
   </action>
   <action name="actionOpen_current_path_in_Explorer">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
    </property>
    <property name="text">
@@ -251,7 +259,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../resources.qrc"/>
+  <include location="../../resources.qrc"/>
  </resources>
  <connections>
   <connection>

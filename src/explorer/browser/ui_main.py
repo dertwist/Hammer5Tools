@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'browser.ui'
+## Form generated from reading UI file 'main.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.8.2
 ##
@@ -17,11 +17,10 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGroupBox,
-    QHBoxLayout, QHeaderView, QLineEdit, QListWidget,
-    QListWidgetItem, QMainWindow, QMenu, QMenuBar,
-    QPushButton, QSizePolicy, QSplitter, QStatusBar,
-    QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-    QWidget)
+    QHBoxLayout, QLineEdit, QListWidget, QListWidgetItem,
+    QMainWindow, QMenu, QMenuBar, QPushButton,
+    QSizePolicy, QSplitter, QStatusBar, QToolButton,
+    QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -137,10 +136,14 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.frame)
 
-        self.filetree = QTreeWidget(self.layoutWidget1)
-        self.filetree.setObjectName(u"filetree")
+        self.filetree_container = QFrame(self.layoutWidget1)
+        self.filetree_container.setObjectName(u"filetree_container")
+        self.filetree_container.setFrameShape(QFrame.Shape.StyledPanel)
+        self.filetree_container.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_5 = QVBoxLayout(self.filetree_container)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
 
-        self.verticalLayout_2.addWidget(self.filetree)
+        self.verticalLayout_2.addWidget(self.filetree_container)
 
         self.groupBox_2 = QGroupBox(self.layoutWidget1)
         self.groupBox_2.setObjectName(u"groupBox_2")
