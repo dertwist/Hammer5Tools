@@ -132,33 +132,3 @@ class CustomFileSystemModel(QFileSystemModel):
 
 
 
-import os
-from PySide6.QtGui import QIcon
-
-def get_file_icon(path=None, is_folder=False):
-    """
-    Return a QIcon based on whether the item is a folder or determined by file extension.
-    This is a simplified example; adapt as necessary for your project.
-    """
-    if is_folder:
-        # Return folder icon
-        return QIcon.fromTheme("folder") or QIcon(":/icons/folder.png")
-
-    if not path:
-        # Fallback generic file icon
-        return QIcon.fromTheme("text-x-generic") or QIcon(":/icons/file.png")
-
-    # Extract file extension
-    _, extension = os.path.splitext(path)
-    extension = extension.lower()
-
-    # Example simplified logic:
-    if extension in [".png", ".jpg", ".jpeg", ".gif"]:
-        return QIcon.fromTheme("image-x-generic") or QIcon(":/icons/image.png")
-    elif extension in [".txt", ".log"]:
-        return QIcon.fromTheme("text-x-generic") or QIcon(":/icons/text.png")
-    elif extension in [".py"]:
-        return QIcon.fromTheme("text-x-python") or QIcon(":/icons/python.png")
-    else:
-        # Fallback generic file icon
-        return QIcon.fromTheme("text-x-generic") or QIcon(":/icons/file.png")
