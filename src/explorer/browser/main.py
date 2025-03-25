@@ -4,7 +4,7 @@ import json
 import shutil
 import re
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog, QInputDialog
+from PySide6.QtWidgets import QMainWindow, QApplication, QMessageBox, QFileDialog, QInputDialog, QMenu
 from PySide6.QtGui import QDesktopServices, QGuiApplication
 
 # Import Explorer from the main explorer module instead of FileTreeManager
@@ -347,7 +347,6 @@ class FileBrowser(QMainWindow):
             self.populateRecentList()
             self.saveConfig()
 
-
     def openFavoriteItem(self, item):
         path_info = item.data(Qt.UserRole)
         if not path_info:
@@ -409,7 +408,7 @@ class FileBrowser(QMainWindow):
         if not path_info:
             return
         file_path = path_info["path"]
-        # Create our own QMenu instead of using createStandardContextMenu()
+        # Use QMenu to create our custom context menu
         menu = QMenu(self.ui.recent_list)
         open_action = menu.addAction("Open with Default Program")
         open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
@@ -429,6 +428,7 @@ class FileBrowser(QMainWindow):
         if not path_info:
             return
         file_path = path_info["path"]
+        # Use QMenu to create our custom context menu
         menu = QMenu(self.ui.favorites_list)
         open_action = menu.addAction("Open with Default Program")
         open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
@@ -512,45 +512,6 @@ class FileBrowser(QMainWindow):
                 vmdl_action = menu.addAction("Quick VMDL File")
                 vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
         menu.exec_(self.explorer.tree.mapToGlobal(position))
-
-    def showRecentContextMenu(self, position):
-        item = self.ui.recent_list.itemAt(position)
-        if not item:
-            return
-        path_info = item.data(Qt.UserRole)
-        if not path_info:
-            return
-        file_path = path_info["path"]
-        menu = self.ui.recent_list.createStandardContextMenu()
-        open_action = menu.addAction("Open")
-        open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
-        rem_action = menu.addAction("Remove from Recent")
-        rem_action.triggered.connect(lambda: self._removeFromRecentAndRefresh(file_path))
-        if os.path.exists(file_path):
-            fav_action = menu.addAction("Add to Favorites")
-            fav_action.triggered.connect(lambda: self.addToFavoritesFromPath(file_path))
-            if os.path.isfile(file_path):
-                cont_action = menu.addAction("Open Containing Folder")
-                cont_action.triggered.connect(lambda: self.openContainingFolder(file_path))
-        menu.exec_(self.ui.recent_list.mapToGlobal(position))
-
-    def showFavoritesContextMenu(self, position):
-        item = self.ui.favorites_list.itemAt(position)
-        if not item:
-            return
-        path_info = item.data(Qt.UserRole)
-        if not path_info:
-            return
-        file_path = path_info["path"]
-        menu = self.ui.favorites_list.createStandardContextMenu()
-        open_action = menu.addAction("Open")
-        open_action.triggered.connect(lambda: self.openFileWithDefaultApp(file_path))
-        rem_action = menu.addAction("Remove from Favorites")
-        rem_action.triggered.connect(lambda: self._removeFromFavoritesAndRefresh(file_path))
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            cont_action = menu.addAction("Open Containing Folder")
-            cont_action.triggered.connect(lambda: self.openContainingFolder(file_path))
-        menu.exec_(self.ui.favorites_list.mapToGlobal(position))
 
     def setPathAsRoot(self, path):
         if os.path.isdir(path):
