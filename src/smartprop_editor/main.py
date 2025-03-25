@@ -3,8 +3,6 @@ import os.path
 import re
 import ast
 
-from distutils.util import strtobool
-
 from PySide6.QtWidgets import (
     QMainWindow,
     QTreeWidgetItem,
@@ -13,22 +11,18 @@ from PySide6.QtWidgets import (
     QApplication,
     QHeaderView,
     QTreeWidget,
-    QTabBar,
     QWidget,
     QVBoxLayout,
     QPushButton,
-    QHBoxLayout,
     QWidgetAction
 )
 from PySide6.QtGui import (
     QKeyEvent,
     QUndoStack,
-    QKeySequence,
-    QAction
+    QKeySequence
 )
-from styles.common import qt_stylesheet_button
 
-from src.explorer.browser import FileBrowser
+from src.explorer.browser.main import FileBrowser
 from PySide6.QtCore import Qt, QTimer
 from src.settings.main import get_settings_value, get_settings_bool
 
@@ -58,8 +52,7 @@ from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItem
 from src.smartprop_editor.element_id import (
     update_value_ElementID,
     update_child_ElementID_value,
-    get_ElementID_key,
-    reset_ElementID
+    get_ElementID_key
 )
 from src.smartprop_editor._common import (
     get_clean_class_name_value,
