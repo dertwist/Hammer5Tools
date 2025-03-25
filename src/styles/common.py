@@ -169,37 +169,6 @@ qt_stylesheet_button = """
         margin-right: 2px;
 
     }"""
-
-qt_stylesheet_toolbutton = """
-    /* QPushButton default and hover styles */
-    QToolButton {
-
-        font: 580 9pt "Segoe UI";
-
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QToolButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QToolButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }"""
 # padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px
 qt_stylesheet_combobox = """
     /* QPushButton default and hover styles */
