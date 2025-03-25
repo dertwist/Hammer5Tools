@@ -13,20 +13,14 @@ from PySide6.QtWidgets import (
     QApplication,
     QHeaderView,
     QTreeWidget,
-    QTabBar,
-    QWidget,
-    QVBoxLayout,
-    QPushButton,
-    QHBoxLayout,
-    QWidgetAction
+    QTabBar
 )
 from PySide6.QtGui import (
+    QAction,
     QKeyEvent,
     QUndoStack,
-    QKeySequence,
-    QAction
+    QKeySequence
 )
-from src.explorer.browser import FileBrowser
 from PySide6.QtCore import Qt, QTimer
 from src.settings.main import get_settings_value, get_settings_bool
 
@@ -136,8 +130,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         # Initialize button signals
         self.buttons()
 
-        self.ui.actionFileBrowser.triggered.connect(self.open_filebrowser)
-
         # Group dockwidgets
         self.tabifyDockWidget(self.ui.dockWidget_4, self.ui.dockWidget_2)
         # Set focus to hierarchy dockwidget
@@ -147,7 +139,6 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         self.undo_stack = QUndoStack(self)
 
-
     def open_preset_manager(self):
         """Creating another instance of this window with a different Explorer path
            for preset management."""
@@ -155,19 +146,18 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.new_instance.mini_explorer.deleteLater()
         self.new_instance.mini_explorer.frame.deleteLater()
         tree_directory = SmartPropEditor_Preset_Path
-        self.new_instance.init_explorer(tree_directory, "SmartPropEditorPresetManager", preset_manager=True)
+        self.new_instance.init_explorer(tree_directory, "SmartPropEditorPresetManager")
         self.new_instance.ui.preset_manager_button.deleteLater()
         self.new_instance.show()
 
-    def init_explorer(self, dir: str = None, editor_name: str = None, preset_manager: bool = None):
+    def init_explorer(self, dir: str = None, editor_name: str = None):
         if dir is None:
             self.tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
         else:
             self.tree_directory = dir
         if editor_name is None:
             editor_name = "SmartPropEditor"
-        if preset_manager is None:
-            preset_manager = False
+
         self.mini_explorer = Explorer(
             tree_directory=self.tree_directory,
             addon=get_addon_name(),
@@ -175,12 +165,6 @@ class SmartPropEditorMainWindow(QMainWindow):
             parent=self.ui.explorer_layout_widget
         )
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
-        if preset_manager:
-            self.ui.dockWidget_10.show()
-            self.ui.toolBar.hide()
-        else:
-            self.ui.dockWidget_10.hide()
-            self.ui.dockWidget_10.deleteLater()
 
     def buttons(self):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
@@ -780,9 +764,9 @@ class SmartPropEditorMainWindow(QMainWindow):
             for item in variables:
                 var_class = (item["_class"]).replace(variable_prefix, "")
                 var_name = item.get("m_VariableName", None)
-                var_display_name = item.get("m_ParameterName", None)
+                var_display_name = item.get("m_DisplayName", None)
                 if var_display_name is None:
-                    var_display_name = item.get("m_DisplayName", None)
+                    var_display_name = item.get("m_ParameterName", None)
                 var_visible_in_editor = bool(item.get("m_bExposeAsParameter", None))
 
                 var_value = {
@@ -851,31 +835,20 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # ======================================[Choices Context Menu]========================================
     def open_MenuChoices(self, position):
-        """
-        Replacing QActions with push buttons keeps the same logic and comments,
-        but we place them inside a QWidget for the menu.
-        """
         menu = QMenu()
-        container_widget = QWidget()
-        vlayout = QVBoxLayout(container_widget)
         item = self.ui.choices_tree_widget.itemAt(position)
-
-        # Add Choice
-        add_choice_btn = QPushButton("Add Choice")
-        add_choice_btn.clicked.connect(
+        add_choice = menu.addAction("Add Choice")
+        add_choice.triggered.connect(
             lambda: AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.ui.variables_scrollArea)
         )
-        vlayout.addWidget(add_choice_btn)
 
-        # If item:
         if item:
             if item.text(2) == "choice":
-                add_option_btn = QPushButton("Add Option")
-                add_option_btn.clicked.connect(lambda: AddOption(parent=item, name="Option"))
-                vlayout.addWidget(add_option_btn)
+                add_option = menu.addAction("Add Option")
+                add_option.triggered.connect(lambda: AddOption(parent=item, name="Option"))
             elif item.text(2) == "option":
-                add_variable_btn = QPushButton("Add Variable")
-                add_variable_btn.clicked.connect(
+                add_variable = menu.addAction("Add Variable")
+                add_variable.triggered.connect(
                     lambda: AddVariable(
                         parent=item,
                         variables_scrollArea=self.ui.variables_scrollArea,
@@ -884,25 +857,16 @@ class SmartPropEditorMainWindow(QMainWindow):
                         type=""
                     )
                 )
-                vlayout.addWidget(add_variable_btn)
 
-        # Sections and Move Up / Move Down
-        move_up_btn = QPushButton("Move Up")
-        move_up_btn.clicked.connect(lambda: self.move_tree_item(self.ui.choices_tree_widget, -1))
-        vlayout.addWidget(move_up_btn)
+        menu.addSection("")
+        move_up_action = menu.addAction("Move Up")
+        move_down_action = menu.addAction("Move Down")
+        move_up_action.triggered.connect(lambda: self.move_tree_item(self.ui.choices_tree_widget, -1))
+        move_down_action.triggered.connect(lambda: self.move_tree_item(self.ui.choices_tree_widget, 1))
+        menu.addSection("")
 
-        move_down_btn = QPushButton("Move Down")
-        move_down_btn.clicked.connect(lambda: self.move_tree_item(self.ui.choices_tree_widget, 1))
-        vlayout.addWidget(move_down_btn)
-
-        # Remove
-        remove_btn = QPushButton("Remove")
-        remove_btn.clicked.connect(lambda: self.remove_tree_item(self.ui.choices_tree_widget))
-        vlayout.addWidget(remove_btn)
-
-        widget_action = QWidgetAction(menu)
-        widget_action.setDefaultWidget(container_widget)
-        menu.addAction(widget_action)
+        remove_action = menu.addAction("Remove")
+        remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.choices_tree_widget))
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
 
@@ -999,24 +963,13 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # ======================================[Variables Context menu]========================================
     def contextMenuEvent(self, event):
-        """
-        Since we are inside the main window, we can show a menu with a QWidgetAction
-        containing push buttons instead of QActions.
-        """
+        context_menu = QMenu(self)
         if self.ui.variables_QscrollArea is QApplication.focusWidget():
-            context_menu = QMenu(self)
-            container_widget = QWidget()
-            layout = QVBoxLayout(container_widget)
+            paste_action = QAction("Paste Variable", self)
+            paste_action.triggered.connect(self.paste_variable)
+            context_menu.addAction(paste_action)
 
-            paste_variable_btn = QPushButton("Paste Variable")
-            paste_variable_btn.clicked.connect(self.paste_variable)
-            layout.addWidget(paste_variable_btn)
-
-            widget_action = QWidgetAction(context_menu)
-            widget_action.setDefaultWidget(container_widget)
-            context_menu.addAction(widget_action)
-
-            context_menu.exec_(event.globalPos())
+        context_menu.exec_(event.globalPos())
 
     def paste_variable(self):
         """
@@ -1099,71 +1052,56 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     # ======================================[Tree widget hierarchy context menu]========================================
     def open_hierarchy_menu(self, position):
-        """
-        Replace old QActions with push buttons inside a QWidgetAction, preserving the logic and comments.
-        """
         menu = QMenu()
-        container_widget = QWidget()
-        layout = QVBoxLayout(container_widget)
+        add_new_action = menu.addAction("New element")
+        add_new_action.triggered.connect(self.add_an_element)
+        add_new_action.setShortcut(QKeySequence("Ctrl+F"))
 
-        # "New element"
-        new_element_btn = QPushButton("New element")
-        new_element_btn.clicked.connect(self.add_an_element)
-        layout.addWidget(new_element_btn)
+        add_preset_action = menu.addAction("New using preset")
+        add_preset_action.triggered.connect(self.add_preset)
 
-        # "New using preset"
-        add_preset_btn = QPushButton("New using preset")
-        add_preset_btn.clicked.connect(self.add_preset)
-        layout.addWidget(add_preset_btn)
+        menu.addSeparator()
 
-        # Move Up
-        move_up_btn = QPushButton("Move Up")
-        move_up_btn.clicked.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget, -1))
-        layout.addWidget(move_up_btn)
+        move_up_action = menu.addAction("Move Up")
+        move_up_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget, -1))
+        move_up_action.setShortcut(QKeySequence("Ctrl+Up"))
 
-        # Move Down
-        move_down_btn = QPushButton("Move Down")
-        move_down_btn.clicked.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget, 1))
-        layout.addWidget(move_down_btn)
+        move_down_action = menu.addAction("Move Down")
+        move_down_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget, 1))
+        move_down_action.setShortcut(QKeySequence("Ctrl+Down"))
 
-        # Remove
-        remove_btn = QPushButton("Remove")
-        remove_btn.clicked.connect(lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.tree_hierarchy_widget)))
-        layout.addWidget(remove_btn)
+        menu.addSeparator()
 
-        # Duplicate
-        duplicate_btn = QPushButton("Duplicate")
-        duplicate_btn.clicked.connect(lambda: self.duplicate_hierarchy_items(self.ui.tree_hierarchy_widget))
-        layout.addWidget(duplicate_btn)
+        remove_action = menu.addAction("Remove")
+        remove_action.triggered.connect(
+            lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.tree_hierarchy_widget)))
+        remove_action.setShortcut(QKeySequence("Delete"))
 
-        # Group selected
-        group_btn = QPushButton("Group selected")
-        group_btn.clicked.connect(lambda: self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget)))
-        layout.addWidget(group_btn)
+        duplicate_action = menu.addAction("Duplicate")
+        duplicate_action.triggered.connect(lambda: self.duplicate_hierarchy_items(self.ui.tree_hierarchy_widget))
+        duplicate_action.setShortcut(QKeySequence("Ctrl+D"))
 
-        # Copy
-        copy_btn = QPushButton("Copy")
-        copy_btn.clicked.connect(lambda: self.copy_item(self.ui.tree_hierarchy_widget))
-        layout.addWidget(copy_btn)
+        grouping_action = menu.addAction("Group selected")
+        grouping_action.triggered.connect(lambda: self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget)))
+        grouping_action.setShortcut(QKeySequence("Ctrl+G"))
 
-        # Cut
-        cut_btn = QPushButton("Cut")
-        cut_btn.clicked.connect(lambda: self.cut_item(self.ui.tree_hierarchy_widget))
-        layout.addWidget(cut_btn)
+        menu.addSeparator()
 
-        # Paste
-        paste_btn = QPushButton("Paste")
-        paste_btn.clicked.connect(lambda: self.paste_item(self.ui.tree_hierarchy_widget))
-        layout.addWidget(paste_btn)
+        copy_action = menu.addAction("Copy")
+        copy_action.setShortcut(QKeySequence.Copy)
+        copy_action.triggered.connect(lambda: self.copy_item(self.ui.tree_hierarchy_widget))
 
-        # Paste with replacement
-        paste_replace_btn = QPushButton("Paste with replacement")
-        paste_replace_btn.clicked.connect(lambda: self.new_item_with_replacement(QApplication.clipboard().text()))
-        layout.addWidget(paste_replace_btn)
+        copy_action = menu.addAction("Cut")
+        copy_action.setShortcut(QKeySequence.Cut)
+        copy_action.triggered.connect(lambda: self.cut_item(self.ui.tree_hierarchy_widget))
 
-        widget_action = QWidgetAction(menu)
-        widget_action.setDefaultWidget(container_widget)
-        menu.addAction(widget_action)
+        paste_action = menu.addAction("Paste")
+        paste_action.setShortcut(QKeySequence.Paste)
+        paste_action.triggered.connect(lambda: self.paste_item(self.ui.tree_hierarchy_widget))
+
+        paste_replace_action = menu.addAction("Paste with replacement")
+        paste_replace_action.setShortcut(QKeySequence("Ctrl+Shift+V"))
+        paste_replace_action.triggered.connect(lambda: self.new_item_with_replacement(QApplication.clipboard().text()))
 
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
 
@@ -1200,30 +1138,32 @@ class SmartPropEditorMainWindow(QMainWindow):
         tree.scrollToItem(selected_items[-1] if direction > 0 else selected_items[0])
 
     def copy_item(self, tree, copy_to_clipboard=True):
-        selected_indexes = tree.selectedIndexes()
-        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
-        selected_items = list(set(selected_items))
-        root_data = {"m_Children": []}
+            selected_indexes = tree.selectedIndexes()
+            selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
+            selected_items = list(set(selected_items))
+            root_data = {"m_Children": []}
 
-        for tree_item in selected_items:
-            item_data = serialization_hierarchy_items(item=tree_item)
-            if item_data and "m_Children" in item_data:
-                root_data["m_Children"].extend(item_data["m_Children"])
+            for tree_item in selected_items:
+                item_data = serialization_hierarchy_items(item=tree_item)
+                if item_data and "m_Children" in item_data:
+                    root_data["m_Children"].extend(item_data["m_Children"])
 
-        if root_data["m_Children"]:
-            if copy_to_clipboard:
-                clipboard = QApplication.clipboard()
-                clipboard.setText(JsonToKv3(root_data))
-                return None
+            if root_data["m_Children"]:
+                if copy_to_clipboard:
+                    clipboard = QApplication.clipboard()
+                    clipboard.setText(JsonToKv3(root_data))
+                    return None
+                else:
+                    return JsonToKv3(root_data)
             else:
-                return JsonToKv3(root_data)
-        else:
-            return None
+                return None
 
     def cut_item(self, tree: QTreeWidget):
         self.copy_item(tree)
         self.undo_stack.push(DeleteTreeItemCommand(tree))
 
+
+    # ---------------------------------- Updated paste_item method ----------------------------------
     def paste_item(self, tree, data_input=None, paste_to_parent=False):
         """
         Improved paste functionality:
@@ -1355,9 +1295,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         modified_content = re.sub(pattern, "= ", file_content)
         modified_content = modified_content.replace("null,", "")
         return modified_content
-    def open_filebrowser(self):
-        self.file_browser = FileBrowser(root=self.tree_directory, editor='SmartPropEditor', extension='vsmart')
-        self.file_browser.show()
 
 
 if __name__ == "__main__":
