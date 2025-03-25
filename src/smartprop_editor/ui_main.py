@@ -19,9 +19,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox,
     QDockWidget, QFrame, QHBoxLayout, QHeaderView,
     QLabel, QLineEdit, QMainWindow, QPushButton,
-    QScrollArea, QSizePolicy, QSpacerItem, QToolBar,
-    QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-    QWidget)
+    QScrollArea, QSizePolicy, QSpacerItem, QToolButton,
+    QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -30,41 +29,45 @@ class Ui_MainWindow(object):
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1280, 720)
         MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
-        self.action_newfile = QAction(MainWindow)
-        self.action_newfile.setObjectName(u"action_newfile")
+        self.actionCreateNewsmartprop = QAction(MainWindow)
+        self.actionCreateNewsmartprop.setObjectName(u"actionCreateNewsmartprop")
         icon = QIcon()
         icon.addFile(u":/valve_common/icons/tools/common/new.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.action_newfile.setIcon(icon)
-        self.action_newfile.setMenuRole(QAction.MenuRole.NoRole)
-        self.action_openfile = QAction(MainWindow)
-        self.action_openfile.setObjectName(u"action_openfile")
+        self.actionCreateNewsmartprop.setIcon(icon)
+        self.actionCreateNewsmartprop.setMenuRole(QAction.MenuRole.NoRole)
+        self.actionOpen_from_Explorer = QAction(MainWindow)
+        self.actionOpen_from_Explorer.setObjectName(u"actionOpen_from_Explorer")
         icon1 = QIcon()
         icon1.addFile(u":/valve_common/icons/tools/common/open.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.action_openfile.setIcon(icon1)
-        self.action_savefile_as = QAction(MainWindow)
-        self.action_savefile_as.setObjectName(u"action_savefile_as")
+        self.actionOpen_from_Explorer.setIcon(icon1)
+        self.actionSave_as = QAction(MainWindow)
+        self.actionSave_as.setObjectName(u"actionSave_as")
         icon2 = QIcon()
         icon2.addFile(u":/valve_common/icons/tools/common/save_all.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.action_savefile_as.setIcon(icon2)
-        self.action_savefile = QAction(MainWindow)
-        self.action_savefile.setObjectName(u"action_savefile")
+        self.actionSave_as.setIcon(icon2)
+        self.actionSave_current_file = QAction(MainWindow)
+        self.actionSave_current_file.setObjectName(u"actionSave_current_file")
         icon3 = QIcon()
         icon3.addFile(u":/valve_common/icons/tools/common/save.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.action_savefile.setIcon(icon3)
-        self.actionExplorer = QAction(MainWindow)
-        self.actionExplorer.setObjectName(u"actionExplorer")
+        self.actionSave_current_file.setIcon(icon3)
+        self.actionRecompile_file = QAction(MainWindow)
+        self.actionRecompile_file.setObjectName(u"actionRecompile_file")
         icon4 = QIcon()
-        icon4.addFile(u":/valve_common/icons/tools/common/find.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.actionExplorer.setIcon(icon4)
-        self.actionExplorer.setMenuRole(QAction.MenuRole.NoRole)
-        self.action_realtime_save = QAction(MainWindow)
-        self.action_realtime_save.setObjectName(u"action_realtime_save")
-        self.action_realtime_save.setCheckable(True)
+        icon4.addFile(u":/valve_common/icons/tools/common/options_activated.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.actionRecompile_file.setIcon(icon4)
+        self.actionRecompile_all_in_addon = QAction(MainWindow)
+        self.actionRecompile_all_in_addon.setObjectName(u"actionRecompile_all_in_addon")
+        self.actionRecompile_all_in_addon.setIcon(icon4)
+        self.actionConvert_all_vsmart_file_to_vdata = QAction(MainWindow)
+        self.actionConvert_all_vsmart_file_to_vdata.setObjectName(u"actionConvert_all_vsmart_file_to_vdata")
         icon5 = QIcon()
-        icon5.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        icon5.addFile(u":/valve_common/icons/tools/common/control_stop.png", QSize(), QIcon.Mode.Normal, QIcon.State.On)
-        self.action_realtime_save.setIcon(icon5)
-        self.action_realtime_save.setMenuRole(QAction.MenuRole.NoRole)
+        icon5.addFile(u":/valve_common/icons/tools/common/move_to_changelist.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.actionConvert_all_vsmart_file_to_vdata.setIcon(icon5)
+        self.actionFormat_serttings = QAction(MainWindow)
+        self.actionFormat_serttings.setObjectName(u"actionFormat_serttings")
+        icon6 = QIcon()
+        icon6.addFile(u":/valve_common/icons/tools/common/setting.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.actionFormat_serttings.setIcon(icon6)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_9 = QVBoxLayout(self.centralwidget)
@@ -106,7 +109,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 690, 700))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 725, 700))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -226,9 +229,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon6 = QIcon()
-        icon6.addFile(u":/icons/schema_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.preset_manager_button.setIcon(icon6)
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/schema_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.preset_manager_button.setIcon(icon7)
         self.preset_manager_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_3.addWidget(self.preset_manager_button)
@@ -258,7 +261,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 283, 327))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 283, 190))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -313,9 +316,9 @@ class Ui_MainWindow(object):
 "    font: 580 9pt \"Segoe UI\";\n"
 "\n"
 "}")
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.paste_variable_button.setIcon(icon7)
+        icon8 = QIcon()
+        icon8.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.paste_variable_button.setIcon(icon8)
         self.paste_variable_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.paste_variable_button)
@@ -347,9 +350,9 @@ class Ui_MainWindow(object):
 "    font: 580 9pt \"Segoe UI\";\n"
 "\n"
 "}")
-        icon8 = QIcon()
-        icon8.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.add_new_variable_button.setIcon(icon8)
+        icon9 = QIcon()
+        icon9.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.add_new_variable_button.setIcon(icon9)
         self.add_new_variable_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.add_new_variable_button)
@@ -579,9 +582,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_button.setIcon(icon9)
+        icon10 = QIcon()
+        icon10.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_file_button.setIcon(icon10)
         self.open_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.open_file_button)
@@ -618,9 +621,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon10 = QIcon()
-        icon10.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_file_button.setIcon(icon10)
+        icon11 = QIcon()
+        icon11.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_file_button.setIcon(icon11)
         self.save_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.save_file_button)
@@ -657,7 +660,7 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.cerate_file_button.setIcon(icon8)
+        self.cerate_file_button.setIcon(icon9)
         self.cerate_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.cerate_file_button)
@@ -705,9 +708,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon11 = QIcon()
-        icon11.addFile(u":/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.save_as_file_button.setIcon(icon11)
+        icon12 = QIcon()
+        icon12.addFile(u":/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.save_as_file_button.setIcon(icon12)
         self.save_as_file_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.save_as_file_button)
@@ -744,9 +747,9 @@ class Ui_MainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon12 = QIcon()
-        icon12.addFile(u":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_file_as_button.setIcon(icon12)
+        icon13 = QIcon()
+        icon13.addFile(u":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_file_as_button.setIcon(icon13)
         self.open_file_as_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.open_file_as_button)
@@ -810,19 +813,6 @@ class Ui_MainWindow(object):
 
         self.dockWidget_2.setWidget(self.dockWidgetContents_3)
         MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_2)
-        self.toolBar = QToolBar(MainWindow)
-        self.toolBar.setObjectName(u"toolBar")
-        MainWindow.addToolBar(Qt.ToolBarArea.LeftToolBarArea, self.toolBar)
-
-        self.toolBar.addAction(self.actionExplorer)
-        self.toolBar.addAction(self.action_realtime_save)
-        self.toolBar.addSeparator()
-        self.toolBar.addAction(self.action_newfile)
-        self.toolBar.addAction(self.action_savefile)
-        self.toolBar.addSeparator()
-        self.toolBar.addAction(self.action_openfile)
-        self.toolBar.addAction(self.action_savefile_as)
-        self.toolBar.addSeparator()
 
         self.retranslateUi(MainWindow)
 
@@ -831,12 +821,17 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.action_newfile.setText(QCoreApplication.translate("MainWindow", u"New File", None))
-        self.action_openfile.setText(QCoreApplication.translate("MainWindow", u"Open File", None))
-        self.action_savefile_as.setText(QCoreApplication.translate("MainWindow", u"Save as", None))
-        self.action_savefile.setText(QCoreApplication.translate("MainWindow", u"Save", None))
-        self.actionExplorer.setText(QCoreApplication.translate("MainWindow", u"Explorer", None))
-        self.action_realtime_save.setText(QCoreApplication.translate("MainWindow", u"Realtime save", None))
+        self.actionCreateNewsmartprop.setText(QCoreApplication.translate("MainWindow", u"CreateNewsmartprop", None))
+        self.actionOpen_from_Explorer.setText(QCoreApplication.translate("MainWindow", u"Open as", None))
+        self.actionSave_as.setText(QCoreApplication.translate("MainWindow", u"Save as", None))
+        self.actionSave_current_file.setText(QCoreApplication.translate("MainWindow", u"Save", None))
+        self.actionRecompile_file.setText(QCoreApplication.translate("MainWindow", u"Recompile file", None))
+        self.actionRecompile_all_in_addon.setText(QCoreApplication.translate("MainWindow", u"Recompile all in addon", None))
+        self.actionConvert_all_vsmart_file_to_vdata.setText(QCoreApplication.translate("MainWindow", u"Convert all vsmart file to vdata", None))
+#if QT_CONFIG(tooltip)
+        self.actionConvert_all_vsmart_file_to_vdata.setToolTip(QCoreApplication.translate("MainWindow", u"Convert all to data", None))
+#endif // QT_CONFIG(tooltip)
+        self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
         self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select an element in the hierarchy", None))
         self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
@@ -898,6 +893,5 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
         ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
         ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Label", None));
-        self.toolBar.setWindowTitle(QCoreApplication.translate("MainWindow", u"toolBar", None))
     # retranslateUi
 

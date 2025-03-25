@@ -105,7 +105,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>690</width>
+            <width>725</width>
             <height>700</height>
            </rect>
           </property>
@@ -420,7 +420,7 @@
           <x>0</x>
           <y>0</y>
           <width>283</width>
-          <height>327</height>
+          <height>190</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -1244,48 +1244,28 @@ QComboBox QAbstractItemView::item:selected {
     </layout>
    </widget>
   </widget>
-  <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>LeftToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="actionExplorer"/>
-   <addaction name="action_realtime_save"/>
-   <addaction name="separator"/>
-   <addaction name="action_newfile"/>
-   <addaction name="action_savefile"/>
-   <addaction name="separator"/>
-   <addaction name="action_openfile"/>
-   <addaction name="action_savefile_as"/>
-   <addaction name="separator"/>
-  </widget>
-  <action name="action_newfile">
+  <action name="actionCreateNewsmartprop">
    <property name="icon">
     <iconset resource="../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/new.png</normaloff>:/valve_common/icons/tools/common/new.png</iconset>
    </property>
    <property name="text">
-    <string>New File</string>
+    <string>CreateNewsmartprop</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
-  <action name="action_openfile">
+  <action name="actionOpen_from_Explorer">
    <property name="icon">
     <iconset resource="../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
    </property>
    <property name="text">
-    <string>Open File</string>
+    <string>Open as</string>
    </property>
   </action>
-  <action name="action_savefile_as">
+  <action name="actionSave_as">
    <property name="icon">
     <iconset resource="../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/save_all.png</normaloff>:/valve_common/icons/tools/common/save_all.png</iconset>
@@ -1294,7 +1274,7 @@ QComboBox QAbstractItemView::item:selected {
     <string>Save as</string>
    </property>
   </action>
-  <action name="action_savefile">
+  <action name="actionSave_current_file">
    <property name="icon">
     <iconset resource="../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/save.png</normaloff>:/valve_common/icons/tools/common/save.png</iconset>
@@ -1303,32 +1283,43 @@ QComboBox QAbstractItemView::item:selected {
     <string>Save</string>
    </property>
   </action>
-  <action name="actionExplorer">
+  <action name="actionRecompile_file">
    <property name="icon">
     <iconset resource="../resources.qrc">
-     <normaloff>:/valve_common/icons/tools/common/find.png</normaloff>:/valve_common/icons/tools/common/find.png</iconset>
+     <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
    </property>
    <property name="text">
-    <string>Explorer</string>
-   </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::NoRole</enum>
+    <string>Recompile file</string>
    </property>
   </action>
-  <action name="action_realtime_save">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
+  <action name="actionRecompile_all_in_addon">
    <property name="icon">
     <iconset resource="../resources.qrc">
-     <normaloff>:/valve_common/icons/tools/common/control_play.png</normaloff>
-     <normalon>:/valve_common/icons/tools/common/control_stop.png</normalon>:/valve_common/icons/tools/common/control_play.png</iconset>
+     <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
    </property>
    <property name="text">
-    <string>Realtime save</string>
+    <string>Recompile all in addon</string>
    </property>
-   <property name="menuRole">
-    <enum>QAction::MenuRole::NoRole</enum>
+  </action>
+  <action name="actionConvert_all_vsmart_file_to_vdata">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</iconset>
+   </property>
+   <property name="text">
+    <string>Convert all vsmart file to vdata</string>
+   </property>
+   <property name="toolTip">
+    <string>Convert all to data</string>
+   </property>
+  </action>
+  <action name="actionFormat_serttings">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/setting.png</normaloff>:/valve_common/icons/tools/common/setting.png</iconset>
+   </property>
+   <property name="text">
+    <string>Format serttings</string>
    </property>
   </action>
  </widget>

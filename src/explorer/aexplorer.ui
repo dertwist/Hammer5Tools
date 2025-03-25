@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>848</width>
-    <height>586</height>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,22 +18,10 @@
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QWidget" name="layoutWidget">
+      <widget class="QWidget" name="">
        <layout class="QVBoxLayout" name="verticalLayout_4">
-        <item>
-         <widget class="QGroupBox" name="groupBox_3">
-          <property name="title">
-           <string>Recent</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_3">
-           <item>
-            <widget class="QListWidget" name="recent_list"/>
-           </item>
-          </layout>
-         </widget>
-        </item>
         <item>
          <widget class="QGroupBox" name="groupBox">
           <property name="title">
@@ -41,14 +29,74 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
            <item>
-            <widget class="QListWidget" name="favorites_list"/>
+            <widget class="QTreeWidget" name="treeWidget">
+             <column>
+              <property name="text">
+               <string notr="true">1</string>
+              </property>
+             </column>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_3">
+          <property name="title">
+           <string>Recent</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout"/>
+           </item>
+           <item>
+            <widget class="QFrame" name="frame">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QLabel" name="label">
+                <property name="text">
+                 <string>File</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton">
+                <property name="text">
+                 <string>(Icon) Select file</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_2">
+                <property name="text">
+                 <string>(Icon) Open folder</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QTreeWidget" name="treeWidget_3">
+             <column>
+              <property name="text">
+               <string notr="true">1</string>
+              </property>
+             </column>
+            </widget>
            </item>
           </layout>
          </widget>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="layoutWidget">
+      <widget class="QWidget" name="">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QGroupBox" name="groupBox_4">
@@ -57,66 +105,23 @@
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="QLineEdit" name="filter">
+            <widget class="QLineEdit" name="lineEdit">
              <property name="placeholderText">
               <string>Name</string>
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QCheckBox" name="subdir">
-             <property name="text">
-              <string>Subdir</string>
-             </property>
-            </widget>
-           </item>
           </layout>
          </widget>
         </item>
         <item>
-         <widget class="QFrame" name="frame">
-          <property name="frameShape">
-           <enum>QFrame::Shape::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Shadow::Raised</enum>
-          </property>
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <property name="leftMargin">
-            <number>0</number>
+         <widget class="QTreeWidget" name="treeWidget_2">
+          <column>
+           <property name="text">
+            <string notr="true">1</string>
            </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QToolButton" name="up_dir">
-             <property name="text">
-              <string>...</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../resources.qrc">
-               <normaloff>:/valve_common/icons/tools/common/arrow_right_up.png</normaloff>:/valve_common/icons/tools/common/arrow_right_up.png</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="path">
-             <property name="placeholderText">
-              <string>Path</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          </column>
          </widget>
-        </item>
-        <item>
-         <widget class="QTreeWidget" name="filetree"/>
         </item>
         <item>
          <widget class="QGroupBox" name="groupBox_2">
@@ -125,35 +130,23 @@
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
-            <widget class="QPushButton" name="add_to_favorites">
+            <widget class="QPushButton" name="pushButton_4">
              <property name="text">
               <string>Add to Favorites</string>
              </property>
-             <property name="icon">
-              <iconset resource="../resources.qrc">
-               <normaloff>:/valve_common/icons/tools/common/bookmark.png</normaloff>:/valve_common/icons/tools/common/bookmark.png</iconset>
-             </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="new_file">
+            <widget class="QPushButton" name="pushButton_5">
              <property name="text">
               <string>New File</string>
              </property>
-             <property name="icon">
-              <iconset resource="../resources.qrc">
-               <normaloff>:/valve_common/icons/tools/common/new.png</normaloff>:/valve_common/icons/tools/common/new.png</iconset>
-             </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="open_file">
+            <widget class="QPushButton" name="pushButton_3">
              <property name="text">
               <string>Open File</string>
-             </property>
-             <property name="icon">
-              <iconset resource="../resources.qrc">
-               <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
              </property>
             </widget>
            </item>
@@ -172,119 +165,18 @@
      <x>0</x>
      <y>0</y>
      <width>848</width>
-     <height>33</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSetting">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionNew_file"/>
-    <addaction name="actionOpen_file"/>
-    <addaction name="actionAdd_To_Favorites"/>
-   </widget>
-   <widget class="QMenu" name="menuOther">
-    <property name="title">
-     <string>Other</string>
-    </property>
-    <addaction name="actionClear_All_Recent"/>
-    <addaction name="actionClear_All_Favorites"/>
-    <addaction name="actionOpen_current_path_in_Explorer"/>
    </widget>
    <addaction name="menuSetting"/>
-   <addaction name="menuOther"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionNew_file">
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/valve_common/icons/tools/common/new.png</normaloff>:/valve_common/icons/tools/common/new.png</iconset>
-   </property>
-   <property name="text">
-    <string>New file</string>
-   </property>
-  </action>
-  <action name="actionOpen_file">
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
-   </property>
-   <property name="text">
-    <string>Open file</string>
-   </property>
-  </action>
-  <action name="actionAdd_To_Favorites">
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/valve_common/icons/tools/common/bookmark.png</normaloff>:/valve_common/icons/tools/common/bookmark.png</iconset>
-   </property>
-   <property name="text">
-    <string>Add To Favorites</string>
-   </property>
-  </action>
-  <action name="actionClear_All_Recent">
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/valve_common/icons/tools/common/clear_list_sm.png</normaloff>:/valve_common/icons/tools/common/clear_list_sm.png</iconset>
-   </property>
-   <property name="text">
-    <string>Clear All Recent</string>
-   </property>
-  </action>
-  <action name="actionClear_All_Favorites">
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/valve_common/icons/tools/common/clear_list_sm.png</normaloff>:/valve_common/icons/tools/common/clear_list_sm.png</iconset>
-   </property>
-   <property name="text">
-    <string>Clear All Favorites</string>
-   </property>
-  </action>
-  <action name="actionOpen_current_path_in_Explorer">
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
-   </property>
-   <property name="text">
-    <string>Open Current Folder In Explorer</string>
-   </property>
-  </action>
  </widget>
- <resources>
-  <include location="../resources.qrc"/>
- </resources>
- <connections>
-  <connection>
-   <sender>actionNew_file</sender>
-   <signal>triggered()</signal>
-   <receiver>new_file</receiver>
-   <slot>click()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>632</x>
-     <y>532</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionAdd_To_Favorites</sender>
-   <signal>triggered()</signal>
-   <receiver>add_to_favorites</receiver>
-   <slot>click()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>500</x>
-     <y>532</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <resources/>
+ <connections/>
 </ui>
