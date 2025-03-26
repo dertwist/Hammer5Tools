@@ -175,7 +175,7 @@ class Explorer(QMainWindow):
         self.goto_button.setStyleSheet(qt_stylesheet_toolbutton)
         self.top_layout.addWidget(self.goto_button)
         self.recent_button = QToolButton(self)
-        self.recent_button.setIcon(QIcon(":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.recent_button.setIcon(QIcon("://icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         self.recent_button.setToolTip("Recent Files")
         self.recent_button.setStyleSheet(qt_stylesheet_toolbutton)
         self.recent_button.setMaximumHeight(26)
@@ -183,7 +183,7 @@ class Explorer(QMainWindow):
         self.recent_button.clicked.connect(self.open_recent_files_dialog)
         self.top_layout.addWidget(self.recent_button)
         self.favorites_button = QToolButton(self)
-        self.favorites_button.setIcon(QIcon(":/icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.favorites_button.setIcon(QIcon("://icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         self.favorites_button.setToolTip("Favorites")
         self.favorites_button.setStyleSheet(qt_stylesheet_toolbutton)
         self.favorites_button.setMaximumHeight(26)
@@ -332,64 +332,79 @@ class Explorer(QMainWindow):
                 self.add_folder_actions(menu, source_index)
             else:
                 self.add_file_actions(menu, source_index)
-            action = QAction("Add to Favorites", self)
-            action.setIcon(QIcon(":/icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
-            action.triggered.connect(lambda: self.add_favorite(self.model.filePath(source_index)))
-            menu.addAction(action)
+            favorite_action = QAction("Add to Favorites", self)
+            favorite_action.setIcon(QIcon(":/icons/bookmarks_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            favorite_action.triggered.connect(lambda: self.add_favorite(self.model.filePath(source_index)))
+            menu.addAction(favorite_action)
         else:
             create_folder_action = QAction("Create Folder", self)
+            create_folder_action.setIcon(QIcon(":/icons/create_new_folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
             create_folder_action.triggered.connect(lambda: self.create_folder(self.model.index(self.tree_directory)))
             menu.addAction(create_folder_action)
             paste_action = QAction("Paste File", self)
+            paste_action.setIcon(QIcon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
             paste_action.triggered.connect(lambda: self.paste_file(self.model.index(self.tree_directory)))
             menu.addAction(paste_action)
         menu.exec_(self.tree.viewport().mapToGlobal(position))
 
     def add_folder_actions(self, menu, index):
         open_folder_action = QAction("Open Folder in Explorer", self)
+        open_folder_action.setIcon(QIcon(":/icons/folder_open.svg"))
         open_folder_action.triggered.connect(lambda: self.open_folder_in_explorer(index))
         menu.addAction(open_folder_action)
-        delete_action = QAction("Delete Folder", self)
-        delete_action.triggered.connect(lambda: self.delete_item(index))
-        menu.addAction(delete_action)
+        delete_folder_action = QAction("Delete Folder", self)
+        delete_folder_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        delete_folder_action.triggered.connect(lambda: self.delete_item(index))
+        menu.addAction(delete_folder_action)
         new_folder_action = QAction("New Folder", self)
+        new_folder_action.setIcon(QIcon(":/icons/create_new_folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         new_folder_action.triggered.connect(lambda: self.create_folder(index))
         menu.addAction(new_folder_action)
         paste_action = QAction("Paste File", self)
+        paste_action.setIcon(QIcon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         paste_action.triggered.connect(lambda: self.paste_file(index))
         menu.addAction(paste_action)
 
     def add_file_actions(self, menu, index):
         open_action = QAction("Open File", self)
+        open_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         open_action.triggered.connect(lambda: self.open_file(index))
         menu.addAction(open_action)
         open_path_action = QAction("Open File Folder", self)
+        open_path_action.setIcon(QIcon(":/icons/folder_open.svg"))
         open_path_action.triggered.connect(lambda: self.open_path_file(index))
         menu.addAction(open_path_action)
         delete_action = QAction("Delete File", self)
+        delete_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         delete_action.triggered.connect(lambda: self.delete_item(index))
         menu.addAction(delete_action)
         duplicate_action = QAction("Duplicate File", self)
+        duplicate_action.setIcon(QIcon(":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         duplicate_action.triggered.connect(lambda: self.duplicate_file(index))
         menu.addAction(duplicate_action)
         copy_action = QAction("Copy File", self)
+        copy_action.setIcon(QIcon(":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         copy_action.triggered.connect(lambda: self.copy_file(index))
         menu.addAction(copy_action)
-        copy_relative_path_action = QAction("Copy relative path", self)
+        copy_relative_path_action = QAction("Copy Relative Path", self)
+        copy_relative_path_action.setIcon(QIcon(":/icons/attachment.png"))
         copy_relative_path_action.triggered.connect(lambda: self.copy_relative_path(index, True))
         menu.addAction(copy_relative_path_action)
         file_path = self.model.filePath(index)
         file_extension = file_path.split('.')[-1].lower()
         if file_extension in audio_extensions:
             copy_audio_path_action = QAction("Copy Audio Path", self)
+            copy_audio_path_action.setIcon(QIcon(":/icons/attachment.png"))
             copy_audio_path_action.triggered.connect(lambda: self.copy_audio_path(index, True))
             menu.addAction(copy_audio_path_action)
         if file_extension == "vmdl":
             quick_config_action = QAction("Quick Batch File", self)
+            quick_config_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
             quick_config_action.triggered.connect(lambda: QuickConfigFile(file_path))
             menu.addAction(quick_config_action)
         if file_extension in model_extensions:
             quick_vmdl_action = QAction("Quick VMDL File", self)
+            quick_vmdl_action.setIcon(QIcon(":/icons/edit_note_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
             quick_vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
             menu.addAction(quick_vmdl_action)
 
@@ -649,6 +664,29 @@ class Explorer(QMainWindow):
                     list_widget.addItem(item)
                 except Exception as e:
                     debug(f"Skipping invalid favorite file path: {path} ({e})")
+        list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+
+        def handle_context_menu(pos):
+            item = list_widget.itemAt(pos)
+            if item is None:
+                return
+            menu = QMenu()
+            remove_action = QAction("Remove Favorite", dialog)
+            remove_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+
+            def remove_item():
+                relative_path = item.text()
+                full_path = os.path.join(self.tree_directory, relative_path)
+                if full_path in self.favorites:
+                    self.favorites.remove(full_path)
+                    self.save_favorites()
+                list_widget.takeItem(list_widget.row(item))
+
+            remove_action.triggered.connect(remove_item)
+            menu.addAction(remove_action)
+            menu.exec_(list_widget.viewport().mapToGlobal(pos))
+
+        list_widget.customContextMenuRequested.connect(handle_context_menu)
         layout.addWidget(list_widget)
         button_layout = QHBoxLayout()
         ok_button = QPushButton("OK", dialog)
@@ -658,16 +696,19 @@ class Explorer(QMainWindow):
         button_layout.addWidget(ok_button)
         button_layout.addWidget(cancel_button)
         layout.addLayout(button_layout)
+
         def on_item_double_clicked(item):
             selected_relative = item.text()
             full_path = os.path.join(self.tree_directory, selected_relative)
             if os.path.exists(full_path):
                 self.select_tree_item(full_path)
             dialog.accept()
+
         def filter_items(text):
             for index in range(list_widget.count()):
                 item = list_widget.item(index)
                 item.setHidden(text.lower() not in item.text().lower())
+
         filter_edit.textChanged.connect(filter_items)
         list_widget.itemDoubleClicked.connect(on_item_double_clicked)
         ok_button.clicked.connect(lambda: dialog.accept())
