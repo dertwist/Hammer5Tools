@@ -261,7 +261,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 283, 190))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 283, 327))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -292,30 +292,36 @@ class Ui_MainWindow(object):
         self.paste_variable_button = QToolButton(self.frame)
         self.paste_variable_button.setObjectName(u"paste_variable_button")
         self.paste_variable_button.setMaximumSize(QSize(28, 28))
-        self.paste_variable_button.setStyleSheet(u"QToolButton {\n"
+        self.paste_variable_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QToolButton {\n"
 "\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:18px;\n"
-"    padding: 3px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QToolButton:pressed {\n"
-"    background-color: red;\n"
-"    background-color: #1C1C1C;\n"
-"    margin: 1 px;\n"
-"    margin-left: 2px;\n"
-"    margin-right: 2px;\n"
-"    font: 580 9pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "\n"
-"}")
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QToolButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QToolButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
         icon8 = QIcon()
         icon8.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.paste_variable_button.setIcon(icon8)
@@ -326,30 +332,36 @@ class Ui_MainWindow(object):
         self.add_new_variable_button = QToolButton(self.frame)
         self.add_new_variable_button.setObjectName(u"add_new_variable_button")
         self.add_new_variable_button.setMaximumSize(QSize(28, 28))
-        self.add_new_variable_button.setStyleSheet(u"QToolButton {\n"
+        self.add_new_variable_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QToolButton {\n"
 "\n"
-"    font: 700 10pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:18px;\n"
-"    padding: 3px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #1C1C1C;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QToolButton:pressed {\n"
-"    background-color: red;\n"
-"    background-color: #1C1C1C;\n"
-"    margin: 1 px;\n"
-"    margin-left: 2px;\n"
-"    margin-right: 2px;\n"
-"    font: 580 9pt \"Segoe UI\";\n"
+"        font: 580 9pt \"Segoe UI\";\n"
 "\n"
-"}")
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QToolButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QToolButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
         icon9 = QIcon()
         icon9.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_new_variable_button.setIcon(icon9)
@@ -409,7 +421,7 @@ class Ui_MainWindow(object):
 "    border-top: 2p"
                         "x solid black;\n"
 "    border: 0px;\n"
-"    border-radius: 4px;\n"
+"    border-radius: 2px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
 "    padding-left: 12px;\n"
 "    padding-right: 12px;\n"
@@ -444,7 +456,7 @@ class Ui_MainWindow(object):
 "QComboBox {\n"
 "    font: 580 8pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
-"    border-radius: 4px;\n"
+"    border-radius: 2px;\n"
 "    border-color: rgba(80, 80, 80, 255);\n"
 "    height: 12px;\n"
 "    padding-top: 5px;\n"
