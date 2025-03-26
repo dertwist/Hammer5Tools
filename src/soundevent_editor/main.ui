@@ -332,7 +332,11 @@
           <number>0</number>
          </property>
          <item>
-          <layout class="QVBoxLayout" name="explorer_layout"/>
+          <layout class="QVBoxLayout" name="explorer_layout">
+           <property name="topMargin">
+            <number>2</number>
+           </property>
+          </layout>
          </item>
         </layout>
        </widget>
