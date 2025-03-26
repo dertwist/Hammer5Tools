@@ -213,6 +213,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.explorer_layout = QVBoxLayout()
         self.explorer_layout.setObjectName(u"explorer_layout")
+        self.explorer_layout.setContentsMargins(-1, 2, -1, -1)
 
         self.verticalLayout.addLayout(self.explorer_layout)
 
