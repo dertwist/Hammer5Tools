@@ -10,6 +10,7 @@ from src.settings.main import get_settings_value, set_settings_value, get_cs2_pa
 from src.widgets_common import ErrorInfo
 from src.explorer.actions import QuickVmdlFile, QuickConfigFile
 from src.styles.common import *
+from src.common import enable_dark_title_bar
 
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 smartprop_extensions = ['vsmart', 'vdata']
@@ -181,6 +182,14 @@ class Explorer(QMainWindow):
         self.recent_button.setMaximumWidth(26)
         self.recent_button.clicked.connect(self.open_recent_files_dialog)
         self.top_layout.addWidget(self.recent_button)
+        self.favorites_button = QToolButton(self)
+        self.favorites_button.setIcon(QIcon(":/icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.favorites_button.setToolTip("Favorites")
+        self.favorites_button.setStyleSheet(qt_stylesheet_toolbutton)
+        self.favorites_button.setMaximumHeight(26)
+        self.favorites_button.setMaximumWidth(26)
+        self.favorites_button.clicked.connect(self.open_favorites_dialog)
+        self.top_layout.addWidget(self.favorites_button)
         self.layout = QVBoxLayout(self)
         self.layout.addLayout(self.top_layout)
         self.layout.addWidget(self.tree)
@@ -195,6 +204,7 @@ class Explorer(QMainWindow):
         if tree_state:
             self.tree.restoreState(tree_state)
         self.recent_files = self.load_recent_files()
+        self.favorites = self.load_favorites()
         self.select_last_opened_path()
         self.frame = QFrame(self)
         self.frame.setLayout(self.layout)
@@ -219,6 +229,7 @@ class Explorer(QMainWindow):
             recent = recent[:30]
         set_settings_value(self.editor_name + '_recent_files', self.addon, recent)
         self.recent_files = recent
+
     def load_recent_files(self):
         rf = get_settings_value(self.editor_name + '_recent_files', self.addon)
         if rf is None:
@@ -227,6 +238,30 @@ class Explorer(QMainWindow):
 
     def save_recent_files(self):
         set_settings_value(self.editor_name + '_recent_files', self.addon, self.recent_files)
+
+    def add_favorite(self, path):
+        if not path:
+            return
+        normalized_path = os.path.normpath(path)
+        favs = self.load_favorites()
+        normalized_favs = [os.path.normpath(p) for p in favs if p]
+        if normalized_path in normalized_favs:
+            index = normalized_favs.index(normalized_path)
+            favs.pop(index)
+        favs.insert(0, normalized_path)
+        if len(favs) > 30:
+            favs = favs[:30]
+        set_settings_value(self.editor_name + '_favorites', self.addon, favs)
+        self.favorites = favs
+
+    def load_favorites(self):
+        fav = get_settings_value(self.editor_name + '_favorites', self.addon)
+        if fav is None:
+            return []
+        return fav if isinstance(fav, list) else []
+
+    def save_favorites(self):
+        set_settings_value(self.editor_name + '_favorites', self.addon, self.favorites)
 
     def select_tree_item(self, path):
         self.add_recent_file(path)
@@ -297,6 +332,10 @@ class Explorer(QMainWindow):
                 self.add_folder_actions(menu, source_index)
             else:
                 self.add_file_actions(menu, source_index)
+            action = QAction("Add to Favorites", self)
+            action.setIcon(QIcon(":/icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+            action.triggered.connect(lambda: self.add_favorite(self.model.filePath(source_index)))
+            menu.addAction(action)
         else:
             create_folder_action = QAction("Create Folder", self)
             create_folder_action.triggered.connect(lambda: self.create_folder(self.model.index(self.tree_directory)))
@@ -503,13 +542,16 @@ class Explorer(QMainWindow):
     def open_goto_dialog(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Goto Path")
+        enable_dark_title_bar(dialog)
         layout = QVBoxLayout(dialog)
         path_edit = QLineEdit(dialog)
         path_edit.setPlaceholderText("Enter full path to focus...")
         layout.addWidget(path_edit)
         button_layout = QHBoxLayout()
         ok_button = QPushButton("OK", dialog)
+        ok_button.setStyleSheet(qt_stylesheet_button)
         cancel_button = QPushButton("Cancel", dialog)
+        cancel_button.setStyleSheet(qt_stylesheet_button)
         button_layout.addWidget(ok_button)
         button_layout.addWidget(cancel_button)
         layout.addLayout(button_layout)
@@ -526,6 +568,7 @@ class Explorer(QMainWindow):
         dialog = QDialog(self)
         dialog.setMinimumWidth(500)
         dialog.setWindowTitle("Recent Files")
+        enable_dark_title_bar(dialog)
         layout = QVBoxLayout(dialog)
         filter_edit = QLineEdit(dialog)
         filter_edit.setPlaceholderText("Filter recent files...")
@@ -536,30 +579,95 @@ class Explorer(QMainWindow):
                 try:
                     relative_path = os.path.relpath(path, self.tree_directory)
                     item = QListWidgetItem(relative_path)
+                    if os.path.isdir(path):
+                        item.setIcon(QIcon("://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                    else:
+                        ext = os.path.splitext(path)[1].lower()
+                        if ext in file_icons:
+                            item.setIcon(QIcon(file_icons[ext]))
+                        elif path.endswith(tuple(audio_extensions)):
+                            item.setIcon(QIcon("://icons/assettypes/vmix_sm.png"))
+                        elif path.endswith(tuple(generic_extensions)):
+                            item.setIcon(QIcon("://icons/assettypes/generic_sm.png"))
+                        else:
+                            item.setIcon(QIcon("://icons/file.svg"))
                     list_widget.addItem(item)
                 except Exception as e:
-                    # Log or ignore invalid paths
                     debug(f"Skipping invalid recent file path: {path} ({e})")
         layout.addWidget(list_widget)
         button_layout = QHBoxLayout()
         ok_button = QPushButton("OK", dialog)
+        ok_button.setStyleSheet(qt_stylesheet_button)
         cancel_button = QPushButton("Cancel", dialog)
+        cancel_button.setStyleSheet(qt_stylesheet_button)
         button_layout.addWidget(ok_button)
         button_layout.addWidget(cancel_button)
         layout.addLayout(button_layout)
-
         def on_item_double_clicked(item):
             selected_relative = item.text()
             full_path = os.path.join(self.tree_directory, selected_relative)
             if os.path.exists(full_path):
                 self.select_tree_item(full_path)
             dialog.accept()
-
         def filter_items(text):
             for index in range(list_widget.count()):
                 item = list_widget.item(index)
                 item.setHidden(text.lower() not in item.text().lower())
+        filter_edit.textChanged.connect(filter_items)
+        list_widget.itemDoubleClicked.connect(on_item_double_clicked)
+        ok_button.clicked.connect(lambda: dialog.accept())
+        cancel_button.clicked.connect(dialog.reject)
+        dialog.exec_()
 
+    def open_favorites_dialog(self):
+        dialog = QDialog(self)
+        dialog.setMinimumWidth(500)
+        dialog.setWindowTitle("Favorites")
+        enable_dark_title_bar(dialog)
+        layout = QVBoxLayout(dialog)
+        filter_edit = QLineEdit(dialog)
+        filter_edit.setPlaceholderText("Filter favorites...")
+        layout.addWidget(filter_edit)
+        list_widget = QListWidget(dialog)
+        for path in self.favorites:
+            if path:
+                try:
+                    relative_path = os.path.relpath(path, self.tree_directory)
+                    item = QListWidgetItem(relative_path)
+                    if os.path.isdir(path):
+                        item.setIcon(QIcon("://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                    else:
+                        ext = os.path.splitext(path)[1].lower()
+                        if ext in file_icons:
+                            item.setIcon(QIcon(file_icons[ext]))
+                        elif path.endswith(tuple(audio_extensions)):
+                            item.setIcon(QIcon("://icons/assettypes/vmix_sm.png"))
+                        elif path.endswith(tuple(generic_extensions)):
+                            item.setIcon(QIcon("://icons/assettypes/generic_sm.png"))
+                        else:
+                            item.setIcon(QIcon("://icons/file.svg"))
+                    list_widget.addItem(item)
+                except Exception as e:
+                    debug(f"Skipping invalid favorite file path: {path} ({e})")
+        layout.addWidget(list_widget)
+        button_layout = QHBoxLayout()
+        ok_button = QPushButton("OK", dialog)
+        ok_button.setStyleSheet(qt_stylesheet_button)
+        cancel_button = QPushButton("Cancel", dialog)
+        cancel_button.setStyleSheet(qt_stylesheet_button)
+        button_layout.addWidget(ok_button)
+        button_layout.addWidget(cancel_button)
+        layout.addLayout(button_layout)
+        def on_item_double_clicked(item):
+            selected_relative = item.text()
+            full_path = os.path.join(self.tree_directory, selected_relative)
+            if os.path.exists(full_path):
+                self.select_tree_item(full_path)
+            dialog.accept()
+        def filter_items(text):
+            for index in range(list_widget.count()):
+                item = list_widget.item(index)
+                item.setHidden(text.lower() not in item.text().lower())
         filter_edit.textChanged.connect(filter_items)
         list_widget.itemDoubleClicked.connect(on_item_double_clicked)
         ok_button.clicked.connect(lambda: dialog.accept())
