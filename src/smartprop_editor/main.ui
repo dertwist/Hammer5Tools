@@ -420,7 +420,7 @@
           <x>0</x>
           <y>0</y>
           <width>283</width>
-          <height>190</height>
+          <height>327</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -508,30 +508,36 @@
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Paste variable&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="styleSheet">
-           <string notr="true">QToolButton {
+           <string notr="true">
+    /* QPushButton default and hover styles */
+    QToolButton {
 
-    font: 700 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    height:18px;
-    padding: 3px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-}
-QToolButton:hover {
-    background-color: #414956;
-    color: white;
-}
-QToolButton:pressed {
-    background-color: red;
-    background-color: #1C1C1C;
-    margin: 1 px;
-    margin-left: 2px;
-    margin-right: 2px;
-    font: 580 9pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 
-}</string>
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QToolButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QToolButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -560,30 +566,36 @@ QToolButton:pressed {
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create variable&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="styleSheet">
-           <string notr="true">QToolButton {
+           <string notr="true">
+    /* QPushButton default and hover styles */
+    QToolButton {
 
-    font: 700 10pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    height:18px;
-    padding: 3px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-}
-QToolButton:hover {
-    background-color: #414956;
-    color: white;
-}
-QToolButton:pressed {
-    background-color: red;
-    background-color: #1C1C1C;
-    margin: 1 px;
-    margin-left: 2px;
-    margin-right: 2px;
-    font: 580 9pt &quot;Segoe UI&quot;;
+        font: 580 9pt &quot;Segoe UI&quot;;
 
-}</string>
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QToolButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QToolButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -652,7 +664,7 @@ QMenu::item {
     font: 580 8pt &quot;Segoe UI&quot;;
     border-top: 2px solid black;
     border: 0px;
-    border-radius: 4px;
+    border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
     padding-left: 12px;
     padding-right: 12px;
@@ -687,7 +699,7 @@ QMenu::indicator:unchecked {
 QComboBox {
     font: 580 8pt &quot;Segoe UI&quot;;
     border: 2px solid black;
-    border-radius: 4px;
+    border-radius: 2px;
     border-color: rgba(80, 80, 80, 255);
     height: 12px;
     padding-top: 5px;
