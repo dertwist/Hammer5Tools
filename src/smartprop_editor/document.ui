@@ -70,18 +70,6 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QLabel" name="label">
-         <property name="font">
-          <font>
-           <pointsize>9</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Properties</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QScrollArea" name="PropertiesArea">
          <property name="focusPolicy">
           <enum>Qt::FocusPolicy::NoFocus</enum>
@@ -105,8 +93,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>459</width>
-            <height>788</height>
+            <width>721</width>
+            <height>804</height>
            </rect>
           </property>
           <property name="styleSheet">
@@ -407,7 +395,7 @@
     <string>Variables</string>
    </property>
    <attribute name="dockWidgetArea">
-    <number>1</number>
+    <number>2</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents">
     <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -443,8 +431,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>207</width>
-          <height>728</height>
+          <width>256</width>
+          <height>100</height>
          </rect>
         </property>
         <property name="styleSheet">
