@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1280, 720)
+        MainWindow.resize(987, 808)
         MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
         self.actionCreateNewsmartprop = QAction(MainWindow)
         self.actionCreateNewsmartprop.setObjectName(u"actionCreateNewsmartprop")
@@ -90,14 +90,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_5.setSpacing(0)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.label = QLabel(self.PropertiesFrame)
-        self.label.setObjectName(u"label")
-        font = QFont()
-        font.setPointSize(9)
-        self.label.setFont(font)
-
-        self.verticalLayout_5.addWidget(self.label)
-
         self.PropertiesArea = QScrollArea(self.PropertiesFrame)
         self.PropertiesArea.setObjectName(u"PropertiesArea")
         self.PropertiesArea.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -109,7 +101,7 @@ class Ui_MainWindow(object):
         self.PropertiesArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 863, 700))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 721, 804))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
@@ -202,10 +194,35 @@ class Ui_MainWindow(object):
 
         self.HierarchyDock.setWidget(self.dockWidgetContents_2)
         MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.HierarchyDock)
+        self.ChoicesDock = QDockWidget(MainWindow)
+        self.ChoicesDock.setObjectName(u"ChoicesDock")
+        self.ChoicesDock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.dockWidgetContents_3 = QWidget()
+        self.dockWidgetContents_3.setObjectName(u"dockWidgetContents_3")
+        self.verticalLayout = QVBoxLayout(self.dockWidgetContents_3)
+        self.verticalLayout.setSpacing(0)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.choices_tree_widget = QTreeWidget(self.dockWidgetContents_3)
+        self.choices_tree_widget.setObjectName(u"choices_tree_widget")
+        self.choices_tree_widget.setDragEnabled(False)
+        self.choices_tree_widget.setDragDropMode(QAbstractItemView.DragDropMode.NoDragDrop)
+        self.choices_tree_widget.setAlternatingRowColors(True)
+        self.choices_tree_widget.setUniformRowHeights(True)
+        self.choices_tree_widget.header().setVisible(True)
+        self.choices_tree_widget.header().setCascadingSectionResizes(False)
+        self.choices_tree_widget.header().setMinimumSectionSize(150)
+        self.choices_tree_widget.header().setDefaultSectionSize(180)
+        self.choices_tree_widget.header().setProperty(u"showSortIndicator", True)
+
+        self.verticalLayout.addWidget(self.choices_tree_widget)
+
+        self.ChoicesDock.setWidget(self.dockWidgetContents_3)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.ChoicesDock)
         self.VariablesDock = QDockWidget(MainWindow)
         self.VariablesDock.setObjectName(u"VariablesDock")
         self.VariablesDock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.VariablesDock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.VariablesDock.setAllowedAreas(Qt.DockWidgetArea.RightDockWidgetArea|Qt.DockWidgetArea.TopDockWidgetArea)
         self.dockWidgetContents = QWidget()
         self.dockWidgetContents.setObjectName(u"dockWidgetContents")
         self.verticalLayout_7 = QVBoxLayout(self.dockWidgetContents)
@@ -222,7 +239,7 @@ class Ui_MainWindow(object):
         self.variables_QscrollArea.setWidgetResizable(True)
         self.variables_scrollArea_widget = QWidget()
         self.variables_scrollArea_widget.setObjectName(u"variables_scrollArea_widget")
-        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 145, 640))
+        self.variables_scrollArea_widget.setGeometry(QRect(0, 0, 256, 100))
         self.variables_scrollArea_widget.setStyleSheet(u"")
         self.verticalLayout_2 = QVBoxLayout(self.variables_scrollArea_widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
@@ -500,32 +517,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_7.addWidget(self.frame)
 
         self.VariablesDock.setWidget(self.dockWidgetContents)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.VariablesDock)
-        self.ChoicesDock = QDockWidget(MainWindow)
-        self.ChoicesDock.setObjectName(u"ChoicesDock")
-        self.ChoicesDock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidgetContents_3 = QWidget()
-        self.dockWidgetContents_3.setObjectName(u"dockWidgetContents_3")
-        self.verticalLayout = QVBoxLayout(self.dockWidgetContents_3)
-        self.verticalLayout.setSpacing(0)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.choices_tree_widget = QTreeWidget(self.dockWidgetContents_3)
-        self.choices_tree_widget.setObjectName(u"choices_tree_widget")
-        self.choices_tree_widget.setDragEnabled(False)
-        self.choices_tree_widget.setDragDropMode(QAbstractItemView.DragDropMode.NoDragDrop)
-        self.choices_tree_widget.setAlternatingRowColors(True)
-        self.choices_tree_widget.setUniformRowHeights(True)
-        self.choices_tree_widget.header().setVisible(True)
-        self.choices_tree_widget.header().setCascadingSectionResizes(False)
-        self.choices_tree_widget.header().setMinimumSectionSize(150)
-        self.choices_tree_widget.header().setDefaultSectionSize(180)
-        self.choices_tree_widget.header().setProperty(u"showSortIndicator", True)
-
-        self.verticalLayout.addWidget(self.choices_tree_widget)
-
-        self.ChoicesDock.setWidget(self.dockWidgetContents_3)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.ChoicesDock)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.VariablesDock)
 
         self.retranslateUi(MainWindow)
 
@@ -545,7 +537,6 @@ class Ui_MainWindow(object):
         self.actionConvert_all_vsmart_file_to_vdata.setToolTip(QCoreApplication.translate("MainWindow", u"Convert all to data", None))
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
         self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select an element in the hierarchy", None))
         self.HierarchyDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
@@ -553,6 +544,11 @@ class Ui_MainWindow(object):
         ___qtreewidgetitem.setText(3, QCoreApplication.translate("MainWindow", u"ID", None));
         ___qtreewidgetitem.setText(2, QCoreApplication.translate("MainWindow", u"Class", None));
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
+        self.ChoicesDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Choices", None))
+        ___qtreewidgetitem1 = self.choices_tree_widget.headerItem()
+        ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
+        ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
+        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Label", None));
         self.VariablesDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
         self.variables_scroll_area_searchbar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
 #if QT_CONFIG(tooltip)
@@ -563,10 +559,5 @@ class Ui_MainWindow(object):
         self.add_new_variable_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Create variable</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.add_new_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-        self.ChoicesDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Choices", None))
-        ___qtreewidgetitem1 = self.choices_tree_widget.headerItem()
-        ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
-        ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
-        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"Label", None));
     # retranslateUi
 
