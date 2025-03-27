@@ -715,14 +715,29 @@ class Explorer(QMainWindow):
         cancel_button.clicked.connect(dialog.reject)
         dialog.exec_()
 
-    def get_current_path(self):
-        current_index = self.tree.currentIndex()
-        if current_index.isValid():
-            source_index = self.filter_proxy_model.mapToSource(current_index)
-            return self.model.filePath(source_index)
+    def get_current_path(self, absolute=False):
+            current_index = self.tree.currentIndex()
+            if current_index.isValid():
+                source_index = self.filter_proxy_model.mapToSource(current_index)
+                path = self.model.filePath(source_index)
+                if absolute:
+                    path = os.path.abspath(path)
+                return path
+            else:
+                error_dialog = ErrorInfo(text="No file selected", details="Please select a file.")
+                error_dialog.exec_()
+                return None
+
+    def get_current_folder(self, absolute=False):
+        filepath = self.get_current_path(absolute=absolute)
+        if filepath and os.path.isdir(filepath):
+            return filepath
+        elif filepath:
+            # If not a directory, return the folder part of the absolute path if absolute flag is set.
+            folder = os.path.dirname(filepath) if absolute else os.path.basename(filepath)
+            return folder
         else:
-            error_dialog = ErrorInfo(text="No file selected", details="Please select a file.")
-            error_dialog.exec_()
+            return None
 
     def closeEvent(self, event):
         tree_state = self.tree.saveState()

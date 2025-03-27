@@ -1,97 +1,27 @@
 import sys
 import os.path
-import re
-import ast
-
-from distutils.util import strtobool
-
 from PySide6.QtWidgets import (
     QMainWindow,
-    QTreeWidgetItem,
     QFileDialog,
-    QMenu,
     QApplication,
-    QHeaderView,
-    QTreeWidget,
-    QTabBar
+    QMessageBox
 )
-from PySide6.QtGui import (
-    QAction,
-    QKeyEvent,
-    QUndoStack,
-    QKeySequence
-)
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QUndoStack
+from PySide6.QtCore import QTimer
 from src.settings.main import get_settings_value, get_settings_bool
-
-from keyvalues3 import kv3_to_json
 from src.smartprop_editor.ui_main import Ui_MainWindow
 from src.settings.main import get_addon_name, settings
-from src.smartprop_editor.variable_frame import VariableFrame
-from src.smartprop_editor.objects import (
-    variables_list,
-    variable_prefix,
-    elements_list,
-    operators_list,
-    selection_criteria_list,
-    filters_list
-)
-from src.smartprop_editor.vsmart import VsmartOpen, VsmartSave, serialization_hierarchy_items, \
-    deserialize_hierarchy_item
-from src.smartprop_editor.property_frame import PropertyFrame
-from src.smartprop_editor.properties_group_frame import PropertiesGroupFrame
-from src.smartprop_editor.choices import AddChoice, AddVariable, AddOption
-from src.popup_menu.main import PopupMenu
-from src.smartprop_editor.commands import DeleteTreeItemCommand, GroupElementsCommand
-from src.replace_dialog.main import FindAndReplaceDialog
 from src.explorer.main import Explorer
 from src.smartprop_editor.document import SmartPropDocument
-from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
-from src.smartprop_editor.element_id import (
-    update_value_ElementID,
-    update_child_ElementID_value,
-    get_ElementID_key,
-    reset_ElementID
-)
-from src.smartprop_editor._common import (
-    get_clean_class_name_value,
-    get_clean_class_name,
-    get_label_id_from_value,
-    unique_counter_name
-)
+from src.widgets import ErrorInfo
 from src.common import (
     enable_dark_title_bar,
-    Kv3ToJson,
-    JsonToKv3,
     get_cs2_path,
     SmartPropEditor_Preset_Path,
     set_qdock_tab_style
 )
 
 cs2_path = get_cs2_path()
-
-#TODO Link "Save" and "Save As" to all tabs:
-# Make sure "Save" and "Save As" work for every open tab in the app.
-
-#TODO Link "Open File" to create a new file with the right path:
-# Set up the "Open File" option to open a new file and make sure the file path is ready for loading the document.
-
-#TODO Add real-time saving:
-# Build a real-time save feature that checks all open tabs for unsaved changes and saves the current document when turned on.
-
-#TODO Tie "Save" to each tab:
-# Connect the "Save" option to every tab so the current tab’s content gets saved when the "Save" button is clicked.
-
-#TODO Handle "Save" when there’s no file path (show a dialog for a new file name):
-# If there’s no path for saving the file, pop up a dialog box to let the user type a new file name.
-# Save the new file in the current folder or the parent folder of the selected item in the file explorer.
-# Use the main window’s parent to call get_current_path() to figure out where to save it.
-
-#TODO Connect "Save" button to the document-saving function:
-# Hook up the "Save" button to the function that saves the document file.
-
-#TODO Change tab name after saving:
-# After saving a document, update the tab’s name to match the saved file’s name.
 
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
@@ -105,6 +35,10 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.update_title = update_title
         enable_dark_title_bar(self)
 
+        # Make the tab widget closable and connect to our close_document method
+        self.ui.DocumentTabWidget.setTabsClosable(True)
+        self.ui.DocumentTabWidget.tabCloseRequested.connect(self.close_document)
+
         # Initialize file explorer
         self.init_explorer()
 
@@ -115,15 +49,11 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         self.undo_stack = QUndoStack(self)
 
-    def open_preset_manager(self):
-        """Creating another instance of this window with a different Explorer path
-           for preset management."""
-        self.new_instance = SmartPropEditorMainWindow(update_title=self.update_title)
-        self.new_instance.mini_explorer.deleteLater()
-        self.new_instance.mini_explorer.frame.deleteLater()
-        tree_directory = SmartPropEditor_Preset_Path
-        self.new_instance.init_explorer(tree_directory, "SmartPropEditorPresetManager")
-        self.new_instance.show()
+        # Initialize realtime save timer (interval from settings or default to 2000ms)
+        delay = int(float(get_settings_value('SmartPropEditor', 'realtime_saving_delay', 5)))
+        self.realtime_save_timer = QTimer(self)
+        self.realtime_save_timer.setInterval(delay)
+        self.realtime_save_timer.timeout.connect(self.realtime_save_all)
 
     def init_explorer(self, dir: str = None, editor_name: str = None):
         if dir is None:
@@ -153,20 +83,159 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.realtime_save = self.ui.realtime_save_checkbox.isChecked()
         if get_settings_bool('SmartPropEditor', 'enable_transparency_window', True):
             if self.realtime_save:
-                transparency = float(get_settings_value('SmartPropEditor', 'transparency_window', 70))/100
+                transparency = float(get_settings_value('SmartPropEditor', 'transparency_window', 70)) / 100
                 self.parent.setWindowOpacity(transparency)
             else:
                 self.parent.setWindowOpacity(1)
+        # Start or stop the realtime save timer
+        if self.realtime_save:
+            self.realtime_save_timer.start()
+        else:
+            self.realtime_save_timer.stop()
+
+    def realtime_save_all(self):
+        # Iterate over all open tabs/documents and auto-save if modified
+        for i in range(self.ui.DocumentTabWidget.count()):
+            doc = self.ui.DocumentTabWidget.widget(i)
+            if hasattr(doc, 'is_modified') and doc.is_modified():
+                # Auto-save document (assumed to be non-external save)
+                if hasattr(doc, 'save_file'):
+                    doc.save_file(external=False)
+                    base_name = "Untitled"
+                    if doc.opened_file:
+                        base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
+                    self.update_document_tab_title(doc, base_name)
 
     def create_new_file(self):
-        self.ui.DocumentTabWidget.addTab(SmartPropDocument(self), "New SmartProp")
+        """
+        Creates a new blank document in a new tab.
+        """
+        new_doc = SmartPropDocument(self)
+        self._setup_document_signals(new_doc, tab_title="Untitled")
+        self.ui.DocumentTabWidget.addTab(new_doc, "Untitled")
+
+    def save_file(self, external=False):
+        """
+        Saves only the currently active tab (document).
+        The 'external' flag indicates whether to perform a 'Save As' operation.
+        After saving, updates the tab's text (shows '*' if modified).
+        """
+        current_index = self.ui.DocumentTabWidget.currentIndex()
+        if current_index < 0:
+            return
+
+        doc = self.ui.DocumentTabWidget.widget(current_index)
+        if hasattr(doc, 'save_file'):
+            doc.save_file(external=external)
+            base_name = "Untitled"
+            if doc.opened_file:
+                base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
+            self.update_document_tab_title(doc, base_name)
+
+    def open_file(self, external=False):
+        """
+        Opens a .vsmart or .vdata file and creates a new document tab.
+        If 'external' is True, uses a file dialog; otherwise uses the path from the explorer.
+        Ensures only one instance of an opened file name is open at a time.
+        """
+        filename = None
+        if external:
+            # Open a file dialog to select the file
+            filename, _ = QFileDialog.getOpenFileName(
+                self,
+                "Open File",
+                os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()),
+                "VSmart Files (*.vsmart *.vdata);;All Files (*)"
+            )
+        else:
+            # Get the currently selected file path from the explorer
+            if hasattr(self.mini_explorer, "get_current_path"):
+                filename = self.mini_explorer.get_current_path(absolute=True)
+
+        if filename:
+            norm_filename = os.path.abspath(filename)
+            extension = os.path.splitext(norm_filename)[1].lower()
+            # Only .vsmart or .vdata
+            if extension not in (".vsmart", ".vdata"):
+                warning_dialog = ErrorInfo(
+                    text="Invalid File Format",
+                    details="Please select a .vsmart or .vdata file."
+                )
+                warning_dialog.exec_()
+                return
+
+            # Check if file is already open
+            tab_count = self.ui.DocumentTabWidget.count()
+            for i in range(tab_count):
+                doc = self.ui.DocumentTabWidget.widget(i)
+                if hasattr(doc, 'opened_file') and doc.opened_file:
+                    if os.path.abspath(doc.opened_file) == norm_filename:
+                        # Switch to already-open file's tab
+                        self.ui.DocumentTabWidget.setCurrentIndex(i)
+                        return
+
+            # Create a new document and load file
+            document = SmartPropDocument(self)
+            document.opened_file = norm_filename
+            if hasattr(document, "open_file"):
+                document.open_file(norm_filename)
+
+            base_name = os.path.splitext(os.path.basename(norm_filename))[0]
+            self._setup_document_signals(document, tab_title=base_name)
+
+            self.ui.DocumentTabWidget.addTab(document, base_name)
+        else:
+            error_dialog = ErrorInfo(text="No file selected", details="Please select a file to open.")
+            error_dialog.exec_()
+
+    def _setup_document_signals(self, doc, tab_title):
+        """
+        Helper method to connect document change signals (if any) and set initial tab text.
+        Ensures the tab name is updated when the document is edited.
+        """
+        # Connect the _edited signal from the document to update the tab title
+        if hasattr(doc, "_edited"):
+            doc._edited.connect(lambda: self.update_document_tab_title(doc, tab_title))
+        self.update_document_tab_title(doc, tab_title)
+
+    def update_document_tab_title(self, doc, base_name):
+        """
+        If doc is modified, prepend '*' to the tab name; otherwise use base_name.
+        """
+        idx = self.ui.DocumentTabWidget.indexOf(doc)
+        if idx != -1 and hasattr(doc, 'is_modified'):
+            text = f"*{base_name}" if doc.is_modified() else base_name
+            self.ui.DocumentTabWidget.setTabText(idx, text)
+
+    def close_document(self, index=None):
+        """
+        Closes the document tab. If index is not provided, closes the currently active tab.
+        If the document has unsaved changes, prompts the user before closing.
+        """
+        if index is None:
+            index = self.ui.DocumentTabWidget.currentIndex()
+
+        if index < 0 or index >= self.ui.DocumentTabWidget.count():
+            return
+
+        doc = self.ui.DocumentTabWidget.widget(index)
+        if hasattr(doc, "is_modified") and doc.is_modified():
+            reply = QMessageBox.question(
+                self,
+                "Unsaved Changes",
+                "This document has unsaved changes. Do you want to close it without saving?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply == QMessageBox.No:
+                return
+
+        removed_widget = self.ui.DocumentTabWidget.widget(index)
+        self.ui.DocumentTabWidget.removeTab(index)
+        if removed_widget is not None:
+            removed_widget.deleteLater()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SmartPropEditorMainWindow()
-    import qtvscodestyle as qtvsc
-
-    stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
-    app.setStyleSheet(stylesheet)
     window.show()
     sys.exit(app.exec())
