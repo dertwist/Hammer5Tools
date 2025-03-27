@@ -70,6 +70,29 @@ from src.common import (
 
 cs2_path = get_cs2_path()
 
+#TODO Link "Save" and "Save As" to all tabs:
+# Make sure "Save" and "Save As" work for every open tab in the app.
+
+#TODO Link "Open File" to create a new file with the right path:
+# Set up the "Open File" option to open a new file and make sure the file path is ready for loading the document.
+
+#TODO Add real-time saving:
+# Build a real-time save feature that checks all open tabs for unsaved changes and saves the current document when turned on.
+
+#TODO Tie "Save" to each tab:
+# Connect the "Save" option to every tab so the current tab’s content gets saved when the "Save" button is clicked.
+
+#TODO Handle "Save" when there’s no file path (show a dialog for a new file name):
+# If there’s no path for saving the file, pop up a dialog box to let the user type a new file name.
+# Save the new file in the current folder or the parent folder of the selected item in the file explorer.
+# Use the main window’s parent to call get_current_path() to figure out where to save it.
+
+#TODO Connect "Save" button to the document-saving function:
+# Hook up the "Save" button to the function that saves the document file.
+
+#TODO Change tab name after saving:
+# After saving a document, update the tab’s name to match the saved file’s name.
+
 class SmartPropEditorMainWindow(QMainWindow):
     def __init__(self, parent=None, update_title=None):
         super().__init__()
