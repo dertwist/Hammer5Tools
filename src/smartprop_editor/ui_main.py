@@ -17,8 +17,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDockWidget, QFrame,
-    QHBoxLayout, QMainWindow, QPushButton, QSizePolicy,
-    QTabWidget, QVBoxLayout, QWidget)
+    QHBoxLayout, QLabel, QMainWindow, QPushButton,
+    QSizePolicy, QTabWidget, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_MainWindow(object):
@@ -68,17 +68,22 @@ class Ui_MainWindow(object):
         self.actionFormat_serttings.setIcon(icon6)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.verticalLayout_9 = QVBoxLayout(self.centralwidget)
-        self.verticalLayout_9.setSpacing(0)
-        self.verticalLayout_9.setObjectName(u"verticalLayout_9")
-        self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout = QVBoxLayout(self.centralwidget)
+        self.verticalLayout.setObjectName(u"verticalLayout")
         self.DocumentTabWidget = QTabWidget(self.centralwidget)
         self.DocumentTabWidget.setObjectName(u"DocumentTabWidget")
         self.DocumentTabWidget.setDocumentMode(True)
         self.DocumentTabWidget.setTabsClosable(True)
         self.DocumentTabWidget.setMovable(True)
 
-        self.verticalLayout_9.addWidget(self.DocumentTabWidget)
+        self.verticalLayout.addWidget(self.DocumentTabWidget)
+
+        self.placeholder_label = QLabel(self.centralwidget)
+        self.placeholder_label.setObjectName(u"placeholder_label")
+        self.placeholder_label.setStyleSheet(u"color: gray; font-size: 13px;")
+        self.placeholder_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.verticalLayout.addWidget(self.placeholder_label)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.ExplorerDock = QDockWidget(MainWindow)
@@ -365,6 +370,7 @@ class Ui_MainWindow(object):
         self.actionConvert_all_vsmart_file_to_vdata.setToolTip(QCoreApplication.translate("MainWindow", u"Convert all to data", None))
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
+        self.placeholder_label.setText(QCoreApplication.translate("MainWindow", u"Open or create a new file", None))
         self.ExplorerDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
 #if QT_CONFIG(tooltip)
         self.open_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><br/></p></body></html>", None))

@@ -934,6 +934,13 @@ class SmartPropDocument(QMainWindow):
 
         return item_visible or any_child_visible
 
+    def open_bulk_model_importer(self):
+        from src.smartprop_editor.actions.bulk_model_importer import BulkModelImporterDialog, process_bulk_models
+        dialog = BulkModelImporterDialog(self, current_folder=self.parent.mini_explorer.get_current_folder(True))
+        # When accepted, process the selected files with the create reference option.
+        dialog.accepted_data.connect(lambda files, create_ref, ref_index: process_bulk_models(self, files, create_ref, ref_index))
+        dialog.exec()
+
     # ======================================[Tree widget hierarchy context menu]========================================
     def open_hierarchy_menu(self, position):
         menu = QMenu()
@@ -986,6 +993,9 @@ class SmartPropDocument(QMainWindow):
         paste_replace_action = menu.addAction("Paste with replacement")
         paste_replace_action.setShortcut(QKeySequence("Ctrl+Shift+V"))
         paste_replace_action.triggered.connect(lambda: self.new_item_with_replacement(QApplication.clipboard().text()))
+
+        bulk_import_action = menu.addAction("Bulk Model Importer")
+        bulk_import_action.triggered.connect(self.open_bulk_model_importer)
 
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
 

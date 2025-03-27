@@ -55,6 +55,21 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.realtime_save_timer.setInterval(delay)
         self.realtime_save_timer.timeout.connect(self.realtime_save_all)
 
+        # Set initial UI state based on document availability
+        self.update_placeholder_visibility()
+
+    def update_placeholder_visibility(self):
+        """
+        Updates the UI: hides DocumentTabWidget and shows placeholder_label if no documents are open.
+        Otherwise, shows DocumentTabWidget and hides placeholder_label.
+        """
+        if self.ui.DocumentTabWidget.count() == 0:
+            self.ui.DocumentTabWidget.hide()
+            self.ui.placeholder_label.show()
+        else:
+            self.ui.DocumentTabWidget.show()
+            self.ui.placeholder_label.hide()
+
     def init_explorer(self, dir: str = None, editor_name: str = None):
         if dir is None:
             self.tree_directory = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name())
@@ -113,6 +128,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         new_doc = SmartPropDocument(self)
         self._setup_document_signals(new_doc, tab_title="Untitled")
         self.ui.DocumentTabWidget.addTab(new_doc, "Untitled")
+        self.update_placeholder_visibility()
 
     def save_file(self, external=False):
         """
@@ -184,6 +200,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             self._setup_document_signals(document, tab_title=base_name)
 
             self.ui.DocumentTabWidget.addTab(document, base_name)
+            self.update_placeholder_visibility()
         else:
             error_dialog = ErrorInfo(text="No file selected", details="Please select a file to open.")
             error_dialog.exec_()
@@ -233,6 +250,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui.DocumentTabWidget.removeTab(index)
         if removed_widget is not None:
             removed_widget.deleteLater()
+        self.update_placeholder_visibility()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
