@@ -21,7 +21,7 @@ from PySide6.QtGui import (
     QUndoStack,
     QKeySequence
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, Signal
 from src.settings.main import get_settings_value, get_settings_bool
 
 from keyvalues3 import kv3_to_json
@@ -75,6 +75,7 @@ cs2_path = get_cs2_path()
 # Nodes that are not connected via the Child input (i.e. isolated nodes) will be automatically attached as children of the root.
 
 class SmartPropDocument(QMainWindow):
+    _edited = Signal()
     def __init__(self, parent=None, update_title=None):
         super().__init__()
         self.parent = parent
@@ -85,6 +86,9 @@ class SmartPropDocument(QMainWindow):
         self.opened_file = None
         self.update_title = update_title
         enable_dark_title_bar(self)
+
+        # Track changes
+        self._modified = False
 
         # Timer for auto-saving
         self.realtime_save_timer = QTimer(self)
@@ -125,27 +129,19 @@ class SmartPropDocument(QMainWindow):
         self._restore_user_prefs()
 
         # Group dockwidgets
-
-        # Add VariablesDock as its own dock
         self.addDockWidget(Qt.RightDockWidgetArea, self.ui.VariablesDock)
-
-        # Add Hierarchy and Choices docks (if not already added)
         self.addDockWidget(Qt.RightDockWidgetArea, self.ui.HierarchyDock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.ui.ChoicesDock)
-
-        # Split VariablesDock and HierarchyDock vertically so that VariablesDock is on top
         self.splitDockWidget(self.ui.VariablesDock, self.ui.HierarchyDock, Qt.Vertical)
-
-        # Tabify Hierarchy and Choices docks into a single group
         self.tabifyDockWidget(self.ui.HierarchyDock, self.ui.ChoicesDock)
-
-        # Optionally, set the HierarchyDock to be the active tab
         self.ui.HierarchyDock.raise_()
 
         set_qdock_tab_style(self.findChildren)
 
         self.undo_stack = QUndoStack(self)
 
+    def is_modified(self):
+        return self._modified
 
     def buttons(self):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
@@ -284,7 +280,6 @@ class SmartPropDocument(QMainWindow):
                     if value is not None:
                         output_value.update(value)
 
-            # If any modifier or selection criteria is empty or None
             try:
                 if modifiers[0] is None:
                     modifiers = []
@@ -300,6 +295,10 @@ class SmartPropDocument(QMainWindow):
             output_value.update({"m_SelectionCriteria": selection_criteria})
             self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
 
+            # Mark document as modified
+            self._modified = True
+            self._edited.emit()
+
             # Realtime save
             if self.realtime_save:
                 raw_delay = get_settings_value('SmartPropEditor', 'realtime_saving_delay', 5)
@@ -308,68 +307,45 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
-        """Handle keyboard and shortcut events for various widgets."""
         if event.type() == QKeyEvent.KeyPress:
-            # Handle events for tree_hierarchy_widget
             if source == self.ui.tree_hierarchy_widget:
-                # Copy (Ctrl + C)
                 if event.matches(QKeySequence.Copy):
                     self.copy_item(self.ui.tree_hierarchy_widget)
                     return True
-
-                # Cut (Ctrl + X)
                 if event.matches(QKeySequence.Cut):
                     self.cut_item(self.ui.tree_hierarchy_widget)
                     return True
-
-                # Paste (Ctrl + V)
                 if event.matches(QKeySequence.Paste):
                     self.paste_item(self.ui.tree_hierarchy_widget)
                     return True
-
-                # Delete
                 if event.matches(QKeySequence.Delete):
                     self.undo_stack.push(DeleteTreeItemCommand(self.ui.tree_hierarchy_widget))
                     return True
-
-                # Paste with replacement (Ctrl + Shift + V)
                 if event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier) and event.key() == Qt.Key_V:
                     self.new_item_with_replacement(QApplication.clipboard().text())
                     return True
-
-                # Paste with replacement (Ctrl + G)
                 if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_G:
                     self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget))
                     return True
-
-                # Move Up (Ctrl + Up)
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Up:
                     self.move_tree_item(self.ui.tree_hierarchy_widget, -1)
                     return True
-
-                # Move Down (Ctrl + Down)
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Down:
                     self.move_tree_item(self.ui.tree_hierarchy_widget, 1)
                     return True
-
-                # Duplicate (Ctrl + D)
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_D:
                     self.duplicate_hierarchy_items(self.ui.tree_hierarchy_widget)
                     return True
-
                 if event.matches(QKeySequence.Undo):
                     self.undo_stack.undo()
                     return True
                 if event.matches(QKeySequence.Redo):
                     self.undo_stack.redo()
                     return True
-
-                # Add element (Ctrl + F)
                 if source.viewport().underMouse():
                     if event.key() == Qt.Key_F and event.modifiers() == Qt.ControlModifier:
                         self.add_an_element()
                         return True
-
         return super().eventFilter(source, event)
 
     # ======================================[Tree Widget Hierarchy New Element]========================================
@@ -412,7 +388,6 @@ class SmartPropDocument(QMainWindow):
                                 self.ui.tree_hierarchy_widget.invisibleRootItem().addChild(child_item)
                             else:
                                 parent.addChild(child_item)
-
                             populate_tree(item, child_item)
 
         def populate_choices(data):
@@ -542,52 +517,30 @@ class SmartPropDocument(QMainWindow):
         excludes duplicates unless an item is forced, and then displays a popup
         menu to add new operators.
         """
-
-        # Combine operator and filter dictionaries from existing lists
         operators_and_filters = operators_list + filters_list
-
-        # Elements we will display in the popup menu
         elements_in_popupmenu = []
-
-        # Operator classes that already exist in the layout
         exists_classes = []
-
-        # These item names should be forced into the final list even if they already exist
         force_items_names = ["SetVariable", "SaveState", 'Comment']
-
-        # Gather the dictionaries for forced items
         force_items = []
         for item in operators_and_filters:
             for key in item.keys():
                 if key in force_items_names:
                     force_items.append(item)
-
-        # Collect the classes currently in the layout
         for i in range(self.modifiers_group_instance.layout.count()):
             widget = self.modifiers_group_instance.layout.itemAt(i).widget()
             if isinstance(widget, PropertyFrame):
                 exists_classes.append(widget.name)
-
-        # Remove forced items from the exists_classes list
-        # so they can appear again in the popup
         for class_name in force_items_names:
             if class_name in exists_classes:
                 exists_classes.remove(class_name)
-
-        # For every item in operators_and_filters, add it if its key isn't in exists_classes
         for item in operators_and_filters:
             for key in item.keys():
                 if key not in exists_classes:
-                    # Avoid duplicates in the final list
                     if item not in elements_in_popupmenu:
                         elements_in_popupmenu.append(item)
-
-        # Ensure force items appear in the final list
         for item in force_items:
             if item not in elements_in_popupmenu:
                 elements_in_popupmenu.append(item)
-
-        # Create and display the popup menu
         self.popup_menu = PopupMenu(
             elements_in_popupmenu,
             add_once=True,
@@ -623,12 +576,10 @@ class SmartPropDocument(QMainWindow):
             widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
             if isinstance(widget, PropertyFrame):
                 exists_classes.append(widget.name)
-
         for item in selection_criteria_list:
             for key, value in item.items():
                 if key not in exists_classes:
                     elements_in_popupmenu.append(item)
-
         self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True, window_name="SPE_selection_criteria")
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_selection_criteria(name, value))
         self.popup_menu.show()
@@ -663,7 +614,6 @@ class SmartPropDocument(QMainWindow):
         self.update_tree_item_value()
 
     # ======================================[Explorer]========================================
-
     def realtime_save_action(self):
         self.realtime_save = self.ui.realtime_save_checkbox.isChecked()
         if get_settings_bool('SmartPropEditor', 'enable_transparency_window', True):
@@ -674,17 +624,7 @@ class SmartPropDocument(QMainWindow):
                 self.parent.setWindowOpacity(1)
 
     # ======================================[Open File]========================================
-    def open_file(self, external=False):
-        if external:
-            filename, _ = QFileDialog.getOpenFileName(
-                None,
-                "Open File",
-                os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()),
-                "VSmart Files (*.vsmart);;All Files (*)"
-            )
-        else:
-            filename = self.mini_explorer.get_current_path()
-            self.mini_explorer.add_recent_file(filename)
+    def open_file(self, filename):
         self.opened_file = filename
         vsmart_instance = VsmartOpen(
             filename=filename,
@@ -694,7 +634,7 @@ class SmartPropDocument(QMainWindow):
         )
         variables = vsmart_instance.variables
 
-        # Clear existing variables in the scroll area
+        # Clear existing variables
         index = 0
         while index < self.ui.variables_scrollArea.count() - 1:
             item = self.ui.variables_scrollArea.takeAt(index)
@@ -704,7 +644,7 @@ class SmartPropDocument(QMainWindow):
             else:
                 index += 1
 
-        # Rebuild variables from the file
+        # Rebuild variables
         if isinstance(variables, list):
             for item in variables:
                 var_class = (item["_class"]).replace(variable_prefix, "")
@@ -740,9 +680,11 @@ class SmartPropDocument(QMainWindow):
                     var_display_name=var_display_name
                 )
 
+        # Reset modification tracking
+        self._modified = False
+
         if not self.realtime_save and self.update_title:
             self.update_title("opened", filename)
-        self.explorer_status()
 
     # ======================================[Save File]========================================
     def save_file(self, external=False):
@@ -760,10 +702,11 @@ class SmartPropDocument(QMainWindow):
                 external = True
 
         if external:
+            current_folder = self.parent.mini_explorer.get_current_folder(True)
             filename, _ = QFileDialog.getSaveFileName(
                 None,
                 "Save File",
-                os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()),
+                current_folder,
                 "VSmart Files (*.vsmart);;All Files (*)"
             )
         self.get_variables(self.ui.variables_scrollArea)
@@ -777,6 +720,8 @@ class SmartPropDocument(QMainWindow):
             self.opened_file = VsmartSaveInstance.filename
             if self.update_title:
                 self.update_title("saved", filename)
+            # Mark document as unmodified after saving
+            self._modified = False
 
     # ======================================[Choices Context Menu]========================================
     def open_MenuChoices(self, position):
@@ -839,6 +784,8 @@ class SmartPropDocument(QMainWindow):
         else:
             index = index + 1
         self.ui.variables_scrollArea.insertWidget(index, variable)
+        self._modified = True
+        self._edited.emit()
 
     def duplicate_variable(self, __data, __index):
         __data[2] = update_value_ElementID(__data[2], force=True)
@@ -917,10 +864,6 @@ class SmartPropDocument(QMainWindow):
         context_menu.exec_(event.globalPos())
 
     def paste_variable(self):
-        """
-        Deserializes variable data from clipboard and creates new variables.
-        Handles the complete variable data structure including optional parameters.
-        """
         clipboard = QApplication.clipboard()
         try:
             m_data = kv3_to_json(clipboard.text())
@@ -933,7 +876,6 @@ class SmartPropDocument(QMainWindow):
                 return
 
             for variable in m_data['m_Variables']:
-                # Extract required fields
                 _class = variable.get('_class', '')
                 if not _class.startswith('CSmartPropVariable_'):
                     continue
@@ -942,7 +884,6 @@ class SmartPropDocument(QMainWindow):
                 var_name = variable.get('m_VariableName', '')
                 var_visible = variable.get('m_bExposeAsParameter', False)
 
-                # Create value dictionary with optional parameters
                 var_value = {
                     'default': variable.get('m_DefaultValue'),
                     'min': variable.get('m_flParamaterMinValue'),
@@ -950,10 +891,8 @@ class SmartPropDocument(QMainWindow):
                     'model': variable.get('m_sModelName')
                 }
 
-                # Update ElementID for the new variable
                 update_value_ElementID(var_value, force=True)
 
-                # Create new variable with extracted data
                 self.add_variable(
                     name=var_name,
                     var_class=var_class,
@@ -1083,53 +1022,44 @@ class SmartPropDocument(QMainWindow):
         tree.scrollToItem(selected_items[-1] if direction > 0 else selected_items[0])
 
     def copy_item(self, tree, copy_to_clipboard=True):
-            selected_indexes = tree.selectedIndexes()
-            selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
-            selected_items = list(set(selected_items))
-            root_data = {"m_Children": []}
+        selected_indexes = tree.selectedIndexes()
+        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
+        selected_items = list(set(selected_items))
+        root_data = {"m_Children": []}
 
-            for tree_item in selected_items:
-                item_data = serialization_hierarchy_items(item=tree_item)
-                if item_data and "m_Children" in item_data:
-                    root_data["m_Children"].extend(item_data["m_Children"])
+        for tree_item in selected_items:
+            item_data = serialization_hierarchy_items(item=tree_item)
+            if item_data and "m_Children" in item_data:
+                root_data["m_Children"].extend(item_data["m_Children"])
 
-            if root_data["m_Children"]:
-                if copy_to_clipboard:
-                    clipboard = QApplication.clipboard()
-                    clipboard.setText(JsonToKv3(root_data))
-                    return None
-                else:
-                    return JsonToKv3(root_data)
-            else:
+        if root_data["m_Children"]:
+            if copy_to_clipboard:
+                clipboard = QApplication.clipboard()
+                clipboard.setText(JsonToKv3(root_data))
                 return None
+            else:
+                return JsonToKv3(root_data)
+        else:
+            return None
 
     def cut_item(self, tree: QTreeWidget):
         self.copy_item(tree)
         self.undo_stack.push(DeleteTreeItemCommand(tree))
 
-
-    # ---------------------------------- Updated paste_item method ----------------------------------
     def paste_item(self, tree, data_input=None, paste_to_parent=False):
-        """
-        Improved paste functionality:
-         - If paste_to_parent is True, paste the first element of the serialized data
-           as a sibling (same level) of the currently selected item, preserving its hierarchy.
-         - Otherwise, paste as a child of the current item.
-        """
         if data_input is None:
             data_input = QApplication.clipboard().text()
         try:
             obj = Kv3ToJson(self.fix_format(data_input))
             if paste_to_parent:
-                # Determine the target parent for pasting as a sibling of the selected item.
                 if tree.currentItem() and tree.currentItem().parent() is not None:
                     parent_item = tree.currentItem().parent()
                 else:
                     parent_item = tree.invisibleRootItem()
                 if "m_Children" in obj and obj["m_Children"]:
-                    # Paste the first element in the serialized structure preserving its children.
                     new_item = deserialize_hierarchy_item(obj["m_Children"][0])
                     parent_item.addChild(new_item)
+
                     try:
                         new_item.setText(0, unique_counter_name(new_item, tree))
                     except Exception:
@@ -1154,6 +1084,9 @@ class SmartPropDocument(QMainWindow):
                         tree_item.setText(0, unique_counter_name(tree_item, tree))
                     except Exception:
                         pass
+            # Mark as modified
+            self._modified = True
+            self._edited.emit()
         except Exception as error:
             error_message = str(error)
             error_dialog = ErrorInfo(
@@ -1173,9 +1106,10 @@ class SmartPropDocument(QMainWindow):
                     parent = itm.parent() or itm.treeWidget().invisibleRootItem()
                     idx = parent.indexOfChild(itm)
                     parent.takeChild(idx)
+        self._modified = True
+        self._edited.emit()
 
     def duplicate_hierarchy_items(self, tree):
-        """Duplicate all selected items in the hierarchy tree."""
         selected_indexes = tree.selectedIndexes()
         selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
         selected_items = list(set(selected_items))
@@ -1210,6 +1144,9 @@ class SmartPropDocument(QMainWindow):
         if tree.selectedItems():
             tree.scrollToItem(tree.selectedItems()[0])
 
+        self._modified = True
+        self._edited.emit()
+
     # ======================================[Window State]========================================
     def _restore_user_prefs(self):
         geo = self.settings.value("SmartPropEditorMainWindow/geometry")
@@ -1235,7 +1172,6 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Other]========================================
     def fix_format(self, file_content):
-        """Fixing format from Source2Viewr or from null elements, in Valve's or exported smartprops."""
         pattern = re.compile(r"= resource_name:")
         modified_content = re.sub(pattern, "= ", file_content)
         modified_content = modified_content.replace("null,", "")
