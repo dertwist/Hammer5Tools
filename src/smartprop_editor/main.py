@@ -129,9 +129,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.buttons()
 
         # Group dockwidgets
-        self.tabifyDockWidget(self.ui.dockWidget_4, self.ui.dockWidget_2)
+        self.tabifyDockWidget(self.ui.HierarchyDock, self.ui.ChoicesDock)
         # Set focus to hierarchy dockwidget
-        self.ui.dockWidget_4.raise_()
+        self.ui.HierarchyDock.raise_()
 
         set_qdock_tab_style(self.findChildren)
 
@@ -689,9 +689,9 @@ class SmartPropEditorMainWindow(QMainWindow):
     # ======================================[Explorer]========================================
     def explorer_status(self):
         if self.opened_file == "":
-            self.ui.dockWidget_10.setWindowTitle("Explorer")
+            self.ui.ExplorerDock.setWindowTitle("Explorer")
         else:
-            self.ui.dockWidget_10.setWindowTitle(f"Explorer: ({os.path.basename(self.opened_file)})")
+            self.ui.ExplorerDock.setWindowTitle(f"Explorer: ({os.path.basename(self.opened_file)})")
 
     def realtime_save_action(self):
         self.realtime_save = self.ui.realtime_save_checkbox.isChecked()

@@ -34,13 +34,13 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QFrame" name="frame_9">
+     <widget class="QFrame" name="PropertiesFrame">
       <property name="styleSheet">
-       <string notr="true">        QFrame#frame_9 {
+       <string notr="true">        QFrame#PropertiesFrame {
             border: 2px solid black; 
             border-color: rgba(80, 80, 80, 255);
         }
-        QFrame#frame_9 QLabel {
+        QFrame#PropertiesFrame QLabel {
             border: 0px solid black; 
         }</string>
       </property>
@@ -82,7 +82,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QScrollArea" name="scrollArea">
+        <widget class="QScrollArea" name="PropertiesArea">
          <property name="focusPolicy">
           <enum>Qt::FocusPolicy::NoFocus</enum>
          </property>
@@ -181,7 +181,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QDockWidget" name="dockWidget_4">
+  <widget class="QDockWidget" name="HierarchyDock">
    <property name="features">
     <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
@@ -372,7 +372,7 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockWidget">
+  <widget class="QDockWidget" name="VariablesDock">
    <property name="features">
     <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
@@ -782,7 +782,7 @@ QComboBox QAbstractItemView::item:selected {
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockWidget_10">
+  <widget class="QDockWidget" name="ExplorerDock">
    <property name="features">
     <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>
@@ -1180,7 +1180,7 @@ QComboBox QAbstractItemView::item:selected {
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockWidget_2">
+  <widget class="QDockWidget" name="ChoicesDock">
    <property name="features">
     <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
    </property>

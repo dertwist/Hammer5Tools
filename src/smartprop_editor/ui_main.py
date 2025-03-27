@@ -74,23 +74,23 @@ class Ui_MainWindow(object):
         self.verticalLayout_9.setSpacing(0)
         self.verticalLayout_9.setObjectName(u"verticalLayout_9")
         self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
-        self.frame_9 = QFrame(self.centralwidget)
-        self.frame_9.setObjectName(u"frame_9")
-        self.frame_9.setStyleSheet(u"        QFrame#frame_9 {\n"
+        self.PropertiesFrame = QFrame(self.centralwidget)
+        self.PropertiesFrame.setObjectName(u"PropertiesFrame")
+        self.PropertiesFrame.setStyleSheet(u"        QFrame#PropertiesFrame {\n"
 "            border: 2px solid black; \n"
 "            border-color: rgba(80, 80, 80, 255);\n"
 "        }\n"
-"        QFrame#frame_9 QLabel {\n"
+"        QFrame#PropertiesFrame QLabel {\n"
 "            border: 0px solid black; \n"
 "        }")
-        self.frame_9.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_9.setFrameShadow(QFrame.Shadow.Raised)
-        self.frame_9.setLineWidth(0)
-        self.verticalLayout_5 = QVBoxLayout(self.frame_9)
+        self.PropertiesFrame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.PropertiesFrame.setFrameShadow(QFrame.Shadow.Raised)
+        self.PropertiesFrame.setLineWidth(0)
+        self.verticalLayout_5 = QVBoxLayout(self.PropertiesFrame)
         self.verticalLayout_5.setSpacing(0)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.label = QLabel(self.frame_9)
+        self.label = QLabel(self.PropertiesFrame)
         self.label.setObjectName(u"label")
         font = QFont()
         font.setPointSize(9)
@@ -98,15 +98,15 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_5.addWidget(self.label)
 
-        self.scrollArea = QScrollArea(self.frame_9)
-        self.scrollArea.setObjectName(u"scrollArea")
-        self.scrollArea.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.scrollArea.setStyleSheet(u"QScrollArea {\n"
+        self.PropertiesArea = QScrollArea(self.PropertiesFrame)
+        self.PropertiesArea.setObjectName(u"PropertiesArea")
+        self.PropertiesArea.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.PropertiesArea.setStyleSheet(u"QScrollArea {\n"
 "    border: 0px solid black;\n"
 "}")
-        self.scrollArea.setLineWidth(0)
-        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.scrollArea.setWidgetResizable(True)
+        self.PropertiesArea.setLineWidth(0)
+        self.PropertiesArea.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.PropertiesArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
         self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 725, 700))
@@ -142,18 +142,18 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_17.addLayout(self.properties_layout)
 
-        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+        self.PropertiesArea.setWidget(self.scrollAreaWidgetContents)
 
-        self.verticalLayout_5.addWidget(self.scrollArea)
+        self.verticalLayout_5.addWidget(self.PropertiesArea)
 
 
-        self.verticalLayout_9.addWidget(self.frame_9)
+        self.verticalLayout_9.addWidget(self.PropertiesFrame)
 
         MainWindow.setCentralWidget(self.centralwidget)
-        self.dockWidget_4 = QDockWidget(MainWindow)
-        self.dockWidget_4.setObjectName(u"dockWidget_4")
-        self.dockWidget_4.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget_4.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.HierarchyDock = QDockWidget(MainWindow)
+        self.HierarchyDock.setObjectName(u"HierarchyDock")
+        self.HierarchyDock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.HierarchyDock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
         self.dockWidgetContents_2 = QWidget()
         self.dockWidgetContents_2.setObjectName(u"dockWidgetContents_2")
         self.verticalLayout_8 = QVBoxLayout(self.dockWidgetContents_2)
@@ -239,12 +239,12 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_8.addWidget(self.frame_2)
 
-        self.dockWidget_4.setWidget(self.dockWidgetContents_2)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_4)
-        self.dockWidget = QDockWidget(MainWindow)
-        self.dockWidget.setObjectName(u"dockWidget")
-        self.dockWidget.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.HierarchyDock.setWidget(self.dockWidgetContents_2)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.HierarchyDock)
+        self.VariablesDock = QDockWidget(MainWindow)
+        self.VariablesDock.setObjectName(u"VariablesDock")
+        self.VariablesDock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.VariablesDock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
         self.dockWidgetContents = QWidget()
         self.dockWidgetContents.setObjectName(u"dockWidgetContents")
         self.verticalLayout_7 = QVBoxLayout(self.dockWidgetContents)
@@ -538,12 +538,12 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_7.addWidget(self.frame)
 
-        self.dockWidget.setWidget(self.dockWidgetContents)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget)
-        self.dockWidget_10 = QDockWidget(MainWindow)
-        self.dockWidget_10.setObjectName(u"dockWidget_10")
-        self.dockWidget_10.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
-        self.dockWidget_10.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
+        self.VariablesDock.setWidget(self.dockWidgetContents)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.VariablesDock)
+        self.ExplorerDock = QDockWidget(MainWindow)
+        self.ExplorerDock.setObjectName(u"ExplorerDock")
+        self.ExplorerDock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.ExplorerDock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
         self.explorer_layout_widget = QWidget()
         self.explorer_layout_widget.setObjectName(u"explorer_layout_widget")
         self.verticalLayout_10 = QVBoxLayout(self.explorer_layout_widget)
@@ -798,11 +798,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_10.addWidget(self.frame_4)
 
-        self.dockWidget_10.setWidget(self.explorer_layout_widget)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dockWidget_10)
-        self.dockWidget_2 = QDockWidget(MainWindow)
-        self.dockWidget_2.setObjectName(u"dockWidget_2")
-        self.dockWidget_2.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.ExplorerDock.setWidget(self.explorer_layout_widget)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.ExplorerDock)
+        self.ChoicesDock = QDockWidget(MainWindow)
+        self.ChoicesDock.setObjectName(u"ChoicesDock")
+        self.ChoicesDock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.dockWidgetContents_3 = QWidget()
         self.dockWidgetContents_3.setObjectName(u"dockWidgetContents_3")
         self.verticalLayout = QVBoxLayout(self.dockWidgetContents_3)
@@ -823,8 +823,8 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.choices_tree_widget)
 
-        self.dockWidget_2.setWidget(self.dockWidgetContents_3)
-        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dockWidget_2)
+        self.ChoicesDock.setWidget(self.dockWidgetContents_3)
+        MainWindow.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.ChoicesDock)
 
         self.retranslateUi(MainWindow)
 
@@ -846,7 +846,7 @@ class Ui_MainWindow(object):
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Properties", None))
         self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select an element in the hierarchy", None))
-        self.dockWidget_4.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
+        self.HierarchyDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Hierarchy", None))
         self.tree_hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem = self.tree_hierarchy_widget.headerItem()
         ___qtreewidgetitem.setText(3, QCoreApplication.translate("MainWindow", u"ID", None));
@@ -856,7 +856,7 @@ class Ui_MainWindow(object):
         self.preset_manager_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Ctrl + N</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.preset_manager_button.setText(QCoreApplication.translate("MainWindow", u"Preset Manager", None))
-        self.dockWidget.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
+        self.VariablesDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Variables", None))
         self.variables_scroll_area_searchbar.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
 #if QT_CONFIG(tooltip)
         self.paste_variable_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Paste variable</p></body></html>", None))
@@ -866,7 +866,7 @@ class Ui_MainWindow(object):
         self.add_new_variable_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Create variable</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.add_new_variable_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-        self.dockWidget_10.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
+        self.ExplorerDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
 #if QT_CONFIG(tooltip)
         self.open_file_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><br/></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
@@ -900,7 +900,7 @@ class Ui_MainWindow(object):
         self.open_file_as_button.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+O", None))
 #endif // QT_CONFIG(shortcut)
         self.realtime_save_checkbox.setText(QCoreApplication.translate("MainWindow", u"Realtime save", None))
-        self.dockWidget_2.setWindowTitle(QCoreApplication.translate("MainWindow", u"Choices", None))
+        self.ChoicesDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Choices", None))
         ___qtreewidgetitem1 = self.choices_tree_widget.headerItem()
         ___qtreewidgetitem1.setText(2, QCoreApplication.translate("MainWindow", u"Type", None));
         ___qtreewidgetitem1.setText(1, QCoreApplication.translate("MainWindow", u"Value", None));
