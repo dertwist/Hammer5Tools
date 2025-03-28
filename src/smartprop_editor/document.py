@@ -36,8 +36,7 @@ from src.smartprop_editor.objects import (
     selection_criteria_list,
     filters_list
 )
-from src.smartprop_editor.vsmart import VsmartOpen, VsmartSave, serialization_hierarchy_items, \
-    deserialize_hierarchy_item
+from src.smartprop_editor.vsmart import VsmartOpen, VsmartSave, serialization_hierarchy_items, deserialize_hierarchy_item
 from src.smartprop_editor.property_frame import PropertyFrame
 from src.smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from src.smartprop_editor.choices import AddChoice, AddVariable, AddOption
@@ -46,12 +45,7 @@ from src.smartprop_editor.commands import DeleteTreeItemCommand, GroupElementsCo
 from src.replace_dialog.main import FindAndReplaceDialog
 from src.explorer.main import Explorer
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
-from src.smartprop_editor.element_id import (
-    update_value_ElementID,
-    update_child_ElementID_value,
-    get_ElementID_key,
-    reset_ElementID
-)
+from src.smartprop_editor.element_id import ElementIDGenerator
 from src.smartprop_editor._common import (
     get_clean_class_name_value,
     get_clean_class_name,
@@ -82,6 +76,7 @@ class SmartPropDocument(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
+        self.element_id_generator = ElementIDGenerator()
         self.realtime_save = False
         self.opened_file = None
         self.update_title = update_title
@@ -370,17 +365,15 @@ class SmartPropDocument(QMainWindow):
                             item_class = item.get("_class")
                             value_dict = item.copy()
                             value_dict.pop("m_Children", None)
-                            update_value_ElementID(value_dict)
-                            value_dict = update_child_ElementID_value(value_dict, force=True)
+                            # Use instance's element_id_generator instead of global functions
+                            self.element_id_generator.update_value(value_dict)
+                            value_dict = self.element_id_generator.update_child_value(value_dict, force=True)
 
                             child_item = HierarchyItemModel(
-                                _name=value_dict.get(
-                                    "m_sLabel",
-                                    get_label_id_from_value(value_dict)
-                                ),
+                                _name=value_dict.get("m_sLabel", get_label_id_from_value(value_dict)),
                                 _data=str(value_dict),
                                 _class=get_clean_class_name(item_class),
-                                _id=get_ElementID_key(value_dict)
+                                _id=self.element_id_generator.get_key(value_dict)
                             )
                             if to_parent and parent.parent() is not None:
                                 parent.parent().addChild(child_item)
@@ -483,12 +476,13 @@ class SmartPropDocument(QMainWindow):
 
     def new_element(self, element_class, element_value):
         element_value = ast.literal_eval(element_value)
-        update_value_ElementID(element_value)
+        # Use element_id_generator method instead of global function
+        self.element_id_generator.update_value(element_value)
         new_element_item = HierarchyItemModel(
             _name=get_label_id_from_value(element_value),
             _data=element_value,
             _class=get_clean_class_name_value(element_value),
-            _id=get_ElementID_key(element_value)
+            _id=self.element_id_generator.get_key(element_value)
         )
         if self.ui.tree_hierarchy_widget.currentItem() is None:
             parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
@@ -788,7 +782,7 @@ class SmartPropDocument(QMainWindow):
         self._edited.emit()
 
     def duplicate_variable(self, __data, __index):
-        __data[2] = update_value_ElementID(__data[2], force=True)
+        __data[2] = self.element_id_generator.update_value(__data[2], force=True)
         self.add_variable(__data[0], __data[1], __data[2], __data[3], __data[4], __index)
 
     def add_new_variable(self):
@@ -891,7 +885,7 @@ class SmartPropDocument(QMainWindow):
                     'model': variable.get('m_sModelName')
                 }
 
-                update_value_ElementID(var_value, force=True)
+                self.element_id_generator.update_value(var_value, force=True)
 
                 self.add_variable(
                     name=var_name,
