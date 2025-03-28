@@ -49,35 +49,56 @@ Any of `None` `bool` `int` `float` `enum.IntEnum` `str`
 `bytes` `bytearray` `flagged_value`.
 """
 
-def check_valid(value: ValueType):
+
+def check_valid(value: ValueType, seen: set = None):
     """
     Check if a value is valid for KV3.
-    Raises `ValueError`, `OverflowError`, `TypeError`.
+
+    This function recursively validates the value and raises
+    ValueError, OverflowError, or TypeError if any issue is found.
+
+    A 'seen' set is used to track mutable containers and prevent infinite
+    recursion in the presence of cyclic references.
     """
+    if seen is None:
+        seen = set()
+
+    # For mutable containers (except for immutable bytes/bytearray),
+    # detect cycles using their id.
+    if isinstance(value, (list, dict, array.array)) and not isinstance(value, (bytes, bytearray)):
+        if id(value) in seen:
+            raise ValueError("Cycle detected in KV3 value")
+        seen.add(id(value))
+
     match value:
         case flagged_value(actual_value, _):
-            return check_valid(actual_value)
+            return check_valid(actual_value, seen)
         case None | bool() | float() | enum.IntEnum() | str():
             pass
         case int():
-            if value > 2**64 - 1: raise OverflowError("int value is bigger than biggest UInt64")
-            elif value < -2**63: raise OverflowError("int value is smaller than smallest Int64")
+            if value > 2 ** 64 - 1:
+                raise OverflowError("int value is bigger than biggest UInt64")
+            elif value < -2 ** 63:
+                raise OverflowError("int value is smaller than smallest Int64")
         case list():
             for nested_value in value:
+                # Allows detecting direct self-reference.
                 if nested_value is value:
                     raise ValueError("list contains itself")
-                check_valid(nested_value)
+                check_valid(nested_value, seen)
         case dict():
             for key, nested_value in value.items():
-                if nested_value is value:
-                    raise ValueError("dict contains itself")
                 if not isinstance(key, str):
                     raise ValueError(f"dict key is not a string type, but {type(key)}")
-                check_valid(nested_value)
+                check_valid(nested_value, seen)
         case array.array() | bytes() | bytearray():
             pass
         case _:
             raise TypeError(f"Invalid type {type(value)} for KV3 value.")
+
+    # Optionally, remove the object's id to allow independent validation in different branches.
+    # (Not needed if the same object cannot appear in multiple branches.)
+    return
 
 def is_valid(value: ValueType) -> bool:
     try:
