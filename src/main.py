@@ -372,30 +372,43 @@ class Widget(QMainWindow):
             self.exit_application()
 
     def selected_addon_name(self):
-        set_addon_name(self.ui.ComboBoxSelectAddon.currentText())
+        new_addon = self.ui.ComboBoxSelectAddon.currentText()
+        if get_addon_name() == new_addon and getattr(self, 'SmartPropEditorMainWindow', None):
+            return
+
+        set_addon_name(new_addon)
         try:
-            if hasattr(self, 'SoundEventEditorMainWindow') and self.SoundEventEditorMainWindow:
-                self.SoundEventEditorMainWindow.closeEvent(self.event)
+            if getattr(self, 'SoundEventEditorMainWindow', None):
+                self.SoundEventEditorMainWindow.close()
                 self.SoundEventEditorMainWindow.deleteLater()
+                self.SoundEventEditorMainWindow = None
         except Exception as e:
-            print(f"Error while cleaning up SoundEventEditorMainWidget: {e}")
+            print(f"Error while cleaning up SoundEventEditorMainWindow: {e}")
         try:
-            if hasattr(self, 'SmartPropEditorMainWindow') and self.SmartPropEditorMainWindow:
-                self.SmartPropEditorMainWindow.closeEvent(self.event)
+            if getattr(self, 'SmartPropEditorMainWindow', None):
+                layout = self.ui.smartpropeditor_tab.layout()
+                layout.removeWidget(self.SmartPropEditorMainWindow)
+                self.SmartPropEditorMainWindow.close()   # call close(), not closeEvent(self.event)
                 self.SmartPropEditorMainWindow.deleteLater()
+                self.SmartPropEditorMainWindow = None
         except Exception as e:
             print(f"Error while cleaning up SmartPropEditorMainWindow: {e}")
         try:
-            if hasattr(self, 'BatchCreator_MainWindow') and self.BatchCreator_MainWindow:
+            if getattr(self, 'BatchCreator_MainWindow', None):
                 self.BatchCreator_MainWindow.close()
+                self.BatchCreator_MainWindow.deleteLater()
+                self.BatchCreator_MainWindow = None
         except Exception as e:
             print('Error while cleaning up BatchCreator_MainWindow:', e)
         try:
-            if hasattr(self, 'LoadingEditorMainWindow') and self.LoadingEditorMainWindow:
+            if getattr(self, 'LoadingEditorMainWindow', None):
                 self.LoadingEditorMainWindow.close()
                 self.LoadingEditorMainWindow.deleteLater()
+                self.LoadingEditorMainWindow = None
         except Exception as e:
             print('Error while cleaning up LoadingEditorMainWindow:', e)
+
+        # INITIALIZE NEW EDITOR INSTANCES
         try:
             self.BatchCreator_MainWindow = BatchCreatorMainWindow(update_title=self.update_title)
             self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
@@ -405,7 +418,7 @@ class Widget(QMainWindow):
             self.SoundEventEditorMainWindow = SoundEventEditorMainWindow(update_title=self.update_title)
             self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWindow)
         except Exception as e:
-            print(f"Error while setting up SoundEventEditorMainWidget: {e}")
+            print(f"Error while setting up SoundEventEditorMainWindow: {e}")
         try:
             self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(update_title=self.update_title, parent=self)
             self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
