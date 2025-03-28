@@ -252,6 +252,14 @@ class SmartPropEditorMainWindow(QMainWindow):
             removed_widget.deleteLater()
         self.update_placeholder_visibility()
 
+    def closeEvent(self, event):
+        """
+        Overridden close event to ensure the realtime save timer is stopped and cleanup is performed.
+        """
+        if self.realtime_save_timer.isActive():
+            self.realtime_save_timer.stop()
+        event.accept()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SmartPropEditorMainWindow()
