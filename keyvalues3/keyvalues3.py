@@ -3,25 +3,33 @@ import dataclasses
 import enum
 from uuid import UUID
 
-class KV3DecodeError(ValueError): pass
-class InvalidKV3Magic(KV3DecodeError): pass
+class KV3DecodeError(ValueError):
+    pass
+
+class InvalidKV3Magic(KV3DecodeError):
+    pass
 
 @dataclasses.dataclass(frozen=True)
 class _HeaderPiece:
     name: str
     version: UUID
+
     def __post_init__(self):
         if not self.name.isidentifier():
             raise ValueError(f"{self!r}: name is not a valid identifier")
         if not isinstance(self.version, UUID):
             raise ValueError(f"{self!r}: version is not an UUID object")
+
     def __str__(self):
         return "%s:%s:version{%s}" % (self.__class__.__name__.lower(), self.name, str(self.version))
 
 @dataclasses.dataclass(frozen=True)
-class Encoding(_HeaderPiece): pass
+class Encoding(_HeaderPiece):
+    pass
+
 @dataclasses.dataclass(frozen=True)
-class Format(_HeaderPiece): pass
+class Format(_HeaderPiece):
+    pass
 
 ENCODING_BINARY_UNCOMPRESSED = Encoding("binary", UUID("1b860500-f7d8-40c1-ad82-75a48267e714"))
 ENCODING_BINARY_BLOCK_COMPRESSED = Encoding("binarybc", UUID("95791a46-95bc-4f6c-a70b-05bca1b7dfd2"))
@@ -35,20 +43,20 @@ FORMAT_VMDL = Format("modeldoc36", UUID("972dada4-b828-45a4-bb93-7795cf0585da"))
 class KV3Header:
     encoding: Encoding = ENCODING_TEXT
     format: Format = FORMAT_GENERIC
+
     def __str__(self):
         return f"<!-- kv3 {self.encoding} {self.format} -->"
 
-
+# Define type unions
 simple_types = None | bool | int | float | enum.IntEnum | str
 container_types = list[simple_types] | array.array | dict[str, simple_types]
 bytearrays = bytes | bytearray
 ValueType = simple_types | container_types | bytearrays
 """
-Any of `None` `bool` `int` `float` `enum.IntEnum` `str`
-`list[ValueType]` `array.array` `dict[str, ValueType]`
-`bytes` `bytearray` `flagged_value`.
+Any of `None`, `bool`, `int`, `float`, `enum.IntEnum`, `str`
+`list[ValueType]`, `array.array`, `dict[str, ValueType]`,
+`bytes`, `bytearray`, `flagged_value`.
 """
-
 
 def check_valid(value: ValueType, seen: set = None):
     """
@@ -72,7 +80,7 @@ def check_valid(value: ValueType, seen: set = None):
 
     match value:
         case flagged_value(actual_value, _):
-            return check_valid(actual_value, seen)
+            result = check_valid(actual_value, seen)
         case None | bool() | float() | enum.IntEnum() | str():
             pass
         case int():
@@ -96,8 +104,9 @@ def check_valid(value: ValueType, seen: set = None):
         case _:
             raise TypeError(f"Invalid type {type(value)} for KV3 value.")
 
-    # Optionally, remove the object's id to allow independent validation in different branches.
-    # (Not needed if the same object cannot appear in multiple branches.)
+    # Remove id from 'seen' for mutable containers to allow independent validation in different branches.
+    if isinstance(value, (list, dict, array.array)) and not isinstance(value, (bytes, bytearray)):
+        seen.remove(id(value))
     return
 
 def is_valid(value: ValueType) -> bool:
@@ -115,8 +124,10 @@ class Flag(enum.IntFlag):
     panorama = enum.auto()
     soundevent = enum.auto()
     subclass = enum.auto()
+
     def __str__(self):
         return "|".join(flag.name for flag in self.__class__ if self.value & flag)
+
     def __call__(self, value: ValueType):
         return flagged_value(value, self)
 
@@ -127,7 +138,7 @@ class flagged_value():
     __match_args__ = __slots__ = ("value", "flags")
 
     def __init__(self, value: ValueType, flags: Flag = Flag(0)):
-        #assert flags.bit_count() == 1, "only one flag is allowed"
+        # assert flags.bit_count() == 1, "only one flag is allowed"
         assert isinstance(value, flagged_value) == False, "value should not be already flagged"
         self.value = value
         self.flags = flags
