@@ -71,7 +71,6 @@ def process_bulk_models(document, files, create_ref, ref_index):
 
     addon_path = get_addon_dir()
     ref_id = None
-    ref_shared_obj_id = None
 
     if not hasattr(document, "reference_objects"):
         document.reference_objects = {}
@@ -83,25 +82,22 @@ def process_bulk_models(document, files, create_ref, ref_index):
     for index, file_path in enumerate(files):
         rel_path = os.path.relpath(file_path, addon_path).replace(os.path.sep, '/')
         base_name, _ = os.path.splitext(os.path.basename(file_path))
-        unique_ref_obj_id = str(uuid.uuid4())
         element_dict = {
             "_class": "CSmartPropElement_Model",
             "m_sModelName": rel_path,
             "m_vModelScale": None,
             "m_MaterialGroupName": None,
             "m_Modifiers": [],
-            "m_SelectionCriteria": [],
-            "m_sReferenceObjectID": unique_ref_obj_id
+            "m_SelectionCriteria": []
         }
         is_reference = create_ref and (index == ref_index)
         if is_reference:
             element_dict["m_sLabel"] = f"{base_name}_REF"
-            element_dict["m_sSharedReferenceObjectID"] = unique_ref_obj_id
         else:
             element_dict["m_sLabel"] = base_name
-            if create_ref and ref_id is not None and ref_shared_obj_id is not None:
+            if create_ref and ref_id is not None:
                 element_dict["m_nReferenceID"] = ref_id
-                element_dict["m_sSharedReferenceObjectID"] = ref_shared_obj_id
+                element_dict["m_sReferenceObjectID"] = str(uuid.uuid4())
         element_value = copy.deepcopy(element_dict)
         update_value_ElementID(element_value)
         label = element_value.get("m_sLabel", get_label_id_from_value(element_value))
@@ -115,10 +111,10 @@ def process_bulk_models(document, files, create_ref, ref_index):
         if is_reference:
             try:
                 ref_id = element_value.get("m_nElementID")
-                ref_shared_obj_id = element_value.get("m_sSharedReferenceObjectID")
-                document.reference_objects[ref_shared_obj_id] = copy.deepcopy(element_value)
             except Exception:
                 ref_id = None
-                ref_shared_obj_id = None
+        else:
+            if create_ref and ref_id is not None and "m_sReferenceObjectID" in element_value:
+                document.reference_objects[element_value["m_sReferenceObjectID"]] = copy.deepcopy(element_value)
 
     apply_stylesheets(document.ui.tree_hierarchy_widget)
