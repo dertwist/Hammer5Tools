@@ -388,8 +388,13 @@ class Explorer(QMainWindow):
         menu.addAction(copy_action)
         copy_relative_path_action = QAction("Copy Relative Path", self)
         copy_relative_path_action.setIcon(QIcon(":/icons/attachment.png"))
-        copy_relative_path_action.triggered.connect(lambda: self.copy_relative_path(index, True))
+        copy_relative_path_action.triggered.connect(lambda: self.copy_path(index, True))
         menu.addAction(copy_relative_path_action)
+
+        copy_path_action = QAction("Copy Path", self)
+        copy_path_action.setIcon(QIcon(":/icons/attachment.png"))
+        copy_path_action.triggered.connect(lambda: self.copy_path(index, True, relative=False))
+        menu.addAction(copy_path_action)
         file_path = self.model.filePath(index)
         file_extension = file_path.split('.')[-1].lower()
         if file_extension in audio_extensions:
@@ -507,9 +512,10 @@ class Explorer(QMainWindow):
         else:
             return file_path
 
-    def copy_relative_path(self, index, to_clipboard):
+    def copy_path(self, index, to_clipboard, relative=True):
         file_path = self.model.filePath(index)
-        file_path = os.path.relpath(file_path, self.rootpath)
+        if relative:
+            file_path = os.path.relpath(file_path, self.rootpath)
         file_path = file_path.replace('\\', '/').lower()
         root, ext = os.path.splitext(file_path)
         file_path = root + ext
