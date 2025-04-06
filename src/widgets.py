@@ -69,6 +69,7 @@ class FloatWidget(QWidget):
 
         # Slider setup
         self.Slider = QSlider()
+        self.Slider.wheelEvent = lambda event: None
         self.Slider.setOrientation(Qt.Vertical if vertical else Qt.Horizontal)
         # Range setup: if slider_range is default (0,0) then use dynamic scaling.
         if self.slider_range[0] == 0 and self.slider_range[1] == 0:
