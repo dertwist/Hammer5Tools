@@ -66,6 +66,11 @@ class QuickConfigFile:
         except Exception as e:
             debug(f"Error extracting filename from source model: {e}")
             return
+
+        # Use original file content for the file content key if available,
+        # otherwise fall back to the default configuration.
+        file_content_for_config = file_content if file_content.strip() else default_config.get("file", {}).get("content", "")
+
         new_config = {
             "process": {
                 "extension": extension,
@@ -90,7 +95,7 @@ class QuickConfigFile:
                 }
             },
             "file": {
-                "content": default_config.get("file", {}).get("content", "")
+                "content": file_content_for_config
             }
         }
         try:
