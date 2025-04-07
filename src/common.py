@@ -37,7 +37,7 @@ def enable_dark_title_bar(window):
 
 #===============================================================<  Variables  >=============================================================
 # Versions
-app_version = '4.5.2'
+app_version = '4.5.3'
 
 editor_info = {
     'editor_info':
