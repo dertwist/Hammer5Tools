@@ -140,25 +140,37 @@ def serialization_hierarchy_items(item, data=None):
     """Convert tree structure to a JSON-like dict structure."""
     if data is None:
         data = {"m_Children": []}
-    value_row = item.text(1)
-    parent_data = ast.literal_eval(value_row)
-    parent_data["m_sLabel"] = item.text(0)
-    if item.childCount() > 0:
-        parent_data["m_Children"] = []
 
-    data["m_Children"].append(parent_data)
+    try:
+        value_row = item.text(1)
+        parent_data = ast.literal_eval(value_row)
+        parent_data["m_sLabel"] = item.text(0)
 
-    if item.childCount() > 0:
-        for index in range(item.childCount()):
-            child = item.child(index)
-            key = child.text(0)
-            value_row = child.text(1)
-            child_data = ast.literal_eval(value_row)
-            child_data["m_sLabel"] = key
-            if child.childCount() > 0:
-                child_data["m_Children"] = []
-                serialization_hierarchy_items(child, child_data)
-            parent_data["m_Children"].append(child_data)
+        # Initialize children array if needed
+        if item.childCount() > 0:
+            parent_data["m_Children"] = []
+
+        # Add this item to parent's children
+        data["m_Children"].append(parent_data)
+
+        # Process children
+        if item.childCount() > 0:
+            for index in range(item.childCount()):
+                child = item.child(index)
+
+                # Create a temporary container for this child
+                child_container = {"m_Children": []}
+
+                # Recursively process the child and its descendants
+                serialization_hierarchy_items(child, child_container)
+
+                # Add the processed child data to parent's children
+                # (The child is now in child_container["m_Children"][0])
+                if child_container["m_Children"]:
+                    parent_data["m_Children"].append(child_container["m_Children"][0])
+    except Exception as e:
+        print(f"Error in serialization: {e}")
+
     return data
 
 def deserialize_hierarchy_item(m_Children):
