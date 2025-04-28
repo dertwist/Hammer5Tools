@@ -81,7 +81,7 @@ def get_cs2_path():
         if cs2_exe_exists(cs2_path):
             return cs2_path
         else:
-            cs2_path = None
+            cs2_path = app_dir
 
     if not cs2_path:
         cs2_path = get_counter_strike_path_from_registry()
@@ -90,7 +90,7 @@ def get_cs2_path():
             if cs2_exe_exists(cs2_path):
                 return cs2_path
             else:
-                cs2_path = None
+                cs2_path = app_dir
 
     return cs2_path
 
