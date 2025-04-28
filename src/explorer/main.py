@@ -8,7 +8,7 @@ from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, 
 
 from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, debug, get_addon_dir
 from src.widgets_common import ErrorInfo
-from src.explorer.actions import QuickVmdlFile, QuickConfigFile
+from src.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess
 from src.styles.common import *
 from src.common import enable_dark_title_bar
 
@@ -412,6 +412,11 @@ class Explorer(QMainWindow):
             quick_vmdl_action.setIcon(QIcon(":/icons/edit_note_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
             quick_vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
             menu.addAction(quick_vmdl_action)
+        if file_extension == ".hbat":
+            quick_process_action = QAction("Quick Process", self)
+            quick_process_action.setIcon(QIcon(":/icons/play_arrow_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            quick_process_action.triggered.connect(lambda: QuickProcess(filepath=file_path).process())
+            menu.addAction(quick_process_action)
 
     def duplicate_file(self, index):
         file_path = self.model.filePath(index)
