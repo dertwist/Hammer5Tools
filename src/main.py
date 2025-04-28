@@ -55,7 +55,7 @@ from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
 from src.launch_options.main import LaunchOptionsDialog
 from styles.qt_global_stylesheet import QT_Stylesheet_global
-from src.common import enable_dark_title_bar, app_version, default_commands
+from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
 
 # Global paths
 steam_path = get_steam_path()
@@ -121,6 +121,22 @@ class Widget(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         enable_dark_title_bar(self)
+
+
+        #Checking for Counter Strike 2 installation
+
+        if cs2_path == app_dir:
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("Counter Strike 2 Not Installed")
+            msg_box.setText("Counter Strike 2 is not installed on your system.")
+            exit_button = msg_box.addButton("Exit", QMessageBox.RejectRole)
+            continue_button = msg_box.addButton("Continue Anyway", QMessageBox.AcceptRole)
+            msg_box.setDefaultButton(exit_button)
+            msg_box.exec()
+            if msg_box.clickedButton() == exit_button:
+                sys.exit(1)
+
 
         # Setup tray icon early so that restoration has a fallback.
         self.setup_tray_icon()
