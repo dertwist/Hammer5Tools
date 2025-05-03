@@ -63,6 +63,9 @@ cs2_path = get_cs2_path()
 stop_discord_thread = threading.Event()
 INSTANCE_KEY = "Hammer5ToolsInstance"
 
+from src.common import Decompiler_path
+print(f"Decompiler path: {Decompiler_path}")
+
 def activate_existing_window(hwnd):
     """
     Activate and redraw an existing window identified by hwnd
