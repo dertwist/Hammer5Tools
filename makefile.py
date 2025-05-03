@@ -36,7 +36,7 @@ def build_hammer5_tools() -> None:
         '--onefile',
         '--windowed',
         '--strip',
-        '--optimize=2',
+        '--optimize=-1',
         '--icon=src/appicon.ico',
         '--add-data=src/appicon.ico;.',
         '--add-data=src/images;images/',
