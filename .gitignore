@@ -1,24 +1,8 @@
-# This file is used to ignore files which are generated
-# ----------------------------------------------------------------------------
-build/
-main.build/
-main.onefile-build/
-main.dist/
-dist/
-.idea
-__pycache__/
-.qtcreator/
-.build/
-hotkeys
-debug.kv3
-settings.cfg
-see_test.txt
-soundevent_editor.cfg
+# General generated files
 *~
 *.autosave
 *.a
 *.core
-*.moc
 *.moc
 *.o
 *.obj
@@ -37,7 +21,6 @@ tags
 .DS_Store
 .directory
 *.debug
-Makefile*
 *.prl
 *.app
 moc_*.cpp
@@ -49,11 +32,11 @@ Thumbs.db
 /.qmake.cache
 /.qmake.stash
 
-# qtcreator generated files
+# QtCreator generated files
 *.pro.user*
 CMakeLists.txt.user*
 
-# xemacs temporary files
+# XEmacs temporary files
 *.flc
 
 # Vim temporary files
@@ -81,18 +64,13 @@ CMakeLists.txt.user*
 # Python byte code
 *.pyc
 
-# Binaries
-# --------
-*.dll
-*.exe
-
-autopytoexe.exe.lnk
+# Miscellaneous
 .codiumai
 dist/debug.kv3
 /dist
 .idea
 
-
+# Python project files
 *.pyproject
 *.spec
 Hammer5Tools.pyproject.user
@@ -100,6 +78,8 @@ Hammer5Tools.pyproject.user.47e72da
 Hammer5Tools.pyproject.user.85e345b
 Hammer5Tools.spec
 Hammer5Tools_Updater.spec
+
+# Project-specific ignores
 /smartprop_editor/hammer.dll.bndb
 /hotkeys/hammer/test.keybindings
 /Decompiler/
@@ -112,3 +92,17 @@ Hammer5Tools_Updater.spec
 settings.ini
 /application.zip
 Hammer5Tools/
+
+# Build and output directories
+build/
+main.build/
+main.onefile-build/
+main.dist/
+dist/
+.idea
+__pycache__/
+.qtcreator/
+.build/
+hotkeys
+debug.kv3
+settings.cfg
