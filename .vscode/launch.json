@@ -1,7 +1,4 @@
-
 {
-    // Use IntelliSense to learn about possible attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -9,24 +6,37 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Python: Hammer5Tools",
-            "type": "python",
-            "request": "launch",
-            "module": "Hammer5Tools",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
         },
         {
             "name": "Python: Build Hammer5Tools",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/dev/build.py",
+            "program": "${workspaceFolder}/makefile.py",
             "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
             "args": [
-                "arg1",
-                "arg2"
+                "--archive",
+                "--build-all"
+            ]
+        },
+        {
+            "name": "Python: Start Hammer5Tools",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/hammer5tools",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "args": [
+                "--dev",
             ]
         }
     ]
