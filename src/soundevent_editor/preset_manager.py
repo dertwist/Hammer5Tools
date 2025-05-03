@@ -76,8 +76,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
     def open_preset(self):
         """Loads a preset into the Window Properties"""
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]
-        __filepath = self.mini_explorer.tree.model().filePath(index)
-
+        __filepath = self.mini_explorer.get_current_path(absolute=True)
         with open(__filepath, 'r') as file:
             __data = file.read()
         __data = Kv3ToJson(__data)
