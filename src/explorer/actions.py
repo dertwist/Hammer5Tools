@@ -3,6 +3,7 @@ from src.common import JsonToKv3, Kv3ToJson
 import os, json
 from src.assetgroup_maker.objects import DEFAULT_VMDL, get_default_file
 from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
+from src.assetgroup_maker.process import perform_batch_processing
 
 class QuickVmdlFile():
     def __init__(self, filepath):
@@ -104,3 +105,31 @@ class QuickConfigFile:
             debug(f"Created config file: {output_file}")
         except Exception as e:
             debug(f"Error creating config file: {e}")
+
+class QuickProcess:
+    def __init__(self, parent=None, filepath=None):
+        # No need for super().__init__ as this is not a Qt class
+        self._filepath = filepath
+        if self._filepath is None:
+            raise ValueError('There is no filepath to process. Please provide a filepath.')
+
+    def process(self):
+        try:
+            with open(self._filepath, 'r') as f:
+                data = json.load(f)
+            process = data.get('process', {})
+            replacements = data.get('replacements', {})
+            content = data.get('file', {}).get('content', '')
+            if not process:
+                debug(f"No process configuration found in {self._filepath}.")
+                return
+            perform_batch_processing(
+                file_path=self._filepath,
+                process=process,
+                preview=False,
+                replacements=replacements,
+                content_template=content
+            )
+            debug(f"Quick process completed for {self._filepath}")
+        except Exception as e:
+            debug(f"QuickProcess error for {self._filepath}: {e}")
