@@ -1056,6 +1056,7 @@ class SmartPropDocument(QMainWindow):
             data_input = QApplication.clipboard().text()
         try:
             obj = Kv3ToJson(self.fix_format(data_input))
+            new_item = None
             if paste_to_parent:
                 if tree.currentItem() and tree.currentItem().parent() is not None:
                     parent_item = tree.currentItem().parent()
@@ -1078,17 +1079,43 @@ class SmartPropDocument(QMainWindow):
                         pass
             else:
                 if "m_Children" in obj:
-                    self.file_deserialization(obj, to_parent=False)
+                    if obj["m_Children"]:
+                        new_item = deserialize_hierarchy_item(obj["m_Children"][0])
+                        if tree.currentItem():
+                            tree.currentItem().addChild(new_item)
+                        else:
+                            tree.invisibleRootItem().addChild(new_item)
+                        try:
+                            new_item.setText(0, unique_counter_name(new_item, tree))
+                        except Exception:
+                            pass
+                        
+                        for child in obj["m_Children"][1:]:
+                            child_item = deserialize_hierarchy_item(child)
+                            if tree.currentItem():
+                                tree.currentItem().addChild(child_item)
+                            else:
+                                tree.invisibleRootItem().addChild(child_item)
+                            try:
+                                child_item.setText(0, unique_counter_name(child_item, tree))
+                            except Exception:
+                                pass
                 else:
-                    tree_item = deserialize_hierarchy_item(obj)
+                    new_item = deserialize_hierarchy_item(obj)
                     if tree.currentItem():
-                        tree.currentItem().addChild(tree_item)
+                        tree.currentItem().addChild(new_item)
                     else:
-                        tree.invisibleRootItem().addChild(tree_item)
+                        tree.invisibleRootItem().addChild(new_item)
                     try:
-                        tree_item.setText(0, unique_counter_name(tree_item, tree))
+                        new_item.setText(0, unique_counter_name(new_item, tree))
                     except Exception:
                         pass
+            if new_item:
+                tree.clearSelection()
+                new_item.setSelected(True)
+                tree.scrollToItem(new_item)
+                tree.setFocus()
+
             # Mark as modified
             self._modified = True
             self._edited.emit()
