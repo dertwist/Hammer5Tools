@@ -803,6 +803,7 @@ class SmartPropDocument(QMainWindow):
         var_display_name = None
         var_visible_in_editor = False
         var_value = {"default": None, "min": None, "max": None, "model": None}
+        var_value = self.element_id_generator.update_value(var_value, force=True)
         self.add_variable(
             name=var_name,
             var_value=var_value,
