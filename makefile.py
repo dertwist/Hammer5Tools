@@ -26,7 +26,6 @@ def kill_process(process_name: str) -> None:
 
 
 def build_hammer5_tools() -> None:
-    """Builds the Hammer 5 Tools application using PyInstaller."""
     subprocess.run([
         'pyinstaller',
         '--name=Hammer5Tools',
@@ -36,7 +35,8 @@ def build_hammer5_tools() -> None:
         '--onefile',
         '--windowed',
         '--strip',
-        '--optimize=-1',
+        '--optimize=2',
+        '--clean', 
         '--icon=src/appicon.ico',
         '--add-data=src/appicon.ico;.',
         '--add-data=src/images;images/',
