@@ -36,7 +36,6 @@ class VariableFrame(QWidget):
         }
 
         # ID Handling
-        update_value_ElementID(self.var_value)
         self.element_id = get_ElementID(self.var_value)
         if get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', default=False):
             self.ui.id_display.setText(str(self.element_id))
