@@ -13,6 +13,7 @@ from src.smartprop_editor.ui_main import Ui_MainWindow
 from src.settings.main import get_addon_name, settings
 from src.explorer.main import Explorer
 from src.smartprop_editor.document import SmartPropDocument
+from src.other.assettypes import asset_types_check
 from src.widgets import ErrorInfo
 from src.common import (
     enable_dark_title_bar,
@@ -142,6 +143,10 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         doc = self.ui.DocumentTabWidget.widget(current_index)
         if hasattr(doc, 'save_file'):
+
+            # Check if the tools files are prepared for vsmart compilation
+            asset_types_check()
+
             doc.save_file(external=external)
             base_name = "Untitled"
             if doc.opened_file:

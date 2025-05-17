@@ -2,6 +2,7 @@ import os
 from src.settings.main import get_cs2_path
 import keyvalues3
 from src.common import editor_info
+from PySide6.QtWidgets import QMessageBox
 
 def load_assettypes():
     file_path = os.path.join(get_cs2_path(), 'game', 'bin', 'assettypes_common.txt')
@@ -44,3 +45,21 @@ def asset_types_modify():
         keyvalues3.write(merged_data, file_path)
     else:
         pass
+
+def asset_types_check():
+    file_path, data = load_assettypes()
+    if is_editor_info_processed(data):
+        pass
+    else:
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Warning)
+        msg_box.setWindowTitle('Smart Prop (vsmart) Not Configured')
+        msg_box.setText(
+            'The Cs2 editor is not yet configured for Smart Prop compilation.'
+        )
+        msg_box.setInformativeText(
+            'To enable vsmart file compilation, please launch the tools using this application.\n'
+            'Ensure Counter-Strike 2 is closed, then reopen it through this application.'
+        )
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.exec()
