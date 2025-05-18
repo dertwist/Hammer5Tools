@@ -13,8 +13,8 @@ def load_assettypes():
         raise ValueError
 
 def is_editor_info_processed(data):
-    processed = data.get('editor_info')
-    return isinstance(processed, list)
+    processed = data.get('editor_info', None)
+    return isinstance(processed, dict)
 
 def add_vsmart_block(data):
     vsmart_block = {
