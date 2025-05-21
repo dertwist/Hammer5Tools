@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QMessageBox
 from src.other.ncm_setup import NCM_mode_setup
-from src.other.assettypes import asset_types_modify
+from src.other.assettypes import ensure_vsmart_configured
 from src.settings.main import get_addon_name, get_cs2_path, get_settings_bool, set_settings_bool, get_settings_value, \
     set_settings_value
 import shutil, psutil
@@ -69,7 +69,7 @@ def __launch_addon():
 
 @exception_handler
 def launch_addon():
-    asset_types_modify()
+    ensure_vsmart_configured()
     __launch_addon()
 
 
