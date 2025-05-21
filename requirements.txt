@@ -24,3 +24,4 @@ idna
 certifi
 pefile
 altgraph
+pytest
