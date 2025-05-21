@@ -1,0 +1,266 @@
+import sys
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem,
+    QPushButton, QVBoxLayout, QWidget, QHBoxLayout
+)
+from PySide6.QtGui import QUndoStack, QUndoCommand
+# from PySide6.QtCore import Qt, QAbstractItemModel
+
+class AddItemCommand(QUndoCommand):
+    _item_refs = set()  # Prevent deletion by keeping references
+
+    def __init__(self, tree, parent_item, text, index=None):
+        super().__init__("Add Item")
+        self.tree = tree
+        self.parent_item = parent_item
+        self.text = text
+        self.index = index
+        self.item = QTreeWidgetItem([text])
+        AddItemCommand._item_refs.add(self.item)
+
+    def redo(self):
+        if self.parent_item:
+            if self.index is None:
+                self.parent_item.addChild(self.item)
+            else:
+                self.parent_item.insertChild(self.index, self.item)
+            self.parent_item.setExpanded(True)
+        else:
+            if self.index is None:
+                self.tree.addTopLevelItem(self.item)
+            else:
+                self.tree.insertTopLevelItem(self.index, self.item)
+
+    def undo(self):
+        if self.parent_item:
+            self.parent_item.removeChild(self.item)
+        else:
+            idx = self.tree.indexOfTopLevelItem(self.item)
+            if idx != -1:
+                self.tree.takeTopLevelItem(idx)
+
+class RemoveItemCommand(QUndoCommand):
+    _item_refs = set()  # Prevent deletion by keeping references
+
+    def __init__(self, tree, item):
+        super().__init__("Remove Item")
+        self.tree = tree
+        self.item = item
+        RemoveItemCommand._item_refs.add(self.item)
+        self.parent = item.parent()
+        self.index = (
+            self.parent.indexOfChild(item)
+            if self.parent
+            else self.tree.indexOfTopLevelItem(item)
+        )
+
+    def redo(self):
+        if self.parent:
+            self.parent.removeChild(self.item)
+        else:
+            idx = self.tree.indexOfTopLevelItem(self.item)
+            if idx != -1:
+                self.tree.takeTopLevelItem(idx)
+
+    def undo(self):
+        if self.parent:
+            if self.index == -1:
+                self.parent.addChild(self.item)
+            else:
+                self.parent.insertChild(self.index, self.item)
+            self.parent.setExpanded(True)
+        else:
+            if self.index == -1:
+                self.tree.addTopLevelItem(self.item)
+            else:
+                self.tree.insertTopLevelItem(self.index, self.item)
+
+class MoveItemCommand(QUndoCommand):
+    """
+    Command to move an existing QTreeWidgetItem, memorizing its original position for undo.
+    """
+
+    def __init__(self, tree: QTreeWidget, item: QTreeWidgetItem,
+                 old_parent: QTreeWidgetItem | None, old_index: int,
+                 new_parent: QTreeWidgetItem | None, new_index: int):
+        super().__init__("Move Item")
+        self.tree = tree
+        self.item = item
+        self._old_parent = old_parent
+        self._old_index = old_index
+        self._new_parent = new_parent
+        self._new_index = new_index
+
+    def _move(self, src_parent, src_index, dst_parent, dst_index):
+        # Detach from source
+        if src_parent is None:
+            item = self.tree.takeTopLevelItem(src_index)
+        else:
+            item = src_parent.takeChild(src_index)
+        # Insert at destination
+        if dst_parent is None:
+            self.tree.insertTopLevelItem(dst_index, item)
+        else:
+            dst_parent.insertChild(dst_index, item)
+            dst_parent.setExpanded(True)
+        self.item = item
+        self.tree.setCurrentItem(item)
+        self.tree.viewport().update()
+
+    def redo(self):
+        self._move(self._old_parent, self._old_index, self._new_parent, self._new_index)
+
+    def undo(self):
+        self._move(self._new_parent, self._new_index, self._old_parent, self._old_index)
+
+
+
+class CustomTreeWidget(QTreeWidget):
+    def __init__(self, undo_stack):
+        super().__init__()
+        self.undo_stack = undo_stack
+        self.undo_stack.setUndoLimit(400)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(False)
+        self.setDropIndicatorShown(True)
+        self.setDragDropMode(QTreeWidget.InternalMove)
+        self._ignore_next_drop = False  # Prevent recursion
+
+    def dropEvent(self, event):
+        if self._ignore_next_drop:
+            self._ignore_next_drop = False
+            super().dropEvent(event)
+            return
+        
+        selected_items = self.selectedItems()
+        if not selected_items:
+            event.ignore()
+            return
+
+        # Record original parent and index for each selected item
+        old_info = {}
+        for item in selected_items:
+            parent = item.parent()
+            index = parent.indexOfChild(item) if parent else self.indexOfTopLevelItem(item)
+            old_info[item] = (parent, index)
+        
+        # Perform the default drop handling
+        super().dropEvent(event)
+        
+        # For each moved item, push a MoveItemCommand if its position changed
+        for item in selected_items:
+            new_parent = item.parent()
+            new_index = new_parent.indexOfChild(item) if new_parent else self.indexOfTopLevelItem(item)
+            old_parent, old_index = old_info[item]
+            if (old_parent, old_index) != (new_parent, new_index):
+                cmd = MoveItemCommand(self, item, old_parent, old_index, new_parent, new_index)
+                self.undo_stack.push(cmd)
+        
+        event.accept()
+
+    def serialize_tree_structure(input, top_level=False):
+        """
+        Counts all children and columns for a QTreeWidget or QTreeWidgetItem.
+        Args:
+            input: QTreeWidget or QTreeWidgetItem
+            top_level: If True, only count top-level items (not recursive)
+        Returns:
+            dict with 'item_count' and 'column_count'
+        """
+        if hasattr(input, 'columnCount'):
+            column_count = input.columnCount()
+        else:
+            column_count = 1
+
+        def count_items(item):
+            count = 1  # count self
+            for i in range(item.childCount()):
+                count += count_items(item.child(i))
+            return count
+
+        if hasattr(input, 'topLevelItemCount'):  # QTreeWidget
+            if top_level:
+                item_count = input.topLevelItemCount()
+            else:
+                item_count = 0
+                for i in range(input.topLevelItemCount()):
+                    item_count += count_items(input.topLevelItem(i))
+        elif hasattr(input, 'childCount'):  # QTreeWidgetItem
+            if top_level:
+                item_count = input.childCount()
+            else:
+                item_count = count_items(input)
+        else:
+            raise TypeError("Input must be QTreeWidget or QTreeWidgetItem")
+
+        return {'item_count': item_count, 'column_count': column_count}
+
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("QTreeWidget with Undoable Drag and Drop")
+        self.resize(600, 400)
+
+        self.undo_stack = QUndoStack(self)
+
+        self.tree = CustomTreeWidget(self.undo_stack)
+        self.tree.setHeaderLabel("Tree Items")
+
+        # Add some initial items
+        self._add_initial_items()
+
+        add_btn = QPushButton("Add Item")
+        remove_btn = QPushButton("Remove Item")
+        undo_btn = QPushButton("Undo")
+        redo_btn = QPushButton("Redo")
+
+        add_btn.clicked.connect(self.add_item)
+        remove_btn.clicked.connect(self.remove_item)
+        undo_btn.clicked.connect(self.undo_stack.undo)
+        redo_btn.clicked.connect(self.undo_stack.redo)
+
+        layout = QVBoxLayout()
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(add_btn)
+        button_layout.addWidget(remove_btn)
+        button_layout.addWidget(undo_btn)
+        button_layout.addWidget(redo_btn)
+        layout.addLayout(button_layout)
+        layout.addWidget(self.tree)
+
+        container = QWidget()
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+
+    def _add_initial_items(self):
+        p1 = QTreeWidgetItem(["Parent 1"])
+        c1 = QTreeWidgetItem(["Child 1"])
+        c2 = QTreeWidgetItem(["Child 2"])
+        p1.addChildren([c1, c2])
+        p1.setExpanded(True)
+        self.tree.addTopLevelItem(p1)
+
+        p2 = QTreeWidgetItem(["Parent 2"])
+        self.tree.addTopLevelItem(p2)
+
+    def add_item(self):
+        selected = self.tree.currentItem()
+        cmd = AddItemCommand(self.tree, selected, "New Item")
+        self.undo_stack.push(cmd)
+
+    def remove_item(self):
+        selected = self.tree.currentItem()
+        if selected:
+            cmd = RemoveItemCommand(self.tree, selected)
+            self.undo_stack.push(cmd)
+            
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    from src.styles.qt_global_stylesheet import QT_Stylesheet_global
+    app.setStyleSheet(QT_Stylesheet_global)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
