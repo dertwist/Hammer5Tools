@@ -89,10 +89,18 @@ class SmartPropDocument(QMainWindow):
         self.realtime_save_timer = QTimer(self)
         self.realtime_save_timer.setSingleShot(True)
         self.realtime_save_timer.timeout.connect(self.save_file)
+        
+        
+        # Hierarchy tree wdiget setup
+        self.ui.tree_hierarchy_widget.deleteLater()
+        self.ui.tree_hierarchy_widget = QTreeWidget()
+        self.ui.frame_2.layout().addWidget(self.ui.tree_hierarchy_widget)
+        
+        self.ui.tree_hierarchy_widget.setColumnCount(4)
+        self.ui.tree_hierarchy_widget.setHeaderLabels(["Label", "Data", "Class", "ID"])
 
         self.ui.tree_hierarchy_widget.installEventFilter(self)
 
-        # Hierarchy setup
         self.ui.tree_hierarchy_widget.hideColumn(1)
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
@@ -101,6 +109,11 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        
+        self.ui.tree_hierarchy_widget.setDragEnabled(True)
+        self.ui.tree_hierarchy_widget.setAcceptDrops(True)
+        self.ui.tree_hierarchy_widget.setDropIndicatorShown(True)
+        self.ui.tree_hierarchy_widget.setDragDropMode(QTreeWidget.InternalMove)
 
         # Choices setup
         self.ui.choices_tree_widget.hideColumn(2)
