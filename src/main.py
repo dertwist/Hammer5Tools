@@ -56,7 +56,7 @@ from soundevent_editor.main import SoundEventEditorMainWindow
 from src.launch_options.main import LaunchOptionsDialog
 from styles.qt_global_stylesheet import QT_Stylesheet_global
 from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
-
+import qdarktheme
 # Global paths
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -139,7 +139,6 @@ class Widget(QMainWindow):
             msg_box.exec()
             if msg_box.clickedButton() == exit_button:
                 sys.exit(1)
-
 
         # Setup tray icon early so that restoration has a fallback.
         self.setup_tray_icon()
