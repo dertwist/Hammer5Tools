@@ -1,9 +1,9 @@
 import copy
 from src.common import JsonToKv3, Kv3ToJson
 import os, json
-from src.assetgroup_maker.objects import DEFAULT_VMDL, get_default_file
-from src.settings.main import get_addon_name, get_cs2_path, get_addon_dir, debug
-from src.assetgroup_maker.process import perform_batch_processing
+from src.editors.assetgroup_maker.objects import DEFAULT_VMDL, get_default_file
+from src.settings.main import get_addon_dir, debug
+from src.editors.assetgroup_maker.process import perform_batch_processing
 
 class QuickVmdlFile():
     def __init__(self, filepath):
