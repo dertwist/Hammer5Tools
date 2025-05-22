@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'property_frame.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.2
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -24,7 +24,7 @@ class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(987, 133)
+        Form.resize(1031, 172)
         Form.setStyleSheet(u"background-color: #1C1C1C;")
         self.verticalLayout = QVBoxLayout(Form)
         self.verticalLayout.setSpacing(0)
@@ -654,14 +654,32 @@ class Ui_Form(object):
 
         self.frame_layout = QFrame(Form)
         self.frame_layout.setObjectName(u"frame_layout")
+        self.frame_layout.setStyleSheet(u"QFrame#frame_layout {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border: 2px solid rgba(80, 80, 80, 255);\n"
+"	border-top: 0px;\n"
+"    border-radius: 0px;\n"
+"	margin-left: 2px;\n"
+"margin-right: 2px;\n"
+"}\n"
+"\n"
+"QFrame:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QFrame::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
         self.frame_layout.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_layout.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.frame_layout)
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2.setContentsMargins(4, 0, 4, 0)
         self.layout = QVBoxLayout()
-        self.layout.setSpacing(8)
+        self.layout.setSpacing(4)
         self.layout.setObjectName(u"layout")
         self.layout.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
 
