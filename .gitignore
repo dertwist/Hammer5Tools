@@ -84,8 +84,8 @@ Hammer5Tools_Updater.spec
 /hotkeys/hammer/test.keybindings
 /Decompiler/
 /SoundEventEditor/
-/src/soundevent_editor/resource/parsing/soundevents.build/
-/src/soundevent_editor/resource/parsing/soundevents.dist/
+/src/editors/soundevent_editor/resource/parsing/soundevents.build/
+/src/editors/soundevent_editor/resource/parsing/soundevents.dist/
 .qodo
 /dev/custom_curve/settings.ini
 /dev/main/settings.ini
