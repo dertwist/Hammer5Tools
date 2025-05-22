@@ -55,6 +55,7 @@ from src.common import (
     SmartPropEditor_Preset_Path,
     set_qdock_tab_style
 )
+from src.editors.smartprop_editor.widgets.tree import HierarchyTreeWidget
 
 cs2_path = get_cs2_path()
 
@@ -77,6 +78,8 @@ class SmartPropDocument(QMainWindow):
         self.update_title = update_title
         enable_dark_title_bar(self)
 
+        self.undo_stack = QUndoStack(self)
+
         # Track changes
         self._modified = False
 
@@ -88,7 +91,7 @@ class SmartPropDocument(QMainWindow):
         
         # Hierarchy tree wdiget setup
         self.ui.tree_hierarchy_widget.deleteLater()
-        self.ui.tree_hierarchy_widget = QTreeWidget()
+        self.ui.tree_hierarchy_widget = HierarchyTreeWidget(self.undo_stack)
         self.ui.frame_2.layout().addWidget(self.ui.tree_hierarchy_widget)
         
         self.ui.tree_hierarchy_widget.setColumnCount(4)
@@ -140,8 +143,6 @@ class SmartPropDocument(QMainWindow):
         self.ui.HierarchyDock.raise_()
 
         set_qdock_tab_style(self.findChildren)
-
-        self.undo_stack = QUndoStack(self)
 
     def is_modified(self):
         return self._modified
@@ -322,7 +323,7 @@ class SmartPropDocument(QMainWindow):
                     self.paste_item(self.ui.tree_hierarchy_widget)
                     return True
                 if event.matches(QKeySequence.Delete):
-                    self.undo_stack.push(DeleteTreeItemCommand(self.ui.tree_hierarchy_widget))
+                    self.ui.tree_hierarchy_widget.DeleteSelectedItems()
                     return True
                 if event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier) and event.key() == Qt.Key_V:
                     self.new_item_with_replacement(QApplication.clipboard().text())
@@ -330,14 +331,8 @@ class SmartPropDocument(QMainWindow):
                 if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_G:
                     self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget))
                     return True
-                if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Up:
-                    self.move_tree_item(self.ui.tree_hierarchy_widget, -1)
-                    return True
-                if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Down:
-                    self.move_tree_item(self.ui.tree_hierarchy_widget, 1)
-                    return True
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_D:
-                    self.duplicate_hierarchy_items(self.ui.tree_hierarchy_widget)
+                    self.ui.tree_hierarchy_widget.DuplicateSelectedItems()
                     return True
                 if event.matches(QKeySequence.Undo):
                     self.undo_stack.undo()
@@ -492,14 +487,7 @@ class SmartPropDocument(QMainWindow):
             _class=get_clean_class_name_value(element_value),
             _id=self.element_id_generator.get_key(element_value)
         )
-        if self.ui.tree_hierarchy_widget.currentItem() is None:
-            parent = self.ui.tree_hierarchy_widget.invisibleRootItem()
-        else:
-            parent = self.ui.tree_hierarchy_widget.currentItem()
-        parent.addChild(new_element_item)
-        if self.ui.tree_hierarchy_widget.currentItem() is not None:
-            self.ui.tree_hierarchy_widget.setCurrentItem(new_element_item)
-            self.ui.tree_hierarchy_widget.setFocus()
+        self.ui.tree_hierarchy_widget.AddItem(new_element_item)
 
     # ======================================[Properties operator]========================================
     def new_operator(self, element_class, element_value):
@@ -956,23 +944,13 @@ class SmartPropDocument(QMainWindow):
 
         menu.addSeparator()
 
-        move_up_action = menu.addAction("Move Up")
-        move_up_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget, -1))
-        move_up_action.setShortcut(QKeySequence("Ctrl+Up"))
-
-        move_down_action = menu.addAction("Move Down")
-        move_down_action.triggered.connect(lambda: self.move_tree_item(self.ui.tree_hierarchy_widget, 1))
-        move_down_action.setShortcut(QKeySequence("Ctrl+Down"))
-
-        menu.addSeparator()
-
         remove_action = menu.addAction("Remove")
         remove_action.triggered.connect(
-            lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.tree_hierarchy_widget)))
+            lambda: self.ui.tree_hierarchy_widget.DeleteSelectedItems())
         remove_action.setShortcut(QKeySequence("Delete"))
 
         duplicate_action = menu.addAction("Duplicate")
-        duplicate_action.triggered.connect(lambda: self.duplicate_hierarchy_items(self.ui.tree_hierarchy_widget))
+        duplicate_action.triggered.connect(lambda: self.ui.tree_hierarchy_widget.DuplicateSelectedItems())
         duplicate_action.setShortcut(QKeySequence("Ctrl+D"))
 
         grouping_action = menu.addAction("Group selected")
