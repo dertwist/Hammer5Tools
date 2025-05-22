@@ -1,4 +1,4 @@
-from smartprop_editor.variables.ui_int import Ui_Widget
+from src.editors.smartprop_editor.variables.ui_int import Ui_Widget
 
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
