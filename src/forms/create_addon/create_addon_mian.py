@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QDialog, QMessageBox
 import shutil, os, re
 from src.settings.main import get_cs2_path, get_settings_value, set_settings_value
-from src.create_addon.ui_create_addon_dialog import Ui_Create_addon_Dialog
+from src.forms.create_addon.ui_create_addon_dialog import Ui_Create_addon_Dialog
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtCore import QRegularExpression
 from src.common import Presets_Path
