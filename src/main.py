@@ -16,8 +16,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QLabel,
     QCheckBox,
-    QDockWidget,
-    QTabWidget
+    QDockWidget
 )
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import (
@@ -29,7 +28,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-from about.main import AboutDialog
+from src.forms.about.main import AboutDialog
 from src.settings.main import (
     PreferencesDialog,
     get_steam_path,
@@ -45,18 +44,17 @@ from src.settings.main import (
 )
 from loading_editor.main import Loading_editorMainWindow
 from hotkey_editor.main import HotkeyEditorMainWindow
-from create_addon.create_addon_mian import Create_addon_Dialog
+from src.forms.create_addon.create_addon_mian import Create_addon_Dialog
 from other.steam_restart import SteamNoLogoFixThreadClass
 from other.addon_functions import delete_addon, launch_addon
 from src.updater.check import check_updates
-from archive_addon.main import ExportAndImportAddonDialog
+from src.forms.archive_addon.main import ExportAndImportAddonDialog
 from assetgroup_maker.main import BatchCreatorMainWindow
 from smartprop_editor.main import SmartPropEditorMainWindow
 from soundevent_editor.main import SoundEventEditorMainWindow
-from src.launch_options.main import LaunchOptionsDialog
+from src.forms.launch_options.main import LaunchOptionsDialog
 from styles.qt_global_stylesheet import QT_Stylesheet_global
 from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
-import qdarktheme
 # Global paths
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()

@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon, QStandardItemModel, QStandardItem
 from PySide6.QtCore import Qt
 
-from src.archive_addon.ui_main import Ui_export_and_import_addon_widget
+from src.forms.archive_addon.ui_main import Ui_export_and_import_addon_widget
 from src.settings.main import get_cs2_path, get_addon_name, get_settings_value
 from src.common import enable_dark_title_bar
 

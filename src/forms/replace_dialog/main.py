@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QDialog
 from PySide6.QtGui import QTextCharFormat, QColor, QTextCursor
 from PySide6.QtCore import Signal
 
-from src.replace_dialog.ui_main import Ui_Dialog
+from src.forms.replace_dialog.ui_main import Ui_Dialog
 from src.common import enable_dark_title_bar
 
 

@@ -1,9 +1,6 @@
-import sys
 import os.path
 import re
 import ast
-
-from distutils.util import strtobool
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -12,8 +9,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QApplication,
     QHeaderView,
-    QTreeWidget,
-    QTabBar
+    QTreeWidget
 )
 from PySide6.QtGui import (
     QAction,
@@ -26,7 +22,7 @@ from src.settings.main import get_settings_value, get_settings_bool
 
 from keyvalues3 import kv3_to_json
 from src.smartprop_editor.ui_document import Ui_MainWindow
-from src.settings.main import get_addon_name, settings
+from src.settings.main import settings
 from src.smartprop_editor.variable_frame import VariableFrame
 from src.smartprop_editor.objects import (
     variables_list,
@@ -42,8 +38,7 @@ from src.smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from src.smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from src.popup_menu.main import PopupMenu
 from src.smartprop_editor.commands import DeleteTreeItemCommand, GroupElementsCommand
-from src.replace_dialog.main import FindAndReplaceDialog
-from src.explorer.main import Explorer
+from src.forms.replace_dialog.main import FindAndReplaceDialog
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
 from src.smartprop_editor.element_id import ElementIDGenerator
 from src.smartprop_editor._common import (
