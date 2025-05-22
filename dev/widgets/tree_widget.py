@@ -1,9 +1,10 @@
 import sys
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem,
-    QPushButton, QVBoxLayout, QWidget, QHBoxLayout
+    QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QAbstractItemView
 )
 from PySide6.QtGui import QUndoStack, QUndoCommand
+from PySide6.QtCore import Qt  # Import Qt for enums
 # from PySide6.QtCore import Qt, QAbstractItemModel
 
 class AddItemCommand(QUndoCommand):
@@ -75,43 +76,85 @@ class RemoveItemCommand(QUndoCommand):
             else:
                 self.tree.insertTopLevelItem(self.index, self.item)
 
-class MoveItemCommand(QUndoCommand):
+class MoveItemsCommand(QUndoCommand):
     """
-    Command to move an existing QTreeWidgetItem, memorizing its original position for undo.
+    Command to move multiple QTreeWidgetItems, memorizing their original and new positions for undo/redo.
     """
-
-    def __init__(self, tree: QTreeWidget, item: QTreeWidgetItem,
-                 old_parent: QTreeWidgetItem | None, old_index: int,
-                 new_parent: QTreeWidgetItem | None, new_index: int):
-        super().__init__("Move Item")
+    def __init__(self, tree, move_infos):
+        super().__init__("Move Items")
         self.tree = tree
-        self.item = item
-        self._old_parent = old_parent
-        self._old_index = old_index
-        self._new_parent = new_parent
-        self._new_index = new_index
+        # move_infos: list of dicts with keys: item, old_parent, old_index, new_parent, new_index
+        self.move_infos = move_infos
 
-    def _move(self, src_parent, src_index, dst_parent, dst_index):
-        # Detach from source
-        if src_parent is None:
-            item = self.tree.takeTopLevelItem(src_index)
+    def _find_current_index(self, parent, item):
+        if parent is None:
+            return self.tree.indexOfTopLevelItem(item)
         else:
-            item = src_parent.takeChild(src_index)
-        # Insert at destination
-        if dst_parent is None:
-            self.tree.insertTopLevelItem(dst_index, item)
+            return parent.indexOfChild(item)
+
+    def _move(self, infos, src_to_dst=True):
+        if src_to_dst:
+            # Remove from old, insert to new
+            sorted_infos = sorted(infos, key=lambda x: (id(x['old_parent']) if x['old_parent'] else -1, x['old_index']), reverse=True)
         else:
-            dst_parent.insertChild(dst_index, item)
-            dst_parent.setExpanded(True)
-        self.item = item
-        self.tree.setCurrentItem(item)
+            # Remove from new, insert to old
+            sorted_infos = sorted(infos, key=lambda x: (id(x['new_parent']) if x['new_parent'] else -1, x['new_index']), reverse=True)
+            sorted_infos = sorted(infos, key=lambda x: (x['new_parent'] or self.tree, x['new_index']), reverse=True)
+
+        for info in sorted_infos:
+            item = info['item']
+            if src_to_dst:
+                # Remove from old
+                src_parent = info['old_parent']
+                src_index = self._find_current_index(src_parent, item)
+                if src_index == -1:
+                    continue
+                if src_parent is None:
+                    self.tree.takeTopLevelItem(src_index)
+                else:
+                    src_parent.takeChild(src_index)
+            else:
+                # Remove from new
+                dst_parent = info['new_parent']
+                dst_index = self._find_current_index(dst_parent, item)
+                if dst_index == -1:
+                    continue
+                if dst_parent is None:
+                    self.tree.takeTopLevelItem(dst_index)
+                else:
+                    dst_parent.takeChild(dst_index)
+
+        if src_to_dst:
+            sorted_infos = sorted(infos, key=lambda x: (id(x['new_parent']) if x['new_parent'] else -1, x['new_index']))
+            for info in sorted_infos:
+                item = info['item']
+                dst_parent = info['new_parent']
+                dst_index = info['new_index']
+                if dst_parent is None:
+                    self.tree.insertTopLevelItem(dst_index, item)
+                else:
+                    dst_parent.insertChild(dst_index, item)
+                    dst_parent.setExpanded(True)
+        else:
+            sorted_infos = sorted(infos, key=lambda x: (id(x['old_parent']) if x['old_parent'] else -1, x['old_index']))
+            for info in sorted_infos:
+                item = info['item']
+                dst_parent = info['old_parent']
+                dst_index = info['old_index']
+                if dst_parent is None:
+                    self.tree.insertTopLevelItem(dst_index, item)
+                else:
+                    dst_parent.insertChild(dst_index, item)
+                    dst_parent.setExpanded(True)
+        self.tree.viewport().update()
         self.tree.viewport().update()
 
     def redo(self):
-        self._move(self._old_parent, self._old_index, self._new_parent, self._new_index)
+        self._move(self.move_infos, src_to_dst=True)
 
     def undo(self):
-        self._move(self._new_parent, self._new_index, self._old_parent, self._old_index)
+        self._move(self.move_infos, src_to_dst=False)
+
 
 
 
@@ -123,41 +166,50 @@ class CustomTreeWidget(QTreeWidget):
         self.setDragEnabled(True)
         self.setAcceptDrops(False)
         self.setDropIndicatorShown(True)
+        self._ignore_next_drop  = False
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setDragDropMode(QTreeWidget.InternalMove)
-        self._ignore_next_drop = False  # Prevent recursion
-
     def dropEvent(self, event):
         if self._ignore_next_drop:
             self._ignore_next_drop = False
             super().dropEvent(event)
             return
-        
+
         selected_items = self.selectedItems()
         if not selected_items:
             event.ignore()
             return
 
-        # Record original parent and index for each selected item
-        old_info = {}
-        for item in selected_items:
-            parent = item.parent()
-            index = parent.indexOfChild(item) if parent else self.indexOfTopLevelItem(item)
-            old_info[item] = (parent, index)
-        
+        # Store old parent and index for each selected item
+        old_info = {
+            item: (item.parent(), item.parent().indexOfChild(item) if item.parent() else self.indexOfTopLevelItem(item))
+            for item in selected_items
+        }
+
         # Perform the default drop handling
         super().dropEvent(event)
-        
-        # For each moved item, push a MoveItemCommand if its position changed
+
+        # Collect move infos for items whose position changed
+        move_infos = []
         for item in selected_items:
             new_parent = item.parent()
             new_index = new_parent.indexOfChild(item) if new_parent else self.indexOfTopLevelItem(item)
             old_parent, old_index = old_info[item]
-            if (old_parent, old_index) != (new_parent, new_index):
-                cmd = MoveItemCommand(self, item, old_parent, old_index, new_parent, new_index)
-                self.undo_stack.push(cmd)
-        
-        event.accept()
+            if (old_parent, old_index) != (new_parent, new_index) and new_index != -1:
+                move_infos.append({
+                    'item': item,
+                    'old_parent': old_parent,
+                    'old_index': old_index,
+                    'new_parent': new_parent,
+                    'new_index': new_index
+                })
 
+        if move_infos:
+            self.undo_stack.push(MoveItemsCommand(self, move_infos))
+
+        event.accept()
+    @staticmethod
     def serialize_tree_structure(input, top_level=False):
         """
         Counts all children and columns for a QTreeWidget or QTreeWidgetItem.
@@ -185,7 +237,7 @@ class CustomTreeWidget(QTreeWidget):
                 item_count = 0
                 for i in range(input.topLevelItemCount()):
                     item_count += count_items(input.topLevelItem(i))
-        elif hasattr(input, 'childCount'):  # QTreeWidgetItem
+        elif hasattr(input, 'childCount') and not isinstance(input, CustomTreeWidget):  # QTreeWidgetItem
             if top_level:
                 item_count = input.childCount()
             else:
@@ -194,12 +246,13 @@ class CustomTreeWidget(QTreeWidget):
             raise TypeError("Input must be QTreeWidget or QTreeWidgetItem")
 
         return {'item_count': item_count, 'column_count': column_count}
+        return {'item_count': item_count, 'column_count': column_count}
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("QTreeWidget with Undoable Drag and Drop")
+        self.setWindowTitle("Drag And drop Tree Widget")
         self.resize(600, 400)
 
         self.undo_stack = QUndoStack(self)
