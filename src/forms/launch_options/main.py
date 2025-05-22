@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDialog
 from src.settings.main import get_addon_name, get_settings_value, set_settings_value
-from src.launch_options.ui_main import Ui_preferences_dialog
+from src.forms.launch_options.ui_main import Ui_preferences_dialog
 from src.other.addon_functions import assemble_commands
 from src.common import *
 from src.common import enable_dark_title_bar
