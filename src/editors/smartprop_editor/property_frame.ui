@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>987</width>
-    <height>133</height>
+    <width>1031</width>
+    <height>172</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -203,7 +203,7 @@ QToolButton:hover {
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../resources.qrc">
+            <iconset resource="../../resources.qrc">
              <normaloff>:/icons/shapes_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/shapes_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
            </property>
            <property name="iconSize">
@@ -401,7 +401,7 @@ QToolButton:hover {
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../resources.qrc">
+            <iconset resource="../../resources.qrc">
              <normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
            </property>
            <property name="iconSize">
@@ -443,7 +443,7 @@ QToolButton:hover {
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../resources.qrc">
+            <iconset resource="../../resources.qrc">
              <normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
            </property>
            <property name="iconSize">
@@ -824,7 +824,7 @@ QToolButton:hover {
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../resources.qrc">
+         <iconset resource="../../resources.qrc">
           <normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
         </property>
         <property name="iconSize">
@@ -866,7 +866,7 @@ QToolButton:hover {
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../resources.qrc">
+         <iconset resource="../../resources.qrc">
           <normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
         </property>
         <property name="iconSize">
@@ -925,7 +925,7 @@ border-right:0px;
          <string>Delete</string>
         </property>
         <property name="icon">
-         <iconset resource="../resources.qrc">
+         <iconset resource="../../resources.qrc">
           <normaloff>:/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
         </property>
        </widget>
@@ -978,7 +978,7 @@ border-right:0px;
          <string>Copy</string>
         </property>
         <property name="icon">
-         <iconset resource="../resources.qrc">
+         <iconset resource="../../resources.qrc">
           <normaloff>:/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
         </property>
        </widget>
@@ -988,6 +988,26 @@ border-right:0px;
    </item>
    <item>
     <widget class="QFrame" name="frame_layout">
+     <property name="styleSheet">
+      <string notr="true">QFrame#frame_layout {
+    font-size: 8pt;
+    font-family: &quot;Segoe UI&quot;;
+    border: 2px solid rgba(80, 80, 80, 255);
+	border-top: 0px;
+    border-radius: 0px;
+	margin-left: 2px;
+margin-right: 2px;
+}
+
+QFrame:focus {
+    border-color: rgba(80, 80, 80, 255);
+}
+
+QFrame::selection {
+    background-color: #414956;
+    color: white;
+}</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Shape::StyledPanel</enum>
      </property>
@@ -999,13 +1019,13 @@ border-right:0px;
        <number>0</number>
       </property>
       <property name="leftMargin">
-       <number>0</number>
+       <number>4</number>
       </property>
       <property name="topMargin">
        <number>0</number>
       </property>
       <property name="rightMargin">
-       <number>0</number>
+       <number>4</number>
       </property>
       <property name="bottomMargin">
        <number>0</number>
@@ -1013,7 +1033,7 @@ border-right:0px;
       <item>
        <layout class="QVBoxLayout" name="layout">
         <property name="spacing">
-         <number>8</number>
+         <number>4</number>
         </property>
         <property name="sizeConstraint">
          <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
@@ -1026,7 +1046,7 @@ border-right:0px;
   </layout>
  </widget>
  <resources>
-  <include location="../resources.qrc"/>
+  <include location="../../resources.qrc"/>
  </resources>
  <connections/>
 </ui>

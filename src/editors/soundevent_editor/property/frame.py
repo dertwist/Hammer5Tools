@@ -75,13 +75,13 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyFloat,
             SoundEventEditorPropertyLegacy,
             SoundEventEditorPropertyBool,
-            SoundEventEditorPropertyCurve,
             SoundEventEditorPropertyVector3,
             SoundEventEditorPropertyFiles,
             SoundEventEditorPropertySoundEvent,
             SoundEventEditorPropertyCombobox,
             SoundEventEditorPropertyBaseLegacy
         )
+        from src.editors.soundevent_editor.property.curve.main import SoundEventEditorPropertyCurve
 
         # Float (Only Positive)
         if name == 'volume':

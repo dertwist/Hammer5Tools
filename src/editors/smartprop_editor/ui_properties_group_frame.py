@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'properties_group_frame.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.2
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -235,7 +235,7 @@ class Ui_Form(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(12, 0, 0, 0)
         self.layout = QVBoxLayout()
-        self.layout.setSpacing(6)
+        self.layout.setSpacing(0)
         self.layout.setObjectName(u"layout")
         self.layout.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
         self.layout.setContentsMargins(-1, 6, -1, 6)
