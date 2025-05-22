@@ -1,21 +1,17 @@
 from src.popup_menu.main import PopupMenu
-from src.smartprop_editor.variable_frame import VariableFrame
-from PySide6.QtCore import QTimer
-from src.styles.common import apply_stylesheets
+from src.editors.smartprop_editor.variable_frame import VariableFrame
 from src.widgets_common import *
 from PySide6.QtWidgets import (
     QWidget,
     QDoubleSpinBox,
-    QVBoxLayout,
     QHBoxLayout,
     QSpacerItem,
     QSizePolicy,
 )
 import re
-from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator, QFocusEvent
+from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator
 from PySide6.QtCore import Qt, QRect, QEvent, Signal
 import math
-from src.smartprop_editor.objects import variables_list
 
 
 #============================================================<  Generic widgets  >==========================================================
@@ -627,7 +623,7 @@ class ComboboxVariablesWidget(QWidget):
         type_combo = QComboBox(dialog)
         type_combo.setFixedHeight(28)
         # Populate the combobox using filter_types if provided, else use the full list from variables_list.
-        from src.smartprop_editor.objects import variables_list
+        from src.editors.smartprop_editor.objects import variables_list
         local_types = self.filter_types if self.filter_types is not None else variables_list
         type_combo.addItems(local_types)
         if self.variable_type in local_types:
