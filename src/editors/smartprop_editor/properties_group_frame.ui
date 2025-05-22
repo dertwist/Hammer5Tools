@@ -184,7 +184,7 @@ border-right:0px;
          <string>Create new</string>
         </property>
         <property name="icon">
-         <iconset resource="../resources.qrc">
+         <iconset resource="../../resources.qrc">
           <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
         </property>
        </widget>
@@ -282,7 +282,7 @@ border-right:0px;
          <string>Paste</string>
         </property>
         <property name="icon">
-         <iconset resource="../resources.qrc">
+         <iconset resource="../../resources.qrc">
           <normaloff>:/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
         </property>
        </widget>
@@ -320,7 +320,7 @@ border-right:0px;
       <item>
        <layout class="QVBoxLayout" name="layout">
         <property name="spacing">
-         <number>6</number>
+         <number>0</number>
         </property>
         <property name="sizeConstraint">
          <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
@@ -369,7 +369,7 @@ border-right:0px;
   </layout>
  </widget>
  <resources>
-  <include location="../resources.qrc"/>
+  <include location="../../resources.qrc"/>
  </resources>
  <connections/>
 </ui>
