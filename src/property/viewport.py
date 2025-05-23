@@ -3,18 +3,19 @@ from typing import List
 
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QFrame, QLabel, QScrollArea, QMenu
+    QFrame, QLabel, QScrollArea, QMenu, QCheckBox
 )
 from PySide6.QtCore import Qt, Signal, QPoint
 from PySide6.QtGui import QPixmap, QUndoCommand, QUndoStack, QKeySequence, QShortcut
+from random import random
 
 import dataclasses
 @dataclasses.dataclass
-class Property:
+class VsmartProperty:
     m_label: str
     m_ElementID: int
     m_class: str
-    m_data: dict = {}
+    m_data: dict = dataclasses.field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -47,31 +48,87 @@ class PropertyWidget(QFrame):
     
     modified = Signal(object)
 
-    def __init__(self, property: Property):
+    def __init__(self):
         super().__init__()
-        self.label = property.m_label
-        self.id = property.m_ElementID
-        self.class_ = property.m_class
-        self.data = property.m_data
-        
+        text = f"{random():.4f}"
+
         self.selected: bool = False
 
         # ---------- initial style ----------
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.updateStyle()
 
-        # ---------- layout ----------
-        self._layout = QHBoxLayout(self)
+        # ---------- main layout ----------
+        self._main_layout = QVBoxLayout(self)
+        self._main_layout.setContentsMargins(0, 0, 0, 0)
+        self._main_layout.setSpacing(0)
+
+        # ---------- frame (header) ----------
+        self._frame_widget = QWidget()
+        self._frame_widget.setFixedHeight(32)
+        self._frame_widget.setStyleSheet("background: transparent;")
+        self._frame_layout = QHBoxLayout(self._frame_widget)
+        self._frame_layout.setContentsMargins(4, 0, 4, 0)
+        self._frame_layout.setSpacing(4)
+
+        # Quick operation buttons (toggle, add, edit) - all on the left
+        self.show_content = QCheckBox()
+        self.show_content.setChecked(False)  # Hide content by default
+        self.show_content.setToolTip("Show/Hide content")
+        self.show_content.stateChanged.connect(self.toggleContent)
+        self._frame_layout.addWidget(self.show_content)
+
+        self.add_button = self.createAddButton()
+        self._frame_layout.addWidget(self.add_button)
+
+        self.edit_button = self.createEditButton()
+        self._frame_layout.addWidget(self.edit_button)
+
         self.label = QLabel(text)
         self.label.setStyleSheet("color: white;")
-        self._layout.addWidget(self.label)
-        self._layout.addStretch()        # keep label left-aligned
+        self._frame_layout.addWidget(self.label)
 
-        #---------- Data ----------
+        self._frame_layout.addStretch()
+
+        self._main_layout.addWidget(self._frame_widget)
+
+        # ---------- content area ----------
+        self._content_widget = QWidget()
+        self._content_layout = QVBoxLayout(self._content_widget)
+        self._content_layout.setContentsMargins(8, 0, 0, 0)
+        self._content_layout.setSpacing(2)
+        self._main_layout.addWidget(self._content_widget)
+        self._content_widget.setVisible(False)  # Hide content by default
 
         # ---------- drag helpers ----------
         self.setMouseTracking(True)
         self.drag_start_pos: QPoint | None = None
+        
+        self.updateSize()
+
+    def createAddButton(self):
+        btn = QLabel("+")
+        btn.setStyleSheet("color: #3A79C9; font-weight: bold; font-size: 18px; padding: 0 6px;")
+        btn.setToolTip("Add")
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Connect to add action if needed
+        return btn
+
+    def createEditButton(self):
+        btn = QLabel("✎")
+        btn.setStyleSheet("color: #3A79C9; font-size: 16px; padding: 0 6px;")
+        btn.setToolTip("Edit")
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Connect to edit action if needed
+        return btn
+    def getContentHeight(self):
+        return int(0)
+    def updateSize(self):
+        height = (32 + int(self.getContentHeight()))
+        self.setMaximumHeight(height)
+        self.setMinimumHeight(height)
+    def toggleContent(self, state):
+        self._content_widget.setVisible(bool(state))
         
     def getData(self):
         pass
@@ -180,7 +237,7 @@ class DuplicateCommand(QUndoCommand):
 
     def redo(self):
         for fr in self.frames_to_duplicate:
-            new_frame = PropertyWidget(fr.text + " Copy")
+            new_frame = PropertyWidget()
             self.window.addFrameSignals(new_frame)
             idx = self.window.framesLayout.indexOf(fr)
             self.window.framesLayout.insertWidget(idx + 1, new_frame)
@@ -300,14 +357,6 @@ class PropertyViewport(QMainWindow):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         self.mainLayout.addWidget(scroll)
-        
-        
-                # Undo/Redo shortcuts
-
-
-
-
-
 
         # ---------- container inside scroll area ----------
         self.container = QWidget()
@@ -315,12 +364,18 @@ class PropertyViewport(QMainWindow):
         self.container.setLayout(self.framesLayout)
         scroll.setWidget(self.container)
 
+        # Add vertical spacer at the bottom
+        self.framesLayout.addStretch()
+
+        # Make scroll area fill available space
+        self.mainLayout.setStretchFactor(scroll, 1)
+
         # ---------- frame data ----------
         self.frames: List[PropertyWidget] = []
         for i in range(3):
-            frame = PropertyWidget(f"Frame {i + 1}")
+            frame = PropertyWidget()
             self.addFrameSignals(frame)
-            self.framesLayout.addWidget(frame)
+            self.framesLayout.insertWidget(self.framesLayout.count() - 1, frame)
             self.frames.append(frame)
 
         self.selected_frames: List[PropertyWidget] = []
@@ -485,12 +540,18 @@ class PropertyViewport(QMainWindow):
             pos_in_container = self.container.mapFrom(self, drag_pos)
             drop_index = self.framesLayout.count()  # default: end of list
 
-            # Only count real widgets (skip drop_indicator)
+            # Only count real widgets (skip drop_indicator and spacer)
             widgets = [
                 self.framesLayout.itemAt(i).widget()
                 for i in range(self.framesLayout.count())
                 if self.framesLayout.itemAt(i).widget() is not self.drop_indicator
+                and self.framesLayout.itemAt(i).widget() is not None
             ]
+
+            # Remove the last widget if it's the spacer (QSpacerItem returns None for widget())
+            if widgets and widgets[-1] is None:
+                widgets = widgets[:-1]
+
 
             for i, widget in enumerate(widgets):
                 if widget in self.dragged_frames:
@@ -535,9 +596,10 @@ class PropertyViewport(QMainWindow):
             for offset, f in enumerate(self.dragged_frames):
                 self.framesLayout.insertWidget(drop_index + offset, f)
 
-            # rebuild `self.frames` to match layout order
+            # rebuild `self.frames` to match layout order, skipping spacers
             self.frames = [self.framesLayout.itemAt(i).widget()
-                           for i in range(self.framesLayout.count())]
+                           for i in range(self.framesLayout.count())
+                           if self.framesLayout.itemAt(i).widget() is not None]
 
             # clear drag state
             self.dragged_frames = []
