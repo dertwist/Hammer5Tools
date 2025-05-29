@@ -37,6 +37,12 @@ class Viewport(QMainWindow):
         self.zoom_level = 1.0
         self.image_files = []
         self.current_image_index = 0
+        
+        # Saved camera state - shared across all images
+        self.saved_zoom_level = None
+        self.saved_h_scroll = None
+        self.saved_v_scroll = None
+        self.current_image_path = None
 
         self.setupUI()
 
@@ -112,18 +118,52 @@ class Viewport(QMainWindow):
     def showImage(self, image_path):
         """
         Load a QPixmap from the given path and display it in the label.
-        Automatically fits the image to the window for better viewing.
+        Maintains the current camera position when switching images.
         """
         try:
+            # Save current camera position before switching
+            if self.current_pixmap:
+                self.saveCameraPosition()
+            
+            # Store the current zoom and scroll positions
+            current_zoom = self.zoom_level
+            current_h_scroll = self.scroll_area.horizontalScrollBar().value() if self.current_pixmap else None
+            current_v_scroll = self.scroll_area.verticalScrollBar().value() if self.current_pixmap else None
+            
             self.current_pixmap = QPixmap(image_path)
             if not self.current_pixmap.isNull():
                 self.clear_placeholder_text()
                 self.image_label.setPixmap(self.current_pixmap)
-                # Reset zoom whenever a new image is loaded.
-                self.zoom_level = 1.0
+                self.current_image_path = image_path
                 self.updateWindowTitle(image_path)
-                # Automatically fit to window for improved preview.
-                self.fitToWindow()
+                
+                # If we had a previous image, maintain the camera position
+                if current_h_scroll is not None:
+                    # Restore the zoom level
+                    self.zoom_level = current_zoom
+                    self.updateImageDisplay(save_position=False)
+                    
+                    # Restore scroll positions after processing events
+                    QApplication.processEvents()
+                    self.scroll_area.horizontalScrollBar().setValue(current_h_scroll)
+                    self.scroll_area.verticalScrollBar().setValue(current_v_scroll)
+                    
+                    debug(f"Maintained camera position for {os.path.basename(image_path)} - Zoom: {current_zoom}")
+                else:
+                    # First image, check if we have a saved position
+                    if self.saved_zoom_level is not None:
+                        self.zoom_level = self.saved_zoom_level
+                        self.updateImageDisplay(save_position=False)
+                        
+                        QApplication.processEvents()
+                        if self.saved_h_scroll is not None:
+                            self.scroll_area.horizontalScrollBar().setValue(self.saved_h_scroll)
+                        if self.saved_v_scroll is not None:
+                            self.scroll_area.verticalScrollBar().setValue(self.saved_v_scroll)
+                    else:
+                        # No saved position, fit to window
+                        self.zoom_level = 1.0
+                        self.fitToWindow()
             else:
                 self.set_placeholder_text()
         except Exception as e:
@@ -169,7 +209,7 @@ class Viewport(QMainWindow):
             except Exception as e:
                 debug(f"Error fitting image to window: {e}")
 
-    def updateImageDisplay(self, mouse_pos=None):
+    def updateImageDisplay(self, mouse_pos=None, save_position=True):
         """
         Scale the displayed pixmap according to the current zoom_level.
         If a mouse_pos is provided, keep the scroll offset around that position.
@@ -196,6 +236,10 @@ class Viewport(QMainWindow):
                     scroll_bar_v.setValue(
                         scroll_bar_v.value() + delta_size.height() * mouse_pos.y() / old_size.height()
                     )
+                
+                # Auto-save camera position after zoom (if enabled)
+                if save_position:
+                    self.saveCameraPosition()
             except Exception as e:
                 debug(f"Error updating image display: {e}")
 
@@ -241,6 +285,37 @@ class Viewport(QMainWindow):
         if event.button() == Qt.RightButton:
             self.panning = False
             QApplication.restoreOverrideCursor()
+            # Save camera position after panning
+            self.saveCameraPosition()
+    
+    def saveCameraPosition(self):
+        """
+        Save the current camera position (shared across all images).
+        """
+        if self.current_pixmap:
+            self.saved_zoom_level = self.zoom_level
+            self.saved_h_scroll = self.scroll_area.horizontalScrollBar().value()
+            self.saved_v_scroll = self.scroll_area.verticalScrollBar().value()
+            debug(f"Saved shared camera position - Zoom: {self.saved_zoom_level}, H: {self.saved_h_scroll}, V: {self.saved_v_scroll}")
+    
+    def restoreCameraPosition(self):
+        """
+        Restore the saved camera position (shared across all images).
+        """
+        if self.current_pixmap and self.saved_zoom_level is not None:
+            # Restore zoom level without saving position again
+            self.zoom_level = self.saved_zoom_level
+            self.updateImageDisplay(save_position=False)
+            
+            # Restore scroll positions after processing events
+            QApplication.processEvents()
+            
+            if self.saved_h_scroll is not None:
+                self.scroll_area.horizontalScrollBar().setValue(self.saved_h_scroll)
+            if self.saved_v_scroll is not None:
+                self.scroll_area.verticalScrollBar().setValue(self.saved_v_scroll)
+                
+            debug(f"Restored shared camera position - Zoom: {self.saved_zoom_level}, H: {self.saved_h_scroll}, V: {self.saved_v_scroll}")
 
 class ImageExplorer(QMainWindow):
     """

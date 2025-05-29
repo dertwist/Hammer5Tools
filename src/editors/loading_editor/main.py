@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget
 )
 from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool
-from PySide6.QtGui import QPixmap, QPainter, QFont, QColor
+from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from src.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir, set_settings_bool, get_settings_bool
@@ -318,7 +318,7 @@ class ApplyScreenshotsWorker(QRunnable):
             # Set up font for the label
             font_size = max(16, pixmap.height() // 40)  # Scale font size based on image height
             font = QFont("Arial", font_size)
-            font.setBold(True)
+            font.setBold(False)
             painter.setFont(font)
             
             # Calculate text position
@@ -331,15 +331,15 @@ class ApplyScreenshotsWorker(QRunnable):
             text_y = pixmap.height() - margin
             
             # Draw text with outline for better visibility
-            # Draw black outline
-            painter.setPen(QColor(128, 128, 128))  # Black outline
-            for dx in [-2, -1, 0, 1, 2]:
-                for dy in [-2, -1, 0, 1, 2]:
+            # Draw black outline (1px)
+            painter.setPen(QColor(64, 64, 64))  # Black outline
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
                     if dx != 0 or dy != 0:
                         painter.drawText(text_x + dx, text_y + dy, camera_name)
             
             # Draw white text on top
-            painter.setPen(QColor(255, 255, 255))  # White text
+            painter.setPen(QColor(255, 255, 255, 220))  # White text
             painter.drawText(text_x, text_y, camera_name)
             
             painter.end()
@@ -399,6 +399,9 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.explorer.layout().addWidget(explorer_view)
         self.ui.screenshot_preview.layout().addWidget(explorer_view.image_viewer)
         self.ui.splitter_2.setSizes([200, 100])
+        
+        # Store reference to the image viewer for camera position functionality
+        self.image_viewer = explorer_view.image_viewer
 
         self.svg_preview_widget = SvgPreviewWidget()
         self.ui.svg_icon_frame.layout().addWidget(self.svg_preview_widget)
@@ -528,6 +531,20 @@ class Loading_editorMainWindow(QMainWindow):
 
     def do_loading_editor_cs2_description(self):
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
+    
+    def keyPressEvent(self, event: QKeyEvent):
+        """
+        Handle key press events for the main window.
+        F key: Reset camera viewport position
+        """
+        if event.key() == Qt.Key_F:
+            # Check if we're not typing in a text field
+            focused_widget = QApplication.focusWidget()
+            if not isinstance(focused_widget, (QPlainTextEdit,)):
+                self.image_viewer.restoreCameraPosition()
+                debug("F key pressed - Restoring camera position")
+        else:
+            super().keyPressEvent(event)
 
 
 if __name__ == "__main__":

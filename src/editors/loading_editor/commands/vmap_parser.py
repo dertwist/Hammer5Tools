@@ -196,6 +196,7 @@ def explore_element(element, depth, brief=False):
 def parse(dmx_file_path, show_entity_properties=True):
     """
     Parse the DMX file and return a list of point_camera entities.
+    This version ensures the VMAP file is not locked by reading it into memory first.
 
     Args:
         dmx_file_path (str): Path to the DMX file.
@@ -205,12 +206,74 @@ def parse(dmx_file_path, show_entity_properties=True):
         list of dicts with camera info.
     """
     Datamodel, Element, DeferredMode = setup_keyvalues2()
-    dmx_model = Datamodel.Load(dmx_file_path, DeferredMode.Automatic)
-    root = dmx_model.Root
-    if root is None:
-        print("Root element is null.")
-        return []
-    return find_point_cameras(root, dmx_model, show_entity_properties=show_entity_properties)
+    
+    dmx_model = None
+    cameras = []
+    
+    try:
+        # Method 1: Try to read file into memory first
+        import tempfile
+        import shutil
+        
+        # Create a temporary copy of the file
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.vmap', delete=False) as temp_file:
+            temp_path = temp_file.name
+            # Copy the file content
+            with open(dmx_file_path, 'rb') as source:
+                shutil.copyfileobj(source, temp_file)
+        
+        # Load from the temporary file
+        try:
+            dmx_model = Datamodel.Load(temp_path, DeferredMode.Automatic)
+            root = dmx_model.Root
+            
+            if root is None:
+                print("Root element is null.")
+            else:
+                # Extract camera data
+                cameras = find_point_cameras(root, dmx_model, show_entity_properties=show_entity_properties)
+        finally:
+            # Clean up temporary file
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
+                
+    except Exception as e:
+        print(f"Error using temporary file method: {e}")
+        
+        # Method 2: Fallback to direct loading with immediate disposal
+        try:
+            dmx_model = Datamodel.Load(dmx_file_path, DeferredMode.Automatic)
+            root = dmx_model.Root
+            
+            if root is None:
+                print("Root element is null.")
+            else:
+                # Extract camera data quickly
+                cameras = find_point_cameras(root, dmx_model, show_entity_properties=show_entity_properties)
+        except Exception as e2:
+            print(f"Error loading VMAP file: {e2}")
+    
+    finally:
+        # Always dispose of the datamodel to ensure file is not locked
+        if dmx_model is not None:
+            try:
+                if hasattr(dmx_model, 'Dispose'):
+                    dmx_model.Dispose()
+                elif hasattr(dmx_model, 'Close'):
+                    dmx_model.Close()
+            except:
+                pass
+            
+            # Clear reference
+            dmx_model = None
+        
+        # Force garbage collection to ensure resources are released
+        import gc
+        gc.collect()
+    
+    return cameras
 
 if __name__ == "__main__":
     dmx_file_path = r"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_sanctum\maps\de_sanctum.vmap"
