@@ -246,7 +246,11 @@ class ImageExplorer(QMainWindow):
     """
     A simple file explorer with a tree view and an embedded Viewport to show images.
     Supports drag/drop for new images.
+    Now supports removing folders and displays smaller icons for folders.
     """
+    FOLDER_ICON_SIZE = QSize(32, 32)
+    FILE_ICON_SIZE = QSize(32, 32)
+
     def __init__(self, tree_directory=None):
         super().__init__()
         self.setWindowTitle("Explorer")
@@ -256,7 +260,7 @@ class ImageExplorer(QMainWindow):
         splitter = QSplitter(self)
 
         self.tree_view = QTreeView()
-        self.tree_view.setIconSize(QSize(64, 64))
+        self.tree_view.setIconSize(self.FILE_ICON_SIZE)
 
         self.file_model = QFileSystemModelWithThumbnails(self)
         self.file_model.setRootPath(root_path)
@@ -284,6 +288,9 @@ class ImageExplorer(QMainWindow):
 
         # Enable drag and drop support
         self.setAcceptDrops(True)
+
+        # Set a delegate to adjust folder icon size
+        self.tree_view.setItemDelegate(FolderIconSizeDelegate(self.file_model, self.FOLDER_ICON_SIZE, self.FILE_ICON_SIZE, self.tree_view))
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -331,9 +338,14 @@ class ImageExplorer(QMainWindow):
             return
 
         menu = QMenu(self)
-        remove_action = QAction("Remove", self)
-        remove_action.triggered.connect(lambda: self.removeSelectedImage(index))
-        menu.addAction(remove_action)
+        if self.file_model.isDir(index):
+            remove_action = QAction("Remove Folder", self)
+            remove_action.triggered.connect(lambda: self.removeSelectedFolder(index))
+            menu.addAction(remove_action)
+        else:
+            remove_action = QAction("Remove Image", self)
+            remove_action.triggered.connect(lambda: self.removeSelectedImage(index))
+            menu.addAction(remove_action)
 
         menu.exec(self.tree_view.viewport().mapToGlobal(position))
 
@@ -348,6 +360,36 @@ class ImageExplorer(QMainWindow):
                 debug(f"Removed image: {file_path}")
             except Exception as e:
                 debug(f"Error removing file '{file_path}': {e}")
+
+    def removeSelectedFolder(self, index):
+        folder_path = self.file_model.filePath(index)
+        if self.file_model.isDir(index):
+            try:
+                shutil.rmtree(folder_path)
+                self.file_model.remove(index)
+                self.image_viewer.set_placeholder_text()
+                self.setWindowTitle("Explorer")
+                debug(f"Removed folder: {folder_path}")
+            except Exception as e:
+                debug(f"Error removing folder '{folder_path}': {e}")
+
+from PySide6.QtWidgets import QStyledItemDelegate
+from PySide6.QtCore import QSize
+
+class FolderIconSizeDelegate(QStyledItemDelegate):
+    """
+    Custom delegate to set a smaller icon size for folders in the tree view.
+    """
+    def __init__(self, model, folder_icon_size, file_icon_size, parent=None):
+        super().__init__(parent)
+        self.model = model
+        self.folder_icon_size = folder_icon_size
+        self.file_icon_size = file_icon_size
+
+    def sizeHint(self, option, index):
+        if self.model.isDir(index):
+            return self.folder_icon_size
+        return self.file_icon_size
 
 class ThumbnailWorkerSignals(QObject):
     result = Signal(str, QIcon)

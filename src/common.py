@@ -55,6 +55,7 @@ Presets_Path = os.path.join(app_dir, "presets")
 SoundEventEditor_sounds_path = os.path.join(app_dir, "SoundEventEditor", 'sounds')
 SoundEventEditor_path = os.path.join(app_dir, "SoundEventEditor")
 Decompiler_path = os.path.join(os.path.dirname(__file__), 'external', 'Decompiler.exe')
+KeyValues2Net_path = os.path.join(os.path.dirname(__file__), 'external', 'keyvalues2', 'Datamodel.NET.dll')
 
 # web
 discord_feedback_channel = "https://discord.gg/5yzvEQnazG"

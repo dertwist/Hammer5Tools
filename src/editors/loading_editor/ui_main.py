@@ -60,50 +60,8 @@ class Ui_Loading_editorMainWindow(object):
 
         self.verticalLayout.addWidget(self.explorer)
 
-        self.verticalLayout_5 = QVBoxLayout()
-        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.clear_all_button = QPushButton(self.screenshots)
-        self.clear_all_button.setObjectName(u"clear_all_button")
-        self.clear_all_button.setMinimumSize(QSize(0, 32))
-        self.clear_all_button.setStyleSheet(u"\n"
-"    /* QPushButton default and hover styles */\n"
-"    QPushButton {\n"
-"\n"
-"        font: 580 9pt \"Segoe UI\";\n"
-"	\n"
-"\n"
-"        border: 2px solid black;\n"
-"        border-radius: 2px;\n"
-"        border-color: rgba(80, 80, 80, 255);\n"
-"        height:22px;\n"
-"        padding-top: 2px;\n"
-"        padding-bottom:2px;\n"
-"        padding-left: 4px;\n"
-"        padding-right: 4px;\n"
-"        color: #E3E3E3;\n"
-"        background-color: #1C1C1C;\n"
-"    }\n"
-"    QPushButton:hover {\n"
-"        background-color: #414956;\n"
-"        color: white;\n"
-"    }\n"
-"    QPushButton:pressed {\n"
-"        background-color: red;\n"
-"        background-color: #1C1C1C;\n"
-"        margin: 1 px;\n"
-"        margin-left: 2px;\n"
-"        margin-right: 2px;\n"
-"\n"
-"    }")
-        icon = QIcon()
-        icon.addFile(u":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.clear_all_button.setIcon(icon)
-        self.clear_all_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_3.addWidget(self.clear_all_button)
-
         self.open_folder_button = QPushButton(self.screenshots)
         self.open_folder_button.setObjectName(u"open_folder_button")
         self.open_folder_button.setMinimumSize(QSize(0, 32))
@@ -137,16 +95,97 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_folder_button.setIcon(icon1)
+        icon = QIcon()
+        icon.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_folder_button.setIcon(icon)
         self.open_folder_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.open_folder_button)
 
 
-        self.verticalLayout_5.addLayout(self.horizontalLayout_3)
+        self.verticalLayout.addLayout(self.horizontalLayout_3)
 
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.history_mode = QCheckBox(self.screenshots)
+        self.history_mode.setObjectName(u"history_mode")
+        self.history_mode.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QCheckBox {\n"
+"\n"
+"        font: 580 10pt \"Segoe UI\";\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QCheckBox:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QCheckBox:pressed {\n"
+"\n"
+"    }")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.history_mode.setIcon(icon1)
+        self.history_mode.setIconSize(QSize(20, 20))
+        self.history_mode.setChecked(True)
+
+        self.horizontalLayout_4.addWidget(self.history_mode)
+
+        self.make_commands = QPushButton(self.screenshots)
+        self.make_commands.setObjectName(u"make_commands")
+        self.make_commands.setMinimumSize(QSize(0, 32))
+        self.make_commands.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/data_object_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.make_commands.setIcon(icon2)
+        self.make_commands.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_4.addWidget(self.make_commands)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_4)
+
+        self.verticalLayout_5 = QVBoxLayout()
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.delete_existings = QCheckBox(self.screenshots)
@@ -175,9 +214,9 @@ class Ui_Loading_editorMainWindow(object):
 "    QCheckBox:pressed {\n"
 "\n"
 "    }")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.delete_existings.setIcon(icon2)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.delete_existings.setIcon(icon3)
         self.delete_existings.setIconSize(QSize(20, 20))
         self.delete_existings.setChecked(True)
 
@@ -216,9 +255,9 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.apply_screenshots_button.setIcon(icon3)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.apply_screenshots_button.setIcon(icon4)
         self.apply_screenshots_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.apply_screenshots_button)
@@ -315,7 +354,7 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.apply_icon_button.setIcon(icon3)
+        self.apply_icon_button.setIcon(icon4)
         self.apply_icon_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_4.addWidget(self.apply_icon_button)
@@ -407,7 +446,7 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.apply_description_button.setIcon(icon3)
+        self.apply_description_button.setIcon(icon4)
         self.apply_description_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_2.addWidget(self.apply_description_button)
@@ -431,17 +470,6 @@ class Ui_Loading_editorMainWindow(object):
         Loading_editorMainWindow.setWindowTitle(QCoreApplication.translate("Loading_editorMainWindow", u"MainWindow", None))
         self.screenshots.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshots", None))
 #if QT_CONFIG(tooltip)
-        self.clear_all_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"hr { height: 1px; border-width: 0; }\n"
-"li.unchecked::marker { content: \"\\2610\"; }\n"
-"li.checked::marker { content: \"\\2612\"; }\n"
-"</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
-"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Deletes all files in the folder.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.clear_all_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete all files in folder", None))
-#if QT_CONFIG(tooltip)
         self.open_folder_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -452,6 +480,23 @@ class Ui_Loading_editorMainWindow(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.open_folder_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Open folder", None))
+#if QT_CONFIG(tooltip)
+        self.history_mode.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p><br/></p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.history_mode.setText(QCoreApplication.translate("Loading_editorMainWindow", u"History mode", None))
+#if QT_CONFIG(tooltip)
+        self.make_commands.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"hr { height: 1px; border-width: 0; }\n"
+"li.unchecked::marker { content: \"\\2610\"; }\n"
+"li.checked::marker { content: \"\\2612\"; }\n"
+"</style></head><body style=\" font-family:'Segoe UI'; font-size:9pt; font-weight:580; font-style:normal;\">\n"
+"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Generates screenshot commands based on <span style=\" font-family:'Courier New';\">point_camera</span> positions. Paste into the console to create images.<br />Images will be saved in:<br /><span style=\" font-family:'Courier New';\">game/screenshots/Hammer5Tools/LoadingScreen</span><br /><span style=\" font-weight:700;\">Warning:</span> All previous images will be deleted.</p>\n"
+"<p style=\" margi"
+                        "n-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">In History mode, images will be saved in:<br /><span style=\" font-family:'Courier New';\">game/screenshots/Hammer5Tools/History/Date</span></p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.make_commands.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Generate commands", None))
 #if QT_CONFIG(tooltip)
         self.delete_existings.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Deletes all existing screenshots on the loading screen.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
@@ -466,7 +511,7 @@ class Ui_Loading_editorMainWindow(object):
 "</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.apply_screenshots_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply screenshots", None))
+        self.apply_screenshots_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Set loading screenshots", None))
         self.screenshot_preview.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshot Preview", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Icon", None))
         self.apply_icon_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply Icon", None))

@@ -3,12 +3,12 @@ import os
 import sys
 from pythonnet import load
 load("coreclr")
-
+from src.common import KeyValues2Net_path
 import clr
 
 def setup_keyvalues2():
     """Setup the Datamodel.NET library for use with Python."""
-    dll_path = os.path.abspath(os.path.join('keyvalues2', "Datamodel.NET.dll"))
+    dll_path = KeyValues2Net_path
     print(f"DLL Path: {dll_path}")
     print(f"DLL Exists: {os.path.exists(dll_path)}")
 

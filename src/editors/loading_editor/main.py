@@ -18,12 +18,12 @@ from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool
 from PySide6.QtGui import QPixmap
 from PySide6.QtSvgWidgets import QSvgWidget
 
-from src.settings.main import get_cs2_path, get_addon_name, debug
+from src.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir, set_settings_bool, get_settings_bool
 from src.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from src.editors.loading_editor.viewport import ImageExplorer
 from src.common import compile
 from src.widgets import ErrorInfo
-
+from src.editors.loading_editor.commands.main import generate_commands
 
 class SvgPreviewWidget(QWidget):
     """
@@ -327,7 +327,8 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         self.threadpool = QThreadPool()
-        self.game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "screenshots")
+        self.game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "screenshots", "Hammer5Tools")
+        self.loadingscreen_path = os.path.join(self.game_screenshot_path, "LoadingScreen")
         os.makedirs(self.game_screenshot_path, exist_ok=True)
 
         explorer_view = ImageExplorer(tree_directory=self.game_screenshot_path)
@@ -342,8 +343,8 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
         self.ui.apply_screenshots_button.clicked.connect(self.start_apply_screenshots)
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
-        self.ui.clear_all_button.clicked.connect(self.clear_images)
         self.ui.open_folder_button.clicked.connect(self.open_images_folder)
+        self.ui.make_commands.clicked.connect(self.generate_commands_action)
 
         self.unified_dialog = UnifiedProcessingDialog(self)
 
@@ -382,7 +383,7 @@ class Loading_editorMainWindow(QMainWindow):
             QMessageBox.warning(self, "Warning", "The number of files is more than 10. The game doesn't support more than 10")
 
         self.unified_dialog.reset()
-        worker = ApplyScreenshotsWorker(self.game_screenshot_path, self.ui.delete_existings.isChecked())
+        worker = ApplyScreenshotsWorker(self.loadingscreen_path, self.ui.delete_existings.isChecked())
         worker.signals.progress.connect(self.unified_dialog.update_progress)
         worker.signals.error.connect(self.show_error)
         worker.signals.finished.connect(self.processing_finished)
@@ -406,9 +407,38 @@ class Loading_editorMainWindow(QMainWindow):
             pass
         self.unified_dialog.cancel_button.clicked.connect(self.unified_dialog.close)
 
-    def clear_images(self):
-        shutil.rmtree(self.game_screenshot_path, ignore_errors=True)
-        os.makedirs(self.game_screenshot_path, exist_ok=True)
+    def show_copy_message_once(self, parent=None):
+        if not get_settings_bool("LoadingEditor", "show_copy_message", True):
+            return
+        msg = QMessageBox(parent or self)
+        msg.setWindowTitle("Copied to Clipboard")
+        msg.setText("Commands were copied to clipboard.")
+        msg.setIcon(QMessageBox.Information)
+        ok_button = msg.addButton(QMessageBox.Ok)
+        do_not_show_button = msg.addButton("Do not show again", QMessageBox.ActionRole)
+        msg.exec_()
+        if msg.clickedButton() == do_not_show_button:
+            set_settings_bool("LoadingEditor", "show_copy_message", False)
+
+    def generate_commands_action(self):
+        path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
+        history_mode: bool = self.ui.history_mode.isChecked()
+        if history_mode is False:
+            if os.path.exists(self.loadingscreen_path):
+                for filename in os.listdir(self.loadingscreen_path):
+                    file_path = os.path.join(self.loadingscreen_path, filename)
+                    try:
+                        if os.path.isfile(file_path) or os.path.islink(file_path):
+                            os.remove(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                    except Exception as e:
+                        debug(f"Failed to delete {file_path}: {e}")
+        commands = generate_commands(path, history_mode)
+        if commands:
+            QApplication.clipboard().setText(";".join(commands))
+            self.show_copy_message_once(self)
+
 
     def open_images_folder(self):
         os.startfile(self.game_screenshot_path)
