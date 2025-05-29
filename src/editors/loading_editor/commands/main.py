@@ -1,6 +1,9 @@
 import os
 from datetime import datetime
-from .vmap_parser import parse
+try:
+    from .vmap_parser import parse
+except:
+    from vmap_parser import parse
 
 def generate_commands(vmap_path, history=False):
     """
@@ -58,20 +61,25 @@ def generate_commands(vmap_path, history=False):
         origin = cam.get("origin", None)
         angles = cam.get("angles", None)
         fov = cam.get("FOV", None)
+        targetname = cam.get("targetname", None)
         delay = camera_count * tick * 10 + 0.1
         origin_str = vector3_to_str(origin)
         angles_str = qangle_to_str(angles)
         if origin_str and fov not in (None, "", "N/A"):
+            # Set screenshot prefix to camera name if available, otherwise use map name
+            screenshot_name = targetname if targetname and targetname != "N/A" else f"{map_name}_cam{camera_count}"
             commands.extend([
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {screenshot_name}>{delay}>1"',
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos {origin_str}>{delay}>1"',
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setang {angles_str}>{delay}>1"' if angles_str else "",
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>fov_cs_debug {fov}>{delay}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>jpeg_screenshot {map_name}>{delay + (tick * 2)}>1"'
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>jpeg_screenshot>{delay + (tick * 2)}>1"'
             ])
     commands = [cmd for cmd in commands if cmd]
     if cameras:
         final_delay = (len(cameras) - 1) * tick * 10 + 1
         commands.extend([
+            f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix shot>{final_delay}>1"',
             f'ent_fire worldent addoutput "OnUser1>cmd>command>r_drawviewmodel 1;cl_drawhud 1;r_drawpanorama 1;noclip 0>{final_delay}>1"',
             "r_drawviewmodel 0",
             "cl_drawhud 0",

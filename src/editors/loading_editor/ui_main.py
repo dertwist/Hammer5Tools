@@ -222,6 +222,40 @@ class Ui_Loading_editorMainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.delete_existings)
 
+        self.camera_name_mode = QCheckBox(self.screenshots)
+        self.camera_name_mode.setObjectName(u"camera_name_mode")
+        self.camera_name_mode.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QCheckBox {\n"
+"\n"
+"        font: 580 10pt \"Segoe UI\";\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QCheckBox:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QCheckBox:pressed {\n"
+"\n"
+"    }")
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/colors_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.camera_name_mode.setIcon(icon4)
+        self.camera_name_mode.setIconSize(QSize(20, 20))
+        self.camera_name_mode.setChecked(True)
+
+        self.horizontalLayout_2.addWidget(self.camera_name_mode)
+
         self.apply_screenshots_button = QPushButton(self.screenshots)
         self.apply_screenshots_button.setObjectName(u"apply_screenshots_button")
         self.apply_screenshots_button.setMinimumSize(QSize(0, 32))
@@ -255,9 +289,9 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.apply_screenshots_button.setIcon(icon4)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.apply_screenshots_button.setIcon(icon5)
         self.apply_screenshots_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.apply_screenshots_button)
@@ -354,7 +388,7 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.apply_icon_button.setIcon(icon4)
+        self.apply_icon_button.setIcon(icon5)
         self.apply_icon_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_4.addWidget(self.apply_icon_button)
@@ -446,7 +480,7 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.apply_description_button.setIcon(icon4)
+        self.apply_description_button.setIcon(icon5)
         self.apply_description_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_2.addWidget(self.apply_description_button)
@@ -501,6 +535,10 @@ class Ui_Loading_editorMainWindow(object):
         self.delete_existings.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Deletes all existing screenshots on the loading screen.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.delete_existings.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete existing", None))
+#if QT_CONFIG(tooltip)
+        self.camera_name_mode.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Deletes all existing screenshots on the loading screen.</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.camera_name_mode.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Camera Name", None))
 #if QT_CONFIG(tooltip)
         self.apply_screenshots_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"

@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget
 )
 from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QPainter, QFont, QColor
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from src.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir, set_settings_bool, get_settings_bool
@@ -93,10 +93,11 @@ class ApplyScreenshotsSignals(QObject):
 
 
 class ApplyScreenshotsWorker(QRunnable):
-    def __init__(self, game_screenshot_path: str, delete_existing: bool):
+    def __init__(self, game_screenshot_path: str, delete_existing: bool, camera_name_mode: bool = False):
         super().__init__()
         self.game_screenshot_path = game_screenshot_path
         self.delete_existing = delete_existing
+        self.camera_name_mode = camera_name_mode
         self.signals = ApplyScreenshotsSignals()
         self._is_aborted = False
         self.addon_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
@@ -167,7 +168,14 @@ class ApplyScreenshotsWorker(QRunnable):
         for idx, file_name in enumerate(files):
             original_path = os.path.join(self.game_screenshot_path, file_name)
             new_base_name = f"{get_addon_name()}_png" if idx == 0 else f"{get_addon_name()}_{idx}_png"
-            file_list.append((original_path, new_base_name))
+            # Extract camera name prefix if camera_name_mode is enabled
+            camera_name = None
+            if self.camera_name_mode:
+                # Extract prefix before underscore (e.g., "Donut" from "Donut_0000.png")
+                base_name = os.path.splitext(file_name)[0]
+                if '_' in base_name:
+                    camera_name = base_name.split('_')[0]
+            file_list.append((original_path, new_base_name, camera_name))
         self.signals.log.emit(f"Collected file list: {file_list}")
         return file_list
 
@@ -192,16 +200,19 @@ class ApplyScreenshotsWorker(QRunnable):
 
     def process_files(self, file_list: list):
         total_files = len(file_list)
-        for index, (original_file, new_base_name) in enumerate(file_list):
+        for index, file_info in enumerate(file_list):
             if self._is_aborted:
                 self.signals.log.emit("Processing aborted.")
                 return
+            original_file = file_info[0]
+            new_base_name = file_info[1]
+            camera_name = file_info[2] if len(file_info) > 2 else None
             self.signals.log.emit(f"Processing file: {original_file} as {new_base_name}")
-            self.creating_vtex(original_file, new_base_name)
+            self.creating_vtex(original_file, new_base_name, camera_name)
             progress = 60 + int(40 * (index + 1) / total_files)
             self.signals.progress.emit(progress)
 
-    def creating_vtex(self, original_file_path: str, new_base_name: str):
+    def creating_vtex(self, original_file_path: str, new_base_name: str, camera_name: str = None):
         resolutions = {
             "1080p": 1080,
             "720p": 720,
@@ -213,6 +224,10 @@ class ApplyScreenshotsWorker(QRunnable):
             debug(msg)
             self.signals.log.emit(msg)
             return
+        
+        # Add camera name label if enabled and camera name exists
+        if self.camera_name_mode and camera_name:
+            pixmap = self.add_camera_name_label(pixmap, camera_name)
 
         vtex_template = (
             """<!-- dmx encoding keyvalues2_noids 1 format vtex 1 -->
@@ -285,6 +300,54 @@ class ApplyScreenshotsWorker(QRunnable):
                 continue
             compile(vtex_path)
             self.signals.log.emit(f"Compiled vtex file {vtex_path}")
+
+    def add_camera_name_label(self, pixmap: QPixmap, camera_name: str) -> QPixmap:
+        """Add camera name as text label on bottom left corner of the image"""
+        try:
+            # Create a copy of the original pixmap to avoid modifying it
+            labeled_pixmap = pixmap.copy()
+            
+            # Create painter
+            painter = QPainter()
+            if not painter.begin(labeled_pixmap):
+                self.signals.log.emit(f"Failed to begin painting on pixmap for camera name: {camera_name}")
+                return pixmap
+            
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            # Set up font for the label
+            font_size = max(16, pixmap.height() // 40)  # Scale font size based on image height
+            font = QFont("Arial", font_size)
+            font.setBold(True)
+            painter.setFont(font)
+            
+            # Calculate text position
+            fm = painter.fontMetrics()
+            text_rect = fm.boundingRect(camera_name)
+            margin = 20
+            
+            # Position text at bottom left corner
+            text_x = margin
+            text_y = pixmap.height() - margin
+            
+            # Draw text with outline for better visibility
+            # Draw black outline
+            painter.setPen(QColor(128, 128, 128))  # Black outline
+            for dx in [-2, -1, 0, 1, 2]:
+                for dy in [-2, -1, 0, 1, 2]:
+                    if dx != 0 or dy != 0:
+                        painter.drawText(text_x + dx, text_y + dy, camera_name)
+            
+            # Draw white text on top
+            painter.setPen(QColor(255, 255, 255))  # White text
+            painter.drawText(text_x, text_y, camera_name)
+            
+            painter.end()
+            return labeled_pixmap
+            
+        except Exception as e:
+            self.signals.log.emit(f"Error adding camera name label: {str(e)}")
+            return pixmap
 
     def abort(self):
         self._is_aborted = True
@@ -383,7 +446,11 @@ class Loading_editorMainWindow(QMainWindow):
             QMessageBox.warning(self, "Warning", "The number of files is more than 10. The game doesn't support more than 10")
 
         self.unified_dialog.reset()
-        worker = ApplyScreenshotsWorker(self.loadingscreen_path, self.ui.delete_existings.isChecked())
+        worker = ApplyScreenshotsWorker(
+            self.loadingscreen_path, 
+            self.ui.delete_existings.isChecked(),
+            self.ui.camera_name_mode.isChecked()
+        )
         worker.signals.progress.connect(self.unified_dialog.update_progress)
         worker.signals.error.connect(self.show_error)
         worker.signals.finished.connect(self.processing_finished)
