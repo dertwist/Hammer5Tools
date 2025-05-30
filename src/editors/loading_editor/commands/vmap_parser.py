@@ -2,39 +2,7 @@ import zipfile
 import os
 import sys
 import subprocess
-
-def setup_keyvalues2():
-    import pycparser
-    from pythonnet import load
-    load("coreclr")
-    from src.common import KeyValues2Net_path
-    import clr
-    """Setup the Datamodel.NET library for use with Python."""
-    dll_path = KeyValues2Net_path
-    print(f"DLL Path: {dll_path}")
-    print(f"DLL Exists: {os.path.exists(dll_path)}")
-
-    if not os.path.exists(dll_path):
-        raise FileNotFoundError(f"DLL not found at: {dll_path}")
-
-    dll_dir = os.path.dirname(dll_path)
-    if dll_dir not in sys.path:
-        sys.path.append(dll_dir)
-
-    try:
-        clr.AddReference("Datamodel.NET")
-    except:
-        try:
-            clr.AddReference(dll_path)
-        except:
-            import System
-            assembly = System.Reflection.Assembly.LoadFrom(dll_path)
-            clr.AddReference(assembly)
-
-    import Datamodel
-    from Datamodel.Codecs import DeferredMode
-
-    return Datamodel.Datamodel, Datamodel.Element, DeferredMode
+from src.dotnet import setup_keyvalues2
 
 
 def find_point_cameras(element, datamodel=None, show_entity_properties=True, _results=None):

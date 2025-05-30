@@ -54,7 +54,8 @@ from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
 from src.forms.launch_options.main import LaunchOptionsDialog
 from styles.qt_global_stylesheet import QT_Stylesheet_global
-from src.common import enable_dark_title_bar, app_version, default_commands, app_dir, check_dotnet_runtime
+from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
+from src.dotnet import check_dotnet_runtime
 # Global paths
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
