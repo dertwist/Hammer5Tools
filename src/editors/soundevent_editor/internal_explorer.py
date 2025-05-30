@@ -88,9 +88,9 @@ class InternalSoundFileExplorer(QTreeWidget):
         local_audiopath_mp3 = os.path.abspath(local_audiopath_mp3)
 
         try:
-            max_cache_mb = float(get_settings_value('SoundEventEditor', 'max_cache_size', 400))
+            max_cache_mb = float(get_settings_value('SoundEventEditor', 'max_cache_size', 4000))
         except ValueError:
-            max_cache_mb = 400
+            max_cache_mb = 4000
         max_cache_bytes = max_cache_mb * 1024 * 1024
 
         # Before using the cache, ensure the cache folder size is maintained.
@@ -105,21 +105,13 @@ class InternalSoundFileExplorer(QTreeWidget):
 
     def decompile_audio(self, internal_path, local_path, assembled_path):
         pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
-        process = QProcess(self)
-
-        process.finished.connect(lambda exit_code, exit_status: self.on_process_finished(exit_code, exit_status, process, local_path, assembled_path))
-        process.errorOccurred.connect(lambda error: self.on_process_error(error, process))
-
-        self._play_audio_file(extract_vsnd_file(vpk_path=pak1, vpk_file=internal_path, output_folder=SoundEventEditor_path, export=True))
-
-
-    @exception_handler
-    def on_process_finished(self, exit_code, exit_status, process, path, assembled_path):
+        extract_vsnd_file(
+            vpk_path=pak1,
+            vpk_file=internal_path,
+            output_folder=SoundEventEditor_path,
+            export=True
+        )
         self.play_audio_file(assembled_path)
-
-    def on_process_error(self, error, process):
-        pass
-
     def assemble_path(self, item):
         path_elements = []
         current_item = item

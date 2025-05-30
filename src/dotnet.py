@@ -430,40 +430,48 @@ def extract_vsnd_file(output_folder: str = None, export=False, vpk_file: str = N
     """
     if output_folder is None:
         export = False
-    import os
     if vpk_path is None:
         raise ValueError("vpk_path must be specified.")
     if vpk_file is None:
         raise ValueError("vpk_file must be specified.")
 
-    interop = DotNetInterop()
-    extractor = VPKExtractor(interop)
-    extractor._ensure_vrf_loaded()
+    # Use static cache for interop and extractor
+    if not hasattr(extract_vsnd_file, "_interop"):
+        extract_vsnd_file._interop = DotNetInterop()
+    interop = extract_vsnd_file._interop
+    interop._init_pythonnet()  # Ensure pythonnet is loaded before importing System
+    import System
+    from System.IO import MemoryStream
+    if not hasattr(extract_vsnd_file, "_extractor"):
+        extract_vsnd_file._extractor = VPKExtractor(interop)
+        extract_vsnd_file._extractor._ensure_vrf_loaded()
+    extractor = extract_vsnd_file._extractor
+
     data = extractor.extract_file(vpk_path, vpk_file)
     if data is None:
         print(f"Failed to extract {vpk_file} from {vpk_path}. File not found.")
         return None
-    if data is not None and not isinstance(data, bytes):
+    if not isinstance(data, bytes):
         data = bytes([data[i] for i in range(data.Length)])
 
     if export:
-        # Use ValveResourceFormat's FileExtract to decompile the .vsnd_c file
         Resource, _, _, FileExtract, _, _ = extractor._vrf_types
-        import System
-        from System.IO import MemoryStream
         resource = System.Activator.CreateInstance(Resource)
         ms = MemoryStream(data)
         try:
             resource.Read(ms)
-            extract_method = None
-            for m in FileExtract.GetMethods():
-                if m.Name == "Extract":
-                    extract_method = m
-                    break
+            # Find Extract method only once
+            if not hasattr(extract_vsnd_file, "_extract_method"):
+                extract_method = None
+                for m in FileExtract.GetMethods():
+                    if m.Name == "Extract":
+                        extract_method = m
+                        break
+                extract_vsnd_file._extract_method = extract_method
+            extract_method = extract_vsnd_file._extract_method
             if extract_method is None:
                 print("Could not find FileExtract.Extract method.")
                 return None
-            # Prepare args for static Extract(resource, ...)
             params = extract_method.GetParameters()
             args = System.Array.CreateInstance(System.Object, len(params))
             args[0] = resource
@@ -471,7 +479,6 @@ def extract_vsnd_file(output_folder: str = None, export=False, vpk_file: str = N
                 args[i] = None
             content_file = extract_method.Invoke(None, args)
             if content_file and hasattr(content_file, 'Data') and content_file.Data:
-                # Determine output extension (wav or mp3)
                 ext = 'wav'
                 if hasattr(content_file, 'FileName') and content_file.FileName:
                     ext = os.path.splitext(str(content_file.FileName))[1][1:] or 'wav'
@@ -502,3 +509,4 @@ if __name__ == "__main__":
                       vpk_file="sounds/music/danielsadowski_01/bombtenseccount.vsnd_c")
     extract_vsnd_file(output_folder="C:/Users/admin/Desktop/New folder", export=True,
                       vpk_file="sounds/music/beartooth_01/bombplanted.vsnd_c")
+
