@@ -9,8 +9,21 @@ cur_dir = os.path.abspath(os.path.dirname(__file__))
 external = f"--add-data={os.path.join(cur_dir, 'src', 'external')};src\\external"
 print(f"External path: {external}")
 
-# Path to your .NET DLL
-dotnet_dll = os.path.join(cur_dir, "src", "external", "keyvalues2", "Datamodel.NET.dll")
+# Path to your .NET DLLs
+dotnet_dlls = [
+    ("Datamodel.NET.dll", "src\\external"),
+    ("ValveKeyValue.dll", "src\\external"),
+    ("ValvePak.dll", "src\\external"),
+    ("ValveResourceFormat.dll", "src\\external"),
+    ("ZstdSharp.dll", "src\\external"),
+    ("K4os.Compression.LZ4.dll", "src\\external"),
+    ("SharpGLTF.Toolkit.dll", "src\\external"),
+    ("SharpZstd.Interop.dll", "src\\external"),
+    ("SkiaSharp.dll", "src\\external"),
+    ("System.IO.Hashing.dll", "src\\external"),
+    ("TinyBCSharp.dll", "src\\external"),
+    ("TinyEXR.NET.dll", "src\\external")
+]
 
 # Runtime hook to fix pycparser/pythonnet issues in PyInstaller onefile
 runtime_hook_path = os.path.join(cur_dir, "pyi_runtime_hook_pythonnet.py")
@@ -62,8 +75,8 @@ def build_hammer5_tools(fast=False) -> None:
         '--noconfirm',
         '--onefile',
         '--windowed',
-        '--strip',
-        f'--optimize={optimization_level}',
+        # '--strip',  # Removed to avoid errors with .NET DLLs
+        '--optimize=0',
         '--clean',
         '--icon=src/appicon.ico',
         '--add-data=src/appicon.ico;.',
@@ -76,11 +89,11 @@ def build_hammer5_tools(fast=False) -> None:
         '--exclude-module=tabulate',
         '--exclude-module=matplotlib',
         external,
-        # Bundle the .NET DLL
-        f'--add-binary={dotnet_dll};keyvalues2/Datamodel.NET.dll',
+        # Bundle all .NET DLLs
+        *[f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls],
         # Bundle pycparser parser tables
-        '--add-data=' + os.path.join(os.path.dirname(__file__), '.venv', 'Lib', 'site-packages', 'pycparser', 'lextab.py') + ';pycparser',
-        '--add-data=' + os.path.join(os.path.dirname(__file__), '.venv', 'Lib', 'site-packages', 'pycparser', 'yacctab.py') + ';pycparser',
+        '--add-data=' + os.path.join(os.path.dirname(__file__), 'venv', 'Lib', 'site-packages', 'pycparser', 'lextab.py') + ';pycparser',
+        '--add-data=' + os.path.join(os.path.dirname(__file__), 'venv', 'Lib', 'site-packages', 'pycparser', 'yacctab.py') + ';pycparser',
         # Runtime hook for pycparser/pythonnet
         f'--runtime-hook={runtime_hook_path}',
         'src/main.py'
@@ -181,3 +194,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

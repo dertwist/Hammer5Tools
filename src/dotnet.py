@@ -503,10 +503,3 @@ def extract_vsnd_file(output_folder: str = None, export=False, vpk_file: str = N
 
 if __name__ == "__main__":
     pass
-    extract_vsnd_file(output_folder="C:/Users/admin/Desktop/New folder", export=True,
-                      vpk_file="sounds/items/healthshot_thud_01.vsnd_c")
-    extract_vsnd_file(output_folder="C:/Users/admin/Desktop/New folder", export=True,
-                      vpk_file="sounds/music/danielsadowski_01/bombtenseccount.vsnd_c")
-    extract_vsnd_file(output_folder="C:/Users/admin/Desktop/New folder", export=True,
-                      vpk_file="sounds/music/beartooth_01/bombplanted.vsnd_c")
-
