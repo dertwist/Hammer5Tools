@@ -3,7 +3,10 @@ from datetime import datetime
 try:
     from .vmap_parser import parse
 except:
-    from vmap_parser import parse
+    try:
+        from vmap_parser import parse
+    except:
+        from src.editors.loading_editor.commands.vmap_parser import parse
 
 def generate_commands(vmap_path, history=False):
     """
