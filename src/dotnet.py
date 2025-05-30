@@ -420,62 +420,85 @@ def setup_keyvalues2():
     interop = DotNetInterop()
     return interop.setup_keyvalues()
 
-def extract_vsnd_file(output_folder:str = None, export=False):
-    """"
-    Export true will extract the file to the output folder.
-    False will just play the file.
+
+def extract_vsnd_file(output_folder: str = None, export=False, vpk_file: str = None, vpk_path: str = None):
+    """
+    Export true will extract the file to the output folder using ValveResourceFormat's FileExtract.
+    False will just return the raw file data.
+    Handles both .wav and .mp3 output from .vsnd_c files.
+    vpk_file: path inside VPK, e.g. 'sounds/items/healthshot_thud_01.vsnd_c'
     """
     if output_folder is None:
         export = False
     import os
-    vpk_path = r"E:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\pak01_dir.vpk"
-    vpk_file = r"sounds/common/talk.wav"
-    vpk_file = vpk_file.replace("sounds/", "sound/")  # Normalize path for VPK
+    if vpk_path is None:
+        raise ValueError("vpk_path must be specified.")
+    if vpk_file is None:
+        raise ValueError("vpk_file must be specified.")
 
     interop = DotNetInterop()
     extractor = VPKExtractor(interop)
     extractor._ensure_vrf_loaded()
     data = extractor.extract_file(vpk_path, vpk_file)
-
+    if data is None:
+        print(f"Failed to extract {vpk_file} from {vpk_path}. File not found.")
+        return None
     if data is not None and not isinstance(data, bytes):
         data = bytes([data[i] for i in range(data.Length)])
 
     if export:
-        output_filepath = os.path.join(output_folder, vpk_file)
-        if data is None:
-            print((f"Failed to extract {vpk_file} from {vpk_path}. File not found."))
-        os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
-        with open(output_filepath, "wb") as f:
-            f.write(data)
-        print(f"Extracted {vpk_file} to {output_filepath}. Size: {len(data)} bytes.")
-        return output_filepath
+        # Use ValveResourceFormat's FileExtract to decompile the .vsnd_c file
+        Resource, _, _, FileExtract, _, _ = extractor._vrf_types
+        import System
+        from System.IO import MemoryStream
+        resource = System.Activator.CreateInstance(Resource)
+        ms = MemoryStream(data)
+        try:
+            resource.Read(ms)
+            extract_method = None
+            for m in FileExtract.GetMethods():
+                if m.Name == "Extract":
+                    extract_method = m
+                    break
+            if extract_method is None:
+                print("Could not find FileExtract.Extract method.")
+                return None
+            # Prepare args for static Extract(resource, ...)
+            params = extract_method.GetParameters()
+            args = System.Array.CreateInstance(System.Object, len(params))
+            args[0] = resource
+            for i in range(1, len(params)):
+                args[i] = None
+            content_file = extract_method.Invoke(None, args)
+            if content_file and hasattr(content_file, 'Data') and content_file.Data:
+                # Determine output extension (wav or mp3)
+                ext = 'wav'
+                if hasattr(content_file, 'FileName') and content_file.FileName:
+                    ext = os.path.splitext(str(content_file.FileName))[1][1:] or 'wav'
+                elif hasattr(content_file, 'Type') and str(content_file.Type).lower() == 'mp3':
+                    ext = 'mp3'
+                output_filepath = os.path.join(output_folder, vpk_file.replace('.vsnd_c', f'.{ext}'))
+                os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+                out_bytes = bytes([content_file.Data[i] for i in range(content_file.Data.Length)])
+                with open(output_filepath, "wb") as f:
+                    f.write(out_bytes)
+                print(f"Decompiled {vpk_file} to {output_filepath}. Size: {len(out_bytes)} bytes.")
+                return output_filepath
+            else:
+                print("Failed to decompile .vsnd_c file using ValveResourceFormat.")
+                return None
+        finally:
+            ms.Dispose()
+            if hasattr(resource, 'Dispose'):
+                resource.Dispose()
     else:
         return data
 
-def get_vpk_content_dict(vpk_path: str) -> dict:
-    interop = DotNetInterop()
-    interop._init_pythonnet()  # Ensure pythonnet is initialized before importing System
-    import System
-    extractor = VPKExtractor(interop)
-    extractor._ensure_vrf_loaded()
-    _, _, _, _, _, Package = extractor._vrf_types
-    package = System.Activator.CreateInstance(Package)
-    package.Read(vpk_path)
-    entries = package.Entries
-    file_dict = {}
-    for ext_key in entries.Keys:
-        entry_list = entries[ext_key]
-        for entry in entry_list:
-            dir_name = getattr(entry, 'DirectoryName', None)
-            file_name = getattr(entry, 'FileName', None)
-            type_name = getattr(entry, 'TypeName', None)
-            if dir_name:
-                full_path = f"{dir_name}/{file_name}.{type_name}"
-            else:
-                full_path = f"{file_name}.{type_name}"
-            # Store entry info as needed, here just storing None as placeholder
-            file_dict[full_path] = None
-    return file_dict
-
 if __name__ == "__main__":
     pass
+    extract_vsnd_file(output_folder="C:/Users/admin/Desktop/New folder", export=True,
+                      vpk_file="sounds/items/healthshot_thud_01.vsnd_c")
+    extract_vsnd_file(output_folder="C:/Users/admin/Desktop/New folder", export=True,
+                      vpk_file="sounds/music/danielsadowski_01/bombtenseccount.vsnd_c")
+    extract_vsnd_file(output_folder="C:/Users/admin/Desktop/New folder", export=True,
+                      vpk_file="sounds/music/beartooth_01/bombplanted.vsnd_c")
