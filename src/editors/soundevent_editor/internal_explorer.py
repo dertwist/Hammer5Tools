@@ -8,6 +8,7 @@ from PySide6.QtMultimedia import QMediaPlayer
 from src.settings.main import get_cs2_path, get_addon_dir, debug, get_settings_value
 from src.common import SoundEventEditor_sounds_path, Decompiler_path, SoundEventEditor_path
 from src.widgets import exception_handler
+from src.dotnet import extract_vpk_file
 
 @exception_handler
 class VPKLoaderThread(QThread):
@@ -109,19 +110,8 @@ class InternalSoundFileExplorer(QTreeWidget):
         process.finished.connect(lambda exit_code, exit_status: self.on_process_finished(exit_code, exit_status, process, local_path, assembled_path))
         process.errorOccurred.connect(lambda error: self.on_process_error(error, process))
 
-        try:
-            process.start(
-                Decompiler_path,
-                [
-                    '-i', pak1,
-                    '--output', SoundEventEditor_path,
-                    '--vpk_filepath', internal_path,
-                    '-d'
-                ]
-            )
-        except Exception as e:
-            debug(e)
-            pass
+        extract_vpk_file(pak1, internal_path, output_path=SoundEventEditor_path)
+
 
     @exception_handler
     def on_process_finished(self, exit_code, exit_status, process, path, assembled_path):

@@ -419,10 +419,15 @@ def extract_vpk_file(vpk_path: str, vpk_file: str, output_path: Optional[str] = 
     interop = DotNetInterop()
     extractor = VPKExtractor(interop)
     file_data = extractor.extract_file(vpk_path, vpk_file)
+    print(f"Extracted file: {vpk_file}")
     if file_data is not None and output_path is not None:
-        output_path = str(output_path)
+        file_path = str(Path(vpk_file).with_suffix(''))
+        extension = file_data.ExtensionAttribute
+        print(f"Extracted file extension: {extension}")
+        output_path = str(output_path) + f"/{file_path}.{extension}"
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         Path(output_path).write_bytes(bytes(file_data))
+
     return file_data
 
 
