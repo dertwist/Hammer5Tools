@@ -298,6 +298,8 @@ class ResourceProcessor:
     def _find_extract_method(self, file_extract_type):
         """Find static Extract method."""
         from System.Reflection import BindingFlags
+        import System
+        from System.IO import MemoryStream
 
         methods = file_extract_type.GetMethods(BindingFlags.Public | BindingFlags.Static)
         for method in methods:
@@ -411,33 +413,80 @@ def setup_keyvalues2():
     return interop.setup_keyvalues()
 
 
-def extract_vpk_file(vpk_path: str, vpk_file: str, output_path: Optional[str] = None) -> Optional[bytes]:
-    """
-    Extract file from VPK. If output_path is provided, save the extracted file to disk.
-    Returns the extracted bytes or None if not found.
-    """
+def extract_vpk_file(vpk_path: str, vpk_file: str) -> Optional[bytes]:
+    """Extract file from VPK. Returns the extracted bytes or None if not found."""
     interop = DotNetInterop()
     extractor = VPKExtractor(interop)
-    file_data = extractor.extract_file(vpk_path, vpk_file)
-    print(f"Extracted file: {vpk_file}")
-    if file_data is not None and output_path is not None:
-        file_path = str(Path(vpk_file).with_suffix(''))
-        extension = file_data.ExtensionAttribute
-        print(f"Extracted file extension: {extension}")
-        output_path = str(output_path) + f"/{file_path}.{extension}"
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        Path(output_path).write_bytes(bytes(file_data))
+    return extractor.extract_file(vpk_path, vpk_file)
 
-    return file_data
+def decompile_sound(data: bytes) -> Tuple[bytes, str]:
+    """Decompile Sound (.vsnd_c) file to wave format. Returns (wav_data, extension)."""
+    import System
+    from System.IO import MemoryStream
+    from System.Security.Cryptography import SHA256
+    
+    interop = DotNetInterop()
+    Resource, _, _, _, _, _ = interop.setup_vrf()
+    
+    # Create resource and load data
+    resource = System.Activator.CreateInstance(Resource)
+    memory_stream = MemoryStream(data)
 
+    try:
+        resource.Read(memory_stream, False)  # verifyFileSize=False parameter
+        
+        # Validate resource type
+        if resource.ResourceType.ToString() != "Sound":
+            raise ValueError(f"Invalid resource type: {resource.ResourceType}")
+            
+        sound_data = resource.DataBlock
+        if sound_data is None:
+            raise ValueError("No sound data found")
+            
+        # Get the sound stream as WAV
+        sound_stream = sound_data.GetSoundStream()
+        
+        # Convert the stream to bytes while computing hash
+        wav_memory = MemoryStream()
+        sound_stream.CopyTo(wav_memory)
+        wav_bytes = bytes(wav_memory.ToArray())
+        
+        # Compute hash for verification
+        using_sha256 = SHA256.Create()
+        hash_value = System.Convert.ToHexString(using_sha256.ComputeHash(MemoryStream(wav_bytes)))
+        print(f"Sound hash: {hash_value}")
+        
+        return wav_bytes, ".wav"
+        
+    finally:
+        memory_stream.Dispose()
+        if hasattr(resource, 'Dispose'):
+            resource.Dispose()
 
 def test_vrf():
     """Test VRF functionality with sample file."""
     vpk_path = r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo\pak01_dir.vpk"
     vpk_file = r"sounds\music\point_captured_ct.vsnd_c"
-    output_path = Path(__file__).parent / "output" / "sounds" / "music" / "point_captured_ct.wav"
-
-    extract_vpk_file(vpk_path=vpk_path, vpk_file=vpk_file, output_path=output_path)
+    output_dir = Path(__file__).parent / "output"
+    
+    # Extract from VPK
+    vsnd_data = extract_vpk_file(vpk_path=vpk_path, vpk_file=vpk_file)
+    if vsnd_data is not None:
+        # Get original filename without extension
+        base_name = Path(vpk_file).stem
+        if base_name.endswith('.vsnd'):  # Remove .vsnd if present
+            base_name = base_name[:-5]
+            
+        # Decompile to WAV
+        wav_data, extension = decompile_sound(vsnd_data)
+        
+        # Save with original name but new extension
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / f"{base_name}{extension}"
+        output_path.write_bytes(wav_data)
+        print(f"Saved output to: {output_path}")
+    else:
+        print(f"Could not find file: {vpk_file}")
 
 
 if __name__ == "__main__":
