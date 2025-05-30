@@ -25,6 +25,22 @@
                 "--build-all"
             ]
         },
+
+        {
+            "name": "Python: Fast Build Hammer5Tools",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/makefile.py",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "args": [
+                "--build-all",
+                "--fast"
+            ]
+        },
+
         {
             "name": "Python: Start Hammer5Tools",
             "type": "debugpy",

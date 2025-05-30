@@ -1,12 +1,64 @@
 import zipfile
 import os
 import sys
+import subprocess
+import pycparser
+
+def check_dotnet_runtime(min_version="3.1"):
+    """
+    Checks if .NET Core runtime is installed and prints the available runtimes.
+    Optionally checks for a minimum required version.
+
+    Args:
+        min_version (str): Minimum required version as a string, e.g., "3.1" or "6.0".
+
+    Returns:
+        bool: True if a compatible .NET Core runtime is found, False otherwise.
+    """
+    try:
+        result = subprocess.run(
+            ["dotnet", "--list-runtimes"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        output = result.stdout.strip()
+        print("Detected .NET runtimes:\n" + output)
+        found = False
+        for line in output.splitlines():
+            if line.startswith("Microsoft.NETCore.App"):
+                # Example line: Microsoft.NETCore.App 6.0.25 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]
+                parts = line.split()
+                if len(parts) >= 2:
+                    version = parts[1]
+                    # Compare major.minor only
+                    version_major_minor = ".".join(version.split(".")[:2])
+                    if version_major_minor >= min_version:
+                        found = True
+        if not found:
+            print(f"ERROR: No compatible .NET Core runtime >= {min_version} found.")
+        return found
+    except FileNotFoundError:
+        print("ERROR: 'dotnet' command not found. Please install .NET Core runtime from https://dotnet.microsoft.com/download")
+        return False
+    except subprocess.CalledProcessError as e:
+        print("ERROR: Failed to run 'dotnet --list-runtimes':", e.stderr)
+        return False
+
+if not check_dotnet_runtime("9.0"):
+    raise RuntimeError("Required .NET Core runtime not found. Please install .NET Core 9.0 or later.")
+
 from pythonnet import load
 load("coreclr")
-from src.common import KeyValues2Net_path
 import clr
 
+
 def setup_keyvalues2():
+    from pythonnet import load
+    load("coreclr")
+    from src.common import KeyValues2Net_path
+    import clr
     """Setup the Datamodel.NET library for use with Python."""
     dll_path = KeyValues2Net_path
     print(f"DLL Path: {dll_path}")

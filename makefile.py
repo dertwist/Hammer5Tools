@@ -6,8 +6,32 @@ import argparse
 from typing import List, Set
 from tabulate import tabulate
 cur_dir = os.path.abspath(os.path.dirname(__file__))
-external = f"--add-data={os.path.join(cur_dir, 'src', 'external')};src\external"
+external = f"--add-data={os.path.join(cur_dir, 'src', 'external')};src\\external"
 print(f"External path: {external}")
+
+# Path to your .NET DLL
+dotnet_dll = os.path.join(cur_dir, "src", "external", "keyvalues2", "Datamodel.NET.dll")
+
+# Runtime hook to fix pycparser/pythonnet issues in PyInstaller onefile
+runtime_hook_path = os.path.join(cur_dir, "pyi_runtime_hook_pythonnet.py")
+with open(runtime_hook_path, "w") as f:
+    f.write(
+        """
+import sys, os, tempfile
+# Fix for pycparser needing writable parser tables
+if hasattr(sys, '_MEIPASS'):
+    import shutil
+    import pycparser
+    import pycparser.ply
+    tempdir = tempfile.gettempdir()
+    for tabfile in ['lextab.py', 'yacctab.py']:
+        src = os.path.join(sys._MEIPASS, 'pycparser', tabfile)
+        dst = os.path.join(tempdir, tabfile)
+        if os.path.exists(src) and not os.path.exists(dst):
+            shutil.copy2(src, dst)
+    sys.path.insert(0, tempdir)
+"""
+    )
 
 
 def print_elapsed_time(stage_name: str, start_time: float) -> None:
@@ -25,8 +49,12 @@ def kill_process(process_name: str) -> None:
     )
 
 
-def build_hammer5_tools() -> None:
-    subprocess.run([
+def build_hammer5_tools(fast=False) -> None:
+    if fast:
+        optimization_level = 0
+    else:
+        optimization_level = 2
+    pyinstaller_cmd = [
         'pyinstaller',
         '--name=Hammer5Tools',
         '--noupx',
@@ -35,8 +63,8 @@ def build_hammer5_tools() -> None:
         '--onefile',
         '--windowed',
         '--strip',
-        '--optimize=2',
-        '--clean', 
+        f'--optimize={optimization_level}',
+        '--clean',
         '--icon=src/appicon.ico',
         '--add-data=src/appicon.ico;.',
         '--add-data=src/images;images/',
@@ -48,9 +76,16 @@ def build_hammer5_tools() -> None:
         '--exclude-module=tabulate',
         '--exclude-module=matplotlib',
         external,
+        # Bundle the .NET DLL
+        f'--add-binary={dotnet_dll};keyvalues2/Datamodel.NET.dll',
+        # Bundle pycparser parser tables
+        '--add-data=' + os.path.join(os.path.dirname(__file__), '.venv', 'Lib', 'site-packages', 'pycparser', 'lextab.py') + ';pycparser',
+        '--add-data=' + os.path.join(os.path.dirname(__file__), '.venv', 'Lib', 'site-packages', 'pycparser', 'yacctab.py') + ';pycparser',
+        # Runtime hook for pycparser/pythonnet
+        f'--runtime-hook={runtime_hook_path}',
         'src/main.py'
-    ], check=True)
-
+    ]
+    subprocess.run(pyinstaller_cmd, check=True)
 
 def archive_files(
     folder_path: str,
@@ -101,6 +136,7 @@ def main() -> None:
     parser.add_argument('--build-all', action='store_true', help="Build Hammer 5 Tools.")
     parser.add_argument('--build-app', action='store_true', help="Build only Hammer 5 Tools.")
     parser.add_argument('--archive', action='store_true', help="Archive the build outputs.")
+    parser.add_argument('--fast', action='store_true', help="User 0 level optimization.")
     args = parser.parse_args()
 
     overall_start_time = time.time()
@@ -114,7 +150,7 @@ def main() -> None:
     try:
         if args.build_all or args.build_app:
             stage_start_time = time.time()
-            build_hammer5_tools()
+            build_hammer5_tools(fast=args.fast)
             elapsed_time = time.time() - stage_start_time
             results.append(["Hammer 5 Tools Build", f"{elapsed_time:.2f} seconds"])
     except subprocess.CalledProcessError as e:

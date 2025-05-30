@@ -26,3 +26,6 @@ pefile
 altgraph
 pytest
 pythonnet
+clr_loader
+cffi
+pycparser
