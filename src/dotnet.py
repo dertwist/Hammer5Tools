@@ -295,6 +295,14 @@ class ResourceProcessor:
 
         return False
 
+    def extract_resource_from_vpk(self, vpk_path: str, file_path: str, output_path: str) -> bool:
+        """Extract a resource from a VPK file using VPKExtractor and process it."""
+        extractor = VPKExtractor(self.interop)
+        data = extractor.extract_file(vpk_path, file_path)
+        if data is None:
+            return False
+        return self.extract_resource(data, output_path)
+
     def _find_extract_method(self, file_extract_type):
         """Find static Extract method."""
         from System.Reflection import BindingFlags
@@ -412,82 +420,62 @@ def setup_keyvalues2():
     interop = DotNetInterop()
     return interop.setup_keyvalues()
 
+def extract_vsnd_file(output_folder:str = None, export=False):
+    """"
+    Export true will extract the file to the output folder.
+    False will just play the file.
+    """
+    if output_folder is None:
+        export = False
+    import os
+    vpk_path = r"E:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\pak01_dir.vpk"
+    vpk_file = r"sounds/common/talk.wav"
+    vpk_file = vpk_file.replace("sounds/", "sound/")  # Normalize path for VPK
 
-def extract_vpk_file(vpk_path: str, vpk_file: str) -> Optional[bytes]:
-    """Extract file from VPK. Returns the extracted bytes or None if not found."""
     interop = DotNetInterop()
     extractor = VPKExtractor(interop)
-    return extractor.extract_file(vpk_path, vpk_file)
+    extractor._ensure_vrf_loaded()
+    data = extractor.extract_file(vpk_path, vpk_file)
 
-def decompile_sound(data: bytes) -> Tuple[bytes, str]:
-    """Decompile Sound (.vsnd_c) file to wave format. Returns (wav_data, extension)."""
-    import System
-    from System.IO import MemoryStream
-    from System.Security.Cryptography import SHA256
-    
-    interop = DotNetInterop()
-    Resource, _, _, _, _, _ = interop.setup_vrf()
-    
-    # Create resource and load data
-    resource = System.Activator.CreateInstance(Resource)
-    memory_stream = MemoryStream(data)
+    if data is not None and not isinstance(data, bytes):
+        data = bytes([data[i] for i in range(data.Length)])
 
-    try:
-        resource.Read(memory_stream, False)  # verifyFileSize=False parameter
-        
-        # Validate resource type
-        if resource.ResourceType.ToString() != "Sound":
-            raise ValueError(f"Invalid resource type: {resource.ResourceType}")
-            
-        sound_data = resource.DataBlock
-        if sound_data is None:
-            raise ValueError("No sound data found")
-            
-        # Get the sound stream as WAV
-        sound_stream = sound_data.GetSoundStream()
-        
-        # Convert the stream to bytes while computing hash
-        wav_memory = MemoryStream()
-        sound_stream.CopyTo(wav_memory)
-        wav_bytes = bytes(wav_memory.ToArray())
-        
-        # Compute hash for verification
-        using_sha256 = SHA256.Create()
-        hash_value = System.Convert.ToHexString(using_sha256.ComputeHash(MemoryStream(wav_bytes)))
-        print(f"Sound hash: {hash_value}")
-        
-        return wav_bytes, ".wav"
-        
-    finally:
-        memory_stream.Dispose()
-        if hasattr(resource, 'Dispose'):
-            resource.Dispose()
-
-def test_vrf():
-    """Test VRF functionality with sample file."""
-    vpk_path = r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo\pak01_dir.vpk"
-    vpk_file = r"sounds\music\point_captured_ct.vsnd_c"
-    output_dir = Path(__file__).parent / "output"
-    
-    # Extract from VPK
-    vsnd_data = extract_vpk_file(vpk_path=vpk_path, vpk_file=vpk_file)
-    if vsnd_data is not None:
-        # Get original filename without extension
-        base_name = Path(vpk_file).stem
-        if base_name.endswith('.vsnd'):  # Remove .vsnd if present
-            base_name = base_name[:-5]
-            
-        # Decompile to WAV
-        wav_data, extension = decompile_sound(vsnd_data)
-        
-        # Save with original name but new extension
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_path = output_dir / f"{base_name}{extension}"
-        output_path.write_bytes(wav_data)
-        print(f"Saved output to: {output_path}")
+    if export:
+        output_filepath = os.path.join(output_folder, vpk_file)
+        if data is None:
+            print((f"Failed to extract {vpk_file} from {vpk_path}. File not found."))
+        os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+        with open(output_filepath, "wb") as f:
+            f.write(data)
+        print(f"Extracted {vpk_file} to {output_filepath}. Size: {len(data)} bytes.")
+        return output_filepath
     else:
-        print(f"Could not find file: {vpk_file}")
+        return data
 
+def get_vpk_content_dict(vpk_path: str) -> dict:
+    interop = DotNetInterop()
+    interop._init_pythonnet()  # Ensure pythonnet is initialized before importing System
+    import System
+    extractor = VPKExtractor(interop)
+    extractor._ensure_vrf_loaded()
+    _, _, _, _, _, Package = extractor._vrf_types
+    package = System.Activator.CreateInstance(Package)
+    package.Read(vpk_path)
+    entries = package.Entries
+    file_dict = {}
+    for ext_key in entries.Keys:
+        entry_list = entries[ext_key]
+        for entry in entry_list:
+            dir_name = getattr(entry, 'DirectoryName', None)
+            file_name = getattr(entry, 'FileName', None)
+            type_name = getattr(entry, 'TypeName', None)
+            if dir_name:
+                full_path = f"{dir_name}/{file_name}.{type_name}"
+            else:
+                full_path = f"{file_name}.{type_name}"
+            # Store entry info as needed, here just storing None as placeholder
+            file_dict[full_path] = None
+    return file_dict
 
 if __name__ == "__main__":
-    test_vrf()
+    pass
