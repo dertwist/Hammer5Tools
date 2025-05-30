@@ -17,6 +17,109 @@ def get_cs2_path():
         return counter_strikke_2_path
     except:
         pass
+#=================================================================<  .NET libraries  >===============================================================
+def check_dotnet_runtime(min_version="9.0", dev_mode=False):
+    """
+    Checks if .NET Core runtime is installed and prints the available runtimes.
+    Optionally checks for a minimum required version.
+
+    Args:
+        min_version (str): Minimum required version as a string, e.g., "9.0".
+        dev_mode (bool): If True, shows the dialog regardless of installed .NET runtime. This is useful for testing download functionality.
+
+    Returns:
+        bool: True if a compatible .NET Core runtime is found, False otherwise.
+    """
+    from PySide6.QtWidgets import QMessageBox
+    import json
+    import webbrowser
+    import urllib.request
+    import sys
+
+    def get_latest_dotnet_version():
+        # Query the official .NET releases index for latest LTS/Current version
+        try:
+            url = "https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/releases-index.json"
+            with urllib.request.urlopen(url) as response:
+                data = json.load(response)
+                # Find the latest release with "channel-version" >= min_version
+                releases = data.get("releases-index", [])
+                for release in releases:
+                    channel_version = release.get("channel-version", "")
+                    if channel_version >= min_version:
+                        return channel_version
+                # fallback to highest found
+                if releases:
+                    return releases[0].get("channel-version", min_version)
+        except Exception:
+            return min_version
+        return min_version
+
+    def get_latest_runtime_download_url(version):
+        # Try to get the latest patch version for the given major.minor version
+        try:
+            url = f"https://dotnetcli.blob.core.windows.net/dotnet/release-metadata/{version}/releases.json"
+            with urllib.request.urlopen(url) as response:
+                data = json.load(response)
+                latest = data.get("latest-release", version)
+                # Compose the download URL for Windows Desktop Runtime x64
+                return f"https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/{latest}/windowsdesktop-runtime-{latest}-win-x64.exe"
+        except Exception:
+            # Fallback to the generic download page
+            return f"https://dotnet.microsoft.com/en-us/download/dotnet/{version}"
+
+    def show_runtime_dialog(message, download_url):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
+        msg.setWindowTitle(".NET Desktop Runtime Required")
+        msg.setText(message)
+        msg.setInformativeText(download_url)
+        msg.setStandardButtons(QMessageBox.Open | QMessageBox.Cancel)
+        ret = msg.exec()
+        if ret == QMessageBox.Open:
+            webbrowser.open(download_url)
+            sys.exit(0)
+        return False
+
+    try:
+        result = subprocess.run(
+            ["dotnet", "--list-runtimes"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        output = result.stdout.strip()
+        found = False
+        for line in output.splitlines():
+            if line.startswith("Microsoft.WindowsDesktop.App"):
+                parts = line.split()
+                if len(parts) >= 2:
+                    version = parts[1]
+                    version_major_minor = ".".join(version.split(".")[:2])
+                    if version_major_minor >= min_version:
+                        found = True
+        if dev_mode or not found:
+            # Show Qt dialog to download .NET
+            latest_version = get_latest_dotnet_version()
+            download_url = get_latest_runtime_download_url(latest_version)
+            message = (f"Required .NET Desktop runtime >= {min_version} not found.\n\n"
+                       f"Please download and install .NET {latest_version} for Windows.")
+            return show_runtime_dialog(message, download_url)
+        return True
+    except FileNotFoundError:
+        # dotnet not found, show dialog
+        latest_version = get_latest_dotnet_version()
+        download_url = get_latest_runtime_download_url(latest_version)
+        message = (f"'dotnet' command not found.\n\n"
+                   f"Please download and install .NET {latest_version} for Windows.")
+        return show_runtime_dialog(message, download_url)
+    except subprocess.CalledProcessError as e:
+        latest_version = get_latest_dotnet_version()
+        download_url = get_latest_runtime_download_url(latest_version)
+        message = (f"Failed to run 'dotnet --list-runtimes':\n{e.stderr}\n\n"
+                   f"Please download and install .NET {latest_version} for Windows.")
+        return show_runtime_dialog(message, download_url)
 
 
 

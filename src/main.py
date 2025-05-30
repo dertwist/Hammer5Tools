@@ -54,7 +54,7 @@ from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
 from src.forms.launch_options.main import LaunchOptionsDialog
 from styles.qt_global_stylesheet import QT_Stylesheet_global
-from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
+from src.common import enable_dark_title_bar, app_version, default_commands, app_dir, check_dotnet_runtime
 # Global paths
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
@@ -62,7 +62,6 @@ stop_discord_thread = threading.Event()
 INSTANCE_KEY = "Hammer5ToolsInstance"
 
 from src.common import Decompiler_path
-print(f"Decompiler path: {Decompiler_path}")
 
 def activate_existing_window(hwnd):
     """
@@ -600,6 +599,8 @@ if __name__ == "__main__":
 
     # No instance running, so create the server.
     app = QApplication(sys.argv)
+    #Checking .NET runtime
+    check_dotnet_runtime()
     app.setStyleSheet(QT_Stylesheet_global)
     widget = Widget(dev_mode=args.dev)
     widget.show()
