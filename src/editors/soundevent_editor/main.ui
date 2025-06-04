@@ -1,0 +1,718 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1490</width>
+    <height>941</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: #1C1C1C;</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_6">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="frame">
+      <property name="styleSheet">
+       <string notr="true">        QFrame#frame {
+            border: 2px solid black; 
+            border-color: rgba(80, 80, 80, 255);
+        }
+        QFrame#frame QLabel {
+            border: 0px solid black; 
+        }</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Raised</enum>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="font">
+          <font>
+           <pointsize>9</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Properties</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_4">
+   <property name="minimumSize">
+    <size>
+     <width>320</width>
+     <height>189</height>
+    </size>
+   </property>
+   <property name="features">
+    <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::DockWidgetArea::BottomDockWidgetArea|Qt::DockWidgetArea::LeftDockWidgetArea|Qt::DockWidgetArea::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Soundevents</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout_8">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QFrame" name="frame_2">
+       <property name="frameShape">
+        <enum>QFrame::Shape::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Raised</enum>
+       </property>
+       <property name="lineWidth">
+        <number>0</number>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLineEdit" name="hierarchy_search_bar_widget">
+          <property name="placeholderText">
+           <string>Search...</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTreeWidget" name="hierarchy_widget">
+          <property name="dragEnabled">
+           <bool>true</bool>
+          </property>
+          <property name="dragDropOverwriteMode">
+           <bool>true</bool>
+          </property>
+          <property name="dragDropMode">
+           <enum>QAbstractItemView::DragDropMode::NoDragDrop</enum>
+          </property>
+          <property name="defaultDropAction">
+           <enum>Qt::DropAction::MoveAction</enum>
+          </property>
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::SelectionMode::ContiguousSelection</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectionBehavior::SelectItems</enum>
+          </property>
+          <property name="uniformRowHeights">
+           <bool>true</bool>
+          </property>
+          <property name="allColumnsShowFocus">
+           <bool>false</bool>
+          </property>
+          <property name="wordWrap">
+           <bool>false</bool>
+          </property>
+          <property name="headerHidden">
+           <bool>false</bool>
+          </property>
+          <property name="columnCount">
+           <number>2</number>
+          </property>
+          <attribute name="headerVisible">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="headerCascadingSectionResizes">
+           <bool>false</bool>
+          </attribute>
+          <attribute name="headerMinimumSectionSize">
+           <number>45</number>
+          </attribute>
+          <attribute name="headerDefaultSectionSize">
+           <number>135</number>
+          </attribute>
+          <attribute name="headerShowSortIndicator" stdset="0">
+           <bool>false</bool>
+          </attribute>
+          <attribute name="headerStretchLastSection">
+           <bool>true</bool>
+          </attribute>
+          <column>
+           <property name="text">
+            <string notr="true">Name</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Data</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="open_preset_manager_button">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Oopen Preset Manager Ctrl + P&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+          </property>
+          <property name="text">
+           <string>Preset manager</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../resources.qrc">
+            <normaloff>:/icons/schema_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/schema_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="shortcut">
+           <string>Ctrl+P</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_10">
+   <property name="minimumSize">
+    <size>
+     <width>320</width>
+     <height>174</height>
+    </size>
+   </property>
+   <property name="features">
+    <set>QDockWidget::DockWidgetFeature::DockWidgetFloatable|QDockWidget::DockWidgetFeature::DockWidgetMovable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::DockWidgetArea::BottomDockWidgetArea|Qt::DockWidgetArea::LeftDockWidgetArea|Qt::DockWidgetArea::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Audio Explorer</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="explorer_layout_widget">
+    <layout class="QVBoxLayout" name="verticalLayout_10">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTabWidget" name="tabWidget">
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="addon_sounds">
+        <attribute name="title">
+         <string>Addon</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="explorer_layout">
+           <property name="topMargin">
+            <number>2</number>
+           </property>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="internal_sounds">
+        <attribute name="title">
+         <string>Internal</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="internal_explorer_search_bar">
+           <property name="placeholderText">
+            <string>Search...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="internal_explorer_layout"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frame_3">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Shape::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Raised</enum>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="save_file_button">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save soundevents_addon.vsndevts Ctrl + S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+          </property>
+          <property name="text">
+           <string>Save</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../resources.qrc">
+            <normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="shortcut">
+           <string>Ctrl+S</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="realtime_save_checkbox">
+          <property name="styleSheet">
+           <string notr="true">
+    /* QPushButton default and hover styles */
+    QCheckBox {
+
+        font: 580 10pt &quot;Segoe UI&quot;;
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QCheckBox:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QCheckBox:pressed {
+
+    }</string>
+          </property>
+          <property name="text">
+           <string>Realtime save</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frame_4">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Shape::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Shadow::Raised</enum>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="output_button">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open soundevents_addon.vsndevts&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+          </property>
+          <property name="text">
+           <string>Output</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../resources.qrc">
+            <normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="shortcut">
+           <string>Ctrl+N</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="load_button">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reload soundevents_addon.vsndevts Ctrl + R&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">
+    /* QPushButton default and hover styles */
+    QPushButton {
+
+        font: 580 9pt &quot;Segoe UI&quot;;
+	
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+          </property>
+          <property name="text">
+           <string>Load</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../resources.qrc">
+            <normaloff>:/icons/description_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/description_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="shortcut">
+           <string>Ctrl+Shift+S</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionCreateNewsmartprop">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/new.png</normaloff>:/valve_common/icons/tools/common/new.png</iconset>
+   </property>
+   <property name="text">
+    <string>CreateNewsmartprop</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionOpen_from_Explorer">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open as</string>
+   </property>
+  </action>
+  <action name="actionSave_as">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/save_all.png</normaloff>:/valve_common/icons/tools/common/save_all.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save as</string>
+   </property>
+  </action>
+  <action name="actionSave_current_file">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/save.png</normaloff>:/valve_common/icons/tools/common/save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionRecompile_file">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
+   </property>
+   <property name="text">
+    <string>Recompile file</string>
+   </property>
+  </action>
+  <action name="actionRecompile_all_in_addon">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
+   </property>
+   <property name="text">
+    <string>Recompile all in addon</string>
+   </property>
+  </action>
+  <action name="actionConvert_all_vsmart_file_to_vdata">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</iconset>
+   </property>
+   <property name="text">
+    <string>Convert all vsmart file to vdata</string>
+   </property>
+   <property name="toolTip">
+    <string>Convert all to data</string>
+   </property>
+  </action>
+  <action name="actionFormat_serttings">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/valve_common/icons/tools/common/setting.png</normaloff>:/valve_common/icons/tools/common/setting.png</iconset>
+   </property>
+   <property name="text">
+    <string>Format serttings</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
