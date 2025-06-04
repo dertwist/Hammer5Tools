@@ -1,0 +1,4999 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+    SurfacePropertiesList = 
+    [
+        
+        {
+            surfacePropertyName = "default"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = -1.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Default.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+                rolling = ""
+                break = ""
+                strain = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1977497166
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "solidmetal"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.830000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 2843522288
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "metal"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 417707814
+            m_baseNameHash = 2843522288
+            base = "solidmetal"
+        },
+        
+        {
+            surfacePropertyName = "metal_barrelSoundOverride"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalBarrel.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1707554372
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "metal_vehicleSoundOverride"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalVehicle.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3757199992
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "metal_survivalCase"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Survival.ContainerDamage"
+                impacthard = "Survival.ContainerDamage"
+                impactsoft = "Survival.ContainerDamage"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Silent.Breakable"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1819771403
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "metal_survivalCase_unpunchable"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Survival.ContainerDamage"
+                impacthard = "Survival.ContainerDamage"
+                impactsoft = "Survival.ContainerDamageUnpunchable"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Silent.Breakable"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 4063521634
+            m_baseNameHash = 1819771403
+            base = "metal_survivalCase"
+        },
+        
+        {
+            surfacePropertyName = "metaldogtags"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "DogTags.Impact"
+                impacthard = "DogTags.Impact"
+                impactsoft = "DogTags.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3689561870
+            m_baseNameHash = 2843522288
+            base = "solidmetal"
+        },
+        
+        {
+            surfacePropertyName = "metalgrate"
+            physics = 
+            {
+                density = 1600.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalGrate.BulletImpact"
+                impacthard = "MetalGrate.ImpactHard"
+                impactsoft = "MetalGrate.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                strain = "Metal_Box.Strain"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.830000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.700000
+            }
+            m_nameHash = 2929520257
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "Metal_Box"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Metal_Box.BulletImpact"
+                impacthard = "Metal_Box.ImpactHard"
+                impactsoft = "Metal_Box.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Metal_Box.Break"
+                strain = "Metal_Box.Strain"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 2858402244
+            m_baseNameHash = 2843522288
+            base = "solidmetal"
+        },
+        
+        {
+            surfacePropertyName = "metal_bouncy"
+            physics = 
+            {
+                density = 10000.000000
+                elasticity = 1000.000000
+                friction = 0.000000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 577384434
+            m_baseNameHash = 2843522288
+            base = "solidmetal"
+        },
+        
+        {
+            surfacePropertyName = "slipperymetal"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.150000
+                friction = 0.100000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.830000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 783396982
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "grate"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalGrate.BulletImpact"
+                impacthard = "MetalGrate.ImpactHard"
+                impactsoft = "MetalGrate.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                strain = "Metal_Box.Strain"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.700000
+            }
+            m_nameHash = 2418804214
+            m_baseNameHash = 2929520257
+            base = "metalgrate"
+        },
+        
+        {
+            surfacePropertyName = "metalvent"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.040000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalVehicle.BulletImpact"
+                impacthard = "MetalVent.ImpactHard"
+                impactsoft = "MetalVent.ImpactHard"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Metal_Box.Break"
+                strain = "Metal_Box.Strain"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3376500746
+            m_baseNameHash = 2858402244
+            base = "Metal_Box"
+        },
+        
+        {
+            surfacePropertyName = "metalpanel"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.200000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalVehicle.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 516339764
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "dirt"
+            physics = 
+            {
+                density = 1600.000000
+                elasticity = 0.010000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Dirt.BulletImpact"
+                impacthard = "Dirt.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.030000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1843462088
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "mud"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 6.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Mud.BulletImpact"
+                impacthard = "Dirt.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2385835545
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "slipperyslime"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.100000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Dirt.BulletImpact"
+                impacthard = "Dirt.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 504105651
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "grass"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "grass.BulletImpact"
+                impacthard = "Dirt.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3533040276
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "slowgrass"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Dirt.BulletImpact"
+                impacthard = "Dirt.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3205031292
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "sugarcane"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Dirt.BulletImpact"
+                impacthard = "Dirt.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 72984178
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "tile"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.300000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Tile.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.990000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3907616666
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "tile_survivalCase"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Survival.ContainerDamage"
+                impacthard = "Survival.ContainerDamage"
+                impactsoft = "Survival.ContainerDamage"
+                break = "Survival.ContainerDeath"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 138082458
+            m_baseNameHash = 3907616666
+            base = "tile"
+        },
+        
+        {
+            surfacePropertyName = "tile_survivalCase_GIB"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Silent.BulletImpact"
+                impacthard = "Silent.ImpactHard"
+                impactsoft = "Silent.ImpactSoft"
+                break = "Silent.Breakable"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1407737112
+            m_baseNameHash = 3907616666
+            base = "tile"
+        },
+        
+        {
+            surfacePropertyName = "Wood"
+            physics = 
+            {
+                density = 700.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood.BulletImpact"
+                impacthard = "Wood.ImpactHard"
+                impactsoft = "Wood.ImpactSoft"
+                break = "Wood.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3076510970
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "Wood_lowdensity"
+            physics = 
+            {
+                density = 300.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood.BulletImpact"
+                impacthard = "Wood.ImpactHard"
+                impactsoft = "Wood.ImpactSoft"
+                break = "Wood.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3853388793
+            m_baseNameHash = 3076510970
+            base = "Wood"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Box"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood_Box.BulletImpact"
+                impacthard = "Wood_Box.ImpactHard"
+                impactsoft = "Wood_Box.ImpactSoft"
+                break = "Wood_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 2379236403
+            m_baseNameHash = 3076510970
+            base = "Wood"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Basket"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood_Box.BulletImpact"
+                impacthard = "Wood_Box.ImpactHard"
+                impactsoft = "Wood_Box.ImpactSoft"
+                break = "Wood_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 317045859
+            m_baseNameHash = 3076510970
+            base = "Wood"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Crate"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood.BulletImpact"
+                impacthard = "Wood_Crate.ImpactHard"
+                impactsoft = "Wood_Crate.ImpactSoft"
+                break = "Wood_Crate.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 509367305
+            m_baseNameHash = 3076510970
+            base = "Wood"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Plank"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood_Plank.BulletImpact"
+                impacthard = "Wood_Plank.ImpactHard"
+                impactsoft = "Wood_Plank.ImpactSoft"
+                break = "Wood_Plank.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 940350824
+            m_baseNameHash = 2379236403
+            base = "Wood_Box"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Solid"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood_Solid.BulletImpact"
+                impacthard = "Wood_Solid.ScrapeRough"
+                impactsoft = "Wood_Solid.ImpactSoft"
+                break = "Wood_Solid.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3902191787
+            m_baseNameHash = 3076510970
+            base = "Wood"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Furniture"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood_Box.BulletImpact"
+                impacthard = "Wood_Box.ImpactHard"
+                impactsoft = "Wood_Furniture.ImpactSoft"
+                break = "Wood_Furniture.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 670127480
+            m_baseNameHash = 2379236403
+            base = "Wood_Box"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Panel"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 1.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood_Panel.BulletImpact"
+                impacthard = "Wood_Panel.ImpactHard"
+                impactsoft = "Wood_Panel.ImpactSoft"
+                break = "Wood_Panel.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 511759467
+            m_baseNameHash = 509367305
+            base = "Wood_Crate"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Dense"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood_Solid.BulletImpact"
+                impacthard = "Wood_Solid.ImpactHard"
+                impactsoft = "Wood_Solid.ImpactSoft"
+                break = "Wood.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.830000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 665398398
+            m_baseNameHash = 3076510970
+            base = "Wood"
+        },
+        
+        {
+            surfacePropertyName = "water"
+            physics = 
+            {
+                density = 1000.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Water.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 0.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1702216732
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "wet"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Concrete.ImpactHard"
+                impactsoft = "Concrete.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 345401639
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "puddle"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Water.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 1690127966
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "slime"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.100000
+                friction = 0.900000
+                dampening = 200.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Water.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 0.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 2589540614
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "quicksand"
+            physics = 
+            {
+                density = 600.000000
+                elasticity = 2.000000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Default.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 0.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2548036920
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "wade"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Water.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1594497082
+            m_baseNameHash = 1702216732
+            base = "water"
+        },
+        
+        {
+            surfacePropertyName = "ladder"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 3802511415
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Ladder"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood.BulletImpact"
+                impacthard = "Wood.ImpactHard"
+                impactsoft = "Wood.ImpactSoft"
+                break = "Wood.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 384507457
+            m_baseNameHash = 3076510970
+            base = "Wood"
+        },
+        
+        {
+            surfacePropertyName = "glass"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.200000
+                friction = 0.500000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Glass.BulletImpact"
+                impacthard = "Glass.ImpactHard"
+                impactsoft = "Glass.ImpactSoft"
+                break = "Glass.Break"
+                strain = "Glass.Strain"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 1432157305
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "glassfloor"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.200000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Glass.BulletImpact"
+                impacthard = "Glass.ImpactHard"
+                impactsoft = "Glass.ImpactSoft"
+                break = "Glass.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 4025285856
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "computer"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Computer.BulletImpact"
+                impacthard = "Computer.ImpactHard"
+                impactsoft = "Computer.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "radio_computer.break"
+                strain = "Metal_Box.Strain"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 2387733995
+            m_baseNameHash = 2858402244
+            base = "Metal_Box"
+        },
+        
+        {
+            surfacePropertyName = "weapon_magazine"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "WeaponMagazine.BulletImpact"
+                impacthard = "WeaponMagazine.ImpactHard"
+                impactsoft = "WeaponMagazine.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "radio_computer.break"
+                strain = "Metal_Box.Strain"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3488276551
+            m_baseNameHash = 2387733995
+            base = "computer"
+        },
+        
+        {
+            surfacePropertyName = "concrete"
+            physics = 
+            {
+                density = 2400.000000
+                elasticity = 0.200000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Concrete.ImpactHard"
+                impactsoft = "Concrete.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            base = "no_decal"
+            m_nameHash = 436732118
+            m_baseNameHash = 1276528775
+        },
+        
+        {
+            surfacePropertyName = "asphalt"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Concrete.ImpactHard"
+                impactsoft = "Concrete.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            base = "concrete"
+            m_nameHash = 117481502
+            m_baseNameHash = 436732118
+        },
+        
+        {
+            surfacePropertyName = "rock"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Rock.ImpactHard"
+                impactsoft = "Rock.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            base = "concrete"
+            m_nameHash = 3062725297
+            m_baseNameHash = 436732118
+        },
+        
+        {
+            surfacePropertyName = "porcelain"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Rock.ImpactHard"
+                impactsoft = "Rock.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Pottery.Break"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            base = "rock"
+            m_nameHash = 4112565037
+            m_baseNameHash = 3062725297
+        },
+        
+        {
+            surfacePropertyName = "boulder"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Boulder.ImpactHard"
+                impactsoft = "Boulder.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            base = "rock"
+            m_nameHash = 3177173410
+            m_baseNameHash = 3062725297
+        },
+        
+        {
+            surfacePropertyName = "brick"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Rock.ImpactHard"
+                impactsoft = "Rock.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            base = "rock"
+            m_nameHash = 3091142243
+            m_baseNameHash = 3062725297
+        },
+        
+        {
+            surfacePropertyName = "concrete_block"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Concrete_Block.ImpactHard"
+                impactsoft = "Concrete.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            base = "concrete"
+            m_nameHash = 3916124915
+            m_baseNameHash = 436732118
+        },
+        
+        {
+            surfacePropertyName = "stucco"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Concrete.ImpactHard"
+                impactsoft = "Concrete.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            base = "concrete"
+            m_nameHash = 2954384760
+            m_baseNameHash = 436732118
+        },
+        
+        {
+            surfacePropertyName = "chainlink"
+            physics = 
+            {
+                density = 1600.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "ChainLink.BulletImpact"
+                impacthard = "ChainLink.ImpactHard"
+                impactsoft = "ChainLink.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 3580549874
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "chain"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "ChainLink.BulletImpact"
+                impacthard = "ChainLink.ImpactHard"
+                impactsoft = "ChainLink.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 1850499590
+            m_baseNameHash = 3580549874
+            base = "chainlink"
+        },
+        
+        {
+            surfacePropertyName = "flesh"
+            physics = 
+            {
+                density = 900.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Flesh.BulletImpact"
+                impacthard = "Flesh.ImpactHard"
+                impactsoft = "Flesh.ImpactSoft"
+                break = "Flesh.Break"
+                strain = "Flesh.Strain"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 1152554101
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "bloodyflesh"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Flesh.BulletImpact"
+                impacthard = "Flesh_Bloody.ImpactHard"
+                impactsoft = "Flesh.ImpactSoft"
+                break = "Flesh.Break"
+                strain = "Flesh.Strain"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 354711774
+            m_baseNameHash = 1152554101
+            base = "flesh"
+        },
+        
+        {
+            surfacePropertyName = "alienflesh"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Flesh.BulletImpact"
+                impacthard = "Flesh.ImpactHard"
+                impactsoft = "Flesh.ImpactSoft"
+                break = "Flesh.Break"
+                strain = "Flesh.Strain"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 3068653923
+            m_baseNameHash = 1152554101
+            base = "flesh"
+        },
+        
+        {
+            surfacePropertyName = "armorflesh"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "ArmorFlesh.BulletImpact"
+                impacthard = "Flesh.ImpactHard"
+                impactsoft = "Flesh.ImpactSoft"
+                break = "Flesh.Break"
+                strain = "Flesh.Strain"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 4052585937
+            m_baseNameHash = 1152554101
+            base = "flesh"
+        },
+        
+        {
+            surfacePropertyName = "ice"
+            physics = 
+            {
+                density = 917.000000
+                elasticity = 0.100000
+                friction = 0.100000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Default.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3822918781
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "carpet"
+            physics = 
+            {
+                density = 500.000000
+                elasticity = 0.010000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Carpet.BulletImpact"
+                impacthard = "Carpet.Impact"
+                impactsoft = "Carpet.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.030000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3060091858
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "dufflebag_survivalCase"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Survival.BagDamage"
+                impacthard = "Survival.BagDamage"
+                impactsoft = "Survival.BagDamage"
+                scraperough = ""
+                break = "Survival.BagDeath"
+                scrapesmooth = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1823084413
+            m_baseNameHash = 3060091858
+            base = "carpet"
+        },
+        
+        {
+            surfacePropertyName = "upholstery"
+            physics = 
+            {
+                density = 500.000000
+                elasticity = 0.010000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Carpet.BulletImpact"
+                impacthard = "Carpet.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.030000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1766757539
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "plaster"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Concrete.ImpactHard"
+                impactsoft = "Concrete.ImpactSoft"
+                scraperough = ""
+                scrapesmooth = ""
+                break = "Breakable.Concrete"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.500000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1382086679
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "sheetrock"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "drywall.ImpactHard"
+                impacthard = "drywall.ImpactHard"
+                impactsoft = "drywall.ImpactSoft"
+                scraperough = ""
+                break = "Cardboard.Break"
+                scrapesmooth = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.500000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1459304115
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "cardboard"
+            physics = 
+            {
+                density = 500.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Cardboard.BulletImpact"
+                impacthard = "Cardboard.ImpactHard"
+                impactsoft = "Cardboard.ImpactSoft"
+                scraperough = ""
+                break = "Cardboard.Break"
+                scrapesmooth = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.250000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1154464259
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "plastic_barrel"
+            physics = 
+            {
+                density = 500.000000
+                elasticity = 0.010000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Plastic_Barrel.BulletImpact"
+                impacthard = "Plastic_Barrel.ImpactHard"
+                impactsoft = "Plastic_Barrel.ImpactSoft"
+                break = "Plastic_Barrel.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.250000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 4132136508
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "Plastic_Box"
+            physics = 
+            {
+                density = 500.000000
+                elasticity = 0.010000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Plastic_Box.BulletImpact"
+                impacthard = "Plastic_Box.ImpactHard"
+                impactsoft = "Plastic_Box.ImpactSoft"
+                break = "Plastic_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.250000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3655027529
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "plastic"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Plastic_Box.ImpactHard"
+                impacthard = "Paintcan.ImpactHard"
+                impactsoft = "Paintcan.ImpactSoft"
+                break = "Plastic_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3275606040
+            m_baseNameHash = 3655027529
+            base = "Plastic_Box"
+        },
+        
+        {
+            surfacePropertyName = "plastic_survivalCase"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Survival.ContainerDamage"
+                impacthard = "Survival.ContainerDamage"
+                impactsoft = "Survival.ContainerDamage"
+                break = "Survival.ContainerDeath"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 2153265894
+            m_baseNameHash = 3275606040
+            base = "plastic"
+        },
+        
+        {
+            surfacePropertyName = "sand"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Sand.BulletImpact"
+                impacthard = "Dirt.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.030000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1690327349
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "rubber"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.200000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber.BulletImpact"
+                impacthard = "Rubber.ImpactHard"
+                impactsoft = "Rubber.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.200000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 432647572
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "rubbertire"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 1.000000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber_Tire.BulletImpact"
+                impacthard = "Rubber_Tire.ImpactHard"
+                impactsoft = "Rubber_Tire.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 492190625
+            m_baseNameHash = 432647572
+            base = "rubber"
+        },
+        
+        {
+            surfacePropertyName = "jeeptire"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 1.337000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber_Tire.BulletImpact"
+                impacthard = "Rubber_Tire.ImpactHard"
+                impactsoft = "Rubber_Tire.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 828476413
+            m_baseNameHash = 432647572
+            base = "rubber"
+        },
+        
+        {
+            surfacePropertyName = "slidingrubbertire"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.200000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber.BulletImpact"
+                impacthard = "Rubber.ImpactHard"
+                impactsoft = "Rubber.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2940509881
+            m_baseNameHash = 432647572
+            base = "rubber"
+        },
+        
+        {
+            surfacePropertyName = "brakingrubbertire"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.600000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber.BulletImpact"
+                impacthard = "Rubber.ImpactHard"
+                impactsoft = "Rubber.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1464650357
+            m_baseNameHash = 432647572
+            base = "rubber"
+        },
+        
+        {
+            surfacePropertyName = "slidingrubbertire_front"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.200000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber.BulletImpact"
+                impacthard = "Rubber.ImpactHard"
+                impactsoft = "Rubber.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3977668098
+            m_baseNameHash = 432647572
+            base = "rubber"
+        },
+        
+        {
+            surfacePropertyName = "slidingrubbertire_rear"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.200000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber.BulletImpact"
+                impacthard = "Rubber.ImpactHard"
+                impactsoft = "Rubber.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2517749806
+            m_baseNameHash = 432647572
+            base = "rubber"
+        },
+        
+        {
+            surfacePropertyName = "glassbottle"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.300000
+                friction = 0.400000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "GlassBottle.BulletImpact"
+                impacthard = "GlassBottle.ImpactHard"
+                impactsoft = "GlassBottle.ImpactSoft"
+                break = "GlassBottle.Break"
+                strain = "Glass.Strain"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 377940586
+            m_baseNameHash = 1432157305
+            base = "glass"
+        },
+        
+        {
+            surfacePropertyName = "pottery"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.300000
+                friction = 0.400000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Pottery.BulletImpact"
+                impacthard = "Pottery.ImpactHard"
+                impactsoft = "Pottery.ImpactSoft"
+                break = "Pottery.Break"
+                strain = "Glass.Strain"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3606421700
+            m_baseNameHash = 377940586
+            base = "glassbottle"
+        },
+        
+        {
+            surfacePropertyName = "clay"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Tile.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2576311204
+            m_baseNameHash = 3907616666
+            base = "tile"
+        },
+        
+        {
+            surfacePropertyName = "canister"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalVehicle.BulletImpact"
+                impacthard = "Canister.ImpactHard"
+                impactsoft = "Canister.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 4213112929
+            m_baseNameHash = 516339764
+            base = "metalpanel"
+        },
+        
+        {
+            surfacePropertyName = "metal_barrel"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalBarrel.BulletImpact"
+                impacthard = "Metal_Barrel.ImpactHard"
+                impactsoft = "Metal_Barrel.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.830000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 367121336
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "metal_barrel_explodingSurvival"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalVehicle.BulletImpact"
+                impacthard = "ExplodingBarrel.ImpactHard"
+                impactsoft = "ExplodingBarrel.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 743526693
+            m_baseNameHash = 367121336
+            base = "metal_barrel"
+        },
+        
+        {
+            surfacePropertyName = "floating_metal_barrel"
+            physics = 
+            {
+                density = 500.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalBarrel.BulletImpact"
+                impacthard = "Metal_Barrel.ImpactHard"
+                impactsoft = "Metal_Barrel.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1443786080
+            m_baseNameHash = 367121336
+            base = "metal_barrel"
+        },
+        
+        {
+            surfacePropertyName = "plastic_barrel_buoyant"
+            physics = 
+            {
+                density = 150.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Plastic_Barrel.BulletImpact"
+                impacthard = "Plastic_Barrel.ImpactHard"
+                impactsoft = "Plastic_Barrel.ImpactSoft"
+                break = "Plastic_Barrel.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 833550759
+            m_baseNameHash = 4132136508
+            base = "plastic_barrel"
+        },
+        
+        {
+            surfacePropertyName = "roller"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.300000
+                friction = 0.700000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalVehicle.BulletImpact"
+                impacthard = "Roller.Impact"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2937534235
+            m_baseNameHash = 516339764
+            base = "metalpanel"
+        },
+        
+        {
+            surfacePropertyName = "popcan"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.990000
+                friction = 0.300000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Popcan.BulletImpact"
+                impacthard = "Popcan.ImpactHard"
+                impactsoft = "Popcan.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Metal_Box.Break"
+                strain = "Metal_Box.Strain"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3125856958
+            m_baseNameHash = 2858402244
+            base = "Metal_Box"
+        },
+        
+        {
+            surfacePropertyName = "paintcan"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.990000
+                friction = 0.300000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Popcan.BulletImpact"
+                impacthard = "Paintcan.ImpactHard"
+                impactsoft = "Paintcan.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Metal_Box.Break"
+                strain = "Metal_Box.Strain"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 251854313
+            m_baseNameHash = 3125856958
+            base = "popcan"
+        },
+        
+        {
+            surfacePropertyName = "paper"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Cardboard.BulletImpact"
+                impacthard = "Cardboard.ImpactHard"
+                impactsoft = "Cardboard.ImpactSoft"
+                scraperough = ""
+                break = "Cardboard.Break"
+                scrapesmooth = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 557949949
+            m_baseNameHash = 1154464259
+            base = "cardboard"
+        },
+        
+        {
+            surfacePropertyName = "papercup"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Cardboard.BulletImpact"
+                impacthard = "Papercup.Impact"
+                impactsoft = "Papercup.Impact"
+                scraperough = ""
+                break = "Cardboard.Break"
+                scrapesmooth = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 70668703
+            m_baseNameHash = 557949949
+            base = "paper"
+        },
+        
+        {
+            surfacePropertyName = "ceiling_tile"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "ceiling_tile.BulletImpact"
+                impacthard = "ceiling_tile.ImpactHard"
+                impactsoft = "ceiling_tile.ImpactSoft"
+                scraperough = ""
+                break = "ceiling_tile.Break"
+                scrapesmooth = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1006568950
+            m_baseNameHash = 1154464259
+            base = "cardboard"
+        },
+        
+        {
+            surfacePropertyName = "foliage"
+            physics = 
+            {
+                density = 700.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Foliage.BulletImpact"
+                impacthard = "Wood_Solid.ScrapeRough"
+                impactsoft = "Wood_Solid.ImpactSoft"
+                break = "Wood_Solid.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3277645402
+            m_baseNameHash = 3902191787
+            base = "Wood_Solid"
+        },
+        
+        {
+            surfacePropertyName = "slipperyslide"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.100000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 2821986826
+            m_baseNameHash = 2843522288
+            base = "solidmetal"
+        },
+        
+        {
+            surfacePropertyName = "strongman_bell"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.830000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 4042361490
+            m_baseNameHash = 2843522288
+            base = "solidmetal"
+        },
+        
+        {
+            surfacePropertyName = "watermelon"
+            physics = 
+            {
+                density = 900.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Watermelon.BulletImpact"
+                impacthard = "Watermelon.Impact"
+                impactsoft = "Default.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 2785255419
+            m_baseNameHash = 345401639
+            base = "wet"
+        },
+        
+        {
+            surfacePropertyName = "item"
+            physics = 
+            {
+                density = 600.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Plastic_Box.ImpactHard"
+                impacthard = "Plastic_Box.ImpactHard"
+                impactsoft = "Plastic_Box.ImpactSoft"
+                break = "Plastic_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 830970602
+            m_baseNameHash = 3655027529
+            base = "Plastic_Box"
+        },
+        
+        {
+            surfacePropertyName = "floatingstandable"
+            physics = 
+            {
+                density = 800.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Dirt.BulletImpact"
+                impacthard = "Dirt.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3891468673
+            m_baseNameHash = 1843462088
+            base = "dirt"
+        },
+        
+        {
+            surfacePropertyName = "grenade"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.010000
+                friction = 0.900000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Grenade.ImpactHard"
+                impacthard = "Grenade.ImpactHard"
+                impactsoft = "Grenade.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+                rolling = "Grenade.Roll"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.400000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2232745004
+            m_baseNameHash = 516339764
+            base = "metalpanel"
+        },
+        
+        {
+            surfacePropertyName = "weapon"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.ImpactHard"
+                impactsoft = "weapon.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3957205779
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "metal_shield"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.ImpactHard"
+                impactsoft = "weapon.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3220048309
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "default_silent"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Default.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 601283519
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "player"
+            physics = 
+            {
+                density = 1000.000000
+                elasticity = 0.001000
+                friction = 0.500000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Flesh.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.000000
+                audioroughnessfactor = 0.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 2233579705
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "player_control_clip"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Default.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 649147094
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "no_decal"
+            physics = 
+            {
+                density = 900.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Default.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1276528775
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "soccerball"
+            physics = 
+            {
+                density = 900.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Ball.BulletImpact"
+                impacthard = "Ball.ImpactHard"
+                impactsoft = "Ball.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 2367662767
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "gravel"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Rock.ImpactHard"
+                impactsoft = "Rock.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 104558468
+            m_baseNameHash = 3062725297
+            base = "rock"
+        },
+        
+        {
+            surfacePropertyName = "snow"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Snow.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 4232132152
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "metalvehicle"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.200000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalVehicle.BulletImpact"
+                impacthard = "Metal_Barrel.ImpactHard"
+                impactsoft = "MetalGrate.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.330000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1244416554
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "brass_bell_large"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "inferno.bell_c"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3021230660
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "brass_bell_medium"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "inferno.bell_d"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 283516618
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "brass_bell_small"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "inferno.bell_e"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 2880959851
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "brass_bell_smallest"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "inferno.bell_f"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 930976584
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "metal_sand_barrel"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalBarrel.BulletImpact"
+                impacthard = "SandBarrel.ImpactHard"
+                impactsoft = "SandBarrel.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.830000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 47258652
+            m_baseNameHash = 2843522288
+            base = "solidmetal"
+        },
+        
+        {
+            surfacePropertyName = "blockbullets"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 1.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Default.BulletImpact"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 2711388870
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "jalopytire"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber_Tire.BulletImpact"
+                impacthard = "Rubber_Tire.ImpactHard"
+                impactsoft = "Rubber_Tire.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 4002878106
+            m_baseNameHash = 828476413
+            base = "jeeptire"
+        },
+        
+        {
+            surfacePropertyName = "slidingrubbertire_jalopyfront"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.150000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber_Tire.BulletImpact"
+                impacthard = "Rubber_Tire.ImpactHard"
+                impactsoft = "Rubber_Tire.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1007633254
+            m_baseNameHash = 4002878106
+            base = "jalopytire"
+        },
+        
+        {
+            surfacePropertyName = "slidingrubbertire_jalopyrear"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.150000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Rubber_Tire.BulletImpact"
+                impacthard = "Rubber_Tire.ImpactHard"
+                impactsoft = "Rubber_Tire.ImpactSoft"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3481741261
+            m_baseNameHash = 4002878106
+            base = "jalopytire"
+        },
+        
+        {
+            surfacePropertyName = "jalopy"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "ATV_impact_medium"
+                impactsoft = "ATV_impact_medium"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1744268859
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "Balloon"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = -1.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Breakable.Balloon"
+                impacthard = "Default.Null"
+                impactsoft = "Default.Null"
+                rolling = ""
+                break = "Breakable.Balloon"
+                strain = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3274651461
+            m_baseNameHash = 1977497166
+            base = "default"
+        },
+        
+        {
+            surfacePropertyName = "metal_ventslat"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2327582287
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "metal_sheetmetal"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2870565398
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "plasticbottle"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Plastic_Box.ImpactHard"
+                impacthard = "Paintcan.ImpactHard"
+                impactsoft = "Paintcan.ImpactSoft"
+                break = "Plastic_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3049503910
+            m_baseNameHash = 3275606040
+            base = "plastic"
+        },
+        
+        {
+            surfacePropertyName = "concrete_polished"
+            physics = 
+            {
+                density = 2400.000000
+                elasticity = 0.200000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Concrete.ImpactHard"
+                impactsoft = "Concrete.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2904757035
+            m_baseNameHash = 436732118
+            base = "concrete"
+        },
+        
+        {
+            surfacePropertyName = "plastic_dumpster"
+            physics = 
+            {
+                density = 500.000000
+                elasticity = 0.010000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Plastic_Box.BulletImpact"
+                impacthard = "Plastic_Box.ImpactHard"
+                impactsoft = "Plastic_Box.ImpactSoft"
+                break = "Plastic_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.250000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 475182043
+            m_baseNameHash = 3655027529
+            base = "Plastic_Box"
+        },
+        
+        {
+            surfacePropertyName = "metal_dumpster"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.100000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalBarrel.BulletImpact"
+                impacthard = "Metal_Barrel.ImpactHard"
+                impactsoft = "Metal_Barrel.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.830000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2734964014
+            m_baseNameHash = 367121336
+            base = "metal_barrel"
+        },
+        
+        {
+            surfacePropertyName = "Cloth"
+            physics = 
+            {
+                density = 500.000000
+                elasticity = 0.010000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Carpet.BulletImpact"
+                impacthard = "Carpet.Impact"
+                impactsoft = "Carpet.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.030000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2703530318
+            m_baseNameHash = 3060091858
+            base = "carpet"
+        },
+        
+        {
+            surfacePropertyName = "plaster_drywall"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "drywall.BulletImpact"
+                impacthard = "drywall.ImpactHard"
+                impactsoft = "drywall.ImpactSoft"
+                scraperough = ""
+                scrapesmooth = ""
+                break = "Cardboard.Break"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.500000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3956808706
+            m_baseNameHash = 1382086679
+            base = "plaster"
+        },
+        
+        {
+            surfacePropertyName = "Wood_Tree"
+            physics = 
+            {
+                density = 2700.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Wood.BulletImpact"
+                impacthard = "Wood_Solid.ImpactHard"
+                impactsoft = "Wood_Solid.ImpactSoft"
+                break = "Wood.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.830000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 1569131525
+            m_baseNameHash = 665398398
+            base = "Wood_Dense"
+        },
+        
+        {
+            surfacePropertyName = "beans"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 6.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Mud.BulletImpact"
+                impacthard = "Dirt.Impact"
+                impactsoft = "Dirt.Impact"
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2769496379
+            m_baseNameHash = 2385835545
+            base = "mud"
+        },
+        
+        {
+            surfacePropertyName = "WeaponHeavy"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.Heavy.Impact"
+                impactsoft = "weapon.Heavy.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3303064258
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponPistol"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.Pistol.Impact"
+                impactsoft = "weapon.Pistol.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 491248572
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponSMG"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.SMG.Impact"
+                impactsoft = "weapon.SMG.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3048377661
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponRifle"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.Rifle.Impact"
+                impactsoft = "weapon.Rifle.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 756963221
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponC4"
+            physics = 
+            {
+                density = 900.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.C4.Impact"
+                impactsoft = "weapon.C4.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3724526359
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponShotgun"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.Shotgun.Impact"
+                impactsoft = "weapon.Shotgun.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3624130683
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "Defuser"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "defuser.BulletImpact"
+                impacthard = "defuser.Impact"
+                impactsoft = "defuser.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3852190359
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponMolotov"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.Molotov.Impact"
+                impactsoft = "weapon.Molotov.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3742913880
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponFlashbang"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.Flashbang.Impact"
+                impactsoft = "weapon.Flashbang.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1438316166
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponSniper"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.Sniper.Impact"
+                impactsoft = "weapon.Sniper.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2553511412
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponHEGrenade"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.HEGrenade.Impact"
+                impactsoft = "weapon.HEGrenade.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 206398865
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "WeaponIncendiary"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.Incendiary.Impact"
+                impactsoft = "weapon.Incendiary.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3686982337
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "cardboard_smallbox"
+            physics = 
+            {
+                density = 500.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Cardboard.BulletImpact"
+                impacthard = "Cardboard.Small.Impact"
+                impactsoft = "Cardboard.Small.Impact"
+                scraperough = ""
+                break = "Cardboard.Break"
+                scrapesmooth = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.250000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 1424257611
+            m_baseNameHash = 1154464259
+            base = "cardboard"
+        },
+        
+        {
+            surfacePropertyName = "papertowel"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Cardboard.BulletImpact"
+                impacthard = "Papertowel.Impact"
+                impactsoft = "Papertowel.Impact"
+                scraperough = ""
+                break = "Cardboard.Break"
+                scrapesmooth = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 260988587
+            m_baseNameHash = 557949949
+            base = "paper"
+        },
+        
+        {
+            surfacePropertyName = "potterylarge"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.300000
+                friction = 0.400000
+                dampening = 0.000000
+                thickness = 0.500000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Pottery.BulletImpact"
+                impacthard = "Pottery.ImpactHard"
+                impactsoft = "Pottery.ImpactSoft"
+                break = "Pottery.Large.Break"
+                strain = "Glass.Strain"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3528849652
+            m_baseNameHash = 377940586
+            base = "glassbottle"
+        },
+        
+        {
+            surfacePropertyName = "plastic_tape"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Tape.BulletImpact"
+                impacthard = "Paintcan.ImpactHard"
+                impactsoft = "Paintcan.ImpactSoft"
+                break = "Plastic_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3330210135
+            m_baseNameHash = 3275606040
+            base = "plastic"
+        },
+        
+        {
+            surfacePropertyName = "playerflesh"
+            physics = 
+            {
+                density = 900.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Silent.BulletImpact"
+                impacthard = "T.ImpactHard"
+                impactsoft = "T.ImpactSoft"
+                break = ""
+                strain = ""
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 242403237
+            m_baseNameHash = 1152554101
+            base = "flesh"
+        },
+        
+        {
+            surfacePropertyName = "fruit"
+            physics = 
+            {
+                density = 900.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Fruit.BulletImpact"
+                impacthard = "Fruit.Impact"
+                impactsoft = "Fruit.Impact"
+                break = "Fruit.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 0.250000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 3961670765
+            m_baseNameHash = 2233579705
+            base = "player"
+        },
+        
+        {
+            surfacePropertyName = "WeaponMagazine"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "WeaponMagazine.BulletImpact"
+                impacthard = "WeaponMagazine.ImpactHard"
+                impactsoft = "WeaponMagazine.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 3613934055
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "audioblocker"
+            physics = 
+            {
+                density = 0.000000
+                elasticity = 0.000000
+                friction = 0.000000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = ""
+                impacthard = ""
+                impactsoft = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.100000
+            }
+            m_nameHash = 2856517772
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "wet_sand"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Concrete.BulletImpact"
+                impacthard = "Concrete.ImpactHard"
+                impactsoft = "Concrete.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.000000
+            }
+            m_nameHash = 2178885540
+            m_baseNameHash = 345401639
+            base = "wet"
+        },
+        
+        {
+            surfacePropertyName = "plastic_autoCover"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "MetalVehicle.BulletImpact"
+                impacthard = "Land_MetalVehicle.StepLeft"
+                impactsoft = "CT_MetalVehicle.StepLeft"
+                break = "Plastic_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+                walkleft = "CT_MetalVehicle.StepLeft"
+                walkright = "CT_MetalVehicle.StepLeft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3293637830
+            m_baseNameHash = 3275606040
+            base = "plastic"
+        },
+        
+        {
+            surfacePropertyName = "plastic_milkCrate"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Plastic_milkCrate.BulletImpact"
+                impacthard = "Plastic_milkCrate.ImpactHard"
+                impactsoft = "Plastic_milkCrate.ImpactSoft"
+                break = "Plastic_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 3024843702
+            m_baseNameHash = 3275606040
+            base = "plastic"
+        },
+        
+        {
+            surfacePropertyName = "WeaponKnife"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.950000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "weapon.BulletImpact"
+                impacthard = "weapon.Knife.Impact"
+                impactsoft = "weapon.Knife.Impact"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 893432462
+            m_baseNameHash = 3957205779
+            base = "weapon"
+        },
+        
+        {
+            surfacePropertyName = "brass_bell_smallest_g"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "inferno.bell_g"
+                impacthard = "Default.ImpactHard"
+                impactsoft = "Default.ImpactSoft"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 1692676941
+            m_baseNameHash = 0
+        },
+        
+        {
+            surfacePropertyName = "metalrailing"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.100000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "SolidMetal.BulletImpact"
+                impacthard = "SolidMetal.ImpactHard"
+                impactsoft = "SolidMetal.ImpactSoft"
+                scrapesmooth = ""
+                scraperough = ""
+                break = "Breakable.Metal"
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 1.000000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 1.000000
+            }
+            m_nameHash = 2838185980
+            m_baseNameHash = 417707814
+            base = "metal"
+        },
+        
+        {
+            surfacePropertyName = "plastic_solid"
+            physics = 
+            {
+                density = 2000.000000
+                elasticity = 0.250000
+                friction = 0.800000
+                dampening = 0.000000
+                thickness = 0.250000
+            }
+            audiosounds = 
+            {
+                bulletimpact = "Plastic_Box.ImpactHard"
+                impacthard = "Paintcan.ImpactHard"
+                impactsoft = "Paintcan.ImpactSoft"
+                break = "Plastic_Box.Break"
+                scrapesmooth = ""
+                scraperough = ""
+            }
+            audioparams = 
+            {
+                audioreflectivity = 0.660000
+                audiohardnessfactor = 1.000000
+                audioroughnessfactor = 0.100000
+                scrapeRoughThreshold = 0.500000
+                impactHardThreshold = 0.500000
+                occlusionFactor = 0.800000
+            }
+            m_nameHash = 2214245875
+            m_baseNameHash = 3275606040
+            base = "plastic"
+        },
+    ]
+}

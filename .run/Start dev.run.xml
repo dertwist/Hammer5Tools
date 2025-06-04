@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Start dev" type="CompoundRunConfigurationType">
+    <toRun name="compile_ui" type="PythonConfigurationType" />
+    <toRun name="main dev" type="PythonConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>

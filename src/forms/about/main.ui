@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>documentation_dialog</class>
+ <widget class="QDialog" name="documentation_dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>645</width>
+    <height>505</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>645</width>
+    <height>505</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>645</width>
+    <height>505</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>About</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: #1C1C1C;</string>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>false</bool>
+  </property>
+  <property name="modal">
+   <bool>false</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="frame">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>180</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>180</height>
+      </size>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Raised</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="spacing">
+       <number>6</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="styleSheet">
+         <string notr="true">image: url(:/images/help/header.png);</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="version">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Segoe UI Black</family>
+          <pointsize>13</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Version: 1.0.0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frame_4">
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Raised</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="font">
+         <font>
+          <pointsize>11</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Use tooltips for understanding the program: 
+For almost all buttons, an explanation appears when you hold your cursor over a button.</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_4">
+        <property name="minimumSize">
+         <size>
+          <width>400</width>
+          <height>200</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">image: url(:/images/help/about/tooltip_help.png);</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frame_3">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>44</height>
+      </size>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Raised</enum>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <property name="spacing">
+       <number>6</number>
+      </property>
+      <property name="leftMargin">
+       <number>9</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>9</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="open_documentation_button">
+        <property name="styleSheet">
+         <string notr="true">    QPushButton {
+
+        font: 580 10pt &quot;Segoe UI&quot;;
+    
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+        </property>
+        <property name="text">
+         <string>Documentation</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources.qrc">
+          <normaloff>:/icons/developer_guide_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/developer_guide_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="request_a_new_feature_button">
+        <property name="styleSheet">
+         <string notr="true">    QPushButton {
+
+        font: 580 10pt &quot;Segoe UI&quot;;
+    
+
+        border: 2px solid black;
+        border-radius: 2px;
+        border-color: rgba(80, 80, 80, 255);
+        height:22px;
+        padding-top: 2px;
+        padding-bottom:2px;
+        padding-left: 4px;
+        padding-right: 4px;
+        color: #E3E3E3;
+        background-color: #1C1C1C;
+    }
+    QPushButton:hover {
+        background-color: #414956;
+        color: white;
+    }
+    QPushButton:pressed {
+        background-color: red;
+        background-color: #1C1C1C;
+        margin: 1 px;
+        margin-left: 2px;
+        margin-right: 2px;
+
+    }</string>
+        </property>
+        <property name="text">
+         <string>Feedback</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources.qrc">
+          <normaloff>:/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
