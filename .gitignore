@@ -1,0 +1,108 @@
+# General generated files
+*~
+*.autosave
+*.a
+*.core
+*.moc
+*.o
+*.obj
+*.orig
+*.rej
+*.so
+*.so.*
+*_pch.h.cpp
+*_resource.rc
+*.qm
+.#*
+*.*#
+core
+!core/
+tags
+.DS_Store
+.directory
+*.debug
+*.prl
+*.app
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+Thumbs.db
+*.res
+*.rc
+/.qmake.cache
+/.qmake.stash
+
+# QtCreator generated files
+*.pro.user*
+CMakeLists.txt.user*
+
+# XEmacs temporary files
+*.flc
+
+# Vim temporary files
+.*.swp
+
+# Visual Studio generated files
+*.ib_pdb_index
+*.idb
+*.ilk
+*.pdb
+*.sln
+*.suo
+*.vcproj
+*vcproj.*.*.user
+*.ncb
+*.sdf
+*.opensdf
+*.vcxproj
+*vcxproj.*
+
+# MinGW generated files
+*.Debug
+*.Release
+
+# Python byte code
+*.pyc
+
+# Miscellaneous
+.codiumai
+dist/debug.kv3
+/dist
+.idea
+
+# Python project files
+*.pyproject
+*.spec
+Hammer5Tools.pyproject.user
+Hammer5Tools.pyproject.user.47e72da
+Hammer5Tools.pyproject.user.85e345b
+Hammer5Tools.spec
+Hammer5Tools_Updater.spec
+
+# Project-specific ignores
+/smartprop_editor/hammer.dll.bndb
+/hotkeys/hammer/test.keybindings
+/Decompiler/
+/SoundEventEditor/
+/src/editors/soundevent_editor/resource/parsing/soundevents.build/
+/src/editors/soundevent_editor/resource/parsing/soundevents.dist/
+.qodo
+/dev/custom_curve/settings.ini
+/dev/main/settings.ini
+settings.ini
+/application.zip
+Hammer5Tools/
+
+# Build and output directories
+build/
+main.build/
+main.onefile-build/
+main.dist/
+dist/
+.idea
+__pycache__/
+.qtcreator/
+.build/
+hotkeys
+debug.kv3
+settings.cfg
