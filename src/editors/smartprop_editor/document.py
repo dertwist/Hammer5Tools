@@ -210,13 +210,11 @@ class SmartPropDocument(QMainWindow):
             print(error)
 
         try:
-            data = ast.literal_eval(item.text(1))
+            data = item.data(0, Qt.UserRole)
             data_modif = data.get("m_Modifiers", {})
             data_sel_criteria = data.get("m_SelectionCriteria", {})
-
             data.pop("m_Modifiers", None)
             data.pop("m_SelectionCriteria", None)
-
             property_instance = PropertyFrame(
                 widget_list=self.ui.properties_layout,
                 value=data,
@@ -297,7 +295,7 @@ class SmartPropDocument(QMainWindow):
 
             output_value.update({"m_Modifiers": modifiers})
             output_value.update({"m_SelectionCriteria": selection_criteria})
-            self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
+            item.setData(0, Qt.UserRole, output_value)
 
             # Mark document as modified
             self._modified = True
@@ -368,13 +366,11 @@ class SmartPropDocument(QMainWindow):
                             item_class = item.get("_class")
                             value_dict = item.copy()
                             value_dict.pop("m_Children", None)
-                            # Use instance's element_id_generator instead of global functions
                             self.element_id_generator.update_value(value_dict)
                             value_dict = self.element_id_generator.update_child_value(value_dict, force=True)
-
                             child_item = HierarchyItemModel(
                                 _name=value_dict.get("m_sLabel", get_label_id_from_value(value_dict)),
-                                _data=str(value_dict),
+                                _data=value_dict,
                                 _class=get_clean_class_name(item_class),
                                 _id=self.element_id_generator.get_key(value_dict)
                             )
@@ -479,7 +475,6 @@ class SmartPropDocument(QMainWindow):
 
     def new_element(self, element_class, element_value):
         element_value = ast.literal_eval(element_value)
-        # Use element_id_generator method instead of global function
         self.element_id_generator.update_value(element_value)
         new_element_item = HierarchyItemModel(
             _name=get_label_id_from_value(element_value),
