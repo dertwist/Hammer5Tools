@@ -220,3 +220,35 @@ class DuplicateItemsCommand(QUndoCommand):
             idx = parent.indexOfChild(new_item)
             if idx != -1:
                 parent.takeChild(idx)
+
+class SelectItemsCommand(QUndoCommand):
+    def __init__(self, tree, old_selected, new_selected):
+        super().__init__("Select Item(s)")
+        self.tree = tree
+        self.old_selected = old_selected
+        self.new_selected = new_selected
+
+    def _set_selection(self, items):
+        # Clear any existing selection first
+        self.tree.clearSelection()
+        
+        # Set selection for new items
+        for item in items:
+            if isinstance(item, QTreeWidgetItem):
+                item.setSelected(True)
+        
+        # Set focus and scroll to first item if there are any selected items
+        if items:
+            self.tree.setCurrentItem(items[0])
+            self.tree.scrollToItem(items[0])
+            # Explicitly set focus to the tree widget
+            self.tree.setFocus(Qt.OtherFocusReason)
+        else:
+            # If no items selected, clear current item
+            self.tree.setCurrentItem(None)
+
+    def redo(self):
+        self._set_selection(self.new_selected)
+
+    def undo(self):
+        self._set_selection(self.old_selected)
