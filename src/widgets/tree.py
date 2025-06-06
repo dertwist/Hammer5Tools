@@ -78,9 +78,9 @@ class HierarchyTreeWidget(QTreeWidget):
             self.setCurrentItem(item)
             self.currentItem().setExpanded(True)
             self.setFocus()
-    def DuplicateSelectedItems(self):
+    def DuplicateSelectedItems(self, ElementIDGenerator=None):
         selected_items = self.selectedItems()
         if not selected_items:
             return
-        cmd = DuplicateItemsCommand(self, selected_items)
+        cmd = DuplicateItemsCommand(self, selected_items, ElementIDGenerator)
         self.undo_stack.push(cmd)

@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QMenu, QApplication
 from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtGui import QCursor, QAction
 from src.property.methods import PropertyMethods
-from src.editors.smartprop_editor.element_id import *
+from src.widgets.element_id import *
 from src.settings.main import get_settings_bool
 from src.widgets.popup_menu.main import PopupMenu
 from src.editors.smartprop_editor.objects import variables_list

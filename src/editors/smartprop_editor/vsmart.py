@@ -13,7 +13,7 @@ from src.editors.smartprop_editor._common import (
     get_clean_class_name_value,
     get_label_id_from_value
 )
-from src.editors.smartprop_editor.element_id import (
+from src.widgets.element_id import (
     set_ElementID,
     reset_ElementID,
     get_ElementID_last,
