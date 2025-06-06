@@ -2,6 +2,7 @@ import ast
 import re
 import keyvalues3 as kv3
 from PySide6.QtWidgets import QTreeWidget
+from PySide6.QtCore import Qt
 
 from src.editors.smartprop_editor.choices import AddChoice, AddOption, AddVariable
 from src.common import editor_info, JsonToKv3
@@ -12,7 +13,7 @@ from src.editors.smartprop_editor._common import (
     get_clean_class_name_value,
     get_label_id_from_value
 )
-from src.editors.smartprop_editor.element_id import (
+from src.widgets.element_id import (
     set_ElementID,
     reset_ElementID,
     get_ElementID_last,
@@ -141,8 +142,8 @@ def serialization_hierarchy_items(item, data=None):
         data = {"m_Children": []}
 
     try:
-        value_row = item.text(1)
-        parent_data = ast.literal_eval(value_row)
+        parent_data = item.data(0, Qt.UserRole)
+        parent_data = dict(parent_data) if parent_data is not None else {}
         parent_data["m_sLabel"] = item.text(0)
 
         # Initialize children array if needed
@@ -253,7 +254,7 @@ class VsmartOpen:
                             value_dict = update_child_ElementID_value(value_dict)
                         child_item = HierarchyItemModel(
                             _name=value_dict.get("m_sLabel", get_label_id_from_value(value_dict)),
-                            _data=str(value_dict),
+                            _data=value_dict,
                             _class=get_clean_class_name(item_class),
                             _id=get_ElementID_key(value_dict)
                         )
@@ -410,8 +411,8 @@ class VsmartSave:
         for index in range(item.childCount()):
             child = item.child(index)
             key = child.text(0)
-            value_row = child.text(1)
-            child_data = ast.literal_eval(value_row)
+            child_data = child.data(0, Qt.UserRole)
+            child_data = dict(child_data) if child_data is not None else {}
             child_data["m_sLabel"] = key
             # Process reference objects if present.
             s_ref_id = child_data.get("m_sReferenceObjectID", None)
@@ -423,7 +424,9 @@ class VsmartSave:
                 if isinstance(n_ref_id, int):
                     reference_str = self.find_element_by_id(n_ref_id, self.tree.invisibleRootItem())
                     if reference_str is not None:
-                        reference_parsed = ast.literal_eval(reference_str)
+                        reference_parsed = reference_str
+                        if isinstance(reference_parsed, str):
+                            reference_parsed = ast.literal_eval(reference_parsed)
                         merged = merge_reference_data(reference_parsed, child_data)
                         merged["m_sReferenceObjectID"] = s_ref_id
                         merged["m_nReferenceID"] = n_ref_id
@@ -438,10 +441,9 @@ class VsmartSave:
         """Traverse the tree to locate an element with m_nElementID; return its text data if found."""
         for i in range(item.childCount()):
             child = item.child(i)
-            val_str = child.text(1)
-            parsed_data = ast.literal_eval(val_str)
-            if parsed_data.get("m_nElementID") == element_id:
-                return val_str
+            val_data = child.data(0, Qt.UserRole)
+            if val_data is not None and val_data.get("m_nElementID") == element_id:
+                return val_data
             if child.childCount() > 0:
                 found = self.find_element_by_id(element_id, child)
                 if found:

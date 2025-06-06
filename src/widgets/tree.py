@@ -4,7 +4,8 @@ from PySide6.QtWidgets import (
     QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QAbstractItemView
 )
 from PySide6.QtGui import QUndoStack, QUndoCommand
-from .commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand
+from PySide6.QtCore import Qt
+from .commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand, SelectItemsCommand
 
 class HierarchyTreeWidget(QTreeWidget):
     def __init__(self, undo_stack):
@@ -16,6 +17,7 @@ class HierarchyTreeWidget(QTreeWidget):
         self.setDropIndicatorShown(True)
         self._ignore_next_drop = False
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.setFocusPolicy(Qt.StrongFocus)
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setDragDropMode(QTreeWidget.InternalMove)
 
@@ -78,9 +80,17 @@ class HierarchyTreeWidget(QTreeWidget):
             self.setCurrentItem(item)
             self.currentItem().setExpanded(True)
             self.setFocus()
-    def DuplicateSelectedItems(self):
+    def DuplicateSelectedItems(self, ElementIDGenerator=None):
         selected_items = self.selectedItems()
         if not selected_items:
             return
-        cmd = DuplicateItemsCommand(self, selected_items)
+        cmd = DuplicateItemsCommand(self, selected_items, ElementIDGenerator)
         self.undo_stack.push(cmd)
+
+    def setSelectedItemsWithUndo(self, items):
+        """Set selected items with undo support"""
+        old_selected = self.selectedItems()
+        # Only create command if selection actually changes
+        if set(old_selected) != set(items):
+            cmd = SelectItemsCommand(self, old_selected, items)
+            self.undo_stack.push(cmd)

@@ -244,7 +244,7 @@ class ComboboxVariablesWidget(QWidget):
             'm_nElementID': None,
         }
         # Always assign a new unique element ID to avoid duplication
-        from src.editors.smartprop_editor.element_id import set_ElementID
+        from src.widgets.element_id import set_ElementID
         var_value['m_nElementID'] = set_ElementID(force=True)
         self.add_variable(
             name=final_name,

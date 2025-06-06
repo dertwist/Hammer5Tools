@@ -9,6 +9,10 @@ import keyvalues3 as kv3
 from keyvalues3.textwriter import KV3EncoderOptions
 import ctypes
 import re, unicodedata, random, string
+
+# Versions
+app_version = '4.6.02'
+
 #======================================================<  Copied from preferences.py file  >===================================================
 
 def get_cs2_path():
@@ -34,8 +38,6 @@ def enable_dark_title_bar(window):
         print(f"Failed to set dark mode title bar: {e}")
 
 #===============================================================<  Variables  >=============================================================
-# Versions
-app_version = '4.6.01'
 
 editor_info = {
     'editor_info':

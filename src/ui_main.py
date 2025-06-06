@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.9.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -24,7 +24,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1194, 889)
+        MainWindow.resize(1097, 878)
         icon = QIcon()
         icon.addFile(u":/icons/appicon.ico", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         MainWindow.setWindowIcon(icon)
@@ -158,29 +158,41 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.discord)
 
+        self.documentation_button = QPushButton(self.centralwidget)
+        self.documentation_button.setObjectName(u"documentation_button")
+        self.documentation_button.setMinimumSize(QSize(32, 0))
+        self.documentation_button.setMaximumSize(QSize(32, 16777210))
+        self.documentation_button.setStyleSheet(u"padding: 5px;")
+        icon8 = QIcon()
+        icon8.addFile(u":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.documentation_button.setIcon(icon8)
+        self.documentation_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.documentation_button)
+
+        self.FixNoSteamLogon_Button = QPushButton(self.centralwidget)
+        self.FixNoSteamLogon_Button.setObjectName(u"FixNoSteamLogon_Button")
+        self.FixNoSteamLogon_Button.setMinimumSize(QSize(92, 0))
+        self.FixNoSteamLogon_Button.setStyleSheet(u"padding: 5px;\n"
+"font: 580 10pt \"Segoe UI\";")
+        icon9 = QIcon()
+        icon9.addFile(u":/valve_common/icons/tools/common/valve_small.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.FixNoSteamLogon_Button.setIcon(icon9)
+        self.FixNoSteamLogon_Button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.FixNoSteamLogon_Button)
+
         self.preferences_button = QPushButton(self.centralwidget)
         self.preferences_button.setObjectName(u"preferences_button")
         self.preferences_button.setMinimumSize(QSize(128, 0))
         self.preferences_button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
-        icon8 = QIcon()
-        icon8.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.preferences_button.setIcon(icon8)
+        icon10 = QIcon()
+        icon10.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.preferences_button.setIcon(icon10)
         self.preferences_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.preferences_button)
-
-        self.documentation_button = QPushButton(self.centralwidget)
-        self.documentation_button.setObjectName(u"documentation_button")
-        self.documentation_button.setMinimumSize(QSize(96, 0))
-        self.documentation_button.setStyleSheet(u"padding: 5px; \n"
-"font: 580 10pt \"Segoe UI\";")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.documentation_button.setIcon(icon9)
-        self.documentation_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.documentation_button)
 
         self.horizontalSpacer_3 = QSpacerItem(24, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
@@ -191,9 +203,9 @@ class Ui_MainWindow(object):
         font = QFont()
         font.setPointSize(11)
         self.export_and_import_addon_button.setFont(font)
-        icon10 = QIcon()
-        icon10.addFile(u":/icons/publish_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.export_and_import_addon_button.setIcon(icon10)
+        icon11 = QIcon()
+        icon11.addFile(u":/icons/publish_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.export_and_import_addon_button.setIcon(icon11)
         self.export_and_import_addon_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.export_and_import_addon_button)
@@ -201,9 +213,9 @@ class Ui_MainWindow(object):
         self.delete_addon_button = QToolButton(self.centralwidget)
         self.delete_addon_button.setObjectName(u"delete_addon_button")
         self.delete_addon_button.setFont(font)
-        icon11 = QIcon()
-        icon11.addFile(u":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.delete_addon_button.setIcon(icon11)
+        icon12 = QIcon()
+        icon12.addFile(u":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.delete_addon_button.setIcon(icon12)
         self.delete_addon_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.delete_addon_button)
@@ -211,9 +223,9 @@ class Ui_MainWindow(object):
         self.create_new_addon_button = QToolButton(self.centralwidget)
         self.create_new_addon_button.setObjectName(u"create_new_addon_button")
         self.create_new_addon_button.setFont(font)
-        icon12 = QIcon()
-        icon12.addFile(u":/icons/post_add_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.create_new_addon_button.setIcon(icon12)
+        icon13 = QIcon()
+        icon13.addFile(u":/icons/post_add_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.create_new_addon_button.setIcon(icon13)
         self.create_new_addon_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.create_new_addon_button)
@@ -227,7 +239,7 @@ class Ui_MainWindow(object):
 
         self.launch_settings = QToolButton(self.centralwidget)
         self.launch_settings.setObjectName(u"launch_settings")
-        self.launch_settings.setIcon(icon8)
+        self.launch_settings.setIcon(icon10)
         self.launch_settings.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.launch_settings)
@@ -238,9 +250,9 @@ class Ui_MainWindow(object):
         self.Launch_Addon_Button.setMinimumSize(QSize(128, 0))
         self.Launch_Addon_Button.setStyleSheet(u"padding: 5px;\n"
 "font: 700 10pt \"Segoe UI\";")
-        icon13 = QIcon()
-        icon13.addFile(u":/icons/icons/hammer_icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Launch_Addon_Button.setIcon(icon13)
+        icon14 = QIcon()
+        icon14.addFile(u":/icons/icons/hammer_icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Launch_Addon_Button.setIcon(icon14)
         self.Launch_Addon_Button.setIconSize(QSize(20, 20))
         self.Launch_Addon_Button.setCheckable(False)
 
@@ -250,12 +262,24 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer)
 
+        self.vcs_button = QPushButton(self.centralwidget)
+        self.vcs_button.setObjectName(u"vcs_button")
+        self.vcs_button.setMinimumSize(QSize(64, 0))
+        self.vcs_button.setMaximumSize(QSize(32, 16777210))
+        self.vcs_button.setStyleSheet(u"padding: 5px;")
+        icon15 = QIcon()
+        icon15.addFile(u":/valve_common/icons/tools/common/flip.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.vcs_button.setIcon(icon15)
+        self.vcs_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.vcs_button)
+
         self.open_addons_folder_button = QToolButton(self.centralwidget)
         self.open_addons_folder_button.setObjectName(u"open_addons_folder_button")
         self.open_addons_folder_button.setFont(font)
-        icon14 = QIcon()
-        icon14.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_addons_folder_button.setIcon(icon14)
+        icon16 = QIcon()
+        icon16.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_addons_folder_button.setIcon(icon16)
 
         self.horizontalLayout_2.addWidget(self.open_addons_folder_button)
 
@@ -268,22 +292,22 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.open_addons_folder_downlist.sizePolicy().hasHeightForWidth())
         self.open_addons_folder_downlist.setSizePolicy(sizePolicy)
-        self.open_addons_folder_downlist.setMinimumSize(QSize(22, 0))
+        self.open_addons_folder_downlist.setMinimumSize(QSize(64, 0))
         self.open_addons_folder_downlist.setStyleSheet(u"font: 580 10pt \"Segoe UI\";")
 
         self.horizontalLayout_2.addWidget(self.open_addons_folder_downlist)
 
-        self.FixNoSteamLogon_Button = QPushButton(self.centralwidget)
-        self.FixNoSteamLogon_Button.setObjectName(u"FixNoSteamLogon_Button")
-        self.FixNoSteamLogon_Button.setMinimumSize(QSize(156, 0))
-        self.FixNoSteamLogon_Button.setStyleSheet(u"padding: 5px;\n"
+        self.cleanup_button = QPushButton(self.centralwidget)
+        self.cleanup_button.setObjectName(u"cleanup_button")
+        self.cleanup_button.setMinimumSize(QSize(92, 0))
+        self.cleanup_button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
-        icon15 = QIcon()
-        icon15.addFile(u":/icons/bolt_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.FixNoSteamLogon_Button.setIcon(icon15)
-        self.FixNoSteamLogon_Button.setIconSize(QSize(20, 20))
+        icon17 = QIcon()
+        icon17.addFile(u":/valve_common/icons/tools/common/find.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.cleanup_button.setIcon(icon17)
+        self.cleanup_button.setIconSize(QSize(20, 20))
 
-        self.horizontalLayout_2.addWidget(self.FixNoSteamLogon_Button)
+        self.horizontalLayout_2.addWidget(self.cleanup_button)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
@@ -314,13 +338,17 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.discord.setText("")
 #if QT_CONFIG(tooltip)
+        self.documentation_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Discord server</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.documentation_button.setText("")
+#if QT_CONFIG(tooltip)
+        self.FixNoSteamLogon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Fix No Steam Logon</span></p><p>This script restarts Steam and launches the current addon.</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.FixNoSteamLogon_Button.setText(QCoreApplication.translate("MainWindow", u"Restart", None))
+#if QT_CONFIG(tooltip)
         self.preferences_button.setToolTip("")
 #endif // QT_CONFIG(tooltip)
         self.preferences_button.setText(QCoreApplication.translate("MainWindow", u"Settings", None))
-#if QT_CONFIG(tooltip)
-        self.documentation_button.setToolTip("")
-#endif // QT_CONFIG(tooltip)
-        self.documentation_button.setText(QCoreApplication.translate("MainWindow", u"About", None))
 #if QT_CONFIG(tooltip)
         self.export_and_import_addon_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Archive addon</span></p><p>Create an archive on from game and content folders.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
@@ -342,6 +370,10 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setText(QCoreApplication.translate("MainWindow", u"Edit map", None))
 #if QT_CONFIG(tooltip)
+        self.vcs_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Version Control</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.vcs_button.setText(QCoreApplication.translate("MainWindow", u"VCS", None))
+#if QT_CONFIG(tooltip)
         self.open_addons_folder_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Open Game/Content Addons folder</span></p><p><span style=\" font-size:9pt;\">Opens the game addons or content addons folder for the current addon selection. </span></p><p><span style=\" font-size:9pt;\">To choose the folder type to open, select a folder in the </span><span style=\" font-size:9pt; font-style:italic;\">Addon Folder Selection</span><span style=\" font-size:9pt;\">.</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.open_addons_folder_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
@@ -354,8 +386,8 @@ class Ui_MainWindow(object):
         self.open_addons_folder_downlist.setCurrentText("")
         self.open_addons_folder_downlist.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Open Folder", None))
 #if QT_CONFIG(tooltip)
-        self.FixNoSteamLogon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Fix No Steam Logon</span></p><p>This script restarts Steam and launches the current addon.</p></body></html>", None))
+        self.cleanup_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Cleanup</span></p><p>...</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.FixNoSteamLogon_Button.setText(QCoreApplication.translate("MainWindow", u"Restart Steam", None))
+        self.cleanup_button.setText(QCoreApplication.translate("MainWindow", u"Cleanup", None))
     # retranslateUi
 

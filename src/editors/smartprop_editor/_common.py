@@ -1,5 +1,5 @@
 from src.editors.smartprop_editor.objects import element_prefix
-from src.editors.smartprop_editor.element_id import get_ElementID_key
+from src.widgets.element_id import get_ElementID_key
 
 disable_line_value_length_limit_keys = [
     "m_vRandomPositionMax", "m_vRandomPositionMin", "m_flRandomScaleMax", "m_vRandomRotationMax",

@@ -62,11 +62,38 @@ def kill_process(process_name: str) -> None:
     )
 
 
+def find_pycparser_tables():
+    """
+    Try to find lextab.py and yacctab.py in the most likely venv locations.
+    Returns (lextab_path, yacctab_path) or raises FileNotFoundError.
+    """
+    candidates = [
+        os.path.join(cur_dir, '.venv', 'Lib', 'site-packages', 'pycparser'),
+        os.path.join(cur_dir, 'venv', 'Lib', 'site-packages', 'pycparser'),
+    ]
+    for base in candidates:
+        lextab = os.path.join(base, 'lextab.py')
+        yacctab = os.path.join(base, 'yacctab.py')
+        if os.path.isfile(lextab) and os.path.isfile(yacctab):
+            return lextab, yacctab
+    raise FileNotFoundError(
+        "Could not find pycparser lextab.py and yacctab.py in either .venv or venv. "
+        "Please ensure pycparser is installed in your virtual environment."
+    )
+
+
 def build_hammer5_tools(fast=False) -> None:
     if fast:
         optimization_level = 0
     else:
         optimization_level = 2
+
+    try:
+        lextab_path, yacctab_path = find_pycparser_tables()
+    except FileNotFoundError as e:
+        print(f"ERROR: {e}")
+        exit(1)
+
     pyinstaller_cmd = [
         'pyinstaller',
         '--name=Hammer5Tools',
@@ -92,8 +119,8 @@ def build_hammer5_tools(fast=False) -> None:
         # Bundle all .NET DLLs
         *[f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls],
         # Bundle pycparser parser tables
-        '--add-data=' + os.path.join(os.path.dirname(__file__), 'venv', 'Lib', 'site-packages', 'pycparser', 'lextab.py') + ';pycparser',
-        '--add-data=' + os.path.join(os.path.dirname(__file__), 'venv', 'Lib', 'site-packages', 'pycparser', 'yacctab.py') + ';pycparser',
+        f'--add-data={lextab_path};pycparser',
+        f'--add-data={yacctab_path};pycparser',
         # Runtime hook for pycparser/pythonnet
         f'--runtime-hook={runtime_hook_path}',
         'src/main.py'
