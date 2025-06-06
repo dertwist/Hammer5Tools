@@ -40,7 +40,7 @@ from src.widgets.popup_menu.main import PopupMenu
 from src.editors.smartprop_editor.commands import GroupElementsCommand
 from src.forms.replace_dialog.main import FindAndReplaceDialog
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
-from src.editors.smartprop_editor.element_id import ElementIDGenerator
+from src.widgets.element_id import ElementIDGenerator
 from src.editors.smartprop_editor._common import (
     get_clean_class_name_value,
     get_clean_class_name,
@@ -330,7 +330,7 @@ class SmartPropDocument(QMainWindow):
                     self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget))
                     return True
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_D:
-                    self.ui.tree_hierarchy_widget.DuplicateSelectedItems()
+                    self.ui.tree_hierarchy_widget.DuplicateSelectedItems(self.element_id_generator)
                     return True
                 if event.matches(QKeySequence.Undo):
                     self.undo_stack.undo()
@@ -944,7 +944,7 @@ class SmartPropDocument(QMainWindow):
         remove_action.setShortcut(QKeySequence("Delete"))
 
         duplicate_action = menu.addAction("Duplicate")
-        duplicate_action.triggered.connect(lambda: self.ui.tree_hierarchy_widget.DuplicateSelectedItems())
+        duplicate_action.triggered.connect(lambda: self.ui.tree_hierarchy_widget.DuplicateSelectedItems(self.element_id_generator))
         duplicate_action.setShortcut(QKeySequence("Ctrl+D"))
 
         grouping_action = menu.addAction("Group selected")
