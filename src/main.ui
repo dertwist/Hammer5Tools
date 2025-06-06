@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1194</width>
-    <height>889</height>
+    <width>1097</width>
+    <height>878</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -240,6 +240,71 @@ QTabBar::tab:selected {
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="documentation_button">
+        <property name="minimumSize">
+         <size>
+          <width>32</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>32</width>
+          <height>16777210</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Discord server&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">padding: 5px;</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="FixNoSteamLogon_Button">
+        <property name="minimumSize">
+         <size>
+          <width>92</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Fix No Steam Logon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This script restarts Steam and launches the current addon.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">padding: 5px;
+font: 580 10pt &quot;Segoe UI&quot;;</string>
+        </property>
+        <property name="text">
+         <string>Restart</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/valve_common/icons/tools/common/valve_small.png</normaloff>:/valve_common/icons/tools/common/valve_small.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="preferences_button">
         <property name="minimumSize">
          <size>
@@ -260,36 +325,6 @@ font: 580 10pt &quot;Segoe UI&quot;;</string>
         <property name="icon">
          <iconset resource="resources.qrc">
           <normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>20</width>
-          <height>20</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="documentation_button">
-        <property name="minimumSize">
-         <size>
-          <width>96</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string/>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: 5px; 
-font: 580 10pt &quot;Segoe UI&quot;;</string>
-        </property>
-        <property name="text">
-         <string>About</string>
-        </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/help_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -476,6 +511,41 @@ font: 700 10pt &quot;Segoe UI&quot;;</string>
        </spacer>
       </item>
       <item>
+       <widget class="QPushButton" name="vcs_button">
+        <property name="minimumSize">
+         <size>
+          <width>64</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>32</width>
+          <height>16777210</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Version Control&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">padding: 5px;</string>
+        </property>
+        <property name="text">
+         <string>VCS</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/valve_common/icons/tools/common/flip.png</normaloff>:/valve_common/icons/tools/common/flip.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QToolButton" name="open_addons_folder_button">
         <property name="font">
          <font>
@@ -504,7 +574,7 @@ font: 700 10pt &quot;Segoe UI&quot;;</string>
         </property>
         <property name="minimumSize">
          <size>
-          <width>22</width>
+          <width>64</width>
           <height>0</height>
          </size>
         </property>
@@ -533,26 +603,26 @@ font: 700 10pt &quot;Segoe UI&quot;;</string>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="FixNoSteamLogon_Button">
+       <widget class="QPushButton" name="cleanup_button">
         <property name="minimumSize">
          <size>
-          <width>156</width>
+          <width>92</width>
           <height>0</height>
          </size>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Fix No Steam Logon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This script restarts Steam and launches the current addon.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Cleanup&lt;/span&gt;&lt;/p&gt;&lt;p&gt;...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
          <string notr="true">padding: 5px;
 font: 580 10pt &quot;Segoe UI&quot;;</string>
         </property>
         <property name="text">
-         <string>Restart Steam</string>
+         <string>Cleanup</string>
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
-          <normaloff>:/icons/bolt_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/bolt_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
+          <normaloff>:/valve_common/icons/tools/common/find.png</normaloff>:/valve_common/icons/tools/common/find.png</iconset>
         </property>
         <property name="iconSize">
          <size>

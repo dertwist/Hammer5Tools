@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComb
     QDialog, QFrame, QHBoxLayout, QLabel,
     QLineEdit, QListWidget, QListWidgetItem, QPushButton,
     QSizePolicy, QToolButton, QVBoxLayout, QWidget)
-import src.resources_rc as resources_rc
+import resources_rc
 
 class Ui_BatchCreator_process_Dialog(object):
     def setupUi(self, BatchCreator_process_Dialog):
