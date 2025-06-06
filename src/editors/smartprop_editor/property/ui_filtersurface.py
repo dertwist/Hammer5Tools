@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QFrame, QHBoxLay
     QHeaderView, QLabel, QLayout, QPushButton,
     QSizePolicy, QSpacerItem, QTreeWidget, QTreeWidgetItem,
     QVBoxLayout, QWidget)
-import src.resources_rc as resources_rc
+import resources_rc
 
 class Ui_Widget(object):
     def setupUi(self, Widget):

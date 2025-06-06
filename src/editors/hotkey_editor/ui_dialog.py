@@ -18,7 +18,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QComboBox,
     QDialog, QDialogButtonBox, QFrame, QHBoxLayout,
     QLineEdit, QSizePolicy, QVBoxLayout, QWidget)
-import src.resources_rc as resources_rc
+import resources_rc
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
