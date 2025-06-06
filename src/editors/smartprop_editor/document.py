@@ -40,7 +40,7 @@ from src.widgets.popup_menu.main import PopupMenu
 from src.editors.smartprop_editor.commands import GroupElementsCommand
 from src.forms.replace_dialog.main import FindAndReplaceDialog
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
-from src.editors.smartprop_editor.element_id import ElementIDGenerator
+from src.widgets.element_id import ElementIDGenerator
 from src.editors.smartprop_editor._common import (
     get_clean_class_name_value,
     get_clean_class_name,
@@ -186,6 +186,12 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Tree Hierarchy updating]========================================
     def on_tree_current_item_changed(self, current_item, previous_item):
+        # Use the new selection command for selection changes
+        if current_item is not None:
+            self.ui.tree_hierarchy_widget.setSelectedItemsWithUndo([current_item])
+        else:
+            self.ui.tree_hierarchy_widget.setSelectedItemsWithUndo([])
+
         item = current_item
         if current_item is not None:
             self.properties_groups_show()
@@ -210,13 +216,11 @@ class SmartPropDocument(QMainWindow):
             print(error)
 
         try:
-            data = ast.literal_eval(item.text(1))
+            data = item.data(0, Qt.UserRole)
             data_modif = data.get("m_Modifiers", {})
             data_sel_criteria = data.get("m_SelectionCriteria", {})
-
             data.pop("m_Modifiers", None)
             data.pop("m_SelectionCriteria", None)
-
             property_instance = PropertyFrame(
                 widget_list=self.ui.properties_layout,
                 value=data,
@@ -297,7 +301,7 @@ class SmartPropDocument(QMainWindow):
 
             output_value.update({"m_Modifiers": modifiers})
             output_value.update({"m_SelectionCriteria": selection_criteria})
-            self.ui.tree_hierarchy_widget.currentItem().setText(1, str(output_value))
+            item.setData(0, Qt.UserRole, output_value)
 
             # Mark document as modified
             self._modified = True
@@ -332,7 +336,7 @@ class SmartPropDocument(QMainWindow):
                     self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget))
                     return True
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_D:
-                    self.ui.tree_hierarchy_widget.DuplicateSelectedItems()
+                    self.ui.tree_hierarchy_widget.DuplicateSelectedItems(self.element_id_generator)
                     return True
                 if event.matches(QKeySequence.Undo):
                     self.undo_stack.undo()
@@ -368,13 +372,11 @@ class SmartPropDocument(QMainWindow):
                             item_class = item.get("_class")
                             value_dict = item.copy()
                             value_dict.pop("m_Children", None)
-                            # Use instance's element_id_generator instead of global functions
                             self.element_id_generator.update_value(value_dict)
                             value_dict = self.element_id_generator.update_child_value(value_dict, force=True)
-
                             child_item = HierarchyItemModel(
                                 _name=value_dict.get("m_sLabel", get_label_id_from_value(value_dict)),
-                                _data=str(value_dict),
+                                _data=value_dict,
                                 _class=get_clean_class_name(item_class),
                                 _id=self.element_id_generator.get_key(value_dict)
                             )
@@ -479,7 +481,6 @@ class SmartPropDocument(QMainWindow):
 
     def new_element(self, element_class, element_value):
         element_value = ast.literal_eval(element_value)
-        # Use element_id_generator method instead of global function
         self.element_id_generator.update_value(element_value)
         new_element_item = HierarchyItemModel(
             _name=get_label_id_from_value(element_value),
@@ -949,7 +950,7 @@ class SmartPropDocument(QMainWindow):
         remove_action.setShortcut(QKeySequence("Delete"))
 
         duplicate_action = menu.addAction("Duplicate")
-        duplicate_action.triggered.connect(lambda: self.ui.tree_hierarchy_widget.DuplicateSelectedItems())
+        duplicate_action.triggered.connect(lambda: self.ui.tree_hierarchy_widget.DuplicateSelectedItems(self.element_id_generator))
         duplicate_action.setShortcut(QKeySequence("Ctrl+D"))
 
         grouping_action = menu.addAction("Group selected")

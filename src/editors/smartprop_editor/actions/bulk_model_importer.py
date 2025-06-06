@@ -62,7 +62,7 @@ class BulkModelImporterDialog(QDialog):
 def process_bulk_models(document, files, create_ref, ref_index):
     from src.settings.main import get_addon_dir
     from src.editors.smartprop_editor._common import get_clean_class_name_value, get_label_id_from_value, get_ElementID_key
-    from src.editors.smartprop_editor.element_id import update_value_ElementID
+    from src.widgets.element_id import update_value_ElementID
     from src.widgets import HierarchyItemModel
 
     addon_path = get_addon_dir()
