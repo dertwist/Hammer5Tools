@@ -186,6 +186,12 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Tree Hierarchy updating]========================================
     def on_tree_current_item_changed(self, current_item, previous_item):
+        # Use the new selection command for selection changes
+        if current_item is not None:
+            self.ui.tree_hierarchy_widget.setSelectedItemsWithUndo([current_item])
+        else:
+            self.ui.tree_hierarchy_widget.setSelectedItemsWithUndo([])
+
         item = current_item
         if current_item is not None:
             self.properties_groups_show()
