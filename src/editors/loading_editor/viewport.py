@@ -179,18 +179,22 @@ class Viewport(QMainWindow):
     def zoomIn(self, mouse_pos=None):
         """
         Zoom in by 20%. Optionally keep the zoom focus around a specific mouse position.
+        Limited to 500% zoom.
         """
         if self.current_pixmap:
-            self.zoom_level *= 1.2
-            self.updateImageDisplay(mouse_pos)
+            new_zoom = self.zoom_level * 1.2
+            if new_zoom <= 5:  # Limit to 1000%
+                self.zoom_level = new_zoom
+                self.updateImageDisplay(mouse_pos)
 
     def zoomOut(self, mouse_pos=None):
         """
         Zoom out by 20%. Optionally keep the zoom focus around a specific mouse position.
+        Limited between 10% and 1000%.
         """
         if self.current_pixmap:
             self.zoom_level /= 1.2
-            if self.zoom_level < 0.1:
+            if self.zoom_level < 0.1:  # Minimum 10% zoom
                 self.zoom_level = 0.1
             self.updateImageDisplay(mouse_pos)
 
