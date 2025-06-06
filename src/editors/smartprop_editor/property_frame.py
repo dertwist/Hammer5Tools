@@ -7,7 +7,7 @@ from PySide6.QtGui import QAction
 
 from src.property.methods import PropertyMethods
 from src.widgets.popup_menu.main import PopupMenu
-from src.editors.smartprop_editor.element_id import update_value_ElementID
+from src.widgets.element_id import update_value_ElementID
 
 from src.editors.smartprop_editor.property.legacy import PropertyLegacy
 from src.editors.smartprop_editor.property.vector3d import PropertyVector3D
@@ -24,7 +24,7 @@ from src.editors.smartprop_editor.property.set_variable import PropertyVariableV
 from src.editors.smartprop_editor.property.comment import PropertyComment
 from PySide6.QtGui import QCursor
 from src.widgets import HierarchyItemModel
-from src.editors.smartprop_editor.element_id import get_ElementID_key
+from src.widgets.element_id import get_ElementID_key
 import uuid
 
 import ast
