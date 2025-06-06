@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'document.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.9.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QDock
     QLineEdit, QMainWindow, QScrollArea, QSizePolicy,
     QSpacerItem, QToolButton, QTreeWidget, QTreeWidgetItem,
     QVBoxLayout, QWidget)
-import resources_rc
+import src.resources_rc as resources_rc
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

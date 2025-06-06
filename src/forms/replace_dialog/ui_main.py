@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.9.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -18,7 +18,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QDialog,
     QDialogButtonBox, QFrame, QHBoxLayout, QLineEdit,
     QPlainTextEdit, QSizePolicy, QVBoxLayout, QWidget)
-import resources_rc
+import src.resources_rc as resources_rc
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
