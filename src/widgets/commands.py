@@ -1,14 +1,10 @@
-import ast
 import uuid
-from PySide6.QtWidgets import QTreeWidget
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QUndoCommand
 from src.widgets import HierarchyItemModel
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem,
-    QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QAbstractItemView
+    QTreeWidget, QTreeWidgetItem
 )
-from PySide6.QtGui import QUndoStack, QUndoCommand
+from PySide6.QtGui import QUndoCommand
 
 
 class AddItemCommand(QUndoCommand):
@@ -179,45 +175,80 @@ class MoveItemsCommand(QUndoCommand):
 
 
 class DuplicateItemsCommand(QUndoCommand):
-    def __init__(self, tree: QTreeWidget, items):
-        """
-        Command to duplicate the given items in the tree.
-        Args:
-            tree (QTreeWidget): The tree widget.
-            items (list[QTreeWidgetItem]): Items to duplicate.
-        """
+    def __init__(self, tree: QTreeWidget, items, ElementIDGenerator=None):
         super().__init__("Duplicate Item(s)")
         self.tree = tree
         self.items = items if isinstance(items, (list, tuple)) else [items]
         self.duplicates = []  # List of (parent, index, new_item)
+        self.id_generator = ElementIDGenerator
 
     def _deep_copy_item(self, item):
-        """Recursively deep copy a QTreeWidgetItem and its children."""
         new_item = HierarchyItemModel()
         for col in range(item.columnCount()):
-            new_item.setText(col, item.text(col))
-            new_item.setData(col, Qt.UserRole, str(uuid.uuid4()))  # Assign new unique ID
-        # Copy user data if needed (custom roles)
+            if col != 3:
+                new_item.setText(col, item.text(col))
+            data = item.data(col, Qt.UserRole)
+            if self.id_generator and isinstance(data, dict):
+                data = self.id_generator.update_value(data.copy(), force=True)
+                new_item.setText(3, str(data.get("m_nElementID", "")))
+            elif data is not None:
+                data = str(uuid.uuid4())
+            new_item.setData(col, Qt.UserRole, data)
         for i in range(item.childCount()):
             child_copy = self._deep_copy_item(item.child(i))
             new_item.addChild(child_copy)
         return new_item
 
     def redo(self):
-        self.duplicates.clear()
-        for item in self.items:
-            parent = item.parent()
-            if parent is None:
-                parent = self.tree.invisibleRootItem()
-            index = parent.indexOfChild(item)
-            new_item = self._deep_copy_item(item)
-            parent.insertChild(index + 1, new_item)
-            self.duplicates.append((parent, index + 1, new_item))
-            parent.setExpanded(True)
+        if not self.duplicates:
+            # First time: create and insert new items
+            for item in self.items:
+                parent = item.parent() or self.tree.invisibleRootItem()
+                index = parent.indexOfChild(item)
+                new_item = self._deep_copy_item(item)
+                parent.insertChild(index + 1, new_item)
+                self.duplicates.append((parent, index + 1, new_item))
+                parent.setExpanded(True)
+        else:
+            # Redo: re-insert the same items
+            for parent, index, new_item in self.duplicates:
+                parent.insertChild(index, new_item)
+                parent.setExpanded(True)
 
     def undo(self):
         for parent, index, new_item in self.duplicates:
-            # Remove the duplicated item
             idx = parent.indexOfChild(new_item)
             if idx != -1:
                 parent.takeChild(idx)
+
+class SelectItemsCommand(QUndoCommand):
+    def __init__(self, tree, old_selected, new_selected):
+        super().__init__("Select Item(s)")
+        self.tree = tree
+        self.old_selected = old_selected
+        self.new_selected = new_selected
+
+    def _set_selection(self, items):
+        # Clear any existing selection first
+        self.tree.clearSelection()
+        
+        # Set selection for new items
+        for item in items:
+            if isinstance(item, QTreeWidgetItem):
+                item.setSelected(True)
+        
+        # Set focus and scroll to first item if there are any selected items
+        if items:
+            self.tree.setCurrentItem(items[0])
+            self.tree.scrollToItem(items[0])
+            # Explicitly set focus to the tree widget
+            self.tree.setFocus(Qt.OtherFocusReason)
+        else:
+            # If no items selected, clear current item
+            self.tree.setCurrentItem(None)
+
+    def redo(self):
+        self._set_selection(self.new_selected)
+
+    def undo(self):
+        self._set_selection(self.old_selected)

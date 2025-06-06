@@ -498,14 +498,16 @@ class HierarchyItemModel(QTreeWidgetItem):
     def __init__(self, _name="New Hierarchy Item", _data=None, _class=None, _id=None, parent=None):
         super().__init__(parent)
 
-        # Set text for name, data, class, and id
+        # Set text for name, class, and id
         self.setText(0, str(_name))
-        if _data is not None:
-            self.setText(1, str(_data))
         if _class is not None:
             self.setText(2, str(_class))
         if _id is not None:
             self.setText(3, str(_id))
+
+        # Store data in UserRole of column 0 for performance
+        if _data is not None:
+            self.setData(0, Qt.UserRole, _data)
 
         # Initially set editable flags only on the first column
         self.setFlags(self.flags() | Qt.ItemIsEditable)
@@ -521,22 +523,20 @@ class HierarchyItemModel(QTreeWidgetItem):
         self.custom_font = QFont("Segoe UI", 10, QFont.DemiBold)
 
     def data(self, column, role):
+        # Provide data from UserRole for column 0
+        if column == 0 and role == Qt.UserRole:
+            return super().data(0, Qt.UserRole)
+
         if role == Qt.ForegroundRole and column in self.custom_colors:
-            # Set text color for specific columns
             return self.custom_colors[column]
-
         if role == Qt.BackgroundRole and column in self.background_colors:
-            # Set background color for specific columns
             return self.background_colors[column]
-
         if role == Qt.FontRole and column == 0:
-            # Set custom font for column 0
             return self.custom_font
 
         return super().data(column, role)
 
     def set_editable(self, editable):
-        """Set the item editable flag based on `editable` boolean."""
         if editable:
             self.setFlags(self.flags() | Qt.ItemIsEditable)
         else:

@@ -45,15 +45,15 @@ from src.settings.main import (
 from src.editors.loading_editor.main import Loading_editorMainWindow
 from src.editors.hotkey_editor.main import HotkeyEditorMainWindow
 from src.forms.create_addon.create_addon_mian import Create_addon_Dialog
-from other.steam_restart import SteamNoLogoFixThreadClass
-from other.addon_functions import delete_addon, launch_addon
+from src.other.steam_restart import SteamNoLogoFixThreadClass
+from src.other.addon_functions import delete_addon, launch_addon
 from src.updater.check import check_updates
 from src.forms.archive_addon.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
 from src.forms.launch_options.main import LaunchOptionsDialog
-from styles.qt_global_stylesheet import QT_Stylesheet_global
+from src.styles.qt_global_stylesheet import QT_Stylesheet_global
 from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
 from src.dotnet import check_dotnet_runtime
 # Global paths
@@ -116,7 +116,7 @@ class DevWidget(QWidget):
 class Widget(QMainWindow):
     def __init__(self, parent=None, dev_mode=False):
         super().__init__(parent)
-        from ui_main import Ui_MainWindow  # Ensure proper dependency resolution
+        from src.ui_main import Ui_MainWindow
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         enable_dark_title_bar(self)
