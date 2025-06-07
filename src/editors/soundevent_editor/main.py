@@ -341,9 +341,8 @@ class SoundEventEditorMainWindow(QMainWindow):
 
             # Safely convert column text to dict value
             try:
-                data_text = current_item.text(1)
-                if data_text:
-                    data = ast.literal_eval(data_text)
+                data = current_item.data(0, Qt.UserRole)
+                if data:
                     if isinstance(data, dict):
                         self.PropertiesWindow.populate_properties(data)
                     else:
