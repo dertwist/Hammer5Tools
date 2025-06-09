@@ -54,6 +54,20 @@
             "args": [
                 "--dev",
             ]
+        },
+        {
+            "name": "Start Test SmartProp Properties",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/editors/smartprop_editor/property/main.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/hammer5tools",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "args": [
+                "--dev",
+            ]
         }
     ]
 }
