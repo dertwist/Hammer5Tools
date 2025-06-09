@@ -20,21 +20,3 @@ Name: "{commondesktop}\Hammer5Tools"; Filename: "{app}\Hammer5Tools.exe"; Tasks:
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional icons:"
-
-; Modified after archivation process
-
-; Modified after archivation process
-
-; Modified after archivation process
-
-; Modified after archivation process
-
-; Modified after archivation process
-
-; Modified after archivation process
-
-; Modified after archivation process
-
-; Modified after archivation process
-
-; Modified after archivation process
