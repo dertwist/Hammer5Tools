@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1097</width>
+    <width>1166</width>
     <height>878</height>
    </rect>
   </property>
@@ -509,41 +509,6 @@ font: 700 10pt &quot;Segoe UI&quot;;</string>
          </size>
         </property>
        </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="vcs_button">
-        <property name="minimumSize">
-         <size>
-          <width>64</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>32</width>
-          <height>16777210</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Version Control&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: 5px;</string>
-        </property>
-        <property name="text">
-         <string>VCS</string>
-        </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/valve_common/icons/tools/common/flip.png</normaloff>:/valve_common/icons/tools/common/flip.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>20</width>
-          <height>20</height>
-         </size>
-        </property>
-       </widget>
       </item>
       <item>
        <widget class="QToolButton" name="open_addons_folder_button">
