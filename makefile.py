@@ -206,12 +206,28 @@ def main() -> None:
             'hammer5tools.7z',
             'hammer5tools_setup.exe',
             'hammer5tools.zip',
-            'settings.ini'
+            'settings.ini',
+            'Hammer5ToolsInstaller.exe'
         }
         excluded_paths = ['SoundEventEditor\\sounds']
         archive_files(output_folder, zip_output_path, excluded_files, excluded_paths)
         elapsed_time = time.time() - stage_start_time
         results.append(["Archiving files", f"{elapsed_time:.2f} seconds"])
+
+        # Modify installer.iss (placeholder logic)
+        iss_path = os.path.join(cur_dir, 'installer.iss')
+        with open(iss_path, 'a', encoding='utf-8') as f:
+            f.write("\n; Modified after archivation process\n")
+
+        # Build installer using Inno Setup Compiler (ISCC)
+        try:
+            build_installer_start = time.time()
+            subprocess.run(['C:\Program Files (x86)\Inno Setup 6\ISCC.exe', iss_path], check=True)
+            build_installer_elapsed = time.time() - build_installer_start
+            results.append(["Build installer", f"{build_installer_elapsed:.2f} seconds"])
+        except Exception as e:
+            print(f"Error building installer: {e}")
+            results.append(["Build installer", f"Failed: {e}"])
 
     overall_elapsed_time = time.time() - overall_start_time
     results.append(["Overall process", f"{overall_elapsed_time:.2f} seconds"])
