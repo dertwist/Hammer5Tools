@@ -102,6 +102,8 @@ def build_hammer5_tools(fast=False) -> None:
         '--noconfirm',
         '--onefile',
         '--windowed',
+        '--hidden-import=resources_rc',
+        '--hidden-import=widgets',
         # '--strip',  # Removed to avoid errors with .NET DLLs
         '--optimize=0',
         '--clean',

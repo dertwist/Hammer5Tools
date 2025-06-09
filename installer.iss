@@ -26,3 +26,15 @@ Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription
 ; Modified after archivation process
 
 ; Modified after archivation process
+
+; Modified after archivation process
+
+; Modified after archivation process
+
+; Modified after archivation process
+
+; Modified after archivation process
+
+; Modified after archivation process
+
+; Modified after archivation process

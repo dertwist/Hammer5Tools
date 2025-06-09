@@ -80,11 +80,12 @@ def main(directory: str) -> None:
     print("All .ui files compiled successfully.")
 
     # Compile resources.qrc if present in the directory
-    directory = os.path.join(directory, 'src')
-    
+    directory_root = os.path.join(directory)
+    directory = os.path.join(directory_root, 'src')
+
     qrc_path = os.path.join(directory, "resources.qrc")
     if os.path.isfile(qrc_path):
-        out_rc = os.path.join(directory, 'resources_rc',"__init__.py")
+        out_rc = os.path.join(directory_root, 'resources_rc',"__init__.py")
         compile_qrc(qrc_path, out_rc)
 
 if __name__ == "__main__":
