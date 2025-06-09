@@ -34,54 +34,33 @@
 | SmartProp Editor | Simplifies creating smart props.      
 
 
-# Dev
+# Development Guide
+---
+## 1. Project Structure
+
+The application is organized into modules, with each editor implemented as a separate module. Editors can be run independently if you provide the paths to CS2 and the addon. All editors are integrated through the main application (src/main.py), which manages their settings. If you wish to use an editor separately from the main application, you must create separate settings and handle the CS2 and addon paths manually.
+
+Project folder overview:
+- `src/`: Contains the main application code and all editor modules.
+    - `forms/`: Minor Qt dialogs, such as About or Launch Options.
+    - `external/`: External libraries and resources not related to Python (e.g., .NET libraries).
+    - `dotnet/`: .NET handle, functions (located in `src/external`).
+
+Each major feature or editor has its own folder:
+- `common/`: Shared helpers and logic used across editors.
+- `main.py`: Entry point for the main application.
 ---
 
-### 1.2 Installation
-
-1. **Clone the Repository:**
-    ```shell
-    git clone https://github.com/dertwist/Hammer5Tools.git
-    cd Hammer5Tools
-    ```
-
-2. **(Optional) Create a Virtual Environment:**
-    ```shell
-    python -m venv venv
-    source ./venv/Scripts/activate
-    ```
-    Using a virtual environment is recommended.
-
-3. **Install Dependencies:**
-    ```shell
-    pip install -r requirements.txt
-    ```
-
----
-
-## 2. Project Structure
-
-- `common/`: Shared helpers and logic.
-- `main.py`: General code.
-- `dotnet/`: .NET libraries (in `src/external`).
-
----
-
-## 3. Build Configuration
-
-- **Development Mode:**  
-  Run with debug tools:
+## 2. Launch and Build configurations
+Run configurations are available for PyCharm and Visual Studio Code.
+- **Run:**
+  To run the application, you need to run the main.py file in the src folder.
+  Do not forget to set the working directory to the `hammer5tools` folder, which is in the same root folder as src.
+  Otherwise, just use the ready-made run configurations in your IDE.
+- **Build:**
   ```shell
-  python src/script.py --dev
+  python makefile.py --build-all --archive
   ```
-- **Build Archive:**  
-  Create a distributable package:
-  ```shell
-  python dev/build.py --build-all --archive
-  ```
+- **Installer:**
 
----
-
-## 4. Creating an Installer
-
-Use [InstallForge](https://installforge.net/) with the `hammer5tools_setup.ifp` config file.
+  To create the installer, you need to install [Inno Setup](https://jrsoftware.org/isinfo.php). Do not change the default installation path.
