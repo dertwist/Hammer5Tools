@@ -21,30 +21,36 @@ from src.styles.qt_global_stylesheet import QT_Stylesheet_global
 from PySide6.QtWidgets import (
     QWidget, QSizePolicy, QSpacerItem, QHBoxLayout, QColorDialog, QToolButton, QTreeWidgetItem, QMenu
 )
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal, QObject, Qt
 from PySide6.QtGui import QIcon, QColor
 
 def prettify_class_name(name: str) -> str:
     name = re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_', '', name)
     return re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', name)
 
+class SignalEmitter(QObject):
+    edited = Signal()
+
 @dataclass
 class PropertyBase(QWidget):
     value_class: str
     value: Any
     variables_scrollArea: Any = None
-    edited: Signal = field(default_factory=Signal, init=False)
 
     def __post_init__(self):
         super().__init__()
+        self._signal_emitter = SignalEmitter()
+
+    def connect_edited(self, slot):
+        self._signal_emitter.edited.connect(slot)
+
+    def emit_edited(self):
+        self._signal_emitter.edited.emit()
 
     def get_variables(self, search_term=None) -> List[str]:
         if not self.variables_scrollArea:
             return []
-        return [
-            widget.name for i in range(self.variables_scrollArea.count())
-            if (widget := self.variables_scrollArea.itemAt(i).widget())
-        ]
+        return [self.variables_scrollArea.itemAt(i).widget().name for i in range(self.variables_scrollArea.count()) if self.variables_scrollArea.itemAt(i).widget()]
 
     def change_value(self):
         pass
@@ -72,7 +78,7 @@ class LegacyProperty(PropertyBase):
             self._variable_count = new_count
         self.text_line.completions.setStringList(self._variables_cache)
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
 
     def change_value(self):
         value = self.text_line.toPlainText()
@@ -159,7 +165,7 @@ class PropertyFloat(PropertyBase):
         variables = self.get_variables()
         self.text_line.completions.setStringList(variables + expression_completer)
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
 
     def change_value(self):
         idx = self.ui.logic_switch.currentIndex()
@@ -268,7 +274,7 @@ class PropertyString(PropertyBase):
         variables = self.get_variables()
         self.text_line.completions.setStringList(variables + expression_completer)
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
 
     def change_value(self):
         idx = self.ui.logic_switch.currentIndex()
@@ -501,7 +507,7 @@ class PropertyVector3D(PropertyBase):
         self.logic_switch_line()
         self.logic_switch()
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
 
     def change_value(self):
         if self.ui.logic_switch.currentIndex() == 0:
@@ -527,12 +533,11 @@ class PropertyVector3D(PropertyBase):
             self.value = {self.value_class: {'m_Components': [value_x, value_y, value_z]}}
 
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        new_count = self.variables_scrollArea.count()
+        if new_count != self._variable_count:
+            self._cached_variables = [self.variables_scrollArea.itemAt(i).widget().name for i in range(self.variables_scrollArea.count()) if self.variables_scrollArea.itemAt(i).widget()]
+            self._variable_count = new_count
+        return self._cached_variables
 
 # --- PropertyVariableOutput ---
 class PropertyVariableOutput(PropertyBase):
@@ -589,7 +594,7 @@ class PropertyVariableOutput(PropertyBase):
         self.on_changed()
     def on_changed(self):
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
     def change_value(self):
         self.value = {self.value_class: self.variable.combobox.get_variable()}
         debug(f'Changed value in variable widget {self.value}')
@@ -604,8 +609,8 @@ class PropertyVariableValue(PropertyBase):
         self.setAcceptDrops(False)
         self.value_class = value_class
         self.value = value
-        self.m_TargetName: str = None
-        self.m_DataType: str = None
+        self.m_TargetName = None
+        self.m_DataType = None
         self.m_Value = None
         self.variables_scrollArea = variables_scrollArea
 
@@ -694,7 +699,7 @@ class PropertyVariableValue(PropertyBase):
         self.logic_switch()
         variables = self.get_variables()
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
     def change_value(self):
         if self.ui.logic_switch.currentText() == 'Float':
             self.m_Value = self.float_widget.value
@@ -704,18 +709,13 @@ class PropertyVariableValue(PropertyBase):
         self.value = {self.value_class: {'m_TargetName': str(self.m_TargetName), 'm_DataType': str(self.m_DataType), 'm_Value': self.m_Value}}
 
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return [self.variables_scrollArea.itemAt(i).widget().name for i in range(self.variables_scrollArea.count()) if self.variables_scrollArea.itemAt(i).widget()]
 
 # --- PropertyComment ---
-class PropertyComment(Property):
+class PropertyComment(PropertyBase):
     edited = Signal()
     def __init__(self, value_class, value):
-        super().__init__()
+        super().__init__(value_class, value)
         self.ui = UiCommentWidget()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
@@ -728,17 +728,17 @@ class PropertyComment(Property):
 
     def on_changed(self):
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
 
     def change_value(self):
         value = self.ui.text_field.toPlainText()
         self.value = {self.value_class: str(value)}
 
 # --- PropertyColorMatch ---
-class PropertyColorMatch(Property):
+class PropertyColorMatch(PropertyBase):
     edited = Signal()
     def __init__(self, value_class, value, variables_scrollArea):
-        super().__init__()
+        super().__init__(value_class, value, variables_scrollArea)
         self.ui = UiColorMatchWidget()
         self.ui.setupUi(self)
         self.setAcceptDrops(False)
@@ -811,7 +811,7 @@ QToolButton:pressed {
 
     def on_changed(self):
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
     def change_value(self):
         value = []
         for i in range(self.ui.layout_color.count()):
@@ -821,18 +821,13 @@ QToolButton:pressed {
         self.value = {self.value_class: value}
 
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return [self.variables_scrollArea.itemAt(i).widget().name for i in range(self.variables_scrollArea.count()) if self.variables_scrollArea.itemAt(i).widget()]
 
 # --- PropertyComparison ---
-class PropertyComparison(Property):
+class PropertyComparison(PropertyBase):
     edited = Signal()
     def __init__(self, value_class, value, variables_scrollArea):
-        super().__init__()
+        super().__init__(value_class, value, variables_scrollArea)
         self.ui = UiComparisonWidget()
         self.ui.setupUi(self)
         self.setAcceptDrops(False)
@@ -875,7 +870,7 @@ class PropertyComparison(Property):
         variables = self.get_variables()
         self.m_value.completions.setStringList(variables)
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
     def change_value(self):
         var_value = self.m_value.toPlainText()
         try:
@@ -886,18 +881,13 @@ class PropertyComparison(Property):
         self.value = {self.value_class: {'m_Name': self.variable.combobox.get_variable(), 'm_Value': var_value,'m_Comparison': self.ui.comparison.currentText()}}
 
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variablesScrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return [self.variables_scrollArea.itemAt(i).widget().name for i in range(self.variables_scrollArea.count()) if self.variables_scrollArea.itemAt(i).widget()]
 
 # --- PropertyBool ---
-class PropertyBool(Property):
+class PropertyBool(PropertyBase):
     edited = Signal()
     def __init__(self, value_class, value, variables_scrollArea):
-        super().__init__()
+        super().__init__(value_class, value, variables_scrollArea)
         from src.editors.smartprop_editor.property.ui_bool import Ui_Widget
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -984,7 +974,7 @@ class PropertyBool(Property):
         variables = self.get_variables()
         self.text_line.completions.setStringList(variables)
         self.change_value()
-        self.edited.emit()
+        self.emit_edited()
     def change_value(self):
         if self.ui.logic_switch.currentIndex() == 0:
             self.value = None
@@ -1006,18 +996,13 @@ class PropertyBool(Property):
             self.value = {self.value_class: {'m_Expression': str(value)}}
 
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return [self.variables_scrollArea.itemAt(i).widget().name for i in range(self.variables_scrollArea.count()) if self.variables_scrollArea.itemAt(i).widget()]
 
 # --- PropertyCombobox ---
-class PropertyCombobox(Property):
+class PropertyCombobox(PropertyBase):
     edited = Signal()
     def __init__(self, value_class, value, variables_scrollArea, items, filter_types):
-        super().__init__()
+        super().__init__(value_class, value, variables_scrollArea)
         from src.editors.smartprop_editor.property.ui_combobox import Ui_Widget
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -1025,21 +1010,16 @@ class PropertyCombobox(Property):
         self.value_class = value_class
         self.value = value
         self.variables_scrollArea = variables_scrollArea
-
         self._variable_count = 0
         self._cached_variables = []
-
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2',
                   re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class))
         self.ui.property_class.setText(output)
-
         self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
         self.ui.logic_switch.setItemText(1, output)
-
         self.ui.value.addItems(items)
         self.ui.value.currentTextChanged.connect(self.on_changed)
-
-        spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacer_item = QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.spacer = QWidget()
         spacer_layout = QHBoxLayout()
         spacer_layout.addSpacerItem(spacer_item)
@@ -1048,15 +1028,14 @@ class PropertyCombobox(Property):
         self.spacer.setStyleSheet('border:None;')
         self.spacer.setContentsMargins(0, 0, 0, 0)
         self.ui.layout.addWidget(self.spacer)
-
         self.variable = ComboboxVariablesWidget(
-            variables_layout=self.variablesScrollArea,
+            variables_layout=self.variables_scrollArea,
             filter_types=filter_types, variable_name=self.value_class
         )
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
-        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.variable_frame = QWidget()
         self.variable_frame.setLayout(layout)
         self.variable.setFixedWidth(256)
@@ -1065,97 +1044,32 @@ class PropertyCombobox(Property):
         self.variable_frame.setMinimumHeight(32)
         self.variable.combobox.changed.connect(self.on_changed)
         self.ui.layout.insertWidget(2, self.variable_frame)
-
         self.text_line = CompletingPlainTextEdit()
         self.text_line.completion_tail = ''
         self.text_line.setPlaceholderText('Variable name, float or expression')
         self.ui.layout.insertWidget(3, self.text_line)
         self.text_line.textChanged.connect(self.on_changed)
-
         self.ui.logic_switch.setCurrentIndex(0)
         self.text_line.setPlainText('')
-
         if isinstance(value, dict):
             if 'm_Expression' in value:
                 self.ui.logic_switch.setCurrentIndex(3)
-                self.text_line.setPlainText(self.var_value)
+                self.text_line.setPlainText(str(value['m_Expression']))
             elif 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.variable.combobox.set_variable(str(value['m_SourceName']))
         elif isinstance(value, str):
             self.ui.logic_switch.setCurrentIndex(1)
             self.ui.value.setCurrentText(value)
-
         self.on_changed()
-
-    def logic_switch(self):
-        if self.ui.logic_switch.currentIndex() == 0:
-            self.text_line.OnlyFloat = False
-            self.text_line.hide()
-            self.ui.value.hide()
-            self.variable_frame.hide()
-            self.spacer.show()
-        elif self.ui.logic_switch.currentIndex() == 1:
-            self.text_line.hide()
-            self.ui.value.show()
-            self.variable_frame.hide()
-            self.spacer.hide()
-        elif self.ui.logic_switch.currentIndex() == 2:
-            self.text_line.hide()
-            self.ui.value.hide()
-            self.variable_frame.show()
-            self.spacer.hide()
-        else:
-            self.text_line.OnlyFloat = False
-            self.text_line.show()
-            self.variable_frame.hide()
-            self.ui.value.hide()
-            self.spacer.hide()
-
-    def on_changed(self):
-        self.logic_switch()
-        variables = self.get_variables()
-        self.text_line.completions.setStringList(variables)
-        self.change_value()
-        self.edited.emit()
-
-    def change_value(self):
-        if self.ui.logic_switch.currentIndex() == 0:
-            self.value = None
-        elif self.ui.logic_switch.currentIndex() == 1:
-            self.value = {self.value_class: self.ui.value.currentText()}
-        elif self.ui.logic_switch.currentIndex() == 2:
-            val = self.variable.combobox.get_variable()
-            try:
-                val = ast.literal_eval(val)
-            except:
-                pass
-            self.value = {self.value_class: {'m_SourceName': str(val)}}
-        elif self.ui.logic_switch.currentIndex() == 3:
-            val = self.text_line.toPlainText()
-            try:
-                val = ast.literal_eval(val)
-            except:
-                pass
-            self.value = {self.value_class: {'m_Expression': str(val)}}
-
     def get_variables(self, search_term=None):
-        new_count = self.variables_scrollArea.count()
-        if new_count != self._variable_count:
-            data_out = []
-            for i in range(self.variables_scrollArea.count()):
-                widget = self.variables_scrollArea.itemAt(i).widget()
-                if widget:
-                    data_out.append(widget.name)
-            self._cached_variables = data_out
-            self._variable_count = new_count
-        return self._cached_variables
+        return [self.variables_scrollArea.itemAt(i).widget().name for i in range(self.variables_scrollArea.count()) if self.variables_scrollArea.itemAt(i).widget()]
 
 # --- PropertySurface ---
-class PropertySurface(Property):
+class PropertySurface(PropertyBase):
     edited = Signal()
     def __init__(self, value_class, value, variables_scrollArea):
-        super().__init__()
+        super().__init__(value_class, value, variablesScrollArea)
         from src.editors.smartprop_editor.property.ui_filtersurface import Ui_Widget
         from src.editors.smartprop_editor.objects import surfaces_list
         from src.widgets.popup_menu.main import PopupMenu
@@ -1164,30 +1078,22 @@ class PropertySurface(Property):
         self.setAcceptDrops(False)
         self.value_class = value_class
         self.value = value
-
         self.color = [255, 255, 255]
         self.variables_scrollArea = variables_scrollArea
-
-        self.ui.surfaces_tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.surfaces_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.surfaces_tree.customContextMenuRequested.connect(self.open_hierarchy_menu)
-
         self.dialog = QColorDialog()
         self.dialog.setStyleSheet(QT_Stylesheet_global)
-
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
-
         self.ui.property_class.setText(output)
-
         if isinstance(value, list):
             for key in value:
                 item = QTreeWidgetItem()
                 item.setText(0, key)
                 self.ui.surfaces_tree.invisibleRootItem().addChild(item)
-
         self.ui.add_surface.clicked.connect(self.surface_popup)
 
-        self.on_changed()
     def add_surface(self, name, value):
         item = QTreeWidgetItem()
         item.setText(0, name)
@@ -1217,7 +1123,8 @@ class PropertySurface(Property):
         existing_items = []
         for i in range(self.ui.surfaces_tree.topLevelItemCount()):
             item = self.ui.surfaces_tree.topLevelItem(i)
-            existing_items.append(item.text(0))
+            if item is not None:
+                existing_items.append(item.text(0))
         for item in surfaces_list:
             for key, value in item.items():
                 if key in existing_items:
@@ -1229,40 +1136,14 @@ class PropertySurface(Property):
         self.popup_menu.add_property_signal.connect(lambda name, value: self.add_surface(name, value))
         self.popup_menu.show()
 
-    def logic_switch(self):
-        if self.ui.logic_switch.currentIndex() == 0:
-            self.text_line.hide()
-            self.ui.value.hide()
-        elif self.ui.logic_switch.currentIndex() == 1:
-            self.text_line.hide()
-            self.ui.value.show()
-        else:
-            self.text_line.show()
-            self.ui.value.hide()
-
-    def on_changed(self):
-        self.change_value()
-        self.edited.emit()
-    def change_value(self):
-        value = []
-        for i in range(self.ui.surfaces_tree.topLevelItemCount()):
-            item = self.ui.surfaces_tree.topLevelItem(i)
-            value.append(item.text(0))
-        self.value = {self.value_class: value}
-
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return [self.variables_scrollArea.itemAt(i).widget().name for i in range(self.variablesScrollArea.count()) if self.variablesScrollArea.itemAt(i).widget()]
 
 # --- PropertyColor ---
-class PropertyColor(Property):
+class PropertyColor(PropertyBase):
     edited = Signal()
     def __init__(self, value_class, value, variables_scrollArea):
-        super().__init__()
+        super().__init__(value_class, value, variables_scrollArea)
         from src.editors.smartprop_editor.property.ui_color import Ui_Widget
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -1273,7 +1154,7 @@ class PropertyColor(Property):
         self.color = [255, 255, 255]
         self.ui.logic_switch.setCurrentIndex(0)
 
-        self.variables_scrollArea = variables_scrollArea
+        self.variables_scrollArea = variablesScrollArea
 
         self.dialog = QColorDialog()
         self.dialog.setStyleSheet(QT_Stylesheet_global)
@@ -1288,7 +1169,7 @@ class PropertyColor(Property):
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
-        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         self.variable_frame = QWidget()
         self.variable_frame.setLayout(layout)
         self.variable.setFixedWidth(256)
@@ -1307,11 +1188,11 @@ class PropertyColor(Property):
         if isinstance(value, dict):
             if 'm_Expression' in value:
                 self.ui.logic_switch.setCurrentIndex(3)
-                self.text_line.setPlainText(self.var_value)
+                self.text_line.setPlainText(str(value['m_Expression']))
                 self.color = [255, 255, 255]
             elif 'm_SourceName' in value:
                 self.ui.logic_switch.setCurrentIndex(2)
-                self.color = [255, 255 ,255]
+                self.color = [255, 255, 255]
                 self.var_value = value['m_SourceName']
                 self.variable.combobox.set_variable(str(self.var_value))
             else:
@@ -1328,7 +1209,8 @@ class PropertyColor(Property):
         color_dialog = self.dialog
         selected_color = color_dialog.getColor(QColor(*self.color))
         if selected_color.isValid():
-            color = selected_color.getRgb()[:3]
+            rgb = list(selected_color.getRgb())[0:3]
+            color = (rgb[0], rgb[1], rgb[2])
             self.ui.value.setStyleSheet(f"""background-color: rgb{color};
                 padding:4px;
                 border:0px;
@@ -1366,7 +1248,7 @@ class PropertyColor(Property):
             border: 2px solid translucent;
             border-color: rgba(80, 80, 80, 100);
             """)
-        self.edited.emit()
+        self.emit_edited()
     def change_value(self):
         if self.ui.logic_switch.currentIndex() == 0:
             self.value = None
@@ -1384,9 +1266,82 @@ class PropertyColor(Property):
             self.value = {self.value_class: {'m_Expression': value}}
 
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variablesScrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return [self.variablesScrollArea.itemAt(i).widget().name for i in range(self.variablesScrollArea.count()) if self.variablesScrollArea.itemAt(i).widget()]
+
+# --- Demo Browser for All Properties ---
+if __name__ == "__main__":
+    import sys
+    from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget, QLabel, QScrollArea, QSizePolicy
+    from PySide6.QtCore import Qt
+    import src.resources_rc
+
+    class DummyScrollArea:
+        def count(self):
+            return 0
+        def itemAt(self, i):
+            return None
+
+    app = QApplication(sys.argv)
+    demo = QWidget()
+    demo.setWindowTitle("SmartProp Property Demo Browser")
+    layout = QVBoxLayout(demo)
+    scroll = QScrollArea()
+    scroll.setWidgetResizable(True)
+    inner = QWidget()
+    inner_layout = QVBoxLayout(inner)
+    scroll.setWidget(inner)
+    layout.addWidget(scroll)
+
+    # Dummy variables_scrollArea for testing
+    dummy_vars = DummyScrollArea()
+
+    # List of (Property class, test value, kwargs)
+    property_tests = [
+        (LegacyProperty, "123", {}),
+        (PropertyFloat, 42.5, {}),
+        (PropertyFloat, 7, {"int_bool": True}),
+        (PropertyString, "Hello world", {}),
+        (PropertyString, {"m_Expression": "x+1"}, {"expression_bool": True}),
+        (PropertyVector3D, [1.0, 2.0, 3.0], {}),
+        (PropertyVariableOutput, {"m_SourceName": "var1"}, {}),
+        (PropertyVariableValue, {"m_TargetName": "var2", "m_DataType": "FLOAT", "m_Value": 3.14}, {}),
+        (PropertyComment, "This is a comment", {}),
+        (PropertyColorMatch, [
+            {"m_Color": [255, 0, 0]},
+            {"m_Color": [0, 255, 0]},
+        ], {}),
+        (PropertyComparison, {"m_Name": "var3", "m_Value": 5, "m_Comparison": "=="}, {}),
+        (PropertyBool, True, {}),
+        (PropertyCombobox, "Option1", {"items": ["Option1", "Option2", "Option3"], "filter_types": ["String"]}),
+        (PropertySurface, ["surface1", "surface2"], {}),
+        (PropertyColor, [128, 64, 255], {}),
+    ]
+
+    for prop_cls, value, kwargs in property_tests:
+        try:
+            prop_name = prop_cls.__name__
+            label = QLabel(f"<b>{prop_name}</b>")
+            # Use Qt.AlignmentFlag.AlignLeft for PySide6
+            label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            inner_layout.addWidget(label)
+            # Some property classes require different constructor args
+            if prop_cls is PropertyComment:
+                widget = prop_cls("m_Comment", value)
+            elif prop_cls is PropertyCombobox:
+                widget = prop_cls("m_Combo", value, dummy_vars, **kwargs)
+            elif prop_cls is PropertySurface:
+                widget = prop_cls("m_Surface", value, dummy_vars)
+            elif prop_cls is PropertyColor:
+                widget = prop_cls("m_Color", value, dummy_vars)
+            else:
+                widget = prop_cls(f"m_{prop_name}", value, dummy_vars, **kwargs)
+            # Use QSizePolicy.Policy.Expanding/Fixed for PySide6
+            widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            inner_layout.addWidget(widget)
+        except Exception as e:
+            err = QLabel(f"<span style='color:red'>Error: {e}</span>")
+            inner_layout.addWidget(err)
+    inner_layout.addStretch(1)
+    demo.resize(700, 1200)
+    demo.show()
+    sys.exit(app.exec())
