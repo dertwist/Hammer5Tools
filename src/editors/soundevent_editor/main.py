@@ -66,8 +66,7 @@ class SaveSoundEvents:
         for index in range(tree.invisibleRootItem().childCount()):
             item = tree.invisibleRootItem().child(index)
             key = str(item.text(0))
-            value = item.text(1)
-            value = ast.literal_eval(value)
+            value = item.data(0, Qt.UserRole)
             item_value = {key:value}
             data.update(item_value)
         # Write to file
