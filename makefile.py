@@ -5,6 +5,8 @@ import subprocess
 import argparse
 from typing import List, Set
 from tabulate import tabulate
+from src.common import app_version
+import re
 cur_dir = os.path.abspath(os.path.dirname(__file__))
 external = f"--add-data={os.path.join(cur_dir, 'src', 'external')};src\\external"
 print(f"External path: {external}")
@@ -216,20 +218,38 @@ def main() -> None:
         elapsed_time = time.time() - stage_start_time
         results.append(["Archiving files", f"{elapsed_time:.2f} seconds"])
 
-        # Modify installer.iss (placeholder logic)
+        # Modify installer.iss by copying to a temporary file, updating version, compiling, then deleting tmp file
+        import shutil
+        tmp_iss_path = os.path.join(cur_dir, 'installer_tmp.iss')
         iss_path = os.path.join(cur_dir, 'installer.iss')
-        with open(iss_path, 'a', encoding='utf-8') as f:
-            f.write("\n; Modified after archivation process\n")
-
-        # Build installer using Inno Setup Compiler (ISCC)
+        # Copy original to tmp
+        shutil.copyfile(iss_path, tmp_iss_path)
+        # Read tmp file content
+        with open(tmp_iss_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        # Replace the AppVersion line in the [Setup] section
+        content = re.sub(r'^(AppVersion\s*=\s*).*$',
+                         rf'\g<1>{app_version}',
+                         content,
+                         flags=re.MULTILINE)
+        # Write back the modified content to tmp file
+        with open(tmp_iss_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        # Build installer using Inno Setup Compiler (ISCC) with tmp file
         try:
             build_installer_start = time.time()
-            subprocess.run(['C:\Program Files (x86)\Inno Setup 6\ISCC.exe', iss_path], check=True)
+            subprocess.run(['C:\Program Files (x86)\Inno Setup 6\ISCC.exe', tmp_iss_path], check=True)
             build_installer_elapsed = time.time() - build_installer_start
             results.append(["Build installer", f"{build_installer_elapsed:.2f} seconds"])
         except Exception as e:
             print(f"Error building installer: {e}")
             results.append(["Build installer", f"Failed: {e}"])
+        finally:
+            # Delete the temporary file
+            try:
+                os.remove(tmp_iss_path)
+            except Exception as e:
+                print(f"Warning: Could not delete temporary installer file: {e}")
 
     overall_elapsed_time = time.time() - overall_start_time
     results.append(["Overall process", f"{overall_elapsed_time:.2f} seconds"])
