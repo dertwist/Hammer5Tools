@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.1
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -24,7 +24,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1097, 878)
+        MainWindow.resize(1166, 878)
         icon = QIcon()
         icon.addFile(u":/icons/appicon.ico", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         MainWindow.setWindowIcon(icon)
@@ -262,24 +262,12 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer)
 
-        self.vcs_button = QPushButton(self.centralwidget)
-        self.vcs_button.setObjectName(u"vcs_button")
-        self.vcs_button.setMinimumSize(QSize(64, 0))
-        self.vcs_button.setMaximumSize(QSize(32, 16777210))
-        self.vcs_button.setStyleSheet(u"padding: 5px;")
-        icon15 = QIcon()
-        icon15.addFile(u":/valve_common/icons/tools/common/flip.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.vcs_button.setIcon(icon15)
-        self.vcs_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.vcs_button)
-
         self.open_addons_folder_button = QToolButton(self.centralwidget)
         self.open_addons_folder_button.setObjectName(u"open_addons_folder_button")
         self.open_addons_folder_button.setFont(font)
-        icon16 = QIcon()
-        icon16.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_addons_folder_button.setIcon(icon16)
+        icon15 = QIcon()
+        icon15.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_addons_folder_button.setIcon(icon15)
 
         self.horizontalLayout_2.addWidget(self.open_addons_folder_button)
 
@@ -302,9 +290,9 @@ class Ui_MainWindow(object):
         self.cleanup_button.setMinimumSize(QSize(92, 0))
         self.cleanup_button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
-        icon17 = QIcon()
-        icon17.addFile(u":/valve_common/icons/tools/common/find.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.cleanup_button.setIcon(icon17)
+        icon16 = QIcon()
+        icon16.addFile(u":/valve_common/icons/tools/common/find.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.cleanup_button.setIcon(icon16)
         self.cleanup_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.cleanup_button)
@@ -369,10 +357,6 @@ class Ui_MainWindow(object):
         self.Launch_Addon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Addon launch</span></p><p>Launches the current addon selected in the addon selection.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setText(QCoreApplication.translate("MainWindow", u"Edit map", None))
-#if QT_CONFIG(tooltip)
-        self.vcs_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Version Control</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.vcs_button.setText(QCoreApplication.translate("MainWindow", u"VCS", None))
 #if QT_CONFIG(tooltip)
         self.open_addons_folder_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Open Game/Content Addons folder</span></p><p><span style=\" font-size:9pt;\">Opens the game addons or content addons folder for the current addon selection. </span></p><p><span style=\" font-size:9pt;\">To choose the folder type to open, select a folder in the </span><span style=\" font-size:9pt; font-style:italic;\">Addon Folder Selection</span><span style=\" font-size:9pt;\">.</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
