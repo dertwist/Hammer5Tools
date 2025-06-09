@@ -52,7 +52,7 @@ class DeleteTreeItemCommand(QUndoCommand):
         for item in selected_items:
             if item:
                 item_data = {
-                    'text': item.text(0),
+                    'text': item.data(0, Qt.UserRole),
                     'value': item.text(1)
                 }
                 selected_items_data.append(item_data)
