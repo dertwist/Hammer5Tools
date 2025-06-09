@@ -327,8 +327,8 @@ class SoundEventEditorMainWindow(QMainWindow):
     def update_hierarchy_item(self, item: HierarchyItemModel, _data: dict):
         """Sets the value to the data column and saves if in realtime mode."""
         # Convert the dictionary to a string representation
-        item.setText(1, str(_data))
-        debug(f'Updated hierarchy item {item.text(0)} with data: \n {_data}')
+        item.setData(0, Qt.UserRole, _data)
+        debug(f'Updated hierarchy item {item.data(0, Qt.UserRole)} with data: \n {_data}')
         if self.realtime_save():
             self.save_soundevents()
 
@@ -366,7 +366,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             return False
 
         # Check if the current item's text matches the filter
-        item_text = item.text(0).lower()
+        item_text = str(item.data(0, Qt.UserRole)).lower()
         item_visible = filter_text in item_text
 
         # Always show the root, regardless of filter
@@ -523,9 +523,9 @@ class SoundEventEditorMainWindow(QMainWindow):
         if data is None:
             data = {}
         for item in tree.selectedItems():
-            value_row = item.text(1)
+            value_row = item.data(0, Qt.UserRole)
             name_row = item.text(0)
-            parent_data = ast.literal_eval(value_row)
+            parent_data = value_row
             data.update({name_row:parent_data})
 
         return data
