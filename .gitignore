@@ -80,10 +80,6 @@ Hammer5Tools.spec
 Hammer5Tools_Updater.spec
 
 # Project-specific ignores
-/smartprop_editor/hammer.dll.bndb
-/hotkeys/hammer/test.keybindings
-/Decompiler/
-/SoundEventEditor/
 /src/editors/soundevent_editor/resource/parsing/soundevents.build/
 /src/editors/soundevent_editor/resource/parsing/soundevents.dist/
 .qodo
@@ -91,7 +87,11 @@ Hammer5Tools_Updater.spec
 /dev/main/settings.ini
 settings.ini
 /application.zip
-Hammer5Tools/
+Hammer5Tools/SoundEventEditor/sounds/
+Hammer5Tools/Hammer5Tools.exe
+Hammer5Tools/Hammer5Tools.zip
+Hammer5Tools/Hammer5ToolsInstaller.exe
+
 
 # Build and output directories
 build/
@@ -103,7 +103,5 @@ dist/
 __pycache__/
 .qtcreator/
 .build/
-hotkeys
 debug.kv3
 settings.cfg
-output/Hammer5ToolsInstaller.exe
