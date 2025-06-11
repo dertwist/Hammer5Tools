@@ -1,0 +1,64 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	_class = "CPostProcessData"
+	m_layers = 
+	[
+		{
+			_class = "CBloomLayer"
+			m_name = "Bloom 1"
+			m_nOpacityPercent = 100
+			m_bVisible = true
+			m_pLayerMask = null
+			m_params = 
+			{
+				m_blendMode = "BLOOM_BLEND_SCREEN"
+				m_flBloomStrength = 1.998
+				m_flScreenBloomStrength = 0.1261
+				m_flBlurBloomStrength = 1.0
+				m_flBloomThreshold = 2.842
+				m_flBloomThresholdWidth = 1.661
+				m_flSkyboxBloomStrength = 1.0
+				m_flBloomStartValue = 1.0
+				m_flBlurWeight = 
+				[
+					0.1999, 0.1999, 0.1999, 0.1999,
+					0.5234,
+				]
+				m_vBlurTint = 
+				[
+					[ 1.0, 1.0, 1.0 ],
+					[ 1.0, 1.0, 1.0 ],
+					[ 1.0, 1.0, 1.0 ],
+					[ 1.0, 1.0, 1.0 ],
+					[ 1.0, 1.0, 1.0 ],
+				]
+			}
+		},
+		{
+			_class = "CToneMappingLayer"
+			m_name = "Tone Mapping 1"
+			m_nOpacityPercent = 100
+			m_bVisible = true
+			m_pLayerMask = null
+			m_params = 
+			{
+				m_flExposureBias = 0.0
+				m_flShoulderStrength = 0.0
+				m_flLinearStrength = 0.001
+				m_flLinearAngle = 0.001
+				m_flToeStrength = 1.0
+				m_flToeNum = 1.0
+				m_flToeDenom = 1.0
+				m_flWhitePoint = 1.498557
+				m_flLuminanceSource = 0.0
+				m_flExposureBiasShadows = 0.0
+				m_flExposureBiasHighlights = 0.0
+				m_flMinShadowLum = 0.0
+				m_flMaxShadowLum = 0.5
+				m_flMinHighlightLum = 2.0
+				m_flMaxHighlightLum = 8.0
+			}
+			m_bUseLocalTonemapOperator = true
+		},
+	]
+}

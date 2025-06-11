@@ -1,0 +1,5111 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	{
+		name = "Hammer 5 Tools"
+		version = "4.1.0"
+		m_nElementID = 27
+	}
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "Box_Style"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 1
+			m_nElementID = 1
+			m_ParameterName = "Stairs style (1=Top faces, 2=Right side, 3=Left side, 4=Both sides, 5=Box)"
+			m_nParamaterMinValue = 1
+			m_nParamaterMaxValue = 5
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "Downstairs"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 2
+			m_ParameterName = "Downstairs"
+		},
+		
+		{
+			_class = "CSmartPropVariable_MaterialGroup"
+			m_VariableName = "Skin_Var"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "dev_square"
+			m_nElementID = 3
+			m_ParameterName = "Texture"
+			m_sModelName = "models/dev/placeholder_box.vmdl"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "count"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 16
+			m_nElementID = 4
+			m_ParameterName = "count"
+			m_nParamaterMinValue = 1
+			m_nParamaterMaxValue = 200
+		},
+		
+		{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "stepHeight"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 8
+			m_nElementID = 5
+			m_ParameterName = "stepHeight"
+			m_nParamaterMinValue = 4
+			m_nParamaterMaxValue = 18
+		},
+		
+		{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "stepWidth"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 128
+			m_nElementID = 6
+			m_ParameterName = "stepWidth"
+			m_nParamaterMinValue = 8
+			m_nParamaterMaxValue = 256
+		},
+		
+		{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "stepDepth"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 16
+			m_nElementID = 7
+			m_ParameterName = "stepDepth"
+			m_nParamaterMinValue = 4
+			m_nParamaterMaxValue = 64
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "totalAngle"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 0.0
+			m_nElementID = 8
+			m_ParameterName = "totalAngle"
+			m_flParamaterMinValue = 0.0
+			m_flParamaterMaxValue = 360.0
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "clockWise"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 9
+			m_ParameterName = "clockWise"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "Clip_Style"
+			m_bExposeAsParameter = true
+			m_DefaultValue = true
+			m_nElementID = 10
+			m_ParameterName = "Clip_Style"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "stepAngle"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 11
+			m_ParameterName = "stepAngle"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "clockWise_int"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 12
+			m_ParameterName = "clockWise_int"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "downstairs_int"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 13
+			m_ParameterName = "downstairs_int"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "radius"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 14
+			m_ParameterName = "radius"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "stepOffset"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 15
+			m_ParameterName = "stepOffset"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "isCurved"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 16
+			m_ParameterName = "isCurved"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Irregularity"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 17
+			m_ParameterName = "Irregularity"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_label"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 18
+			m_ParameterName = "surface_type_label"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_carpet"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 19
+			m_ParameterName = "surface_type_carpet"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_concrete"
+			m_bExposeAsParameter = true
+			m_DefaultValue = true
+			m_nElementID = 20
+			m_ParameterName = "surface_type_concrete"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_dirt"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 21
+			m_ParameterName = "surface_type_dirt"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_glass"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 22
+			m_ParameterName = "surface_type_glass"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_grass"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 23
+			m_ParameterName = "surface_type_grass"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_metal"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 24
+			m_ParameterName = "surface_type_metal"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_plastic"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 25
+			m_ParameterName = "surface_type_plastic"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_tile"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 26
+			m_ParameterName = "surface_type_tile"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "surface_type_wood"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 27
+			m_ParameterName = "surface_type_wood"
+		}
+	]
+	m_Choices = 
+	[
+
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_PlaceMultiple"
+			m_nElementID = 2
+			m_sLabel = "Style_01"
+			m_nCount = 
+			{
+				m_SourceName = "count"
+			}
+			m_Expression = "InstanceIndex() >= 200"
+			m_Modifiers = [
+			{
+				_class = "CSmartPropFilter_VariableValue"
+				m_VariableComparison = 
+				{
+					m_Name = "Box_Style"
+					m_Value = 5
+					m_Comparison = "EQUAL"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableBool"
+				m_VariableName = "isCurved"
+				m_VariableValue = 
+				{
+					m_Expression = "Min(totalAngle, count-1) != 0"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "clockWise ? -1 : 1"
+				}
+				m_VariableName = "clockWise_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "Downstairs ? -1 : 1"
+				}
+				m_VariableName = "downstairs_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? totalAngle * clockWise_int / (count-1) : 0"
+				}
+				m_VariableName = "StepAngle"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? stepDepth / Tan( Deg2rad( stepAngle ) ) - stepWidth * 0.5 * clockWise_int : 0"
+				}
+				m_VariableName = "Radius"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableName = "StepOffset"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? 0 : stepDepth"
+				}
+			}]
+			m_Children = [
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box.vmdl"
+				m_MaterialGroupName = 
+				{
+					m_SourceName = "Skin_Var"
+				}
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_01"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box_step_clip.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "Clip_Style"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_02"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_carpet.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_carpet"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_03"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_concrete.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_concrete"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_04"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_dirt.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_dirt"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_05"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_glass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_glass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_06"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_grass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_grass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_07"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_metal.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_metal"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_08"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_plastic.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_plastic"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_09"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_tile.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_tile"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_10"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_wood.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_wood"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_11"
+			}]
+		},
+		
+		{
+			_class = "CSmartPropElement_PlaceMultiple"
+			m_nElementID = 2
+			m_sLabel = "Style_02"
+			m_nCount = 
+			{
+				m_SourceName = "count"
+			}
+			m_Expression = "InstanceIndex() >= 200"
+			m_Modifiers = [
+			{
+				_class = "CSmartPropFilter_VariableValue"
+				m_VariableComparison = 
+				{
+					m_Name = "Box_Style"
+					m_Value = 1
+					m_Comparison = "EQUAL"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableBool"
+				m_VariableName = "isCurved"
+				m_VariableValue = 
+				{
+					m_Expression = "Min(totalAngle, count-1) != 0"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "clockWise ? -1 : 1"
+				}
+				m_VariableName = "clockWise_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "Downstairs ? -1 : 1"
+				}
+				m_VariableName = "downstairs_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? totalAngle * clockWise_int / (count-1) : 0"
+				}
+				m_VariableName = "StepAngle"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? stepDepth / Tan( Deg2rad( stepAngle ) ) - stepWidth * 0.5 * clockWise_int : 0"
+				}
+				m_VariableName = "Radius"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableName = "StepOffset"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? 0 : stepDepth"
+				}
+			}]
+			m_Children = [
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box_step.vmdl"
+				m_MaterialGroupName = 
+				{
+					m_SourceName = "Skin_Var"
+				}
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_01"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box_step_clip.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "Clip_Style"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_02"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_carpet.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_carpet"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_03"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_concrete.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_concrete"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_04"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_dirt.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_dirt"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_05"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_glass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_glass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_06"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_grass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_grass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_07"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_metal.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_metal"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_08"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_plastic.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_plastic"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_09"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_tile.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_tile"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_10"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_wood.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_wood"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_11"
+			}]
+		},
+		
+		{
+			_class = "CSmartPropElement_PlaceMultiple"
+			m_nElementID = 2
+			m_sLabel = "Style_01"
+			m_nCount = 
+			{
+				m_SourceName = "count"
+			}
+			m_Expression = "InstanceIndex() >= 200"
+			m_Modifiers = [
+			{
+				_class = "CSmartPropFilter_VariableValue"
+				m_VariableComparison = 
+				{
+					m_Name = "Box_Style"
+					m_Value = 2
+					m_Comparison = "EQUAL"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableBool"
+				m_VariableName = "isCurved"
+				m_VariableValue = 
+				{
+					m_Expression = "Min(totalAngle, count-1) != 0"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "clockWise ? -1 : 1"
+				}
+				m_VariableName = "clockWise_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "Downstairs ? -1 : 1"
+				}
+				m_VariableName = "downstairs_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? totalAngle * clockWise_int / (count-1) : 0"
+				}
+				m_VariableName = "StepAngle"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? stepDepth / Tan( Deg2rad( stepAngle ) ) - stepWidth * 0.5 * clockWise_int : 0"
+				}
+				m_VariableName = "Radius"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableName = "StepOffset"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? 0 : stepDepth"
+				}
+			}]
+			m_Children = [
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box_step_side_right.vmdl"
+				m_MaterialGroupName = 
+				{
+					m_SourceName = "Skin_Var"
+				}
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_01"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box_step_clip.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "Clip_Style"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_02"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_carpet.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_carpet"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_03"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_concrete.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_concrete"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_04"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_dirt.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_dirt"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_05"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_glass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_glass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_06"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_grass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_grass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_07"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_metal.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_metal"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_08"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_plastic.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_plastic"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_09"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_tile.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_tile"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_10"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_wood.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_wood"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_11"
+			}]
+		},
+		
+		{
+			_class = "CSmartPropElement_PlaceMultiple"
+			m_nElementID = 2
+			m_sLabel = "Style_01"
+			m_nCount = 
+			{
+				m_SourceName = "count"
+			}
+			m_Expression = "InstanceIndex() >= 200"
+			m_Modifiers = [
+			{
+				_class = "CSmartPropFilter_VariableValue"
+				m_VariableComparison = 
+				{
+					m_Name = "Box_Style"
+					m_Value = 3
+					m_Comparison = "EQUAL"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableBool"
+				m_VariableName = "isCurved"
+				m_VariableValue = 
+				{
+					m_Expression = "Min(totalAngle, count-1) != 0"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "clockWise ? -1 : 1"
+				}
+				m_VariableName = "clockWise_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "Downstairs ? -1 : 1"
+				}
+				m_VariableName = "downstairs_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? totalAngle * clockWise_int / (count-1) : 0"
+				}
+				m_VariableName = "StepAngle"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? stepDepth / Tan( Deg2rad( stepAngle ) ) - stepWidth * 0.5 * clockWise_int : 0"
+				}
+				m_VariableName = "Radius"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableName = "StepOffset"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? 0 : stepDepth"
+				}
+			}]
+			m_Children = [
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box_step_side_left.vmdl"
+				m_MaterialGroupName = 
+				{
+					m_SourceName = "Skin_Var"
+				}
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_01"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box_step_clip.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "Clip_Style"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_02"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_carpet.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_carpet"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_03"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_concrete.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_concrete"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_04"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_dirt.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_dirt"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_05"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_glass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_glass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_06"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_grass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_grass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_07"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_metal.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_metal"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_08"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_plastic.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_plastic"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_09"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_tile.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_tile"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_10"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_wood.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_wood"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_11"
+			}]
+		},
+		
+		{
+			_class = "CSmartPropElement_PlaceMultiple"
+			m_nElementID = 2
+			m_sLabel = "Style_01"
+			m_nCount = 
+			{
+				m_SourceName = "count"
+			}
+			m_Expression = "InstanceIndex() >= 200"
+			m_Modifiers = [
+			{
+				_class = "CSmartPropFilter_VariableValue"
+				m_VariableComparison = 
+				{
+					m_Name = "Box_Style"
+					m_Value = 4
+					m_Comparison = "EQUAL"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableBool"
+				m_VariableName = "isCurved"
+				m_VariableValue = 
+				{
+					m_Expression = "Min(totalAngle, count-1) != 0"
+				}
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "clockWise ? -1 : 1"
+				}
+				m_VariableName = "clockWise_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "Downstairs ? -1 : 1"
+				}
+				m_VariableName = "downstairs_int"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? totalAngle * clockWise_int / (count-1) : 0"
+				}
+				m_VariableName = "StepAngle"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? stepDepth / Tan( Deg2rad( stepAngle ) ) - stepWidth * 0.5 * clockWise_int : 0"
+				}
+				m_VariableName = "Radius"
+			}, 
+			{
+				_class = "CSmartPropOperation_SetVariableFloat"
+				m_VariableName = "StepOffset"
+				m_VariableValue = 
+				{
+					m_Expression = "isCurved ? 0 : stepDepth"
+				}
+			}]
+			m_Children = [
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box_step_side_both.vmdl"
+				m_MaterialGroupName = 
+				{
+					m_SourceName = "Skin_Var"
+				}
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_01"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_box_step_clip.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "Clip_Style"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_02"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_carpet.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_carpet"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_03"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_concrete.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_concrete"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_04"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_dirt.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_dirt"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_05"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_glass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_glass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_06"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_grass.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_grass"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_07"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_metal.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_metal"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_08"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_plastic.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_plastic"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_09"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_tile.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_tile"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_10"
+			}, 
+			{
+				_class = "CSmartPropElement_Model"
+				m_nElementID = 1
+				m_sModelName = "models/dev/placeholder_collision_wood.vmdl"
+				m_vModelScale = 
+				{
+					m_Components = [
+					{
+						m_Expression = "stepDepth * 0.1"
+					}, 
+					{
+						m_Expression = "stepWidth * 0.1"
+					}, 
+					{
+						m_Expression = "stepHeight * 0.1"
+					}]
+				}
+				m_Modifiers = [
+				{
+					_class = "CSmartPropFilter_VariableValue"
+					m_VariableComparison = 
+					{
+						m_Name = "surface_type_wood"
+						m_Value = true
+						m_Comparison = "EQUAL"
+					}
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "stepDepth * 0.5"
+						}, 
+						{
+							m_Expression = "radius"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "InstanceIndex() * stepAngle * downstairs_int"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = [
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepOffset : InstanceIndex() * -stepOffset - stepDepth"
+						}, 
+						{
+							m_Expression = "-radius"
+						}, 
+						{
+							m_Expression = "!Downstairs ? InstanceIndex() * stepHeight * downstairs_int : InstanceIndex() * stepHeight * downstairs_int - stepHeight"
+						}]
+					}
+					m_bEnabled = true
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = [0.0, 
+						{
+							m_Expression = "RandomFloat( -15 * Irregularity, 15 * Irregularity )"
+						}, 0.0]
+					}
+					m_bEnabled = true
+				}]
+				m_sLabel = "Model_11"
+			}]
+		}
+	]
+}

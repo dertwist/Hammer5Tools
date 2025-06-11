@@ -1,0 +1,115 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	{
+		Info = "Hammer5Tools by Twist"
+		GitHub = "https://github.com/dertwist/Hammer5Tools"
+		Discord_Server = "https://discord.gg/DvCXEyhssd"
+		social_links = 
+		{
+			Steam = "https://steamcommunity.com/id/der_twist"
+			Twitter = "https://twitter.com/der_twist"
+			Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+			ArtStation = "https://www.artstation.com/nucky3d"
+		}
+		m_nElementID = 37
+	}
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Irregularity_value"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 2
+			m_ParameterName = "Irregularity Intensity"
+			m_flParamaterMaxValue = 4.0
+			m_sModelName = "None"
+		},
+	]
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_Group"
+			m_bEnabled = true
+			m_nElementID = 3
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_RandomOffset"
+					m_bEnabled = true
+					m_nElementID = 6
+					m_vRandomPositionMin = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "Irregularity_value * -1"
+							},
+														{
+								m_Expression = "Irregularity_value * -1"
+							},
+														{
+								m_Expression = "Irregularity_value * -1"
+							},
+						]
+					}
+					m_vRandomPositionMax = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "Irregularity_value"
+							},
+														{
+								m_Expression = "Irregularity_value"
+							},
+														{
+								m_Expression = "Irregularity_value"
+							},
+						]
+					}
+				},
+								{
+					_class = "CSmartPropOperation_RandomRotation"
+					m_bEnabled = true
+					m_nElementID = 5
+					m_vRandomRotationMax = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "Irregularity_value "
+							},
+														{
+								m_Expression = "Irregularity_value "
+							},
+														{
+								m_Expression = "Irregularity_value "
+							},
+						]
+					}
+					m_vRandomRotationMin = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "Irregularity_value * -1"
+							},
+														{
+								m_Expression = "Irregularity_value * -1"
+							},
+														{
+								m_Expression = "Irregularity_value * -1"
+							},
+						]
+					}
+				},
+			]
+			m_SelectionCriteria = []
+			m_sLabel = "Irregularity State"
+		},
+	]
+}

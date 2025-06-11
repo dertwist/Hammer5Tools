@@ -1,0 +1,275 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	{
+		name = "Hammer 5 Tools"
+		version = "4.4.0"
+		m_nElementID = 35
+	}
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "Cap"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 1
+			m_ParameterName = "Cap"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Width"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 1.0
+			m_nElementID = 2
+			m_ParameterName = "Width"
+			m_flParamaterMinValue = 0.2
+			m_flParamaterMaxValue = 2.0
+			m_sModelName = "None"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Thickness"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 1.0
+			m_nElementID = 3
+			m_ParameterName = "Thickness"
+			m_flParamaterMinValue = 0.2
+			m_flParamaterMaxValue = 2.0
+			m_sModelName = "None"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "random_color"
+			m_bExposeAsParameter = true
+			m_DefaultValue = true
+			m_nElementID = 4
+			m_ParameterName = "random_color"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "color_index"
+			m_bExposeAsParameter = false
+			m_DefaultValue = 1
+			m_nElementID = 5
+			m_ParameterName = "color_index"
+			m_sModelName = "None"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_VariableName = "Model_cap"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "models/de_inferno/inferno_winebar_interior_01/inferno_winebar_crate_01_c.vmdl"
+			m_nElementID = 6
+			m_ParameterName = "Model Cap"
+			m_sModelName = "None"
+		},
+		
+		{
+			_class = "CSmartPropVariable_Model"
+			m_VariableName = "Model"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "models/de_inferno/inferno_winebar_interior_01/inferno_winebar_crate_01_b.vmdl"
+			m_nElementID = 23
+			m_ParameterName = "Model"
+			m_sModelName = "None"
+		}
+	]
+	m_Choices = 
+	[
+		
+		{
+			_class = "CSmartPropChoice"
+			m_Name = "Presets"
+			m_Options = [
+			{
+				m_Name = "default"
+				m_VariableValues = []
+			}, 
+			{
+				m_Name = "Wide + Cap"
+				m_VariableValues = [
+				{
+					m_TargetName = "Width"
+					m_DataType = "FLOAT"
+					m_Value = 1.2
+				}, 
+				{
+					m_TargetName = "Cap"
+					m_DataType = "Bool"
+					m_Value = true
+				}]
+			}, 
+			{
+				m_Name = "Narrow"
+				m_VariableValues = [
+				{
+					m_TargetName = "Width"
+					m_DataType = "FLOAT"
+					m_Value = 0.7
+				}, 
+				{
+					m_TargetName = "Cap"
+					m_DataType = "Bool"
+					m_Value = false
+				}]
+			}]
+			m_DefaultOption = "Default"
+			m_nElementID = 33
+		},
+		
+		{
+			_class = "CSmartPropChoice"
+			m_Name = "Color"
+			m_Options = [
+			{
+				m_Name = "Color 01"
+				m_VariableValues = [
+				{
+					m_TargetName = "color_index"
+					m_DataType = "Int"
+					m_Value = 1.0
+				}]
+			}, 
+			{
+				m_Name = "Color 02"
+				m_VariableValues = [
+				{
+					m_TargetName = "color_index"
+					m_DataType = "Int"
+					m_Value = 2.0
+				}]
+			}]
+			m_DefaultOption = "Color 02"
+			m_nElementID = 34
+		},
+		
+		{
+			_class = "CSmartPropChoice"
+			m_Name = "Test"
+			m_Options = [
+			{
+				m_Name = "Option"
+				m_VariableValues = [
+				{
+					m_TargetName = "Model"
+					m_DataType = "Model"
+					m_Value = "models/de_inferno/inferno_winebar_interior_01/inferno_winebar_crate_01_b.vmdl"
+				}]
+			}, 
+			{
+				m_Name = "D"
+				m_VariableValues = [
+				{
+					m_TargetName = "Model"
+					m_DataType = "Model"
+					m_Value = "models/de_inferno/inferno_winebar_interior_01/inferno_winebar_crate_01_b.vmdl"
+				}]
+			}]
+			m_DefaultOption = "default"
+			m_nElementID = 35
+		}
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_Group"
+			m_bEnabled = true
+			m_nElementID = 10
+			m_Modifiers = [
+			{
+				_class = "CSmartPropOperation_SetTintColor"
+				m_bEnabled = true
+				m_nElementID = 11
+				m_ColorSelection = {m_SourceName = "color_index"}
+				m_SelectionMode = "SPECIFIC"
+				m_ColorChoices = [{m_Color = [255, 255, 255]}, {m_Color = [226, 190, 132]}, {m_Color = [167, 142, 121]}]
+				m_Mode = "MULTIPLY_CURRENT"
+			}]
+			m_SelectionCriteria = []
+			m_sLabel = "Fill color"
+			m_Children = [
+			{
+				_class = "CSmartPropElement_Group"
+				m_bEnabled = true
+				m_nElementID = 12
+				m_Modifiers = [
+				{
+					_class = "CSmartPropOperation_SetTintColor"
+					m_bEnabled = {m_Expression = "random_color"}
+					m_nElementID = 13
+					m_SelectionMode = "RANDOM"
+					m_ColorChoices = [{m_Color = [255, 255, 255]}, {m_Color = [202, 202, 202]}, {m_Color = [161, 161, 161]}]
+					m_Mode = "MULTIPLY_CURRENT"
+				}]
+				m_SelectionCriteria = []
+				m_sLabel = "ranodm tint"
+				m_Children = [
+				{
+					_class = "CSmartPropElement_Group"
+					m_bEnabled = true
+					m_nElementID = 14
+					m_Modifiers = [
+					{
+						_class = "CSmartPropOperation_Translate"
+						m_bEnabled = true
+						m_nElementID = 15
+						m_vPosition = 
+						{
+							m_Components = [0.0, 0.0, 6.0]
+						}
+					}]
+					m_SelectionCriteria = []
+					m_sLabel = "translate"
+					m_Children = [
+					{
+						_class = "CSmartPropElement_Model"
+						m_bEnabled = true
+						m_nElementID = 20
+						m_vModelScale = 
+						{
+							m_Components = [{m_SourceName = "Width"}, {m_SourceName = "Thickness"}, 1.0]
+						}
+						m_sModelName = {m_SourceName = "Model_cap"}
+						m_Modifiers = [
+						{
+							_class = "CSmartPropFilter_VariableValue"
+							m_bEnabled = true
+							m_nElementID = 22
+							m_VariableComparison = {m_Name = "Cap" m_Value = true m_Comparison = "EQUAL"}
+						}, 
+						{
+							_class = "CSmartPropOperation_CreateLocator"
+							m_bEnabled = true
+							m_nElementID = 21
+							m_flDisplayScale = 0.5
+						}]
+						m_SelectionCriteria = []
+						m_sLabel = "cap"
+					}]
+				}, 
+				{
+					_class = "CSmartPropElement_Model"
+					m_bEnabled = true
+					m_nElementID = 16
+					m_vModelScale = 
+					{
+						m_Components = [{m_SourceName = "Width"}, {m_SourceName = "Thickness"}, 1.0]
+					}
+					m_sModelName = {m_SourceName = "Model"}
+					m_Modifiers = []
+					m_SelectionCriteria = []
+					m_sLabel = "Model_01"
+				}]
+			}]
+		}
+	]
+}

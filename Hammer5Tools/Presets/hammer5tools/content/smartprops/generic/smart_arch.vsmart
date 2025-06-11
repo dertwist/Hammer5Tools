@@ -1,0 +1,688 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	{
+		Info = "Hammer5Tools by Twist"
+		GitHub = "https://github.com/dertwist/Hammer5Tools"
+		Discord_Server = "https://discord.gg/DvCXEyhssd"
+		social_links = 
+		{
+			Steam = "https://steamcommunity.com/id/der_twist"
+			Twitter = "https://twitter.com/der_twist"
+			Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+			ArtStation = "https://www.artstation.com/nucky3d"
+		}
+		m_nElementID = 51
+	}
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "new_var_1"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 50
+			m_ParameterName = "====Model===="
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "MaterialGroup"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "default"
+			m_nElementID = 12
+			m_ParameterName = "Material Group"
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Model"
+			m_VariableName = "Arch Piece"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "models/props/de_inferno/hr_i/broken_wall_bricks/broken_wall_brick_02.vmdl"
+			m_nElementID = 3
+			m_ParameterName = "Arch Piece"
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_scale"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 1.0
+			m_nElementID = 11
+			m_ParameterName = "model_scale"
+			m_flParamaterMinValue = 0.25
+			m_flParamaterMaxValue = 2.0
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "new_var_3"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 51
+			m_ParameterName = " "
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "new_var"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 51
+			m_ParameterName = "====Arch===="
+		},
+				{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "ArchPieces"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 6
+			m_nElementID = 2
+			m_ParameterName = "Amount"
+			m_nParamaterMinValue = 1
+			m_nParamaterMaxValue = 16
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Radial_step"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 3.8
+			m_nElementID = 19
+			m_ParameterName = "Radial_step"
+			m_flParamaterMaxValue = 10.0
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "new_var_4"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 51
+			m_ParameterName = " "
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "new_var_2"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 51
+			m_ParameterName = "====Columns===="
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "ModelHeight"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 14.0
+			m_nElementID = 5
+			m_ParameterName = "ModelHeight"
+			m_flParamaterMinValue = 1.0
+			m_flParamaterMaxValue = 64.0
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "end_offset"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 32.0
+			m_nElementID = 9
+			m_ParameterName = "End Offset"
+			m_flParamaterMinValue = -32.0
+			m_flParamaterMaxValue = 32.0
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "end_rotate_180"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 10
+			m_ParameterName = "End 180 Rotate"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "ModelLenght"
+			m_bExposeAsParameter = false
+			m_DefaultValue = 32.0
+			m_nElementID = 6
+			m_ParameterName = "ModelLenght"
+			m_flParamaterMaxValue = 128.0
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Sizer_Y"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 20
+			m_ParameterName = "Sizer_Y"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Sizer_Z"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 21
+			m_ParameterName = "Sizer_Z"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Sizer_X"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 22
+			m_ParameterName = "Sizer_X"
+		},
+	]
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_Group"
+			m_bEnabled = true
+			m_nElementID = 1
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_bEnabled = true
+					m_OutputVariableMaxZ = "Sizer_Z"
+					m_OutputVariableMinZ = ""
+					m_flInitialMaxZ = 16.0
+					m_flInitialMinZ = 0.0
+					m_OutputVariableMaxY = ""
+					m_OutputVariableMinY = "Sizer_Y"
+					m_flInitialMaxY = -24.0
+					m_flInitialMinY = -8.0
+					m_OutputVariableMaxX = "Sizer_X"
+					m_OutputVariableMinX = ""
+					m_flConstraintMaxX = 16.0
+					m_flConstraintMinX = 16.0
+					m_flInitialMaxX = 128.0
+					m_flInitialMinX = 0.0
+				},
+			]
+			m_SelectionCriteria = []
+			m_sLabel = "Sizer"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_FitOnLine"
+					m_bEnabled = true
+					m_bOrientAlongLine = false
+					m_nScaleMode = "SCALE_END_TO_FIT"
+					m_vEnd = 
+					{
+						m_Components = 
+						[
+														{
+								m_SourceName = "Sizer_X"
+							},
+							0,
+							0,
+						]
+					}
+					m_Modifiers = []
+					m_SelectionCriteria = []
+					m_sLabel = "FitOnLine_01"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Group"
+							m_Modifiers = []
+							m_SelectionCriteria = 
+							[
+																{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_flLength = 32
+									m_bAllowScale = true
+									m_flMinLength = 0
+									m_flMaxLength = 128
+									m_sLabel = ""
+								},
+							]
+							m_sLabel = "Group_01"
+							m_nElementID = 4
+						},
+												{
+							_class = "CSmartPropElement_FitOnLine"
+							m_bEnabled = true
+							m_bOrientAlongLine = false
+							m_nScaleMode = "SCALE_END_TO_FIT"
+							m_vEnd = 
+							{
+								m_Components = 
+								[
+									0,
+									0,
+																		{
+										m_SourceName = "Sizer_Z"
+									},
+								]
+							}
+							m_Modifiers = []
+							m_SelectionCriteria = 
+							[
+																{
+									_class = "CSmartPropSelectionCriteria_EndCap"
+									m_bEnabled = true
+									m_bEnd = false
+									m_bStart = true
+								},
+																{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_bEnabled = true
+									m_flMaxLength = 
+									{
+										m_Expression = "ModelLenght * 2"
+									}
+									m_flMinLength = 
+									{
+										m_Expression = "ModelLenght /2"
+									}
+									m_bAllowScale = true
+									m_flLength = 
+									{
+										m_SourceName = "ModelLenght"
+									}
+								},
+							]
+							m_sLabel = "Start"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Group"
+									m_bEnabled = true
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_Scale"
+											m_bEnabled = true
+											m_flScale = 
+											{
+												m_SourceName = "model_scale"
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_bEnabled = true
+											m_flMaxLength = 
+											{
+												m_Expression = " ModelHeight "
+											}
+											m_flMinLength = 
+											{
+												m_Expression = "1"
+											}
+											m_bAllowScale = true
+											m_flLength = 
+											{
+												m_SourceName = "ModelHeight"
+											}
+										},
+									]
+									m_sLabel = "Group"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Model"
+											m_bEnabled = true
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+																										{
+														m_Expression = "1"
+													},
+																										{
+														m_Expression = " Sizer_Y /32 * -1 "
+													},
+																										{
+														m_Expression = "1 * LinearScale()"
+													},
+												]
+											}
+											m_sModelName = 
+											{
+												m_SourceName = "Arch Piece"
+											}
+											m_Modifiers = []
+											m_SelectionCriteria = []
+											m_sLabel = "Model_01"
+										},
+									]
+								},
+							]
+						},
+												{
+							_class = "CSmartPropElement_FitOnLine"
+							m_bEnabled = true
+							m_nElementID = 38
+							m_bOrientAlongLine = false
+							m_nScaleMode = "SCALE_END_TO_FIT"
+							m_vEnd = 
+							{
+								m_Components = 
+								[
+									0.0,
+									0.0,
+																		{
+										m_SourceName = "Sizer_Z"
+									},
+								]
+							}
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_bEnabled = 
+									{
+										m_Expression = "end_rotate_180"
+									}
+									m_nElementID = 40
+									m_vRotation = 
+									{
+										m_Components = [0.0, 180.0, 0.0]
+									}
+								},
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_bEnabled = true
+									m_nElementID = 39
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+																						{
+												m_SourceName = "end_offset"
+											},
+											0.0,
+											0.0,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+																{
+									_class = "CSmartPropSelectionCriteria_EndCap"
+									m_bEnabled = true
+									m_nElementID = 42
+									m_bEnd = true
+									m_bStart = false
+								},
+																{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_bEnabled = true
+									m_nElementID = 41
+									m_flMaxLength = 
+									{
+										m_Expression = "ModelLenght * 2"
+									}
+									m_flMinLength = 
+									{
+										m_Expression = "ModelLenght /2"
+									}
+									m_bAllowScale = false
+									m_flLength = 
+									{
+										m_SourceName = "ModelLenght"
+									}
+								},
+							]
+							m_sLabel = "End"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Group"
+									m_bEnabled = true
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_Scale"
+											m_bEnabled = true
+											m_flScale = 
+											{
+												m_SourceName = "model_scale"
+											}
+										},
+									]
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_bEnabled = true
+											m_flMaxLength = 
+											{
+												m_Expression = " ModelHeight "
+											}
+											m_flMinLength = 
+											{
+												m_Expression = "1"
+											}
+											m_bAllowScale = true
+											m_flLength = 
+											{
+												m_SourceName = "ModelHeight"
+											}
+										},
+									]
+									m_sLabel = "Group"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Model"
+											m_bEnabled = true
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+																										{
+														m_Expression = "1"
+													},
+																										{
+														m_Expression = " Sizer_Y /32 * -1 "
+													},
+																										{
+														m_Expression = "1 * LinearScale()"
+													},
+												]
+											}
+											m_sModelName = 
+											{
+												m_SourceName = "Arch Piece"
+											}
+											m_Modifiers = []
+											m_SelectionCriteria = []
+											m_sLabel = "Model_01"
+										},
+									]
+								},
+							]
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_Translate"
+							m_vPosition = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = " Sizer_X/2 "
+									},
+									0,
+																		{
+										m_Expression = " Sizer_Z "
+									},
+								]
+							}
+						},
+												{
+							_class = "CSmartPropOperation_CreateLocator"
+						},
+					]
+					m_SelectionCriteria = []
+					m_sLabel = "Pivot"
+					m_nElementID = 3
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_PlaceMultiple"
+							m_bEnabled = true
+							m_nElementID = 6
+							m_Expression = 
+							{
+								m_Expression = ""
+							}
+							m_nCount = 
+							{
+								m_Expression = " Sizer_X/550 *(ArchPieces*10) "
+							}
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_bEnabled = true
+									m_nElementID = 47
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+																						{
+												m_Expression = " 0 "
+											},
+											0.0,
+											0.0,
+										]
+									}
+								},
+							]
+							m_SelectionCriteria = []
+							m_sLabel = "Instances"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Group"
+									m_bEnabled = true
+									m_nElementID = 9
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_Rotate"
+											m_bEnabled = true
+											m_nElementID = 18
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+																										{
+														m_Expression = " (180+1)/(Sizer_X/( Radial_step * 150 ) * (ArchPieces*10)) * instanceindex() "
+													},
+													0.0,
+													0.0,
+												]
+											}
+										},
+									]
+									m_SelectionCriteria = []
+									m_sLabel = "Rotation Pivot"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Model"
+											m_bEnabled = true
+											m_nElementID = 14
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "MaterialGroup"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+													1.0,
+																										{
+														m_Expression = " Sizer_Y /32 * -1 "
+													},
+													1.0,
+												]
+											}
+											m_sModelName = 
+											{
+												m_SourceName = "Arch Piece"
+											}
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_bEnabled = true
+													m_nElementID = 16
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = " ((Sizer_X -ModelLenght) /2 *-1) - ModelLenght/2 "
+															},
+															0.0,
+															0.0,
+														]
+													}
+												},
+																								{
+													_class = "CSmartPropOperation_Scale"
+													m_bEnabled = true
+													m_nElementID = 15
+													m_flScale = 
+													{
+														m_SourceName = "model_scale"
+													}
+												},
+											]
+											m_SelectionCriteria = 
+											[
+																								{
+													_class = "CSmartPropSelectionCriteria_LinearLength"
+													m_bEnabled = true
+													m_nElementID = 17
+													m_flMaxLength = 
+													{
+														m_SourceName = "ModelHeight"
+													}
+													m_flMinLength = 
+													{
+														m_SourceName = "ModelHeight"
+													}
+													m_bAllowScale = false
+													m_flLength = 
+													{
+														m_SourceName = "ModelHeight"
+													}
+												},
+											]
+											m_sLabel = "Arch Piece"
+										},
+									]
+								},
+							]
+						},
+					]
+				},
+			]
+		},
+	]
+}

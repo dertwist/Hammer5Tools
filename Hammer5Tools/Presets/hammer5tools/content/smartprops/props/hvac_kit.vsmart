@@ -1,0 +1,724 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	[
+				{
+			Info = "Hammer5Tools by Twist"
+			GitHub = "https://github.com/dertwist/Hammer5Tools"
+			Discord_Server = "https://discord.gg/DvCXEyhssd"
+			social_links = 
+			{
+				Steam = "https://steamcommunity.com/id/der_twist"
+				Twitter = "https://twitter.com/der_twist"
+				Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+				ArtStation = "https://www.artstation.com/nucky3d"
+			}
+		},
+	]
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "length"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_ParameterName = "length"
+		},
+	]
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_PickOne"
+			m_SelectionMode = "FIRST"
+			m_HandleShape = "CIRCLE"
+			m_nElementID = 1
+			m_sLabel = "PickOne_01"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Model"
+					m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_endcap.vmdl"
+					m_nElementID = 2
+					m_sLabel = "Model_01"
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 3
+					m_sLabel = "Group_02"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_ModifyState"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_CreateSizer"
+									m_OutputVariableMaxY = "length"
+									m_flInitialMaxY = 64.0
+								},
+							]
+							m_nElementID = 18
+							m_sLabel = "ModifyState_01"
+						},
+												{
+							_class = "CSmartPropElement_FitOnLine"
+							m_vEnd = 
+							{
+								m_Components = 
+								[
+									0.0,
+																		{
+										m_SourceName = "length"
+									},
+									0.0,
+								]
+							}
+							m_nElementID = 19
+							m_sLabel = "FitOnLine_02"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_512.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 512.0
+										},
+									]
+									m_nElementID = 52
+									m_sLabel = "Model_01"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_256.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 256.0
+										},
+									]
+									m_nElementID = 53
+									m_sLabel = "Model_02"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_128.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 128.0
+										},
+									]
+									m_nElementID = 54
+									m_sLabel = "Model_03"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_64.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 64.0
+										},
+									]
+									m_nElementID = 55
+									m_sLabel = "Model_04"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_32.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 32.0
+										},
+									]
+									m_nElementID = 56
+									m_sLabel = "Model_05"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_16.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 16.0
+										},
+									]
+									m_nElementID = 57
+									m_sLabel = "Model_06"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_8.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 8.0
+										},
+									]
+									m_nElementID = 58
+									m_sLabel = "Model_07"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_4.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 4.0
+										},
+									]
+									m_nElementID = 59
+									m_sLabel = "Model_08"
+								},
+																{
+									_class = "CSmartPropElement_SmartProp"
+									m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_EndCap"
+											m_bStart = false
+											m_bEnd = true
+										},
+									]
+									m_nElementID = 60
+									m_sLabel = "SmartProp_09"
+								},
+							]
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 4
+					m_sLabel = "Group_03"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_d.vmdl"
+							m_nElementID = 20
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 25.0, -26.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, -90.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 21
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 5
+					m_sLabel = "Group_04"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_d_short.vmdl"
+							m_nElementID = 22
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 8.0, -8.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, -90.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 23
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 6
+					m_sLabel = "Group_05"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_u.vmdl"
+							m_nElementID = 24
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 25.0, 26.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, 90.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 25
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 7
+					m_sLabel = "Group_06"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_u_short.vmdl"
+							m_nElementID = 26
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 8.0, 8.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, 90.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 27
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 8
+					m_sLabel = "Group_07"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_l.vmdl"
+							m_nElementID = 28
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [-42.0, 42.0, 0.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 90.0, 0.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 29
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 9
+					m_sLabel = "Group_08"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_l_short.vmdl"
+							m_nElementID = 30
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [-12.0, 12.0, 0.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 90.0, 0.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 31
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 10
+					m_sLabel = "Group_09"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_r.vmdl"
+							m_nElementID = 32
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [42.0, 42.0, 0.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, -90.0, 0.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 33
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 11
+					m_sLabel = "Group_10"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_curve_r_short.vmdl"
+							m_nElementID = 34
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [12.0, 12.0, 0.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, -90.0, 0.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 35
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 12
+					m_sLabel = "Group_11"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_split_horizontal.vmdl"
+							m_nElementID = 36
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [42.0, 42.0, 0.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, -90.0, 0.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 37
+							m_sLabel = "SmartProp_02"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [-42.0, 42.0, 0.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 90.0, 0.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 38
+							m_sLabel = "SmartProp_03"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 13
+					m_sLabel = "Group_12"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_split_horizontal_short.vmdl"
+							m_nElementID = 39
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [12.0, 12.0, 0.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, -90.0, 0.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 40
+							m_sLabel = "SmartProp_02"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [-12.0, 12.0, 0.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 90.0, 0.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 41
+							m_sLabel = "SmartProp_03"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 14
+					m_sLabel = "Group_13"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_split_vertical.vmdl"
+							m_nElementID = 42
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 25.0, 26.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, 90.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 43
+							m_sLabel = "SmartProp_02"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 25.0, -26.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, -90.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 44
+							m_sLabel = "SmartProp_03"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 15
+					m_sLabel = "Group_14"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_split_vertical_short.vmdl"
+							m_nElementID = 45
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 8.0, 8.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, 90.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 46
+							m_sLabel = "SmartProp_02"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 8.0, -8.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, -90.0]
+								},
+							]
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_nElementID = 47
+							m_sLabel = "SmartProp_03"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 16
+					m_sLabel = "Group_15"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_002_transition.vmdl"
+							m_nElementID = 48
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 12.0, 4.0]
+								},
+																{
+									_class = "CSmartPropOperation_Scale"
+									m_flScale = 0.5
+								},
+							]
+							m_nElementID = 49
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 17
+					m_sLabel = "Group_16"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/props/de_nuke/hr_nuke/airduct_hvac_001/airduct_hvac_001_002_transition.vmdl"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 24.0, -8.0]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 180.0, 0.0]
+								},
+																{
+									_class = "CSmartPropOperation_Scale"
+									m_flScale = 2.0
+								},
+							]
+							m_nElementID = 50
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props/hvac_kit.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 24.0, -8.0]
+								},
+																{
+									_class = "CSmartPropOperation_Scale"
+									m_flScale = 2.0
+								},
+							]
+							m_nElementID = 51
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+			]
+		},
+	]
+}

@@ -1,0 +1,74 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	[
+				{
+			Info = "Hammer5Tools by Twist"
+			GitHub = "https://github.com/dertwist/Hammer5Tools"
+			Discord_Server = "https://discord.gg/DvCXEyhssd"
+			social_links = 
+			{
+				Steam = "https://steamcommunity.com/id/der_twist"
+				Twitter = "https://twitter.com/der_twist"
+				Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+				ArtStation = "https://www.artstation.com/nucky3d"
+			}
+		},
+	]
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_MaterialGroup"
+			m_VariableName = "materialGroup"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_ParameterName = "Material Group"
+			m_sModelName = "models/props/de_nuke/hr_nuke/metal_railing_001/metal_railing_001_16.vmdl"
+		},
+	]
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_PickOne"
+			m_vHandleOfffset = [0.0, 0.0, 48.0]
+			m_HandleShape = "CIRCLE"
+			m_SelectionMode = "FIRST"
+			m_nElementID = 1
+			m_sLabel = "PickOne_01"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Model"
+					m_MaterialGroupName = 
+					{
+						m_SourceName = "materialGroup"
+					}
+					m_sModelName = "models/props/de_nuke/hr_nuke/metal_railing_001/metal_railing_001_end.vmdl"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_Translate"
+							m_vPosition = [2.0, 0.0, 0.0]
+						},
+					]
+					m_nElementID = 2
+					m_sLabel = "Model_01"
+				},
+								{
+					_class = "CSmartPropElement_SmartProp"
+					m_sSmartProp = "smartprops/props//railing_kit_run.vsmart"
+					m_nElementID = 3
+					m_sLabel = "SmartProp_02"
+				},
+								{
+					_class = "CSmartPropElement_SmartProp"
+					m_sSmartProp = "smartprops/props//railing_kit_stairs.vsmart"
+					m_nElementID = 4
+					m_sLabel = "SmartProp_03"
+				},
+			]
+		},
+	]
+}

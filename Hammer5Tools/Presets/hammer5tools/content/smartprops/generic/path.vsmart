@@ -1,0 +1,461 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	{
+		Info = "Hammer5Tools by Twist"
+		GitHub = "https://github.com/dertwist/Hammer5Tools"
+		Discord_Server = "https://discord.gg/DvCXEyhssd"
+		social_links = 
+		{
+			Steam = "https://steamcommunity.com/id/der_twist"
+			Twitter = "https://twitter.com/der_twist"
+			Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+			ArtStation = "https://www.artstation.com/nucky3d"
+		}
+		m_nElementID = 47
+	}
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "info"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 19
+			m_ParameterName = "===== Models ======"
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "Model_01_material_group"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "default"
+			m_nElementID = 13
+			m_ParameterName = "Material Group"
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Model"
+			m_VariableName = "Model 01"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "models/props/de_inferno/hr_i/broken_wall_bricks/broken_wall_brick_05.vmdl"
+			m_nElementID = 9
+			m_ParameterName = "Model 1"
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Vector3D"
+			m_VariableName = "Model_01_manual_rotate"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [0, 0, 0]
+			m_nElementID = 39
+			m_ParameterName = "Model 1 Rotate"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_01_scale"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 1.0
+			m_nElementID = 47
+			m_ParameterName = "Model 1 Scale"
+			m_flParamaterMinValue = 0.5
+			m_flParamaterMaxValue = 2.0
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Model"
+			m_VariableName = "Model 02"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "models/props/de_inferno/hr_i/broken_wall_bricks/broken_wall_brick_02.vmdl"
+			m_nElementID = 38
+			m_ParameterName = "Model 2"
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Vector3D"
+			m_VariableName = "Model_02_manual_rotate"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [0, 0, 0]
+			m_nElementID = 10
+			m_ParameterName = "Model 2 Rotate"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_02_scale"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 1.0
+			m_nElementID = 47
+			m_ParameterName = "Model 2 Scale"
+			m_flParamaterMinValue = 0.5
+			m_flParamaterMaxValue = 2.0
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "info1"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 20
+			m_ParameterName = "===== Path ======"
+		},
+				{
+			_class = "CSmartPropVariable_Vector3D"
+			m_VariableName = "random_rotate_max"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [3, 3, 1]
+			m_nElementID = 3
+			m_ParameterName = "random_rotate_max"
+		},
+				{
+			_class = "CSmartPropVariable_Vector3D"
+			m_VariableName = "random_rotate_min"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [-2, -2, -1]
+			m_nElementID = 2
+			m_ParameterName = "random_rotate_min"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "random_scale_max"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 1
+			m_nElementID = 4
+			m_ParameterName = "random_scale_max"
+			m_flParamaterMinValue = 0.2
+			m_flParamaterMaxValue = 2
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "random_scale_min"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 0.9
+			m_nElementID = 5
+			m_ParameterName = "random_scale_min"
+			m_flParamaterMinValue = 0.2
+			m_flParamaterMaxValue = 2
+		},
+				{
+			_class = "CSmartPropVariable_Vector3D"
+			m_VariableName = "random_pos_max"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [2, 2, 2]
+			m_nElementID = 6
+			m_ParameterName = "random_pos_max"
+		},
+				{
+			_class = "CSmartPropVariable_Vector3D"
+			m_VariableName = "random_pos_min"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [-2, -2, -2]
+			m_nElementID = 7
+			m_ParameterName = "random_pos_min"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_01_liniar_lenght"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 32
+			m_nElementID = 8
+			m_ParameterName = "Model Lenght"
+			m_flParamaterMinValue = 8
+			m_flParamaterMaxValue = 128
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Irregularity_value"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 2
+			m_ParameterName = "Irregularity Intensity"
+			m_flParamaterMaxValue = 1.0
+			m_sModelName = "None"
+		},
+	]
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_PlaceOnPath"
+			m_bEnabled = true
+			m_nElementID = 1
+			m_DefaultPath = null
+			m_PathSpace = "WORLD"
+			m_flOffsetAlongPath = 0.0
+			m_vPathOffset = 
+			{
+				m_Components = [0.0, 0.0, 0.0]
+			}
+			m_PathName = "path"
+			m_Modifiers = []
+			m_SelectionCriteria = []
+			m_sLabel = "PlaceOnPath_01"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Group"
+					m_bEnabled = true
+					m_nElementID = 3
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_RandomOffset"
+							m_bEnabled = true
+							m_nElementID = 6
+							m_vRandomPositionMin = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = "Irregularity_value * -1"
+									},
+																		{
+										m_Expression = "Irregularity_value * -1"
+									},
+																		{
+										m_Expression = "Irregularity_value * -1"
+									},
+								]
+							}
+							m_vRandomPositionMax = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = "Irregularity_value"
+									},
+																		{
+										m_Expression = "Irregularity_value"
+									},
+																		{
+										m_Expression = "Irregularity_value"
+									},
+								]
+							}
+						},
+												{
+							_class = "CSmartPropOperation_RandomRotation"
+							m_bEnabled = true
+							m_nElementID = 5
+							m_vRandomRotationMax = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = "Irregularity_value "
+									},
+																		{
+										m_Expression = "Irregularity_value "
+									},
+																		{
+										m_Expression = "Irregularity_value "
+									},
+								]
+							}
+							m_vRandomRotationMin = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = "Irregularity_value * -1"
+									},
+																		{
+										m_Expression = "Irregularity_value * -1"
+									},
+																		{
+										m_Expression = "Irregularity_value * -1"
+									},
+								]
+							}
+						},
+					]
+					m_SelectionCriteria = 
+					[
+												{
+							_class = "CSmartPropSelectionCriteria_PathPosition"
+							m_bEnabled = true
+							m_nElementID = 31
+							m_bAllowAtEnd = true
+							m_bAllowAtStart = true
+							m_nNthPositionIndexOffset = 
+							{
+								m_SourceName = "model_01_liniar_lenght"
+							}
+							m_nPlaceEveryNthPosition = 
+							{
+								m_SourceName = "model_01_liniar_lenght"
+							}
+							m_PlaceAtPositions = "NTH"
+						},
+					]
+					m_sLabel = "Irregularity State"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_PickOne"
+							m_bEnabled = true
+							m_nElementID = 26
+							m_bConfigurable = true
+							m_SelectionMode = "RANDOM"
+							m_Modifiers = []
+							m_SelectionCriteria = []
+							m_sLabel = "PickOne_26"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Model"
+									m_bEnabled = true
+									m_nElementID = 32
+									m_MaterialGroupName = 
+									{
+										m_SourceName = "Model_01_material_group"
+									}
+									m_sModelName = 
+									{
+										m_SourceName = "Model 01"
+									}
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_Rotate"
+											m_bEnabled = true
+											m_nElementID = 33
+											m_vRotation = 
+											{
+												m_SourceName = "Model_01_manual_rotate"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_Scale"
+											m_bEnabled = true
+											m_nElementID = 46
+											m_flScale = 
+											{
+												m_SourceName = "model_01_scale"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_RandomRotation"
+											m_bEnabled = true
+											m_nElementID = 34
+											m_vRandomRotationMax = 
+											{
+												m_SourceName = "random_rotate_max"
+											}
+											m_vRandomRotationMin = 
+											{
+												m_SourceName = "random_rotate_min"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_RandomScale"
+											m_bEnabled = true
+											m_nElementID = 35
+											m_flRandomScaleMax = 
+											{
+												m_SourceName = "random_scale_max"
+											}
+											m_flRandomScaleMin = 
+											{
+												m_SourceName = "random_scale_min"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_RandomOffset"
+											m_bEnabled = true
+											m_nElementID = 36
+											m_vRandomPositionMax = 
+											{
+												m_SourceName = "random_pos_max"
+											}
+											m_vRandomPositionMin = 
+											{
+												m_SourceName = "random_pos_min"
+											}
+										},
+									]
+									m_SelectionCriteria = []
+									m_sLabel = "01"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_bEnabled = true
+									m_nElementID = 40
+									m_MaterialGroupName = 
+									{
+										m_SourceName = "Model_01_material_group"
+									}
+									m_sModelName = 
+									{
+										m_SourceName = "Model 02"
+									}
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_Rotate"
+											m_bEnabled = true
+											m_nElementID = 41
+											m_vRotation = 
+											{
+												m_SourceName = "Model_02_manual_rotate"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_Scale"
+											m_bEnabled = true
+											m_nElementID = 46
+											m_flScale = 
+											{
+												m_SourceName = "model_02_scale"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_RandomRotation"
+											m_bEnabled = true
+											m_nElementID = 42
+											m_vRandomRotationMax = 
+											{
+												m_SourceName = "random_rotate_max"
+											}
+											m_vRandomRotationMin = 
+											{
+												m_SourceName = "random_rotate_min"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_RandomScale"
+											m_bEnabled = true
+											m_nElementID = 43
+											m_flRandomScaleMax = 
+											{
+												m_SourceName = "random_scale_max"
+											}
+											m_flRandomScaleMin = 
+											{
+												m_SourceName = "random_scale_min"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_RandomOffset"
+											m_bEnabled = true
+											m_nElementID = 44
+											m_vRandomPositionMax = 
+											{
+												m_SourceName = "random_pos_max"
+											}
+											m_vRandomPositionMin = 
+											{
+												m_SourceName = "random_pos_min"
+											}
+										},
+									]
+									m_SelectionCriteria = []
+									m_sLabel = "02"
+								},
+							]
+						},
+					]
+				},
+			]
+		},
+	]
+}

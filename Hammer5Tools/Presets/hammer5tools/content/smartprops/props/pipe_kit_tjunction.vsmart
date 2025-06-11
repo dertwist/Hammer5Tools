@@ -1,0 +1,77 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	[
+				{
+			Info = "Hammer5Tools by Twist"
+			GitHub = "https://github.com/dertwist/Hammer5Tools"
+			Discord_Server = "https://discord.gg/DvCXEyhssd"
+			social_links = 
+			{
+				Steam = "https://steamcommunity.com/id/der_twist"
+				Twitter = "https://twitter.com/der_twist"
+				Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+				ArtStation = "https://www.artstation.com/nucky3d"
+			}
+		},
+	]
+	m_Variables = []
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_ModifyState"
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = [0.0, 4.0, 0.0]
+				},
+								{
+					_class = "CSmartPropOperation_CreateRotator"
+					m_flDisplayRadius = 10.0
+					m_vRotationAxis = [0.0, 1.0, 0.0]
+				},
+			]
+			m_nElementID = 1
+			m_sLabel = "ModifyState_01"
+		},
+				{
+			_class = "CSmartPropElement_Model"
+			m_sModelName = "models/generic/pipe01/pipe01_tjunction01a_medium.vmdl"
+			m_nElementID = 2
+			m_sLabel = "Model_02"
+		},
+				{
+			_class = "CSmartPropElement_SmartProp"
+			m_sSmartProp = "smartprops/props/pipe_kit_main.vsmart"
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = [0.0, 4.0, 0.0]
+				},
+			]
+			m_nElementID = 3
+			m_sLabel = "SmartProp_03"
+		},
+				{
+			_class = "CSmartPropElement_SmartProp"
+			m_sSmartProp = "smartprops/props/pipe_kit_main.vsmart"
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = [0.0, 0.0, -4.0]
+				},
+								{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = [0.0, 0.0, -90.0]
+				},
+			]
+			m_nElementID = 4
+			m_sLabel = "SmartProp_04"
+		},
+	]
+}

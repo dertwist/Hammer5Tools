@@ -1,0 +1,68 @@
+// THIS FILE IS AUTO-GENERATED
+
+Layer0
+{
+	shader "csgo_environment.vfx"
+
+	//---- Create Variation ----
+	F_MATERIAL_REFERENCE 1
+
+	//---- Color ----
+	g_flModelTintAmount "1.000"
+	g_nScaleTexCoordUByModelScaleAxis "0" // None
+	g_nScaleTexCoordVByModelScaleAxis "0" // None
+	g_vColorTint "[0.396078 0.396078 0.396078 0.000000]"
+
+	//---- Fog ----
+	g_bFogEnabled "1"
+
+	//---- Layer 1 ----
+	// [inherited from layer] g_bModelTint1 "1.000000"
+	// [inherited from layer] g_flTexCoordRotation1 "0.000031"
+	// [inherited from layer] g_fTextureColorBrightness1 "1.000000"
+	// [inherited from layer] g_fTextureColorContrast1 "1.000000"
+	// [inherited from layer] g_fTextureColorSaturation1 "1.000000"
+	// [inherited from layer] g_fTextureNormalContrast1 "1.000000"
+	// [inherited from layer] g_fTextureRoughnessBrightness1 "1.000000"
+	// [inherited from layer] g_fTextureRoughnessContrast1 "1.000000"
+	// [inherited from layer] g_fTintMaskBrightness1 "1.000000"
+	// [inherited from layer] g_fTintMaskContrast1 "1.000000"
+	// [inherited from layer] g_nColorCorrectionMode1 "0.000000"
+	// [inherited from layer] g_nVertexColorMode1 "0.000000"
+	// [inherited from layer] g_vAmbientOcclusionLevels1 "[0.000000 0.500000 1.000000]"
+	// [inherited from layer] g_vTexCoordCenter1 "[0.500000 0.500000]"
+	// [inherited from layer] g_vTexCoordOffset1 "[0.000000 0.000000]"
+	// [inherited from layer] g_vTexCoordScale1 "[1.000000 1.000000]"
+	// [inherited from layer] g_vTextureColorTint1 "[1.000000 1.000000 1.000000 0.000000]"
+
+	//---- Texture Address Mode ----
+	g_nTextureAddressModeU "0" // Wrap
+	g_nTextureAddressModeV "0" // Wrap
+
+	// Material Layer References
+	MaterialLayers
+	{
+		MaterialLayerReference_1 "materials/dev/gray_grid.vmat"
+	}
+
+
+	VariableState
+	{
+		"Color"
+		{
+		}
+		"Fog"
+		{
+		}
+		"Layer 1"
+		{
+			"Tint Mask" 0
+			"Color Correction" 0
+			"Lighting" 0
+			"Texture Transform" 1
+		}
+		"Texture Address Mode"
+		{
+		}
+	}
+}
