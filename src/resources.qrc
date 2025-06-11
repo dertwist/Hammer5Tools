@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/icons">
+    <file>icons/steam_logo_2.png</file>
+    <file>icons/steam_logo.png</file>
     <file>icons/hammer_icon.png</file>
     <file>appicon.ico</file>
   </qresource>
