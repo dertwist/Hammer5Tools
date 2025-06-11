@@ -1,0 +1,12 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+		type = "csgo_mega"
+		mixgroup = "Amb_Common"
+		vsnd_files_track_01 = ["sounds/music/valve_01/roundtenseccount.vsnd"]
+		volume = 3.0
+		distance_effect_mix = 0.0
+		use_world_position = true
+		position = [0.0, 0.0, 0.0]
+		comment = "Adding positon for your sound: Copy position of your sound entity and paste into ''Position'' property. 
+Add custom: Sounds: drag and drop from explorer a sound into ''Vsnd Files Track 01 '' property."
+}

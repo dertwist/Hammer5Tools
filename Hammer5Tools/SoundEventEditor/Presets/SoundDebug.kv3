@@ -1,0 +1,7 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	vsnd_files_track_01 = ["sounds/common/pink_noise_mono_loop.vsnd"]
+	base = "amb.base"
+	position_relative_to_player = true
+	comment = "This preset is used for debugging sound files to check if they work properly. For testing, it is recommended to create a simple soundscape and select the sound event do not forget to check 'Override soundscape with sound event'. You should hear the sound if you are within the soundscape radius."
+}

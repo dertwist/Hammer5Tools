@@ -1,0 +1,87 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+//Hammer5Tools Smartprop Editor by Twist 
+//Discord: twist0691 
+//Steam: https://steamcommunity.com/id/der_twist 
+//Twitter: https://twitter.com/der_twist
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "Scale"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_ParameterName = "Scale"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Scale_slider"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 1.0
+			m_ParameterName = "Scale_slider"
+			m_flParamaterMinValue = 0.2
+			m_flParamaterMaxValue = 3.0
+			m_sModelName = "None"
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "SetVariable"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_ParameterName = "SetVariable"
+		},
+	]
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_Group"
+			m_bEnabled = true
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_SetVariableBool"
+					m_bEnabled = true
+					m_VariableName = "SetVariable"
+					m_VariableValue = 
+					{
+						m_Expression = "Scale_slider > 1"
+					}
+				},
+								{
+					_class = "CSmartPropOperation_SetVariableFloat"
+					m_bEnabled = true
+					m_VariableName = "Scale"
+					m_VariableValue = 
+					{
+						m_Expression = "SetVariable ? 2 : 1"
+					}
+				},
+			]
+			m_SelectionCriteria = []
+			m_sLabel = "BE CAREFUL WITH ORDERING"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Model"
+					m_bEnabled = true
+					m_sModelName = "models/ar_baggage/baggage_luggage/baggage_luggage_01a.vmdl"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_Scale"
+							m_bEnabled = true
+							m_flScale = 
+							{
+								m_SourceName = "Scale"
+							}
+						},
+						null,
+					]
+					m_SelectionCriteria = []
+					m_sLabel = "Model"
+				},
+			]
+		},
+	]
+}

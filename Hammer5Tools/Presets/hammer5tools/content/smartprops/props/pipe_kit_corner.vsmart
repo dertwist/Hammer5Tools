@@ -1,0 +1,214 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	[
+				{
+			Info = "Hammer5Tools by Twist"
+			GitHub = "https://github.com/dertwist/Hammer5Tools"
+			Discord_Server = "https://discord.gg/DvCXEyhssd"
+			social_links = 
+			{
+				Steam = "https://steamcommunity.com/id/der_twist"
+				Twitter = "https://twitter.com/der_twist"
+				Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+				ArtStation = "https://www.artstation.com/nucky3d"
+			}
+		},
+	]
+	m_Variables = []
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_PickOne"
+			m_bEnabled = true
+			m_vHandleOffset = 
+			{
+				m_Components = [0.0, 5.02, 0.0]
+			}
+			m_HandleSize = 21.85
+			m_HandleShape = "CIRCLE"
+			m_SelectionMode = "FIRST"
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_CreateRotator"
+					m_bEnabled = true
+					m_OutputVariable = ""
+					m_flDisplayRadius = 10.0
+					m_vRotationAxis = 
+					{
+						m_Components = [0.0, 1.0, 0.0]
+					}
+				},
+			]
+			m_SelectionCriteria = []
+			m_sLabel = "PickOne_01"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_SmartProp"
+					m_sSmartProp = "smartprops/props//pipe_kit_main.vsmart"
+					m_nElementID = 2
+					m_sLabel = "SmartProp_01"
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 3
+					m_sLabel = "Group_02"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/generic/pipe01/pipe01_corner4a_medium.vmdl"
+							m_nElementID = 8
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//pipe_kit_corner.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, 90.0]
+								},
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 4.0, -4.0]
+								},
+							]
+							m_nElementID = 9
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 4
+					m_sLabel = "Group_03"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/generic/pipe01/pipe01_corner8a_medium.vmdl"
+							m_nElementID = 10
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//pipe_kit_corner.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 5.65685, 2.34315]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, 45.0]
+								},
+							]
+							m_nElementID = 11
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 5
+					m_sLabel = "Group_04"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/generic/pipe01/pipe01_corner16a_medium.vmdl"
+							m_nElementID = 12
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//pipe_kit_corner.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 11.3137, 4.68629]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, 45.0]
+								},
+							]
+							m_nElementID = 13
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 6
+					m_sLabel = "Group_05"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/generic/pipe01/pipe01_corner24a_medium.vmdl"
+							m_nElementID = 14
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//pipe_kit_corner.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 16.9706, 7.02944]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, 45.0]
+								},
+							]
+							m_nElementID = 15
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 7
+					m_sLabel = "Group_06"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/generic/pipe01/pipe01_corner32a_medium.vmdl"
+							m_nElementID = 16
+							m_sLabel = "Model_01"
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//pipe_kit_corner.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = [0.0, 22.6274, 9.37258]
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = [0.0, 0.0, 45.0]
+								},
+							]
+							m_nElementID = 17
+							m_sLabel = "SmartProp_02"
+						},
+					]
+				},
+			]
+		},
+	]
+}

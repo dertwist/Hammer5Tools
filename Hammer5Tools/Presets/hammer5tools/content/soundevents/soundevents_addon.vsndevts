@@ -1,0 +1,387 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+
+// For soundevents to compile into the addon, this file must be kept named as soundevents_addon.vsndevts and all new soundevents should be added to this file. 
+
+// A soundevent in CS2 is a container that can host a combination of sound parameters, vsnds (.wavs), and other soundevents. Soundevents can be used to trigger other soundevents and therefore small hierarchies can be created if needed. For most ambient sounds in CS2, we use soundevents in small hierarchical structures (parent/child/grandchildren) for each area in a map.
+
+// Soundevents can now reference a "base" soundevent which is essentially any soundevent you wish to act as a template. 
+// Below we have added some commonly used base soundevents which are defined in more detail at the end of this file. You can overwrite any property from a base event simply by re-adding the property to your own soundevent and giving it a new value. 
+// "amb.soundscapeParent.base" - use this as the main soundevent that triggers all sounds within a particular soundscape. This event also sets the reverb/dsp for the area. This soundevent's name needs to be placed in the soundevent property of the env_soundscape entity in hammer. Do not assign any .vsnd files to a parent event. 
+// "amb.looping.atXYZ.base" - loop a 3d sound at point in the world. Use 'getpos' in the dev console to obtain coordinates at the position of the camera.Markers have to be embedded in the wav file for a sound to loop.
+// "amb.looping.stereo.base" - loop a simple stereo background sound. Markers have to be embedded in the wav file for a sound to loop.
+// "amb.intermittent.randomAroundPlayer.base" - one shot sounds that play every so often at a random location around the player. eg. airplanes, rockfalls.
+// "amb.intermittent.atXYZ.base" - one shot sounds that play every so often at a specific location. 
+
+// Helpful convars and tips:
+// New to CS2: It's highly recommended that you use the env_soundscape entity radius property to fill up an entire space, rather than use soundscapes as on/off switches at choke points to an area. This is required so that all gameplay sfx recieve appropriate reveb based on the location of their emission, regardless of where the player is listening from.
+// soundscape_debug 1 : shows env_soundscape entity placement and LOS during runtime.
+// server_snd_cast Weapon_AK47.Single 1 : places a  repeating soundevent at the location of the crosshair during runtime repeating every 1 sec. This is useful for testing 3d sound, occlusion and sound location based reverb (as opposed to traditional listener based reverb). To stop, type server_snd_cast
+// To hear ambient soundevent changes while a map is running, simply leave the soundscape area and re-enter.
+// Use the Sounds debugger in the VConcsole to see a list of currently playing vsnds and a log of previously played soundevents with associated data. The button on the right above "Filter Audio"  will allow you to see the location of emitting sound.
+
+// reverb/dsp presets:
+//reverb_2_crawlSpace
+//reverb_3_smallTunnels
+//reverb_4_smallCarpetRoom
+//reverb_5_smallRoom
+//reverb_6_largeRoom
+//reverb_7_mediumHall
+//reverb_8_mediumCarpetRoom
+//reverb_9_mediumChamber
+//reverb_10_warehouse
+//reverb_11_smallBright9
+//reverb_12_mediumBright
+//reverb_13_largeBright
+//reverb_14_brightHallway
+//reverb_15_largeCarpetRoom
+//reverb_16_carpetCorridor
+//reverb_17_smallConcrete
+//reverb_18_mediumConcrete
+//reverb_19_largeConcrete
+//reverb_20_outsideAlley
+//reverb_21_outsideStreet
+//reverb_22_outsideOpen
+//reverb_23_smallBathroom
+//reverb_24_largeBathroom
+ 
+	"ambient_example.outdoors" = 
+	{
+		base = "amb.soundscapeParent.base"
+		enable_child_events = true
+		soundevent_01 = 
+		[
+			"ambient_example.outdoors.birds",
+			"ambient_example.outdoors.airplanes",
+			"ambient_example.outdoors.wind",
+		]
+	}
+	"ambient_example.outdoors.wind" = 
+	{
+		base = "amb.looping.stereo.base"
+		volume = 0.7
+		pitch = 0.8
+		vsnd_files_track_01 = "sounds/ambient/dust2/wind_sand_01.vsnd"
+	}
+	"ambient_example.outdoors.airplanes" = 
+	{
+		base = "amb.intermittent.randomAroundPlayer.base"
+		volume = 0.7
+		randomize_position_min_radius = 2000.0
+		randomize_position_max_radius = 3000.0
+		retrigger_interval_min = 11.0
+		retrigger_interval_max = 30.0
+		vsnd_files_track_01 = 
+		[
+			"sounds/ambient/dust2/airplane_01.vsnd",
+			"sounds/ambient/dust2/airplane_02.vsnd",
+			"sounds/ambient/dust2/airplane_03.vsnd",
+		]
+	}
+	"ambient_example.outdoors.birds" = 
+	{
+		base = "amb.intermittent.atXYZ.base"
+		volume = 0.5
+		retrigger_interval_min = 1.0
+		retrigger_interval_max = 6.0
+		position = [ 1264.0, -491.0, 64.0 ]
+		vsnd_files_track_01 = 
+		[
+			"sounds/bird_01.vsnd",
+			"sounds/bird_02.vsnd",
+			"sounds/bird_03.vsnd",
+			"sounds/bird_04.vsnd",
+			"sounds/bird_05.vsnd",
+			"sounds/bird_06.vsnd",
+		]
+	}
+	"ambient_example.indoors" = 
+	{
+		base = "amb.soundscapeParent.base"
+		enable_child_events = true
+		dsp_preset = "reverb_9_mediumChamber"
+		soundevent_01 = 
+		[
+			"ambient_example.indoors.background",
+			"ambient_example.indoors.rockfalls",
+			"ambient_example.indoors.vent",
+		]
+	}
+	"ambient_example.indoors.background" = 
+	{
+		base = "amb.looping.stereo.base"
+		volume = 0.1
+		vsnd_files_track_01 = "sounds/interior_01.vsnd" 
+	}
+	"ambient_example.indoors.rockfalls" = 
+	{
+		base = "amb.intermittent.randomAroundPlayer.base"
+		volume = 0.7
+		randomize_position_min_radius = 500.0
+		randomize_position_max_radius = 1000.0
+		randomize_position_hemisphere = false
+		retrigger_interval_min = 5.0
+		retrigger_interval_max = 15.0
+		retrigger_radius = 1000.0
+		vsnd_files_track_01 = 
+		[
+			"sounds/ambient/dust2/rockfall_01.vsnd",
+			"sounds/ambient/dust2/rockfall_02.vsnd",
+			"sounds/ambient/dust2/rockfall_03.vsnd",
+			"sounds/ambient/dust2/rockfall_04.vsnd",
+			"sounds/ambient/dust2/rockfall_05.vsnd",
+			"sounds/ambient/dust2/rockfall_06.vsnd",
+			"sounds/ambient/dust2/rockfall_07.vsnd",
+			"sounds/ambient/dust2/rockfall_08.vsnd",
+		]
+	}
+	"ambient_example.indoors.vent" = 
+	{
+		base = "amb.looping.atXYZ.base"
+		volume = 0.2
+		position = [ 1136.0, 1392.0, 64.0 ]
+		vsnd_files_track_01 = "sounds/vent_01.vsnd"
+		distance_volume_mapping_curve = 
+		[
+			[
+				0.0, 1.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+			[
+				500.0, 1.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+	}
+
+
+
+
+
+///////////////////////////////////////////////////////////
+/////////////// BASE SOUNDEVENT TEMPLATES - editing these isn't recommended unless you want to change the default values. Best used as a copy/paste reference for overwriting specific values in your own soundevents. Any custom soundevent you create can also be used as a base template.
+
+	"amb.base" = 
+	{
+		type = "csgo_mega"
+		mixgroup = "Amb_Common"
+		occlusion_intensity = 0.0
+		distance_effect_mix = 0.0
+		restrict_source_reverb = true
+		use_distance_unfiltered_stereo_mapping_curve = true
+		use_time_volume_mapping_curve = true
+		distance_volume_mapping_curve = 
+		[
+			[
+				0.0, 1.0, -0.00394, -0.00394,
+				2.0, 3.0,
+			],
+			[
+				300.0, 0.0, -0.002991, -0.002991,
+				2.0, 3.0,
+			],
+		]
+		fadetime_volume_mapping_curve = 
+		[
+			[
+				0.0, 1.0, -1.223776, -1.223776,
+				2.0, 3.0,
+			],
+			[
+				0.208571, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+		distance_unfiltered_stereo_mapping_curve = 
+		[
+			[
+				0.0, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+			[
+				300.0, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+		time_volume_mapping_curve = 
+		[
+			[
+				0.0, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+			[
+				0.297143, 1.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+	}
+	"amb.intermittent.randomAroundPlayer.base" = 
+	{
+		base = "amb.base"
+		delay = 5.0
+		volume = 1.0
+		randomize_position_min_radius = 4000.0
+		randomize_position_max_radius = 4000.0
+		randomize_position_hemisphere = true
+		volume_random_min = -0.5
+		pitch_random_min = -0.6
+		enable_retrigger = true
+		retrigger_interval_min = 13.0
+		retrigger_interval_max = 35.0
+		retrigger_radius = 10000.0
+		position_relative_to_player = true
+		reverb_wet = 1.0
+		distance_volume_mapping_curve = 
+		[
+			[
+				0.0, 1.0, 0.0, 0.0,
+				0.0, 0.0,
+			],
+			[
+				300.0, 1.0, 0.0, 0.0,
+				0.0, 0.0,
+			],
+		]
+		fadetime_volume_mapping_curve = 
+		[
+			[
+				0.0, 1.0, -1.223776, -1.223776,
+				2.0, 3.0,
+			],
+			[
+				0.691429, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+		time_volume_mapping_curve = 
+		[
+			[
+				0.0, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+			[
+				1.0, 1.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+	}
+	"amb.intermittent.atXYZ.base" = 
+	{
+		base = "amb.base"
+		position = [ 0, 0, 0 ]
+		volume = 1.0
+		volume_random_min = -0.3
+		volume_random_max = 0.1
+		pitch_random_min = -0.03
+		pitch_random_max = 0.03
+		reverb_wet = 1.0
+		enable_retrigger = true
+		retrigger_interval_min = 1.0
+		retrigger_interval_max = 10.0
+		use_world_position = false
+		position_relative_to_player = false
+		distance_unfiltered_stereo_mapping_curve = 
+		[
+			[
+				0.0, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+			[
+				300.0, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+		distance_volume_mapping_curve = 
+		[
+			[
+				97.14286, 1.0, -0.001763, -0.001763,
+				2.0, 3.0,
+			],
+			[
+				2000.0, 0.0, -0.000526, -0.000526,
+				1.0, 1.0,
+			],
+		]
+	}
+	"amb.looping.stereo.base" = 
+	{
+		base = "amb.base"
+		volume = 1.0
+		pitch = 1.0
+		distance_volume_mapping_curve = 
+		[
+			[
+				0.0, 1.0, 0.0, 0.0,
+				0.0, 0.0,
+			],
+			[
+				300.0, 1.0, 0.0, 0.0,
+				0.0, 0.0,
+			],
+		]
+		fadetime_volume_mapping_curve = 
+		[
+			[
+				0.0, 1.0, -1.223776, -1.223776,
+				2.0, 3.0,
+			],
+			[
+				1.0, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+		time_volume_mapping_curve = 
+		[
+			[
+				0.0, 0.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+			[
+				1.0, 1.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+		distance_unfiltered_stereo_mapping_curve = 
+		[
+			[
+				0.0, 1.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+			[
+				300.0, 1.0, 0.0, 0.0,
+				2.0, 3.0,
+			],
+		]
+	}
+	"amb.looping.atXYZ.base" = 
+	{
+		base = "amb.base"
+		volume = 1.0
+		position = [ 1135.96875, 1391.918457, 64.03125 ]
+		use_world_position = true
+		position_relative_to_player = false
+		reverb_wet = 1.0
+		distance_volume_mapping_curve = 
+		[
+			[
+				0.0, 1.0, -0.001763, -0.001763,
+				2.0, 3.0,
+			],
+			[
+				1500.0, 0.0, -0.000667, -0.000667,
+				1.0, 1.0,
+			],
+		]
+	}
+	"amb.soundscapeParent.base" = 
+	{
+		base = "amb.base"
+		override_dsp_preset = true
+		dsp_preset = "reverb_22_outsideOpen"
+		enable_child_events = false
+		set_child_position = false
+		soundevent_01 = ""
+	}
+
+
+}

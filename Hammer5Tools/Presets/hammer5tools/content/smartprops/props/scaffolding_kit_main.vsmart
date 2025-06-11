@@ -1,0 +1,326 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	[
+				{
+			Info = "Hammer5Tools by Twist"
+			GitHub = "https://github.com/dertwist/Hammer5Tools"
+			Discord_Server = "https://discord.gg/DvCXEyhssd"
+			social_links = 
+			{
+				Steam = "https://steamcommunity.com/id/der_twist"
+				Twitter = "https://twitter.com/der_twist"
+				Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+				ArtStation = "https://www.artstation.com/nucky3d"
+			}
+		},
+	]
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "height"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_ParameterName = "height"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "length"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_ParameterName = "length"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "ledgerSpacing"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 25.0
+			m_ParameterName = "Ledger Spacing"
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "useEndCap"
+			m_bExposeAsParameter = true
+			m_DefaultValue = true
+			m_ParameterName = "End Cap?"
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "useBottomStantion"
+			m_bExposeAsParameter = true
+			m_DefaultValue = true
+			m_ParameterName = "Bottom Stantion?"
+		},
+	]
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_FitOnLine"
+			m_vEnd = 
+			{
+				m_Components = 
+				[
+										{
+						m_SourceName = "length"
+					},
+					0.0,
+					0.0,
+				]
+			}
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_OutputVariableMaxX = "length"
+					m_OutputVariableMaxZ = "height"
+					m_flInitialMaxX = 100.0
+					m_flInitialMaxZ = 256.0
+				},
+			]
+			m_nElementID = 1
+			m_sLabel = "FitOnLine_01"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+												{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 100.0
+						},
+					]
+					m_nElementID = 2
+					m_sLabel = "Group_01"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//scaffolding_kit_pole.vsmart"
+							m_nElementID = 6
+							m_sLabel = "SmartProp_01"
+						},
+												{
+							_class = "CSmartPropElement_FitOnLine"
+							m_vStart = [0.0, 0.0, 25.0]
+							m_vEnd = 
+							{
+								m_Components = 
+								[
+									0.0,
+									0.0,
+																		{
+										m_SourceName = "height"
+									},
+								]
+							}
+							m_nElementID = 7
+							m_sLabel = "FitOnLine_02"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/de_inferno/scaffoldings_01/sc_ledger_100.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 
+											{
+												m_SourceName = "ledgerSpacing"
+											}
+										},
+									]
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = [50.0, 0.0, 0.0]
+										},
+																				{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = [0.0, 90.0, 0.0]
+										},
+									]
+									m_nElementID = 13
+									m_sLabel = "Model_01"
+								},
+							]
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+												{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 50.0
+						},
+					]
+					m_nElementID = 3
+					m_sLabel = "Group_02"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//scaffolding_kit_pole.vsmart"
+							m_nElementID = 8
+							m_sLabel = "SmartProp_01"
+						},
+												{
+							_class = "CSmartPropElement_FitOnLine"
+							m_vStart = [0.0, 0.0, 25.0]
+							m_vEnd = 
+							{
+								m_Components = 
+								[
+									0.0,
+									0.0,
+																		{
+										m_SourceName = "height"
+									},
+								]
+							}
+							m_nElementID = 9
+							m_sLabel = "FitOnLine_02"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/de_inferno/scaffoldings_01/sc_ledger_50.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 
+											{
+												m_SourceName = "ledgerSpacing"
+											}
+										},
+									]
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = [25.0, 0.0, 0.0]
+										},
+									]
+									m_nElementID = 14
+									m_sLabel = "Model_01"
+								},
+							]
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+												{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 25.0
+						},
+					]
+					m_nElementID = 4
+					m_sLabel = "Group_03"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//scaffolding_kit_pole.vsmart"
+							m_nElementID = 10
+							m_sLabel = "SmartProp_01"
+						},
+												{
+							_class = "CSmartPropElement_FitOnLine"
+							m_vStart = [0.0, 0.0, 25.0]
+							m_vEnd = 
+							{
+								m_Components = 
+								[
+									0.0,
+									0.0,
+																		{
+										m_SourceName = "height"
+									},
+								]
+							}
+							m_nElementID = 11
+							m_sLabel = "FitOnLine_02"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = "models/de_inferno/scaffoldings_01/sc_ledger_25.vmdl"
+									m_SelectionCriteria = 
+									[
+																				{
+											_class = "CSmartPropSelectionCriteria_LinearLength"
+											m_flLength = 
+											{
+												m_SourceName = "ledgerSpacing"
+											}
+										},
+									]
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = [12.5, 0.0, 0.0]
+										},
+									]
+									m_nElementID = 15
+									m_sLabel = "Model_01"
+								},
+							]
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_SelectionCriteria = 
+					[
+												{
+							_class = "CSmartPropSelectionCriteria_EndCap"
+							m_bStart = false
+							m_bEnd = true
+						},
+					]
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_CreateLocator"
+						},
+					]
+					m_nElementID = 5
+					m_sLabel = "Group_04"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//scaffolding_kit_pole.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropFilter_VariableValue"
+									m_VariableComparison = 
+									{
+										m_Name = "useEndCap"
+										m_Value = true
+										m_Comparison = "EQUAL"
+									}
+								},
+							]
+							m_nElementID = 12
+							m_sLabel = "SmartProp_01"
+						},
+					]
+				},
+			]
+		},
+	]
+}

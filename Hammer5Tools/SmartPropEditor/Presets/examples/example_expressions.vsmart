@@ -1,0 +1,179 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+//Hammer5Tools Smartprop Editor by Twist 
+//Discord: twist0691 
+//Steam: https://steamcommunity.com/id/der_twist 
+//Twitter: https://twitter.com/der_twist
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "Child"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_ParameterName = "Child"
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "roasted"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_ParameterName = "roasted"
+		},
+				{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "Sizer_X"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_ParameterName = "Sizer_X"
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "scale_instance"
+			m_bExposeAsParameter = true
+			m_DefaultValue = true
+			m_ParameterName = "Scale in descending order"
+		},
+	]
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_Group"
+			m_bEnabled = true
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_bEnabled = true
+					m_OutputVariableMaxZ = ""
+					m_OutputVariableMinZ = ""
+					m_OutputVariableMaxY = ""
+					m_OutputVariableMinY = ""
+					m_OutputVariableMaxX = "Sizer_X"
+					m_OutputVariableMinX = ""
+					m_flInitialMaxX = 96.0
+					m_flInitialMinX = 16.0
+				},
+			]
+			m_SelectionCriteria = []
+			m_sLabel = "Sizer"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_FitOnLine"
+					m_bEnabled = true
+					m_vEnd = 
+					{
+						m_Components = 
+						[
+														{
+								m_SourceName = "Sizer_X"
+							},
+							"",
+							"",
+						]
+					}
+					m_Modifiers = []
+					m_SelectionCriteria = []
+					m_sLabel = "FitOnLine"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Group"
+							m_bEnabled = true
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Scale"
+									m_bEnabled = false
+									m_flScale = 
+									{
+										m_Expression = "scale_instance ? 1 / ( sqrt(InstanceIndex()))  :  1"
+									}
+								},
+																{
+									_class = "CSmartPropOperation_Scale"
+									m_bEnabled = true
+									m_flScale = 
+									{
+										m_Expression = "scale_instance ? 1 - (InstanceIndex() * 0.07)  :  1"
+									}
+								},
+							]
+							m_SelectionCriteria = 
+							[
+																{
+									_class = "CSmartPropSelectionCriteria_LinearLength"
+									m_bEnabled = true
+									m_bAllowScale = false
+									m_flLength = 16.0
+								},
+							]
+							m_sLabel = "Chicken"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_Model"
+									m_bEnabled = true
+									m_sModelName = "models/chicken/chicken_roasted.vmdl"
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropFilter_VariableValue"
+											m_bEnabled = true
+											m_VariableComparison = 
+											{
+												m_Name = "roasted"
+												m_Value = true
+												m_Comparison = "EQUAL"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_Scale"
+											m_bEnabled = true
+											m_flScale = 
+											{
+												m_Expression = "Child ? 0.5 : 1"
+											}
+										},
+									]
+									m_SelectionCriteria = []
+									m_sLabel = "chicken_roasted"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_bEnabled = true
+									m_sModelName = "models/chicken/chicken.vmdl"
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropFilter_VariableValue"
+											m_bEnabled = true
+											m_VariableComparison = 
+											{
+												m_Name = "roasted"
+												m_Value = false
+												m_Comparison = "EQUAL"
+											}
+										},
+																				{
+											_class = "CSmartPropOperation_Scale"
+											m_bEnabled = true
+											m_flScale = 
+											{
+												m_Expression = "Child ? 0.5 : 1"
+											}
+										},
+									]
+									m_SelectionCriteria = []
+									m_sLabel = "chicken"
+								},
+							]
+						},
+					]
+				},
+			]
+		},
+	]
+}

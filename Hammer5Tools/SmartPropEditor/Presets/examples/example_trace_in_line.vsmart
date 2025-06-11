@@ -1,0 +1,152 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+//Hammer5Tools Smartprop Editor by Twist 
+//Discord: twist0691 
+//Steam: https://steamcommunity.com/id/der_twist 
+//Twitter: https://twitter.com/der_twist
+	generic_data_type = "CSmartPropRoot"
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "Sizer_X"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_ParameterName = "Sizer_X"
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "small_models"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_ParameterName = "small_models"
+		},
+	]
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_FitOnLine"
+			m_bEnabled = true
+			m_vEnd = 
+			{
+				m_Components = 
+				[
+										{
+						m_SourceName = "Sizer_X"
+					},
+					"",
+					"",
+				]
+			}
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_bEnabled = true
+					m_OutputVariableMaxZ = ""
+					m_OutputVariableMinZ = ""
+					m_OutputVariableMaxY = ""
+					m_OutputVariableMinY = ""
+					m_OutputVariableMaxX = "Sizer_X"
+					m_OutputVariableMinX = ""
+					m_flInitialMaxX = 96.0
+				},
+			]
+			m_SelectionCriteria = []
+			m_sLabel = "FitOnLine"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Model"
+					m_bEnabled = true
+					m_sModelName = "models/de_overpass/overpass_cardboard_box/overpass_cardboard_box_01.vmdl"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_TraceInDirection"
+							m_bEnabled = true
+							m_flTraceLength = 500.0
+							m_flOriginOffset = -500.0
+							m_flSurfaceUpInfluence = 1.0
+							m_nNoHitResult = "NOTHING"
+							m_DirectionSpace = "WORLD"
+						},
+												{
+							_class = "CSmartPropOperation_SetTintColor"
+							m_bEnabled = true
+							m_ColorChoices = 
+							[
+																{
+									m_Color = [98, 98, 98]
+								},
+																{
+									m_Color = [85, 107, 47]
+								},
+																{
+									m_Color = [215, 215, 215]
+								},
+																{
+									m_Color = [162, 83, 67]
+								},
+																{
+									m_Color = [137, 189, 215]
+								},
+																{
+									m_Color = [202, 173, 30]
+								},
+																{
+									m_Color = [215, 150, 72]
+								},
+							]
+							m_Mode = "REPLACE"
+						},
+												{
+							_class = "CSmartPropOperation_RandomScale"
+							m_bEnabled = true
+							m_flRandomScaleMin = 
+							{
+								m_Expression = "small_models ? 0.4 : 0.8"
+							}
+							m_flRandomScaleMax = 
+							{
+								m_Expression = "small_models ? 1 : 1.2"
+							}
+						},
+												{
+							_class = "CSmartPropOperation_RandomRotation"
+							m_bEnabled = true
+							m_vRandomRotationMax = 
+							{
+								m_Components = [0, 16, 0]
+							}
+							m_vRandomRotationMin = 
+							{
+								m_Components = [0, -16, 0]
+							}
+						},
+												{
+							_class = "CSmartPropOperation_Translate"
+							m_bEnabled = true
+							m_vPosition = 
+							{
+								m_Components = [0, -16, 0]
+							}
+						},
+					]
+					m_SelectionCriteria = 
+					[
+												{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_bEnabled = true
+							m_flMaxLength = 0.0
+							m_flMinLength = 0.0
+							m_bAllowScale = false
+							m_flLength = 40.0
+						},
+					]
+					m_sLabel = "Model"
+				},
+			]
+		},
+	]
+}
