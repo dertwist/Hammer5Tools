@@ -65,7 +65,8 @@ default_settings()
 def debug(value):
     if settings.value("OTHER/debug_info", type=bool, defaultValue=False):
         print(value)
-
+def debug_bool():
+    return settings.value("OTHER/debug_info", type=bool, defaultValue=False)
 def get_cs2_path():
     """
     Retrieves the CS2 installation path without saving it back to the settings.
@@ -109,6 +110,11 @@ def get_steam_path():
             raise ValueError("Cannot find Steam path, and none set in config.")
         return steam_path
 
+def get_addon_name():
+    return get_settings_value('LAUNCH', 'addon')
+
+def set_addon_name(addon_name_set):
+    return set_settings_value('LAUNCH', 'addon', addon_name_set)
 def get_addon_dir():
     try:
         cs2_path = get_cs2_path()
@@ -119,9 +125,3 @@ def get_addon_dir():
     except Exception as e:
         debug(f"Error retrieving addon directory: {e}")
         raise
-
-def get_addon_name():
-    return get_settings_value('LAUNCH', 'addon')
-
-def set_addon_name(addon_name_set):
-    return set_settings_value('LAUNCH', 'addon', addon_name_set)
