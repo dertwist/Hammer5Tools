@@ -1,0 +1,337 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	{
+		name = "Hammer 5 Tools"
+		version = "4.4.0"
+		m_nElementID = 30
+	}
+	m_Variables = 
+	[
+		
+		{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "Irregularity_value"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 8.0
+			m_nElementID = 2
+			m_ParameterName = "Irregularity Intensity"
+			m_flParamaterMinValue = 0.0
+			m_flParamaterMaxValue = 16.0
+			m_sModelName = "None"
+		}
+	]
+	m_Choices = 
+	[
+
+	]
+	m_Children = 
+	[
+		
+		{
+			_class = "CSmartPropElement_Model"
+			m_bEnabled = true
+			m_nElementID = 4
+			m_MaterialGroupName = {m_Expression = ""}
+			m_vModelScale = 
+			{
+				m_Components = [1.32, 1.32, 1.38]
+			}
+			m_sModelName = "models/generic/street_trashcan_03/street_trashcan_03_body.vmdl"
+			m_Modifiers = [
+			{
+				_class = "Hammer5Tools_Comment"
+				m_bEnabled = true
+				m_nElementID = 27
+				m_Comment = "This is the reference for Model_02 and Model_03. Any changes to this element will apply to those elements. If you want to overwrite some of the values in the referenced elements, just copy and paste the property into the referenced elements."
+			}, 
+			{
+				_class = "CSmartPropOperation_Rotate"
+				m_bEnabled = true
+				m_nElementID = 17
+				m_vRotation = {m_Components = [0.0, 0.0, 0.0]}
+			}, 
+			{
+				_class = "Hammer5Tools_Comment"
+				m_bEnabled = true
+				m_nElementID = 28
+				m_Comment = "I don’t want to have the red color in 'SetTintColor' for Model_02. Switch to this element and look at the changes."
+			}, 
+			{
+				_class = "CSmartPropOperation_SetTintColor"
+				m_bEnabled = true
+				m_nElementID = 26
+				m_SelectionMode = "RANDOM"
+				m_ColorChoices = [{m_Color = [255, 0, 0]}, {m_Color = [255, 0, 196]}, {m_Color = [255, 255, 255]}, {m_Color = [239, 255, 67]}]
+				m_Mode = "MULTIPLY_OBJECT"
+			}, 
+			{
+				_class = "CSmartPropOperation_RandomRotation"
+				m_bEnabled = true
+				m_nElementID = 22
+				m_vRandomRotationMax = {m_Components = [{m_Expression = "Irregularity_value "}, {m_Expression = "Irregularity_value "}, {m_Expression = "Irregularity_value "}]}
+				m_vRandomRotationMin = {m_Components = [{m_Expression = "Irregularity_value * -2"}, {m_Expression = "Irregularity_value * -2"}, {m_Expression = "Irregularity_value * -1"}]}
+			}, 
+			{
+				_class = "CSmartPropOperation_RandomOffset"
+				m_bEnabled = true
+				m_nElementID = 21
+				m_vRandomPositionMax = {m_Components = [{m_Expression = "Irregularity_value*2"}, {m_Expression = "Irregularity_value"}, {m_Expression = "Irregularity_value"}]}
+				m_vRandomPositionMin = {m_Components = [{m_Expression = "Irregularity_value * -1"}, {m_Expression = "Irregularity_value * -1"}, {m_Expression = "Irregularity_value * -1"}]}
+			}]
+			m_SelectionCriteria = []
+			m_sLabel = "Ref"
+		},
+		
+		{
+			_class = "CSmartPropElement_Group"
+			m_bEnabled = true
+			m_nElementID = 19
+			m_Modifiers = [
+			{
+				_class = "Hammer5Tools_Comment"
+				m_bEnabled = true
+				m_nElementID = 30
+				m_Comment = "The reason I added another group with a 'Translate Modifier' on top of the models is that all referenced modifiers are applied after the reference’s modifiers by default. To be clearer, if we don’t use another group on top, we would receive:
+
+--- RandomModifiers + Rotate Modifier
+
+--- Translate Modifier
+
+But we need:
+
+--- Translate Modifier
+
+--- RandomModifiers + Rotate Modifier"
+			}, 
+			{
+				_class = "CSmartPropOperation_Translate"
+				m_bEnabled = true
+				m_nElementID = 11
+				m_vPosition = 
+				{
+					m_Components = [0.0, 64.0, 0.0]
+				}
+			}]
+			m_SelectionCriteria = []
+			m_sLabel = "Translate Modif"
+			m_Children = [
+			{
+				_class = "CSmartPropElement_Model"
+				m_bEnabled = true
+				m_nElementID = 10
+				m_MaterialGroupName = {m_Expression = ""}
+				m_vModelScale = 
+				{
+					m_Components = [1.32, 1.32, 1.38]
+				}
+				m_sModelName = "models/cs_italy/props/books/italy_books_2.vmdl"
+				m_Modifiers = [
+				{
+					_class = "Hammer5Tools_Comment"
+					m_bEnabled = true
+					m_nElementID = 27
+					m_Comment = "This is the reference for Model_02 and Model_03. Any changes to this element will apply to those elements. If you want to overwrite some of the values in the referenced elements, just copy and paste the property into the referenced elements."
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_bEnabled = true
+					m_nElementID = 17
+					m_vRotation = {m_Components = [0.0, 0.0, 0.0]}
+				}, 
+				{
+					_class = "Hammer5Tools_Comment"
+					m_bEnabled = true
+					m_nElementID = 28
+					m_Comment = "I don’t want to have the red color in 'SetTintColor' for Model_02. Switch to this element and look at the changes."
+				}, 
+				{
+					_class = "CSmartPropOperation_SetTintColor"
+					m_bEnabled = true
+					m_nElementID = 26
+					m_SelectionMode = "RANDOM"
+					m_ColorChoices = [{m_Color = [255, 0, 0]}, {m_Color = [255, 0, 196]}, {m_Color = [255, 255, 255]}, {m_Color = [239, 255, 67]}]
+					m_Mode = "MULTIPLY_OBJECT"
+				}, 
+				{
+					_class = "CSmartPropOperation_RandomRotation"
+					m_bEnabled = true
+					m_nElementID = 22
+					m_vRandomRotationMax = {m_Components = [{m_Expression = "Irregularity_value "}, {m_Expression = "Irregularity_value "}, {m_Expression = "Irregularity_value "}]}
+					m_vRandomRotationMin = {m_Components = [{m_Expression = "Irregularity_value * -2"}, {m_Expression = "Irregularity_value * -2"}, {m_Expression = "Irregularity_value * -1"}]}
+				}, 
+				{
+					_class = "CSmartPropOperation_RandomOffset"
+					m_bEnabled = true
+					m_nElementID = 21
+					m_vRandomPositionMax = {m_Components = [{m_Expression = "Irregularity_value*2"}, {m_Expression = "Irregularity_value"}, {m_Expression = "Irregularity_value"}]}
+					m_vRandomPositionMin = {m_Components = [{m_Expression = "Irregularity_value * -1"}, {m_Expression = "Irregularity_value * -1"}, {m_Expression = "Irregularity_value * -1"}]}
+				}, 
+				{
+					_class = "Hammer5Tools_Comment"
+					m_bEnabled = true
+					m_nElementID = 29
+					m_Comment = "I just copied the whole property and removed the red color."
+				}, 
+				{
+					_class = "CSmartPropOperation_SetTintColor"
+					m_bEnabled = true
+					m_nElementID = 26
+					m_SelectionMode = "RANDOM"
+					m_ColorChoices = [{m_Color = [255, 0, 196]}, {m_Color = [255, 255, 255]}, {m_Color = [239, 255, 67]}]
+					m_Mode = "MULTIPLY_OBJECT"
+				}]
+				m_SelectionCriteria = []
+				m_nReferenceID = 4
+				m_sReferenceObjectID = "8ff303fa-ef10-4b48-87fb-d83c194fefd3"
+				m_sLabel = "Model_02"
+			}]
+		},
+		
+		{
+			_class = "CSmartPropElement_Group"
+			m_bEnabled = true
+			m_nElementID = 24
+			m_Modifiers = [
+			{
+				_class = "Hammer5Tools_Comment"
+				m_bEnabled = true
+				m_nElementID = 30
+				m_Comment = "The reason I added another group with a 'Translate Modifier' on top of the models is that all referenced modifiers are applied after the reference’s modifiers by default. To be clearer, if we don’t use another group on top, we would receive:
+
+--- RandomModifiers + Rotate Modifier
+
+--- Translate Modifier
+
+But we need:
+
+--- Translate Modifier
+
+--- RandomModifiers + Rotate Modifier"
+			}, 
+			{
+				_class = "CSmartPropOperation_Translate"
+				m_bEnabled = true
+				m_nElementID = 25
+				m_vPosition = 
+				{
+					m_Components = [0.0, -64.0, 0.0]
+				}
+			}]
+			m_SelectionCriteria = []
+			m_sLabel = "Translate Modif"
+			m_Children = [
+			{
+				_class = "CSmartPropElement_Model"
+				m_bEnabled = true
+				m_nElementID = 23
+				m_MaterialGroupName = {m_Expression = ""}
+				m_vModelScale = 
+				{
+					m_Components = [1.32, 1.32, 1.38]
+				}
+				m_sModelName = "models/cs_italy/props/bucket/wood_bucket_1.vmdl"
+				m_Modifiers = [
+				{
+					_class = "Hammer5Tools_Comment"
+					m_bEnabled = true
+					m_nElementID = 27
+					m_Comment = "This is the reference for Model_02 and Model_03. Any changes to this element will apply to those elements. If you want to overwrite some of the values in the referenced elements, just copy and paste the property into the referenced elements."
+				}, 
+				{
+					_class = "CSmartPropOperation_Rotate"
+					m_bEnabled = true
+					m_nElementID = 17
+					m_vRotation = {m_Components = [0.0, 0.0, 0.0]}
+				}, 
+				{
+					_class = "Hammer5Tools_Comment"
+					m_bEnabled = true
+					m_nElementID = 28
+					m_Comment = "I don’t want to have the red color in 'SetTintColor' for Model_02. Switch to this element and look at the changes."
+				}, 
+				{
+					_class = "CSmartPropOperation_SetTintColor"
+					m_bEnabled = true
+					m_nElementID = 26
+					m_SelectionMode = "RANDOM"
+					m_ColorChoices = [{m_Color = [255, 0, 0]}, {m_Color = [255, 0, 196]}, {m_Color = [255, 255, 255]}, {m_Color = [239, 255, 67]}]
+					m_Mode = "MULTIPLY_OBJECT"
+				}, 
+				{
+					_class = "CSmartPropOperation_RandomRotation"
+					m_bEnabled = true
+					m_nElementID = 22
+					m_vRandomRotationMax = {m_Components = [{m_Expression = "Irregularity_value "}, {m_Expression = "Irregularity_value "}, {m_Expression = "Irregularity_value "}]}
+					m_vRandomRotationMin = {m_Components = [{m_Expression = "Irregularity_value * -2"}, {m_Expression = "Irregularity_value * -2"}, {m_Expression = "Irregularity_value * -1"}]}
+				}, 
+				{
+					_class = "CSmartPropOperation_RandomOffset"
+					m_bEnabled = true
+					m_nElementID = 21
+					m_vRandomPositionMax = {m_Components = [{m_Expression = "Irregularity_value*2"}, {m_Expression = "Irregularity_value"}, {m_Expression = "Irregularity_value"}]}
+					m_vRandomPositionMin = {m_Components = [{m_Expression = "Irregularity_value * -1"}, {m_Expression = "Irregularity_value * -1"}, {m_Expression = "Irregularity_value * -1"}]}
+				}]
+				m_SelectionCriteria = []
+				m_nReferenceID = 4
+				m_sReferenceObjectID = "30dbf5f9-807a-4d31-899a-ea5b913ae00c"
+				m_sLabel = "Model_03"
+			}]
+		}
+	]
+	m_ReferenceObjects = 
+	{
+		"8ff303fa-ef10-4b48-87fb-d83c194fefd3" = 
+		{
+			_class = "CSmartPropElement_Model"
+			m_bEnabled = true
+			m_nElementID = 10
+			m_nReferenceID = 4
+			m_sReferenceObjectID = "8ff303fa-ef10-4b48-87fb-d83c194fefd3"
+			m_sModelName = "models/cs_italy/props/books/italy_books_2.vmdl"
+			m_Modifiers = 
+			[
+				
+				{
+					_class = "Hammer5Tools_Comment"
+					m_bEnabled = true
+					m_nElementID = 29
+					m_Comment = "I just copied the whole property and removed the red color."
+				},
+				
+				{
+					_class = "CSmartPropOperation_SetTintColor"
+					m_bEnabled = true
+					m_nElementID = 26
+					m_SelectionMode = "RANDOM"
+					m_ColorChoices = [{m_Color = [255, 0, 196]}, {m_Color = [255, 255, 255]}, {m_Color = [239, 255, 67]}]
+					m_Mode = "MULTIPLY_OBJECT"
+				}
+			]
+			m_SelectionCriteria = 
+			[
+
+			]
+			m_sLabel = "Model_02"
+		}
+		"30dbf5f9-807a-4d31-899a-ea5b913ae00c" = 
+		{
+			_class = "CSmartPropElement_Model"
+			m_bEnabled = true
+			m_nElementID = 23
+			m_nReferenceID = 4
+			m_sReferenceObjectID = "30dbf5f9-807a-4d31-899a-ea5b913ae00c"
+			m_sModelName = "models/cs_italy/props/bucket/wood_bucket_1.vmdl"
+			m_Modifiers = 
+			[
+
+			]
+			m_SelectionCriteria = 
+			[
+
+			]
+			m_sLabel = "Model_03"
+		}
+	}
+}
