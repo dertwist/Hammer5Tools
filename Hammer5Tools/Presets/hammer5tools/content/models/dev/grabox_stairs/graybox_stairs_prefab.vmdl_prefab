@@ -1,0 +1,163 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc39:version{1ceecb0d-4093-4729-ab18-b76886c64cde} -->
+{
+	rootNode = 
+	{
+		_class = "RootNode"
+		children = 
+		[
+			{
+				_class = "MaterialGroupList"
+				children = 
+				[
+					{
+						_class = "MaterialGroup"
+						name = "gray_stone_wall"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_stone_wall.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_aslphalt"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_aslphalt.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_brick_wall"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_brick_wall.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_brick_wall_2"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_brick_wall_2.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_brick_wall_3"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_brick_wall_3.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_folliage_1"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_folliage_1.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_ground"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_ground.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_ground_2"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_ground_2.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_roof"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_roof.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_roof_2"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_roof_2.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_wall"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_wall.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_wood"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_wood.vmat"
+							},
+						]
+					},
+					{
+						_class = "MaterialGroup"
+						name = "gray_wood_2"
+						remaps = 
+						[
+							{
+								from = "materials/dev/gray_stone_wall.vmat"
+								to = "materials/dev/gray_wood_2.vmat"
+							},
+						]
+					},
+				]
+			},
+		]
+		model_archetype = ""
+		primary_associated_entity = ""
+		anim_graph_name = ""
+		document_sub_type = "ModelDocSubType_None"
+	}
+}

@@ -1,0 +1,162 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	[
+				{
+			Info = "Hammer5Tools by Twist"
+			GitHub = "https://github.com/dertwist/Hammer5Tools"
+			Discord_Server = "https://discord.gg/DvCXEyhssd"
+			social_links = 
+			{
+				Steam = "https://steamcommunity.com/id/der_twist"
+				Twitter = "https://twitter.com/der_twist"
+				Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+				ArtStation = "https://www.artstation.com/nucky3d"
+			}
+		},
+	]
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "length"
+			m_bExposeAsParameter = false
+			m_DefaultValue = 0
+			m_ParameterName = "length"
+		},
+	]
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_FitOnLine"
+			m_vEnd = 
+			{
+				m_Components = 
+				[
+					0,
+										{
+						m_SourceName = "length"
+					},
+					0,
+				]
+			}
+			m_bOrientAlongLine = false
+			m_nPickMode = "RANDOM"
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_flInitialMinX = 0
+					m_flInitialMaxX = 0
+					m_flInitialMinY = 0
+					m_flInitialMaxY = 64
+					m_OutputVariableMaxY = "length"
+					m_flInitialMinZ = 0
+					m_flInitialMaxZ = 0
+				},
+			]
+			m_SelectionCriteria = []
+			m_sLabel = "FitOnLine_01"
+			m_nElementID = 1
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_SmartProp"
+					m_sSmartProp = "smartprops/props//wireset_main.vsmart"
+					m_Modifiers = []
+					m_SelectionCriteria = 
+					[
+												{
+							_class = "CSmartPropSelectionCriteria_EndCap"
+							m_bStart = false
+							m_bEnd = true
+							m_sLabel = ""
+						},
+					]
+					m_sLabel = "SmartProp_01"
+					m_nElementID = 2
+				},
+								{
+					_class = "CSmartPropElement_Model"
+					m_sModelName = "models/de_overpass/industrial/wireset/wireset_vert_32_a.vmdl"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_Rotate"
+							m_vRotation = 
+							{
+								m_Components = [0, 90, 0]
+							}
+						},
+					]
+					m_SelectionCriteria = 
+					[
+												{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 32
+							m_bAllowScale = false
+							m_flMinLength = 0
+							m_flMaxLength = 0
+							m_sLabel = ""
+						},
+					]
+					m_sLabel = "32"
+					m_nElementID = 3
+				},
+								{
+					_class = "CSmartPropElement_PickOne"
+					m_SelectionMode = "RANDOM"
+					m_vHandleOfffset = 
+					{
+						m_Components = [0, 0, 0]
+					}
+					m_HandleShape = "SQUARE"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_Rotate"
+							m_vRotation = 
+							{
+								m_Components = [0, 90, 0]
+							}
+						},
+					]
+					m_SelectionCriteria = 
+					[
+												{
+							_class = "CSmartPropSelectionCriteria_LinearLength"
+							m_flLength = 64
+							m_bAllowScale = false
+							m_flMinLength = 0
+							m_flMaxLength = 0
+							m_sLabel = ""
+						},
+					]
+					m_sLabel = "64"
+					m_nElementID = 4
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_vert_64_a.vmdl"
+							m_Modifiers = []
+							m_SelectionCriteria = []
+							m_sLabel = "a"
+							m_nElementID = 5
+						},
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_vert_extender_64.vmdl"
+							m_Modifiers = []
+							m_SelectionCriteria = []
+							m_sLabel = "b"
+							m_nElementID = 6
+						},
+					]
+				},
+			]
+		},
+	]
+}

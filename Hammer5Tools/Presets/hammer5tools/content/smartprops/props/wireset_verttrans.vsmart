@@ -1,0 +1,124 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	[
+				{
+			Info = "Hammer5Tools by Twist"
+			GitHub = "https://github.com/dertwist/Hammer5Tools"
+			Discord_Server = "https://discord.gg/DvCXEyhssd"
+			social_links = 
+			{
+				Steam = "https://steamcommunity.com/id/der_twist"
+				Twitter = "https://twitter.com/der_twist"
+				Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+				ArtStation = "https://www.artstation.com/nucky3d"
+			}
+		},
+	]
+	m_Variables = []
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_PickOne"
+			m_SelectionMode = "FIRST"
+			m_vHandleOfffset = 
+			{
+				m_Components = [0, 0, 8]
+			}
+			m_HandleShape = "CIRCLE"
+			m_Modifiers = []
+			m_SelectionCriteria = []
+			m_sLabel = "PickOne_01"
+			m_nElementID = 1
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = []
+					m_SelectionCriteria = []
+					m_sLabel = "Down"
+					m_nElementID = 2
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_verttrans_down_a.vmdl"
+							m_Modifiers = []
+							m_SelectionCriteria = []
+							m_sLabel = "Model_01"
+							m_nElementID = 4
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//wireset_main.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = [16, 16, 0]
+									}
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = [0, 270, 0]
+									}
+								},
+							]
+							m_SelectionCriteria = []
+							m_sLabel = "SmartProp_02"
+							m_nElementID = 5
+						},
+					]
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = []
+					m_SelectionCriteria = []
+					m_sLabel = "Up"
+					m_nElementID = 3
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Model"
+							m_sModelName = "models/de_overpass/industrial/wireset/wireset_verttrans_up_a.vmdl"
+							m_Modifiers = []
+							m_SelectionCriteria = []
+							m_sLabel = "Model_01"
+							m_nElementID = 6
+						},
+												{
+							_class = "CSmartPropElement_SmartProp"
+							m_sSmartProp = "smartprops/props//wireset_main.vsmart"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = [-16, 16, 0]
+									}
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = [0, 90, 0]
+									}
+								},
+							]
+							m_SelectionCriteria = []
+							m_sLabel = "SmartProp_02"
+							m_nElementID = 7
+						},
+					]
+				},
+			]
+		},
+	]
+}
