@@ -176,7 +176,7 @@ class Ui_MainWindow(object):
         self.FixNoSteamLogon_Button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
         icon9 = QIcon()
-        icon9.addFile(u":/icons/icons/steam_logo.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon9.addFile(u":/icons/icons/steam_logo_2.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.FixNoSteamLogon_Button.setIcon(icon9)
         self.FixNoSteamLogon_Button.setIconSize(QSize(20, 20))
 

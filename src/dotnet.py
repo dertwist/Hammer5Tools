@@ -565,5 +565,45 @@ class TestVMapThumbnail(unittest.TestCase):
             self.fail(f"Failed to save image: {e}")
 
 # End Extract thumbnail from VMAP file
+
+# Start Extract reference files from VMAP file
+
+
+def extract_vmap_references(vmap_path):
+    Datamodel, _, DeferredMode = setup_keyvalues2()
+    if not os.path.exists(vmap_path):
+        return None, None
+
+    dmx_model = None
+    try:
+        dmx_model = Datamodel.Load(vmap_path, DeferredMode.Automatic)
+        if not dmx_model or not dmx_model.Root or not hasattr(dmx_model, 'PrefixAttributes'):
+            return None, None
+        prefix_attrs = dmx_model.PrefixAttributes
+        data = prefix_attrs.get("map_asset_references")
+        if data is None:
+            return None, None
+        return list(data)
+    except Exception:
+        return None, None
+    finally:
+        if dmx_model and hasattr(dmx_model, 'Dispose'):
+            dmx_model.Dispose()
+        import gc; gc.collect()
+
+# End Extract reference files from VMAP file
+class TestVMapReferences(unittest.TestCase):
+    def test_extract_vmap_references(self):
+        vmap_path = os.path.join(tests_path, 'files', 'vmap', 'xxx_mapname_xxx.vmap')
+        references = extract_vmap_references(vmap_path)
+        print(references)
+        self.assertIsNotNone(references, "No references found.")
+        self.assertIsInstance(references, list, "Data is list.")
+        self.assertGreater(len(references), 0, "References list is empty.")
+
+        try:
+            print(references)
+        except Exception as e:
+            self.fail(f"Failed to print references: {e}")
 if __name__ == "__main__":
     pass

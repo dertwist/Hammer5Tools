@@ -56,6 +56,7 @@ from src.forms.launch_options.main import LaunchOptionsDialog
 from src.styles.qt_global_stylesheet import QT_Stylesheet_global
 from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
 from src.dotnet import check_dotnet_runtime
+from src.other.addon_validation import validate_addon_structure
 
 from src.widgets import *
 # Global paths
@@ -601,8 +602,9 @@ if __name__ == "__main__":
     # No instance running, so create the server.
     app = QApplication(sys.argv)
     #Checking .NET runtime
-    check_dotnet_runtime()
     app.setStyleSheet(QT_Stylesheet_global)
+    check_dotnet_runtime()
+    validate_addon_structure()
     widget = Widget(dev_mode=args.dev)
     widget.show()
     instance_server = start_instance_server(widget)

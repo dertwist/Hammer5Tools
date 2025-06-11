@@ -294,7 +294,7 @@ font: 580 10pt &quot;Segoe UI&quot;;</string>
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
-          <normaloff>:/icons/icons/steam_logo.png</normaloff>:/icons/icons/steam_logo.png</iconset>
+          <normaloff>:/icons/icons/steam_logo_2.png</normaloff>:/icons/icons/steam_logo_2.png</iconset>
         </property>
         <property name="iconSize">
          <size>
