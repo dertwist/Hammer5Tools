@@ -130,7 +130,7 @@ def convert_snake_case(name: str = None):
         pretty_label = ' '.join(word.capitalize() for word in words)
         return pretty_label
 
-#===============================================================<  Format  >============================================================
+#===============================================================<  Kv3 Format  >============================================================
 def Kv3ToJson(input):
     if '<!-- kv3 encoding:' in input:
         pass
