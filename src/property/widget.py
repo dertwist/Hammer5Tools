@@ -9,13 +9,27 @@ from PySide6.QtCore import Qt, Signal, QPoint
 from PySide6.QtGui import QPixmap, QUndoCommand, QUndoStack, QKeySequence, QShortcut
 from random import random
 
+
 import dataclasses
 @dataclasses.dataclass
-class VsmartProperty:
+class BasePropertyDataclass:
+    m_label: str
+    m_ShowChild: bool = True
+
+    def to_dict(self) -> dict:
+        return {
+            "m_Label": self.m_label,
+            "m_ShowChild": self.m_ShowChild
+        }
+
+import dataclasses
+@dataclasses.dataclass
+class VsmartPropertyDataclass:
     m_label: str
     m_ElementID: int
     m_class: str
     m_data: dict = dataclasses.field(default_factory=dict)
+    m_ShowChild: bool = True
 
     def to_dict(self) -> dict:
         return {
@@ -23,7 +37,20 @@ class VsmartProperty:
             "m_ElemetID": self.m_ElementID,
             "m_Class": self.m_class,
             "m_Data": self.m_data,
-            "m_ShowChild": self.m_data
+            "m_ShowChild": self.m_ShowChild
+        }
+
+@dataclasses.dataclass
+class SoundEventPropertyDataclass:
+    m_Class: str
+    m_data: dict = dataclasses.field(default_factory=dict)
+    m_ShowChild: bool = True
+
+    def to_dict(self) -> dict:
+        return {
+            "m_Class": self.m_Class,
+            "m_Data": self.m_data,
+            "m_ShowChild": self.m_ShowChild
         }
 # PropertyViewport is a widget that contains PropertyWidget instances.
 # Each property has a label, ID, class, and data.
@@ -88,7 +115,7 @@ class PropertyWidget(QFrame):
 
         # Quick operation buttons (toggle, add, edit) - all on the left
         self.show_content = QCheckBox()
-        self.show_content.setChecked(False)  # Hide content by default
+        self.show_content.setChecked(True)
         self.show_content.setToolTip("Show/Hide content")
         self.show_content.stateChanged.connect(self.toggleContent)
         self._frame_layout.addWidget(self.show_content)
@@ -113,7 +140,7 @@ class PropertyWidget(QFrame):
         self._content_layout.setContentsMargins(8, 0, 0, 0)
         self._content_layout.setSpacing(2)
         self._main_layout.addWidget(self._content_widget)
-        self._content_widget.setVisible(False)  # Hide content by default
+        self._content_widget.setVisible(True)
 
         self.populateControls()
         # ---------- drag helpers ----------
@@ -129,7 +156,7 @@ class PropertyWidget(QFrame):
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         # Connect to add action if needed
         return btn
-    def addProperty(self):
+    def addControl(self):
         property_widget = QFrame()
         layout = QVBoxLayout(property_widget)  # Ensure the QFrame has a layout
         layout.setContentsMargins(0, 0, 0, 0)
@@ -166,8 +193,8 @@ class PropertyWidget(QFrame):
         pass
 
     def populateControls(self):
-        self._content_layout.addWidget(self.addProperty())
-        self._content_layout.addWidget(self.addProperty())
+        self._content_layout.addWidget(self.addControl())
+        self._content_layout.addWidget(self.addControl())
 
     def modificated(self):
         '''Getting data from all controls and emit signal with this data'''
