@@ -105,3 +105,4 @@ __pycache__/
 .build/
 debug.kv3
 settings.cfg
+/tests/files/vmap/xxx_mapname_xxx.thumbnail.jpg
