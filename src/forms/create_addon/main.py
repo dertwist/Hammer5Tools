@@ -3,6 +3,7 @@ import shutil, os, re
 from src.settings.main import get_cs2_path, get_settings_value, set_settings_value, debug
 from src.forms.create_addon.ui_main import Ui_Create_addon_Dialog
 from src.widgets import exception_handler
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtCore import QRegularExpression
 from src.common import Presets_Path
@@ -62,7 +63,9 @@ class Create_addon_Dialog(QDialog):
         pixmap = QPixmap()
         success = pixmap.loadFromData(image_bytes)
         if success:
-            self.ui.label.setPixmap(pixmap)
+            label_size = self.ui.label.size()
+            scaled_pixmap = pixmap.scaled(label_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.ui.label.setPixmap(scaled_pixmap)
         else:
             debug("QPixmap failed to load image from data.")
 
