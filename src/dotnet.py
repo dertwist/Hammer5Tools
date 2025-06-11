@@ -11,8 +11,11 @@ import webbrowser
 import urllib.request
 from pathlib import Path
 from typing import Optional, Tuple, Any
-
+import unittest
+import binascii
 from PySide6.QtWidgets import QMessageBox
+
+tests_path = Path(__file__).parent.parent / 'tests'
 
 
 class DotNetPaths:
@@ -541,23 +544,25 @@ def extract_vmap_thumbnail(vmap_path):
             dmx_model.Dispose()
         import gc; gc.collect()
 
-def test_extract_vmap_thumbnail():
-    import binascii
-    from pathlib import Path
+class TestVMapThumbnail(unittest.TestCase):
+    def test_extract_vmap_thumbnail(self):
+        vmap_path = os.path.join(tests_path, 'files', 'vmap', 'xxx_mapname_xxx.vmap')
+        hex_data, fmt = extract_vmap_thumbnail(vmap_path)
+        self.assertIsNotNone(hex_data, "No thumbnail data found.")
+        self.assertIsInstance(hex_data, str, "Hex data is not a string.")
+        self.assertGreater(len(hex_data), 0, "Hex data is empty.")
 
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
-    vmap_path = 'xxx_mapname_xxx.vmap'
-    hex_data, fmt = extract_vmap_thumbnail(vmap_path)
-    if hex_data:
         try:
             image_bytes = binascii.unhexlify(hex_data)
+        except Exception as e:
+            self.fail(f"Failed to decode hex data: {e}")
+
+        try:
             output_path = Path(vmap_path).with_suffix(f'.thumbnail.{fmt or "jpg"}')
             output_path.write_bytes(image_bytes)
             print(f"Saved thumbnail to: {output_path}")
         except Exception as e:
-            print(f"Error saving thumbnail: {e}")
-    else:
-        print("No thumbnail data found")
+            self.fail(f"Failed to save image: {e}")
 
 # End Extract thumbnail from VMAP file
 if __name__ == "__main__":
