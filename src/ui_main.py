@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.9.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -176,7 +176,7 @@ class Ui_MainWindow(object):
         self.FixNoSteamLogon_Button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
         icon9 = QIcon()
-        icon9.addFile(u":/valve_common/icons/tools/common/valve_small.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon9.addFile(u":/icons/icons/steam_logo_2.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.FixNoSteamLogon_Button.setIcon(icon9)
         self.FixNoSteamLogon_Button.setIconSize(QSize(20, 20))
 
