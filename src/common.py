@@ -11,7 +11,7 @@ import ctypes
 import re, unicodedata, random, string
 
 # Versions
-app_version = '4.6.02'
+app_version = '4.6.03'
 
 #======================================================<  Copied from preferences.py file  >===================================================
 
