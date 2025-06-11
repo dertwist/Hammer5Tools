@@ -57,6 +57,7 @@ from src.styles.qt_global_stylesheet import QT_Stylesheet_global
 from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
 from src.dotnet import check_dotnet_runtime
 from src.other.addon_validation import validate_addon_structure
+from src.forms.cleanup.main import CleanupDialog
 
 from src.widgets import *
 # Global paths
@@ -364,6 +365,7 @@ class Widget(QMainWindow):
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
         self.ui.discord.clicked.connect(self.open_discord)
         self.ui.documentation_button.clicked.connect(self.open_about)
+        self.ui.cleanup_button.clicked.connect(lambda: CleanupDialog(self).show())
         self.updateLaunchAddonButton()
 
     def updateLaunchAddonButton(self):
