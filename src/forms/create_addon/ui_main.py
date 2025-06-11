@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'create_addon_dialog.ui'
+## Form generated from reading UI file 'main.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.0
 ##
@@ -15,8 +15,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QFrame,
-    QHBoxLayout, QLineEdit, QPushButton, QSizePolicy,
+from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QHBoxLayout,
+    QLabel, QLineEdit, QPushButton, QSizePolicy,
     QVBoxLayout, QWidget)
 import resources_rc
 
@@ -24,18 +24,38 @@ class Ui_Create_addon_Dialog(object):
     def setupUi(self, Create_addon_Dialog):
         if not Create_addon_Dialog.objectName():
             Create_addon_Dialog.setObjectName(u"Create_addon_Dialog")
-        Create_addon_Dialog.resize(656, 76)
+        Create_addon_Dialog.setEnabled(True)
+        Create_addon_Dialog.resize(276, 346)
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(Create_addon_Dialog.sizePolicy().hasHeightForWidth())
         Create_addon_Dialog.setSizePolicy(sizePolicy)
         Create_addon_Dialog.setMinimumSize(QSize(0, 0))
-        Create_addon_Dialog.setMaximumSize(QSize(8999, 999))
+        Create_addon_Dialog.setMaximumSize(QSize(276, 346))
         Create_addon_Dialog.setStyleSheet(u"")
-        self.verticalLayout = QVBoxLayout(Create_addon_Dialog)
+        self.verticalLayout_2 = QVBoxLayout(Create_addon_Dialog)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(2, 2, 2, 2)
+        self.label = QLabel(Create_addon_Dialog)
+        self.label.setObjectName(u"label")
+        self.label.setMinimumSize(QSize(256, 256))
+        self.label.setMaximumSize(QSize(256, 256))
+
+        self.verticalLayout.addWidget(self.label)
+
+        self.presets_comobox = QComboBox(Create_addon_Dialog)
+        self.presets_comobox.setObjectName(u"presets_comobox")
+        self.presets_comobox.setMaximumSize(QSize(16777215, 32))
+
+        self.verticalLayout.addWidget(self.presets_comobox)
+
+
+        self.verticalLayout_2.addLayout(self.verticalLayout)
+
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.lineEdit_addon_name = QLineEdit(Create_addon_Dialog)
         self.lineEdit_addon_name.setObjectName(u"lineEdit_addon_name")
         self.lineEdit_addon_name.setMinimumSize(QSize(0, 32))
@@ -63,22 +83,9 @@ class Ui_Create_addon_Dialog(object):
         self.lineEdit_addon_name.setMaxLength(32)
         self.lineEdit_addon_name.setClearButtonEnabled(True)
 
-        self.verticalLayout.addWidget(self.lineEdit_addon_name)
+        self.horizontalLayout.addWidget(self.lineEdit_addon_name)
 
-        self.frame = QFrame(Create_addon_Dialog)
-        self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout = QHBoxLayout(self.frame)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.presets_comobox = QComboBox(self.frame)
-        self.presets_comobox.setObjectName(u"presets_comobox")
-        self.presets_comobox.setMaximumSize(QSize(16777215, 32))
-
-        self.horizontalLayout.addWidget(self.presets_comobox)
-
-        self.create_addon_button = QPushButton(self.frame)
+        self.create_addon_button = QPushButton(Create_addon_Dialog)
         self.create_addon_button.setObjectName(u"create_addon_button")
         self.create_addon_button.setMinimumSize(QSize(0, 32))
         self.create_addon_button.setStyleSheet(u"\n"
@@ -119,7 +126,7 @@ class Ui_Create_addon_Dialog(object):
         self.horizontalLayout.addWidget(self.create_addon_button)
 
 
-        self.verticalLayout.addWidget(self.frame)
+        self.verticalLayout_2.addLayout(self.horizontalLayout)
 
 
         self.retranslateUi(Create_addon_Dialog)
@@ -129,9 +136,10 @@ class Ui_Create_addon_Dialog(object):
 
     def retranslateUi(self, Create_addon_Dialog):
         Create_addon_Dialog.setWindowTitle(QCoreApplication.translate("Create_addon_Dialog", u"Create Addon", None))
+        self.label.setText(QCoreApplication.translate("Create_addon_Dialog", u"img", None))
+        self.presets_comobox.setPlaceholderText(QCoreApplication.translate("Create_addon_Dialog", u"No presets", None))
         self.lineEdit_addon_name.setInputMask("")
         self.lineEdit_addon_name.setPlaceholderText(QCoreApplication.translate("Create_addon_Dialog", u"de_mapname", None))
-        self.presets_comobox.setPlaceholderText(QCoreApplication.translate("Create_addon_Dialog", u"No presets", None))
         self.create_addon_button.setText(QCoreApplication.translate("Create_addon_Dialog", u"Create Addon", None))
     # retranslateUi
 

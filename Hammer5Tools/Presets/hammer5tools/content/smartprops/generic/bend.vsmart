@@ -1,0 +1,2219 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	generic_data_type = "CSmartPropRoot"
+	editor_info = 
+	{
+		Info = "Hammer5Tools by Twist"
+		GitHub = "https://github.com/dertwist/Hammer5Tools"
+		Discord_Server = "https://discord.gg/DvCXEyhssd"
+		social_links = 
+		{
+			Steam = "https://steamcommunity.com/id/der_twist"
+			Twitter = "https://twitter.com/der_twist"
+			Bluesky = "https://bsky.app/profile/der-twist.bsky.social"
+			ArtStation = "https://www.artstation.com/nucky3d"
+		}
+		m_nElementID = 295
+	}
+	m_Variables = 
+	[
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "empty004"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 115
+			m_ParameterName = " === Model settings ==="
+		},
+				{
+			_class = "CSmartPropVariable_Model"
+			m_VariableName = "model"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "models/props/de_train/hr_train_s2/train_spill/spill_kit_barrier_01a.vmdl"
+			m_nElementID = 116
+			m_ParameterName = "Model"
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "model_skin"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "type_skin_name_here"
+			m_nElementID = 117
+			m_ParameterName = "Model skin"
+		},
+				{
+			_class = "CSmartPropVariable_Color"
+			m_VariableName = "model_tint"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [255, 255, 255]
+			m_nElementID = 118
+			m_ParameterName = "Model tint"
+		},
+				{
+			_class = "CSmartPropVariable_Vector3D"
+			m_VariableName = "model_scale"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [1, 1, 1]
+			m_nElementID = 119
+			m_ParameterName = "Model scale"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_origin_x"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 0
+			m_nElementID = 120
+			m_ParameterName = "Model origin X"
+			m_flParamaterMinValue = -256
+			m_flParamaterMaxValue = 256
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_origin_y"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 0
+			m_nElementID = 121
+			m_ParameterName = "Model origin Y"
+			m_flParamaterMinValue = -256
+			m_flParamaterMaxValue = 256
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_origin_z"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 0
+			m_nElementID = 122
+			m_ParameterName = "Model origin Z"
+			m_flParamaterMinValue = -256
+			m_flParamaterMaxValue = 256
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_angles_x"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "0"
+			m_nElementID = 123
+			m_ParameterName = "Model rotate X"
+			m_flParamaterMinValue = -180
+			m_flParamaterMaxValue = 180
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_angles_y"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "0"
+			m_nElementID = 124
+			m_ParameterName = "Model rotate Y"
+			m_flParamaterMinValue = -180
+			m_flParamaterMaxValue = 180
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model_angles_z"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "0"
+			m_nElementID = 125
+			m_ParameterName = "Model rotate Z"
+			m_flParamaterMinValue = -180
+			m_flParamaterMaxValue = 180
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "empty000"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 126
+			m_ParameterName = " "
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "empty001"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 127
+			m_ParameterName = " === Deformer volume ==="
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "simplified_volume"
+			m_bExposeAsParameter = true
+			m_DefaultValue = true
+			m_nElementID = 128
+			m_ParameterName = "Line instead of volume"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "deformer_origin_x"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 0
+			m_nElementID = 129
+			m_ParameterName = "Deformer origin X"
+			m_flParamaterMinValue = -512
+			m_flParamaterMaxValue = 512
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "deformer_origin_y"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 0
+			m_nElementID = 130
+			m_ParameterName = "Deformer origin Y"
+			m_flParamaterMinValue = -512
+			m_flParamaterMaxValue = 512
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "deformer_origin_z"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 16
+			m_nElementID = 131
+			m_ParameterName = "Deformer origin Z"
+			m_flParamaterMinValue = -128
+			m_flParamaterMaxValue = 1024
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "angles_x"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "0"
+			m_nElementID = 132
+			m_ParameterName = "Deformer rotate X"
+			m_flParamaterMinValue = -180
+			m_flParamaterMaxValue = 180
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "angles_y"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "0"
+			m_nElementID = 133
+			m_ParameterName = "Deformer rotate Y"
+			m_flParamaterMinValue = -180
+			m_flParamaterMaxValue = 180
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "angles_z"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "0"
+			m_nElementID = 134
+			m_ParameterName = "Deformer rotate Z"
+			m_flParamaterMinValue = -180
+			m_flParamaterMaxValue = 180
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "empty002"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 135
+			m_ParameterName = " "
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "empty003"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 136
+			m_ParameterName = " === Bend settings ==="
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "enable_bend"
+			m_bExposeAsParameter = true
+			m_DefaultValue = false
+			m_nElementID = 137
+			m_ParameterName = "Enable bending"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "deformer_radius"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 75
+			m_nElementID = 138
+			m_ParameterName = "Bend radius"
+			m_flParamaterMinValue = 4
+			m_flParamaterMaxValue = 512
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "angle"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 90
+			m_nElementID = 139
+			m_ParameterName = "Manual bend angle"
+			m_flParamaterMinValue = 0
+			m_flParamaterMaxValue = 720
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "auto_angle"
+			m_bExposeAsParameter = true
+			m_DefaultValue = true
+			m_nElementID = 140
+			m_ParameterName = "Auto angle"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "auto_angle_extension"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 1
+			m_nElementID = 141
+			m_ParameterName = "Auto angle extension"
+			m_flParamaterMinValue = 0.25
+			m_flParamaterMaxValue = 2
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "bend_point"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 142
+			m_ParameterName = "Bend point"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "size_x"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 143
+			m_ParameterName = "size_x"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "size_y"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 144
+			m_ParameterName = "size_y"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "size_z"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 145
+			m_ParameterName = "size_z"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "size_x_min"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 146
+			m_ParameterName = "size_x_min"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "size_y_min"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 147
+			m_ParameterName = "size_y_min"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "size_z_min"
+			m_bExposeAsParameter = false
+			m_DefaultValue = ""
+			m_nElementID = 148
+			m_ParameterName = "size_z_min"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "rotator_radius"
+			m_bExposeAsParameter = false
+			m_DefaultValue = "16"
+			m_nElementID = 149
+			m_ParameterName = "Rotators radius"
+			m_flParamaterMinValue = 4
+			m_flParamaterMaxValue = 32
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "empty007"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 150
+			m_ParameterName = " "
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "empty008"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 151
+			m_ParameterName = " === Locators settings ==="
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "locators_scale_bool"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "false"
+			m_nElementID = 152
+			m_ParameterName = "Big bend locators (WARNING: Changing this option might freeze Hammer for a few seconds)"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "locators_scale"
+			m_bExposeAsParameter = false
+			m_DefaultValue = "1"
+			m_nElementID = 153
+			m_ParameterName = "Bend locators scale"
+			m_flParamaterMinValue = 0.25
+			m_flParamaterMaxValue = 8
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "hide_locators"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "false"
+			m_nElementID = 154
+			m_ParameterName = "Hide bend locators"
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "empty005"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 155
+			m_ParameterName = " "
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "empty006"
+			m_bExposeAsParameter = true
+			m_DefaultValue = ""
+			m_nElementID = 156
+			m_ParameterName = " === Second model settings ==="
+		},
+				{
+			_class = "CSmartPropVariable_Bool"
+			m_VariableName = "enable_second_model"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "false"
+			m_nElementID = 157
+			m_ParameterName = "Enable second model"
+		},
+				{
+			_class = "CSmartPropVariable_Model"
+			m_VariableName = "model2"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "models/props/de_train/hr_train_s2/train_spill/spill_kit_barrier_01a.vmdl"
+			m_nElementID = 158
+			m_ParameterName = "Second model"
+		},
+				{
+			_class = "CSmartPropVariable_String"
+			m_VariableName = "model2_skin"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "type_skin_name_here"
+			m_nElementID = 159
+			m_ParameterName = "Second model skin"
+		},
+				{
+			_class = "CSmartPropVariable_Color"
+			m_VariableName = "model2_tint"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [255, 255, 255]
+			m_nElementID = 160
+			m_ParameterName = "Second model tint"
+		},
+				{
+			_class = "CSmartPropVariable_Vector3D"
+			m_VariableName = "model2_scale"
+			m_bExposeAsParameter = true
+			m_DefaultValue = [1, 1, 1]
+			m_nElementID = 161
+			m_ParameterName = "Second model scale"
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model2_origin_x"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 100
+			m_nElementID = 162
+			m_ParameterName = "Second model origin X"
+			m_flParamaterMinValue = -256
+			m_flParamaterMaxValue = 256
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model2_origin_y"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 0
+			m_nElementID = 163
+			m_ParameterName = "Second model origin Y"
+			m_flParamaterMinValue = -256
+			m_flParamaterMaxValue = 256
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model2_origin_z"
+			m_bExposeAsParameter = true
+			m_DefaultValue = 0
+			m_nElementID = 164
+			m_ParameterName = "Second model origin Z"
+			m_flParamaterMinValue = -256
+			m_flParamaterMaxValue = 256
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model2_angles_x"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "0"
+			m_nElementID = 165
+			m_ParameterName = "Second model rotate X"
+			m_flParamaterMinValue = -180
+			m_flParamaterMaxValue = 180
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model2_angles_y"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "0"
+			m_nElementID = 166
+			m_ParameterName = "Second model rotate Y"
+			m_flParamaterMinValue = -180
+			m_flParamaterMaxValue = 180
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "model2_angles_z"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "0"
+			m_nElementID = 167
+			m_ParameterName = "Second model rotate Z"
+			m_flParamaterMinValue = -180
+			m_flParamaterMaxValue = 180
+		},
+				{
+			_class = "CSmartPropVariable_Int"
+			m_VariableName = "model2_amount"
+			m_bExposeAsParameter = true
+			m_DefaultValue = "1"
+			m_nElementID = 168
+			m_ParameterName = "Second model amount"
+			m_nParamaterMinValue = 1
+			m_nParamaterMaxValue = 16
+		},
+				{
+			_class = "CSmartPropVariable_Float"
+			m_VariableName = "pi"
+			m_bExposeAsParameter = false
+			m_DefaultValue = 2.64
+			m_nElementID = 169
+			m_ParameterName = "pi"
+			m_sModelName = "None"
+		},
+	]
+	m_Choices = []
+	m_Children = 
+	[
+				{
+			_class = "CSmartPropElement_Group"
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "deformer_origin_x"
+							},
+														{
+								m_Expression = "deformer_origin_y"
+							},
+														{
+								m_Expression = "deformer_origin_z"
+							},
+						]
+					}
+					m_nElementID = 2
+				},
+			]
+			m_nElementID = 1
+			m_sLabel = "Variables"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_Rotate"
+							m_vRotation = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = "0"
+									},
+																		{
+										m_Expression = "angles_y"
+									},
+																		{
+										m_Expression = "angles_z"
+									},
+								]
+							}
+							m_nElementID = 4
+						},
+												{
+							_class = "CSmartPropOperation_CreateRotator"
+							m_flDisplayRadius = 
+							{
+								m_Expression = "rotator_radius"
+							}
+							m_vRotationAxis = [0.0, 1.0, 0.0]
+							m_bEnabled = false
+							m_OutputVariable = "angles_x"
+							m_nElementID = 5
+						},
+					]
+					m_nElementID = 3
+					m_sLabel = "Group_03"
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_Rotate"
+							m_vRotation = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = "angles_x"
+									},
+																		{
+										m_Expression = "0"
+									},
+																		{
+										m_Expression = "angles_z"
+									},
+								]
+							}
+							m_nElementID = 7
+						},
+												{
+							_class = "CSmartPropOperation_CreateRotator"
+							m_flDisplayRadius = 
+							{
+								m_Expression = "rotator_radius"
+							}
+							m_vRotationAxis = [0.0, 0.0, 1.0]
+							m_bEnabled = false
+							m_OutputVariable = "angles_y"
+							m_nElementID = 8
+						},
+					]
+					m_nElementID = 6
+					m_sLabel = "Group_06"
+				},
+								{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_Rotate"
+							m_vRotation = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = "angles_x"
+									},
+																		{
+										m_Expression = "angles_y"
+									},
+																		{
+										m_Expression = "0"
+									},
+								]
+							}
+							m_nElementID = 10
+						},
+												{
+							_class = "CSmartPropOperation_CreateRotator"
+							m_flDisplayRadius = 
+							{
+								m_Expression = "rotator_radius"
+							}
+							m_vRotationAxis = [1.0, 0.0, 0.0]
+							m_bEnabled = false
+							m_OutputVariable = "angles_z"
+							m_nElementID = 11
+						},
+					]
+					m_nElementID = 9
+					m_sLabel = "Group_09"
+				},
+			]
+		},
+				{
+			_class = "CSmartPropElement_Group"
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "deformer_origin_x"
+							},
+														{
+								m_Expression = "deformer_origin_y"
+							},
+														{
+								m_Expression = "deformer_origin_z"
+							},
+						]
+					}
+					m_nElementID = 13
+				},
+								{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "angles_x"
+							},
+														{
+								m_Expression = "angles_y"
+							},
+														{
+								m_Expression = "angles_z"
+							},
+						]
+					}
+					m_nElementID = 14
+				},
+								{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_bEnabled = 
+					{
+						m_Expression = "!simplified_volume"
+					}
+					m_flInitialMinX = 0.0
+					m_flInitialMinY = 0.0
+					m_flInitialMinZ = 0.0
+					m_flInitialMaxX = 32.0
+					m_flInitialMaxY = 32.0
+					m_flInitialMaxZ = 32.0
+					m_OutputVariableMaxX = "size_x"
+					m_OutputVariableMaxY = "size_y"
+					m_OutputVariableMaxZ = "size_z"
+					m_nElementID = 15
+				},
+								{
+					_class = "CSmartPropOperation_CreateSizer"
+					m_bEnabled = 
+					{
+						m_Expression = "simplified_volume"
+					}
+					m_flInitialMinX = 0.0
+					m_flInitialMinY = -32.0
+					m_flInitialMinZ = -32.0
+					m_flInitialMaxX = 32.0
+					m_flInitialMaxY = 32.0
+					m_flInitialMaxZ = 32.0
+					m_flConstraintMinY = -32.0
+					m_flConstraintMinZ = -32.0
+					m_flConstraintMaxY = 32.0
+					m_flConstraintMaxZ = 32.0
+					m_OutputVariableMaxX = "size_x"
+					m_nElementID = 16
+				},
+								{
+					_class = "CSmartPropOperation_SetVariableFloat"
+					m_VariableValue = 
+					{
+						m_Expression = "auto_angle ? (size_x / (2 * deformer_radius * pi / 360)) * auto_angle_extension : angle"
+					}
+					m_VariableName = "angle"
+					m_nElementID = 17
+				},
+								{
+					_class = "CSmartPropOperation_SetVariableFloat"
+					m_VariableValue = 
+					{
+						m_Expression = "deformer_origin_x"
+					}
+					m_VariableName = "deformer_origin_x"
+					m_nElementID = 18
+				},
+								{
+					_class = "CSmartPropOperation_SetVariableFloat"
+					m_VariableValue = 
+					{
+						m_Expression = "deformer_origin_y"
+					}
+					m_VariableName = "deformer_origin_y"
+					m_nElementID = 19
+				},
+								{
+					_class = "CSmartPropOperation_SetVariableFloat"
+					m_VariableValue = 
+					{
+						m_Expression = "deformer_origin_z"
+					}
+					m_VariableName = "deformer_origin_z"
+					m_nElementID = 20
+				},
+			]
+			m_nElementID = 12
+			m_sLabel = "Group_12"
+		},
+				{
+			_class = "CSmartPropElement_Group"
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "deformer_origin_x"
+							},
+														{
+								m_Expression = "deformer_origin_y"
+							},
+														{
+								m_Expression = "deformer_origin_z"
+							},
+						]
+					}
+					m_nElementID = 22
+				},
+								{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "angles_x"
+							},
+														{
+								m_Expression = "angles_y"
+							},
+														{
+								m_Expression = "angles_z"
+							},
+						]
+					}
+					m_nElementID = 23
+				},
+								{
+					_class = "CSmartPropOperation_Translate"
+					m_vPosition = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "size_x_min"
+							},
+														{
+								m_Expression = "size_y_min - deformer_radius"
+							},
+														{
+								m_Expression = "size_z_min"
+							},
+						]
+					}
+					m_nElementID = 24
+				},
+			]
+			m_nElementID = 21
+			m_sLabel = "Gizmos"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Group"
+					m_Modifiers = 
+					[
+												{
+							_class = "CSmartPropOperation_Rotate"
+							m_vRotation = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = "0"
+									},
+																		{
+										m_Expression = "0"
+									},
+																		{
+										m_Expression = "0"
+									},
+								]
+							}
+							m_nElementID = 26
+						},
+												{
+							_class = "CSmartPropOperation_Translate"
+							m_vPosition = 
+							{
+								m_Components = 
+								[
+																		{
+										m_Expression = "0"
+									},
+																		{
+										m_Expression = "0"
+									},
+																		{
+										m_Expression = "0"
+									},
+								]
+							}
+							m_nElementID = 27
+						},
+					]
+					m_nElementID = 25
+					m_sLabel = "Holder"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Group"
+							m_Modifiers = 
+							[
+																{
+									_class = "CSmartPropOperation_SetVariableFloat"
+									m_VariableValue = 
+									{
+										m_Expression = "locators_scale_bool ? 4 : 1"
+									}
+									m_VariableName = "locators_scale"
+									m_nElementID = 29
+								},
+																{
+									_class = "CSmartPropOperation_Translate"
+									m_vPosition = 
+									{
+										m_Components = 
+										[
+																						{
+												m_Expression = "size_x * bend_point"
+											},
+																						{
+												m_Expression = "0"
+											},
+																						{
+												m_Expression = "0"
+											},
+										]
+									}
+									m_nElementID = 30
+								},
+																{
+									_class = "CSmartPropOperation_Rotate"
+									m_vRotation = 
+									{
+										m_Components = 
+										[
+																						{
+												m_Expression = "0"
+											},
+																						{
+												m_Expression = "angle * bend_point"
+											},
+																						{
+												m_Expression = "0"
+											},
+										]
+									}
+									m_nElementID = 31
+								},
+							]
+							m_nElementID = 28
+							m_sLabel = "Group_28"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "1"
+									}
+									m_Modifiers = []
+									m_nElementID = 32
+									m_sLabel = "PlaceMultiple_32"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "-angle * bend_point"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 34
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius + (size_y * 0.5)"
+															},
+																														{
+																m_Expression = "(size_z * 0.5)"
+															},
+														]
+													}
+													m_nElementID = 35
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "1 * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 36
+												},
+											]
+											m_nElementID = 33
+											m_sLabel = "Group_33"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_z"
+									}
+									m_Modifiers = []
+									m_nElementID = 37
+									m_sLabel = "PlaceMultiple_37"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 39
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius"
+															},
+																														{
+																m_Expression = "InstanceIndex()"
+															},
+														]
+													}
+													m_nElementID = 40
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "0.15 * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 41
+												},
+											]
+											m_nElementID = 38
+											m_sLabel = "Group_38"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_z"
+									}
+									m_Modifiers = []
+									m_nElementID = 42
+									m_sLabel = "PlaceMultiple_42"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 44
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius + size_y"
+															},
+																														{
+																m_Expression = "InstanceIndex()"
+															},
+														]
+													}
+													m_nElementID = 45
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "0.15 * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 46
+												},
+											]
+											m_nElementID = 43
+											m_sLabel = "Group_43"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_z"
+									}
+									m_Modifiers = []
+									m_nElementID = 47
+									m_sLabel = "PlaceMultiple_47"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "-angle"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 49
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius"
+															},
+																														{
+																m_Expression = "InstanceIndex()"
+															},
+														]
+													}
+													m_nElementID = 50
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "0.15 * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 51
+												},
+											]
+											m_nElementID = 48
+											m_sLabel = "Group_48"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_z"
+									}
+									m_Modifiers = []
+									m_nElementID = 52
+									m_sLabel = "PlaceMultiple_52"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "-angle"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 54
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius + size_y"
+															},
+																														{
+																m_Expression = "InstanceIndex()"
+															},
+														]
+													}
+													m_nElementID = 55
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "0.15 * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 56
+												},
+											]
+											m_nElementID = 53
+											m_sLabel = "Group_53"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_y"
+									}
+									m_Modifiers = []
+									m_nElementID = 57
+									m_sLabel = "PlaceMultiple_57"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 59
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius + InstanceIndex()"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 60
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "0.15 * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 61
+												},
+											]
+											m_nElementID = 58
+											m_sLabel = "Group_58"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_y"
+									}
+									m_Modifiers = []
+									m_nElementID = 62
+									m_sLabel = "PlaceMultiple_62"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 64
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius + InstanceIndex()"
+															},
+																														{
+																m_Expression = "size_z"
+															},
+														]
+													}
+													m_nElementID = 65
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "0.15 * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 66
+												},
+											]
+											m_nElementID = 63
+											m_sLabel = "Group_63"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_y"
+									}
+									m_Modifiers = []
+									m_nElementID = 67
+									m_sLabel = "PlaceMultiple_67"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "-angle"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 69
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius + InstanceIndex()"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 70
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "0.15 * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 71
+												},
+											]
+											m_nElementID = 68
+											m_sLabel = "Group_68"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_y"
+									}
+									m_Modifiers = []
+									m_nElementID = 72
+									m_sLabel = "PlaceMultiple_72"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "-angle"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 74
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius + InstanceIndex()"
+															},
+																														{
+																m_Expression = "size_z"
+															},
+														]
+													}
+													m_nElementID = 75
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "0.15 * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 76
+												},
+											]
+											m_nElementID = 73
+											m_sLabel = "Group_73"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "angle + 1"
+									}
+									m_Modifiers = []
+									m_nElementID = 77
+									m_sLabel = "PlaceMultiple_77"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "InstanceIndex() == (InstanceCount() - 1) ? -angle : -InstanceIndex()"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 79
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 80
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "(InstanceIndex() % 15 == 0 ? 0.3 : 0.15) * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 81
+												},
+											]
+											m_nElementID = 78
+											m_sLabel = "Group_78"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_y < 1 ? 0 : angle + 1"
+									}
+									m_Modifiers = []
+									m_nElementID = 82
+									m_sLabel = "PlaceMultiple_82"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "InstanceIndex() == (InstanceCount() - 1) ? -angle : -InstanceIndex()"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 84
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius + size_y - size_y_min"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 85
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "(InstanceIndex() % 15 == 0 ? 0.3 : 0.15) * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 86
+												},
+											]
+											m_nElementID = 83
+											m_sLabel = "Group_83"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_z < 1 ? 0 : angle + 1"
+									}
+									m_Modifiers = []
+									m_nElementID = 87
+									m_sLabel = "PlaceMultiple_87"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "InstanceIndex() == (InstanceCount() - 1) ? -angle : -InstanceIndex()"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 89
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius"
+															},
+																														{
+																m_Expression = "size_z - size_z_min"
+															},
+														]
+													}
+													m_nElementID = 90
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "(InstanceIndex() % 15 == 0 ? 0.3 : 0.15) * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 91
+												},
+											]
+											m_nElementID = 88
+											m_sLabel = "Group_88"
+										},
+									]
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "size_z < 1 ? 0 : angle + 1"
+									}
+									m_Modifiers = []
+									m_nElementID = 92
+									m_sLabel = "PlaceMultiple_92"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Group"
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "InstanceIndex() == (InstanceCount() - 1) ? -angle : -InstanceIndex()"
+															},
+																														{
+																m_Expression = "0"
+															},
+														]
+													}
+													m_nElementID = 94
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "0"
+															},
+																														{
+																m_Expression = "deformer_radius + size_y - size_y_min"
+															},
+																														{
+																m_Expression = "size_z - size_z_min"
+															},
+														]
+													}
+													m_nElementID = 95
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_bEnabled = 
+													{
+														m_Expression = "!hide_locators"
+													}
+													m_flDisplayScale = 
+													{
+														m_Expression = "(InstanceIndex() % 15 == 0 ? 0.3 : 0.15) * locators_scale"
+													}
+													m_bAllowScale = false
+													m_bAllowRotation = false
+													m_nElementID = 96
+												},
+											]
+											m_nElementID = 93
+											m_sLabel = "Group_93"
+										},
+									]
+								},
+							]
+						},
+					]
+				},
+			]
+		},
+				{
+			_class = "CSmartPropElement_BendDeformer"
+			m_bDeformationEnabled = 
+			{
+				m_Expression = "enable_bend"
+			}
+			m_flBendAngle = 
+			{
+				m_Expression = "angle"
+			}
+			m_flBendPoint = 
+			{
+				m_SourceName = "bend_point"
+			}
+			m_flBendRadius = 
+			{
+				m_SourceName = "deformer_radius"
+			}
+			m_vOrigin = 
+			{
+				m_Components = 
+				[
+										{
+						m_Expression = "deformer_origin_x"
+					},
+										{
+						m_Expression = "deformer_origin_y"
+					},
+										{
+						m_Expression = "deformer_origin_z"
+					},
+				]
+			}
+			m_vSize = 
+			{
+				m_Components = 
+				[
+										{
+						m_Expression = "size_x - size_x_min"
+					},
+										{
+						m_Expression = "size_y - size_y_min"
+					},
+										{
+						m_Expression = "size_z - size_z_min"
+					},
+				]
+			}
+			m_vAngles = 
+			{
+				m_Components = 
+				[
+										{
+						m_Expression = "angles_x"
+					},
+										{
+						m_Expression = "angles_y"
+					},
+										{
+						m_Expression = "angles_z"
+					},
+				]
+			}
+			m_Modifiers = 
+			[
+								{
+					_class = "CSmartPropOperation_Rotate"
+					m_vRotation = 
+					{
+						m_Components = 
+						[
+														{
+								m_Expression = "0"
+							},
+														{
+								m_Expression = "0"
+							},
+														{
+								m_Expression = "0"
+							},
+						]
+					}
+					m_nElementID = 98
+				},
+			]
+			m_nElementID = 97
+			m_sLabel = "BendDeformer_97"
+			m_Children = 
+			[
+								{
+					_class = "CSmartPropElement_Group"
+					m_nElementID = 99
+					m_sLabel = "Group_99"
+					m_Children = 
+					[
+												{
+							_class = "CSmartPropElement_Group"
+							m_nElementID = 100
+							m_sLabel = "Group_100"
+							m_Children = 
+							[
+																{
+									_class = "CSmartPropElement_ModifyState"
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_SetTintColor"
+											m_Mode = "REPLACE"
+											m_ColorChoices = 
+											[
+																								{
+													m_Color = 
+													{
+														m_SourceName = "model_tint"
+													}
+												},
+											]
+											m_nElementID = 102
+										},
+									]
+									m_nElementID = 101
+									m_sLabel = "ModifyState_101"
+								},
+																{
+									_class = "CSmartPropElement_Model"
+									m_sModelName = 
+									{
+										m_SourceName = "model"
+									}
+									m_MaterialGroupName = 
+									{
+										m_SourceName = "model_skin"
+									}
+									m_vModelScale = 
+									{
+										m_Components = 
+										[
+																						{
+												m_Expression = "model_scale.x"
+											},
+																						{
+												m_Expression = "model_scale.y"
+											},
+																						{
+												m_Expression = "model_scale.z"
+											},
+										]
+									}
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_Translate"
+											m_vPosition = 
+											{
+												m_Components = 
+												[
+																										{
+														m_Expression = "model_origin_x"
+													},
+																										{
+														m_Expression = "model_origin_y"
+													},
+																										{
+														m_Expression = "model_origin_z"
+													},
+												]
+											}
+											m_nElementID = 104
+										},
+																				{
+											_class = "CSmartPropOperation_Rotate"
+											m_vRotation = 
+											{
+												m_Components = 
+												[
+																										{
+														m_Expression = "model_angles_x"
+													},
+																										{
+														m_Expression = "model_angles_y"
+													},
+																										{
+														m_Expression = "model_angles_z"
+													},
+												]
+											}
+											m_nElementID = 105
+										},
+																				{
+											_class = "CSmartPropOperation_CreateLocator"
+											m_nElementID = 106
+										},
+									]
+									m_nElementID = 103
+									m_sLabel = "Model_103"
+								},
+																{
+									_class = "CSmartPropElement_ModifyState"
+									m_Modifiers = 
+									[
+																				{
+											_class = "CSmartPropOperation_SetTintColor"
+											m_Mode = "REPLACE"
+											m_ColorChoices = 
+											[
+																								{
+													m_Color = 
+													{
+														m_SourceName = "model2_tint"
+													}
+												},
+											]
+											m_nElementID = 108
+										},
+									]
+									m_nElementID = 107
+									m_sLabel = "ModifyState_107"
+								},
+																{
+									_class = "CSmartPropElement_PlaceMultiple"
+									m_nCount = 
+									{
+										m_Expression = "model2_amount"
+									}
+									m_nElementID = 109
+									m_sLabel = "PlaceMultiple_109"
+									m_Children = 
+									[
+																				{
+											_class = "CSmartPropElement_Model"
+											m_sModelName = 
+											{
+												m_SourceName = "model2"
+											}
+											m_MaterialGroupName = 
+											{
+												m_SourceName = "model2_skin"
+											}
+											m_vModelScale = 
+											{
+												m_Components = 
+												[
+																										{
+														m_Expression = "model2_scale.x"
+													},
+																										{
+														m_Expression = "model2_scale.y"
+													},
+																										{
+														m_Expression = "model2_scale.z"
+													},
+												]
+											}
+											m_Modifiers = 
+											[
+																								{
+													_class = "CSmartPropFilter_VariableValue"
+													m_VariableComparison = 
+													{
+														m_Name = "enable_second_model"
+														m_Value = true
+														m_Comparison = "EQUAL"
+													}
+													m_nElementID = 111
+												},
+																								{
+													_class = "CSmartPropOperation_Translate"
+													m_vPosition = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "model2_origin_x + ((model2_origin_x - model_origin_x) * InstanceIndex())"
+															},
+																														{
+																m_Expression = "model2_origin_y + ((model2_origin_y - model_origin_y) * InstanceIndex())"
+															},
+																														{
+																m_Expression = "model2_origin_z + ((model2_origin_z - model_origin_z) * InstanceIndex())"
+															},
+														]
+													}
+													m_nElementID = 112
+												},
+																								{
+													_class = "CSmartPropOperation_Rotate"
+													m_vRotation = 
+													{
+														m_Components = 
+														[
+																														{
+																m_Expression = "model2_angles_x"
+															},
+																														{
+																m_Expression = "model2_angles_y"
+															},
+																														{
+																m_Expression = "model2_angles_z"
+															},
+														]
+													}
+													m_nElementID = 113
+												},
+																								{
+													_class = "CSmartPropOperation_CreateLocator"
+													m_nElementID = 114
+												},
+											]
+											m_nElementID = 110
+											m_sLabel = "Model_110"
+										},
+									]
+								},
+							]
+						},
+					]
+				},
+			]
+		},
+	]
+}

@@ -345,11 +345,17 @@ class DotNetRuntimeChecker:
 
             if show_dialog:
                 self._show_download_dialog()
+            else:
+                setup_vrf()
+                setup_keyvalues2()
             return False
 
         except (FileNotFoundError, subprocess.CalledProcessError):
             if show_dialog:
                 self._show_download_dialog()
+            else:
+                setup_vrf()
+                setup_keyvalues2()
             return False
 
     def _show_download_dialog(self):
@@ -501,5 +507,58 @@ def extract_vsnd_file(output_folder: str = None, export=False, vpk_file: str = N
     else:
         return data
 
+# Start Extract thumbnail from VMAP file
+
+def extract_vmap_thumbnail(vmap_path):
+    Datamodel, _, DeferredMode = setup_keyvalues2()
+    if not os.path.exists(vmap_path):
+        return None, None
+
+    dmx_model = None
+    try:
+        dmx_model = Datamodel.Load(vmap_path, DeferredMode.Automatic)
+        if not dmx_model or not dmx_model.Root or not hasattr(dmx_model, 'PrefixAttributes'):
+            return None, None
+        prefix_attrs = dmx_model.PrefixAttributes
+        data = prefix_attrs.get("asset_preview_thumbnail")
+        fmt = prefix_attrs.get("asset_preview_thumbnail_format", "jpg")
+        if data is None:
+            return None, None
+        # Convert .NET byte array to hex string
+        if hasattr(data, 'Length'):
+            hex_data = ''.join(f'{data[i]:02X}' for i in range(data.Length))
+        elif isinstance(data, bytes):
+            hex_data = data.hex().upper()
+        elif isinstance(data, str):
+            hex_data = data.strip().replace('\n', '').replace('\t', '').replace(' ', '')
+        else:
+            hex_data = str(data).strip().replace('\n', '').replace('\t', '').replace(' ', '')
+        return hex_data, fmt
+    except Exception:
+        return None, None
+    finally:
+        if dmx_model and hasattr(dmx_model, 'Dispose'):
+            dmx_model.Dispose()
+        import gc; gc.collect()
+
+def test_extract_vmap_thumbnail():
+    import binascii
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src'))
+    vmap_path = 'xxx_mapname_xxx.vmap'
+    hex_data, fmt = extract_vmap_thumbnail(vmap_path)
+    if hex_data:
+        try:
+            image_bytes = binascii.unhexlify(hex_data)
+            output_path = Path(vmap_path).with_suffix(f'.thumbnail.{fmt or "jpg"}')
+            output_path.write_bytes(image_bytes)
+            print(f"Saved thumbnail to: {output_path}")
+        except Exception as e:
+            print(f"Error saving thumbnail: {e}")
+    else:
+        print("No thumbnail data found")
+
+# End Extract thumbnail from VMAP file
 if __name__ == "__main__":
     pass

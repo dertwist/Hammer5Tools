@@ -1,0 +1,54 @@
+// THIS FILE IS AUTO-GENERATED
+
+Layer0
+{
+	shader "csgo_environment.vfx"
+
+	//---- Color ----
+	g_flModelTintAmount "1.000"
+	g_nScaleTexCoordUByModelScaleAxis "0" // None
+	g_nScaleTexCoordVByModelScaleAxis "0" // None
+	g_vColorTint "[0.776471 0.776471 0.776471 0.000000]"
+
+	//---- Fog ----
+	g_bFogEnabled "1"
+
+	//---- Material1 ----
+	g_flTexCoordRotation1 "0.000"
+	g_vTexCoordCenter1 "[0.500 0.500]"
+	g_vTexCoordOffset1 "[0.000 0.000]"
+	g_vTexCoordScale1 "[1.000 1.000]"
+	TextureAmbientOcclusion1 "[1.000000 1.000000 1.000000 0.000000]"
+	TextureColor1 "materials/dev/gray_grid_color.tga"
+	TextureHeight1 "materials/default/default_height.tga"
+	TextureMetalness1 "[0.000000 0.000000 0.000000 0.000000]"
+	TextureNormal1 "materials/dev/gray_grid_normal.tga"
+	TextureRoughness1 "materials/dev/gray_grid_rough.tga"
+	TextureTintMask1 "[1.000000 1.000000 1.000000 0.000000]"
+
+	//---- Texture Address Mode ----
+	g_nTextureAddressModeU "0" // Wrap
+	g_nTextureAddressModeV "0" // Wrap
+
+
+	VariableState
+	{
+		"Color"
+		{
+		}
+		"Fog"
+		{
+		}
+		"Material1"
+		{
+			"Color" 0
+			"Tint Mask" 0
+			"Lighting" 0
+			"Height" 0
+			"Texture Transform" 1
+		}
+		"Texture Address Mode"
+		{
+		}
+	}
+}

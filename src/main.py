@@ -44,7 +44,7 @@ from src.settings.main import (
 )
 from src.editors.loading_editor.main import Loading_editorMainWindow
 from src.editors.hotkey_editor.main import HotkeyEditorMainWindow
-from src.forms.create_addon.create_addon_mian import Create_addon_Dialog
+from src.forms.create_addon.main import Create_addon_Dialog
 from src.other.steam_restart import SteamNoLogoFixThreadClass
 from src.other.addon_functions import delete_addon, launch_addon
 from src.updater.check import check_updates
