@@ -66,8 +66,25 @@ def get_vmap_references(addon_dir=None, vmap=None):
         extract_references(kv3_data)
         return references
 
-    def get_smartprop_references(vsmart_path):
-        """Extract references from a .vsmart file."""
+    def get_smartprop_references(vsmart_path, addon_dir=None, visited=None):
+        """
+        Extract references from a .vsmart file, avoiding infinite recursion by tracking visited files.
+        :param vsmart_path: Path to the .vsmart file.
+        :param addon_dir: Base directory for resolving relative references.
+        :param visited: Set of already visited file paths.
+        :return: List of referenced model names.
+        """
+        if visited is None:
+            visited = set()
+        if addon_dir is None:
+            addon_dir = os.path.dirname(vsmart_path)
+
+        abs_path = os.path.abspath(vsmart_path)
+        if abs_path in visited:
+            # Already processed this file, avoid recursion
+            return []
+        visited.add(abs_path)
+
         try:
             with open(vsmart_path, 'r') as f:
                 kv3_data = f.read()
@@ -84,14 +101,18 @@ def get_vmap_references(addon_dir=None, vmap=None):
         def extract_references(d):
             if isinstance(d, dict):
                 for key, value in d.items():
-                    if key in ('m_sModelName', 'm_sSmartProp') and isinstance(value, str) and value:
+                    if key == 'm_sModelName' and isinstance(value, str) and value:
+                        references.append(value)
+                    elif key == 'm_sSmartProp' and isinstance(value, str) and value:
+                        # Recursively process referenced smartprop files
+                        ref_path = os.path.join(addon_dir, value)
+                        references.extend(get_smartprop_references(ref_path, addon_dir, visited))
                         references.append(value)
                     elif isinstance(value, (dict, list)):
-                        if isinstance(value, dict):
-                            extract_references(value)
-                        else:
-                            for item in value:
-                                extract_references(item)
+                        extract_references(value)
+            elif isinstance(d, list):
+                for item in d:
+                    extract_references(item)
 
         extract_references(file)
         return references
@@ -99,7 +120,8 @@ def get_vmap_references(addon_dir=None, vmap=None):
     def get_material_references(vmat_path):
         """Extract texture and material references from a .vmat file."""
         try:
-            file = vdf.load(open(vmat_path, 'r'))
+            with open(vmat_path, 'r') as f:
+                file = vdf.load(f)
         except FileNotFoundError:
             print(f"Error: File '{vmat_path}' not found")
             return [], []
@@ -110,17 +132,34 @@ def get_vmap_references(addon_dir=None, vmap=None):
         texture_references = []
         material_references = []
 
-        def extract_references(d):
-            if isinstance(d, dict):
-                for key, value in d.items():
-                    if key.startswith('Texture') and value and value != '':
-                        texture_references.append(value)
-                    elif key.startswith('MaterialLayerReference') and value:
-                        material_references.append(value)
-                    elif key.startswith('SkyTexture') and value:
-                        material_references.append(value)
-                    elif isinstance(value, dict):
-                        extract_references(value)
+        def extract_references(node):
+            """Recursively walk a nested dict / list structure collecting texture and material paths."""
+            # Handle dictionaries
+            if isinstance(node, dict):
+                for key, val in node.items():
+                    # If the value is a string, decide if it represents a texture or material reference
+                    if isinstance(val, str):
+                        # Looks-like-a-path heuristics: contains a path separator and a dot, and isn't an inline array (starts with '[')
+                        is_path_like = (('/' in val or '\\' in val) and '.' in val and not val.strip().startswith('['))
+                        if is_path_like and ('Texture' in key or 'Material' in key or 'SkyTexture' in key):
+                            if 'Texture' in key:
+                                # Direct texture reference
+                                print(val)
+                                texture_references.append(val.lower())
+                            else:  # 'Material' in key
+                                # First add the material itself
+                                material_references.append(val.lower())
+                                # Then dive into that material file to find nested references
+                                child_tex, child_mat = get_material_references(os.path.join(addon_dir, val))
+                                texture_references.extend(child_tex)
+                                material_references.extend(child_mat)
+                    # Recurse into nested containers
+                    if isinstance(val, (dict, list)):
+                        extract_references(val)
+            # Handle lists
+            elif isinstance(node, list):
+                for item in node:
+                    extract_references(item)
 
         extract_references(file)
         return texture_references, material_references
@@ -143,8 +182,9 @@ def get_vmap_references(addon_dir=None, vmap=None):
         def extract_references(d):
             if isinstance(d, dict):
                 for key, value in d.items():
-                    if key in ('filename', 'target_file', 'from', 'to') and isinstance(value, str) and value:
-                        references.append(value)
+                    if key in ('filename', 'target_file', 'to', 'global_default_material', 'single_override_material') and isinstance(value, str) and value:
+                        normalised = os.path.normpath(value).replace('\\', '/').lower()
+                        references.append(normalised)
                     elif isinstance(value, (dict, list)):
                         if isinstance(value, dict):
                             extract_references(value)
@@ -159,15 +199,16 @@ def get_vmap_references(addon_dir=None, vmap=None):
         """Extract references from a file based on its type."""
         ext = os.path.splitext(file_path)[1].lower()
         full_path = os.path.join(addon_dir, file_path)
-        if ext in ['.vmdl', '.vmdl_prefab']:
+        if ext == '.vsmart':
+            return get_smartprop_references(full_path)
+        elif ext in ['.vmdl', '.vmdl_prefab']:
             return get_model_references(full_path)
         elif ext == '.vmat':
             texture_refs, mat_refs = get_material_references(full_path)
             return texture_refs + mat_refs
         elif ext == '.vsndevts':
             return get_soundevent_references(full_path)
-        elif ext == '.vsmart':
-            return get_smartprop_references(full_path)
+
         return []
 
     # Define file extensions
@@ -200,34 +241,112 @@ def get_vmap_references(addon_dir=None, vmap=None):
 
     addon_assets = [file for file in assets_collection if not (file.startswith('csgo/') or file.startswith('csgo_addons/'))]
 
-    # Recursively collect all referenced files
-    referenced_files = set([vmap_relative_path])
-    queue = deque(vmap_assets_references)
-    while queue:
-        current_file = queue.popleft()
-        if current_file not in referenced_files:
-            referenced_files.add(current_file)
-            ext = os.path.splitext(current_file)[1].lower()
-            refs = []
-            if ext == '.vmap':
-                # Recursively extract references from child vmap
-                child_vmap_path = os.path.join(addon_dir, current_file)
-                if os.path.exists(child_vmap_path):
-                    child_refs = extract_vmap_references(child_vmap_path)
-                    refs.extend(child_refs)
-            refs.extend(get_references(current_file, addon_dir))
-            refs.extend(essentials_files)  # Include essential files in the references
-            for ref in refs:
-                if ref not in referenced_files:
-                    queue.append(ref)
+    # --- Recursive reference collection with ordered stages -----------------
+    # Stage priority:
+    #   1) All .vmap files (including child vmaps)
+    #      ↳ can reference: other .vmap, .vsmart, .vmat, .vmdl files
+    #   2) All .vsmart files (including child smartprops)
+    #      ↳ can reference: other .vsmart, .vmdl files
+    #   3) All .vmdl / .vmdl_prefab files (including child models)
+    #      ↳ can reference: .vmdl, .vmdl_prefab, .vmat, geometry sources (.fbx, .obj, .dmx, …)
+    #   4) All .vmat files (including child materials)
+    #      ↳ can reference: other .vmat and texture assets (.png, .tga, .tif, etc.)
+    #   5) All .vsndevts files
+    #      ↳ can reference: audio assets (.mp3, .wav, .ogg, …)
+
+    referenced_files: set[str] = set()
+
+    # Separate queues for each priority level
+    queue_vmap: deque[str] = deque([vmap_relative_path])  # start with root vmap
+    queue_vsmart: deque[str] = deque()
+    queue_vmdl: deque[str] = deque()
+    queue_vmat: deque[str] = deque()
+    queue_vsndevts: deque[str] = deque()
+    queue_other: deque[str] = deque()
+
+    # Helper to push a reference into the correct queue if it's new
+    def enqueue(path: str):
+        ext = os.path.splitext(path)[1].lower()
+        if ext == '.vmap':
+            queue_vmap.append(path)
+        elif ext == '.vsmart':
+            queue_vsmart.append(path)
+        elif ext in ('.vmdl', '.vmdl_prefab'):
+            queue_vmdl.append(path)
+        elif ext == '.vmat':
+            queue_vmat.append(path)
+        elif ext == '.vsndevts':
+            queue_vsndevts.append(path)
+        else:
+            queue_other.append(path)
+
+    # Seed initial references extracted directly from the root vmap
+    for ref in vmap_assets_references:
+        enqueue(ref)
+
+    # Utility to process a single file and enqueue its references
+    def process_file(rel_path: str):
+        """Add file to reference set and enqueue any nested references it contains."""
+        if rel_path in referenced_files:
+            return
+        referenced_files.add(rel_path)
+        ext = os.path.splitext(rel_path)[1].lower()
+        refs: list[str] = []
+
+        # Dedicated handling for nested vmaps to avoid re-opening large sets later
+        if ext == '.vmap':
+            child_vmap_path = os.path.join(addon_dir, rel_path)
+            if os.path.exists(child_vmap_path):
+                refs.extend(extract_vmap_references(child_vmap_path))
+        # Generic extraction for all supported file types
+        refs.extend(get_references(rel_path, addon_dir))
+
+        # Add essential always-present files
+        refs.extend(essentials_files)
+
+        for r in refs:
+            enqueue(r)
+
+    # Stage 1 – process every vmap first
+    while queue_vmap:
+        vmap_to_process = queue_vmap.popleft()
+        process_file(vmap_to_process)
+
+    # Stage 2 – process all smartprops (.vsmart)
+    while queue_vsmart:
+        smart_to_process = queue_vsmart.popleft()
+        process_file(smart_to_process)
+
+    # Stage 3 – process all models (.vmdl / .vmdl_prefab)
+    while queue_vmdl:
+        model_to_process = queue_vmdl.popleft()
+        process_file(model_to_process)
+
+    # Stage 4 – process all materials (.vmat)
+    while queue_vmat:
+        vmat_to_process = queue_vmat.popleft()
+        process_file(vmat_to_process)
+
+    # Stage 5 – process all sound event files (.vsndevts)
+    while queue_vsndevts:
+        vsnd_to_process = queue_vsndevts.popleft()
+        process_file(vsnd_to_process)
+
+    # Finally process any remaining miscellaneous files
+    while queue_other:
+        process_file(queue_other.popleft())
+
+
+
     return addon_assets, referenced_files
 
 def get_junk_files(addon_dir=None, vmap=None):
     addon_assets, referenced_files = get_vmap_references(addon_dir, vmap)
-    # Identify junk files
+
+    referenced_files_lower = set(f.lower() for f in referenced_files)
     junk_collection = []
     for file in addon_assets:
-        if file not in referenced_files:
+        if file.lower() not in referenced_files_lower:
             full_path = os.path.join(addon_dir, file)
             try:
                 size = os.path.getsize(full_path)
@@ -237,11 +356,10 @@ def get_junk_files(addon_dir=None, vmap=None):
     return junk_collection
 
 
-
 class TestJunkCollect(unittest.TestCase):
     def test_junkcollect(self):
-        addon_name = "test_cleanup"
-        addon_dir = os.path.normpath(r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\test_cleanup")
-        vmap = os.path.normpath(r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\test_cleanup\maps\test_cleanup.vmap")
+        addon_name = "de_sanctum"
+        addon_dir = os.path.normpath(r"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_sanctum")
+        vmap = os.path.normpath(r"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_sanctum\maps\de_sanctum.vmap")
         junk_files = get_junk_files(addon_dir, vmap)
         print(f'Junk collect for addon: {addon_name}: {len(junk_files)}')

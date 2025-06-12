@@ -58,6 +58,7 @@ class CleanupDialog(QDialog):
             "This tool will remove all unused files from your addon (content).\n"
             f"It will keep only the files referenced in the {get_addon_name()}.vmap file."
             "\n\n To complete the cleanup, you need to cleanup in Asset Browser in the editor.\n"
+            "\n\nWarning! .vmdl files that don't have any of the following properties: DefaultMaterialGroup, ReplaceMaterial, or MaterialGroup will have no material references!\n"
         )
         instructions_label.setWordWrap(True)
         main_layout.addWidget(instructions_label)
@@ -133,13 +134,18 @@ class CleanupDialog(QDialog):
         self.cleanup_button.setDefault(True)
         button_layout.addWidget(self.cleanup_button)
 
+        # Connect buttons to their respective actions
+        self.recalculate_button.clicked.connect(self.recalculate)
+        self.cleanup_button.clicked.connect(self.cleanup_addon)
+
         footer_layout.addLayout(button_layout)
         main_layout.addLayout(footer_layout)
 
 
         # Data & model setup
-        vmap_path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
-        self.junk_files = get_junk_files(addon_dir=get_addon_dir(), vmap=vmap_path)
+        self.addon_dir = get_addon_dir()
+        self.vmap_path = os.path.join(self.addon_dir, "maps", f"{get_addon_name()}.vmap")
+        self.junk_files = get_junk_files(addon_dir=self.addon_dir, vmap=self.vmap_path)
         extensions = set(os.path.splitext(file)[1].lower() for file, _ in self.junk_files)
         self.filter_combo.addItem("All")
         for ext in sorted(extensions):
@@ -186,7 +192,8 @@ class CleanupDialog(QDialog):
         )
 
     def recalculate(self):
-        self.junk_files = get_junk_files()
+        # Recalculate junk files based on current addon dir and vmap path
+        self.junk_files = get_junk_files(addon_dir=self.addon_dir, vmap=self.vmap_path)
 
         self.model.clear()
         self.model.setHorizontalHeaderLabels(["File Path", "Size"])
