@@ -207,7 +207,15 @@ def get_vmap_references(addon_dir=None, vmap=None):
         current_file = queue.popleft()
         if current_file not in referenced_files:
             referenced_files.add(current_file)
-            refs = get_references(current_file, addon_dir)
+            ext = os.path.splitext(current_file)[1].lower()
+            refs = []
+            if ext == '.vmap':
+                # Recursively extract references from child vmap
+                child_vmap_path = os.path.join(addon_dir, current_file)
+                if os.path.exists(child_vmap_path):
+                    child_refs = extract_vmap_references(child_vmap_path)
+                    refs.extend(child_refs)
+            refs.extend(get_references(current_file, addon_dir))
             refs.extend(essentials_files)  # Include essential files in the references
             for ref in refs:
                 if ref not in referenced_files:
