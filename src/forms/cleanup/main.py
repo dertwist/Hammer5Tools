@@ -251,13 +251,41 @@ class CleanupDialog(QDialog):
         menu = QMenu()
         select_action = QAction("Check Selected", self)
         deselect_action = QAction("Uncheck Selected", self)
+        open_explorer_action = QAction("Open in Explorer", self)
 
         select_action.triggered.connect(lambda: self.set_selected_rows_checked(indexes, Qt.Checked))
         deselect_action.triggered.connect(lambda: self.set_selected_rows_checked(indexes, Qt.Unchecked))
+        open_explorer_action.triggered.connect(lambda: self.open_in_explorer(indexes))
 
         menu.addAction(select_action)
         menu.addAction(deselect_action)
+        menu.addAction(open_explorer_action)
         menu.exec(self.table_view.viewport().mapToGlobal(position))
+
+    def open_in_explorer(self, indexes):
+        if not indexes:
+            return
+        # Open the folder containing the first selected file
+        proxy_index = indexes[0]
+        source_index = self.proxy_model.mapToSource(proxy_index)
+        item = self.model.item(source_index.row(), 0)
+        if item is not None:
+            file_path = item.data(Qt.UserRole)
+            addon_dir = os.path.join(get_addon_dir())
+            abs_path = os.path.abspath(os.path.join(addon_dir, file_path))
+            folder = os.path.dirname(abs_path)
+            if os.path.exists(folder):
+                try:
+                    if os.name == 'nt':
+                        os.startfile(folder)
+                    elif sys.platform == 'darwin':
+                        import subprocess
+                        subprocess.Popen(['open', folder])
+                    else:
+                        import subprocess
+                        subprocess.Popen(['xdg-open', folder])
+                except Exception as e:
+                    QMessageBox.warning(self, "Error", f"Could not open folder: {e}")
 
     def set_selected_rows_checked(self, indexes, state):
         for proxy_index in indexes:

@@ -55,7 +55,11 @@ class ExportAndImportAddonDialog(QDialog):
         self.table_view.horizontalHeader().setMinimumSectionSize(50)
         self.table_view.horizontalHeader().setStretchLastSection(True)
         self.file_model = QStandardItemModel(self)
-        self.table_view.setModel(self.file_model)
+        from PySide6.QtCore import QSortFilterProxyModel
+        self.proxy_model = QSortFilterProxyModel(self)
+        self.proxy_model.setSourceModel(self.file_model)
+        self.proxy_model.setSortRole(Qt.UserRole)
+        self.table_view.setModel(self.proxy_model)
         self.layout.addWidget(self.table_view)
 
         btn_layout = QHBoxLayout()
@@ -124,7 +128,7 @@ class ExportAndImportAddonDialog(QDialog):
         self.vmap_widget_container.setVisible(False)
         advanced_layout.addWidget(self.vmap_widget_container)
         advanced_layout.addWidget(QLabel("Ignore file extensions (comma separated):"))
-        self.ignore_edit = QLineEdit(".bak, .bin")
+        self.ignore_edit = QLineEdit(".bak, .bin, .los")
         advanced_layout.addWidget(self.ignore_edit)
         advanced_layout.addWidget(QLabel("Archive Compression Level:"))
         self.compression_combo = QComboBox()
@@ -290,6 +294,7 @@ class ExportAndImportAddonDialog(QDialog):
         selection = self.vmap_table_view.selectionModel().selectedRows()
         if not selection: return
         remove_action = menu.addAction("Remove Selected")
+        open_explorer_action = menu.addAction("Open in Explorer")
         menu.addSeparator()
         check_action = menu.addAction("Check Selected")
         uncheck_action = menu.addAction("Uncheck Selected")
@@ -300,6 +305,11 @@ class ExportAndImportAddonDialog(QDialog):
             for p in paths_to_remove: self.vmap_ref_counts.pop(p, None)
             self._populate_vmap_table()
             self.on_vmap_item_changed()
+        elif action == open_explorer_action:
+            # Open the folder containing the first selected vmap file
+            vmap_path = self.vmap_model.item(selection[0].row(), 1).data(Qt.UserRole)
+            if vmap_path and os.path.exists(vmap_path):
+                self.open_folder(os.path.dirname(vmap_path))
         elif action == check_action:
             self.set_checked_state_for_selection(self.vmap_table_view, Qt.Checked)
         elif action == uncheck_action:
@@ -375,11 +385,15 @@ class ExportAndImportAddonDialog(QDialog):
 
     def _get_game_addon_files(self) -> Dict[str, int]:
         current_addon_name = get_addon_name()
-        if not current_addon_name: return {}
-        exclude_game_folders, _ = self.get_folder_filters()
+        if not current_addon_name:
+            return {}
         game_folder = os.path.join(cs2_path, 'game', 'csgo_addons', current_addon_name)
         ignored_extensions = [ext.strip().lower() for ext in self.ignore_edit.text().split(',') if ext.strip()]
-        return self._collect_files(game_folder, ignored_extensions, exclude_subs=exclude_game_folders)
+        include_game_folders = ['']
+        if self.compiled_maps_checkbox.isChecked(): include_game_folders.append('maps')
+        if self.compiled_models_checkbox.isChecked(): include_game_folders.append('models')
+        if self.compiled_materials_checkbox.isChecked(): include_game_folders.append('materials')
+        return self._collect_files(game_folder, ignored_extensions, include_subs=include_game_folders)
 
     def get_folder_filters(self) -> (List[str], List[str]):
         exclude_game_folders = []
