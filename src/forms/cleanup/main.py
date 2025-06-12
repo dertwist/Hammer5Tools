@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QCheckBox, QLineEdit, \
-    QDialog, QPushButton, QTableView, QComboBox, QMessageBox, QHeaderView, QMenu
+    QDialog, QPushButton, QTableView, QComboBox, QMessageBox, QHeaderView, QMenu, QSizePolicy
 from PySide6.QtCore import Qt, QSortFilterProxyModel
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction
 import os
@@ -62,21 +62,38 @@ class CleanupDialog(QDialog):
         instructions_label.setWordWrap(True)
         main_layout.addWidget(instructions_label)
 
-        # Search and filter
-        search_layout = QHBoxLayout()
-        search_label = QLabel("Search:")
-        self.search_box = QLineEdit()
-        search_layout.addWidget(search_label)
-        search_layout.addWidget(self.search_box)
-        main_layout.addLayout(search_layout)
+        filters_frame = QFrame()
+        filters_frame.setFrameShape(QFrame.StyledPanel)
+        filters_frame.setContentsMargins(8, 4, 8, 4)
 
-        filter_layout = QHBoxLayout()
-        filter_label = QLabel("File Type:")
+        filters_layout = QHBoxLayout(filters_frame)
+        filters_layout.setSpacing(10)
+
+        # Search Label + Input
+        search_label = QLabel("Search:")
+        filters_layout.addWidget(search_label)
+
+        self.search_box = QLineEdit()
+        self.search_box.setMinimumWidth(256)
+        self.search_box.setPlaceholderText("Filter by name...")
+        self.search_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        filters_layout.addWidget(self.search_box)
+
+        # File Type Label + ComboBox
+        file_type_label = QLabel("File Type:")
+        filters_layout.addSpacing(20)
+        filters_layout.addWidget(file_type_label)
+
         self.filter_combo = QComboBox()
         self.filter_combo.setStyleSheet(qt_stylesheet_combobox)
-        filter_layout.addWidget(filter_label)
-        filter_layout.addWidget(self.filter_combo)
-        main_layout.addLayout(filter_layout)
+        self.filter_combo.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        filters_layout.addWidget(self.filter_combo)
+
+        # Spacer to push everything to the left
+        filters_layout.addStretch()
+
+        # Add to main layout
+        main_layout.addWidget(filters_frame)
 
         # Table view
         self.table_view = QTableView()
@@ -99,19 +116,26 @@ class CleanupDialog(QDialog):
         stats_layout.addWidget(self.stats_label)
         main_layout.addLayout(stats_layout)
 
-        # Buttons
-        buttons_layout = QHBoxLayout()
+        footer_layout = QHBoxLayout()
 
-        recalculate_button = QPushButton("Recalculate")
-        recalculate_button.clicked.connect(self.recalculate)
-        buttons_layout.addWidget(recalculate_button)
-        recalculate_button.setStyleSheet(qt_stylesheet_button)
+        # Stats label on the left
+        self.stats_label = QLabel()
+        footer_layout.addWidget(self.stats_label, 1, Qt.AlignLeft)
 
-        cleanup_button = QPushButton("Cleanup Addon")
-        cleanup_button.clicked.connect(self.cleanup_addon)
-        buttons_layout.addWidget(cleanup_button)
-        cleanup_button.setStyleSheet(qt_stylesheet_button)
-        main_layout.addLayout(buttons_layout)
+        # Wrap buttons in their own layout for better alignment control
+        button_layout = QHBoxLayout()
+        self.recalculate_button = QPushButton("Recalculate")
+        self.recalculate_button.setStyleSheet(qt_stylesheet_button)
+        button_layout.addWidget(self.recalculate_button)
+
+        self.cleanup_button = QPushButton("Delete Selected Files")
+        self.cleanup_button.setStyleSheet(qt_stylesheet_button)
+        self.cleanup_button.setDefault(True)
+        button_layout.addWidget(self.cleanup_button)
+
+        footer_layout.addLayout(button_layout)
+        main_layout.addLayout(footer_layout)
+
 
         # Data & model setup
         vmap_path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
