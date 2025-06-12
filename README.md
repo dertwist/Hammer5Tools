@@ -48,7 +48,7 @@ Project folder overview:
 
 Each major feature or editor has its own folder:
 - `common/`: Shared helpers and logic used across editors.
-- `main.py`: Entry point for the main application.
+- `main.py`: General functions, entry point.
 ---
 
 ## 2. Launch and Build configurations
