@@ -48,7 +48,7 @@ from src.forms.create_addon.main import Create_addon_Dialog
 from src.other.steam_restart import SteamNoLogoFixThreadClass
 from src.other.addon_functions import delete_addon, launch_addon
 from src.updater.check import check_updates
-from src.forms.archive_addon.main import ExportAndImportAddonDialog
+from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow

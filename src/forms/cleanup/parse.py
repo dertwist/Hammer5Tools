@@ -6,16 +6,17 @@ import unittest
 from src.settings.main import get_addon_name, get_addon_dir
 import os
 
-def get_junk_files(addon_name=None, addon_dir=None):
+def get_vmap_references(addon_dir=None, vmap=None):
     """
     Identify unused (junk) files in the addon, including textures and meshes.
     Returns a list of tuples (file_path, size).
     """
-    if addon_name is None:
-        addon_name = get_addon_name()
     if addon_dir is None:
         addon_dir = get_addon_dir()
-    #Sub Funcitons
+    if vmap is None:
+        raise ValueError("vmap must be provided")
+
+    #Subfuncitons
 
     def get_soundevent_references(vsndevts_path):
         """Extract sound event references from a .vsndevts file."""
@@ -116,6 +117,8 @@ def get_junk_files(addon_name=None, addon_dir=None):
                         texture_references.append(value)
                     elif key.startswith('MaterialLayerReference') and value:
                         material_references.append(value)
+                    elif key.startswith('SkyTexture') and value:
+                        material_references.append(value)
                     elif isinstance(value, dict):
                         extract_references(value)
 
@@ -169,15 +172,16 @@ def get_junk_files(addon_name=None, addon_dir=None):
 
     # Define file extensions
     asset_extensions = ['.vmat', '.vmdl', '.vmdl_prefab', '.vsndevts', '.vsmart', '.vmap',
-                        '.png', '.tga', '.fbx', '.obj', '.jpg', '.wav', '.mp3', '.ogg', '.vmap']
+'.png', '.tga', '.fbx', '.obj', '.jpg', '.wav', '.mp3', '.ogg', '.vmap','.hdri', '.tif', '.psd', '.exr', '.hdr']
     directories_to_search = ['maps', 'models', 'materials', 'sounds', 'soundevents', 'smartprops']
     directories_to_ignore = ['materials\\default', 'weapons', 'RadGen', 'materials\\radgen']
     essentials_files = [f'soundevents/soundevents_addon.vsndevts']
     # Get the main .vmap file path
-    vmap_path = os.path.join(addon_dir, 'maps', f"{addon_name}.vmap")
+    vmap_path = vmap
     vmap_relative_path = os.path.relpath(vmap_path, addon_dir).replace('\\', '/')
+    print(f'vmap_relative_path {vmap_relative_path}')
     vmap_assets_references = extract_vmap_references(vmap_path)
-    print(f"Found {len(vmap_assets_references)} direct references in the addon '{addon_name}'.")
+    print(f"Found {len(vmap_assets_references)} direct references in the addon.")
 
     # Collect all asset files in the addon
     assets_collection = []
@@ -192,7 +196,7 @@ def get_junk_files(addon_name=None, addon_dir=None):
                     relative_path = os.path.relpath(file_path, addon_dir).replace('\\', '/')
                     assets_collection.append(relative_path)
 
-    print(f"Found {len(assets_collection)} assets in the addon '{addon_name}'.")
+    print(f"Found {len(assets_collection)} assets in the addon.")
 
     addon_assets = [file for file in assets_collection if not (file.startswith('csgo/') or file.startswith('csgo_addons/'))]
 
@@ -208,7 +212,10 @@ def get_junk_files(addon_name=None, addon_dir=None):
             for ref in refs:
                 if ref not in referenced_files:
                     queue.append(ref)
+    return addon_assets, referenced_files
 
+def get_junk_files(addon_dir=None, vmap=None):
+    addon_assets, referenced_files = get_vmap_references(addon_dir, vmap)
     # Identify junk files
     junk_collection = []
     for file in addon_assets:
@@ -219,14 +226,14 @@ def get_junk_files(addon_name=None, addon_dir=None):
             except OSError:
                 size = 0
             junk_collection.append((file, size))
-
-    print(f"Identified {len(junk_collection)} junk files in the addon '{addon_name}'.")
     return junk_collection
+
+
 
 class TestJunkCollect(unittest.TestCase):
     def test_junkcollect(self):
         addon_name = "test_cleanup"
-        addon_dir = os.path.normpath(
-            r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\test_cleanup")
-        junk_files = get_junk_files(addon_name, addon_dir)
+        addon_dir = os.path.normpath(r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\test_cleanup")
+        vmap = os.path.normpath(r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\test_cleanup\maps\test_cleanup.vmap")
+        junk_files = get_junk_files(addon_dir, vmap)
         print(f'Junk collect for addon: {addon_name}: {len(junk_files)}')

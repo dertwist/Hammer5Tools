@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QF
 from PySide6.QtCore import Qt, QSortFilterProxyModel
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction
 import os
+from src.styles.common import qt_stylesheet_combobox, qt_stylesheet_checkbox, qt_stylesheet_button
 
 from src.settings.main import get_addon_name, get_addon_dir
 from src.widgets import qt_stylesheet_button, enable_dark_title_bar
@@ -72,6 +73,7 @@ class CleanupDialog(QDialog):
         filter_layout = QHBoxLayout()
         filter_label = QLabel("File Type:")
         self.filter_combo = QComboBox()
+        self.filter_combo.setStyleSheet(qt_stylesheet_combobox)
         filter_layout.addWidget(filter_label)
         filter_layout.addWidget(self.filter_combo)
         main_layout.addLayout(filter_layout)
@@ -103,15 +105,17 @@ class CleanupDialog(QDialog):
         recalculate_button = QPushButton("Recalculate")
         recalculate_button.clicked.connect(self.recalculate)
         buttons_layout.addWidget(recalculate_button)
+        recalculate_button.setStyleSheet(qt_stylesheet_button)
 
         cleanup_button = QPushButton("Cleanup Addon")
         cleanup_button.clicked.connect(self.cleanup_addon)
         buttons_layout.addWidget(cleanup_button)
-
+        cleanup_button.setStyleSheet(qt_stylesheet_button)
         main_layout.addLayout(buttons_layout)
 
         # Data & model setup
-        self.junk_files = get_junk_files()
+        vmap_path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
+        self.junk_files = get_junk_files(addon_dir=get_addon_dir(), vmap=vmap_path)
         extensions = set(os.path.splitext(file)[1].lower() for file, _ in self.junk_files)
         self.filter_combo.addItem("All")
         for ext in sorted(extensions):
