@@ -108,24 +108,17 @@ class ExportAndImportAddonDialog(QDialog):
         self.vmap_model = QStandardItemModel(self)
         self.vmap_model.setHorizontalHeaderLabels(['', 'VMap File', 'References'])
         self.vmap_table_view.setModel(self.vmap_model)
-        # FIXED: Set persistent resize modes for columns to stretch and fit content
         self.vmap_table_view.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.vmap_table_view.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.vmap_table_view.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-
-
-        self.vmap_table_view.setAlternatingRowColors(True)
-        self.vmap_table_view.setSortingEnabled(True)
-        self.vmap_table_view.setSelectionBehavior(QTableView.SelectRows)
-        self.vmap_table_view.setSelectionMode(QTableView.ExtendedSelection)  # Multi-selection enabled
-        self.vmap_table_view.horizontalHeader().setMinimumSectionSize(50)
         self.vmap_table_view.horizontalHeader().setStretchLastSection(True)
-        self.vmap_table_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.vmap_table_view.setAlternatingRowColors(True)
+        self.vmap_table_view.setSelectionBehavior(QTableView.SelectRows)
+        self.vmap_table_view.setSelectionMode(QTableView.ExtendedSelection)
         self.vmap_table_view.setMaximumHeight(120)
 
         self.add_vmap_button = QPushButton("Add VMap File...")
         self.add_vmap_button.setStyleSheet(qt_stylesheet_button)
-        vmap_layout.addWidget(QLabel("Source VMap Files (defaults to main addon vmap):"))
         vmap_layout.addWidget(self.vmap_table_view)
         vmap_layout.addWidget(self.add_vmap_button)
         self.vmap_widget_container.setVisible(False)
@@ -159,7 +152,6 @@ class ExportAndImportAddonDialog(QDialog):
         self.vmap_model.itemChanged.connect(self.on_vmap_item_changed)
 
     def on_vmap_item_changed(self, item: Optional[QStandardItem] = None):
-        # FIXED: Centralized handler for VMap changes. Triggers if called manually (item is None) or from a checkbox click.
         if item is None or item.column() == 0:
             self.dependent_files_cache.clear()
             self.update_export_preview()
@@ -187,25 +179,22 @@ class ExportAndImportAddonDialog(QDialog):
             self.vmap_model.itemChanged.disconnect(self.on_vmap_item_changed)
         except (RuntimeError, TypeError):
             pass
-
         self.vmap_model.clear()
         self.vmap_model.setHorizontalHeaderLabels(['', 'VMap File', 'References'])
         for vmap_path in self.vmap_files:
             item_check = QStandardItem()
-            item_check.setCheckable(True)
-            item_check.setCheckState(Qt.Checked)
+            item_check.setCheckable(True);
+            item_check.setCheckState(Qt.Checked);
             item_check.setEditable(False)
             item_name = QStandardItem(os.path.basename(vmap_path))
-            item_name.setData(vmap_path, Qt.UserRole)
-            item_name.setToolTip(vmap_path)
+            item_name.setData(vmap_path, Qt.UserRole);
+            item_name.setToolTip(vmap_path);
             item_name.setEditable(False)
             ref_count = self.vmap_ref_counts.get(vmap_path)
             item_refs = QStandardItem(str(ref_count) if ref_count is not None else "N/A")
             item_refs.setEditable(False)
             self.vmap_model.appendRow([item_check, item_name, item_refs])
-
         self.vmap_model.itemChanged.connect(self.on_vmap_item_changed)
-        # FIXED: Removed redundant resize call. setSectionResizeMode handles this.
 
     def update_export_preview(self):
         if not get_addon_name():
@@ -218,24 +207,35 @@ class ExportAndImportAddonDialog(QDialog):
             self._populate_table()
 
     def calculate_dependencies(self):
+        # FIXED: Rewritten to automatically add default vmap to the table if found
         addon_dir = get_addon_dir()
         if not addon_dir: return QMessageBox.warning(self, "Error", "Addon directory not found.")
-        self.table_view.setEnabled(False)
+        self.table_view.setEnabled(False);
         self.export_button.setEnabled(False)
         self.size_label.setText("Calculating dependencies...")
-        self.dependent_files_cache.clear()
+        self.dependent_files_cache.clear();
         self.vmap_ref_counts.clear()
-        vmaps_to_scan = []
-        if self.vmap_model.rowCount() > 0:
-            for row in range(self.vmap_model.rowCount()):
-                if self.vmap_model.item(row, 0).checkState() == Qt.Checked:
-                    vmaps_to_scan.append(self.vmap_model.item(row, 1).data(Qt.UserRole))
-        if not vmaps_to_scan and not self.vmap_files:
+
+        # If no vmaps have been added manually, find and add the default one
+        if not self.vmap_files:
             main_vmap_path = os.path.join(addon_dir, 'maps', f'{get_addon_name()}.vmap')
             if os.path.exists(main_vmap_path):
-                vmaps_to_scan.append(main_vmap_path)
+                self.vmap_files.append(main_vmap_path)
+                self._populate_vmap_table()  # Update UI to show the default vmap
             else:
                 QMessageBox.warning(self, "VMap Not Found", f"Default VMap not found. Add a VMap file manually.")
+                self._populate_table()  # Show empty table
+                self.table_view.setEnabled(True);
+                self.export_button.setEnabled(True)
+                return
+
+        # Build list of vmaps to scan from the UI table
+        vmaps_to_scan = []
+        for row in range(self.vmap_model.rowCount()):
+            if self.vmap_model.item(row, 0).checkState() == Qt.Checked:
+                vmaps_to_scan.append(self.vmap_model.item(row, 1).data(Qt.UserRole))
+
+        # Scan the selected vmaps
         for vmap_file in vmaps_to_scan:
             try:
                 _, referenced_files_relative = get_vmap_references(addon_dir, vmap_file)
@@ -245,9 +245,11 @@ class ExportAndImportAddonDialog(QDialog):
             except Exception as e:
                 QMessageBox.critical(self, "Dependency Error",
                                      f"Failed to parse {os.path.basename(vmap_file)}.\nError: {e}")
-        self._populate_vmap_table()
+
+        # Update UI with results
+        self._populate_vmap_table()  # Re-populate to show ref counts
         self._populate_table()
-        self.table_view.setEnabled(True)
+        self.table_view.setEnabled(True);
         self.export_button.setEnabled(True)
 
     def _populate_table(self):
@@ -255,19 +257,21 @@ class ExportAndImportAddonDialog(QDialog):
             self.file_model.itemChanged.disconnect(self.recalculate_size)
         except (RuntimeError, TypeError):
             pass
-        all_files = self.get_all_addon_files()
+
+        content_files = self._get_content_addon_files()
         if self.only_deps_checkbox.isChecked():
-            all_files = {path: size for path, size in all_files.items() if
-                         os.path.normpath(path) in self.dependent_files_cache}
+            content_files = {path: size for path, size in content_files.items() if
+                             os.path.normpath(path) in self.dependent_files_cache}
+
+        game_files = self._get_game_addon_files()
+        files_to_show = {**content_files, **game_files}
+
         self.file_model.clear()
         self.file_model.setHorizontalHeaderLabels(['', 'File', 'Size', 'Path'])
-        for path, size in sorted(all_files.items()):
-            is_checked = True
-            if not self.only_deps_checkbox.isChecked() and self.dependent_files_cache:
-                is_checked = os.path.normpath(path) in self.dependent_files_cache
+        for path, size in sorted(files_to_show.items()):
             item_include = QStandardItem()
-            item_include.setCheckable(True)
-            item_include.setCheckState(Qt.Checked if is_checked else Qt.Unchecked)
+            item_include.setCheckable(True);
+            item_include.setCheckState(Qt.Checked)
             item_filename = QStandardItem(os.path.basename(path))
             item_filename.setData(path, Qt.UserRole)
             item_path = QStandardItem(os.path.relpath(os.path.dirname(path), cs2_path))
@@ -276,6 +280,7 @@ class ExportAndImportAddonDialog(QDialog):
             for item in [item_filename, item_path, item_size, item_include]:
                 item.setEditable(False)
             self.file_model.appendRow([item_include, item_filename, item_size, item_path])
+
         self.table_view.resizeColumnsToContents()
         self.recalculate_size()
         self.file_model.itemChanged.connect(self.recalculate_size)
@@ -315,7 +320,6 @@ class ExportAndImportAddonDialog(QDialog):
     def set_checked_state_for_selection(self, table_view: QTableView, state: Qt.CheckState):
         model = table_view.model()
         selection = table_view.selectionModel().selectedRows()
-        # FIXED: Refactored logic to be more robust and trigger a single, reliable update
         if model == self.file_model:
             try:
                 model.itemChanged.disconnect(self.recalculate_size)
@@ -337,46 +341,52 @@ class ExportAndImportAddonDialog(QDialog):
             model.itemChanged.connect(self.on_vmap_item_changed)
             self.on_vmap_item_changed()
 
-    # --- UNCHANGED METHODS ---
-
-    def get_all_addon_files(self) -> Dict[str, int]:
-        current_addon_name = get_addon_name()
-        if not current_addon_name: return {}
-        exclude_game_folders, include_content_folders = self.get_folder_filters()
-        game_folder = os.path.join(cs2_path, 'game', 'csgo_addons', current_addon_name)
-        content_folder = os.path.join(cs2_path, 'content', 'csgo_addons', current_addon_name)
-        ignored_extensions = [ext.strip().lower() for ext in self.ignore_edit.text().split(',') if ext.strip()]
+    def _collect_files(self, folder: str, ignored_extensions: List[str], include_subs: Optional[List[str]] = None,
+                       exclude_subs: Optional[List[str]] = None) -> Dict[str, int]:
+        files_map = {}
         vcs_ignore_dirs = {'.git', '.diversion'}
         vcs_ignore_files = {'.gitignore'}
-
-        def collect(folder: str, include_subs: Optional[List[str]] = None, exclude_subs: Optional[List[str]] = None) -> \
-        Dict[str, int]:
-            files_map = {}
-            if not os.path.isdir(folder): return {}
-            for root, dirs, files in os.walk(folder):
-                if self.ignore_vcs_checkbox.isChecked(): dirs[:] = [d for d in dirs if d not in vcs_ignore_dirs]
-                if include_subs and root == folder: dirs[:] = [d for d in dirs if d in include_subs]
+        if not os.path.isdir(folder): return {}
+        for root, dirs, files in os.walk(folder):
+            if self.ignore_vcs_checkbox.isChecked():
+                dirs[:] = [d for d in dirs if d not in vcs_ignore_dirs]
+            if root == folder:
+                if include_subs: dirs[:] = [d for d in dirs if d in include_subs]
                 if exclude_subs: dirs[:] = [d for d in dirs if d not in exclude_subs]
-                if self.ignore_vcs_checkbox.isChecked(): files = [f for f in files if f not in vcs_ignore_files]
-                for file in files:
-                    if any(file.lower().endswith(ext) for ext in
-                           ignored_extensions) or file in exclude_game_folders: continue
-                    try:
-                        file_path = os.path.join(root, file)
-                        files_map[file_path] = os.path.getsize(file_path)
-                    except OSError:
-                        pass
-            return files_map
+            if self.ignore_vcs_checkbox.isChecked():
+                files = [f for f in files if f not in vcs_ignore_files]
+            for file in files:
+                if any(file.lower().endswith(ext) for ext in ignored_extensions): continue
+                if file == 'tools_thumbnail_cache.bin': continue
+                try:
+                    file_path = os.path.join(root, file)
+                    files_map[file_path] = os.path.getsize(file_path)
+                except OSError:
+                    pass
+        return files_map
 
-        return {**collect(content_folder, include_subs=include_content_folders),
-                **collect(game_folder, exclude_subs=exclude_game_folders)}
+    def _get_content_addon_files(self) -> Dict[str, int]:
+        current_addon_name = get_addon_name()
+        if not current_addon_name: return {}
+        _, include_content_folders = self.get_folder_filters()
+        content_folder = os.path.join(cs2_path, 'content', 'csgo_addons', current_addon_name)
+        ignored_extensions = [ext.strip().lower() for ext in self.ignore_edit.text().split(',') if ext.strip()]
+        return self._collect_files(content_folder, ignored_extensions, include_subs=include_content_folders)
+
+    def _get_game_addon_files(self) -> Dict[str, int]:
+        current_addon_name = get_addon_name()
+        if not current_addon_name: return {}
+        exclude_game_folders, _ = self.get_folder_filters()
+        game_folder = os.path.join(cs2_path, 'game', 'csgo_addons', current_addon_name)
+        ignored_extensions = [ext.strip().lower() for ext in self.ignore_edit.text().split(',') if ext.strip()]
+        return self._collect_files(game_folder, ignored_extensions, exclude_subs=exclude_game_folders)
 
     def get_folder_filters(self) -> (List[str], List[str]):
-        exclude_game_folders = ['tools_thumbnail_cache.bin']
-        include_content_folders = None
+        exclude_game_folders = []
         if not self.compiled_maps_checkbox.isChecked(): exclude_game_folders.append('maps')
         if not self.compiled_models_checkbox.isChecked(): exclude_game_folders.append('models')
         if not self.compiled_materials_checkbox.isChecked(): exclude_game_folders.append('materials')
+        include_content_folders = None
         if self.skip_non_default_checkbox.isChecked():
             include_content_folders = ['maps', 'models', 'materials', 'postprocess', 'smartprops', 'soundevents',
                                        'sounds']
