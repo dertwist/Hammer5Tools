@@ -3,7 +3,7 @@ AppName=Hammer5Tools
 AppVersion=5.0.0
 DefaultDirName={pf}\Hammer5Tools
 OutputDir=Hammer5Tools
-OutputBaseFilename=Hammer5ToolsInstaller
+OutputBaseFilename=hammer5tools_setup
 Compression=lzma
 SolidCompression=yes
 
