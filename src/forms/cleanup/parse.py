@@ -6,6 +6,86 @@ import unittest
 from src.settings.main import get_addon_name, get_addon_dir
 import os
 
+def get_soundevent_references(vsndevts_path):
+    """Extract sound event references from a .vsndevts file."""
+    try:
+        with open(vsndevts_path, 'r') as file:
+            kv3_data = Kv3ToJson(file.read())
+    except FileNotFoundError:
+        print(f"Error: File '{vsndevts_path}' not found")
+        return []
+    except Exception as e:
+        print(f"Error parsing '{vsndevts_path}': {e}")
+        return []
+
+    references = []
+
+    def convert_vsnd(vsnd):
+        """
+        Convert a .vsnd path to a real file path by trying alternative extensions.
+        """
+        path, _ = (os.path.splitext(vsnd.replace('/', '\\')))
+        full_base_path = os.path.join(get_addon_dir(), path)
+        for ext in ['.mp3', '.wav', '.ogg']:
+            full_path = full_base_path + ext
+            if os.path.isfile(full_path):
+                print(f'Found path')
+                return vsnd.replace('.vsnd', ext)
+        return vsnd
+
+    def extract_references(data):
+        if isinstance(data, dict):
+            for key, value in data.items():
+                if key == 'vsnd_files_track_01':
+                    if isinstance(value, str):
+                        references.append(convert_vsnd(value))
+                    elif isinstance(value, list):
+                        for item in value:
+                            if isinstance(item, str):
+                                references.append(convert_vsnd(item))
+                elif isinstance(value, dict):
+                    extract_references(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        extract_references(item)
+        elif isinstance(data, list):
+            for item in data:
+                extract_references(item)
+
+    extract_references(kv3_data)
+    return references
+
+def get_smartprop_references(vsmart_path):
+    """Extract references from a .vsmart file."""
+    try:
+        with open(vsmart_path, 'r') as f:
+            kv3_data = f.read()
+        file = Kv3ToJson(kv3_data)
+    except FileNotFoundError:
+        print(f"Error: File '{vsmart_path}' not found")
+        return []
+    except Exception as e:
+        print(f"Error parsing '{vsmart_path}': {e}")
+        return []
+
+    references = []
+
+    def extract_references(d):
+        if isinstance(d, dict):
+            for key, value in d.items():
+                if key in ('m_sModelName', 'm_sSmartProp') and isinstance(value, str) and value:
+                    references.append(value)
+                elif isinstance(value, (dict, list)):
+                    if isinstance(value, dict):
+                        extract_references(value)
+                    else:
+                        for item in value:
+                            extract_references(item)
+
+    extract_references(file)
+    return references
+
+
 def get_material_references(vmat_path):
     """Extract texture and material references from a .vmat file."""
     try:
@@ -72,6 +152,10 @@ def get_references(file_path, addon_dir):
     elif ext == '.vmat':
         texture_refs, mat_refs = get_material_references(full_path)
         return texture_refs + mat_refs
+    elif ext == '.vsndevts':
+        return get_soundevent_references(full_path)
+    elif ext == '.vsmart':
+        return get_smartprop_references(full_path)
     return []
 
 def get_junk_files(addon_name=None, addon_dir=None):
@@ -86,10 +170,10 @@ def get_junk_files(addon_name=None, addon_dir=None):
 
     # Define file extensions
     asset_extensions = ['.vmat', '.vmdl', '.vmdl_prefab', '.vsndevts', '.vsmart', '.vmap',
-                        '.png', '.tga', '.fbx', '.obj', '.jpg', '.wav', '.mp3', '.ogg']
-    directories_to_search = ['maps', 'models', 'materials', 'sounds', 'soundevents']
+                        '.png', '.tga', '.fbx', '.obj', '.jpg', '.wav', '.mp3', '.ogg', '.vmap']
+    directories_to_search = ['maps', 'models', 'materials', 'sounds', 'soundevents', 'smartprops']
     directories_to_ignore = ['materials\\default', 'weapons', 'RadGen', 'materials\\radgen']
-
+    essentials_files = [f'soundevents/soundevents_addon.vsndevts']
     # Get the main .vmap file path
     vmap_path = os.path.join(addon_dir, 'maps', f"{addon_name}.vmap")
     vmap_relative_path = os.path.relpath(vmap_path, addon_dir).replace('\\', '/')
@@ -111,9 +195,7 @@ def get_junk_files(addon_name=None, addon_dir=None):
 
     print(f"Found {len(assets_collection)} assets in the addon '{addon_name}'.")
 
-    # Filter out default CS:GO library assets
-    addon_assets = [file for file in assets_collection if
-                    not (file.startswith('csgo/') or file.startswith('csgo_addons/'))]
+    addon_assets = [file for file in assets_collection if not (file.startswith('csgo/') or file.startswith('csgo_addons/'))]
 
     # Recursively collect all referenced files
     referenced_files = set([vmap_relative_path])
@@ -123,6 +205,7 @@ def get_junk_files(addon_name=None, addon_dir=None):
         if current_file not in referenced_files:
             referenced_files.add(current_file)
             refs = get_references(current_file, addon_dir)
+            refs.extend(essentials_files)  # Include essential files in the references
             for ref in refs:
                 if ref not in referenced_files:
                     queue.append(ref)
