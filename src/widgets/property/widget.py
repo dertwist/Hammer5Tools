@@ -9,49 +9,6 @@ from PySide6.QtCore import Qt, Signal, QPoint
 from PySide6.QtGui import QPixmap, QUndoCommand, QUndoStack, QKeySequence, QShortcut
 from random import random
 
-
-import dataclasses
-@dataclasses.dataclass
-class BasePropertyDataclass:
-    m_label: str
-    m_ShowChild: bool = True
-
-    def to_dict(self) -> dict:
-        return {
-            "m_Label": self.m_label,
-            "m_ShowChild": self.m_ShowChild
-        }
-
-import dataclasses
-@dataclasses.dataclass
-class VsmartPropertyDataclass:
-    m_label: str
-    m_ElementID: int
-    m_class: str
-    m_data: dict = dataclasses.field(default_factory=dict)
-    m_ShowChild: bool = True
-
-    def to_dict(self) -> dict:
-        return {
-            "m_Label": self.m_label,
-            "m_ElemetID": self.m_ElementID,
-            "m_Class": self.m_class,
-            "m_Data": self.m_data,
-            "m_ShowChild": self.m_ShowChild
-        }
-
-@dataclasses.dataclass
-class SoundEventPropertyDataclass:
-    m_Class: str
-    m_data: dict = dataclasses.field(default_factory=dict)
-    m_ShowChild: bool = True
-
-    def to_dict(self) -> dict:
-        return {
-            "m_Class": self.m_Class,
-            "m_Data": self.m_data,
-            "m_ShowChild": self.m_ShowChild
-        }
 # PropertyViewport is a widget that contains PropertyWidget instances.
 # Each property has a label, ID, class, and data.
 # The way m_data is edited depends on the editor:

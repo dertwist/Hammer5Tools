@@ -1,13 +1,4 @@
-import sys
-from typing import List
-
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QFrame, QLabel, QScrollArea, QMenu, QCheckBox
-)
-from PySide6.QtCore import Qt, Signal, QPoint
-from PySide6.QtGui import QPixmap, QUndoCommand, QUndoStack, QKeySequence, QShortcut
-from random import random
+from PySide6.QtGui import QUndoCommand
 
 
 # -------------------- Undo Command Classes --------------------
@@ -19,7 +10,7 @@ class DuplicateCommand(QUndoCommand):
         self.new_frames = []
 
     def redo(self):
-        from src.property.widget import PropertyWidget  # Fix: import here
+        from src.widgets.property.widget import PropertyWidget  # Fix: import here
         for fr in self.frames_to_duplicate:
             new_frame = PropertyWidget(PropertyViewport=self.window)  # Fix: pass correct viewport
             self.window.addFrameSignals(new_frame)
@@ -76,7 +67,7 @@ class PasteCommand(QUndoCommand):
         self.pasted_frames = []
 
     def redo(self):
-        from src.property.widget import PropertyWidget
+        from src.widgets.property.widget import PropertyWidget
         # Determine insert index
         if self.target is None:
             self.insert_index = self.window.framesLayout.count() - 1  # before spacer
@@ -167,7 +158,7 @@ class AddCommand(QUndoCommand):
         self.new_frame = None
 
     def redo(self):
-        from src.property.widget import PropertyWidget
+        from src.widgets.property.widget import PropertyWidget
         self.new_frame = PropertyWidget(PropertyViewport=self.window.__class__)
         self.window.addFrameSignals(self.new_frame)
         idx = self.insert_index

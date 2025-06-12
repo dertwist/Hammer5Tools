@@ -1,15 +1,5 @@
-import sys
-from typing import List
-
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QFrame, QLabel, QScrollArea, QMenu, QCheckBox
-)
-from PySide6.QtCore import Qt, Signal, QPoint
-from PySide6.QtGui import QPixmap, QUndoCommand, QUndoStack, QKeySequence, QShortcut
-from random import random
-from src.property.commands import *
-from src.property.widget import *
+from src.widgets.property.commands import *
+from src.widgets.property.widget import *
 
 
 class DragImage(QWidget):
