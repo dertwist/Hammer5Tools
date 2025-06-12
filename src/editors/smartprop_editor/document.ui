@@ -414,389 +414,12 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
-     <item>
-      <widget class="QLineEdit" name="variables_scroll_area_searchbar">
-       <property name="placeholderText">
-        <string>Search...</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QScrollArea" name="variables_QscrollArea">
-       <property name="widgetResizable">
-        <bool>true</bool>
-       </property>
-       <widget class="QWidget" name="variables_scrollArea_widget">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>256</width>
-          <height>100</height>
-         </rect>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <layout class="QVBoxLayout" name="variables_scrollArea">
-           <property name="spacing">
-            <number>0</number>
-           </property>
-           <item>
-            <spacer name="verticalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-     </item>
-     <item>
-      <widget class="QFrame" name="frame">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>28</height>
-        </size>
-       </property>
-       <property name="frameShape">
-        <enum>QFrame::Shape::StyledPanel</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Shadow::Raised</enum>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <property name="leftMargin">
-         <number>0</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <widget class="QToolButton" name="paste_variable_button">
-          <property name="maximumSize">
-           <size>
-            <width>28</width>
-            <height>28</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Paste variable&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">
-    /* QPushButton default and hover styles */
-    QToolButton {
-
-        font: 580 9pt &quot;Segoe UI&quot;;
-
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QToolButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QToolButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="add_new_variable_button">
-          <property name="maximumSize">
-           <size>
-            <width>28</width>
-            <height>28</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create variable&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">
-    /* QPushButton default and hover styles */
-    QToolButton {
-
-        font: 580 9pt &quot;Segoe UI&quot;;
-
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QToolButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QToolButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../resources.qrc">
-            <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="add_new_variable_combobox">
-          <property name="styleSheet">
-           <string notr="true">QMenu {
-background-color: red;
- }
-
-QMenu::item {
-    padding: 5px 10px;
-    font: 580 8pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-    color: #E3E3E3;
-}
-QMenu::item:selected {
-    background-color: #414956;
-    color: white;
-}
-QWidget {
-    background-color: #151515;
-    outline: none;
-}
-
-QWidget:item:checked {
-    background-color: #151515;
-    color: white;
-}
-
-QWidget:item:selected {
-    background-color: #414956;
-    color: white;
-    border: 0px;
-}
-
-
-
-QMenu {
-    background-color: #1d1d1f;
-    color: #FFFFFF;
-    border: 1px solid #555555;
-    /* padding-top: 5px; */
-    /* padding-bottom: 5px; */
-    border: 2px solid black;
-    border-radius: 4px;
-    border-color: rgba(80, 80, 80, 255);
-}
-
-QMenu::item {
-    font: 580 8pt &quot;Segoe UI&quot;;
-    border-top: 2px solid black;
-    border: 0px;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    padding-left: 12px;
-    padding-right: 12px;
-    color: #E3E3E3;
-}
-
-QMenu::item:selected {
-    background-color: #666666;
-    color: #FFFFFF;
-}
-
-QMenu::separator {
-    height: 1px;
-    background: #AAAAAA;
-    margin: 5px 0;
-}
-
-QMenu::indicator {
-    width: 13px;
-    height: 13px;
-}
-
-QMenu::indicator:checked {
-    image: url(:/images/checkmark.png);
-}
-
-QMenu::indicator:unchecked {
-    image: url(:/images/empty.png);
-}
-
-
-QComboBox {
-    font: 580 8pt &quot;Segoe UI&quot;;
-    border: 2px solid black;
-    border-radius: 2px;
-    border-color: rgba(80, 80, 80, 255);
-    height: 12px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    color: #E3E3E3;
-    background-color: #1C1C1C;
-    padding-left: 5px;
-}
-
-QComboBox:hover {
-    background-color: #414956;
-    color: white;
-}
-
-QComboBox:pressed {
-    background-color: #2E2F30;
-    color: white;
-}
-
-QComboBox:item {
-    font: 580 8pt &quot;Segoe UI&quot;;
-    color: #E3E3E3;
-    padding-left: 5px;
-    background-color: #1C1C1C;
-    border-style: none;
-}
-
-QComboBox::drop-down {
-    color: #E3E3E3;
-    padding: 2px;
-    background: url(://icons/arrow_drop_down_16dp.svg) no-repeat center;
-    border-bottom: 0px solid black;
-    border-top: 0px solid black;
-    border-right: 0px;
-    border-left: 2px solid;
-    margin-left: 5px;
-    padding: 5px;
-    width: 7px;
-    border-color: rgba(80, 80, 80, 255);
-    background-color: #1C1C1C;
-}
-
-
-QComboBox QAbstractItemView {
-    border: 2px solid gray;
-    border-color: rgba(80, 80, 80, 255);
-    selection-background-color: #414956;
-    background-color: #1C1C1C;
-}
-
-
-QComboBox QAbstractItemView::item {
-    height: 16px; /* Set the height of each item */
-    padding: 4px; /* Add padding to each item */
-    padding-left: 5px;
-    padding-right: 5px;
-    color: #ff8a8a8a;
-    border-style: none;
-    border-bottom: 0.5px solid black;
-    border-color: rgba(255, 255, 255, 10);
-}
-
-
-QComboBox QAbstractItemView::item:selected {
-    height: 16px; /* Set the height of each item */
-    padding: 4px; /* Add padding to each item */
-    padding-left: 5px;
-    padding-right: 5px;
-    background-color: #414956;
-    color: white;
-    border: none; /* Remove border */
-    outline: none; /* Remove outline */
-}</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
     </layout>
    </widget>
   </widget>
   <action name="actionCreateNewsmartprop">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/new.png</normaloff>:/valve_common/icons/tools/common/new.png</iconset>
    </property>
    <property name="text">
@@ -808,7 +431,7 @@ QComboBox QAbstractItemView::item:selected {
   </action>
   <action name="actionOpen_from_Explorer">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
    </property>
    <property name="text">
@@ -817,7 +440,7 @@ QComboBox QAbstractItemView::item:selected {
   </action>
   <action name="actionSave_as">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/save_all.png</normaloff>:/valve_common/icons/tools/common/save_all.png</iconset>
    </property>
    <property name="text">
@@ -826,7 +449,7 @@ QComboBox QAbstractItemView::item:selected {
   </action>
   <action name="actionSave_current_file">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/save.png</normaloff>:/valve_common/icons/tools/common/save.png</iconset>
    </property>
    <property name="text">
@@ -835,7 +458,7 @@ QComboBox QAbstractItemView::item:selected {
   </action>
   <action name="actionRecompile_file">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
    </property>
    <property name="text">
@@ -844,7 +467,7 @@ QComboBox QAbstractItemView::item:selected {
   </action>
   <action name="actionRecompile_all_in_addon">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
    </property>
    <property name="text">
@@ -853,7 +476,7 @@ QComboBox QAbstractItemView::item:selected {
   </action>
   <action name="actionConvert_all_vsmart_file_to_vdata">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</iconset>
    </property>
    <property name="text">
@@ -865,7 +488,7 @@ QComboBox QAbstractItemView::item:selected {
   </action>
   <action name="actionFormat_serttings">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/setting.png</normaloff>:/valve_common/icons/tools/common/setting.png</iconset>
    </property>
    <property name="text">
@@ -874,7 +497,7 @@ QComboBox QAbstractItemView::item:selected {
   </action>
  </widget>
  <resources>
-  <include location="../resources.qrc"/>
+  <include location="../../resources.qrc"/>
  </resources>
  <connections/>
 </ui>
