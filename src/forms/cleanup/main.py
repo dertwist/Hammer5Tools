@@ -92,10 +92,20 @@ class CleanupDialog(QDialog):
         stats_layout.addWidget(self.stats_label)
         main_layout.addLayout(stats_layout)
 
+        # Buttons layout
+        buttons_layout = QHBoxLayout()
+
+        # Recalculate button
+        recalculate_button = QPushButton("Recalculate")
+        recalculate_button.clicked.connect(self.recalculate)
+        buttons_layout.addWidget(recalculate_button)
+
         # Cleanup button
         cleanup_button = QPushButton("Cleanup Addon")
         cleanup_button.clicked.connect(self.cleanup_addon)
-        main_layout.addWidget(cleanup_button)
+        buttons_layout.addWidget(cleanup_button)
+
+        main_layout.addLayout(buttons_layout)
 
         # Populate data
         self.junk_files = get_junk_files()
@@ -129,6 +139,35 @@ class CleanupDialog(QDialog):
         self.proxy_model.layoutChanged.connect(self.update_statistics)
 
         # Initial update
+        self.update_statistics()
+
+    def recalculate(self):
+        # Refresh junk files
+        self.junk_files = get_junk_files()
+
+        # Clear model and refill
+        self.model.clear()
+        self.model.setHorizontalHeaderLabels(["File Path", "Size"])
+        for file, size in self.junk_files:
+            item_path = QStandardItem(file)
+            item_path.setCheckable(True)
+            item_path.setCheckState(Qt.Checked)
+            item_path.setData(file, Qt.UserRole)
+            item_size = QStandardItem(format_size(size))
+            item_size.setData(size, Qt.UserRole)
+            self.model.appendRow([item_path, item_size])
+
+        # Update filter combo box
+        self.filter_combo.blockSignals(True)
+        self.filter_combo.clear()
+        extensions = set(os.path.splitext(file)[1].lower() for file, _ in self.junk_files)
+        self.filter_combo.addItem("All")
+        for ext in sorted(extensions):
+            self.filter_combo.addItem(ext)
+        self.filter_combo.blockSignals(False)
+
+        # Refresh filters
+        self.proxy_model.invalidateFilter()
         self.update_statistics()
 
     def update_statistics(self):
@@ -172,10 +211,3 @@ class CleanupDialog(QDialog):
 
         QMessageBox.information(self, "Cleanup Completed", f"Deleted {len(deleted_files)} files")
         self.accept()
-
-if __name__ == "__main__":
-    from PySide6.QtWidgets import QApplication
-    import sys
-    app = QApplication(sys.argv)
-    dialog = CleanupDialog()
-    dialog.exec()
