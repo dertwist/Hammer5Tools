@@ -6,158 +6,6 @@ import unittest
 from src.settings.main import get_addon_name, get_addon_dir
 import os
 
-def get_soundevent_references(vsndevts_path):
-    """Extract sound event references from a .vsndevts file."""
-    try:
-        with open(vsndevts_path, 'r') as file:
-            kv3_data = Kv3ToJson(file.read())
-    except FileNotFoundError:
-        print(f"Error: File '{vsndevts_path}' not found")
-        return []
-    except Exception as e:
-        print(f"Error parsing '{vsndevts_path}': {e}")
-        return []
-
-    references = []
-
-    def convert_vsnd(vsnd):
-        """
-        Convert a .vsnd path to a real file path by trying alternative extensions.
-        """
-        path, _ = (os.path.splitext(vsnd.replace('/', '\\')))
-        full_base_path = os.path.join(get_addon_dir(), path)
-        for ext in ['.mp3', '.wav', '.ogg']:
-            full_path = full_base_path + ext
-            if os.path.isfile(full_path):
-                print(f'Found path')
-                return vsnd.replace('.vsnd', ext)
-        return vsnd
-
-    def extract_references(data):
-        if isinstance(data, dict):
-            for key, value in data.items():
-                if key == 'vsnd_files_track_01':
-                    if isinstance(value, str):
-                        references.append(convert_vsnd(value))
-                    elif isinstance(value, list):
-                        for item in value:
-                            if isinstance(item, str):
-                                references.append(convert_vsnd(item))
-                elif isinstance(value, dict):
-                    extract_references(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        extract_references(item)
-        elif isinstance(data, list):
-            for item in data:
-                extract_references(item)
-
-    extract_references(kv3_data)
-    return references
-
-def get_smartprop_references(vsmart_path):
-    """Extract references from a .vsmart file."""
-    try:
-        with open(vsmart_path, 'r') as f:
-            kv3_data = f.read()
-        file = Kv3ToJson(kv3_data)
-    except FileNotFoundError:
-        print(f"Error: File '{vsmart_path}' not found")
-        return []
-    except Exception as e:
-        print(f"Error parsing '{vsmart_path}': {e}")
-        return []
-
-    references = []
-
-    def extract_references(d):
-        if isinstance(d, dict):
-            for key, value in d.items():
-                if key in ('m_sModelName', 'm_sSmartProp') and isinstance(value, str) and value:
-                    references.append(value)
-                elif isinstance(value, (dict, list)):
-                    if isinstance(value, dict):
-                        extract_references(value)
-                    else:
-                        for item in value:
-                            extract_references(item)
-
-    extract_references(file)
-    return references
-
-
-def get_material_references(vmat_path):
-    """Extract texture and material references from a .vmat file."""
-    try:
-        file = vdf.load(open(vmat_path, 'r'))
-    except FileNotFoundError:
-        print(f"Error: File '{vmat_path}' not found")
-        return [], []
-    except Exception as e:
-        print(f"Error parsing '{vmat_path}': {e}")
-        return [], []
-
-    texture_references = []
-    material_references = []
-
-    def extract_references(d):
-        if isinstance(d, dict):
-            for key, value in d.items():
-                if key.startswith('Texture') and value and value != '':
-                    texture_references.append(value)
-                elif key.startswith('MaterialLayerReference') and value:
-                    material_references.append(value)
-                elif isinstance(value, dict):
-                    extract_references(value)
-
-    extract_references(file)
-    return texture_references, material_references
-
-def get_model_references(vmdl_path):
-    """Extract references from a .vmdl or .vmdl_prefab file."""
-    try:
-        with open(vmdl_path, 'r') as f:
-            kv3_data = f.read()
-        file = Kv3ToJson(kv3_data)
-    except FileNotFoundError:
-        print(f"Error: File '{vmdl_path}' not found")
-        return []
-    except Exception as e:
-        print(f"Error parsing '{vmdl_path}': {e}")
-        return []
-
-    references = []
-
-    def extract_references(d):
-        if isinstance(d, dict):
-            for key, value in d.items():
-                if key in ('filename', 'target_file', 'from', 'to') and isinstance(value, str) and value:
-                    references.append(value)
-                elif isinstance(value, (dict, list)):
-                    if isinstance(value, dict):
-                        extract_references(value)
-                    else:
-                        for item in value:
-                            extract_references(item)
-
-    extract_references(file)
-    return references
-
-def get_references(file_path, addon_dir):
-    """Extract references from a file based on its type."""
-    ext = os.path.splitext(file_path)[1].lower()
-    full_path = os.path.join(addon_dir, file_path)
-    if ext in ['.vmdl', '.vmdl_prefab']:
-        return get_model_references(full_path)
-    elif ext == '.vmat':
-        texture_refs, mat_refs = get_material_references(full_path)
-        return texture_refs + mat_refs
-    elif ext == '.vsndevts':
-        return get_soundevent_references(full_path)
-    elif ext == '.vsmart':
-        return get_smartprop_references(full_path)
-    return []
-
 def get_junk_files(addon_name=None, addon_dir=None):
     """
     Identify unused (junk) files in the addon, including textures and meshes.
@@ -167,6 +15,157 @@ def get_junk_files(addon_name=None, addon_dir=None):
         addon_name = get_addon_name()
     if addon_dir is None:
         addon_dir = get_addon_dir()
+    #Sub Funcitons
+
+    def get_soundevent_references(vsndevts_path):
+        """Extract sound event references from a .vsndevts file."""
+        try:
+            with open(vsndevts_path, 'r') as file:
+                kv3_data = Kv3ToJson(file.read())
+        except FileNotFoundError:
+            print(f"Error: File '{vsndevts_path}' not found")
+            return []
+        except Exception as e:
+            print(f"Error parsing '{vsndevts_path}': {e}")
+            return []
+
+        references = []
+
+        def convert_vsnd(vsnd):
+            """
+            Convert a .vsnd path to a real file path by trying alternative extensions.
+            """
+            path, _ = (os.path.splitext(vsnd.replace('/', '\\')))
+            full_base_path = os.path.join(addon_dir, path)
+            for ext in ['.mp3', '.wav', '.ogg']:
+                full_path = full_base_path + ext
+                if os.path.isfile(full_path):
+                    return vsnd.replace('.vsnd', ext)
+            return vsnd
+
+        def extract_references(data):
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    if key == 'vsnd_files_track_01':
+                        if isinstance(value, str):
+                            references.append(convert_vsnd(value))
+                        elif isinstance(value, list):
+                            for item in value:
+                                if isinstance(item, str):
+                                    references.append(convert_vsnd(item))
+                    elif isinstance(value, dict):
+                        extract_references(value)
+                    elif isinstance(value, list):
+                        for item in value:
+                            extract_references(item)
+            elif isinstance(data, list):
+                for item in data:
+                    extract_references(item)
+
+        extract_references(kv3_data)
+        return references
+
+    def get_smartprop_references(vsmart_path):
+        """Extract references from a .vsmart file."""
+        try:
+            with open(vsmart_path, 'r') as f:
+                kv3_data = f.read()
+            file = Kv3ToJson(kv3_data)
+        except FileNotFoundError:
+            print(f"Error: File '{vsmart_path}' not found")
+            return []
+        except Exception as e:
+            print(f"Error parsing '{vsmart_path}': {e}")
+            return []
+
+        references = []
+
+        def extract_references(d):
+            if isinstance(d, dict):
+                for key, value in d.items():
+                    if key in ('m_sModelName', 'm_sSmartProp') and isinstance(value, str) and value:
+                        references.append(value)
+                    elif isinstance(value, (dict, list)):
+                        if isinstance(value, dict):
+                            extract_references(value)
+                        else:
+                            for item in value:
+                                extract_references(item)
+
+        extract_references(file)
+        return references
+
+    def get_material_references(vmat_path):
+        """Extract texture and material references from a .vmat file."""
+        try:
+            file = vdf.load(open(vmat_path, 'r'))
+        except FileNotFoundError:
+            print(f"Error: File '{vmat_path}' not found")
+            return [], []
+        except Exception as e:
+            print(f"Error parsing '{vmat_path}': {e}")
+            return [], []
+
+        texture_references = []
+        material_references = []
+
+        def extract_references(d):
+            if isinstance(d, dict):
+                for key, value in d.items():
+                    if key.startswith('Texture') and value and value != '':
+                        texture_references.append(value)
+                    elif key.startswith('MaterialLayerReference') and value:
+                        material_references.append(value)
+                    elif isinstance(value, dict):
+                        extract_references(value)
+
+        extract_references(file)
+        return texture_references, material_references
+
+    def get_model_references(vmdl_path):
+        """Extract references from a .vmdl or .vmdl_prefab file."""
+        try:
+            with open(vmdl_path, 'r') as f:
+                kv3_data = f.read()
+            file = Kv3ToJson(kv3_data)
+        except FileNotFoundError:
+            print(f"Error: File '{vmdl_path}' not found")
+            return []
+        except Exception as e:
+            print(f"Error parsing '{vmdl_path}': {e}")
+            return []
+
+        references = []
+
+        def extract_references(d):
+            if isinstance(d, dict):
+                for key, value in d.items():
+                    if key in ('filename', 'target_file', 'from', 'to') and isinstance(value, str) and value:
+                        references.append(value)
+                    elif isinstance(value, (dict, list)):
+                        if isinstance(value, dict):
+                            extract_references(value)
+                        else:
+                            for item in value:
+                                extract_references(item)
+
+        extract_references(file)
+        return references
+
+    def get_references(file_path, addon_dir):
+        """Extract references from a file based on its type."""
+        ext = os.path.splitext(file_path)[1].lower()
+        full_path = os.path.join(addon_dir, file_path)
+        if ext in ['.vmdl', '.vmdl_prefab']:
+            return get_model_references(full_path)
+        elif ext == '.vmat':
+            texture_refs, mat_refs = get_material_references(full_path)
+            return texture_refs + mat_refs
+        elif ext == '.vsndevts':
+            return get_soundevent_references(full_path)
+        elif ext == '.vsmart':
+            return get_smartprop_references(full_path)
+        return []
 
     # Define file extensions
     asset_extensions = ['.vmat', '.vmdl', '.vmdl_prefab', '.vsndevts', '.vsmart', '.vmap',
@@ -226,8 +225,8 @@ def get_junk_files(addon_name=None, addon_dir=None):
 
 class TestJunkCollect(unittest.TestCase):
     def test_junkcollect(self):
-        addon_name = "kk"
+        addon_name = "test_cleanup"
         addon_dir = os.path.normpath(
-            r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\kk")
+            r"C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\test_cleanup")
         junk_files = get_junk_files(addon_name, addon_dir)
         print(f'Junk collect for addon: {addon_name}: {len(junk_files)}')
