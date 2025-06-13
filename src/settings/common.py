@@ -102,12 +102,12 @@ def get_steam_path():
     try:
         steam_path = get_settings_value('PATHS', 'steam')
         if not steam_path:
-            raise ValueError("Steam path not found or empty")
+            print("Steam path not found or empty")
         return steam_path
     except:
         steam_path = get_steam_install_path()
         if not steam_path:
-            raise ValueError("Cannot find Steam path, and none set in config.")
+            print("Cannot find Steam path, and none set in config.")
         return steam_path
 
 def get_addon_name():
