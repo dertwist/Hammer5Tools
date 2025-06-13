@@ -100,7 +100,7 @@ def allocate_console():
         ctypes.windll.kernel32.AllocConsole()
         sys.stdout = open("CONOUT$", "w")
         sys.stderr = open("CONOUT$", "w")
-
+@exception_handler
 class DevWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -116,7 +116,7 @@ class DevWidget(QWidget):
         )
         layout.addWidget(self.checkBox_debug_info)
         self.setLayout(layout)
-
+@exception_handler
 class Widget(QMainWindow):
     def __init__(self, parent=None, dev_mode=False):
         super().__init__(parent)
@@ -125,9 +125,9 @@ class Widget(QMainWindow):
         self.ui.setupUi(self)
         enable_dark_title_bar(self)
 
-
+        print(cs2_path)
+        print(app_dir)
         #Checking for Counter Strike 2 installation
-
         if cs2_path == app_dir:
             msg_box = QMessageBox()
             msg_box.setIcon(QMessageBox.Warning)
@@ -184,6 +184,7 @@ class Widget(QMainWindow):
         for child in self.findChildren(QMainWindow):
             for dock in child.findChildren(QDockWidget):
                 dock.show()
+        validate_addon_structure()
 
     def deferred_update_check(self):
         try:
@@ -191,6 +192,7 @@ class Widget(QMainWindow):
         except Exception as e:
             print(f"Error checking updates: {e}")
 
+    @exception_handler
     def update_title(self, status=None, file_path=None, text=None):
         base_title = "Hammer 5 Tools"
         new_title = base_title
@@ -253,7 +255,7 @@ class Widget(QMainWindow):
     def setup_tabs(self):
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
         self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
-
+    @exception_handler
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
         addons_folder = os.path.join(cs2_path, "content", "csgo_addons")
@@ -368,6 +370,7 @@ class Widget(QMainWindow):
         self.ui.cleanup_button.clicked.connect(lambda: CleanupDialog(self).show())
         self.updateLaunchAddonButton()
 
+    @exception_handler
     def updateLaunchAddonButton(self):
         commands = get_settings_value("LAUNCH", "commands", default_commands)
         if commands and "-asset" in commands:
@@ -390,6 +393,7 @@ class Widget(QMainWindow):
         else:
             self.exit_application()
 
+    @exception_handler
     def selected_addon_name(self):
         new_addon = self.ui.ComboBoxSelectAddon.currentText()
         if get_addon_name() == new_addon and getattr(self, 'SmartPropEditorMainWindow', None):
@@ -449,18 +453,21 @@ class Widget(QMainWindow):
         except Exception as e:
             print(f"Error while setting up LoadingEditorMainWindow: {e}")
 
+    @exception_handler
     def open_addons_folder(self):
         addon_name = self.ui.ComboBoxSelectAddon.currentText()
         folder_name = self.ui.open_addons_folder_downlist.currentText()
         folder_path = r"\game\csgo_addons" if folder_name == "Game" else r"\content\csgo_addons"
         os.startfile(f"{cs2_path}{folder_path}\\{addon_name}")
 
+    @exception_handler
     def open_preferences_dialog(self):
         if self.preferences_dialog is None:
             self.preferences_dialog = PreferencesDialog(app_version, self)
             self.preferences_dialog.show()
             self.preferences_dialog.finished.connect(self.preferences_dialog_closed)
 
+    @exception_handler
     def open_launch_options(self):
         if self.launch_options is None:
             self.launch_options = LaunchOptionsDialog()
@@ -474,6 +481,7 @@ class Widget(QMainWindow):
     def preferences_dialog_closed(self):
         self.preferences_dialog = None
 
+    @exception_handler
     def open_create_addon_dialog(self):
         if self.Create_addon_Dialog is None:
             self.Create_addon_Dialog = Create_addon_Dialog(self)
@@ -484,14 +492,17 @@ class Widget(QMainWindow):
         self.Create_addon_Dialog = None
         self.refresh_addon_combobox()
 
+    @exception_handler
     def delete_addon(self):
         delete_addon(self.ui, cs2_path, get_addon_name)
 
+    @exception_handler
     def open_export_and_import_addon(self):
         dialog = ExportAndImportAddonDialog(self)
         dialog.finished.connect(self.refresh_addon_combobox)
         dialog.show()
 
+    @exception_handler
     def SteamNoLogonFix(self):
         self.thread = SteamNoLogoFixThreadClass()
         self.thread.start()
@@ -606,7 +617,6 @@ if __name__ == "__main__":
     #Checking .NET runtime
     app.setStyleSheet(QT_Stylesheet_global)
     check_dotnet_runtime()
-    validate_addon_structure()
     widget = Widget(dev_mode=args.dev)
     widget.show()
     instance_server = start_instance_server(widget)
