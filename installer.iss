@@ -1,7 +1,13 @@
 [Setup]
 AppName=Hammer5Tools
 AppVersion=5.0.0
-DefaultDirName={pf}\Hammer5Tools
+
+; Install to a portable folder by default
+DefaultDirName=C:\Portable\Hammer5Tools
+
+; Do not generate an uninstaller
+Uninstallable=no
+
 OutputDir=Hammer5Tools
 OutputBaseFilename=hammer5tools_setup
 Compression=lzma

@@ -100,7 +100,6 @@ def allocate_console():
         ctypes.windll.kernel32.AllocConsole()
         sys.stdout = open("CONOUT$", "w")
         sys.stderr = open("CONOUT$", "w")
-@exception_handler
 class DevWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -116,7 +115,6 @@ class DevWidget(QWidget):
         )
         layout.addWidget(self.checkBox_debug_info)
         self.setLayout(layout)
-@exception_handler
 class Widget(QMainWindow):
     def __init__(self, parent=None, dev_mode=False):
         super().__init__(parent)
@@ -255,7 +253,6 @@ class Widget(QMainWindow):
     def setup_tabs(self):
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
         self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
-    @exception_handler
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
         addons_folder = os.path.join(cs2_path, "content", "csgo_addons")
@@ -370,7 +367,6 @@ class Widget(QMainWindow):
         self.ui.cleanup_button.clicked.connect(lambda: CleanupDialog(self).show())
         self.updateLaunchAddonButton()
 
-    @exception_handler
     def updateLaunchAddonButton(self):
         commands = get_settings_value("LAUNCH", "commands", default_commands)
         if commands and "-asset" in commands:
@@ -393,7 +389,6 @@ class Widget(QMainWindow):
         else:
             self.exit_application()
 
-    @exception_handler
     def selected_addon_name(self):
         new_addon = self.ui.ComboBoxSelectAddon.currentText()
         if get_addon_name() == new_addon and getattr(self, 'SmartPropEditorMainWindow', None):
@@ -481,7 +476,6 @@ class Widget(QMainWindow):
     def preferences_dialog_closed(self):
         self.preferences_dialog = None
 
-    @exception_handler
     def open_create_addon_dialog(self):
         if self.Create_addon_Dialog is None:
             self.Create_addon_Dialog = Create_addon_Dialog(self)
@@ -492,17 +486,14 @@ class Widget(QMainWindow):
         self.Create_addon_Dialog = None
         self.refresh_addon_combobox()
 
-    @exception_handler
     def delete_addon(self):
         delete_addon(self.ui, cs2_path, get_addon_name)
 
-    @exception_handler
     def open_export_and_import_addon(self):
         dialog = ExportAndImportAddonDialog(self)
         dialog.finished.connect(self.refresh_addon_combobox)
         dialog.show()
 
-    @exception_handler
     def SteamNoLogonFix(self):
         self.thread = SteamNoLogoFixThreadClass()
         self.thread.start()
