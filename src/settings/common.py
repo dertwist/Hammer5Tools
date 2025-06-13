@@ -100,15 +100,12 @@ def get_steam_path():
     Retrieves the Steam installation path without saving it back to the settings.
     """
     try:
-        steam_path = get_settings_value('PATHS', 'steam')
-        if not steam_path:
-            print("Steam path not found or empty")
-        return steam_path
-    except:
         steam_path = get_steam_install_path()
         if not steam_path:
             print("Cannot find Steam path, and none set in config.")
         return steam_path
+    except:
+        pass
 
 def get_addon_name():
     return get_settings_value('LAUNCH', 'addon')
