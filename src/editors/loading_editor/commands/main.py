@@ -27,12 +27,14 @@ def generate_commands(vmap_path, history=False):
     else:
         screenshot_path = f"screenshots\\Hammer5Tools\\LoadingScreen"
     commands = [
+        "cl_firstperson_legs 0",
         "sv_cheats 1",
+        "bot_kick",
         "noclip 1",
         "ent_fire cmd kill",
         "ent_create point_servercommand {targetname cmd}",
         f"screenshot_subdir {screenshot_path}",
-        "jpeg_quality 100"
+        "jpeg_quality 100 "
     ]
     tick = 1.0 / 64.0
     def vector3_to_str(vec):
