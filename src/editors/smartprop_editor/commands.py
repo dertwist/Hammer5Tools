@@ -44,7 +44,7 @@ class GroupElementsCommand(QUndoCommand):
         self.group_element = HierarchyItemModel(
             _data=group_data,
             _name='Group',
-            _class='CSmartPropElement_Group',
+            _class='Group',
             _id=group_id
         )
 
