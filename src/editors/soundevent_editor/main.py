@@ -2,6 +2,7 @@ import ast, shutil
 
 from src.settings.main import get_addon_name, get_cs2_path, debug, get_settings_bool, settings, get_addon_dir
 from src.editors.soundevent_editor.ui_main import Ui_MainWindow
+from src.widgets.tree import HierarchyTreeWidget
 from src.widgets.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem, QFileDialog
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
