@@ -14,7 +14,7 @@ from src.settings.main import get_addon_name, settings
 from src.widgets.explorer.main import Explorer
 from src.editors.smartprop_editor.document import SmartPropDocument
 from src.other.assettypes import check_vsmart_configuration
-from src.widgets import ErrorInfo
+from src.widgets import ErrorInfo, exception_handler
 from src.common import (
     enable_dark_title_bar,
     get_cs2_path,
@@ -120,7 +120,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                     if doc.opened_file:
                         base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
                     self.update_document_tab_title(doc, base_name)
-
     def create_new_file(self):
         """
         Creates a new blank document in a new tab.
