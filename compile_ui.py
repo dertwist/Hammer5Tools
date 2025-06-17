@@ -85,7 +85,7 @@ def main(directory: str) -> None:
 
     qrc_path = os.path.join(directory, "resources.qrc")
     if os.path.isfile(qrc_path):
-        out_rc = os.path.join(directory_root, 'resources_rc',"__init__.py")
+        out_rc = os.path.join(directory, 'resources_rc',"__init__.py")
         compile_qrc(qrc_path, out_rc)
 
 if __name__ == "__main__":
