@@ -56,6 +56,7 @@ from src.common import (
     set_qdock_tab_style
 )
 from src.widgets.tree import HierarchyTreeWidget
+from src.editors.smartprop_editor.variables_viewport import SmartPropEditorVariableViewport
 
 cs2_path = get_cs2_path()
 
@@ -79,6 +80,10 @@ class SmartPropDocument(QMainWindow):
         enable_dark_title_bar(self)
 
         self.undo_stack = QUndoStack(self)
+
+        #Viewports
+        self.variable_viewport = SmartPropEditorVariableViewport(self)
+        self.ui.VariableDockWidgetContent.layout().addWidget(self.variable_viewport)
 
         # Track changes
         self._modified = False
@@ -125,13 +130,6 @@ class SmartPropDocument(QMainWindow):
             lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem())
         )
 
-        # Add variable classes to combobox
-        for item in variables_list:
-            self.ui.add_new_variable_combobox.addItem(item)
-
-        # Initialize button signals
-        self.buttons()
-
         self._restore_user_prefs()
 
         # Group dockwidgets
@@ -146,11 +144,6 @@ class SmartPropDocument(QMainWindow):
 
     def is_modified(self):
         return self._modified
-
-    def buttons(self):
-        self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
-        self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
-        self.ui.paste_variable_button.clicked.connect(self.paste_variable)
 
     # ======================================[Properties groups]========================================
     def properties_groups_init(self):
@@ -224,7 +217,7 @@ class SmartPropDocument(QMainWindow):
             property_instance = PropertyFrame(
                 widget_list=self.ui.properties_layout,
                 value=data,
-                variables_scrollArea=self.ui.variables_scrollArea,
+                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 element=True,
                 reference_bar=True,
                 tree_hierarchy=self.ui.tree_hierarchy_widget
@@ -237,7 +230,7 @@ class SmartPropDocument(QMainWindow):
                     prop_instance = PropertyFrame(
                         widget_list=self.modifiers_group_instance.layout,
                         value=entry,
-                        variables_scrollArea=self.ui.variables_scrollArea,
+                        variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                         tree_hierarchy=self.ui.tree_hierarchy_widget
                     )
                     prop_instance.edited.connect(self.update_tree_item_value)
@@ -248,7 +241,7 @@ class SmartPropDocument(QMainWindow):
                     prop_instance = PropertyFrame(
                         widget_list=self.selection_criteria_group_instance.layout,
                         value=entry,
-                        variables_scrollArea=self.ui.variables_scrollArea,
+                        variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                         tree_hierarchy=self.ui.tree_hierarchy_widget
                     )
                     prop_instance.edited.connect(self.update_tree_item_value)
@@ -400,7 +393,7 @@ class SmartPropDocument(QMainWindow):
                     name=name,
                     tree=self.ui.choices_tree_widget,
                     default=default,
-                    variables_scrollArea=self.ui.variables_scrollArea
+                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
                 ).item
                 if options:
                     for option in options:
@@ -409,7 +402,7 @@ class SmartPropDocument(QMainWindow):
                         for variable in variables_list_:
                             AddVariable(
                                 parent=option_item,
-                                variables_scrollArea=self.ui.variables_scrollArea,
+                                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                                 name=variable["m_TargetName"],
                                 type=variable.get("m_DataType", ""),
                                 value=variable["m_Value"]
@@ -442,7 +435,7 @@ class SmartPropDocument(QMainWindow):
                     else:
                         var_value.update({"min": None, "max": None})
 
-                    existing_variables = self.get_variables(layout=self.ui.variables_scrollArea, only_names=True)
+                    existing_variables = self.get_variables(layout=self.variable_viewport.ui.variables_scrollArea, only_names=True)
                     variable_exists = False
                     for index, variable in existing_variables.items():
                         name_ = variable[0]
@@ -495,7 +488,7 @@ class SmartPropDocument(QMainWindow):
         operator_instance = PropertyFrame(
             widget_list=self.modifiers_group_instance.layout,
             value=element_value,
-            variables_scrollArea=self.ui.variables_scrollArea,
+            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
             tree_hierarchy=self.ui.tree_hierarchy_widget
         )
         operator_instance.edited.connect(self.update_tree_item_value)
@@ -550,7 +543,7 @@ class SmartPropDocument(QMainWindow):
             operator_instance = PropertyFrame(
                 widget_list=self.modifiers_group_instance.layout,
                 value=ast.literal_eval(clipboard_data[2]),
-                variables_scrollArea=self.ui.variables_scrollArea,
+                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 tree_hierarchy=self.ui.tree_hierarchy_widget
             )
             operator_instance.edited.connect(self.update_tree_item_value)
@@ -579,7 +572,7 @@ class SmartPropDocument(QMainWindow):
         operator_instance = PropertyFrame(
             widget_list=self.selection_criteria_group_instance.layout,
             value=element_value,
-            variables_scrollArea=self.ui.variables_scrollArea,
+            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
             tree_hierarchy=self.ui.tree_hierarchy_widget
         )
         operator_instance.edited.connect(self.update_tree_item_value)
@@ -595,7 +588,7 @@ class SmartPropDocument(QMainWindow):
             operator_instance = PropertyFrame(
                 widget_list=self.selection_criteria_group_instance.layout,
                 value=ast.literal_eval(clipboard_data[2]),
-                variables_scrollArea=self.ui.variables_scrollArea,
+                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 tree_hierarchy=self.ui.tree_hierarchy_widget
             )
             operator_instance.edited.connect(self.update_tree_item_value)
@@ -621,14 +614,14 @@ class SmartPropDocument(QMainWindow):
             filename=filename,
             tree=self.ui.tree_hierarchy_widget,
             choices_tree=self.ui.choices_tree_widget,
-            variables_scrollArea=self.ui.variables_scrollArea
+            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
         )
         variables = vsmart_instance.variables
 
         # Clear existing variables
         index = 0
-        while index < self.ui.variables_scrollArea.count() - 1:
-            item = self.ui.variables_scrollArea.takeAt(index)
+        while index < self.variable_viewport.ui.variables_scrollArea.count() - 1:
+            item = self.variable_viewport.ui.variables_scrollArea.takeAt(index)
             widget = item.widget()
             if widget is not None:
                 widget.deleteLater()
@@ -700,13 +693,13 @@ class SmartPropDocument(QMainWindow):
                 current_folder,
                 "VSmart Files (*.vsmart);;All Files (*)"
             )
-        self.get_variables(self.ui.variables_scrollArea)
+        self.get_variables(self.variable_viewport.ui.variables_scrollArea)
         if filename:
             VsmartSaveInstance = VsmartSave(
                 filename=filename,
                 tree=self.ui.tree_hierarchy_widget,
                 choices_tree=self.ui.choices_tree_widget,
-                variables_layout=self.ui.variables_scrollArea
+                variables_layout=self.variable_viewport.ui.variables_scrollArea
             )
             self.opened_file = VsmartSaveInstance.filename
             if self.update_title:
@@ -720,7 +713,7 @@ class SmartPropDocument(QMainWindow):
         item = self.ui.choices_tree_widget.itemAt(position)
         add_choice = menu.addAction("Add Choice")
         add_choice.triggered.connect(
-            lambda: AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.ui.variables_scrollArea)
+            lambda: AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.variable_viewport.ui.variables_scrollArea)
         )
 
         if item:
@@ -732,7 +725,7 @@ class SmartPropDocument(QMainWindow):
                 add_variable.triggered.connect(
                     lambda: AddVariable(
                         parent=item,
-                        variables_scrollArea=self.ui.variables_scrollArea,
+                        variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                         name="default",
                         value="",
                         type=""
@@ -761,63 +754,17 @@ class SmartPropDocument(QMainWindow):
             var_display_name,
             index: int = None
     ):
-        variable = VariableFrame(
-            name=name,
-            widget_list=self.ui.variables_scrollArea,
-            var_value=var_value,
-            var_class=var_class,
-            var_visible_in_editor=var_visible_in_editor,
-            var_display_name=var_display_name
-        )
-        variable.duplicate.connect(self.duplicate_variable)
-        if index is None:
-            index = (self.ui.variables_scrollArea.count()) - 1
-        else:
-            index = index + 1
-        self.ui.variables_scrollArea.insertWidget(index, variable)
+        self.variable_viewport.add_variable(name, var_class, var_value, var_visible_in_editor, var_display_name, index)
         self._modified = True
         self._edited.emit()
 
     def duplicate_variable(self, __data, __index):
-        __data[2] = self.element_id_generator.update_value(__data[2], force=True)
-        self.add_variable(__data[0], __data[1], __data[2], __data[3], __data[4], __index)
+        self.variable_viewport.duplicate_variable(__data, __index)
 
     def add_new_variable(self):
-        name = "new_var"
-        existing_variables = []
-        variables_ = self.get_variables(self.ui.variables_scrollArea)
-        for key, value in variables_.items():
-            existing_variables.append(value[0])
-
-        if name in existing_variables:
-            suffix = 1
-            while f"{name}_{suffix}" in existing_variables:
-                suffix += 1
-            name = f"{name}_{suffix}"
-
-        var_class = self.ui.add_new_variable_combobox.currentText()
-        var_name = name
-        var_display_name = None
-        var_visible_in_editor = False
-        var_value = {"default": None, "min": None, "max": None, "model": None}
-        var_value = self.element_id_generator.update_value(var_value, force=True)
-        self.add_variable(
-            name=var_name,
-            var_value=var_value,
-            var_visible_in_editor=var_visible_in_editor,
-            var_class=var_class,
-            var_display_name=var_display_name
-        )
+        self.variable_viewport.add_new_variable()
 
     # ======================================[Variables Other]========================================
-    def search_variables(self, search_term=None):
-        for i in range(self.ui.variables_scrollArea.layout().count()):
-            widget = self.ui.variables_scrollArea.layout().itemAt(i).widget()
-            if widget:
-                if search_term.lower() in widget.name.lower():
-                    widget.show()
-                else:
-                    widget.hide()
 
     def get_variables(self, layout, only_names=False):
         if only_names:
@@ -844,57 +791,6 @@ class SmartPropDocument(QMainWindow):
                     }
                     data_out.update(item_)
             return data_out
-
-    # ======================================[Variables Context menu]========================================
-    def contextMenuEvent(self, event):
-        context_menu = QMenu(self)
-        if self.ui.variables_QscrollArea is QApplication.focusWidget():
-            paste_action = QAction("Paste Variable", self)
-            paste_action.triggered.connect(self.paste_variable)
-            context_menu.addAction(paste_action)
-
-        context_menu.exec_(event.globalPos())
-
-    def paste_variable(self):
-        clipboard = QApplication.clipboard()
-        try:
-            m_data = kv3_to_json(clipboard.text())
-            if not isinstance(m_data, dict):
-                ErrorInfo(text="Clipboard data format is not valid.", details=m_data).exec()
-                return
-
-            if 'm_Variables' not in m_data:
-                ErrorInfo(text="No variables found in clipboard data.").exec()
-                return
-
-            for variable in m_data['m_Variables']:
-                _class = variable.get('_class', '')
-                if not _class.startswith('CSmartPropVariable_'):
-                    continue
-
-                var_class = _class.replace('CSmartPropVariable_', '')
-                var_name = variable.get('m_VariableName', '')
-                var_visible = variable.get('m_bExposeAsParameter', False)
-
-                var_value = {
-                    'default': variable.get('m_DefaultValue'),
-                    'min': variable.get('m_flParamaterMinValue'),
-                    'max': variable.get('m_flParamaterMaxValue'),
-                    'model': variable.get('m_sModelName')
-                }
-
-                self.element_id_generator.update_value(var_value, force=True)
-
-                self.add_variable(
-                    name=var_name,
-                    var_class=var_class,
-                    var_value=var_value,
-                    var_visible_in_editor=var_visible,
-                    var_display_name=variable.get('m_ParameterName')
-                )
-
-        except Exception as e:
-            ErrorInfo(text="Failed to paste variable data.", details=str(e)).exec()
 
     # ======================================[Tree widget hierarchy filter]========================================
     def search_hierarchy(self, filter_text, parent_item):
@@ -1177,7 +1073,7 @@ class SmartPropDocument(QMainWindow):
 
         saved_index = self.settings.value("SmartPropEditorMainWindow/currentComboBoxIndex")
         if saved_index is not None:
-            self.ui.add_new_variable_combobox.setCurrentIndex(int(saved_index))
+            self.variable_viewport.ui.add_new_variable_combobox.setCurrentIndex(int(saved_index))
 
     def _save_user_prefs(self):
         current_index = self.ui.add_new_variable_combobox.currentIndex()
