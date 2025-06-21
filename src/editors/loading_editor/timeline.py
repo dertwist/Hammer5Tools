@@ -86,6 +86,8 @@ class TimelineExportWorker(QRunnable):
                     elif img.mode != 'RGB':
                         img = img.convert('RGB')
                     
+                    # Convert to palette mode for GIF (adaptive palette)
+                    img = img.convert('P', palette=Image.ADAPTIVE)
                     images.append(img)
                     progress = int((i + 1) / total_images * 90)  # 90% for loading images
                     self.signals.progress.emit(progress)
@@ -531,6 +533,8 @@ class TimelineExplorer(QMainWindow):
                             img = background
                         elif img.mode != 'RGB':
                             img = img.convert('RGB')
+                        # Convert to palette mode for GIF (adaptive palette)
+                        img = img.convert('P', palette=Image.ADAPTIVE)
                         pil_images.append(img)
                     except Exception as e:
                         debug(f"Error processing image {image_path}: {e}")
