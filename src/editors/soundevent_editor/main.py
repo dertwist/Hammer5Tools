@@ -95,7 +95,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Init Hierarchy
         self.ui.hierarchy_widget.deleteLater()
         self.ui.hierarchy_widget = HierarchyTreeWidget(self.undo_stack, True)
-        self.ui.frame_2.layout().insertWidget(0, self.ui.hierarchy_widget)
+        self.ui.frame_2.layout().insertWidget(1, self.ui.hierarchy_widget)
 
         self.ui.hierarchy_widget.header().setSectionHidden(1, True)
         self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
