@@ -12,7 +12,10 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QLabel,
-    QWidget
+    QWidget,
+    QHBoxLayout,
+    QButtonGroup,
+    QRadioButton
 )
 from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool
 from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent
@@ -21,6 +24,7 @@ from PySide6.QtSvgWidgets import QSvgWidget
 from src.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir, set_settings_bool, get_settings_bool
 from src.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from src.editors.loading_editor.viewport import ImageExplorer
+from src.editors.loading_editor.timeline import TimelineExplorer
 from src.common import compile
 from src.widgets import ErrorInfo
 from src.editors.loading_editor.commands.main import generate_commands
@@ -385,16 +389,34 @@ class Loading_editorMainWindow(QMainWindow):
         self.threadpool = QThreadPool()
         self.game_screenshot_path = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "screenshots", "Hammer5Tools")
         self.loadingscreen_path = os.path.join(self.game_screenshot_path, "LoadingScreen")
+        self.history_path = os.path.join(self.game_screenshot_path, "History")
         os.makedirs(self.game_screenshot_path, exist_ok=True)
 
-        explorer_view = ImageExplorer(tree_directory=self.game_screenshot_path)
-        explorer_view.setStyleSheet("padding:0")
-        self.ui.explorer.layout().addWidget(explorer_view)
-        self.ui.screenshot_preview.layout().addWidget(explorer_view.image_viewer)
+        # Create both views
+        self.explorer_view = ImageExplorer(tree_directory=self.game_screenshot_path)
+        self.explorer_view.setStyleSheet("padding:0")
+        
+        self.timeline_view = TimelineExplorer(history_directory=self.history_path)
+        self.timeline_view.setStyleSheet("padding:0")
+        
+        # Connect timeline image selection to viewport
+        self.timeline_view.image_selected.connect(self.on_timeline_image_selected)
+        
+        # Add explorer view to the explorer tab
+        self.ui.explorer.layout().addWidget(self.explorer_view)
+        
+        # Add timeline view to the timeline tab
+        self.ui.timeline_tab.layout().insertWidget(0, self.timeline_view)
+        
+        # Setup shared viewport
+        self.ui.screenshot_preview.layout().addWidget(self.explorer_view.image_viewer)
         self.ui.splitter_2.setSizes([200, 100])
         
         # Store reference to the image viewer for camera position functionality
-        self.image_viewer = explorer_view.image_viewer
+        self.image_viewer = self.explorer_view.image_viewer
+        
+        # Connect tab change signal
+        self.ui.screenshots_tabwidget.currentChanged.connect(self.on_tab_changed)
 
         self.svg_preview_widget = SvgPreviewWidget()
         self.ui.svg_icon_frame.layout().addWidget(self.svg_preview_widget)
@@ -404,11 +426,32 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
         self.ui.open_folder_button.clicked.connect(self.open_images_folder)
         self.ui.make_commands.clicked.connect(self.generate_commands_action)
+        self.ui.generate_gifs.clicked.connect(self.export_all_to_gif)
 
         self.unified_dialog = UnifiedProcessingDialog(self)
 
         self.load_existing_icon()
         self.load_existing_description()
+
+    def on_tab_changed(self, index: int):
+        """Handle tab change between Explorer and Timeline"""
+        if index == 1:  # Timeline tab
+            # Refresh timeline data when switching to timeline tab
+            self.timeline_view.load_timeline_data()
+            debug("Switched to Timeline tab")
+        else:  # Explorer tab
+            debug("Switched to Explorer tab")
+
+    def on_timeline_image_selected(self, image_path: str):
+        """Handle image selection from timeline view"""
+        if os.path.exists(image_path):
+            # Show the image in the viewport
+            self.image_viewer.showImage(image_path)
+            debug(f"Timeline image selected: {os.path.basename(image_path)}")
+
+    def export_all_to_gif(self):
+        """Export all camera sequences to GIF files"""
+        self.timeline_view.export_all_to_gif()
 
     def load_existing_icon(self):
         folder_path = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
