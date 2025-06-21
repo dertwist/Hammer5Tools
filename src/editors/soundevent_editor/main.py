@@ -9,10 +9,11 @@ from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
 from PySide6.QtCore import Qt
 from src.widgets.popup_menu.main import PopupMenu
 from src.widgets import HierarchyItemModel, ErrorInfo
+from src.editors.soundevent_editor.commands import *
+from src.widgets.commands import AddItemCommand, PasteItemsCommand
 from src.editors.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from src.editors.soundevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
 from src.common import *
-from src.editors.soundevent_editor.commands import DeleteTreeItemCommand
 from src.editors.soundevent_editor.internal_explorer import InternalSoundFileExplorer
 from src.editors.soundevent_editor.audio_player import AudioPlayer
 from src.widgets.common import exception_handler
@@ -56,7 +57,7 @@ class LoadSoundEvents:
         self.root = self.tree.invisibleRootItem()
         for key in data:
             if key != "editor_info":
-                new_item = HierarchyItemModel(_data=data[key], _name=key)
+                new_item = HierarchyItemModel(_data=data[key], _name=key, _class='Event')
                 self.root.addChild(new_item)
 
 class SaveSoundEvents:
@@ -91,16 +92,21 @@ class SoundEventEditorMainWindow(QMainWindow):
         debug(f"self.filepath_vsndevts : {self.filepath_vsndevts}")
         debug(f"self.filepath_sounds : {self.filepath_sounds}")
 
-        # Init LoadSoundEvents
-        self.load_soundevents(self.filepath_vsndevts)
-        # Init PropertiesWindow
-        self.PropertiesWindowInit()
-
         # Init Hierarchy
+        self.ui.hierarchy_widget.deleteLater()
+        self.ui.hierarchy_widget = HierarchyTreeWidget(self.undo_stack, True)
+        self.ui.frame_2.layout().insertWidget(0, self.ui.hierarchy_widget)
+
         self.ui.hierarchy_widget.header().setSectionHidden(1, True)
         self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
         self.ui.hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
+        self.ui.hierarchy_widget.setHeaderLabels(['Event'])
+
+        # Init LoadSoundEvents
+        self.load_soundevents(self.filepath_vsndevts)
+        # Init PropertiesWindow
+        self.PropertiesWindowInit()
 
         # Init filter
         self.ui.hierarchy_widget.installEventFilter(self)
@@ -230,16 +236,8 @@ class SoundEventEditorMainWindow(QMainWindow):
 
                 # Delete
                 if event.matches(QKeySequence.Delete):
-                    self.undo_stack.push(DeleteTreeItemCommand(self.ui.hierarchy_widget))
+                    self.ui.hierarchy_widget.DeleteSelectedItems()
 
-                    return True
-                # Move Up
-                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_Up:
-                    self.move_tree_item(self.ui.hierarchy_widget, -1)
-                    return True
-                # Move Down
-                if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_Down:
-                    self.move_tree_item(self.ui.hierarchy_widget, 1)
                     return True
                 # Duplicate
                 if event.modifiers() == (Qt.ControlModifier) and event.key() == Qt.Key_D:
@@ -267,7 +265,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         if __soundevent_name is None:
             __soundevent_name = "SoundEvent"
         __soundevent_name = self.unique_soundevent_int(__soundevent_name)
-        __soundevent = HierarchyItemModel(_name=__soundevent_name, _data=_data)
+        __soundevent = HierarchyItemModel(_name=__soundevent_name, _data=_data, _class='Event')
         self.ui.hierarchy_widget.invisibleRootItem().addChild(__soundevent)
 
     def unique_soundevent_int(self, _name: str = None):
@@ -409,19 +407,10 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         menu.addSeparator()
 
-        move_up_action = menu.addAction("Move Up")
-        move_up_action.triggered.connect(lambda: self.move_tree_item(self.ui.hierarchy_widget, -1))
-        move_up_action.setShortcut(QKeySequence(QKeySequence("Ctrl+Up")))
-
-        move_down_action = menu.addAction("Move Down")
-        move_down_action.triggered.connect(lambda: self.move_tree_item(self.ui.hierarchy_widget, 1))
-        move_down_action.setShortcut(QKeySequence(QKeySequence("Ctrl+Down")))
-        menu.addSeparator()
-
         remove_action = menu.addAction("Remove")
         # remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.hierarchy_widget))
         remove_action.triggered.connect(
-            lambda: self.undo_stack.push(DeleteTreeItemCommand(self.ui.hierarchy_widget)))
+            lambda: self.ui.hierarchy_widget.DeleteSelectedItems())
         remove_action.setShortcut(QKeySequence(QKeySequence("Delete")))
 
         duplicate_action = menu.addAction("Duplicate")
@@ -487,14 +476,17 @@ class SoundEventEditorMainWindow(QMainWindow):
             return JsonToKv3(item_data)
 
     def paste_item(self, tree, data_input=None, paste_to_parent=False):
-        """Pasting tree item"""
+        """Pasting tree items with undo support using PasteItemsCommand (batch)"""
         if data_input is None:
             data_input = QApplication.clipboard().text()
         try:
-            input = Kv3ToJson(data_input)
-            tree_items = self.deserialize_hierarchy_items(input)
-            for tree_item in tree_items:
-                tree.invisibleRootItem().addChild(tree_item)
+            input_data = Kv3ToJson(data_input)
+            tree_items = self.deserialize_hierarchy_items(input_data)
+            if not tree_items:
+                return
+            parent = tree.invisibleRootItem()
+            cmd = PasteItemsCommand(tree, parent, tree_items)
+            tree.undo_stack.push(cmd)
         except Exception as error:
             error_message = str(error)
             error_dialog = ErrorInfo(text="Wrong format of the pasting content", details=error_message)
@@ -548,7 +540,7 @@ class SoundEventEditorMainWindow(QMainWindow):
                 counter += 1
                 candidate = f"{base_name}_{counter:02d}"
             name_counters[base_name] = counter + 1
-            tree_item = HierarchyItemModel(_data=value, _name=candidate)
+            tree_item = HierarchyItemModel(_data=value, _name=candidate, _class='Event')
             tree_items.append(tree_item)
             names.add(candidate)
         return tree_items
