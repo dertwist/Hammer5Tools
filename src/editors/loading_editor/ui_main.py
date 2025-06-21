@@ -73,7 +73,7 @@ class Ui_Loading_editorMainWindow(object):
         self.timeline_tab.setObjectName(u"timeline_tab")
         self.verticalLayout_9 = QVBoxLayout(self.timeline_tab)
         self.verticalLayout_9.setObjectName(u"verticalLayout_9")
-        self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_9.setContentsMargins(1, 4, 1, 4)
         self.horizontalLayout_6 = QHBoxLayout()
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
         self.refresh = QPushButton(self.timeline_tab)
