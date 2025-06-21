@@ -38,7 +38,24 @@ class AddItemCommand(QUndoCommand):
             idx = self.tree.indexOfTopLevelItem(self.item)
             if idx != -1:
                 self.tree.takeTopLevelItem(idx)
+class PasteItemsCommand(QUndoCommand):
+    def __init__(self, tree, parent, items):
+        super().__init__("Paste Items")
+        self.tree = tree
+        self.parent = parent
+        self.items = items
+        self.added = []
 
+    def redo(self):
+        for item in self.items:
+            self.parent.addChild(item)
+            self.parent.setExpanded(True)
+            self.added.append(item)
+
+    def undo(self):
+        for item in self.added:
+            self.parent.removeChild(item)
+        self.added.clear()
 
 class RemoveItemCommand(QUndoCommand):
     _item_refs = set()  # Prevent deletion by keeping references
