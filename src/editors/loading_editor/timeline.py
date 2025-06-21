@@ -51,9 +51,30 @@ class TimelineExportWorker(QRunnable):
             images = []
             total_images = len(self.image_paths)
             
+            # First pass: determine the maximum resolution
+            max_width, max_height = 0, 0
+            for image_path in self.image_paths:
+                try:
+                    with Image.open(image_path) as img:
+                        max_width = max(max_width, img.width)
+                        max_height = max(max_height, img.height)
+                except Exception as e:
+                    debug(f"Error checking image size {image_path}: {e}")
+                    continue
+            
+            if max_width == 0 or max_height == 0:
+                self.signals.error.emit("No valid images found")
+                return
+            
+            # Second pass: load and resize images
             for i, image_path in enumerate(self.image_paths):
                 try:
                     img = Image.open(image_path)
+                    
+                    # Resize to maximum resolution if needed
+                    if img.width != max_width or img.height != max_height:
+                        img = img.resize((max_width, max_height), Image.Resampling.LANCZOS)
+                    
                     # Convert to RGB if necessary (GIF doesn't support RGBA)
                     if img.mode in ('RGBA', 'LA'):
                         background = Image.new('RGB', img.size, (255, 255, 255))
@@ -100,7 +121,7 @@ class TimelineTreeWidget(QTreeWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setHeaderLabel("Timeline")
-        self.setIconSize(QSize(64, 64))
+        self.setIconSize(QSize(32, 32))
         self.setIndentation(20)
         self.setRootIsDecorated(True)
         self.setAlternatingRowColors(True)
@@ -173,8 +194,8 @@ class TimelineTreeWidget(QTreeWidget):
             QMessageBox.warning(self, "Export Error", "No images found for this camera.")
             return
         
-        # Sort by timestamp (newest first)
-        image_paths.sort(key=lambda x: self.extract_timestamp_from_path(x), reverse=True)
+        # Sort by timestamp (oldest first)
+        image_paths.sort(key=lambda x: self.extract_timestamp_from_path(x))
         
         # Ask user for output directory
         output_dir = QFileDialog.getExistingDirectory(
@@ -267,8 +288,8 @@ class TimelineTreeWidget(QTreeWidget):
         
         # Create tree structure
         for camera_name, images in camera_data.items():
-            # Sort images by timestamp (newest first)
-            images.sort(key=lambda x: x[0], reverse=True)
+            # Sort images by timestamp (oldest first)
+            images.sort(key=lambda x: x[0])
             
             # Create camera folder item
             camera_item = QTreeWidgetItem(self)
@@ -297,15 +318,21 @@ class TimelineTreeWidget(QTreeWidget):
         debug(f"Loaded timeline data: {len(camera_data)} cameras")
 
     def extract_camera_name(self, filename: str) -> str:
-        """Extract camera name from filename"""
+        """Extract camera name from filename, treating different numbered cameras as separate"""
         # Remove extension
         base_name = os.path.splitext(filename)[0]
-        
-        # Extract prefix before underscore and number (e.g., "CT Spawn_0000" -> "CT Spawn")
-        match = re.match(r'^(.+?)_\d+$', base_name)
+
+        # Extract camera name and number (e.g., "Site_0000" -> "Site", "Site_0001" -> "Site 1")
+        match = re.match(r'^(.+?)_(\d+)$', base_name)
         if match:
-            return match.group(1)
-        
+            camera_base = match.group(1)
+            camera_number = int(match.group(2))
+            
+            if camera_number == 0:
+                return camera_base  # "Site_0000" -> "Site"
+            else:
+                return f"{camera_base} {camera_number}"  # "Site_0001" -> "Site 1"
+
         # If no underscore pattern, return the base name
         return base_name
 
@@ -394,20 +421,6 @@ class TimelineExplorer(QMainWindow):
         self.timeline_tree.image_selected.connect(self.image_selected.emit)
         
         layout.addWidget(self.timeline_tree)
-        
-        # Add export all button
-        button_layout = QHBoxLayout()
-        
-        self.export_all_button = QPushButton("Export All to GIF")
-        self.export_all_button.clicked.connect(self.export_all_to_gif)
-        button_layout.addWidget(self.export_all_button)
-        
-        self.refresh_button = QPushButton("Refresh")
-        self.refresh_button.clicked.connect(self.load_timeline_data)
-        button_layout.addWidget(self.refresh_button)
-        
-        button_layout.addStretch()
-        layout.addLayout(button_layout)
 
     def set_history_directory(self, directory: str):
         """Set the history directory and reload data"""
@@ -477,25 +490,51 @@ class TimelineExplorer(QMainWindow):
             if progress_dialog.wasCanceled():
                 break
             
-            # Sort by timestamp (newest first)
-            images.sort(key=lambda x: x[0], reverse=True)
+            # Sort by timestamp (oldest first)
+            images.sort(key=lambda x: x[0])
             image_paths = [img[1] for img in images]
             
-            # Create GIF for this camera
+            # Create GIF for this camera with image rescaling
             try:
                 pil_images = []
+                
+                # First pass: determine the maximum resolution
+                max_width, max_height = 0, 0
                 for image_path in image_paths:
-                    img = Image.open(image_path)
-                    if img.mode in ('RGBA', 'LA'):
-                        background = Image.new('RGB', img.size, (255, 255, 255))
-                        if img.mode == 'RGBA':
-                            background.paste(img, mask=img.split()[-1])
-                        else:
-                            background.paste(img, mask=img.split()[-1])
-                        img = background
-                    elif img.mode != 'RGB':
-                        img = img.convert('RGB')
-                    pil_images.append(img)
+                    try:
+                        with Image.open(image_path) as img:
+                            max_width = max(max_width, img.width)
+                            max_height = max(max_height, img.height)
+                    except Exception as e:
+                        debug(f"Error checking image size {image_path}: {e}")
+                        continue
+                
+                if max_width == 0 or max_height == 0:
+                    debug(f"No valid images for camera {camera_name}")
+                    continue
+                
+                # Second pass: load and resize images
+                for image_path in image_paths:
+                    try:
+                        img = Image.open(image_path)
+                        
+                        # Resize to maximum resolution if needed
+                        if img.width != max_width or img.height != max_height:
+                            img = img.resize((max_width, max_height), Image.Resampling.LANCZOS)
+                        
+                        if img.mode in ('RGBA', 'LA'):
+                            background = Image.new('RGB', img.size, (255, 255, 255))
+                            if img.mode == 'RGBA':
+                                background.paste(img, mask=img.split()[-1])
+                            else:
+                                background.paste(img, mask=img.split()[-1])
+                            img = background
+                        elif img.mode != 'RGB':
+                            img = img.convert('RGB')
+                        pil_images.append(img)
+                    except Exception as e:
+                        debug(f"Error processing image {image_path}: {e}")
+                        continue
                 
                 if pil_images:
                     gif_path = os.path.join(output_dir, f"{camera_name}_timeline.gif")
