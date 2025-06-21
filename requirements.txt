@@ -1,4 +1,5 @@
-PySide6
+PySide6==6.9.0
+PySide6_Essentials==6.9.0
 packaging
 markdown2
 pypresence
@@ -30,3 +31,4 @@ clr_loader
 cffi
 vdf
 pycparser
+Pillow

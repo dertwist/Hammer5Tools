@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'main.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.1
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -17,14 +17,15 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGroupBox,
     QHBoxLayout, QMainWindow, QPlainTextEdit, QPushButton,
-    QSizePolicy, QSplitter, QVBoxLayout, QWidget)
+    QSizePolicy, QSplitter, QTabWidget, QVBoxLayout,
+    QWidget)
 import resources_rc
 
 class Ui_Loading_editorMainWindow(object):
     def setupUi(self, Loading_editorMainWindow):
         if not Loading_editorMainWindow.objectName():
             Loading_editorMainWindow.setObjectName(u"Loading_editorMainWindow")
-        Loading_editorMainWindow.resize(1025, 545)
+        Loading_editorMainWindow.resize(1292, 983)
         Loading_editorMainWindow.setStyleSheet(u"background-color: rgb(28, 28, 28);")
         self.centralwidget = QWidget(Loading_editorMainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -49,7 +50,14 @@ class Ui_Loading_editorMainWindow(object):
         self.verticalLayout = QVBoxLayout(self.screenshots)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.explorer = QFrame(self.screenshots)
+        self.screenshots_tabwidget = QTabWidget(self.screenshots)
+        self.screenshots_tabwidget.setObjectName(u"screenshots_tabwidget")
+        self.explorer_tab = QWidget()
+        self.explorer_tab.setObjectName(u"explorer_tab")
+        self.verticalLayout_8 = QVBoxLayout(self.explorer_tab)
+        self.verticalLayout_8.setObjectName(u"verticalLayout_8")
+        self.verticalLayout_8.setContentsMargins(0, 0, 0, 0)
+        self.explorer = QFrame(self.explorer_tab)
         self.explorer.setObjectName(u"explorer")
         self.explorer.setFrameShape(QFrame.Shape.StyledPanel)
         self.explorer.setFrameShadow(QFrame.Shadow.Raised)
@@ -58,7 +66,102 @@ class Ui_Loading_editorMainWindow(object):
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.horizontalLayout_5.setContentsMargins(0, 4, 0, 4)
 
-        self.verticalLayout.addWidget(self.explorer)
+        self.verticalLayout_8.addWidget(self.explorer)
+
+        self.screenshots_tabwidget.addTab(self.explorer_tab, "")
+        self.timeline_tab = QWidget()
+        self.timeline_tab.setObjectName(u"timeline_tab")
+        self.verticalLayout_9 = QVBoxLayout(self.timeline_tab)
+        self.verticalLayout_9.setObjectName(u"verticalLayout_9")
+        self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_6 = QHBoxLayout()
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.refresh = QPushButton(self.timeline_tab)
+        self.refresh.setObjectName(u"refresh")
+        self.refresh.setMinimumSize(QSize(0, 32))
+        self.refresh.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon = QIcon()
+        icon.addFile(u":/valve_common/icons/tools/common/refresh.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.refresh.setIcon(icon)
+        self.refresh.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_6.addWidget(self.refresh)
+
+        self.generate_gifs = QPushButton(self.timeline_tab)
+        self.generate_gifs.setObjectName(u"generate_gifs")
+        self.generate_gifs.setMinimumSize(QSize(0, 32))
+        self.generate_gifs.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon1 = QIcon()
+        icon1.addFile(u":/valve_common/icons/tools/common/control_play.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.generate_gifs.setIcon(icon1)
+        self.generate_gifs.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_6.addWidget(self.generate_gifs)
+
+
+        self.verticalLayout_9.addLayout(self.horizontalLayout_6)
+
+        self.screenshots_tabwidget.addTab(self.timeline_tab, "")
+
+        self.verticalLayout.addWidget(self.screenshots_tabwidget)
 
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
@@ -95,9 +198,9 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon = QIcon()
-        icon.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_folder_button.setIcon(icon)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_folder_button.setIcon(icon2)
         self.open_folder_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_3.addWidget(self.open_folder_button)
@@ -133,9 +236,9 @@ class Ui_Loading_editorMainWindow(object):
 "    QCheckBox:pressed {\n"
 "\n"
 "    }")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.history_mode.setIcon(icon1)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.history_mode.setIcon(icon3)
         self.history_mode.setIconSize(QSize(20, 20))
         self.history_mode.setChecked(True)
 
@@ -174,9 +277,9 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/data_object_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.make_commands.setIcon(icon2)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/data_object_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.make_commands.setIcon(icon4)
         self.make_commands.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.make_commands)
@@ -214,9 +317,9 @@ class Ui_Loading_editorMainWindow(object):
 "    QCheckBox:pressed {\n"
 "\n"
 "    }")
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.delete_existings.setIcon(icon3)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.delete_existings.setIcon(icon5)
         self.delete_existings.setIconSize(QSize(20, 20))
         self.delete_existings.setChecked(True)
 
@@ -248,9 +351,9 @@ class Ui_Loading_editorMainWindow(object):
 "    QCheckBox:pressed {\n"
 "\n"
 "    }")
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/colors_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.camera_name_mode.setIcon(icon4)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/colors_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.camera_name_mode.setIcon(icon6)
         self.camera_name_mode.setIconSize(QSize(20, 20))
         self.camera_name_mode.setChecked(True)
 
@@ -289,9 +392,9 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.apply_screenshots_button.setIcon(icon5)
+        icon7 = QIcon()
+        icon7.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.apply_screenshots_button.setIcon(icon7)
         self.apply_screenshots_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.apply_screenshots_button)
@@ -388,7 +491,7 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.apply_icon_button.setIcon(icon5)
+        self.apply_icon_button.setIcon(icon7)
         self.apply_icon_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_4.addWidget(self.apply_icon_button)
@@ -480,7 +583,7 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.apply_description_button.setIcon(icon5)
+        self.apply_description_button.setIcon(icon7)
         self.apply_description_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_2.addWidget(self.apply_description_button)
@@ -497,12 +600,39 @@ class Ui_Loading_editorMainWindow(object):
 
         self.retranslateUi(Loading_editorMainWindow)
 
+        self.screenshots_tabwidget.setCurrentIndex(1)
+
+
         QMetaObject.connectSlotsByName(Loading_editorMainWindow)
     # setupUi
 
     def retranslateUi(self, Loading_editorMainWindow):
         Loading_editorMainWindow.setWindowTitle(QCoreApplication.translate("Loading_editorMainWindow", u"MainWindow", None))
         self.screenshots.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshots", None))
+        self.screenshots_tabwidget.setTabText(self.screenshots_tabwidget.indexOf(self.explorer_tab), QCoreApplication.translate("Loading_editorMainWindow", u"Explorer", None))
+#if QT_CONFIG(tooltip)
+        self.refresh.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"hr { height: 1px; border-width: 0; }\n"
+"li.unchecked::marker { content: \"\\2610\"; }\n"
+"li.checked::marker { content: \"\\2612\"; }\n"
+"</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.refresh.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Refresh", None))
+#if QT_CONFIG(tooltip)
+        self.generate_gifs.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"hr { height: 1px; border-width: 0; }\n"
+"li.unchecked::marker { content: \"\\2610\"; }\n"
+"li.checked::marker { content: \"\\2612\"; }\n"
+"</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.generate_gifs.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Generate gifs", None))
+        self.screenshots_tabwidget.setTabText(self.screenshots_tabwidget.indexOf(self.timeline_tab), QCoreApplication.translate("Loading_editorMainWindow", u"Timeline", None))
 #if QT_CONFIG(tooltip)
         self.open_folder_button.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
