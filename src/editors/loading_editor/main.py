@@ -1,4 +1,4 @@
-import os
+﻿import os
 import shutil
 import sys
 
@@ -426,12 +426,17 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
         self.ui.open_folder_button.clicked.connect(self.open_images_folder)
         self.ui.make_commands.clicked.connect(self.generate_commands_action)
+        self.ui.refresh.clicked.connect(self.refresh_timeline)
         self.ui.generate_gifs.clicked.connect(self.export_all_to_gif)
 
         self.unified_dialog = UnifiedProcessingDialog(self)
 
         self.load_existing_icon()
         self.load_existing_description()
+
+    def refresh_timeline(self):
+        """Refresh timeline data"""
+        self.timeline_view.load_timeline_data()
 
     def on_tab_changed(self, index: int):
         """Handle tab change between Explorer and Timeline"""
@@ -568,6 +573,10 @@ class Loading_editorMainWindow(QMainWindow):
     def do_loading_editor_cs2_description(self):
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
     
+    def refresh_timeline(self):
+        """Refresh timeline data"""
+        self.timeline_view.load_timeline_data()
+
     def keyPressEvent(self, event: QKeyEvent):
         """
         Handle key press events for the main window.
@@ -581,10 +590,3 @@ class Loading_editorMainWindow(QMainWindow):
                 debug("F key pressed - Restoring camera position")
         else:
             super().keyPressEvent(event)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = Loading_editorMainWindow()
-    window.show()
-    sys.exit(app.exec())
