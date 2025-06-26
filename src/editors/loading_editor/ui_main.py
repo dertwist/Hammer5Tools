@@ -600,7 +600,7 @@ class Ui_Loading_editorMainWindow(object):
 
         self.retranslateUi(Loading_editorMainWindow)
 
-        self.screenshots_tabwidget.setCurrentIndex(1)
+        self.screenshots_tabwidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(Loading_editorMainWindow)
