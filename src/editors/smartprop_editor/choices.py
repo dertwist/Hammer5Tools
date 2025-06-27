@@ -113,6 +113,7 @@ class VariableFloat(QWidget):
         self.slider.setMinimum(-1000)
         self.slider.setMaximum(1000)
         self.slider.setFocusPolicy(Qt.StrongFocus)
+        self.slider.wheelEvent = lambda event: None  # Disable mouse wheel
         self.editline.setFocusPolicy(Qt.StrongFocus)
 
         self.layout.addWidget(self.editline)

@@ -17,6 +17,7 @@ from PySide6.QtGui import (
     QUndoStack,
     QKeySequence
 )
+import traceback, ctypes
 from PySide6.QtCore import Qt, QTimer, Signal
 from src.settings.main import get_settings_value, get_settings_bool
 
@@ -39,7 +40,7 @@ from src.editors.smartprop_editor.choices import AddChoice, AddVariable, AddOpti
 from src.widgets.popup_menu.main import PopupMenu
 from src.editors.smartprop_editor.commands import GroupElementsCommand
 from src.forms.replace_dialog.main import FindAndReplaceDialog
-from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
+from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, error
 from src.widgets.element_id import ElementIDGenerator
 from src.editors.smartprop_editor._common import (
     get_clean_class_name_value,
@@ -74,7 +75,6 @@ class SmartPropDocument(QMainWindow):
         self.ui.setupUi(self)
         self.settings = settings
         self.element_id_generator = ElementIDGenerator()
-        self.realtime_save = False
         self.opened_file = None
         self.update_title = update_title
         enable_dark_title_bar(self)
@@ -87,11 +87,6 @@ class SmartPropDocument(QMainWindow):
 
         # Track changes
         self._modified = False
-
-        # Timer for auto-saving
-        self.realtime_save_timer = QTimer(self)
-        self.realtime_save_timer.setSingleShot(True)
-        self.realtime_save_timer.timeout.connect(self.save_file)
         
         
         # Hierarchy tree wdiget setup
@@ -299,12 +294,6 @@ class SmartPropDocument(QMainWindow):
             # Mark document as modified
             self._modified = True
             self._edited.emit()
-
-            # Realtime save
-            if self.realtime_save:
-                raw_delay = get_settings_value('SmartPropEditor', 'realtime_saving_delay', 5)
-                time = int(float(raw_delay))
-                self.realtime_save_timer.start(time)
 
     # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
@@ -597,16 +586,6 @@ class SmartPropDocument(QMainWindow):
             print("Clipboard data format is not valid.")
         self.update_tree_item_value()
 
-    # ======================================[Explorer]========================================
-    def realtime_save_action(self):
-        self.realtime_save = self.ui.realtime_save_checkbox.isChecked()
-        if get_settings_bool('SmartPropEditor', 'enable_transparency_window', True):
-            if self.realtime_save:
-                transparency = float(get_settings_value('SmartPropEditor', 'transparency_window', 70))/100
-                self.parent.setWindowOpacity(transparency)
-            else:
-                self.parent.setWindowOpacity(1)
-
     # ======================================[Open File]========================================
     def open_file(self, filename):
         self.opened_file = filename
@@ -667,11 +646,8 @@ class SmartPropDocument(QMainWindow):
         # Reset modification tracking
         self._modified = False
 
-        if not self.realtime_save and self.update_title:
-            self.update_title("opened", filename)
-
     # ======================================[Save File]========================================
-    def save_file(self, external=False):
+    def save_file(self, external=False, realtime_save=False):
         if external:
             if not self.opened_file:
                 filename = None
@@ -695,12 +671,23 @@ class SmartPropDocument(QMainWindow):
             )
         self.get_variables(self.variable_viewport.ui.variables_scrollArea)
         if filename:
-            VsmartSaveInstance = VsmartSave(
-                filename=filename,
-                tree=self.ui.tree_hierarchy_widget,
-                choices_tree=self.ui.choices_tree_widget,
-                variables_layout=self.variable_viewport.ui.variables_scrollArea
-            )
+            if not realtime_save:
+                try:
+                    VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget,variables_layout=self.variable_viewport.ui.variables_scrollArea)
+                except Exception as e:
+                    error_message = f"An error while saving Vsmart File: {e}"
+                    error_details = traceback.format_exc()
+                    error(error_message)
+
+                    # Ensure the dialog is executed in the main thread
+                    app = QApplication.instance()
+                    if app is not None:
+                        ErrorInfo(text=error_message, details=error_details).exec_()
+                    else:
+                        print("Error: QApplication instance is not available.")
+            else:
+                VsmartSaveInstance = VsmartSave(filename=filename,tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget, variables_layout=self.variable_viewport.ui.variables_scrollArea)
+
             self.opened_file = VsmartSaveInstance.filename
             if self.update_title:
                 self.update_title("saved", filename)

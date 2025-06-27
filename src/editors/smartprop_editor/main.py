@@ -115,7 +115,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             if hasattr(doc, 'is_modified') and doc.is_modified():
                 # Auto-save document (assumed to be non-external save)
                 if hasattr(doc, 'save_file'):
-                    doc.save_file(external=False)
+                    doc.save_file(external=False, realtime_save=True)
                     base_name = "Untitled"
                     if doc.opened_file:
                         base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
