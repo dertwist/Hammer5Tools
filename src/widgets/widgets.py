@@ -195,6 +195,9 @@ class BoxSlider(QWidget):
         self.installEventFilter(self)
         self.setFocusPolicy(Qt.StrongFocus)
         self.edit_box.setFocusPolicy(Qt.StrongFocus)
+        
+        # Ensure proper stacking order - edit box should be on top when visible
+        self.edit_box.raise_()
 
     def update_slider_rect(self):
         """Update the slider rectangle based on current widget size"""
@@ -271,6 +274,7 @@ class BoxSlider(QWidget):
         self.edit_box.setText(f"{self.value:.{self.digits}f}")
         self.edit_box.setGeometry(self.slider_rect)
         self.edit_box.show()
+        self.edit_box.raise_()  # Ensure edit box is on top
         self.edit_box.selectAll()
         self.edit_box.setFocus()
         self.update()
@@ -335,14 +339,8 @@ class BoxSlider(QWidget):
         self.update()
 
     def wheelEvent(self, event):
-        """Handle mouse wheel events"""
-        if not self.in_edit_mode:
-            delta = event.angleDelta().y() / 120
-            new_value = self.value + (delta * self.value_step)
-            self.set_value(new_value)
-            event.accept()
-        else:
-            event.ignore()
+        """Handle mouse wheel events - disabled to prevent accidental changes"""
+        event.ignore()
 
 
 class LegacyWidget(QWidget):
