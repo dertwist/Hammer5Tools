@@ -333,7 +333,6 @@ class PropertyFrame(QWidget):
             return {}
 
     def on_edited(self):
-        debug('Property frame was edited')
         if self.ui.variable_display.text() != '':
             enabled = {'m_Expression': str(self.ui.variable_display.text())}
         else:
