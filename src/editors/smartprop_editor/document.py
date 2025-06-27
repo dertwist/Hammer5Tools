@@ -40,7 +40,7 @@ from src.editors.smartprop_editor.choices import AddChoice, AddVariable, AddOpti
 from src.widgets.popup_menu.main import PopupMenu
 from src.editors.smartprop_editor.commands import GroupElementsCommand
 from src.forms.replace_dialog.main import FindAndReplaceDialog
-from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, error
+from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, error, exception_handler
 from src.widgets.element_id import ElementIDGenerator
 from src.editors.smartprop_editor._common import (
     get_clean_class_name_value,
@@ -587,6 +587,7 @@ class SmartPropDocument(QMainWindow):
         self.update_tree_item_value()
 
     # ======================================[Open File]========================================
+    @exception_handler
     def open_file(self, filename):
         self.opened_file = filename
         vsmart_instance = VsmartOpen(
