@@ -111,6 +111,7 @@ class PropertyFloat(PropertyBase):
             self.ui.property_class.setStyleSheet("color: rgb(181, 255, 239);")
 
         self.ui.property_class.setText(prettify_class_name(self.value_class))
+        self.ui.logic_switch.wheelEvent = lambda event: None  # Disable mouse wheel
         self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
 
         self.variable = ComboboxVariablesWidget(
@@ -209,6 +210,7 @@ class PropertyString(PropertyBase):
             "color: rgb(255, 123, 125);" if expression_bool else "color: rgb(255, 209, 153);"
         )
         self.ui.property_class.setText(prettify_class_name(self.value_class))
+        self.ui.logic_switch.wheelEvent = lambda event: None  # Disable mouse wheel
         self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
 
         self.text_line = CompletingPlainTextEdit()

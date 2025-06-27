@@ -18,6 +18,8 @@ class PropertyVariableOutput(QWidget):
         self.value = value
         self.variables_scrollArea = variables_scrollArea
 
+        self.ui.logic_switch.wheelEvent = lambda event: None
+
         self.spacer = Spacer()
         self.ui.layout.addWidget(self.spacer)
 

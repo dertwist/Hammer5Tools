@@ -13,6 +13,11 @@ class PropertyCombobox(QWidget):
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(False)
+        
+        # Disable mouse wheel for comboboxes
+        self.ui.logic_switch.wheelEvent = lambda event: None
+        self.ui.value.wheelEvent = lambda event: None
+        
         self.value_class = value_class
         self.value = value
         self.variables_scrollArea = variables_scrollArea
