@@ -23,6 +23,9 @@ class PropertyColorMatch(QWidget):
 
         self.variables_scrollArea = variables_scrollArea
 
+        self.ui.logic_switch.wheelEvent = lambda event: None
+        self.ui.value.wheelEvent = lambda event: None
+
         self.dialog = QColorDialog()
         self.dialog.setStyleSheet(QT_Stylesheet_global)
 

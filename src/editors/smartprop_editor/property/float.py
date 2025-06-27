@@ -21,6 +21,8 @@ class PropertyFloat(QWidget):
         self.int_bool = int_bool
         self.variables_scrollArea = variables_scrollArea
 
+        self.ui.logic_switch.wheelEvent = lambda event: None
+
         # Float widget setup
         self.float_widget = FloatWidget(slider_range=slider_range, int_output=int_bool)
         self.float_widget.edited.connect(self.on_changed)
