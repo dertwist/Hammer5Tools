@@ -17,6 +17,7 @@ class PropertyComparison(QWidget):
         self.value = value
         self.variables_scrollArea = variables_scrollArea
 
+
         print(value_class)
         self.ui.comparison.currentTextChanged.connect(self.on_changed)
 
