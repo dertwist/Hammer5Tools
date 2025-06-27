@@ -17,6 +17,9 @@ class PropertyBool(QWidget):
         self.value = value
         self.variables_scrollArea = variables_scrollArea
 
+        self.ui.logic_switch.wheelEvent = lambda event: None
+        self.ui.value.wheelEvent = lambda event: None
+
 
         output = re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)

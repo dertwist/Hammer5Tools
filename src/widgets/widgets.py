@@ -47,6 +47,7 @@ class FloatWidget(QWidget):
 
         # SpinBox setup
         self.SpinBox = QDoubleSpinBox()
+        self.SpinBox.wheelEvent = lambda event: None
         self.SpinBox.setDecimals(digits)
         self.SpinBox.setSingleStep(value_step)
         if self.only_positive:
@@ -441,6 +442,7 @@ class ComboboxDynamicItems(QComboBox):
         # self.setStyleSheet('padding:2px; font: 580 9pt "Segoe UI"; padding-left:4px;')
         self.setStyleSheet(qt_stylesheet_combobox)
         self.items = items if items is not None else []
+        self.WheelEnabled = False
 
     def updateItems(self):
         current = self.currentText()

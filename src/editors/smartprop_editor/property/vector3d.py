@@ -16,6 +16,7 @@ class PropertyVector3D(QWidget):
     _pattern_phase1 = re.compile(r'm_fl|m_n|m_v|m_')
     _pattern_phase2 = re.compile(r'([a-z0-9])([A-Z])')
 
+
     def __init__(self, value_class, value, variables_scrollArea):
         super().__init__()
         self.ui = Ui_Widget()
@@ -24,6 +25,11 @@ class PropertyVector3D(QWidget):
         self.value_class = value_class
         self.value = value
         self.variables_scrollArea = variables_scrollArea
+
+        self.ui.logic_switch.wheelEvent = lambda event: None
+        self.ui.comboBox_x.wheelEvent = lambda event: None
+        self.ui.comboBox_y.wheelEvent = lambda event: None
+        self.ui.comboBox_z.wheelEvent = lambda event: None
 
         # Performance: Build output string in a single pass
         intermediate = self._pattern_phase1.sub('', self.value_class)
@@ -71,6 +77,7 @@ class PropertyVector3D(QWidget):
         self.ui.layout_x.insertWidget(4, self.text_line_x)
         self.text_line_x.textChanged.connect(self.on_changed)
         self.ui.comboBox_x.currentIndexChanged.connect(self.on_changed)
+
 
         # Vector Y Setup
         self.float_widget_y = FloatWidget()

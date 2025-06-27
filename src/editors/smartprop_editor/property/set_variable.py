@@ -2,6 +2,7 @@ from src.editors.smartprop_editor.property.ui_set_variable import Ui_Widget
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from src.widgets import FloatWidget, BoolWidget
 
 # m_VariableValue =
 # {
@@ -41,6 +42,7 @@ class PropertyVariableValue(QWidget):
         self.float_widget = FloatWidget(slider_range=[0,0], int_output=False)
         self.float_widget.edited.connect(self.on_changed)
         self.ui.layout_3.addWidget(self.float_widget)
+
 
 
         # init colors
