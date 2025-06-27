@@ -43,6 +43,8 @@ class AudioPlayer(QWidget):
         self.ui.play_button.clicked.connect(self.toggle_play_pause)
         self.ui.loop_checkbox.stateChanged.connect(self.toggle_loop)
         self.ui.timeline_slider.sliderMoved.connect(self.seek_position)
+        # Disable mouse wheel for timeline slider to prevent accidental seeking
+        self.ui.timeline_slider.wheelEvent = lambda event: None
         self.audio_player.positionChanged.connect(self.update_position)
         self.audio_player.durationChanged.connect(self.update_duration)
         self.audio_player.mediaStatusChanged.connect(self.handle_media_status)

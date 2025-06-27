@@ -380,7 +380,6 @@ class VsmartSave:
             variables_.append(var_dict)
         return variables_
 
-    @exception_handler
     def save_file(self):
         """Save file while processing references and merging reference objects."""
         out_data = {"generic_data_type": "CSmartPropRoot"}
