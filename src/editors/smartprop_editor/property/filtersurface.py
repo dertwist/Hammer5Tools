@@ -18,6 +18,7 @@ class PropertySurface(QWidget):
         self.value_class = value_class
         self.value = value
 
+
         self.color = [255, 255, 255]
         # self.ui.logic_switch.setCurrentIndex(0)
 

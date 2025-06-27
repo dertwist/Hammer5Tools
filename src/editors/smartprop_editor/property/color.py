@@ -24,6 +24,9 @@ class PropertyColor(QWidget):
         self.color = [255, 255, 255]
         self.ui.logic_switch.setCurrentIndex(0)
 
+        self.ui.logic_switch.wheelEvent = lambda event: None
+        self.ui.value.wheelEvent = lambda event: None
+
         self.variables_scrollArea = variables_scrollArea
 
         self.dialog = QColorDialog()
