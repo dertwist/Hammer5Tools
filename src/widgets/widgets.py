@@ -196,7 +196,7 @@ class BoxSlider(QWidget):
         self.installEventFilter(self)
         self.setFocusPolicy(Qt.StrongFocus)
         self.edit_box.setFocusPolicy(Qt.StrongFocus)
-        
+
         # Ensure proper stacking order - edit box should be on top when visible
         self.edit_box.raise_()
 
@@ -535,6 +535,22 @@ class HierarchyItemModel(QTreeWidgetItem):
             0: QColor("#f0f0f0"),  # Light grey background in column 0
         }
         self.custom_font = QFont("Segoe UI", 10, QFont.DemiBold)
+
+    def update_icon(self):
+        _class = self.text(2)
+        print(_class)
+        if _class is not None:
+            self.setText(2, str(_class))
+            if _class == 'Category':
+                self.seticon_folder()
+            elif _class == 'Group':
+                self.seticon_group()
+            elif _class == 'Model':
+                self.seticon_vmdl()
+            elif _class == 'SmartProp':
+                self.seticon_vsmart()
+            else:
+                self.seticon_generic()
 
     def data(self, column, role):
         # Provide data from UserRole for column 0
