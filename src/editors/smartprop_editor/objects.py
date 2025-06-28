@@ -34,7 +34,7 @@ elements_list = [
     {'SmartProp': {'_class': 'CSmartPropElement_SmartProp', 'm_sSmartProp': '', 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PlaceInSphere': {'_class': 'CSmartPropElement_PlaceInSphere', 'm_flRandomness': None, 'm_nCountMin': 0, 'm_nCountMax': 0, 'm_flPositionRadiusInner': 0, 'm_flPositionRadiusOuter': 0, 'm_bAlignOrientation': False, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PlaceMultiple': {'_class': 'CSmartPropElement_PlaceMultiple', 'm_nCount': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
-    {'PlaceOnPath': {'_class': 'CSmartPropElement_PlaceOnPath', 'm_PathName': 'path', 'm_vPathOffset': None, 'm_flOffsetAlongPath': None, 'm_PathSpace': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
+    {'PlaceOnPath': {'_class': 'CSmartPropElement_PlaceOnPath', 'm_PathName': 'path', 'm_vPathOffset': None, 'm_flOffsetAlongPath': None, 'm_PathSpace': None, 'm_Modifiers': [], 'm_SelectionCriteria': [], 'm_bUseFixedUpDirection': True,'m_bUseProjectedDistance': True, 'm_vUpDirection': None, 'm_UpDirectionSpace': 'WORLD', 'm_DefaultPath': [[-400.0, 0.0, 0.0], [-200.0, 32, 0.0], [200.0, -32, 0.0], [400.0, 0.0, 0.0]]}},
     {'FitOnLine': {'_class': 'CSmartPropElement_FitOnLine', 'm_vStart': None, 'm_vEnd': None, 'm_PointSpace': None, 'm_bOrientAlongLine': None, 'm_vUpDirection': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'PickOne': {'_class': 'CSmartPropElement_PickOne', 'm_SelectionMode': 'RANDOM', 'm_vHandleOffset': None, 'm_HandleShape': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
     {'Model': {'_class': 'CSmartPropElement_Model', 'm_sModelName': '', 'm_vModelScale': None, 'm_MaterialGroupName': None, 'm_Modifiers': [], 'm_SelectionCriteria': []}},
