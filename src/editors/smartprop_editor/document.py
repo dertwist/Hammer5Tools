@@ -215,7 +215,8 @@ class SmartPropDocument(QMainWindow):
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 element=True,
                 reference_bar=True,
-                tree_hierarchy=self.ui.tree_hierarchy_widget
+                tree_hierarchy=self.ui.tree_hierarchy_widget,
+                element_id_generator=self.element_id_generator
             )
             property_instance.edited.connect(self.update_tree_item_value)
             self.ui.properties_layout.insertWidget(0, property_instance)
@@ -226,7 +227,8 @@ class SmartPropDocument(QMainWindow):
                         widget_list=self.modifiers_group_instance.layout,
                         value=entry,
                         variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                        tree_hierarchy=self.ui.tree_hierarchy_widget
+                        tree_hierarchy=self.ui.tree_hierarchy_widget,
+                        element_id_generator=self.element_id_generator
                     )
                     prop_instance.edited.connect(self.update_tree_item_value)
                     self.modifiers_group_instance.layout.insertWidget(0, prop_instance)
@@ -237,7 +239,8 @@ class SmartPropDocument(QMainWindow):
                         widget_list=self.selection_criteria_group_instance.layout,
                         value=entry,
                         variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                        tree_hierarchy=self.ui.tree_hierarchy_widget
+                        tree_hierarchy=self.ui.tree_hierarchy_widget,
+                        element_id_generator=self.element_id_generator
                     )
                     prop_instance.edited.connect(self.update_tree_item_value)
                     self.selection_criteria_group_instance.layout.insertWidget(0, prop_instance)
@@ -478,7 +481,8 @@ class SmartPropDocument(QMainWindow):
             widget_list=self.modifiers_group_instance.layout,
             value=element_value,
             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-            tree_hierarchy=self.ui.tree_hierarchy_widget
+            tree_hierarchy=self.ui.tree_hierarchy_widget,
+            element_id_generator=self.element_id_generator
         )
         operator_instance.edited.connect(self.update_tree_item_value)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
@@ -533,7 +537,8 @@ class SmartPropDocument(QMainWindow):
                 widget_list=self.modifiers_group_instance.layout,
                 value=ast.literal_eval(clipboard_data[2]),
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                tree_hierarchy=self.ui.tree_hierarchy_widget
+                tree_hierarchy=self.ui.tree_hierarchy_widget,
+                element_id_generator=self.element_id_generator
             )
             operator_instance.edited.connect(self.update_tree_item_value)
             self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
@@ -562,7 +567,8 @@ class SmartPropDocument(QMainWindow):
             widget_list=self.selection_criteria_group_instance.layout,
             value=element_value,
             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-            tree_hierarchy=self.ui.tree_hierarchy_widget
+            tree_hierarchy=self.ui.tree_hierarchy_widget,
+            element_id_generator=self.element_id_generator
         )
         operator_instance.edited.connect(self.update_tree_item_value)
         self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
@@ -578,7 +584,8 @@ class SmartPropDocument(QMainWindow):
                 widget_list=self.selection_criteria_group_instance.layout,
                 value=ast.literal_eval(clipboard_data[2]),
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                tree_hierarchy=self.ui.tree_hierarchy_widget
+                tree_hierarchy=self.ui.tree_hierarchy_widget,
+                element_id_generator=self.element_id_generator
             )
             operator_instance.edited.connect(self.update_tree_item_value)
             self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
