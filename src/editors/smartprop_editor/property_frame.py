@@ -7,7 +7,7 @@ from PySide6.QtGui import QAction
 
 from src.property.methods import PropertyMethods
 from src.widgets.popup_menu.main import PopupMenu
-from src.widgets.element_id import update_value_ElementID
+from src.widgets.element_id import ElementIDGenerator
 
 from src.editors.smartprop_editor.property.legacy import PropertyLegacy
 from src.editors.smartprop_editor.property.vector3d import PropertyVector3D
@@ -24,7 +24,6 @@ from src.editors.smartprop_editor.property.set_variable import PropertyVariableV
 from src.editors.smartprop_editor.property.comment import PropertyComment
 from PySide6.QtGui import QCursor
 from src.widgets import HierarchyItemModel
-from src.widgets.element_id import get_ElementID_key
 import uuid
 
 import ast
@@ -123,7 +122,7 @@ class PropertyFrame(QWidget):
         ]
     }
 
-    def __init__(self, value, widget_list, variables_scrollArea, element=False, reference_bar=False, tree_hierarchy=None):
+    def __init__(self, value, widget_list, variables_scrollArea, element=False, reference_bar=False, tree_hierarchy=None, element_id_generator=None):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -135,6 +134,11 @@ class PropertyFrame(QWidget):
             raise ValueError("tree_hierarchy cannot be None - a valid hierarchy structure is required")
         else:
             self.tree_hierarchy = tree_hierarchy
+
+        if element_id_generator is None:
+            self.element_id_generator = ElementIDGenerator()
+        else:
+            self.element_id_generator = element_id_generator
 
         # Use ast.literal_eval only if not already a dict
         if not isinstance(value, dict):
@@ -159,8 +163,8 @@ class PropertyFrame(QWidget):
         self.layout = self.ui.layout
 
         #===========================================================<  Element ID  >========================================================
-        update_value_ElementID(self.value)
-        self.element_id = get_ElementID_key(self.value)
+        self.element_id_generator.update_value(self.value)
+        self.element_id = self.element_id_generator.get_key(self.value)
         debug(f'Property frame get_ElementID: {self.element_id}')
         self.ui.element_id_display.setText(str(self.element_id))
 
