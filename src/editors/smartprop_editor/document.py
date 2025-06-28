@@ -973,7 +973,7 @@ class SmartPropDocument(QMainWindow):
 
     def cut_item(self, tree: QTreeWidget):
         self.copy_item(tree)
-        self.undo_stack.push(self.ui.tree_hierarchy_widget.DeleteSelectedItems())
+        self.ui.tree_hierarchy_widget.DeleteSelectedItems()
 
     def paste_item(self, tree, data_input=None, paste_to_parent=False):
         from src.common import Kv3ToJson
