@@ -23,9 +23,6 @@ class PropertyColorMatch(QWidget):
 
         self.variables_scrollArea = variables_scrollArea
 
-        self.ui.logic_switch.wheelEvent = lambda event: None
-        self.ui.value.wheelEvent = lambda event: None
-
         self.dialog = QColorDialog()
         self.dialog.setStyleSheet(QT_Stylesheet_global)
 
@@ -98,13 +95,3 @@ QToolButton:pressed {
             if isinstance(item, PropertyColor):
                 value.append(item.value)
         self.value = {self.value_class: value}
-
-
-    def get_variables(self, search_term=None):
-        self.variables_scrollArea
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
