@@ -199,6 +199,21 @@ class DuplicateItemsCommand(QUndoCommand):
         self.duplicates = []  # List of (parent, index, new_item)
         self.id_generator = ElementIDGenerator
 
+    def _update_ids_recursively(self, data):
+        """Recursively update all m_nElementID values in the data structure"""
+        if isinstance(data, dict):
+            updated_data = data.copy()
+            if 'm_nElementID' in updated_data and self.id_generator:
+                updated_data = self.id_generator.update_value(updated_data, force=True)
+            for key, value in updated_data.items():
+                updated_data[key] = self._update_ids_recursively(value)
+
+            return updated_data
+        elif isinstance(data, list):
+            return [self._update_ids_recursively(item) for item in data]
+        else:
+            return data
+
     def _deep_copy_item(self, item):
         new_item = HierarchyItemModel()
         for col in range(item.columnCount()):
@@ -206,11 +221,12 @@ class DuplicateItemsCommand(QUndoCommand):
                 new_item.setText(col, item.text(col))
             data = item.data(col, Qt.UserRole)
             if self.id_generator and isinstance(data, dict):
-                data = self.id_generator.update_value(data.copy(), force=True)
+                data = self._update_ids_recursively(data)
                 new_item.setText(3, str(data.get("m_nElementID", "")))
             elif data is not None:
                 data = str(uuid.uuid4())
             new_item.setData(col, Qt.UserRole, data)
+            new_item.update_icon()
         for i in range(item.childCount()):
             child_copy = self._deep_copy_item(item.child(i))
             new_item.addChild(child_copy)
