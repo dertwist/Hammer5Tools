@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QSizePolicy
 )
-from PySide6.QtGui import QCursor, QKeyEvent
+from PySide6.QtGui import QCursor, QKeyEvent, QScreen
 from PySide6.QtCore import QEvent, Qt, Signal
 from src.widgets.popup_menu.ui_main import Ui_PoPupMenu
 from src.widgets.common import Button
@@ -82,9 +82,16 @@ class PropertyItemWidget(QWidget):
             self.bookmark_button.clicked.connect(self._toggle_bookmark)
             self._layout.addWidget(self.bookmark_button)
 
-    def _apply_styles(self):
+    def _apply_styles(self, highlighted=False):
         # Apply a global stylesheet to the label
-        self.label.setStyleSheet(_label_stylesheet())
+        style = _label_stylesheet()
+        self.label.setStyleSheet(style)
+        self.label.setProperty("selected", highlighted)
+        self.label.style().unpolish(self.label)
+        self.label.style().polish(self.label)
+
+    def set_highlighted(self, highlighted):
+        self._apply_styles(highlighted)
 
     def _on_label_clicked(self, event):
         """Called when the user clicks the property label."""
@@ -176,10 +183,16 @@ class PopupMenu(QDialog):
         self.bookmarked_items = set()
         self.removed_items = set()
 
+        # Arrow key navigation support
+        self.current_selection_index = -1  # No selection by default
+        self.visible_items = []
+        self._keyboard_navigation_started = False
+
         # Create internal layouts, read stored bookmarks, and populate
         self._setup_ui()
         self._init_bookmarks()
         self._populate_properties()
+        self._update_visible_items()
 
         self._is_closing = False
 
@@ -243,6 +256,7 @@ class PopupMenu(QDialog):
         self._clear_layout(self.regular_layout)
         self._populate_properties()
         self.separator.setVisible(bool(self.bookmarked_items))
+        self._update_visible_items()
 
     def _clear_layout(self, layout):
         """Remove all widgets in a layout."""
@@ -256,6 +270,7 @@ class PopupMenu(QDialog):
 
     def _populate_properties(self):
         """Populate the menu with bookmarked items on top, regular items below."""
+        self._all_items = []
         bookmarked_list = []
         for mapping in self.properties:
             for key, val in mapping.items():
@@ -280,12 +295,14 @@ class PopupMenu(QDialog):
                     bookmarked_list.append(item_widget)
                 else:
                     self.regular_layout.addWidget(item_widget)
+                self._all_items.append(item_widget)
 
         # If bookmarked_list isn't empty, style the last item differently
         for idx, wdg in enumerate(bookmarked_list):
             if idx == len(bookmarked_list) - 1:
                 wdg.label.setStyleSheet(_bookmark_bottom_style())
             self.bookmarked_layout.addWidget(wdg)
+            self._all_items.append(wdg)
 
         self.separator.setVisible(len(bookmarked_list) > 0)
 
@@ -295,6 +312,7 @@ class PopupMenu(QDialog):
         if remove_item:
             self.removed_items.add((key, val))
             self._remove_layout_item(label)
+            self._update_visible_items()
 
     def _remove_layout_item(self, label):
         """Remove a widget with the given label from either layout."""
@@ -326,6 +344,7 @@ class PopupMenu(QDialog):
         self._search_layout_iterative(self.bookmarked_layout, text)
         self._search_layout_iterative(self.regular_layout, text)
         self.separator.setVisible(len(text) == 0 and bool(self.bookmarked_items))
+        self._update_visible_items()
 
     def _search_layout_iterative(self, layout, search_text):
         queue = [layout]
@@ -344,10 +363,70 @@ class PopupMenu(QDialog):
                     is_match = search_text in child_wdg.label.text().lower()
                     child_wdg.setVisible(is_match)
 
+    def _update_visible_items(self):
+        # Gather all visible PropertyItemWidget in order
+        self.visible_items = [w for w in self._all_items if w.isVisible()]
+        # Remove highlight from all
+        for w in self._all_items:
+            w.set_highlighted(False)
+        # Set highlight to current selection only if navigation started
+        if self.visible_items and self._keyboard_navigation_started:
+            if self.current_selection_index < 0 or self.current_selection_index >= len(self.visible_items):
+                self.current_selection_index = 0
+            self.visible_items[self.current_selection_index].set_highlighted(True)
+        else:
+            self.current_selection_index = -1
+
+    def _navigate_up(self):
+        if not self.visible_items:
+            return
+        if not self._keyboard_navigation_started:
+            self._keyboard_navigation_started = True
+            self.current_selection_index = 0
+            self._update_visible_items()
+            return
+        self.visible_items[self.current_selection_index].set_highlighted(False)
+        self.current_selection_index = (self.current_selection_index - 1) % len(self.visible_items)
+        self.visible_items[self.current_selection_index].set_highlighted(True)
+        self._ensure_item_visible(self.visible_items[self.current_selection_index])
+
+    def _navigate_down(self):
+        if not self.visible_items:
+            return
+        if not self._keyboard_navigation_started:
+            self._keyboard_navigation_started = True
+            self.current_selection_index = 0
+            self._update_visible_items()
+            return
+        self.visible_items[self.current_selection_index].set_highlighted(False)
+        self.current_selection_index = (self.current_selection_index + 1) % len(self.visible_items)
+        self.visible_items[self.current_selection_index].set_highlighted(True)
+        self._ensure_item_visible(self.visible_items[self.current_selection_index])
+
+    def _activate_current_item(self):
+        if not self._keyboard_navigation_started:
+            return
+        if self.visible_items and 0 <= self.current_selection_index < len(self.visible_items):
+            # Simulate click
+            self.visible_items[self.current_selection_index]._on_label_clicked(None)
+
+    def _ensure_item_visible(self, item):
+        # Scroll the scroll area to ensure the item is visible
+        area = self.ui.scrollArea
+        widget = item
+        y = widget.mapTo(self.container, widget.pos()).y()
+        area.verticalScrollBar().setValue(y)
+
     def keyPressEvent(self, event: QKeyEvent):
-        """Allow closing with escape; no keyboard-based item selection."""
+        """Handle keyboard navigation and escape key."""
         if event.key() == Qt.Key_Escape:
             self.close()
+        elif event.key() == Qt.Key_Up:
+            self._navigate_up()
+        elif event.key() == Qt.Key_Down:
+            self._navigate_down()
+        elif event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            self._activate_current_item()
         else:
             super().keyPressEvent(event)
 
@@ -360,15 +439,23 @@ class PopupMenu(QDialog):
         return super().event(evt)
 
     def showEvent(self, evt):
-        """Position the popup near the mouse cursor when it shows."""
-        screen_geo = QApplication.primaryScreen().availableGeometry()
+        """Position the popup near the mouse cursor, on the correct screen, when it shows."""
+        # Find the screen under the cursor
+        cursor_pos = QCursor.pos()
+        screen = None
+        for s in QApplication.screens():
+            if s.geometry().contains(cursor_pos):
+                screen = s
+                break
+        if screen is None:
+            screen = QApplication.primaryScreen()
+        screen_geo = screen.availableGeometry()
         win_geo = self.geometry()
-
-        x = min(max(QCursor.pos().x(), screen_geo.left()), screen_geo.right() - win_geo.width())
-        y = min(max(QCursor.pos().y(), screen_geo.top()), screen_geo.bottom() - win_geo.height())
-
+        x = min(max(cursor_pos.x(), screen_geo.left()), screen_geo.right() - win_geo.width())
+        y = min(max(cursor_pos.y(), screen_geo.top()), screen_geo.bottom() - win_geo.height())
         self.move(x, y)
         super().showEvent(evt)
+        self._update_visible_items()
 
     def closeEvent(self, evt):
         """Clean up layouts and references on close."""
