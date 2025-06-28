@@ -17,6 +17,7 @@ from PySide6.QtGui import (
     QUndoStack,
     QKeySequence
 )
+import uuid
 import traceback, ctypes
 from PySide6.QtCore import Qt, QTimer, Signal
 from src.settings.main import get_settings_value, get_settings_bool
@@ -38,7 +39,7 @@ from src.editors.smartprop_editor.property_frame import PropertyFrame
 from src.editors.smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from src.editors.smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from src.widgets.popup_menu.main import PopupMenu
-from src.editors.smartprop_editor.commands import GroupElementsCommand
+from src.editors.smartprop_editor.commands import GroupElementsCommand, BulkModelImportCommand, NewFromPresetCommand, PasteItemsCommand
 from src.forms.replace_dialog.main import FindAndReplaceDialog
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, error, exception_handler
 from src.widgets.element_id import ElementIDGenerator
@@ -341,7 +342,6 @@ class SmartPropDocument(QMainWindow):
         for root, dirs, files in os.walk(SmartPropEditor_Preset_Path):
             for file in files:
                 presets.append({file: os.path.join(root, file)})
-
         self.popup_menu = PopupMenu(presets, add_once=False, window_name="SPE_elements_presets")
         self.popup_menu.add_property_signal.connect(lambda name, value: self.load_preset(name, value))
         self.popup_menu.show()
@@ -818,10 +818,57 @@ class SmartPropDocument(QMainWindow):
         return item_visible or any_child_visible
 
     def open_bulk_model_importer(self):
-        from src.editors.smartprop_editor.actions.bulk_model_importer import BulkModelImporterDialog, process_bulk_models
+        from src.editors.smartprop_editor.actions.bulk_model_importer import BulkModelImporterDialog
+        from src.editors.smartprop_editor._common import get_clean_class_name_value, get_label_id_from_value, get_ElementID_key
+        from src.widgets.element_id import update_value_ElementID
+        from src.widgets import HierarchyItemModel
+        import copy, os
         dialog = BulkModelImporterDialog(self, current_folder=self.parent.mini_explorer.get_current_folder(True))
-        # When accepted, process the selected files with the create reference option.
-        dialog.accepted_data.connect(lambda files, create_ref, ref_index: process_bulk_models(self, files, create_ref, ref_index))
+        def on_accept(files, create_ref, ref_index):
+            addon_path = self.parent.mini_explorer.get_current_folder(True)
+            ref_id = None
+            parent_item = self.ui.tree_hierarchy_widget.currentItem()
+            if parent_item is None:
+                parent_item = self.ui.tree_hierarchy_widget.invisibleRootItem()
+            items = []
+            for index, file_path in enumerate(files):
+                rel_path = os.path.relpath(file_path, addon_path).replace(os.path.sep, '/')
+                base_name, _ = os.path.splitext(os.path.basename(file_path))
+                element_dict = {
+                    "_class": "CSmartPropElement_Model",
+                    "m_sModelName": rel_path,
+                    "m_vModelScale": None,
+                    "m_MaterialGroupName": None,
+                    "m_Modifiers": [],
+                    "m_SelectionCriteria": []
+                }
+                is_reference = create_ref and (index == ref_index)
+                if is_reference:
+                    element_dict["m_sLabel"] = f"{base_name}_REF"
+                else:
+                    element_dict["m_sLabel"] = base_name
+                    if create_ref and ref_id is not None:
+                        element_dict["m_nReferenceID"] = ref_id
+                        element_dict["m_sReferenceObjectID"] = str(uuid.uuid4())
+                element_value = copy.deepcopy(element_dict)
+                update_value_ElementID(element_value)
+                label = element_value.get("m_sLabel", get_label_id_from_value(element_value))
+                new_item = HierarchyItemModel(
+                    _name=label,
+                    _data=element_value,
+                    _class=get_clean_class_name_value(element_value),
+                    _id=get_ElementID_key(element_value)
+                )
+                items.append(new_item)
+                if is_reference:
+                    try:
+                        ref_id = element_value.get("m_nElementID")
+                    except Exception:
+                        ref_id = None
+            self.undo_stack.push(BulkModelImportCommand(self, parent_item, items))
+            self._modified = True
+            self._edited.emit()
+        dialog.accepted_data.connect(on_accept)
         dialog.exec()
 
     # ======================================[Tree widget hierarchy context menu]========================================
@@ -831,7 +878,7 @@ class SmartPropDocument(QMainWindow):
         add_new_action.triggered.connect(self.add_an_element)
         add_new_action.setShortcut(QKeySequence("Ctrl+F"))
 
-        add_preset_action = menu.addAction("New using preset")
+        add_preset_action = menu.addAction("New from preset")
         add_preset_action.triggered.connect(self.add_preset)
 
         menu.addSeparator()
@@ -929,71 +976,23 @@ class SmartPropDocument(QMainWindow):
         self.undo_stack.push(self.ui.tree_hierarchy_widget.DeleteSelectedItems())
 
     def paste_item(self, tree, data_input=None, paste_to_parent=False):
+        from src.common import Kv3ToJson
+        from src.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
         if data_input is None:
             data_input = QApplication.clipboard().text()
         try:
             obj = Kv3ToJson(self.fix_format(data_input))
-            new_item = None
+            items = []
+            parent = tree.currentItem() or tree.invisibleRootItem()
             if paste_to_parent:
-                if tree.currentItem() and tree.currentItem().parent() is not None:
-                    parent_item = tree.currentItem().parent()
-                else:
-                    parent_item = tree.invisibleRootItem()
-                if "m_Children" in obj and obj["m_Children"]:
-                    new_item = deserialize_hierarchy_item(obj["m_Children"][0])
-                    parent_item.addChild(new_item)
-
-                    try:
-                        new_item.setText(0, unique_counter_name(new_item, tree))
-                    except Exception:
-                        pass
-                else:
-                    new_item = deserialize_hierarchy_item(obj)
-                    parent_item.addChild(new_item)
-                    try:
-                        new_item.setText(0, unique_counter_name(new_item, tree))
-                    except Exception:
-                        pass
+                parent = parent.parent() or tree.invisibleRootItem()
+            if "m_Children" in obj:
+                for child in obj["m_Children"]:
+                    item = deserialize_hierarchy_item(child)
+                    items.append(item)
             else:
-                if "m_Children" in obj:
-                    if obj["m_Children"]:
-                        new_item = deserialize_hierarchy_item(obj["m_Children"][0])
-                        if tree.currentItem():
-                            tree.currentItem().addChild(new_item)
-                        else:
-                            tree.invisibleRootItem().addChild(new_item)
-                        try:
-                            new_item.setText(0, unique_counter_name(new_item, tree))
-                        except Exception:
-                            pass
-                        
-                        for child in obj["m_Children"][1:]:
-                            child_item = deserialize_hierarchy_item(child)
-                            if tree.currentItem():
-                                tree.currentItem().addChild(child_item)
-                            else:
-                                tree.invisibleRootItem().addChild(child_item)
-                            try:
-                                child_item.setText(0, unique_counter_name(child_item, tree))
-                            except Exception:
-                                pass
-                else:
-                    new_item = deserialize_hierarchy_item(obj)
-                    if tree.currentItem():
-                        tree.currentItem().addChild(new_item)
-                    else:
-                        tree.invisibleRootItem().addChild(new_item)
-                    try:
-                        new_item.setText(0, unique_counter_name(new_item, tree))
-                    except Exception:
-                        pass
-            if new_item:
-                tree.clearSelection()
-                new_item.setSelected(True)
-                tree.scrollToItem(new_item)
-                tree.setFocus()
-
-            # Mark as modified
+                items.append(deserialize_hierarchy_item(obj))
+            self.undo_stack.push(PasteItemsCommand(tree, parent, items))
             self._modified = True
             self._edited.emit()
         except Exception as error:
