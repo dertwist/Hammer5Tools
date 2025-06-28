@@ -364,8 +364,15 @@ class PopupMenu(QDialog):
                     child_wdg.setVisible(is_match)
 
     def _update_visible_items(self):
-        # Gather all visible PropertyItemWidget in order
-        self.visible_items = [w for w in self._all_items if w.isVisible()]
+        # Gather all visible PropertyItemWidget in order: bookmarks first, then regular
+        def layout_visible_items(layout):
+            items = []
+            for i in range(layout.count()):
+                w = layout.itemAt(i).widget()
+                if w and w.isVisible():
+                    items.append(w)
+            return items
+        self.visible_items = layout_visible_items(self.bookmarked_layout) + layout_visible_items(self.regular_layout)
         # Remove highlight from all
         for w in self._all_items:
             w.set_highlighted(False)
