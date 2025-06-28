@@ -1,6 +1,7 @@
 [Setup]
 AppName=Hammer5Tools
 AppVersion=5.0.0
+DefaultGroupName=Hammer 5Tools
 
 ; Install to a portable folder by default
 DefaultDirName=C:\Portable\Hammer5Tools
@@ -21,7 +22,6 @@ Source: "Hammer5Tools\SmartPropEditor\*"; DestDir: "{app}\SmartPropEditor"; Flag
 Source: "Hammer5Tools\SoundEventEditor\Presets\*"; DestDir: "{app}\SoundEventEditor\Presets"; Flags: recursesubdirs ignoreversion
 
 [Icons]
-Name: "{group}\Hammer5Tools"; Filename: "{app}\Hammer5Tools.exe"
 Name: "{commondesktop}\Hammer5Tools"; Filename: "{app}\Hammer5Tools.exe"; Tasks: desktopicon
 
 [Tasks]
