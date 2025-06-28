@@ -1011,44 +1011,6 @@ class SmartPropDocument(QMainWindow):
         self._modified = True
         self._edited.emit()
 
-    def duplicate_hierarchy_items(self, tree):
-        selected_indexes = tree.selectedIndexes()
-        selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
-        selected_items = list(set(selected_items))
-
-        if not selected_items:
-            return
-
-        parent_to_items = {}
-        for item in selected_items:
-            parent = item.parent() or tree.invisibleRootItem()
-            if parent not in parent_to_items:
-                parent_to_items[parent] = []
-            parent_to_items[parent].append(item)
-
-        tree.clearSelection()
-
-        for parent, items in parent_to_items.items():
-            for item in items:
-                item_data = serialization_hierarchy_items(item=item)
-
-                if item_data and "m_Children" in item_data and item_data["m_Children"]:
-                    new_item = deserialize_hierarchy_item(item_data["m_Children"][0])
-                    parent.addChild(new_item)
-
-                    try:
-                        new_item.setText(0, unique_counter_name(new_item, tree))
-                    except Exception:
-                        pass
-
-                    new_item.setSelected(True)
-
-        if tree.selectedItems():
-            tree.scrollToItem(tree.selectedItems()[0])
-
-        self._modified = True
-        self._edited.emit()
-
     # ======================================[Window State]========================================
     def _restore_user_prefs(self):
         geo = self.settings.value("SmartPropEditorMainWindow/geometry")
