@@ -61,6 +61,11 @@ Run configurations are available for PyCharm and Visual Studio Code.
   ```shell
   python makefile.py --build-all --archive
   ```
+  The script will generate exe file in the `hammer5tools` folder. After that
+  it will create a zip archive of the application in the `dist` folder for distribution.
+  The archive used by automic updates and can be used to run the application on other computers without installation.
+
+
 - **Installer:**
 
   To create the installer, you need to install [Inno Setup](https://jrsoftware.org/isinfo.php). Do not change the default installation path.
