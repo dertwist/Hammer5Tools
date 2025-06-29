@@ -9,7 +9,7 @@ DefaultDirName=C:\Portable\Hammer5Tools
 ; Do not generate an uninstaller
 Uninstallable=no
 
-OutputDir=Hammer5Tools
+OutputDir=dist
 OutputBaseFilename=hammer5tools_setup
 Compression=lzma
 SolidCompression=yes

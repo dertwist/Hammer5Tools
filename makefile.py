@@ -201,7 +201,9 @@ def main() -> None:
         print(f"Error during build: {e}")
         return
 
-    output_folder = 'hammer5tools'
+    output_folder = 'dist'
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
     zip_output_path = os.path.join(output_folder, 'hammer5tools.zip')
 
     if args.archive:
@@ -214,7 +216,7 @@ def main() -> None:
             'Hammer5ToolsInstaller.exe'
         }
         excluded_paths = ['SoundEventEditor\\sounds']
-        archive_files(output_folder, zip_output_path, excluded_files, excluded_paths)
+        archive_files('Hammer5Tools', zip_output_path, excluded_files, excluded_paths)
         elapsed_time = time.time() - stage_start_time
         results.append(["Archiving files", f"{elapsed_time:.2f} seconds"])
 
