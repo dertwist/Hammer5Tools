@@ -63,6 +63,7 @@ from src.widgets import *
 # Global paths
 steam_path = get_steam_path()
 cs2_path = get_cs2_path()
+print(f'Cs2: {get_cs2_path()}')
 stop_discord_thread = threading.Event()
 INSTANCE_KEY = "Hammer5ToolsInstance"
 
@@ -126,17 +127,24 @@ class Widget(QMainWindow):
         print(cs2_path)
         print(app_dir)
         #Checking for Counter Strike 2 installation
-        if cs2_path == app_dir:
+        if cs2_path is None:
             msg_box = QMessageBox()
             msg_box.setIcon(QMessageBox.Warning)
-            msg_box.setWindowTitle("Counter Strike 2 Not Installed")
-            msg_box.setText("Counter Strike 2 is not installed on your system.")
+            msg_box.setWindowTitle("Counter Strike 2 Not Found")
+            msg_box.setText("Counter Strike 2 installation was not found automatically.\n\n"
+                          "You can manually set the CS2 path in Settings > General > CS2 Path.\n\n"
+                          "Would you like to continue anyway?")
             exit_button = msg_box.addButton("Exit", QMessageBox.RejectRole)
+            settings_button = msg_box.addButton("Open Settings", QMessageBox.ActionRole)
             continue_button = msg_box.addButton("Continue Anyway", QMessageBox.AcceptRole)
-            msg_box.setDefaultButton(exit_button)
-            msg_box.exec()
+            msg_box.setDefaultButton(settings_button)
+            result = msg_box.exec()
+            
             if msg_box.clickedButton() == exit_button:
                 sys.exit(1)
+            elif msg_box.clickedButton() == settings_button:
+                # We'll open settings after the main window is fully initialized
+                QTimer.singleShot(500, self.open_preferences_dialog)
 
         # Setup tray icon early so that restoration has a fallback.
         self.setup_tray_icon()
@@ -174,8 +182,11 @@ class Widget(QMainWindow):
 
         # Setup filesystem watcher for addon folder.
         self.addon_watcher = QFileSystemWatcher(self)
-        self.addon_watcher.addPath(os.path.join(cs2_path, "content", "csgo_addons"))
-        self.addon_watcher.directoryChanged.connect(self.refresh_addon_combobox)
+        if cs2_path is not None:
+            addon_folder_path = os.path.join(cs2_path, "content", "csgo_addons")
+            if os.path.exists(addon_folder_path):
+                self.addon_watcher.addPath(addon_folder_path)
+                self.addon_watcher.directoryChanged.connect(self.refresh_addon_combobox)
 
         for dock in self.findChildren(QDockWidget):
             dock.show()
@@ -255,9 +266,23 @@ class Widget(QMainWindow):
         self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
+        
+        # Check if CS2 path is available
+        if cs2_path is None:
+            print("CS2 path not set, cannot populate addon combobox")
+            self.ui.ComboBoxSelectAddon.addItem("CS2 Path Not Set")
+            self.ui.ComboBoxSelectAddon.setCurrentIndex(0)
+            return
+            
         addons_folder = os.path.join(cs2_path, "content", "csgo_addons")
         found_any = False
         try:
+            if not os.path.exists(addons_folder):
+                print(f"Addons folder does not exist: {addons_folder}")
+                self.ui.ComboBoxSelectAddon.addItem("Addons Folder Not Found")
+                self.ui.ComboBoxSelectAddon.setCurrentIndex(0)
+                return
+                
             for item in os.listdir(addons_folder):
                 full_path = os.path.join(addons_folder, item)
                 if os.path.isdir(full_path) and item not in exclude_addons:
@@ -389,71 +414,70 @@ class Widget(QMainWindow):
         else:
             self.exit_application()
 
-    def selected_addon_name(self):
+    @exception_handler
+    def selected_addon_name(self, text=None):
         new_addon = self.ui.ComboBoxSelectAddon.currentText()
         if get_addon_name() == new_addon and getattr(self, 'SmartPropEditorMainWindow', None):
             return
 
         set_addon_name(new_addon)
-        try:
-            if getattr(self, 'SoundEventEditorMainWindow', None):
-                self.SoundEventEditorMainWindow.close()
-                self.SoundEventEditorMainWindow.deleteLater()
-                self.SoundEventEditorMainWindow = None
-        except Exception as e:
-            print(f"Error while cleaning up SoundEventEditorMainWindow: {e}")
-        try:
-            if getattr(self, 'SmartPropEditorMainWindow', None):
-                layout = self.ui.smartpropeditor_tab.layout()
-                layout.removeWidget(self.SmartPropEditorMainWindow)
-                self.SmartPropEditorMainWindow.close()   # call close(), not closeEvent(self.event)
-                self.SmartPropEditorMainWindow.deleteLater()
-                self.SmartPropEditorMainWindow = None
-        except Exception as e:
-            print(f"Error while cleaning up SmartPropEditorMainWindow: {e}")
-        try:
-            if getattr(self, 'BatchCreator_MainWindow', None):
-                self.BatchCreator_MainWindow.close()
-                self.BatchCreator_MainWindow.deleteLater()
-                self.BatchCreator_MainWindow = None
-        except Exception as e:
-            print('Error while cleaning up BatchCreator_MainWindow:', e)
-        try:
-            if getattr(self, 'LoadingEditorMainWindow', None):
-                self.LoadingEditorMainWindow.close()
-                self.LoadingEditorMainWindow.deleteLater()
-                self.LoadingEditorMainWindow = None
-        except Exception as e:
-            print('Error while cleaning up LoadingEditorMainWindow:', e)
+        if getattr(self, 'SoundEventEditorMainWindow', None):
+            self.SoundEventEditorMainWindow.close()
+            self.SoundEventEditorMainWindow.deleteLater()
+            self.SoundEventEditorMainWindow = None
+        if getattr(self, 'SmartPropEditorMainWindow', None):
+            layout = self.ui.smartpropeditor_tab.layout()
+            layout.removeWidget(self.SmartPropEditorMainWindow)
+            self.SmartPropEditorMainWindow.close()
+            self.SmartPropEditorMainWindow.deleteLater()
+            self.SmartPropEditorMainWindow = None
+        if getattr(self, 'BatchCreator_MainWindow', None):
+            self.BatchCreator_MainWindow.close()
+            self.BatchCreator_MainWindow.deleteLater()
+            self.BatchCreator_MainWindow = None
+        if getattr(self, 'LoadingEditorMainWindow', None):
+            self.LoadingEditorMainWindow.close()
+            self.LoadingEditorMainWindow.deleteLater()
+            self.LoadingEditorMainWindow = None
 
         # INITIALIZE NEW EDITOR INSTANCES
-        try:
-            self.BatchCreator_MainWindow = BatchCreatorMainWindow(update_title=self.update_title)
-            self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
-        except Exception as e:
-            print('Error while setting up BatchCreator_MainWindow:', e)
-        try:
+        self.BatchCreator_MainWindow = BatchCreatorMainWindow(update_title=self.update_title)
+        self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
+        if cs2_path is not None:
             self.SoundEventEditorMainWindow = SoundEventEditorMainWindow(update_title=self.update_title)
-            self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWindow)
-        except Exception as e:
-            print(f"Error while setting up SoundEventEditorMainWindow: {e}")
-        try:
+        else:
+            print("SoundEventEditor: CS2 path not set, skipping initialization")
+            self.SoundEventEditorMainWindow = None
+        self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWindow)
+        if cs2_path is not None:
             self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(update_title=self.update_title, parent=self)
-            self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
-        except Exception as e:
-            print(f"Error while setting up SmartPropEditorMainWindow: {e}")
-        try:
+        else:
+            self.SmartPropEditorMainWindow = None
+        self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
+        if cs2_path is not None:
             self.LoadingEditorMainWindow = Loading_editorMainWindow()
-            self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
-        except Exception as e:
-            print(f"Error while setting up LoadingEditorMainWindow: {e}")
+        else:
+            print("LoadingEditor: CS2 path not set, skipping initialization")
+            self.LoadingEditorMainWindow = None
+        self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
 
     @exception_handler
     def open_addons_folder(self):
+        if cs2_path is None:
+            QMessageBox.warning(self, "CS2 Path Not Set", 
+                              "CS2 installation path is not set. Please set it in Settings > General > CS2 Path.")
+            return
+            
         addon_name = self.ui.ComboBoxSelectAddon.currentText()
         folder_name = self.ui.open_addons_folder_downlist.currentText()
         folder_path = r"\game\csgo_addons" if folder_name == "Game" else r"\content\csgo_addons"
-        os.startfile(f"{cs2_path}{folder_path}\\{addon_name}")
+        full_path = f"{cs2_path}{folder_path}\\{addon_name}"
+        
+        if os.path.exists(full_path):
+            os.startfile(full_path)
+        else:
+            QMessageBox.warning(self, "Folder Not Found", 
+                              f"The addon folder does not exist:\n{full_path}")
 
     @exception_handler
     def open_preferences_dialog(self):

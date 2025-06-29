@@ -103,6 +103,21 @@ class PreferencesDialog(QDialog):
         self.browse_archive_button.set_size(27)
         layout_paths.addWidget(self.browse_archive_button)
         layout.addWidget(self.frame_paths)
+        
+        # CS2 Path row
+        self.frame_cs2_path = QFrame(general_tab_content)
+        layout_cs2_path = QHBoxLayout(self.frame_cs2_path)
+        cs2_label = QLabel("CS2 path:", self.frame_cs2_path)
+        cs2_label.setMinimumWidth(130)
+        layout_cs2_path.addWidget(cs2_label)
+        self.preferences_lineedit_cs2_path = QLineEdit(self.frame_cs2_path)
+        layout_cs2_path.addWidget(self.preferences_lineedit_cs2_path)
+        # Add "Browse" button for CS2 path
+        self.browse_cs2_button = Button()
+        self.browse_cs2_button.set_icon_folder_open()
+        self.browse_cs2_button.set_size(27)
+        layout_cs2_path.addWidget(self.browse_cs2_button)
+        layout.addWidget(self.frame_cs2_path)
         # Add divider after Paths Subcategory
         layout.addWidget(self.create_divider(general_tab_content))
         # ------------- Discord Status Subcategory -------------
@@ -339,6 +354,17 @@ class PreferencesDialog(QDialog):
 
     def populate_preferences(self):
         self.preferences_lineedit_archive_path.setText(get_settings_value('PATHS', 'archive'))
+        # Populate CS2 path
+        manual_cs2_path = get_manual_cs2_path()
+        if manual_cs2_path:
+            self.preferences_lineedit_cs2_path.setText(manual_cs2_path)
+        else:
+            # Show current detected path if any
+            current_cs2_path = get_cs2_path()
+            if current_cs2_path:
+                self.preferences_lineedit_cs2_path.setPlaceholderText(f"Auto-detected: {current_cs2_path}")
+            else:
+                self.preferences_lineedit_cs2_path.setPlaceholderText("CS2 not found - set manually")
         self.checkBox_show_in_hammer_discord_status.setChecked(get_settings_bool('DISCORD_STATUS', 'show_status'))
         self.checkBox_hide_project_name_discord_status.setChecked(get_settings_bool('DISCORD_STATUS', 'show_project_name'))
         self.editline_custom_discord_status.setText(get_settings_value('DISCORD_STATUS', 'custom_status'))
@@ -398,6 +424,11 @@ class PreferencesDialog(QDialog):
         self.preferences_lineedit_archive_path.textChanged.connect(
             lambda: set_settings_value('PATHS', 'archive', self.preferences_lineedit_archive_path.text())
         )
+        # Connect CS2 path
+        self.preferences_lineedit_cs2_path.textChanged.connect(
+            lambda: set_manual_cs2_path(self.preferences_lineedit_cs2_path.text())
+        )
+        self.browse_cs2_button.clicked.connect(self.browse_cs2_path)
         self.checkBox_show_in_hammer_discord_status.toggled.connect(
             lambda: set_settings_bool('DISCORD_STATUS', 'show_status', self.checkBox_show_in_hammer_discord_status.isChecked())
         )
@@ -455,6 +486,27 @@ class PreferencesDialog(QDialog):
         if selected_dir:
             self.preferences_lineedit_archive_path.setText(selected_dir)
             set_settings_value('PATHS', 'archive', selected_dir)
+
+    def browse_cs2_path(self):
+        selected_dir = QFileDialog.getExistingDirectory(self, "Select Counter Strike 2 Installation Path", os.getcwd())
+        if selected_dir:
+            # Validate that this looks like a CS2 installation
+            cs2_exe_path = os.path.join(selected_dir, "game", "bin", "win64", "cs2.exe")
+            if os.path.exists(cs2_exe_path):
+                self.preferences_lineedit_cs2_path.setText(selected_dir)
+                set_manual_cs2_path(selected_dir)
+                # Show success message
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.information(self, "CS2 Path Set", 
+                                      f"CS2 path successfully set to:\n{selected_dir}\n\n"
+                                      "Please restart the application for changes to take effect.")
+            else:
+                # Show error message
+                from PySide6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "Invalid CS2 Path", 
+                                  f"The selected directory does not appear to be a valid CS2 installation.\n\n"
+                                  f"Expected to find: {cs2_exe_path}\n\n"
+                                  "Please select the root CS2 installation directory.")
 
     def open_settings_folder(self):
         subprocess.Popen(f'explorer "{os.getcwd()}"')
