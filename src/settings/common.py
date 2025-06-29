@@ -72,28 +72,37 @@ def get_cs2_path():
     Retrieves the CS2 installation path without saving it back to the settings.
     """
     def cs2_exe_exists(cs2_path):
+        if not cs2_path or cs2_path == app_dir:
+            return False
         cs2_exe_path = os.path.join(cs2_path, "game", "bin", "win64", "cs2.exe")
         return os.path.exists(cs2_exe_path)
 
-    cs2_path = get_settings_value('PATHS', 'Cs2')
+    manual_cs2_path = get_settings_value('PATHS', 'manual_cs2_path')
+    if manual_cs2_path:
+        manual_cs2_path = os.path.normpath(manual_cs2_path)
+        if cs2_exe_exists(manual_cs2_path):
+            print(f"Using manual CS2 path: {manual_cs2_path}")
+            return manual_cs2_path
 
+    cs2_path = get_counter_strike_path_from_registry()
     if cs2_path:
         cs2_path = os.path.normpath(cs2_path)
         if cs2_exe_exists(cs2_path):
             return cs2_path
-        else:
-            cs2_path = app_dir
 
-    if not cs2_path:
-        cs2_path = get_counter_strike_path_from_registry()
-        if cs2_path:
-            cs2_path = os.path.normpath(cs2_path)
-            if cs2_exe_exists(cs2_path):
-                return cs2_path
-            else:
-                cs2_path = app_dir
+    return None
 
-    return cs2_path
+def set_manual_cs2_path(path):
+    """
+    Sets the manual CS2 path in settings.
+    """
+    set_settings_value('PATHS', 'manual_cs2_path', path)
+
+def get_manual_cs2_path():
+    """
+    Gets the manual CS2 path from settings.
+    """
+    return get_settings_value('PATHS', 'manual_cs2_path')
 
 def get_steam_path():
     """
@@ -108,16 +117,20 @@ def get_steam_path():
         pass
 
 def get_addon_name():
-    return get_settings_value('LAUNCH', 'addon')
+    return get_settings_value('LAUNCH', 'addon', default='addon')
 
 def set_addon_name(addon_name_set):
     return set_settings_value('LAUNCH', 'addon', addon_name_set)
 def get_addon_dir():
     try:
         cs2_path = get_cs2_path()
+        if cs2_path is None:
+            raise ValueError("CS2 path not found. Please set CS2 installation path in settings.")
+        
         addon_name = get_addon_name()
         if not addon_name:
             raise ValueError("Addon name not found or empty in configuration.")
+        
         return os.path.join(cs2_path, 'content', 'csgo_addons', addon_name)
     except Exception as e:
         debug(f"Error retrieving addon directory: {e}")
