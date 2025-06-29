@@ -15,12 +15,7 @@ app_version = '4.7.2'
 
 #======================================================<  Copied from preferences.py file  >===================================================
 
-def get_cs2_path():
-    try:
-        counter_strikke_2_path = (get_counter_strike_path_from_registry()).replace("\\\\", "\\")
-        return counter_strikke_2_path
-    except:
-        pass
+from src.settings.common import get_cs2_path
 
 #=================================================================<  Title  >===============================================================
 def enable_dark_title_bar(window):

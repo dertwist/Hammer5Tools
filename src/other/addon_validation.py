@@ -9,8 +9,13 @@ def validate_addon_structure():
     The addon should have a valid structure with only one main vmap file that matches the addon name.
     All versions should be stored in a VCS file or used as prefabs.
     """
-    addon_name = get_addon_name()
-    addon_dir = get_addon_dir()
+    try:
+        addon_name = get_addon_name()
+        addon_dir = get_addon_dir()
+    except (ValueError, TypeError) as e:
+        # CS2 path not found or addon name not set - skip validation
+        print(f"Skipping addon validation: {e}")
+        return True
 
     # Check if the main vmap file exists and matches the addon name
     main_vmap_file = os.path.join(addon_dir, 'maps', f"{addon_name}.vmap")

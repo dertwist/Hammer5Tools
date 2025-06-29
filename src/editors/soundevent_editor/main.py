@@ -85,6 +85,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.update_title = update_title
 
         # Variables
+        print(get_cs2_path())
+        print(get_addon_name())
         self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
         self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'sounds')
 

@@ -10,11 +10,22 @@ from src.widgets import exception_handler
 
 @exception_handler
 def delete_addon(ui, cs2_path, get_addon_name):
-    delete_paths = [
-        os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name()),
-        os.path.join(cs2_path, 'game', 'csgo_addons', get_addon_name())
-    ]
+    if cs2_path is None:
+        QMessageBox.warning(None, "CS2 Path Not Set", 
+                          "CS2 installation path is not set. Please set it in Settings > General > CS2 Path.")
+        return
+        
     addon_name = get_addon_name()
+    if not addon_name:
+        QMessageBox.warning(None, "No Addon Selected", 
+                          "No addon is selected for deletion.")
+        return
+        
+    delete_paths = [
+        os.path.join(cs2_path, 'content', 'csgo_addons', addon_name),
+        os.path.join(cs2_path, 'game', 'csgo_addons', addon_name)
+    ]
+    
     reply = QMessageBox.question(None, 'Remove Addon', f"Are you sure you want to permanently delete the addon '{addon_name}'? This action cannot be undone.", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
     if reply == QMessageBox.Yes:
         try:
@@ -39,6 +50,16 @@ def assemble_commands(commands:str, addon_name):
 def __launch_addon():
     addon_name = get_addon_name()
     cs2_path = get_cs2_path()
+    
+    if cs2_path is None:
+        QMessageBox.warning(None, "CS2 Path Not Set", 
+                          "CS2 installation path is not set. Please set it in Settings > General > CS2 Path.")
+        return
+        
+    if not addon_name:
+        QMessageBox.warning(None, "No Addon Selected", 
+                          "No addon is selected for launch.")
+        return
 
     commands = get_settings_value("LAUNCH", "commands")
     if not commands:
@@ -48,6 +69,12 @@ def __launch_addon():
     commands = assemble_commands(commands, addon_name)
 
     cs2_exe_path = os.path.join(cs2_path, "game", "bin", "win64", "cs2.exe")
+    
+    if not os.path.exists(cs2_exe_path):
+        QMessageBox.warning(None, "CS2 Executable Not Found", 
+                          f"CS2 executable not found at:\n{cs2_exe_path}\n\n"
+                          "Please verify your CS2 installation path in Settings.")
+        return
 
     cs2_launch_commands = f'"{cs2_exe_path}" {commands}'
 
