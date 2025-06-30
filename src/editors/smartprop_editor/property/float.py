@@ -11,7 +11,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 class PropertyFloat(QWidget):
     edited = Signal()
 
-    def __init__(self, value_class, value, variables_scrollArea, int_bool=False, slider_range=[0, 0]):
+    def __init__(self, element_id_generator, value_class, value, variables_scrollArea, int_bool=False, slider_range=[0, 0]):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -66,7 +66,7 @@ class PropertyFloat(QWidget):
 
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Float', 'Int'], variable_name=self.value_class)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Float', 'Int'], variable_name=self.value_class, element_id_generator=element_id_generator)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)

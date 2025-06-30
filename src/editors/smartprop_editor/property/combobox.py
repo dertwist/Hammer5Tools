@@ -8,7 +8,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 
 class PropertyCombobox(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, items, filter_types):
+    def __init__(self, value_class, value, variables_scrollArea, items, filter_types, element_id_generator):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -51,7 +51,8 @@ class PropertyCombobox(QWidget):
         # Variable setup
         self.variable = ComboboxVariablesWidget(
             variables_layout=self.variables_scrollArea,
-            filter_types=filter_types, variable_name=self.value_class
+            filter_types=filter_types, variable_name=self.value_class,
+            element_id_generator=element_id_generator
         )
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
