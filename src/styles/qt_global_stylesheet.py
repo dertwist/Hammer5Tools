@@ -760,7 +760,8 @@ QMenu::item {
     border-top: 0px;
     bottom-bottom: 2px solid transparent;
     border-color: rgba(80, 80, 80, 105);
-    padding: 4px 12px 4px 12px;
+    padding: 4px 8px 4px 8px;
+    padding-right: 20px;
     color: #cccccc;
 }
 
