@@ -67,6 +67,7 @@ class HotkeyEditorMainWindow(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.parent = parent
 
         # variables definition
         self.selected_preset = ''
@@ -137,7 +138,7 @@ class HotkeyEditorMainWindow(QMainWindow):
             pass
         else:
             os.makedirs(self.hotkeys_path)
-        self.explorer_instance = Explorer(editor_name='HotkeyEditor', tree_directory=self.hotkeys_path, parent=self.ui.frame, addon=get_addon_name())
+        self.explorer_instance = Explorer(editor_name='HotkeyEditor', tree_directory=self.hotkeys_path, parent=self.parent, addon=get_addon_name())
         self.ui.explorer_layout.insertWidget(0, self.explorer_instance.frame)
 
     def populate_editor(self):

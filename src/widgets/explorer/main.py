@@ -428,22 +428,60 @@ class Explorer(QMainWindow):
     def add_file_actions(self, menu, index):
         file_path = self.model.filePath(index)
         file_extension = os.path.splitext(file_path)[1]
-        
-        # Get default application for this file extension
+        file_path = self.model.filePath(index)
+        file_extension = file_path.split('.')[-1].lower()
+
+        if file_extension == "hbat":
+            open_config_action = QAction("Open Config", self)
+            open_config_action.setIcon(QIcon(file_icons['.hbat']))
+            open_config_action.triggered.connect(lambda: self.open_config(file_path))
+            menu.addAction(open_config_action)
+
+        if file_extension == "vsmart":
+            open_vsmart_action = QAction("Open Vsmart", self)
+            open_vsmart_action.setIcon(QIcon(file_icons['.vsmart']))
+            open_vsmart_action.triggered.connect(lambda: self.open_vsmart(file_path))
+            menu.addAction(open_vsmart_action)
+
         default_app = get_default_application(file_extension)
         if default_app:
             app_name, app_path = default_app
             open_action = QAction(f"Open with {app_name.replace('.exe', '')}", self)
         else:
             open_action = QAction("Open File", self)
-        
+
         open_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         open_action.triggered.connect(lambda: self.open_file(index))
         menu.addAction(open_action)
+
+        if file_extension == "vmdl":
+            menu.addSeparator()
+            quick_config_action = QAction("Quick Batch File", self)
+            quick_config_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            quick_config_action.triggered.connect(lambda: QuickConfigFile(file_path))
+            menu.addAction(quick_config_action)
+            menu.addSeparator()
+
+        if file_extension in model_extensions:
+            menu.addSeparator()
+            quick_vmdl_action = QAction("Quick VMDL File", self)
+            quick_vmdl_action.setIcon(QIcon(":/icons/edit_note_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            quick_vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
+            menu.addAction(quick_vmdl_action)
+            menu.addSeparator()
+        if file_extension == "hbat":
+            menu.addSeparator()
+            quick_process_action = QAction("Quick Process", self)
+            quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            quick_process_action.triggered.connect(lambda: QuickProcess(filepath=file_path).process())
+            menu.addAction(quick_process_action)
+            menu.addSeparator()
+
         open_path_action = QAction("Open File Folder", self)
         open_path_action.setIcon(QIcon(":/icons/folder_open.svg"))
         open_path_action.triggered.connect(lambda: self.open_path_file(index))
         menu.addAction(open_path_action)
+        menu.addSeparator()
         delete_action = QAction("Delete File", self)
         delete_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         delete_action.triggered.connect(lambda: self.delete_item(index))
@@ -461,32 +499,18 @@ class Explorer(QMainWindow):
         copy_relative_path_action.triggered.connect(lambda: self.copy_path(index, True))
         menu.addAction(copy_relative_path_action)
 
+        menu.addSeparator()
+
         copy_path_action = QAction("Copy Path", self)
         copy_path_action.setIcon(QIcon(":/icons/attachment.png"))
         copy_path_action.triggered.connect(lambda: self.copy_path(index, True, relative=False))
         menu.addAction(copy_path_action)
-        file_path = self.model.filePath(index)
-        file_extension = file_path.split('.')[-1].lower()
+
         if file_extension in audio_extensions:
             copy_audio_path_action = QAction("Copy Audio Path", self)
             copy_audio_path_action.setIcon(QIcon(":/icons/attachment.png"))
             copy_audio_path_action.triggered.connect(lambda: self.copy_audio_path(index, True))
             menu.addAction(copy_audio_path_action)
-        if file_extension == "vmdl":
-            quick_config_action = QAction("Quick Batch File", self)
-            quick_config_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-            quick_config_action.triggered.connect(lambda: QuickConfigFile(file_path))
-            menu.addAction(quick_config_action)
-        if file_extension in model_extensions:
-            quick_vmdl_action = QAction("Quick VMDL File", self)
-            quick_vmdl_action.setIcon(QIcon(":/icons/edit_note_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-            quick_vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
-            menu.addAction(quick_vmdl_action)
-        if file_extension == "hbat":
-            quick_process_action = QAction("Quick Process", self)
-            quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-            quick_process_action.triggered.connect(lambda: QuickProcess(filepath=file_path).process())
-            menu.addAction(quick_process_action)
 
     def duplicate_file(self, index):
         file_path = self.model.filePath(index)
@@ -507,6 +531,14 @@ class Explorer(QMainWindow):
             error_dialog = ErrorInfo(text="Duplication Error", details="Failed to duplicate the file.")
             error_dialog.exec_()
             return False
+
+    def open_config(self, filepath):
+        parent = self.parent()
+        parent.BatchCreator_MainWindow.open_filepath(filepath)
+    def open_vsmart(self, filepath):
+        parent = self.parent()
+        parent.SmartPropEditorMainWindow.open_file(external=False, filename=filepath)
+
 
     def copy_file(self, index):
         file_path = self.model.filePath(index)

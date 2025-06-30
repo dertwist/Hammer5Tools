@@ -54,6 +54,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui = Ui_BatchCreator_MainWindow()
         self.ui.setupUi(self)
         self.update_title = update_title
+        self.parent = parent
 
         self.current_file: Optional[str] = None
         self.process_data: Dict = get_default_file()['process'].copy()
@@ -68,7 +69,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.replace_reference_editline()
 
         self.explorer = Explorer(
-            parent=self.ui.left_vertical_frame,
+            parent=self.parent,
             tree_directory=self.explorer_directory,
             addon=self.addon_name,
             editor_name='BatchCreator'
@@ -459,6 +460,16 @@ class BatchCreatorMainWindow(QMainWindow):
                     QMessageBox.information(self, "Folder Selected", "You have selected a folder. Please select a file to open.")
             else:
                 QMessageBox.information(self, "No File Selected", "No file selected. Please select a file to open.")
+    def open_filepath(self, file_path: str):
+        if os.path.isfile(file_path):
+            ext = os.path.splitext(file_path)[1]
+            if ext != ".hbat":
+                if not self.confirm_open_anyway():
+                    return
+            self.load_file(file_path)
+            self.update_title('opened', file_path)
+        else:
+            QMessageBox.information(self, "Invalid File", "The selected path is not a valid file.")
 
     def confirm_open_anyway(self) -> bool:
         """Confirm opening a file with an unsupported extension."""

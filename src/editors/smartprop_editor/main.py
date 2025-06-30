@@ -82,7 +82,7 @@ class SmartPropEditorMainWindow(QMainWindow):
             tree_directory=self.tree_directory,
             addon=get_addon_name(),
             editor_name=editor_name,
-            parent=self.ui.explorer_layout_widget
+            parent=self.parent
         )
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
@@ -151,25 +151,25 @@ class SmartPropEditorMainWindow(QMainWindow):
                 base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
             self.update_document_tab_title(doc, base_name)
 
-    def open_file(self, external=False):
+    def open_file(self, external=False, filename=None):
         """
         Opens a .vsmart or .vdata file and creates a new document tab.
         If 'external' is True, uses a file dialog; otherwise uses the path from the explorer.
         Ensures only one instance of an opened file name is open at a time.
         """
-        filename = None
-        if external:
-            # Open a file dialog to select the file
-            filename, _ = QFileDialog.getOpenFileName(
-                self,
-                "Open File",
-                os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()),
-                "VSmart Files (*.vsmart *.vdata);;All Files (*)"
-            )
-        else:
-            # Get the currently selected file path from the explorer
-            if hasattr(self.mini_explorer, "get_current_path"):
-                filename = self.mini_explorer.get_current_path(absolute=True)
+        if filename is None:
+            if external:
+                # Open a file dialog to select the file
+                filename, _ = QFileDialog.getOpenFileName(
+                    self,
+                    "Open File",
+                    os.path.join(cs2_path, "content", "csgo_addons", get_addon_name()),
+                    "VSmart Files (*.vsmart *.vdata);;All Files (*)"
+                )
+            else:
+                # Get the currently selected file path from the explorer
+                if hasattr(self.mini_explorer, "get_current_path"):
+                    filename = self.mini_explorer.get_current_path(absolute=True)
 
         if filename:
             norm_filename = os.path.abspath(filename)
