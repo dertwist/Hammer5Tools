@@ -114,7 +114,8 @@ def perform_update(update_url="https://github.com/dertwist/Hammer5Tools/releases
     try:
         # Create the PowerShell update script.
         ps1_path = os.path.join(tempfile.gettempdir(), "self_update.ps1")
-        ps1_content = f"""$updatePath = "{update_path}"
+        ps1_content = f"""[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$updatePath = "{update_path}"
 $programPath = "{program_path}"
 $appExecutable = Join-Path -Path $programPath -ChildPath "Hammer5tools.exe"
 
