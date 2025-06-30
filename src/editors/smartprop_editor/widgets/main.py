@@ -65,14 +65,14 @@ class ComboboxVariables(ComboboxDynamicItems):
         else:
             return self.currentText()
 class ComboboxVariablesWidget(QWidget):
-    def __init__(self, parent=None, variables_layout=None, filter_types: list = None, variable_type: str = None, variable_name: str = None):
+    def __init__(self, element_id_generator, parent=None, variables_layout=None, filter_types: list = None, variable_type: str = None, variable_name: str = None):
         """Combobox variables widget with search and add buttons.
            It dynamically shows or hides the add button and supports creating new variables via a non-modal dialog.
         """
         super().__init__(parent)
         layout_widget = QHBoxLayout(self)
         layout_widget.setContentsMargins(0, 0, 0, 0)
-
+        self.element_id_generator = element_id_generator
         if variable_name is None:
             self.variable_name = "new_var"
         else:
@@ -123,6 +123,7 @@ class ComboboxVariablesWidget(QWidget):
 
     def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name, index: int = None):
         """Create a variable widget and add it to the variables layout."""
+        self.element_id_generator.update_value(var_value, force=True)
         variable = VariableFrame(
             name=name,
             widget_list=self.variables_layout,
@@ -140,6 +141,7 @@ class ComboboxVariablesWidget(QWidget):
 
     def duplicate_variable(self, data, index):
         """Duplicate the variable by reusing its properties."""
+        self.element_id_generator.update_value(data, force=True)
         self.add_variable(
             name=data[0],
             var_class=data[1],
