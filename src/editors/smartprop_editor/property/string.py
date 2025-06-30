@@ -9,12 +9,13 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 
 class PropertyString(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False, filter_types=None):
+    def __init__(self, element_id_generator, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False, filter_types=None):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(False)
         self.value_class = value_class
+        self.element_id_generator =element_id_generator
         self.value = value
         self.only_string = only_string
         self.expression_bool = expression_bool
@@ -57,7 +58,7 @@ class PropertyString(QWidget):
         self.text_line.completion_tail = ''
 
         # Variable
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types, variable_name=self.value_class)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types, variable_name=self.value_class, element_id_generator=element_id_generator)
         self.variable.setFixedWidth(256)
         self.variable.setMaximumHeight(24)
         self.variable.search_button.set_size(width=24, height=24)

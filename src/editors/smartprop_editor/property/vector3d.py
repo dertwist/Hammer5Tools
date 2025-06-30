@@ -17,10 +17,11 @@ class PropertyVector3D(QWidget):
     _pattern_phase2 = re.compile(r'([a-z0-9])([A-Z])')
 
 
-    def __init__(self, value_class, value, variables_scrollArea):
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
+        self.element_id_generator = element_id_generator
         self.setAcceptDrops(False)
         self.value_class = value_class
         self.value = value
@@ -42,7 +43,8 @@ class PropertyVector3D(QWidget):
         # Variable
         self.variable_logic_switch = ComboboxVariablesWidget(
             variables_layout=self.variables_scrollArea,
-            filter_types=['Vector3D'], variable_name=f"{self.value_class}"
+            filter_types=['Vector3D'], variable_name=f"{self.value_class}",
+            element_id_generator=self.element_id_generator
         )
         self.variable_logic_switch.setMinimumWidth(256)
         self.variable_logic_switch.setMaximumHeight(24)
@@ -57,7 +59,8 @@ class PropertyVector3D(QWidget):
 
         self.variable_x = ComboboxVariablesWidget(
             variables_layout=self.variables_scrollArea,
-            filter_types=filter_types, variable_name=f"{self.value_class}_x"
+            filter_types=filter_types, variable_name=f"{self.value_class}_x",
+            element_id_generator=self.element_id_generator
         )
         self.variable_x.setMinimumWidth(256)
         self.variable_x.setMaximumHeight(24)
@@ -86,7 +89,8 @@ class PropertyVector3D(QWidget):
 
         self.variable_y = ComboboxVariablesWidget(
             variables_layout=self.variables_scrollArea,
-            filter_types=filter_types, variable_name=f"{self.value_class}_y"
+            filter_types=filter_types, variable_name=f"{self.value_class}_y",
+            element_id_generator=self.element_id_generator
         )
         self.variable_y.setMinimumWidth(256)
         self.variable_y.setMaximumHeight(24)
@@ -114,7 +118,8 @@ class PropertyVector3D(QWidget):
 
         self.variable_z = ComboboxVariablesWidget(
             variables_layout=self.variables_scrollArea,
-            filter_types=filter_types, variable_name=f"{self.value_class}_z"
+            filter_types=filter_types, variable_name=f"{self.value_class}_z",
+            element_id_generator=self.element_id_generator
         )
         self.variable_z.setMinimumWidth(196)
         self.variable_z.setMaximumHeight(24)

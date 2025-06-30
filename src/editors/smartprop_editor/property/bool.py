@@ -8,7 +8,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 
 class PropertyBool(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea):
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -16,6 +16,7 @@ class PropertyBool(QWidget):
         self.value_class = value_class
         self.value = value
         self.variables_scrollArea = variables_scrollArea
+        self.element_id_generator = element_id_generator
 
         self.ui.logic_switch.wheelEvent = lambda event: None
         self.ui.value.wheelEvent = lambda event: None
@@ -40,7 +41,7 @@ class PropertyBool(QWidget):
         self.text_line.setPlainText('')
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Bool'], variable_name=self.value_class)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Bool'], variable_name=self.value_class, element_id_generator=self.element_id_generator)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)

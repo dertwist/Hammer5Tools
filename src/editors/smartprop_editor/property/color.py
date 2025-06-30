@@ -13,13 +13,14 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 
 class PropertyColor(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea):
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(False)
         self.value_class = value_class
         self.value = value
+        self.element_id_generator = element_id_generator
 
         self.color = [255, 255, 255]
         self.ui.logic_switch.setCurrentIndex(0)
@@ -41,7 +42,7 @@ class PropertyColor(QWidget):
 
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Color'], variable_name=self.value_class)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Color'], variable_name=self.value_class, element_id_generator=self.element_id_generator)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
