@@ -1,8 +1,9 @@
 import os
 import re
 import shutil
+import winreg
 from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QMessageBox, \
-    QLineEdit, QToolButton, QDialog, QListWidgetItem
+    QLineEdit, QToolButton, QDialog, QListWidgetItem, QTreeView, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QFrame
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel
@@ -121,6 +122,63 @@ class CustomFileSystemModel(QFileSystemModel):
         if index.isValid() and index.column() == self.NAME_COLUMN:
             return Qt.ItemIsEditable | Qt.ItemIsDragEnabled | Qt.ItemIsDropEnabled | default_flags
         return default_flags
+
+def get_default_application(file_extension):
+    """
+    Get the default application associated with a file extension on Windows.
+    Returns the application name and path, or None if not found.
+    """
+    try:
+        # Remove the dot from extension if present
+        if file_extension.startswith('.'):
+            file_extension = file_extension[1:]
+        
+        # Get the file type from the extension
+        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, f".{file_extension}") as key:
+            file_type = winreg.QueryValue(key, "")
+        
+        if not file_type:
+            return None
+            
+        # Get the command associated with the file type
+        try:
+            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, f"{file_type}\\shell\\open\\command") as key:
+                command = winreg.QueryValue(key, "")
+        except FileNotFoundError:
+            # Try alternative path
+            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, f"{file_type}\\shell\\edit\\command") as key:
+                command = winreg.QueryValue(key, "")
+        
+        if command:
+            # Extract the executable path from the command
+            # Commands often contain quotes and parameters like: "C:\Program Files\App\app.exe" "%1"
+            import shlex
+            try:
+                parts = shlex.split(command)
+                if parts:
+                    exe_path = parts[0]
+                    app_name = os.path.basename(exe_path)
+                    return app_name, exe_path
+            except ValueError:
+                # Fallback for malformed commands
+                if command.startswith('"'):
+                    end_quote = command.find('"', 1)
+                    if end_quote != -1:
+                        exe_path = command[1:end_quote]
+                        app_name = os.path.basename(exe_path)
+                        return app_name, exe_path
+                else:
+                    # Simple case without quotes
+                    parts = command.split()
+                    if parts:
+                        exe_path = parts[0]
+                        app_name = os.path.basename(exe_path)
+                        return app_name, exe_path
+        
+        return None
+        
+    except (FileNotFoundError, OSError, winreg.error):
+        return None
 
 class Explorer(QMainWindow):
     play_sound = Signal(str)
@@ -346,6 +404,7 @@ class Explorer(QMainWindow):
             paste_action.setIcon(QIcon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
             paste_action.triggered.connect(lambda: self.paste_file(self.model.index(self.tree_directory)))
             menu.addAction(paste_action)
+        menu.adjustSize()
         menu.exec_(self.tree.viewport().mapToGlobal(position))
 
     def add_folder_actions(self, menu, index):
@@ -367,7 +426,17 @@ class Explorer(QMainWindow):
         menu.addAction(paste_action)
 
     def add_file_actions(self, menu, index):
-        open_action = QAction("Open File with", self)
+        file_path = self.model.filePath(index)
+        file_extension = os.path.splitext(file_path)[1]
+        
+        # Get default application for this file extension
+        default_app = get_default_application(file_extension)
+        if default_app:
+            app_name, app_path = default_app
+            open_action = QAction(f"Open with {app_name.replace('.exe', '')}", self)
+        else:
+            open_action = QAction("Open File", self)
+        
         open_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         open_action.triggered.connect(lambda: self.open_file(index))
         menu.addAction(open_action)
