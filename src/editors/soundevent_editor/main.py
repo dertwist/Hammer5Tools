@@ -80,13 +80,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         super().__init__(parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.parent = parent
         self.settings = settings
         self.undo_stack = QUndoStack(self)
         self.update_title = update_title
 
         # Variables
-        print(get_cs2_path())
-        print(get_addon_name())
         self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
         self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'sounds')
 
@@ -131,7 +130,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             pass
         else:
             os.makedirs(self.filepath_sounds)
-        self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.ui.explorer_layout_widget, use_internal_player=True)
+        self.mini_explorer = Explorer(tree_directory=self.filepath_sounds, addon=get_addon_name(), editor_name='SoundEvent_Editor', parent=self.parent, use_internal_player=True)
         self.mini_explorer.tree.setStyleSheet("""border:none""")
         self.mini_explorer.play_sound.connect(self.play_sound)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)

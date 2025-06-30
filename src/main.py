@@ -124,8 +124,6 @@ class Widget(QMainWindow):
         self.ui.setupUi(self)
         enable_dark_title_bar(self)
 
-        print(cs2_path)
-        print(app_dir)
         #Checking for Counter Strike 2 installation
         if cs2_path is None:
             msg_box = QMessageBox()
@@ -440,11 +438,12 @@ class Widget(QMainWindow):
             self.LoadingEditorMainWindow.deleteLater()
             self.LoadingEditorMainWindow = None
 
+
         # INITIALIZE NEW EDITOR INSTANCES
-        self.BatchCreator_MainWindow = BatchCreatorMainWindow(update_title=self.update_title)
+        self.BatchCreator_MainWindow = BatchCreatorMainWindow(update_title=self.update_title, parent=self)
         self.ui.BatchCreator_tab.layout().addWidget(self.BatchCreator_MainWindow)
         if cs2_path is not None:
-            self.SoundEventEditorMainWindow = SoundEventEditorMainWindow(update_title=self.update_title)
+            self.SoundEventEditorMainWindow = SoundEventEditorMainWindow(update_title=self.update_title, parent=self)
         else:
             print("SoundEventEditor: CS2 path not set, skipping initialization")
             self.SoundEventEditorMainWindow = None
@@ -455,7 +454,7 @@ class Widget(QMainWindow):
             self.SmartPropEditorMainWindow = None
         self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
         if cs2_path is not None:
-            self.LoadingEditorMainWindow = Loading_editorMainWindow()
+            self.LoadingEditorMainWindow = Loading_editorMainWindow(parent=self)
         else:
             print("LoadingEditor: CS2 path not set, skipping initialization")
             self.LoadingEditorMainWindow = None
