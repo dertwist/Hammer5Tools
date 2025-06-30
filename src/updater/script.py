@@ -6,13 +6,43 @@ import threading
 import psutil
 import zipfile
 import io
+import ctypes
 
 from PySide6.QtWidgets import QApplication, QDialog, QVBoxLayout, QLabel, QProgressBar
-from PySide6.QtCore import Qt, QUrl, QEventLoop, QProcess
+from PySide6.QtCore import Qt, QUrl, QEventLoop
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
 DETACHED_PROCESS = 0x00000008
 
+def run_ps1_as_admin(ps1_path, args=None):
+    """
+    Runs the given PowerShell script as administrator.
+    :param ps1_path: Path to the .ps1 script
+    :param args: List of additional arguments to pass to the script
+    :return: True if the process was started, False otherwise
+    """
+    if not os.path.exists(ps1_path):
+        raise FileNotFoundError(f"Script not found: {ps1_path}")
+
+    params = [f'-ExecutionPolicy', 'Bypass', '-File', f'"{ps1_path}"']
+    if args:
+        params.extend(args)
+    params_str = ' '.join(params)
+
+    lpVerb = "runas"  # Causes UAC elevation prompt
+    lpFile = "powershell"
+    lpParameters = params_str
+    lpDirectory = os.path.dirname(ps1_path)
+    nShowCmd = 1  # SW_SHOWNORMAL
+
+    try:
+        rc = ctypes.windll.shell32.ShellExecuteW(
+            None, lpVerb, lpFile, lpParameters, lpDirectory, 0
+        )
+        return rc > 32  # >32 means success
+    except Exception as e:
+        print(f"Failed to launch script as admin: {e}")
+        return False
 
 def perform_update(update_url="https://github.com/dertwist/Hammer5Tools/releases/latest/download/Hammer5Tools.zip"):
     program_path = os.getcwd()
@@ -175,11 +205,11 @@ Remove-Item -Path $MyInvocation.MyCommand.Definition -Force
         with open(ps1_path, "w", encoding="utf-8") as f:
             f.write(ps1_content)
 
-        # Launch PowerShell script bypassing the execution policy.
-        if not QProcess.startDetached("powershell", ["-ExecutionPolicy", "Bypass", "-File", ps1_path]):
-            print("Failed to launch the update PowerShell script.")
+        # Launch PowerShell script as administrator (UAC prompt).
+        if not run_ps1_as_admin(ps1_path):
+            print("Failed to launch the update PowerShell script as administrator.")
         else:
-            print("Update PowerShell script launched successfully.")
+            print("Update PowerShell script launched successfully with admin rights.")
 
     except Exception as e:
         print(f"Error during update installation: {e}")
@@ -189,7 +219,6 @@ Remove-Item -Path $MyInvocation.MyCommand.Definition -Force
                 os.remove(ps1_path)
             except Exception:
                 pass
-
 
 if __name__ == "__main__":
     perform_update()

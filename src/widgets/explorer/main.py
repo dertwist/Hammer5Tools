@@ -367,7 +367,7 @@ class Explorer(QMainWindow):
         menu.addAction(paste_action)
 
     def add_file_actions(self, menu, index):
-        open_action = QAction("Open File", self)
+        open_action = QAction("Open File with", self)
         open_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         open_action.triggered.connect(lambda: self.open_file(index))
         menu.addAction(open_action)
