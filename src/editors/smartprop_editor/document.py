@@ -20,6 +20,8 @@ from PySide6.QtGui import (
 import uuid
 import traceback, ctypes
 from PySide6.QtCore import Qt, QTimer, Signal
+
+from src.settings.common import get_addon_dir
 from src.settings.main import get_settings_value, get_settings_bool
 
 from keyvalues3 import kv3_to_json
@@ -825,7 +827,7 @@ class SmartPropDocument(QMainWindow):
         import copy, os
         dialog = BulkModelImporterDialog(self, current_folder=self.parent.mini_explorer.get_current_folder(True))
         def on_accept(files, create_ref, ref_index):
-            addon_path = self.parent.mini_explorer.get_current_folder(True)
+            addon_path = get_addon_dir()
             ref_id = None
             parent_item = self.ui.tree_hierarchy_widget.currentItem()
             if parent_item is None:
