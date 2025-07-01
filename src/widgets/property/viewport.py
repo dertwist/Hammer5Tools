@@ -138,12 +138,14 @@ class PropertyViewport(QMainWindow):
             self.last_selected_index = index
         else:
             # ----- Single selection -----
-            for f in self.frames:
-                f.selected = False
-                f.updateStyle()
-            frame.selected = True
-            frame.updateStyle()
-            self.selected_frames = [frame]
+            # Don't deselect if clicking on an already selected frame (potential drag start)
+            if not frame.selected or len(self.selected_frames) <= 1:
+                for f in self.frames:
+                    f.selected = False
+                    f.updateStyle()
+                frame.selected = True
+                frame.updateStyle()
+                self.selected_frames = [frame]
             self.last_selected_index = index
 
     # ---------------------------------------------------- frame operations
