@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem,
     QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QAbstractItemView
 )
-from PySide6.QtGui import QUndoStack, QUndoCommand
+from PySide6.QtGui import QUndoStack, QUndoCommand, QMouseEvent
 from PySide6.QtCore import Qt
 try:
     from .commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand, SelectItemsCommand
@@ -113,7 +113,12 @@ class HierarchyTreeWidget(QTreeWidget):
         if set(old_selected) != set(items):
             cmd = SelectItemsCommand(self, old_selected, items)
             self.undo_stack.push(cmd)
-
+    def mousePressEvent(self, event: QMouseEvent):
+        item = self.itemAt(event.pos())
+        if item is None and event.button() == Qt.LeftButton:
+            self.clearSelection()
+            self.setCurrentItem(None)
+        super().mousePressEvent(event)
 
 
 if __name__ == "__main__":
