@@ -7,7 +7,8 @@ class DragImage(QWidget):
     def __init__(self, frames: List[PropertyWidget], parent=None):
         super().__init__(parent,
                          Qt.WindowType.FramelessWindowHint |
-                         Qt.WindowType.Tool)
+                         Qt.WindowType.Tool |
+                         Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
 
         layout = QVBoxLayout(self)
@@ -209,6 +210,8 @@ class PropertyViewport(QMainWindow):
         self.drag_image = DragImage(self.dragged_frames)
         self.drag_image.move(global_pos - self.drag_offset)
         self.drag_image.show()
+        # Ensure the drag image stays on top
+        self.drag_image.raise_()
 
     def _showDropIndicatorAt(self, index: int):
         """Insert the drop indicator frame into layout at given index, clamped to valid range."""
@@ -240,6 +243,8 @@ class PropertyViewport(QMainWindow):
             drag_pos = event.position().toPoint()
             global_pos = self.mapToGlobal(drag_pos)
             self.drag_image.move(global_pos - self.drag_offset)
+            # Ensure drag image stays visible
+            self.drag_image.raise_()
 
             # determine potential drop position
             pos_in_container = self.container.mapFrom(self, drag_pos)

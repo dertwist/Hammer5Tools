@@ -828,7 +828,7 @@ QToolButton:pressed {
 # --- PropertyComparison ---
 class PropertyComparison(PropertyBase):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea):
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator):
         super().__init__(value_class, value, variables_scrollArea)
         self.ui = UiComparisonWidget()
         self.ui.setupUi(self)
@@ -839,7 +839,7 @@ class PropertyComparison(PropertyBase):
 
         self.ui.comparison.currentTextChanged.connect(self.on_changed)
 
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, variable_name=self.value_class)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, variable_name=self.value_class, element_id_generator=element_id_generator)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
@@ -888,7 +888,7 @@ class PropertyComparison(PropertyBase):
 # --- PropertyBool ---
 class PropertyBool(PropertyBase):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea):
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator):
         super().__init__(value_class, value, variables_scrollArea)
         from src.editors.smartprop_editor.property.ui_bool import Ui_Widget
         self.ui = Ui_Widget()
@@ -917,7 +917,7 @@ class PropertyBool(PropertyBase):
         self.text_line.setPlainText('')
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Bool'], variable_name=self.value_class)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Bool'], variable_name=self.value_class, element_id_generator=element_id_generator)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
