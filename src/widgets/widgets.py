@@ -1,4 +1,7 @@
-from .common import *
+try:
+    from .common import *
+except:
+    from common import *
 from PySide6.QtWidgets import (
     QWidget,
     QDoubleSpinBox,
@@ -484,14 +487,6 @@ class ComboboxTreeChild(ComboboxDynamicItems):
 
         return data_out
 
-
-#================================================================<  generic  >==============================================================
-
-
-
-
-
-
 #==============================================================<  Tree widgets  >===========================================================
 
 class HierarchyItemModel(QTreeWidgetItem):
@@ -610,17 +605,6 @@ def on_three_hierarchyitem_clicked(item, column):
         item.set_editable(True)
     else:
         item.set_editable(False)
-
-#
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#
-#     import qtvscodestyle as qtvsc
-#
-#     stylesheet = qtvsc.load_stylesheet(qtvsc.Theme.DARK_VS)
-#     app.setStyleSheet(stylesheet)
-#     ErrorInfo('Testhgkhkljhklhklj asf asf asf asf asdf asdf asf asdf ', 'dfaasd').exec()
-#     sys.exit(app.exec())
 
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
