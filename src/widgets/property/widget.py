@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal, QPoint
 from PySide6.QtGui import QPixmap, QUndoCommand, QUndoStack, QKeySequence, QShortcut
 from random import random
+from src.styles.widgets import *
 
 # PropertyViewport is a widget that contains PropertyWidget instances.
 # Each property has a label, ID, class, and data.
@@ -74,6 +75,7 @@ class PropertyWidget(QFrame):
         self.show_content = QCheckBox()
         self.show_content.setChecked(True)
         self.show_content.setToolTip("Show/Hide content")
+        self.show_content.setStyleSheet(qt_stylesheet_checkbox_showchild)
         self.show_content.stateChanged.connect(self.toggleContent)
         self._frame_layout.addWidget(self.show_content)
 

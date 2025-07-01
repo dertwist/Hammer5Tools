@@ -205,3 +205,86 @@ class DeleteButton(Button):
             self.instance.close()
         except Exception as e:
             print(f"Error deleting instance: {e}")
+
+
+if __name__ == "__main__":
+    import sys
+    from PySide6.QtWidgets import (
+        QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGroupBox, QSpacerItem, QSizePolicy
+    )
+    from PySide6.QtGui import QIcon
+    from src.widgets.common import Button, DeleteButton, CheckBox
+    from src.styles.common import apply_stylesheets
+    from src.common import enable_dark_title_bar
+
+
+    class ButtonCheckboxShowcase(QWidget):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle("Button and CheckBox Showcase")
+            self.setWindowIcon(QIcon("../appicon.ico"))
+            enable_dark_title_bar(self)
+            self.setMinimumSize(600, 400)
+
+            main_layout = QVBoxLayout(self)
+
+            # --- Buttons Showcase ---
+            button_group = QGroupBox("Buttons")
+            button_layout = QHBoxLayout()
+
+            # Standard Button with text
+            btn_text = Button(text="Standard")
+            button_layout.addWidget(btn_text)
+
+            # Button with icon (add)
+            btn_add = Button(text="Add", icon=":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+            button_layout.addWidget(btn_add)
+
+            # Button with icon (search)
+            btn_search = Button(icon=":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", text="Search")
+            button_layout.addWidget(btn_search)
+
+            # Button with custom size
+            btn_large = Button(text="Large", size=48)
+            button_layout.addWidget(btn_large)
+
+            # Button with only icon (delete)
+            btn_icon_only = Button(icon=":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", size=32)
+            button_layout.addWidget(btn_icon_only)
+
+            # DeleteButton (requires a QWidget instance, so we use self)
+            btn_delete = DeleteButton(instance=self)
+            btn_delete.setText("Delete (closes window)")
+            button_layout.addWidget(btn_delete)
+
+            button_group.setLayout(button_layout)
+            main_layout.addWidget(button_group)
+
+            # --- CheckBox Showcase ---
+            checkbox_group = QGroupBox("CheckBoxes")
+            checkbox_layout = QHBoxLayout()
+
+            # Unchecked
+            cb_unchecked = CheckBox(text="Unchecked", checked=False)
+            checkbox_layout.addWidget(cb_unchecked)
+
+            # Checked
+            cb_checked = CheckBox(text="Checked", checked=True)
+            checkbox_layout.addWidget(cb_checked)
+
+            # Custom label
+            cb_custom = CheckBox(text="Custom Label")
+            checkbox_layout.addWidget(cb_custom)
+
+            checkbox_group.setLayout(checkbox_layout)
+            main_layout.addWidget(checkbox_group)
+
+            # Spacer to push everything to the top
+            main_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+            # Apply styles to all widgets
+            apply_stylesheets(self)
+    app = QApplication(sys.argv)
+    showcase = ButtonCheckboxShowcase()
+    showcase.show()
+    sys.exit(app.exec())
