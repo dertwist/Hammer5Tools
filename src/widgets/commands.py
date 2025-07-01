@@ -203,7 +203,6 @@ class DuplicateItemsCommand(QUndoCommand):
         """Recursively update all m_nElementID values in the data structure"""
         if isinstance(data, dict):
             updated_data = data.copy()
-            updated_data = self.id_generator.update_value(updated_data, force=True)
             if 'm_nElementID' in updated_data and self.id_generator:
                 updated_data = self.id_generator.update_value(updated_data, force=True)
             for key, value in updated_data.items():
