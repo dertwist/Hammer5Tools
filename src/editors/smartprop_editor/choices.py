@@ -40,7 +40,7 @@ class AddOption():
         self.item.setFlags(self.item.flags() | Qt.ItemIsEditable)
         parent.addChild(self.item)
 class AddVariable():
-    def __init__(self, parent=QTreeWidgetItem, name=None, value=None, variables_scrollArea=None, type=None):
+    def __init__(self, element_id_generator, parent=QTreeWidgetItem, name=None, value=None, variables_scrollArea=None, type=None):
         super().__init__()
         """Adding variable tree item"""
         item = QTreeWidgetItem()
@@ -50,7 +50,7 @@ class AddVariable():
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         parent.addChild(item)
         # Combobox var
-        combobox = ComboboxVariablesWidget(variables_layout=variables_scrollArea, filter_types=['Float', 'MaterialGroup', 'Bool', 'Int', 'ScaleMode', 'PickMode', 'Model'])
+        combobox = ComboboxVariablesWidget(variables_layout=variables_scrollArea, filter_types=['Float', 'MaterialGroup', 'Bool', 'Int', 'ScaleMode', 'PickMode', 'Model'], element_id_generator=element_id_generator)
         combobox.combobox.setCurrentText(name)
         combobox.combobox.addItem(name)
 
