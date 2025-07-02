@@ -75,6 +75,9 @@ class PropertyFrame(QWidget):
         'CreateLocator': [
             'm_flDisplayScale', 'm_bAllowScale'
         ],
+        'RestoreState': [
+            'm_StateName', 'm_bDiscardIfUknown'
+        ],
         'RandomRotation': [
             'm_vRandomRotationMin', 'm_vRandomRotationMax'
         ],
