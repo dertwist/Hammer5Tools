@@ -172,23 +172,26 @@ def serialization_hierarchy_items(item, data=None):
         print(f"Error in serialization: {e}")
 
     return data
-
-def deserialize_hierarchy_item(m_Children):
+@exception_handler
+def deserialize_hierarchy_item(m_Children, element_id_generator=None):
     """Convert JSON-like hierarchy into tree items recursively."""
     item_value = {}
     for key in m_Children:
         if key != "m_Children":
             item_value.update({key: m_Children[key]})
-    item_value = update_child_ElementID_value(item_value, force=True)
+
+    item_value = element_id_generator.update_child_value(item_value, force=True)
+    element_id = element_id_generator.get_key(item_value)
+    
     name = item_value.get("m_sLabel", get_clean_class_name_value(item_value))
     tree_item = HierarchyItemModel(
         _data=item_value,
         _name=name,
-        _id=get_ElementID_key(item_value),
+        _id=element_id,
         _class=get_clean_class_name_value(item_value)
     )
     for child_data in m_Children.get("m_Children", []):
-        child_item = deserialize_hierarchy_item(child_data)
+        child_item = deserialize_hierarchy_item(child_data, element_id_generator)
         tree_item.addChild(child_item)
     return tree_item
 
