@@ -822,8 +822,7 @@ class SmartPropDocument(QMainWindow):
 
     def open_bulk_model_importer(self):
         from src.editors.smartprop_editor.actions.bulk_model_importer import BulkModelImporterDialog
-        from src.editors.smartprop_editor._common import get_clean_class_name_value, get_label_id_from_value, get_ElementID_key
-        from src.widgets.element_id import update_value_ElementID
+        from src.editors.smartprop_editor._common import get_clean_class_name_value, get_label_id_from_value
         from src.widgets import HierarchyItemModel
         import copy, os
         dialog = BulkModelImporterDialog(self, current_folder=self.parent.mini_explorer.get_current_folder(True))
@@ -854,13 +853,13 @@ class SmartPropDocument(QMainWindow):
                         element_dict["m_nReferenceID"] = ref_id
                         element_dict["m_sReferenceObjectID"] = str(uuid.uuid4())
                 element_value = copy.deepcopy(element_dict)
-                update_value_ElementID(element_value)
+                self.element_id_generator.update_value(element_value)
                 label = element_value.get("m_sLabel", get_label_id_from_value(element_value))
                 new_item = HierarchyItemModel(
                     _name=label,
                     _data=element_value,
                     _class=get_clean_class_name_value(element_value),
-                    _id=get_ElementID_key(element_value)
+                    _id=self.element_id_generator.get_key(element_value)
                 )
                 items.append(new_item)
                 if is_reference:
@@ -991,10 +990,10 @@ class SmartPropDocument(QMainWindow):
                 parent = parent.parent() or tree.invisibleRootItem()
             if "m_Children" in obj:
                 for child in obj["m_Children"]:
-                    item = deserialize_hierarchy_item(child)
+                    item = deserialize_hierarchy_item(child, self.element_id_generator)
                     items.append(item)
             else:
-                items.append(deserialize_hierarchy_item(obj))
+                items.append(deserialize_hierarchy_item(obj, self.element_id_generator))
             self.undo_stack.push(PasteItemsCommand(tree, parent, items))
             self._modified = True
             self._edited.emit()
