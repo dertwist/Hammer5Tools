@@ -26,7 +26,7 @@ STRING_COLOR = '(255, 209, 153)'
 class PropertyVariableValue(QWidget):
     edited = Signal()
 
-    def __init__(self, value_class, value, variables_scrollArea):
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -73,7 +73,7 @@ class PropertyVariableValue(QWidget):
 
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Float', 'Int', 'Bool'], variable_name=self.value_class)
+        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Float', 'Int', 'Bool'], variable_name=self.value_class, element_id_generator=element_id_generator)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
