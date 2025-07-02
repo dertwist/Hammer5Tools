@@ -725,7 +725,8 @@ class SmartPropDocument(QMainWindow):
                         variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                         name="default",
                         value="",
-                        type=""
+                        type="",
+                        element_id_generator=self.element_id_generator
                     )
                 )
 
