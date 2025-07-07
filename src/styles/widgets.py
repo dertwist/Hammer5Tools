@@ -13,14 +13,13 @@ QCheckBox::indicator:unchecked {
 }
 QCheckBox {
     font: 700 10pt "Segoe UI";
-    border: 2px solid black;
-    border-radius: 0px;
-    border-color: rgba(80, 80, 80, 255);
     height:14px;
     color: #E3E3E3;
 }
 QCheckBox:hover {
-    background-color: #414956;
     color: white;
 }
-"""
+QCheckBox{
+	margin-right:15px;
+	margin-left:15px;
+}"""
