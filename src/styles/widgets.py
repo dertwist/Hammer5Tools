@@ -17,19 +17,10 @@ QCheckBox {
     border-radius: 0px;
     border-color: rgba(80, 80, 80, 255);
     height:14px;
-    padding-top: 2px;
-    padding-bottom:4px;
     color: #E3E3E3;
-background-color: #242424;
-    padding-left: 4px;
 }
 QCheckBox:hover {
     background-color: #414956;
     color: white;
 }
-QCheckBox{
-	padding-left:5px;
-	border-left: 0px solid black;
-border-right: 0px solid black;
-border-top: 0px solid black;
-}"""
+"""

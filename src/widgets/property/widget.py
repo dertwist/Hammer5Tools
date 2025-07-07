@@ -59,9 +59,20 @@ class PropertyWidget(QFrame):
         # ---------- frame (header) ----------
         self._frame_widget = QWidget()
         self._frame_widget.setFixedHeight(32)
-        self._frame_widget.setStyleSheet("background: transparent;")
+        self._frame_widget.setObjectName("_frame_widget")
+        _frame_widget_style = """
+        
+        #_frame_widget {
+            background-color: #1d1f24;
+            border: 2px solid #505050;
+        }
+        #_frame_widget * {
+            background-color: #1d1f24;
+        }
+        """
+        self._frame_widget.setStyleSheet(_frame_widget_style)
         self._frame_layout = QHBoxLayout(self._frame_widget)
-        self._frame_layout.setContentsMargins(4, 0, 4, 4)
+        self._frame_layout.setContentsMargins(4, 2, 2, 4)
         self._frame_layout.setSpacing(4)
 
 
@@ -110,7 +121,7 @@ class PropertyWidget(QFrame):
 
     def createAddButton(self):
         btn = QLabel("+")
-        btn.setStyleSheet("color: #3A79C9; font-weight: bold; font-size: 18px; padding: 0 6px;")
+        btn.setStyleSheet("color: #73849e; font-weight: bold; font-size: 18px; padding: 0 6px;")
         btn.setToolTip("Add")
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         # Connect to add action if needed
@@ -126,7 +137,7 @@ class PropertyWidget(QFrame):
 
     def createEditButton(self):
         btn = QLabel("✎")
-        btn.setStyleSheet("color: #3A79C9; font-size: 16px; padding: 0 6px;")
+        btn.setStyleSheet("color: #73849e; font-size: 16px; padding: 0 6px;")
         btn.setToolTip("Edit")
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         # Connect to edit action if needed
@@ -140,7 +151,7 @@ class PropertyWidget(QFrame):
         return height
 
     def updateSize(self):
-        height = (32 + int(self.getContentHeight()))
+        height = (36 + int(self.getContentHeight()))
         self.setMaximumHeight(height)
         self.setMinimumHeight(height)
 
@@ -216,7 +227,7 @@ class PropertyWidget(QFrame):
             self.setStyleSheet("""
                 QFrame#PropertyWidget {
                     background-color: #1C1C1C;
-                    border: 2px solid #3A79C9;
+                    border: 2px solid #73849e;
                 }
             """)
         else:
