@@ -155,8 +155,7 @@ class PropertyVector3D(QWidget):
                     variable.combobox.setCurrentText(in_value['m_SourceName'])
                     combo.setCurrentIndex(1)
             elif isinstance(in_value, int) or isinstance(in_value, float):
-                float_widget.SpinBox.setValue(in_value)
-                float_widget.on_SpinBox_updated()
+                float_widget.set_value(in_value)
                 combo.setCurrentIndex(0)
             else:
                 layout_widget.setPlainText(str(in_value))
