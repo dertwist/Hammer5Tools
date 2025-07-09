@@ -198,7 +198,8 @@ def deserialize_hierarchy_item(m_Children, element_id_generator=None):
 # ======================================[Vsmart File Loading and Saving]========================================
 
 class VsmartOpen:
-    def __init__(self, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
+    def __init__(self, element_id_generator, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
+        self.element_id_generator = element_id_generator
         self.filename = filename
         self.variables_scrollArea = variables_scrollArea
         self.tree = tree
@@ -286,6 +287,7 @@ class VsmartOpen:
                     variables = option["m_VariableValues"]
                     for variable in variables:
                         AddVariable(
+                            self.element_id_generator,
                             parent=option_item,
                             variables_scrollArea=self.variables_scrollArea,
                             name=variable["m_TargetName"],

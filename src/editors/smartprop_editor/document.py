@@ -600,6 +600,7 @@ class SmartPropDocument(QMainWindow):
     def open_file(self, filename):
         self.opened_file = filename
         vsmart_instance = VsmartOpen(
+            element_id_generator= self.element_id_generator,
             filename=filename,
             tree=self.ui.tree_hierarchy_widget,
             choices_tree=self.ui.choices_tree_widget,
