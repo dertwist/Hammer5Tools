@@ -4,7 +4,7 @@ except:
     from common import *
 from PySide6.QtWidgets import (
     QWidget,
-    QDoubleSpinBox,
+    QLineEdit,
     QHBoxLayout,
     QSpacerItem,
     QSizePolicy,
@@ -48,21 +48,16 @@ class FloatWidget(QWidget):
         self.lock_range = lock_range
         self.slider_range = slider_range
 
-        # SpinBox setup
-        self.SpinBox = QDoubleSpinBox()
-        self.SpinBox.wheelEvent = lambda event: None
-        self.SpinBox.setDecimals(digits)
-        self.SpinBox.setSingleStep(value_step)
-        if self.only_positive:
-            self.SpinBox.setMinimum(0)
-        else:
-            self.SpinBox.setMinimum(-99999999)
-        self.SpinBox.setMaximum(99999999)
-        self.SpinBox.setValue(value)
-        # If lock_range is enabled and a valid slider_range is provided, enforce boundaries on the spinbox.
+        # Editline setup (replacing QDoubleSpinBox)
+        self.SpinBox = QLineEdit()
+        self.SpinBox.setMaximumWidth(64)
+        self.SpinBox.setValidator(QDoubleValidator(-99999999 if not self.only_positive else 0, 99999999, digits, self))
+        self.SpinBox.setText(str(value))
+        self.SpinBox.editingFinished.connect(self.on_SpinBox_updated)
+        self.SpinBox.setStyleSheet('padding: 2px;')
+        # If lock_range is enabled and a valid slider_range is provided, enforce boundaries on the validator.
         if (self.slider_range[0] != 0 or self.slider_range[1] != 0) and self.lock_range:
-            self.SpinBox.setMinimum(self.slider_range[0])
-            self.SpinBox.setMaximum(self.slider_range[1])
+            self.SpinBox.setValidator(QDoubleValidator(self.slider_range[0], self.slider_range[1], digits, self))
 
         # Slider setup
         self.Slider = QSlider()
@@ -70,7 +65,10 @@ class FloatWidget(QWidget):
         self.Slider.setOrientation(Qt.Vertical if vertical else Qt.Horizontal)
         # Range setup: if slider_range is default (0,0) then use dynamic scaling.
         if self.slider_range[0] == 0 and self.slider_range[1] == 0:
-            value_current = self.SpinBox.value()
+            try:
+                value_current = float(self.SpinBox.text())
+            except ValueError:
+                value_current = 0.0
             self.Slider.setMaximum(abs(value_current) * self.slider_scale * 100 + 1000)
             if self.only_positive:
                 self.Slider.setMinimum(0)
@@ -96,7 +94,6 @@ class FloatWidget(QWidget):
         if vertical:
             self.setFixedWidth(96)
         self.on_SpinBox_updated()
-        self.SpinBox.valueChanged.connect(self.on_SpinBox_updated)
 
     # Method to change text color if needed
     def set_color(self, color):
@@ -104,7 +101,10 @@ class FloatWidget(QWidget):
 
     # Handler when the spinbox value is updated
     def on_SpinBox_updated(self):
-        value = self.SpinBox.value()
+        try:
+            value = float(self.SpinBox.text())
+        except ValueError:
+            value = 0.0
         if self.int_output:
             value = round(value)
         # Adjust slider range only if lock_range is not enabled and using dynamic scaling.
@@ -125,13 +125,13 @@ class FloatWidget(QWidget):
         value = self.Slider.value() / 100
         if self.int_output:
             value = round(value)
-        self.SpinBox.setValue(value)
+        self.SpinBox.setText(str(value))
         self.value = value
         self.edited.emit(value)
 
     # Programmatically set the value
     def set_value(self, value):
-        self.SpinBox.setValue(value)
+        self.SpinBox.setText(str(value))
         self.on_SpinBox_updated()
 
 
