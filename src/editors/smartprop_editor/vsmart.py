@@ -230,14 +230,13 @@ class VsmartOpen:
         # Clear previous tree data.
         self.tree.clear()
         self.choices_tree.clear()
-        reset_ElementID()
         # Set next element ID if available.
         self.next_element_id = data.get("editor_info", None)
         if self.next_element_id:
             if isinstance(self.next_element_id, dict):
                 self.next_element_id = self.next_element_id.get("m_nElementID", None)
                 if self.next_element_id:
-                    reset_ElementID(self.next_element_id, [self.next_element_id])
+                    self.element_id_generator.add_id(self.next_element_id)
                     debug(f"Last ElementID from file: {self.next_element_id}")
         self.populate_tree(data)
         self.populate_choices(data.get("m_Choices", None))
