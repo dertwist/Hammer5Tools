@@ -535,9 +535,11 @@ class SmartPropDocument(QMainWindow):
         clipboard_data = clipboard_text.split(";;")
 
         if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
+            data = ast.literal_eval(clipboard_data[2])
+            data = self.element_id_generator.update_value(data, force=True)
             operator_instance = PropertyFrame(
                 widget_list=self.modifiers_group_instance.layout,
-                value=ast.literal_eval(clipboard_data[2]),
+                value=data,
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 tree_hierarchy=self.ui.tree_hierarchy_widget,
                 element_id_generator=self.element_id_generator
@@ -582,9 +584,11 @@ class SmartPropDocument(QMainWindow):
         clipboard_data = clipboard_text.split(";;")
 
         if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
+            data = ast.literal_eval(clipboard_data[2])
+            data = self.element_id_generator.update_value(data, force=True)
             operator_instance = PropertyFrame(
                 widget_list=self.selection_criteria_group_instance.layout,
-                value=ast.literal_eval(clipboard_data[2]),
+                value=data,
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 tree_hierarchy=self.ui.tree_hierarchy_widget,
                 element_id_generator=self.element_id_generator
@@ -633,6 +637,11 @@ class SmartPropDocument(QMainWindow):
                     "model": item.get("m_sModelName", None),
                     "m_nElementID": item.get("m_nElementID", None)
                 }
+                element_id = var_value['m_nElementID']
+                if element_id is not None:
+                    self.element_id_generator.add_id(element_id)
+                else:
+                    var_value = self.element_id_generator.update_value(var_value)
                 if var_class == "Float":
                     var_value.update({
                         "min": item.get("m_flParamaterMinValue", None),
@@ -645,7 +654,6 @@ class SmartPropDocument(QMainWindow):
                     })
                 else:
                     var_value.update({"min": None, "max": None})
-
                 self.add_variable(
                     name=var_name,
                     var_value=var_value,
