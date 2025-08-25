@@ -4,6 +4,7 @@ from src.widgets.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 
 
 class PropertyComparison(QWidget):
@@ -59,10 +60,17 @@ class PropertyComparison(QWidget):
 
 
     def on_changed(self):
-        variables = self.get_variables()
-        self.m_value.completions.setStringList(variables)
+        # Setup type-aware completer without filters
+        CompletionUtils.setup_completer_for_widget(
+            self.m_value,
+            self.variables_scrollArea,
+            filter_types=None,  # No filtering - show all variable types
+            context='comparison'
+        )
+        
         self.change_value()
         self.edited.emit()
+        
     def change_value(self):
         # Default
         var_value = self.m_value.toPlainText()
@@ -74,10 +82,4 @@ class PropertyComparison(QWidget):
         self.value = {self.value_class: {'m_Name': self.variable.combobox.get_variable(), 'm_Value': var_value,'m_Comparison': self.ui.comparison.currentText()}}
 
     def get_variables(self, search_term=None):
-        self.variables_scrollArea
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
