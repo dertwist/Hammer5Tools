@@ -4,6 +4,7 @@ from src.editors.smartprop_editor.property.ui_legacy import Ui_Widget
 from src.widgets.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 
 
 class PropertyLegacy(QWidget):
@@ -18,11 +19,8 @@ class PropertyLegacy(QWidget):
         self.value = value
         self.variables_scrollArea = variables_scrollArea
 
-        # Cache for variable names to avoid recomputing repeatedly
-        self._variables_cache = []
-        self._variable_count = 0
-
         self.text_line = CompletingPlainTextEdit()
+        self.text_line.completion_tail = ''
         self.ui.layout.insertWidget(1, self.text_line)
 
         self.text_line.setPlainText(str(self.value))
@@ -33,13 +31,14 @@ class PropertyLegacy(QWidget):
         self.change_value()
 
     def on_changed(self):
-        # Update the cache only if the number of items has changed
-        new_count = self.variables_scrollArea.count()
-        if new_count != self._variable_count:
-            self._variables_cache = self.get_variables()
-            self._variable_count = new_count
-
-        self.text_line.completions.setStringList(self._variables_cache)
+        # Setup type-aware completer without filters
+        CompletionUtils.setup_completer_for_widget(
+            self.text_line,
+            self.variables_scrollArea,
+            filter_types=None,  # No filtering - show all variable types
+            context='general'
+        )
+        
         self.change_value()
         self.edited.emit()
 
@@ -52,9 +51,4 @@ class PropertyLegacy(QWidget):
         self.value = {self.value_class: value}
 
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
