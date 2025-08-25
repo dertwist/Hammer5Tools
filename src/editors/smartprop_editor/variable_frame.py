@@ -7,12 +7,13 @@ from src.property.methods import PropertyMethods
 from src.widgets.element_id import *
 from src.settings.main import get_settings_bool
 from src.widgets.popup_menu.main import PopupMenu
-from src.editors.smartprop_editor.objects import variables_list
+from src.editors.smartprop_editor.objects import variables_list, expression_completer
+from src.widgets.completer.main import CompletingPlainTextEdit
 
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
 
-    def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list):
+    def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list, element_id_generator):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -24,15 +25,20 @@ class VariableFrame(QWidget):
         self.var_min = var_value.get('min')
         self.var_max = var_value.get('max')
         self.var_model = var_value.get('model')
+        self.hide_expression = var_value.get('m_HideExpression')
         self.var_visible_in_editor = var_visible_in_editor
         self.var_display_name = var_display_name
+        self.element_id_generator = element_id_generator
 
+        # Keep the full hide expression as-is (no extraction needed)
+        # m_HideExpression can contain expressions like "new_var_1 == false" or "new_var_1 < 23"
         self.var_value = {
             'default': self.var_default,
             'min': self.var_min,
             'max': self.var_max,
             'model': self.var_model,
-            'm_nElementID': get_ElementID(var_value)
+            'm_nElementID': get_ElementID(var_value),
+            'm_HideExpression': self.hide_expression
         }
 
         # ID Handling
@@ -63,7 +69,20 @@ class VariableFrame(QWidget):
 
         # Connect the edited signal directly to on_changed
         self.var_int_instance.edited.connect(self.on_changed)
-        self.ui.layout.insertWidget(1, self.var_int_instance)
+        self.ui.layout.insertWidget(2, self.var_int_instance)
+
+        # Setup the CompletingPlainTextEdit for Hide Expression logic
+        self.hide_expression_input = CompletingPlainTextEdit()
+        self.hide_expression_input.completion_tail = ''
+        self.hide_expression_input.setPlaceholderText("Enter expression (e.g., variable_name == false, variable_name < 23)")
+        if self.hide_expression:
+            self.hide_expression_input.setPlainText(str(self.hide_expression))
+        self.hide_expression_input.textChanged.connect(self.on_hide_expression_changed)
+        
+        # Setup completer for variable names
+        self._setup_hide_expression_completer()
+        
+        self.ui.hide_expression_frame.layout().addWidget(self.hide_expression_input)
 
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
@@ -133,6 +152,59 @@ class VariableFrame(QWidget):
         }
         return elements_dict.get(var_class, [])
 
+    def _get_available_variable_names(self):
+        """Get list of available variable names from the widget list for completer."""
+        variable_names = []
+        count = self.widget_list.count()
+        for i in range(count):
+            widget = self.widget_list.itemAt(i).widget()
+            if hasattr(widget, "name") and widget.name:
+                variable_names.append(widget.name)
+        return variable_names
+
+    def _setup_hide_expression_completer(self):
+        """Setup completer for hide expression input with variable names and common operators."""
+        # Get available variable names
+        variable_names = self._get_available_variable_names()
+        
+        # Create completion suggestions including variables and common patterns
+        completions = []
+        
+        # Add variable names
+        completions.extend(variable_names)
+        
+        # Add common expression patterns with variable names
+        for var_name in variable_names:
+            completions.extend([
+                f"{var_name} == false",
+                f"{var_name} == true",
+                f"{var_name} != false",
+                f"{var_name} != true",
+                f"{var_name} == 0",
+                f"{var_name} != 0",
+                f"{var_name} > 0",
+                f"{var_name} < 0",
+                f"{var_name} >= 0",
+                f"{var_name} <= 0",
+                f"!{var_name}"
+            ])
+        
+        # Add expression completer items and common boolean values/operators
+        completions.extend(expression_completer)
+        completions.extend([
+            "true", "false", "==", "!=", ">=", "<=", ">", "<", "!"
+        ])
+        
+        # Remove duplicates and sort
+        completions = sorted(list(set(completions)))
+        
+        # Set the completions for the CompletingPlainTextEdit
+        self.hide_expression_input.completions.setStringList(completions)
+
+    def update_hide_expression_completer(self):
+        """Update the completer when variable names change."""
+        self._setup_hide_expression_completer()
+
     def set_class(self, var_class):
         widget = self.ui.layout.itemAt(1).widget()
         widget.deleteLater()
@@ -142,12 +214,14 @@ class VariableFrame(QWidget):
             'min': None,
             'max': None,
             'model': None,
-            'm_nElementID': self.var_value['m_nElementID']
+            'm_nElementID': self.var_value['m_nElementID'],
+            'm_HideExpression': None # m_HideExpression = "AdvancedOptions == false"
         }
         self.var_default = self.var_value['default']
         self.var_min = self.var_value['min']
         self.var_max = self.var_value['max']
         self.var_model = self.var_value['model']
+        self.hide_expression = self.var_value['m_HideExpression']
         self.ui.variable_class.setText(var_class)
 
         self._initialize_var_instance(var_class)
@@ -165,7 +239,17 @@ class VariableFrame(QWidget):
         self.popup_menu = PopupMenu(elements, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.set_class(value))
         self.popup_menu.show()
-
+        
+    def on_hide_expression_changed(self):
+        """Handle changes to the hide expression input field."""
+        self.hide_expression = self.hide_expression_input.toPlainText().strip()
+        # Convert empty string to None for consistency
+        if not self.hide_expression:
+            self.hide_expression = None
+        # Update completer with current variable names
+        self._setup_hide_expression_completer()
+        self.on_changed()
+        
     def show_child(self):
         if not self.ui.show_child.isChecked():
             self.ui.frame_layout.setMaximumSize(16666, 0)
@@ -186,7 +270,8 @@ class VariableFrame(QWidget):
                 'min': None,
                 'max': None,
                 'model': None,
-                'm_nElementID': self.element_id
+                'm_nElementID': self.element_id,
+                'm_HideExpression':  self.hide_expression if self.hide_expression is not None else None
             }
         else:
             self.var_value = {
@@ -194,7 +279,8 @@ class VariableFrame(QWidget):
                 'min': var_min if var_min is not None else None,
                 'max': var_max if var_max is not None else None,
                 'model': var_model if var_model is not None else None,
-                'm_nElementID': self.element_id
+                'm_nElementID': self.element_id,
+                'm_HideExpression': self.hide_expression if self.hide_expression is not None else None
             }
 
     def update_self(self):
@@ -274,6 +360,8 @@ class VariableFrame(QWidget):
                 m_variable.update({'m_flParamaterMaxValue': self.var_max})
             if self.var_model is not None:
                 m_variable.update({'m_sModelName': self.var_model})
+            if self.hide_expression is not None:
+                m_variable.update({'m_HideExpression': self.hide_expression})
             m_data = {'m_Variables': []}
             m_data['m_Variables'].append(m_variable)
             clipboard.setText(JsonToKv3(m_data))

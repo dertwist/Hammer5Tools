@@ -365,6 +365,46 @@ class Ui_Form(object):
 
         self.layout.addWidget(self.frame_3)
 
+        self.hide_expression_frame = QFrame(self.frame_layout)
+        self.hide_expression_frame.setObjectName(u"hide_expression_frame")
+        self.hide_expression_frame.setMaximumSize(QSize(16777215, 32))
+        self.hide_expression_frame.setStyleSheet(u".QFrame {\n"
+"    font: 580 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"	border-top: 0px;\n"
+"    border-color: rgba(50, 50, 50, 255);\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+".QFrame::hover {\n"
+"}\n"
+".QFrame::selected {\n"
+"    background-color: #414956;\n"
+"}")
+        self.hide_expression_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.hide_expression_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.hide_expression_frame.setLineWidth(0)
+        self.horizontalLayout_3 = QHBoxLayout(self.hide_expression_frame)
+        self.horizontalLayout_3.setSpacing(16)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.label_3 = QLabel(self.hide_expression_frame)
+        self.label_3.setObjectName(u"label_3")
+        self.label_3.setStyleSheet(u"border:0px;\n"
+"background-color: rgba(255, 255, 255, 0);\n"
+"font: 8pt \"Segoe UI\";\n"
+"\n"
+"")
+
+        self.horizontalLayout_3.addWidget(self.label_3)
+
+
+        self.layout.addWidget(self.hide_expression_frame)
+
 
         self.verticalLayout_2.addLayout(self.layout)
 
@@ -407,5 +447,6 @@ class Ui_Form(object):
         self.id_display.setText(QCoreApplication.translate("Form", u"ID", None))
         self.label_2.setText(QCoreApplication.translate("Form", u"Display name", None))
         self.varialbe_display_name.setPlaceholderText(QCoreApplication.translate("Form", u"Not nessesary", None))
+        self.label_3.setText(QCoreApplication.translate("Form", u"Hide expression", None))
     # retranslateUi
 
