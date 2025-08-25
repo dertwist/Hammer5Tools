@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QComboBox, QWidget, QHBoxLayout, QSpacerItem, QSiz
 from PySide6.QtCore import Signal, Qt
 import re
 
-from src.editors.smartprop_editor.variable_frame import VariableFrame
 from src.widgets.popup_menu.main import PopupMenu
 from src.widgets.common import Button, apply_stylesheets
 from src.widgets import ComboboxDynamicItems
@@ -123,6 +122,7 @@ class ComboboxVariablesWidget(QWidget):
 
     def add_variable(self, name, var_class, var_value, var_visible_in_editor, var_display_name, index: int = None):
         """Create a variable widget and add it to the variables layout."""
+        from src.editors.smartprop_editor.variable_frame import VariableFrame
         self.element_id_generator.update_value(var_value, force=True)
         variable = VariableFrame(
             name=name,
@@ -130,7 +130,8 @@ class ComboboxVariablesWidget(QWidget):
             var_value=var_value,
             var_class=var_class,
             var_visible_in_editor=var_visible_in_editor,
-            var_display_name=var_display_name
+            var_display_name=var_display_name,
+            element_id_generator=self.element_id_generator
         )
         variable.duplicate.connect(self.duplicate_variable)
         if index is None:
