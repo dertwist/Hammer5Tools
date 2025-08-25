@@ -11,10 +11,12 @@ from src.editors.smartprop_editor.objects import variables_list, expression_comp
 from src.widgets.completer.main import CompletingPlainTextEdit
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 
+
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
 
-    def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list, element_id_generator):
+    def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list,
+                 element_id_generator):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -75,14 +77,15 @@ class VariableFrame(QWidget):
         # Setup the CompletingPlainTextEdit for Hide Expression logic
         self.hide_expression_input = CompletingPlainTextEdit()
         self.hide_expression_input.completion_tail = ''
-        self.hide_expression_input.setPlaceholderText("Enter expression (e.g., variable_name == false, variable_name < 23)")
+        self.hide_expression_input.setPlaceholderText(
+            "Enter expression (e.g., variable_name == false, variable_name < 23)")
         if self.hide_expression:
             self.hide_expression_input.setPlainText(str(self.hide_expression))
         self.hide_expression_input.textChanged.connect(self.on_hide_expression_changed)
-        
+
         # Setup completer for variable names with filtering for hide expressions
         self._setup_hide_expression_completer()
-        
+
         self.ui.hide_expression_frame.layout().addWidget(self.hide_expression_input)
 
         self.show_child()
@@ -116,7 +119,9 @@ class VariableFrame(QWidget):
             self.var_int_instance = Var_class_color(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=self.var_model
             )
-        elif var_class in ['CoordinateSpace', 'GridPlacementMode', 'GridOriginMode', 'PickMode', 'ScaleMode', 'TraceNoHit', 'ApplyColorMode', 'ChoiceSelectionMode', 'RadiusPlacementMode', 'DistributionMode', 'PathPositions']:
+        elif var_class in ['CoordinateSpace', 'GridPlacementMode', 'GridOriginMode', 'PickMode', 'ScaleMode',
+                           'TraceNoHit', 'ApplyColorMode', 'ChoiceSelectionMode', 'RadiusPlacementMode',
+                           'DistributionMode', 'PathPositions']:
             from src.editors.smartprop_editor.variables.combobox import Var_class_combobox
             elements = self._get_combobox_elements(var_class)
             self.var_int_instance = Var_class_combobox(
@@ -144,7 +149,7 @@ class VariableFrame(QWidget):
         """Setup completer for hide expression input with filtered type-aware completions."""
         # For hide expressions, only show Bool, Int, and Float variables
         filter_types = ['Bool', 'Int', 'Float']
-        
+
         # Use the utility to setup the completer with filtering
         CompletionUtils.setup_completer_for_widget(
             self.hide_expression_input,
@@ -167,7 +172,7 @@ class VariableFrame(QWidget):
             'max': None,
             'model': None,
             'm_nElementID': self.var_value['m_nElementID'],
-            'm_HideExpression': None # m_HideExpression = "AdvancedOptions == false"
+            'm_HideExpression': None  # m_HideExpression = "AdvancedOptions == false"
         }
         self.var_default = self.var_value['default']
         self.var_min = self.var_value['min']
@@ -191,7 +196,7 @@ class VariableFrame(QWidget):
         self.popup_menu = PopupMenu(elements, add_once=False)
         self.popup_menu.add_property_signal.connect(lambda name, value: self.set_class(value))
         self.popup_menu.show()
-        
+
     def on_hide_expression_changed(self):
         """Handle changes to the hide expression input field."""
         self.hide_expression = self.hide_expression_input.toPlainText().strip()
@@ -201,7 +206,7 @@ class VariableFrame(QWidget):
         # Update completer with current variable names and types
         self._setup_hide_expression_completer()
         self.on_changed()
-        
+
     def show_child(self):
         if not self.ui.show_child.isChecked():
             self.ui.frame_layout.setMaximumSize(16666, 0)
@@ -223,7 +228,7 @@ class VariableFrame(QWidget):
                 'max': None,
                 'model': None,
                 'm_nElementID': self.element_id,
-                'm_HideExpression':  self.hide_expression if self.hide_expression is not None else None
+                'm_HideExpression': self.hide_expression if self.hide_expression is not None else None
             }
         else:
             self.var_value = {
@@ -301,7 +306,8 @@ class VariableFrame(QWidget):
             self.deleteLater()
         elif action == copy_action:
             clipboard = QApplication.clipboard()
-            m_variable = {'_class': f'CSmartPropVariable_{self.var_class}', 'm_VariableName':self.name, 'm_bExposeAsParameter': self.var_visible_in_editor}
+            m_variable = {'_class': f'CSmartPropVariable_{self.var_class}', 'm_VariableName': self.name,
+                          'm_bExposeAsParameter': self.var_visible_in_editor}
             if self.var_display_name is not None:
                 m_variable.update({'m_ParameterName': self.var_display_name})
             if self.var_default is not None:

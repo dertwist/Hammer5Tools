@@ -7,6 +7,7 @@ from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.objects import expression_completer
 from src.widgets import FloatWidget
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 
 class PropertyFloat(QWidget):
     edited = Signal()
@@ -135,10 +136,19 @@ class PropertyFloat(QWidget):
 
     def on_changed(self):
         self.logic_switch()
-        variables = self.get_variables()
-        self.text_line.completions.setStringList(variables + expression_completer)
+        
+        # Setup type-aware completer for expression mode without filters
+        if self.ui.logic_switch.currentIndex() == 3:  # Expression mode
+            CompletionUtils.setup_completer_for_widget(
+                self.text_line,
+                self.variables_scrollArea,
+                filter_types=None,  # No filtering - show all variable types
+                context='numeric'
+            )
+        
         self.change_value()
         self.edited.emit()
+        
     def change_value(self):
         # Default
         if self.ui.logic_switch.currentIndex() == 0:
@@ -169,9 +179,4 @@ class PropertyFloat(QWidget):
             self.value = {self.value_class: {'m_Expression': str(value)}}
 
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return CompletionUtils.get_available_variable_names(self.variables_scrollArea)

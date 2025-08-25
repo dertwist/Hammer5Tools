@@ -5,6 +5,7 @@ from src.widgets.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 
 class PropertyCombobox(QWidget):
     edited = Signal()
@@ -21,10 +22,6 @@ class PropertyCombobox(QWidget):
         self.value_class = value_class
         self.value = value
         self.variables_scrollArea = variables_scrollArea
-
-        # Cache for variables to avoid repeated lookups
-        self._variable_count = 0
-        self._cached_variables = []
 
         # Pre-calculate the output for property_class to reduce repeated compilations
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2',
@@ -119,8 +116,16 @@ class PropertyCombobox(QWidget):
 
     def on_changed(self):
         self.logic_switch()
-        variables = self.get_variables()
-        self.text_line.completions.setStringList(variables)
+        
+        # Setup type-aware completer for expression mode without filters
+        if self.ui.logic_switch.currentIndex() == 3:  # Expression mode
+            CompletionUtils.setup_completer_for_widget(
+                self.text_line,
+                self.variables_scrollArea,
+                filter_types=None,  # No filtering - show all variable types
+                context='general'
+            )
+        
         self.change_value()
         self.edited.emit()
 
@@ -149,14 +154,4 @@ class PropertyCombobox(QWidget):
             self.value = {self.value_class: {'m_Expression': str(val)}}
 
     def get_variables(self, search_term=None):
-        # Cache mechanism to avoid repeated lookups unless the scrollArea item count changes
-        new_count = self.variables_scrollArea.count()
-        if new_count != self._variable_count:
-            data_out = []
-            for i in range(self.variables_scrollArea.count()):
-                widget = self.variables_scrollArea.itemAt(i).widget()
-                if widget:
-                    data_out.append(widget.name)
-            self._cached_variables = data_out
-            self._variable_count = new_count
-        return self._cached_variables
+        return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
