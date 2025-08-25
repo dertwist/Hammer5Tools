@@ -7,6 +7,7 @@ from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.objects import expression_completer
 from src.widgets import FloatWidget
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 
 
 class PropertyVector3D(QWidget):
@@ -77,6 +78,7 @@ class PropertyVector3D(QWidget):
         self.ui.layout_x.insertWidget(3, self.variable_x_frame)
 
         self.text_line_x = CompletingPlainTextEdit()
+        self.text_line_x.completion_tail = ''
         self.ui.layout_x.insertWidget(4, self.text_line_x)
         self.text_line_x.textChanged.connect(self.on_changed)
         self.ui.comboBox_x.currentIndexChanged.connect(self.on_changed)
@@ -107,6 +109,7 @@ class PropertyVector3D(QWidget):
         self.ui.layout_y.insertWidget(3, self.variable_y_frame)
 
         self.text_line_y = CompletingPlainTextEdit()
+        self.text_line_y.completion_tail = ''
         self.ui.layout_y.insertWidget(4, self.text_line_y)
         self.text_line_y.textChanged.connect(self.on_changed)
         self.ui.comboBox_y.currentIndexChanged.connect(self.on_changed)
@@ -136,6 +139,7 @@ class PropertyVector3D(QWidget):
         self.ui.layout_z.insertWidget(3, self.variable_z_frame)
 
         self.text_line_z = CompletingPlainTextEdit()
+        self.text_line_z.completion_tail = ''
         self.ui.layout_z.insertWidget(4, self.text_line_z)
         self.text_line_z.textChanged.connect(self.on_changed)
         self.ui.comboBox_z.currentIndexChanged.connect(self.on_changed)
@@ -244,10 +248,26 @@ class PropertyVector3D(QWidget):
             self.variable_logic_switch.hide()
 
     def on_changed(self):
-        variables = self.get_variables()
-        self.text_line_x.completions.setStringList(variables + expression_completer)
-        self.text_line_y.completions.setStringList(variables + expression_completer)
-        self.text_line_z.completions.setStringList(variables + expression_completer)
+        # Setup type-aware completer for expression mode without filters
+        CompletionUtils.setup_completer_for_widget(
+            self.text_line_x,
+            self.variables_scrollArea,
+            filter_types=None,  # No filtering - show all variable types
+            context='numeric'
+        )
+        CompletionUtils.setup_completer_for_widget(
+            self.text_line_y,
+            self.variables_scrollArea,
+            filter_types=None,  # No filtering - show all variable types
+            context='numeric'
+        )
+        CompletionUtils.setup_completer_for_widget(
+            self.text_line_z,
+            self.variables_scrollArea,
+            filter_types=None,  # No filtering - show all variable types
+            context='numeric'
+        )
+        
         self.logic_switch_line()
         self.logic_switch()
 
@@ -278,9 +298,4 @@ class PropertyVector3D(QWidget):
             self.value = {self.value_class: {'m_Components': [value_x, value_y, value_z]}}
 
     def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                data_out.append(widget.name)
-        return data_out
+        return CompletionUtils.get_available_variable_names(self.variables_scrollArea)

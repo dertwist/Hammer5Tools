@@ -5,6 +5,7 @@ from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.objects import expression_completer
 from src.widgets import FloatWidget, BoolWidget
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 
 # m_VariableValue =
 # {
@@ -205,8 +206,16 @@ class PropertyVariableValue(QWidget):
         try:
             self.logic_switch_value()
             self.logic_switch()
-            variables = self.get_variables()
-            self.text_line.completions.setStringList(variables + expression_completer)
+            
+            # Setup type-aware completer for expression mode without filters
+            if self.ui.logic_switch_value.currentText() == 'Expression':
+                CompletionUtils.setup_completer_for_widget(
+                    self.text_line,
+                    self.variables_scrollArea,
+                    filter_types=None,  # No filtering - show all variable types
+                    context='general'
+                )
+            
             self.change_value()
             self.edited.emit()
         except Exception as e:
@@ -242,12 +251,4 @@ class PropertyVariableValue(QWidget):
 
     def get_variables(self, search_term=None):
         """Get list of available variable names"""
-        data_out = []
-        try:
-            for i in range(self.variables_scrollArea.count()):
-                widget = self.variables_scrollArea.itemAt(i).widget()
-                if widget and hasattr(widget, 'name'):
-                    data_out.append(widget.name)
-        except Exception as e:
-            print(f"Error in get_variables: {e}")
-        return data_out
+        return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
