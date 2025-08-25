@@ -1,7 +1,3 @@
-import os.path
-import re
-import ast
-
 from PySide6.QtWidgets import (
     QMainWindow,
     QTreeWidgetItem,
@@ -18,46 +14,14 @@ from PySide6.QtGui import (
     QUndoStack,
     QKeySequence
 )
-from PySide6.QtCore import Qt, QTimer, Signal
-from src.settings.main import get_settings_value, get_settings_bool
 
 from keyvalues3 import kv3_to_json
-from src.editors.smartprop_editor.ui_document import Ui_MainWindow
-from src.settings.main import settings
 from src.editors.smartprop_editor.variable_frame import VariableFrame
 from src.editors.smartprop_editor.objects import (
     variables_list,
-    variable_prefix,
-    elements_list,
-    operators_list,
-    selection_criteria_list,
-    filters_list
 )
 from src.editors.smartprop_editor.ui_variables_viewport import Ui_Form
-from src.editors.smartprop_editor.vsmart import VsmartOpen, VsmartSave, serialization_hierarchy_items, deserialize_hierarchy_item
-from src.editors.smartprop_editor.property_frame import PropertyFrame
-from src.editors.smartprop_editor.properties_group_frame import PropertiesGroupFrame
-from src.editors.smartprop_editor.choices import AddChoice, AddVariable, AddOption
-from src.widgets.popup_menu.main import PopupMenu
-from src.editors.smartprop_editor.commands import GroupElementsCommand
-from src.forms.replace_dialog.main import FindAndReplaceDialog
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel
-from src.widgets.element_id import ElementIDGenerator
-from src.editors.smartprop_editor._common import (
-    get_clean_class_name_value,
-    get_clean_class_name,
-    get_label_id_from_value,
-    unique_counter_name
-)
-from src.common import (
-    enable_dark_title_bar,
-    Kv3ToJson,
-    JsonToKv3,
-    get_cs2_path,
-    SmartPropEditor_Preset_Path,
-    set_qdock_tab_style
-)
-from src.widgets.tree import HierarchyTreeWidget
 
 class SmartPropEditorVariableViewport(QWidget):
     def __init__(self, parent=None):
@@ -91,7 +55,8 @@ class SmartPropEditorVariableViewport(QWidget):
             var_value=var_value,
             var_class=var_class,
             var_visible_in_editor=var_visible_in_editor,
-            var_display_name=var_display_name
+            var_display_name=var_display_name,
+            element_id_generator=self.element_id_generator
         )
         variable.duplicate.connect(self.duplicate_variable)
         if index is None:
@@ -202,7 +167,8 @@ class SmartPropEditorVariableViewport(QWidget):
                     'default': variable.get('m_DefaultValue'),
                     'min': variable.get('m_flParamaterMinValue'),
                     'max': variable.get('m_flParamaterMaxValue'),
-                    'model': variable.get('m_sModelName')
+                    'model': variable.get('m_sModelName'),
+                    'm_HideExpression': variable.get('m_HideExpression')
                 }
 
                 self.element_id_generator.update_value(var_value, force=True)
