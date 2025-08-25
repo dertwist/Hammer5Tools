@@ -27,7 +27,6 @@ from src.settings.main import get_settings_value, get_settings_bool
 from keyvalues3 import kv3_to_json
 from src.editors.smartprop_editor.ui_document import Ui_MainWindow
 from src.settings.main import settings
-from src.editors.smartprop_editor.variable_frame import VariableFrame
 from src.editors.smartprop_editor.objects import (
     variables_list,
     variable_prefix,
@@ -414,7 +413,8 @@ class SmartPropDocument(QMainWindow):
                     var_value = {
                         "default": item.get("m_DefaultValue", None),
                         "model": item.get("m_sModelName", None),
-                        "m_nElementID": item.get("m_nElementID", None)
+                        "m_nElementID": item.get("m_nElementID", None),
+                        'm_HideExpression': item.get("m_HideExpression", None)
                     }
                     if var_class == "Float":
                         var_value.update({
@@ -635,7 +635,8 @@ class SmartPropDocument(QMainWindow):
                 var_value = {
                     "default": item.get("m_DefaultValue", None),
                     "model": item.get("m_sModelName", None),
-                    "m_nElementID": item.get("m_nElementID", None)
+                    "m_nElementID": item.get("m_nElementID", None),
+                    'm_HideExpression': item.get("m_HideExpression", None)
                 }
                 element_id = var_value['m_nElementID']
                 if element_id is not None:

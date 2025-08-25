@@ -357,6 +357,7 @@ class VsmartSave:
             var_model = var_key_value[2]["model"]
             var_class = var_key_value[1]
             var_id = var_key_value[2]["m_nElementID"]
+            var_hide_expression = var_key_value[2]["m_HideExpression"]
 
             var_dict = {
                 "_class": variable_prefix + var_class,
@@ -381,6 +382,8 @@ class VsmartSave:
                     var_dict.update({"m_nParamaterMaxValue": var_max})
             if var_model is not None:
                 var_dict.update({"m_sModelName": var_model})
+            if var_hide_expression is not None:
+                var_dict.update({"m_HideExpression": var_hide_expression})
             variables_.append(var_dict)
         return variables_
 
