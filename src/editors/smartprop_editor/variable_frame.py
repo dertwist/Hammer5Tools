@@ -78,7 +78,7 @@ class VariableFrame(QWidget):
         self.hide_expression_input = CompletingPlainTextEdit()
         self.hide_expression_input.completion_tail = ''
         self.hide_expression_input.setPlaceholderText(
-            "Enter expression (e.g., variable_name == false, variable_name < 23)")
+            "Enter expression (e.g., variable_name == false)")
         if self.hide_expression:
             self.hide_expression_input.setPlainText(str(self.hide_expression))
         self.hide_expression_input.textChanged.connect(self.on_hide_expression_changed)
