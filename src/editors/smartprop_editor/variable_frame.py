@@ -9,6 +9,7 @@ from src.settings.main import get_settings_bool
 from src.widgets.popup_menu.main import PopupMenu
 from src.editors.smartprop_editor.objects import variables_list, expression_completer
 from src.widgets.completer.main import CompletingPlainTextEdit
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
@@ -79,7 +80,7 @@ class VariableFrame(QWidget):
             self.hide_expression_input.setPlainText(str(self.hide_expression))
         self.hide_expression_input.textChanged.connect(self.on_hide_expression_changed)
         
-        # Setup completer for variable names
+        # Setup completer for variable names with filtering for hide expressions
         self._setup_hide_expression_completer()
         
         self.ui.hide_expression_frame.layout().addWidget(self.hide_expression_input)
@@ -137,69 +138,20 @@ class VariableFrame(QWidget):
             )
 
     def _get_combobox_elements(self, var_class):
-        elements_dict = {
-            'CoordinateSpace': ['ELEMENT', 'OBJECT', 'WORLD'],
-            'GridPlacementMode': ['SEGMENT', 'FILL'],
-            'GridOriginMode': ['CENTER', 'CORNER'],
-            'PickMode': ['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'],
-            'ScaleMode': ['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'],
-            'TraceNoHit': ['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'],
-            'ApplyColorMode': ['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'],
-            'ChoiceSelectionMode': ['RANDOM', 'FIRST', 'SPECIFIC'],
-            'RadiusPlacementMode': ['SPHERE', 'CIRCLE'],
-            'DistributionMode': ['RANDOM', 'REGULAR'],
-            'PathPositions': ['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'],
-        }
-        return elements_dict.get(var_class, [])
-
-    def _get_available_variable_names(self):
-        """Get list of available variable names from the widget list for completer."""
-        variable_names = []
-        count = self.widget_list.count()
-        for i in range(count):
-            widget = self.widget_list.itemAt(i).widget()
-            if hasattr(widget, "name") and widget.name:
-                variable_names.append(widget.name)
-        return variable_names
+        return CompletionUtils.get_combobox_elements(var_class)
 
     def _setup_hide_expression_completer(self):
-        """Setup completer for hide expression input with variable names and common operators."""
-        # Get available variable names
-        variable_names = self._get_available_variable_names()
+        """Setup completer for hide expression input with filtered type-aware completions."""
+        # For hide expressions, only show Bool, Int, and Float variables
+        filter_types = ['Bool', 'Int', 'Float']
         
-        # Create completion suggestions including variables and common patterns
-        completions = []
-        
-        # Add variable names
-        completions.extend(variable_names)
-        
-        # Add common expression patterns with variable names
-        for var_name in variable_names:
-            completions.extend([
-                f"{var_name} == false",
-                f"{var_name} == true",
-                f"{var_name} != false",
-                f"{var_name} != true",
-                f"{var_name} == 0",
-                f"{var_name} != 0",
-                f"{var_name} > 0",
-                f"{var_name} < 0",
-                f"{var_name} >= 0",
-                f"{var_name} <= 0",
-                f"!{var_name}"
-            ])
-        
-        # Add expression completer items and common boolean values/operators
-        completions.extend(expression_completer)
-        completions.extend([
-            "true", "false", "==", "!=", ">=", "<=", ">", "<", "!"
-        ])
-        
-        # Remove duplicates and sort
-        completions = sorted(list(set(completions)))
-        
-        # Set the completions for the CompletingPlainTextEdit
-        self.hide_expression_input.completions.setStringList(completions)
+        # Use the utility to setup the completer with filtering
+        CompletionUtils.setup_completer_for_widget(
+            self.hide_expression_input,
+            self.widget_list,
+            filter_types=filter_types,
+            context='hide_expression'
+        )
 
     def update_hide_expression_completer(self):
         """Update the completer when variable names change."""
@@ -246,7 +198,7 @@ class VariableFrame(QWidget):
         # Convert empty string to None for consistency
         if not self.hide_expression:
             self.hide_expression = None
-        # Update completer with current variable names
+        # Update completer with current variable names and types
         self._setup_hide_expression_completer()
         self.on_changed()
         
