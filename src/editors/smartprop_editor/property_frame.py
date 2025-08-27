@@ -37,93 +37,93 @@ class PropertyFrame(QWidget):
     _prop_classes_map_cache = {
         # Elements
         'FitOnLine': [
-            'm_vStart','m_vEnd', 'm_vUpDirection', 'm_PointSpace', 'm_nScaleMode', 'm_nPickMode', 'm_bOrientAlongLine'
+            'm_bEnabled', 'm_vStart','m_vEnd', 'm_vUpDirection', 'm_PointSpace', 'm_nScaleMode', 'm_nPickMode', 'm_bOrientAlongLine'
         ],
         'PickOne': [
-            'm_SelectionMode','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize','m_vHandleOffset','m_bConfigurable'
+            'm_bEnabled', 'm_SelectionMode','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize','m_vHandleOffset','m_bConfigurable'
         ],
         'PlaceInSphere': [
-            'm_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode'
+            'm_bEnabled', 'm_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode'
         ],
         'PlaceOnPath': [
-            'm_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace', 'm_flSpacing', 'm_DefaultPath', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_UpDirectionSpace', 'm_vUpDirection'
+            'm_bEnabled', 'm_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace', 'm_flSpacing', 'm_DefaultPath', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_UpDirectionSpace', 'm_vUpDirection'
         ],
         'Model': [
-            'm_sModelName','m_vModelScale','m_MaterialGroupName'
+            'm_bEnabled', 'm_sModelName','m_vModelScale','m_MaterialGroupName'
         ],
         'SmartProp': [
-            'm_sSmartProp','m_vModelScale'
+            'm_bEnabled', 'm_sSmartProp','m_vModelScale'
         ],
         'PlaceMultiple': [
-            'm_nCount', 'm_Expression'
+            'm_bEnabled', 'm_nCount', 'm_Expression'
         ],
         'BendDeformer': [
-            'm_bDeformationEnabled', 'm_vSize', 'm_vOrigin', 'm_vAngles', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'
+            'm_bEnabled', 'm_bDeformationEnabled', 'm_vSize', 'm_vOrigin', 'm_vAngles', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'
         ],
         # Operators
         'CreateSizer': [
-            'm_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX',
+            'm_bEnabled', 'm_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX',
             'm_OutputVariableMinX', 'm_OutputVariableMaxX', 'm_flInitialMinY', 'm_flInitialMaxY',
             'm_flConstraintMinY', 'm_flConstraintMaxY', 'm_OutputVariableMinY', 'm_OutputVariableMaxY',
             'm_flInitialMinZ', 'm_flInitialMaxZ', 'm_flConstraintMinZ', 'm_flConstraintMaxZ',
             'm_OutputVariableMinZ', 'm_OutputVariableMaxZ'
         ],
         'CreateRotator': [
-            'm_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_bApplyToCurrentTransform',
+            'm_bEnabled', 'm_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_bApplyToCurrentTransform',
             'm_OutputVariable', 'm_flSnappingIncrement', 'm_bEnforceLimits', 'm_flMinAngle', 'm_flMaxAngle'
         ],
         'CreateLocator': [
-            'm_flDisplayScale', 'm_bAllowScale'
+            'm_bEnabled', 'm_flDisplayScale', 'm_bAllowScale'
         ],
         'RestoreState': [
-            'm_StateName', 'm_bDiscardIfUknown'
+            'm_bEnabled', 'm_StateName', 'm_bDiscardIfUknown'
         ],
         'RandomRotation': [
-            'm_vRandomRotationMin', 'm_vRandomRotationMax'
+            'm_bEnabled', 'm_vRandomRotationMin', 'm_vRandomRotationMax'
         ],
         'RandomOffset': [
-            'm_vRandomPositionMin', 'm_vRandomPositionMax'
+            'm_bEnabled', 'm_vRandomPositionMin', 'm_vRandomPositionMax'
         ],
         'RandomScale': [
-            'm_flRandomScaleMin', 'm_flRandomScaleMax'
+            'm_bEnabled', 'm_flRandomScaleMin', 'm_flRandomScaleMax'
         ],
         'Scale': [
-            'm_flScale'
+            'm_bEnabled', 'm_flScale'
         ],
         'SetTintColor': [
-            'm_Mode', 'm_ColorChoices', 'm_SelectionMode', 'm_ColorSelection'
+            'm_bEnabled', 'm_Mode', 'm_ColorChoices', 'm_SelectionMode', 'm_ColorSelection'
         ],
         'SetVariable': [
-            'm_VariableValue'
+            'm_bEnabled', 'm_VariableValue'
         ],
         # Filters
         'SurfaceProperties': [
-            'm_DisallowedSurfaceProperties', 'm_AllowedSurfaceProperties'
+            'm_bEnabled', 'm_DisallowedSurfaceProperties', 'm_AllowedSurfaceProperties'
         ],
         'VariableValue': [
-            'm_VariableComparison'
+            'm_bEnabled', 'm_VariableComparison'
         ],
         'SurfaceAngle': [
-            'm_flSurfaceSlopeMin', 'm_flSurfaceSlopeMax'
+            'm_bEnabled', 'm_flSurfaceSlopeMin', 'm_flSurfaceSlopeMax'
         ],
         # Selection Criteria
         'PathPosition': [
-            'm_PlaceAtPositions', 'm_nPlaceEveryNthPosition', 'm_nNthPositionIndexOffset', 'm_bAllowAtStart','m_bAllowAtEnd'
+            'm_bEnabled', 'm_PlaceAtPositions', 'm_nPlaceEveryNthPosition', 'm_nNthPositionIndexOffset', 'm_bAllowAtStart','m_bAllowAtEnd'
         ],
         'EndCap': [
-            'm_bStart', 'm_bEnd'
+            'm_bEnabled', 'm_bStart', 'm_bEnd'
         ],
         'LinearLength': [
-            'm_flLength', 'm_bAllowScale', 'm_flMinLength', 'm_flMaxLength'
+            'm_bEnabled', 'm_flLength', 'm_bAllowScale', 'm_flMinLength', 'm_flMaxLength'
         ],
         'ChoiceWeight': [
-            'm_flWeight'
+            'm_bEnabled', 'm_flWeight'
         ],
         'TraceInDirection': [
-            'm_DirectionSpace', 'm_nNoHitResult', 'm_flSurfaceUpInfluence', 'm_flOriginOffset', 'm_flTraceLength'
+            'm_bEnabled', 'm_DirectionSpace', 'm_nNoHitResult', 'm_flSurfaceUpInfluence', 'm_flOriginOffset', 'm_flTraceLength'
         ],
         'SaveState': [
-            'm_StateName'
+            'm_bEnabled', 'm_StateName'
         ]
     }
 
@@ -148,7 +148,9 @@ class PropertyFrame(QWidget):
 
         self.name_prefix, self.name = value['_class'].split('_', 1)
         del value['_class']
-        self.value = value
+        # Definition of the value variable before getting property data. to have priority for the variable m_bEnabled
+        self.value = {'m_bEnabled' : True}
+        self.value.update(value)
 
         if reference_bar:
             self.ui.ReferenceID.setText(str(self.value.get('m_nReferenceID', '')))
@@ -170,27 +172,10 @@ class PropertyFrame(QWidget):
         debug(f'Property frame get_ElementID: {self.element_id}')
         self.ui.element_id_display.setText(str(self.element_id))
 
-        self.enable = value.get('m_bEnabled', True)
         self.prop_class = self.name
 
         self.ui.property_class.setText(self.name)
-        try:
-            self.ui.enable.setChecked(self.enable)
-        except:
-            # For cases where self.enable might be a dict or unrecognized
-            if isinstance(self.enable, dict):
-                if 'm_SourceName' in self.enable:
-                    self.ui.variable_display.setText(self.enable['m_SourceName'])
-                if 'm_Expression' in self.enable:
-                    self.ui.variable_display.setText(self.enable['m_Expression'])
-            else:
-                print(f'Error with setting m_bEnabled: {self.enable}; Name: {self.name};Value: {self.value}')
-            self.ui.enable.setChecked(True)
 
-        self.ui.enable.clicked.connect(self.on_edited)
-        self.ui.variables_search.clicked.connect(self.search_enable_variable)
-        self.ui.variable_clear.clicked.connect(lambda: self.ui.variable_display.clear())
-        self.ui.variable_display.textChanged.connect(self.on_edited)
 
         self.widget_list = widget_list
 
@@ -232,10 +217,12 @@ class PropertyFrame(QWidget):
                 property_instance.edited.connect(self.on_edited)
                 property_instance.setAcceptDrops(False)
                 self.ui.layout.insertWidget(0, property_instance)
-            if 'm_nPickMode' in value_class:
-                property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['LARGEST_FIRST','RANDOM','ALL_IN_ORDER'], filter_types=['PickMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif value_class == 'm_bEnabled':
-                pass
+            if value_class == 'm_bEnabled':
+                property_instance = PropertyBool(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator)
+                add_instance()
+            elif 'm_nPickMode' in value_class:
+                property_instance = PropertyCombobox(value=val, value_class=value_class,variables_scrollArea=self.variables_scrollArea,items=['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'],filter_types=['PickMode'],element_id_generator=self.element_id_generator);
+                add_instance()
             elif value_class == 'm_sLabel':
                 pass
             elif value_class == 'm_nElementID':
@@ -290,7 +277,7 @@ class PropertyFrame(QWidget):
             else: property_instance = PropertyLegacy(value=val,value_class=value_class,variables_scrollArea=self.variables_scrollArea); add_instance()
 
         def operator_adding_instances(classes):
-            for item in classes:
+            for item in reversed(classes):
                 if item in self.value:
                     adding_instances(item, self.value[item])
                 else:
@@ -308,24 +295,6 @@ class PropertyFrame(QWidget):
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
-    def search_enable_variable(self):
-        variables = self.get_variables()
-        self.popup_menu = PopupMenu(variables, add_once=False)
-        self.popup_menu.add_property_signal.connect(lambda name, value: self.add_variable(name, value))
-        self.popup_menu.show()
-
-    def add_variable(self, name, value):
-        self.ui.variable_display.setText(name)
-
-    def get_variables(self, search_term=None):
-        data_out = []
-        for i in range(self.variables_scrollArea.count()):
-            widget = self.variables_scrollArea.itemAt(i).widget()
-            if widget:
-                if 'Bool' in getattr(widget, 'var_class', ''):
-                    data_out.append({widget.name: {widget.var_class}})
-        return data_out
-
     def update_reference_values(self):
         try:
             if self.ReferenceIDGet() is not None:
@@ -340,14 +309,9 @@ class PropertyFrame(QWidget):
             return {}
 
     def on_edited(self):
-        if self.ui.variable_display.text() != '':
-            enabled = {'m_Expression': str(self.ui.variable_display.text())}
-        else:
-            enabled = self.ui.enable.isChecked()
 
         self.value = {
             '_class': f'{self.name_prefix}_{self.name}',
-            'm_bEnabled': enabled,
             'm_nElementID': self.element_id,
         }
 
