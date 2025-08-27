@@ -97,10 +97,10 @@
 }</string>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Shape::StyledPanel</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Shadow::Raised</enum>
      </property>
      <property name="lineWidth">
       <number>0</number>
@@ -124,7 +124,7 @@
       <item>
        <layout class="QHBoxLayout" name="layout">
         <property name="sizeConstraint">
-         <enum>QLayout::SetFixedSize</enum>
+         <enum>QLayout::SizeConstraint::SetFixedSize</enum>
         </property>
         <item>
          <widget class="QLabel" name="property_class">
@@ -140,7 +140,7 @@ background-color: rgba(255, 255, 255, 0);
 font: 8pt &quot;Segoe UI&quot;;
 padding-right: 16px;
 
-color: rgb(255, 189, 190);</string>
+color: #008B8B;</string>
           </property>
           <property name="text">
            <string>Reference</string>
@@ -162,7 +162,7 @@ color: rgb(255, 189, 190);</string>
            </size>
           </property>
           <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
+           <enum>Qt::FocusPolicy::NoFocus</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">QLineEdit {
@@ -171,11 +171,11 @@ color: rgb(255, 189, 190);</string>
     border-top: 0px;
     border-left: 0px;
     border-right: 0px;
-    border-bottom: 2px solid rgba(80, 80, 80, 255);
     border-radius: 0px;
     padding: 2px;
     color: #E3E3E3;
-    background-color: #242424;
+    border-bottom: 0px solid rgba(80, 80, 80, 255);
+    background-color: #1C1C1C;
 }
 
 QLineEdit:focus {
@@ -188,13 +188,13 @@ QLineEdit::selection {
 }</string>
           </property>
           <property name="inputMethodHints">
-           <set>Qt::ImhLatinOnly|Qt::ImhLowercaseOnly</set>
+           <set>Qt::InputMethodHint::ImhLatinOnly|Qt::InputMethodHint::ImhLowercaseOnly</set>
           </property>
           <property name="maxLength">
            <number>32</number>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
           <property name="readOnly">
            <bool>true</bool>
@@ -210,7 +210,7 @@ QLineEdit::selection {
            <bool>true</bool>
           </property>
           <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
+           <enum>Qt::FocusPolicy::NoFocus</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">QToolButton {
@@ -225,6 +225,8 @@ border-right: None;
     background-color: #242424;
 height:16px;
 width:16px;
+    border-bottom: 0px solid rgba(80, 80, 80, 255);
+    background-color: #1C1C1C;
 }
 QToolButton:hover {
     background-color: #414956;
@@ -235,7 +237,7 @@ QToolButton:hover {
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../../../../resources.qrc">
+           <iconset>
             <normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
           </property>
           <property name="iconSize">
@@ -252,7 +254,7 @@ QToolButton:hover {
            <bool>true</bool>
           </property>
           <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
+           <enum>Qt::FocusPolicy::NoFocus</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">QToolButton {
@@ -267,6 +269,8 @@ border-right: None;
     background-color: #242424;
 height:16px;
 width:16px;
+    border-bottom: 0px solid rgba(80, 80, 80, 255);
+    background-color: #1C1C1C;
 }
 QToolButton:hover {
     background-color: #414956;
@@ -277,7 +281,7 @@ QToolButton:hover {
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../../../../resources.qrc">
+           <iconset>
             <normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
           </property>
           <property name="iconSize">
@@ -289,9 +293,25 @@ QToolButton:hover {
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="reference_show_button">
+          <property name="minimumSize">
+           <size>
+            <width>110</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="text">
+           <string>Show in hierarchy</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
