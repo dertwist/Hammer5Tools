@@ -156,12 +156,6 @@ class PropertyFrame(QWidget):
         self.value = {'m_bEnabled' : True}
         self.value.update(value)
 
-        # Remove reference UI elements since they're now handled by a separate property
-        self.ui.ReferenceID.deleteLater()
-        self.ui.ReferenceID_Label.deleteLater()
-        self.ui.ReferenceID_Clear.deleteLater()
-        self.ui.ReferenceID_Search.deleteLater()
-
         self.layout = self.ui.layout
 
         #===========================================================<  Element ID  >========================================================
