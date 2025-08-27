@@ -4,6 +4,7 @@ import re
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Signal
 from src.widgets.popup_menu.main import PopupMenu
+from src.styles.common import qt_stylesheet_button
 from src.widgets import HierarchyItemModel
 import uuid
 
@@ -21,6 +22,8 @@ class PropertyReference(QWidget):
         self.element_id_generator = element_id_generator
         self.tree_hierarchy = tree_hierarchy
 
+        self.ui.reference_show_button.setStyleSheet(qt_stylesheet_button)
+
         # Set up the property class label
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
@@ -29,6 +32,7 @@ class PropertyReference(QWidget):
         # Connect signals
         self.ui.reference_search.clicked.connect(self.reference_id_search)
         self.ui.reference_clear.clicked.connect(self.reference_id_clear)
+        self.ui.reference_show_button.clicked.connect(self.show_reference_in_hierarchy)
         self.ui.reference_id.textChanged.connect(self.on_changed)
 
         # Initialize with existing value
@@ -144,6 +148,64 @@ class PropertyReference(QWidget):
     def reference_id_clear(self):
         """Clear the reference ID field."""
         self.ui.reference_id.clear()
+
+    def show_reference_in_hierarchy(self):
+        """Show the referenced element in the hierarchy tree."""
+        if not self.tree_hierarchy:
+            print("No hierarchy tree available")
+            return
+            
+        ref_id = self.reference_id_get()
+        if ref_id is None:
+            print("No reference ID to show")
+            return
+            
+        # Helper function to recursively search for the item with matching element ID
+        def find_item_by_element_id(parent_item, target_id):
+            try:
+                for i in range(parent_item.childCount()):
+                    item = parent_item.child(i)
+                    if item:
+                        # Check if this item has the target element ID
+                        try:
+                            if item.columnCount() > 3:
+                                element_id_text = item.text(3)
+                                if element_id_text and str(element_id_text) == str(target_id):
+                                    return item
+                        except:
+                            pass
+                        
+                        # Recursively search children
+                        if item.childCount() > 0:
+                            found_item = find_item_by_element_id(item, target_id)
+                            if found_item:
+                                return found_item
+            except Exception as e:
+                print(f"Error searching for item: {e}")
+            return None
+        
+        try:
+            # Search for the item with the reference ID
+            root_item = self.tree_hierarchy.invisibleRootItem()
+            target_item = find_item_by_element_id(root_item, ref_id)
+            
+            if target_item:
+                # Select and scroll to the item
+                self.tree_hierarchy.setCurrentItem(target_item)
+                self.tree_hierarchy.scrollToItem(target_item)
+                
+                # Expand parent items to make sure the item is visible
+                parent = target_item.parent()
+                while parent:
+                    parent.setExpanded(True)
+                    parent = parent.parent()
+                    
+                print(f"Found and selected element with ID {ref_id} in hierarchy")
+            else:
+                print(f"Element with ID {ref_id} not found in hierarchy")
+                
+        except Exception as e:
+            print(f"Error showing reference in hierarchy: {e}")
 
     def reference_object_id_get(self):
         """Generate a new reference object ID."""
