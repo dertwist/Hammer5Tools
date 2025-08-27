@@ -22,6 +22,7 @@ from src.editors.smartprop_editor.property.colormatch import PropertyColorMatch
 from src.editors.smartprop_editor.property.variable import PropertyVariableOutput
 from src.editors.smartprop_editor.property.set_variable import PropertyVariableValue
 from src.editors.smartprop_editor.property.comment import PropertyComment
+from src.editors.smartprop_editor.property.reference import PropertyReference
 from PySide6.QtGui import QCursor
 from src.widgets import HierarchyItemModel
 import uuid
@@ -127,7 +128,7 @@ class PropertyFrame(QWidget):
         ]
     }
 
-    def __init__(self, value, widget_list, variables_scrollArea, element_id_generator, element=False, reference_bar=False, tree_hierarchy=None):
+    def __init__(self, value, widget_list, variables_scrollArea, element_id_generator, element=False, tree_hierarchy=None):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -152,17 +153,11 @@ class PropertyFrame(QWidget):
         self.value = {'m_bEnabled' : True}
         self.value.update(value)
 
-        if reference_bar:
-            self.ui.ReferenceID.setText(str(self.value.get('m_nReferenceID', '')))
-            self.ui.ReferenceID_Search.clicked.connect(self.ReferenceIDSearch)
-            self.ui.ReferenceID_Clear.clicked.connect(self.ReferenceIDClear)
-            self.ui.ReferenceID.textChanged.connect(self.on_edited)
-
-        else:
-            self.ui.ReferenceID.deleteLater()
-            self.ui.ReferenceID_Label.deleteLater()
-            self.ui.ReferenceID_Clear.deleteLater()
-            self.ui.ReferenceID_Search.deleteLater()
+        # Remove reference UI elements since they're now handled by a separate property
+        self.ui.ReferenceID.deleteLater()
+        self.ui.ReferenceID_Label.deleteLater()
+        self.ui.ReferenceID_Clear.deleteLater()
+        self.ui.ReferenceID_Search.deleteLater()
 
         self.layout = self.ui.layout
 
@@ -228,9 +223,11 @@ class PropertyFrame(QWidget):
             elif value_class == 'm_nElementID':
                 pass
             elif value_class == 'm_nReferenceID':
-                pass
+                property_instance = PropertyReference(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator, tree_hierarchy=self.tree_hierarchy)
+                add_instance()
             elif value_class == 'm_sReferenceObjectID':
-                pass
+                property_instance = PropertyReference(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator, tree_hierarchy=self.tree_hierarchy)
+                add_instance()
             elif 'm_nScaleMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NONE','SCALE_END_TO_FIT','SCALE_EQUALLY','SCALE_MAXIMAIZE'], filter_types=['ScaleMode'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_CoordinateSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_DirectionSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['DirectionSpace'], element_id_generator=self.element_id_generator); add_instance()
@@ -283,6 +280,13 @@ class PropertyFrame(QWidget):
                 else:
                     adding_instances(item, None)
 
+        # For elements, always add reference properties if they don't exist
+        if self.element:
+            # Add reference properties for elements if they don't exist in the data
+            if 'm_nReferenceID' not in self.value and 'm_sReferenceObjectID' not in self.value:
+                # Add reference properties to show the reference widget
+                adding_instances('m_nReferenceID', None)
+
         if self.prop_class in self._prop_classes_map_cache:
             operator_adding_instances(self._prop_classes_map_cache[self.prop_class])
         else:
@@ -295,29 +299,12 @@ class PropertyFrame(QWidget):
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
-    def update_reference_values(self):
-        try:
-            if self.ReferenceIDGet() is not None:
-                reference_values = {
-                    'm_nReferenceID': self.ReferenceIDGet(),
-                    'm_sReferenceObjectID': self.ReferenceObjectIDGet()
-                }
-                print(reference_values)
-                return reference_values
-            return {}
-        except:
-            return {}
-
     def on_edited(self):
 
         self.value = {
             '_class': f'{self.name_prefix}_{self.name}',
             'm_nElementID': self.element_id,
         }
-
-        reference_values = self.update_reference_values()
-        self.value.update(reference_values)
-
 
         try:
             for index in range(self.ui.layout.count()):
@@ -380,59 +367,3 @@ class PropertyFrame(QWidget):
         self.value = None
         self.edited.emit()
         self.deleteLater()
-    # ===========================================================<  Referencing  >=========================================================
-    def ReferenceIDSearch(self):
-        """
-        Create and display a popup menu with all hierarchy items from the tree_hierarchy.
-        Items with m_bReferenceObject set to True are excluded.
-        Each menu item displays in the format: [Class]-[Label]-[ElementID].
-        """
-
-        # Helper function to recursively collect all items from the tree
-        def collect_tree_items(parent_item):
-            items = []
-            for i in range(parent_item.childCount()):
-                item = parent_item.child(i)
-                # Add the current item
-                items.append(item)
-                # Recursively add all children
-                if item.childCount() > 0:
-                    items.extend(collect_tree_items(item))
-            return items
-
-        # Collect all items from the tree hierarchy
-        root_item = self.tree_hierarchy.invisibleRootItem()
-        all_items = collect_tree_items(root_item)
-
-        # Create a list of property dictionaries for the PopupMenu
-        properties = []
-        for item in all_items:
-            item: HierarchyItemModel = item
-            if item.text(5) == 'True':
-                pass
-            else:
-                label = item.text(0)
-                class_name = item.text(2)
-                element_id = item.text(3)
-                display_text = f"{label} | {class_name} | {element_id}"
-
-                properties.append({display_text: element_id})
-
-        # Create and show the popup menu
-        self.hierarchy_menu = PopupMenu(properties=properties, window_name='hierarchy_item_menu')
-        self.hierarchy_menu.add_property_signal.connect(self.on_hierarchy_item_selected)
-        self.hierarchy_menu.show()
-
-    def on_hierarchy_item_selected(self, name, element_id):
-        """Handle the selection of a hierarchy item from the popup menu."""
-        self.ui.ReferenceID.setText(str(element_id))
-    def ReferenceIDClear(self):
-        self.ui.ReferenceID.clear()
-    def ReferenceObjectIDGet(self):
-        _id = str(uuid.uuid4())
-        return _id
-    def ReferenceIDGet(self):
-        value = self.ui.ReferenceID.text().strip()
-        if not value:
-            raise ValueError("ReferenceID cannot be empty")
-        return int(value)
