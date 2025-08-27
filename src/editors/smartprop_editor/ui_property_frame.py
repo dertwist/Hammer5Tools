@@ -98,8 +98,13 @@ class Ui_Form(object):
 
         self.frame_2 = QFrame(self.frame)
         self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setMinimumSize(QSize(400, 0))
-        self.frame_2.setMaximumSize(QSize(400, 16777215))
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.frame_2.sizePolicy().hasHeightForWidth())
+        self.frame_2.setSizePolicy(sizePolicy)
+        self.frame_2.setMinimumSize(QSize(300, 0))
+        self.frame_2.setMaximumSize(QSize(3, 16777215))
         self.frame_2.setFrameShape(QFrame.Shape.NoFrame)
         self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.frame_2)
@@ -164,41 +169,7 @@ class Ui_Form(object):
 
         self.horizontalLayout_2.addWidget(self.property_class)
 
-        self.property_class_4 = QLineEdit(self.frame_2)
-        self.property_class_4.setObjectName(u"property_class_4")
-        self.property_class_4.setMaximumSize(QSize(16, 16777215))
-        self.property_class_4.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.property_class_4.setStyleSheet(u"QLineEdit {\n"
-"    font-size: 8pt;\n"
-"    font-family: \"Segoe UI\";\n"
-"    border-top: 0px;\n"
-"    border-left: 0px;\n"
-"    border-right: 0px;\n"
-"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"}\n"
-"\n"
-"QLineEdit:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"\n"
-"QLineEdit::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        self.property_class_4.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
-        self.property_class_4.setMaxLength(32)
-        self.property_class_4.setReadOnly(True)
-
-        self.horizontalLayout_2.addWidget(self.property_class_4)
-
-
-        self.horizontalLayout.addWidget(self.frame_2)
-
-        self.element_id_display_2 = QLineEdit(self.frame)
+        self.element_id_display_2 = QLineEdit(self.frame_2)
         self.element_id_display_2.setObjectName(u"element_id_display_2")
         self.element_id_display_2.setMaximumSize(QSize(32, 16777215))
         self.element_id_display_2.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -227,9 +198,9 @@ class Ui_Form(object):
         self.element_id_display_2.setMaxLength(32)
         self.element_id_display_2.setReadOnly(True)
 
-        self.horizontalLayout.addWidget(self.element_id_display_2)
+        self.horizontalLayout_2.addWidget(self.element_id_display_2)
 
-        self.element_id_display = QLineEdit(self.frame)
+        self.element_id_display = QLineEdit(self.frame_2)
         self.element_id_display.setObjectName(u"element_id_display")
         self.element_id_display.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.element_id_display.setStyleSheet(u"QLineEdit {\n"
@@ -257,18 +228,16 @@ class Ui_Form(object):
         self.element_id_display.setMaxLength(32)
         self.element_id_display.setReadOnly(True)
 
-        self.horizontalLayout.addWidget(self.element_id_display)
+        self.horizontalLayout_2.addWidget(self.element_id_display)
 
-        self.property_class_3 = QLineEdit(self.frame)
-        self.property_class_3.setObjectName(u"property_class_3")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        sizePolicy.setHorizontalStretch(128)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.property_class_3.sizePolicy().hasHeightForWidth())
-        self.property_class_3.setSizePolicy(sizePolicy)
-        self.property_class_3.setMaximumSize(QSize(16777215, 16777215))
-        self.property_class_3.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.property_class_3.setStyleSheet(u"QLineEdit {\n"
+
+        self.horizontalLayout.addWidget(self.frame_2)
+
+        self.property_class_4 = QLineEdit(self.frame)
+        self.property_class_4.setObjectName(u"property_class_4")
+        self.property_class_4.setMaximumSize(QSize(16777215, 16777215))
+        self.property_class_4.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.property_class_4.setStyleSheet(u"QLineEdit {\n"
 "    font-size: 8pt;\n"
 "    font-family: \"Segoe UI\";\n"
 "    border-top: 0px;\n"
@@ -289,141 +258,11 @@ class Ui_Form(object):
 "    background-color: #414956;\n"
 "    color: white;\n"
 "}")
-        self.property_class_3.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
-        self.property_class_3.setMaxLength(32)
-        self.property_class_3.setReadOnly(True)
+        self.property_class_4.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
+        self.property_class_4.setMaxLength(32)
+        self.property_class_4.setReadOnly(True)
 
-        self.horizontalLayout.addWidget(self.property_class_3)
-
-        self.ReferenceID_Label = QLineEdit(self.frame)
-        self.ReferenceID_Label.setObjectName(u"ReferenceID_Label")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.ReferenceID_Label.sizePolicy().hasHeightForWidth())
-        self.ReferenceID_Label.setSizePolicy(sizePolicy1)
-        self.ReferenceID_Label.setMinimumSize(QSize(64, 0))
-        self.ReferenceID_Label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.ReferenceID_Label.setStyleSheet(u"QLineEdit {\n"
-"    font-size: 8pt;\n"
-"    font-family: \"Segoe UI\";\n"
-"    border-top: 0px;\n"
-"    border-left: 0px;\n"
-"    border-right: 0px;\n"
-"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"}\n"
-"\n"
-"QLineEdit:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"\n"
-"QLineEdit::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        self.ReferenceID_Label.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
-        self.ReferenceID_Label.setMaxLength(32)
-        self.ReferenceID_Label.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTrailing|Qt.AlignmentFlag.AlignVCenter)
-        self.ReferenceID_Label.setReadOnly(True)
-
-        self.horizontalLayout.addWidget(self.ReferenceID_Label)
-
-        self.ReferenceID = QLineEdit(self.frame)
-        self.ReferenceID.setObjectName(u"ReferenceID")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.ReferenceID.sizePolicy().hasHeightForWidth())
-        self.ReferenceID.setSizePolicy(sizePolicy2)
-        self.ReferenceID.setMaximumSize(QSize(72, 16777215))
-        self.ReferenceID.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.ReferenceID.setStyleSheet(u"QLineEdit {\n"
-"    font-size: 8pt;\n"
-"    font-family: \"Segoe UI\";\n"
-"    border-top: 0px;\n"
-"    border-left: 0px;\n"
-"    border-right: 0px;\n"
-"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"}\n"
-"\n"
-"QLineEdit:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"\n"
-"QLineEdit::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        self.ReferenceID.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
-        self.ReferenceID.setMaxLength(32)
-        self.ReferenceID.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ReferenceID.setReadOnly(True)
-
-        self.horizontalLayout.addWidget(self.ReferenceID)
-
-        self.ReferenceID_Clear = QToolButton(self.frame)
-        self.ReferenceID_Clear.setObjectName(u"ReferenceID_Clear")
-        self.ReferenceID_Clear.setEnabled(True)
-        self.ReferenceID_Clear.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.ReferenceID_Clear.setStyleSheet(u"QToolButton {\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"border-left: None;\n"
-"border-top: None;\n"
-"border-right: None;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"height:16px;\n"
-"width:16px;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.ReferenceID_Clear.setIcon(icon1)
-        self.ReferenceID_Clear.setIconSize(QSize(24, 24))
-
-        self.horizontalLayout.addWidget(self.ReferenceID_Clear)
-
-        self.ReferenceID_Search = QToolButton(self.frame)
-        self.ReferenceID_Search.setObjectName(u"ReferenceID_Search")
-        self.ReferenceID_Search.setEnabled(True)
-        self.ReferenceID_Search.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.ReferenceID_Search.setStyleSheet(u"QToolButton {\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"border-left: None;\n"
-"border-top: None;\n"
-"border-right: None;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"height:16px;\n"
-"width:16px;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.ReferenceID_Search.setIcon(icon2)
-        self.ReferenceID_Search.setIconSize(QSize(24, 24))
-
-        self.horizontalLayout.addWidget(self.ReferenceID_Search)
+        self.horizontalLayout.addWidget(self.property_class_4)
 
         self.delete_button = QPushButton(self.frame)
         self.delete_button.setObjectName(u"delete_button")
@@ -467,9 +306,9 @@ class Ui_Form(object):
 "	padding-right: 8px;\n"
 "	color: #E3E3E3;\n"
 "}")
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.delete_button.setIcon(icon3)
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.delete_button.setIcon(icon1)
 
         self.horizontalLayout.addWidget(self.delete_button)
 
@@ -515,9 +354,9 @@ class Ui_Form(object):
 "	padding-right: 8px;\n"
 "	color: #E3E3E3;\n"
 "}")
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.copy_button.setIcon(icon4)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.copy_button.setIcon(icon2)
 
         self.horizontalLayout.addWidget(self.copy_button)
 
@@ -579,10 +418,6 @@ class Ui_Form(object):
 #endif // QT_CONFIG(tooltip)
         self.property_class.setText(QCoreApplication.translate("Form", u"Class properties", None))
 #if QT_CONFIG(tooltip)
-        self.property_class_4.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.property_class_4.setText("")
-#if QT_CONFIG(tooltip)
         self.element_id_display_2.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.element_id_display_2.setText(QCoreApplication.translate("Form", u"ID:", None))
@@ -593,21 +428,9 @@ class Ui_Form(object):
         self.element_id_display.setText("")
         self.element_id_display.setPlaceholderText(QCoreApplication.translate("Form", u"ID", None))
 #if QT_CONFIG(tooltip)
-        self.property_class_3.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
+        self.property_class_4.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.property_class_3.setText("")
-#if QT_CONFIG(tooltip)
-        self.ReferenceID_Label.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.ReferenceID_Label.setText(QCoreApplication.translate("Form", u"Reference:", None))
-        self.ReferenceID_Label.setPlaceholderText(QCoreApplication.translate("Form", u"ReferenceID", None))
-#if QT_CONFIG(tooltip)
-        self.ReferenceID.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.ReferenceID.setText("")
-        self.ReferenceID.setPlaceholderText(QCoreApplication.translate("Form", u"ID", None))
-        self.ReferenceID_Clear.setText("")
-        self.ReferenceID_Search.setText("")
+        self.property_class_4.setText("")
         self.delete_button.setText(QCoreApplication.translate("Form", u"Delete", None))
         self.copy_button.setText(QCoreApplication.translate("Form", u"Copy", None))
     # retranslateUi
