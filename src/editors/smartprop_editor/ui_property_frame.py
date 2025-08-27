@@ -164,138 +164,6 @@ class Ui_Form(object):
 
         self.horizontalLayout_2.addWidget(self.property_class)
 
-        self.enable = QCheckBox(self.frame_2)
-        self.enable.setObjectName(u"enable")
-        self.enable.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.enable.setStyleSheet(u"QCheckBox::indicator:checked {\n"
-"image: url(://icons/select_check_box_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
-"   \n"
-"	height:16px;\n"
-"	width:16px;\n"
-"}\n"
-"\n"
-"QCheckBox::indicator:unchecked {\n"
-"    image: url(://icons/check_box_outline_blank_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);\n"
-"	height:16px;\n"
-"	width:16px;\n"
-"}\n"
-"\n"
-"\n"
-"QCheckBox {\n"
-"    font: 580  8pt \"Segoe UI\";\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"    height:14px;\n"
-"    padding-top: 2px;\n"
-"    padding-bottom:2px;\n"
-"    color: #E3E3E3;\n"
-"    padding-left: 4px;\n"
-"background-color: #242424;\n"
-"}\n"
-"QCheckBox:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}\n"
-"QCheckBox{\n"
-"	padding-left:5px;\n"
-"	border-left: 0px solid black;\n"
-"border-right: 0px solid black;\n"
-"border-top: 0px solid black;\n"
-"}")
-        self.enable.setChecked(False)
-        self.enable.setAutoRepeat(False)
-        self.enable.setAutoExclusive(False)
-        self.enable.setTristate(False)
-
-        self.horizontalLayout_2.addWidget(self.enable)
-
-        self.variable_display = QLineEdit(self.frame_2)
-        self.variable_display.setObjectName(u"variable_display")
-        self.variable_display.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.variable_display.setStyleSheet(u"QLineEdit {\n"
-"    font-size: 8pt;\n"
-"    font-family: \"Segoe UI\";\n"
-"    border-top: 0px;\n"
-"    border-left: 0px;\n"
-"    border-right: 0px;\n"
-"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
-"    border-radius: 0px;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"}\n"
-"\n"
-"QLineEdit:focus {\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"}\n"
-"\n"
-"QLineEdit::selection {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        self.variable_display.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
-        self.variable_display.setMaxLength(32)
-        self.variable_display.setReadOnly(True)
-
-        self.horizontalLayout_2.addWidget(self.variable_display)
-
-        self.variable_clear = QToolButton(self.frame_2)
-        self.variable_clear.setObjectName(u"variable_clear")
-        self.variable_clear.setEnabled(True)
-        self.variable_clear.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.variable_clear.setStyleSheet(u"QToolButton {\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"border-left: None;\n"
-"border-top: None;\n"
-"border-right: None;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"height:16px;\n"
-"width:16px;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.variable_clear.setIcon(icon1)
-        self.variable_clear.setIconSize(QSize(24, 24))
-
-        self.horizontalLayout_2.addWidget(self.variable_clear)
-
-        self.variables_search = QToolButton(self.frame_2)
-        self.variables_search.setObjectName(u"variables_search")
-        self.variables_search.setEnabled(True)
-        self.variables_search.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.variables_search.setStyleSheet(u"QToolButton {\n"
-"    border: 2px solid black;\n"
-"    border-radius: 0px;\n"
-"    border-color: rgba(80, 80, 80, 255);\n"
-"border-left: None;\n"
-"border-top: None;\n"
-"border-right: None;\n"
-"    padding: 2px;\n"
-"    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
-"height:16px;\n"
-"width:16px;\n"
-"}\n"
-"QToolButton:hover {\n"
-"    background-color: #414956;\n"
-"    color: white;\n"
-"}")
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.variables_search.setIcon(icon2)
-        self.variables_search.setIconSize(QSize(24, 24))
-
-        self.horizontalLayout_2.addWidget(self.variables_search)
-
         self.property_class_4 = QLineEdit(self.frame_2)
         self.property_class_4.setObjectName(u"property_class_4")
         self.property_class_4.setMaximumSize(QSize(16, 16777215))
@@ -522,6 +390,8 @@ class Ui_Form(object):
 "    background-color: #414956;\n"
 "    color: white;\n"
 "}")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.ReferenceID_Clear.setIcon(icon1)
         self.ReferenceID_Clear.setIconSize(QSize(24, 24))
 
@@ -548,6 +418,8 @@ class Ui_Form(object):
 "    background-color: #414956;\n"
 "    color: white;\n"
 "}")
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.ReferenceID_Search.setIcon(icon2)
         self.ReferenceID_Search.setIconSize(QSize(24, 24))
 
@@ -706,17 +578,6 @@ class Ui_Form(object):
         self.property_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.property_class.setText(QCoreApplication.translate("Form", u"Class properties", None))
-#if QT_CONFIG(tooltip)
-        self.enable.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p><span style=\" font-weight:400;\">Enable set</span></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.enable.setText("")
-#if QT_CONFIG(tooltip)
-        self.variable_display.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.variable_display.setText("")
-        self.variable_display.setPlaceholderText(QCoreApplication.translate("Form", u"Set enable from variable", None))
-        self.variable_clear.setText("")
-        self.variables_search.setText("")
 #if QT_CONFIG(tooltip)
         self.property_class_4.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
