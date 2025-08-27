@@ -38,28 +38,31 @@ class PropertyFrame(QWidget):
     _prop_classes_map_cache = {
         # Elements
         'FitOnLine': [
-            'm_bEnabled', 'm_vStart','m_vEnd', 'm_vUpDirection', 'm_PointSpace', 'm_nScaleMode', 'm_nPickMode', 'm_bOrientAlongLine'
+            'm_nReferenceID', 'm_bEnabled', 'm_vStart','m_vEnd', 'm_vUpDirection', 'm_PointSpace', 'm_nScaleMode', 'm_nPickMode', 'm_bOrientAlongLine'
         ],
         'PickOne': [
-            'm_bEnabled', 'm_SelectionMode','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize','m_vHandleOffset','m_bConfigurable'
+            'm_nReferenceID', 'm_bEnabled', 'm_SelectionMode','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize','m_vHandleOffset','m_bConfigurable'
         ],
         'PlaceInSphere': [
-            'm_bEnabled', 'm_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode'
+            'm_nReferenceID', 'm_bEnabled', 'm_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode'
         ],
         'PlaceOnPath': [
-            'm_bEnabled', 'm_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace', 'm_flSpacing', 'm_DefaultPath', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_UpDirectionSpace', 'm_vUpDirection'
+            'm_nReferenceID', 'm_bEnabled', 'm_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace', 'm_flSpacing', 'm_DefaultPath', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_UpDirectionSpace', 'm_vUpDirection'
         ],
         'Model': [
-            'm_bEnabled', 'm_sModelName','m_vModelScale','m_MaterialGroupName'
+            'm_nReferenceID', 'm_bEnabled','m_vModelScale','m_MaterialGroupName', 'm_sModelName'
         ],
         'SmartProp': [
-            'm_bEnabled', 'm_sSmartProp','m_vModelScale'
+            'm_nReferenceID', 'm_bEnabled', 'm_sSmartProp','m_vModelScale'
         ],
         'PlaceMultiple': [
-            'm_bEnabled', 'm_nCount', 'm_Expression'
+            'm_nReferenceID', 'm_bEnabled', 'm_nCount', 'm_Expression'
+        ],
+        'Group': [
+            'm_nReferenceID', 'm_bEnabled'
         ],
         'BendDeformer': [
-            'm_bEnabled', 'm_bDeformationEnabled', 'm_vSize', 'm_vOrigin', 'm_vAngles', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'
+            'm_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vSize', 'm_vOrigin', 'm_vAngles', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'
         ],
         # Operators
         'CreateSizer': [
@@ -115,7 +118,7 @@ class PropertyFrame(QWidget):
             'm_bEnabled', 'm_bStart', 'm_bEnd'
         ],
         'LinearLength': [
-            'm_bEnabled', 'm_flLength', 'm_bAllowScale', 'm_flMinLength', 'm_flMaxLength'
+            'm_bEnabled', 'm_bAllowScale', 'm_flLength', 'm_flMinLength', 'm_flMaxLength'
         ],
         'ChoiceWeight': [
             'm_bEnabled', 'm_flWeight'
@@ -279,13 +282,6 @@ class PropertyFrame(QWidget):
                     adding_instances(item, self.value[item])
                 else:
                     adding_instances(item, None)
-
-        # For elements, always add reference properties if they don't exist
-        if self.element:
-            # Add reference properties for elements if they don't exist in the data
-            if 'm_nReferenceID' not in self.value and 'm_sReferenceObjectID' not in self.value:
-                # Add reference properties to show the reference widget
-                adding_instances('m_nReferenceID', None)
 
         if self.prop_class in self._prop_classes_map_cache:
             operator_adding_instances(self._prop_classes_map_cache[self.prop_class])
