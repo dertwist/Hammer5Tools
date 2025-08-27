@@ -216,7 +216,6 @@ class SmartPropDocument(QMainWindow):
                 value=data,
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 element=True,
-                reference_bar=True,
                 tree_hierarchy=self.ui.tree_hierarchy_widget,
                 element_id_generator=self.element_id_generator
             )
