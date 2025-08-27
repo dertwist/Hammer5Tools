@@ -16,9 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
-    QLayout, QLineEdit, QSizePolicy, QSpacerItem,
-    QToolButton, QVBoxLayout, QWidget)
-
+    QLayout, QLineEdit, QPushButton, QSizePolicy,
+    QSpacerItem, QToolButton, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_Widget(object):
@@ -34,7 +33,7 @@ class Ui_Widget(object):
 "    border-radius: 0px;\n"
 "    border-left: 0px;\n"
 "    border-right: 0px;\n"
-"\tborder-top: 0px;\n"
+"	border-top: 0px;\n"
 "    border-color: rgba(50, 50, 50, 255);\n"
 "    padding: 8px;\n"
 "    padding-left: 6px;\n"
@@ -62,7 +61,7 @@ class Ui_Widget(object):
 "    border-radius: 0px;\n"
 "    border-left: 0px;\n"
 "    border-right: 0px;\n"
-"\tborder-top: 0px;\n"
+"	border-top: 0px;\n"
 "    border-color: rgba(50, 50, 50, 255);\n"
 "    color: #E3E3E3;\n"
 "    background-color: #1C1C1C;\n"
@@ -95,7 +94,7 @@ class Ui_Widget(object):
 "font: 8pt \"Segoe UI\";\n"
 "padding-right: 16px;\n"
 "\n"
-"color: rgb(255, 189, 190);")
+"color: #008B8B;")
 
         self.layout.addWidget(self.property_class)
 
@@ -114,11 +113,11 @@ class Ui_Widget(object):
 "    border-top: 0px;\n"
 "    border-left: 0px;\n"
 "    border-right: 0px;\n"
-"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
 "    border-radius: 0px;\n"
 "    padding: 2px;\n"
 "    color: #E3E3E3;\n"
-"    background-color: #242424;\n"
+"    border-bottom: 0px solid rgba(80, 80, 80, 255);\n"
+"    background-color: #1C1C1C;\n"
 "}\n"
 "\n"
 "QLineEdit:focus {\n"
@@ -152,6 +151,8 @@ class Ui_Widget(object):
 "    background-color: #242424;\n"
 "height:16px;\n"
 "width:16px;\n"
+"    border-bottom: 0px solid rgba(80, 80, 80, 255);\n"
+"    background-color: #1C1C1C;\n"
 "}\n"
 "QToolButton:hover {\n"
 "    background-color: #414956;\n"
@@ -180,6 +181,8 @@ class Ui_Widget(object):
 "    background-color: #242424;\n"
 "height:16px;\n"
 "width:16px;\n"
+"    border-bottom: 0px solid rgba(80, 80, 80, 255);\n"
+"    background-color: #1C1C1C;\n"
 "}\n"
 "QToolButton:hover {\n"
 "    background-color: #414956;\n"
@@ -191,6 +194,13 @@ class Ui_Widget(object):
         self.reference_search.setIconSize(QSize(24, 24))
 
         self.layout.addWidget(self.reference_search)
+
+        self.reference_show_button = QPushButton(self.frame)
+        self.reference_show_button.setObjectName(u"reference_show_button")
+        self.reference_show_button.setMinimumSize(QSize(110, 0))
+        self.reference_show_button.setStyleSheet(u"")
+
+        self.layout.addWidget(self.reference_show_button)
 
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
@@ -214,4 +224,6 @@ class Ui_Widget(object):
         self.reference_id.setPlaceholderText(QCoreApplication.translate("Widget", u"ID", None))
         self.reference_clear.setText("")
         self.reference_search.setText("")
+        self.reference_show_button.setText(QCoreApplication.translate("Widget", u"Show in hierarchy", None))
     # retranslateUi
+
