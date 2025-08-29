@@ -6,6 +6,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.objects import expression_completer
 from src.widgets import FloatWidget, BoolWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
+from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
 
 # m_VariableValue =
 # {
@@ -61,7 +62,9 @@ class PropertyVariableValue(QWidget):
             self.text_line = CompletingPlainTextEdit()
             self.text_line.completion_tail = ''
             self.text_line.OnlyFloat = False
+            self.expression_editor = ExpressionEditor(self.text_line, self.variables_scrollArea)
             self.text_line.setPlaceholderText('Variable name, float or expression')
+            self.ui.layout_3.addWidget(self.expression_editor)
             self.ui.layout_3.addWidget(self.text_line)
             self.text_line.textChanged.connect(self.on_changed)
 
@@ -157,6 +160,7 @@ class PropertyVariableValue(QWidget):
         try:
             if self.ui.logic_switch_value.currentText() == 'Value':
                 self.text_line.hide()
+                self.expression_editor.hide()
                 self.value_spacer_item.show()
                 # Show appropriate widget based on current data type
                 current_type = self.ui.logic_switch.currentText()
@@ -168,6 +172,7 @@ class PropertyVariableValue(QWidget):
                     self.bool_widget.hide()
             elif self.ui.logic_switch_value.currentText() == 'Expression':
                 self.text_line.show()
+                self.expression_editor.show()
                 self.value_spacer_item.hide()
                 self.float_widget.hide()
                 self.bool_widget.hide()

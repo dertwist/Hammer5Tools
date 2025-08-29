@@ -90,7 +90,7 @@ class VariableFrame(QWidget):
 
 
         #Setup Expression editor
-        self.expression_editor = ExpressionEditor(self.hide_expression_input)
+        self.expression_editor = ExpressionEditor(self.hide_expression_input, self.widget_list)
         self.ui.hide_expression_frame.layout().addWidget(self.expression_editor)
 
         #Expression text field
