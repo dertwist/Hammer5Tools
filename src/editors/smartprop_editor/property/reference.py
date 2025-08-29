@@ -236,13 +236,6 @@ class PropertyReference(QWidget):
                 'm_nReferenceID': ref_id,
                 'm_sReferenceObjectID': self.reference_object_id_get()
             }
-            
-            if self.value_class == 'm_nReferenceID':
-                self.value = {self.value_class: ref_id}
-            elif self.value_class == 'm_sReferenceObjectID':
-                self.value = {self.value_class: self.reference_object_id_get()}
-            else:
-                # For general reference handling, include both values
-                self.value = reference_values
+            self.value = reference_values
         else:
             self.value = None
