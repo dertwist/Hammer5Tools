@@ -10,6 +10,7 @@ from src.widgets.popup_menu.main import PopupMenu
 from src.editors.smartprop_editor.objects import variables_list, expression_completer
 from src.widgets.completer.main import CompletingPlainTextEdit
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
+from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
 
 
 class VariableFrame(QWidget):
@@ -86,6 +87,13 @@ class VariableFrame(QWidget):
         # Setup completer for variable names with filtering for hide expressions
         self._setup_hide_expression_completer()
 
+
+
+        #Setup Expression editor
+        self.expression_editor = ExpressionEditor(self.hide_expression_input)
+        self.ui.hide_expression_frame.layout().addWidget(self.expression_editor)
+
+        #Expression text field
         self.ui.hide_expression_frame.layout().addWidget(self.hide_expression_input)
 
         self.show_child()
