@@ -7,6 +7,7 @@ from src.editors.smartprop_editor.objects import expression_completer
 from src.widgets import Spacer
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
+from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
 
 class PropertyString(QWidget):
     edited = Signal()
@@ -57,6 +58,7 @@ class PropertyString(QWidget):
         # EditLine
         self.text_line = CompletingPlainTextEdit()
         self.text_line.completion_tail = ''
+        self.expression_editor = ExpressionEditor(self.text_line, self.variables_scrollArea)
 
         # Variable
         self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types, variable_name=self.value_class, element_id_generator=element_id_generator)
@@ -77,7 +79,8 @@ class PropertyString(QWidget):
             self.text_line.setPlaceholderText(placeholder)
         else:
             self.text_line.setPlaceholderText('Variable name, string or expression')
-        self.ui.layout.insertWidget(2, self.text_line)
+        self.ui.layout.insertWidget(3, self.text_line)
+        self.ui.layout.insertWidget(2, self.expression_editor)
         self.text_line.textChanged.connect(self.on_changed)
         if isinstance(value, dict):
             if 'm_Expression' in value:
@@ -117,36 +120,30 @@ class PropertyString(QWidget):
             self.variable_frame.hide()
             self.text_line.hide()
             self.spacer.show()
+            self.expression_editor.hide()
         elif self.ui.logic_switch.currentIndex() == 1:
             self.variable_frame.hide()
             self.text_line.show()
             self.spacer.hide()
+            self.expression_editor.hide()
         elif self.ui.logic_switch.currentIndex() == 2:
             self.variable_frame.show()
             self.text_line.hide()
             self.spacer.hide()
+            self.expression_editor.hide()
         elif self.ui.logic_switch.currentIndex() == 3:
             self.variable_frame.hide()
             self.text_line.show()
             self.spacer.hide()
+            self.expression_editor.show()
+
         self.on_changed()
 
 
     def on_changed(self):
-        # Determine context based on current mode
-        if self.ui.logic_switch.currentIndex() == 1:  # String mode
-            context = 'string'
-        elif self.ui.logic_switch.currentIndex() == 3:  # Expression mode
-            context = 'general'
-        else:
-            context = 'general'
-
-        # Setup type-aware completer without filters (show all variable types)
         CompletionUtils.setup_completer_for_widget(
             self.text_line,
             self.variables_scrollArea,
-            filter_types=None,  # No filtering - show all variable types
-            context=context
         )
         
         self.change_value()
