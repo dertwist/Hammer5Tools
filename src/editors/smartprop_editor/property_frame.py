@@ -61,6 +61,9 @@ class PropertyFrame(QWidget):
         'Group': [
             'm_nReferenceID', 'm_bEnabled'
         ],
+        'ModifyState': [
+            'm_nReferenceID', 'm_bEnabled'
+        ],
         'BendDeformer': [
             'm_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vSize', 'm_vOrigin', 'm_vAngles', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'
         ],
