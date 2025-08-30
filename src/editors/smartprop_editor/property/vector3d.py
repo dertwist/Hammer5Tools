@@ -8,6 +8,7 @@ from src.editors.smartprop_editor.objects import expression_completer
 from src.widgets import FloatWidget
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
+from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
 
 
 class PropertyVector3D(QWidget):
@@ -79,8 +80,11 @@ class PropertyVector3D(QWidget):
 
         self.text_line_x = CompletingPlainTextEdit()
         self.text_line_x.completion_tail = ''
+        self.expression_editor_x = ExpressionEditor(self.text_line_x, self.variables_scrollArea)
         self.ui.layout_x.insertWidget(4, self.text_line_x)
+        self.ui.layout_x.insertWidget(4, self.expression_editor_x)
         self.text_line_x.textChanged.connect(self.on_changed)
+        self.text_line_x.setPlaceholderText('Enter expression (e.g., variable_name.x)')
         self.ui.comboBox_x.currentIndexChanged.connect(self.on_changed)
 
 
@@ -110,8 +114,11 @@ class PropertyVector3D(QWidget):
 
         self.text_line_y = CompletingPlainTextEdit()
         self.text_line_y.completion_tail = ''
+        self.expression_editor_y = ExpressionEditor(self.text_line_y, self.variables_scrollArea)
         self.ui.layout_y.insertWidget(4, self.text_line_y)
+        self.ui.layout_y.insertWidget(4, self.expression_editor_y)
         self.text_line_y.textChanged.connect(self.on_changed)
+        self.text_line_y.setPlaceholderText('Enter expression (e.g., variable_name.y)')
         self.ui.comboBox_y.currentIndexChanged.connect(self.on_changed)
 
         # Vector Z Setup
@@ -140,8 +147,11 @@ class PropertyVector3D(QWidget):
 
         self.text_line_z = CompletingPlainTextEdit()
         self.text_line_z.completion_tail = ''
+        self.expression_editor_z = ExpressionEditor(self.text_line_z, self.variables_scrollArea)
         self.ui.layout_z.insertWidget(4, self.text_line_z)
+        self.ui.layout_z.insertWidget(4, self.expression_editor_z)
         self.text_line_z.textChanged.connect(self.on_changed)
+        self.text_line_z.setPlaceholderText('Enter expression (e.g., variable_name.z)')
         self.ui.comboBox_z.currentIndexChanged.connect(self.on_changed)
 
         # Default states
@@ -194,40 +204,49 @@ class PropertyVector3D(QWidget):
     def logic_switch_line(self):
         if self.ui.comboBox_x.currentIndex() == 0:
             self.text_line_x.hide()
+            self.expression_editor_x.hide()
             self.float_widget_x.show()
             self.variable_x_frame.hide()
         elif self.ui.comboBox_x.currentIndex() == 1:
             self.text_line_x.hide()
+            self.expression_editor_x.hide()
             self.float_widget_x.hide()
             self.variable_x_frame.show()
         else:
             self.text_line_x.show()
+            self.expression_editor_x.show()
             self.float_widget_x.hide()
             self.variable_x_frame.hide()
 
         if self.ui.comboBox_y.currentIndex() == 0:
             self.text_line_y.hide()
+            self.expression_editor_y.hide()
             self.float_widget_y.show()
             self.variable_y_frame.hide()
         elif self.ui.comboBox_y.currentIndex() == 1:
             self.text_line_y.hide()
+            self.expression_editor_y.hide()
             self.float_widget_y.hide()
             self.variable_y_frame.show()
         else:
             self.text_line_y.show()
+            self.expression_editor_y.show()
             self.float_widget_y.hide()
             self.variable_y_frame.hide()
 
         if self.ui.comboBox_z.currentIndex() == 0:
             self.text_line_z.hide()
+            self.expression_editor_z.hide()
             self.float_widget_z.show()
             self.variable_z_frame.hide()
         elif self.ui.comboBox_z.currentIndex() == 1:
             self.text_line_z.hide()
+            self.expression_editor_z.hide()
             self.float_widget_z.hide()
             self.variable_z_frame.show()
         else:
             self.text_line_z.show()
+            self.expression_editor_z.show()
             self.float_widget_z.hide()
             self.variable_z_frame.hide()
 

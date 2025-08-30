@@ -10,6 +10,7 @@ from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
+from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
 
 
 class PropertyColor(QWidget):
@@ -62,7 +63,9 @@ class PropertyColor(QWidget):
         self.text_line = CompletingPlainTextEdit()
         self.text_line.completion_tail = ''
         self.text_line.setPlaceholderText('Variable name, RGB or expression')
+        self.expression_editor = ExpressionEditor(self.text_line, self.variables_scrollArea)
         self.ui.layout.insertWidget(2, self.text_line)
+        self.ui.layout.insertWidget(2, self.expression_editor)
         self.text_line.textChanged.connect(self.on_changed)
 
         if isinstance(value, dict):
@@ -106,19 +109,24 @@ class PropertyColor(QWidget):
     def logic_switch(self):
         if self.ui.logic_switch.currentIndex() == 0:
             self.text_line.hide()
+            self.expression_editor.hide()
             self.ui.value.hide()
             self.variable_frame.hide()
         elif self.ui.logic_switch.currentIndex() == 1:
             self.text_line.hide()
+            self.expression_editor.hide()
             self.ui.value.show()
             self.variable_frame.hide()
         elif self.ui.logic_switch.currentIndex() == 2:
             self.text_line.hide()
+            self.expression_editor.hide()
             self.ui.value.hide()
             self.variable_frame.show()
         else:
             self.text_line.show()
+            self.expression_editor.show()
             self.ui.value.hide()
+            self.variable_frame.hide()
 
     def on_changed(self):
         self.logic_switch()
