@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
+from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
 
 class PropertyCombobox(QWidget):
     edited = Signal()
@@ -68,7 +69,9 @@ class PropertyCombobox(QWidget):
         self.text_line = CompletingPlainTextEdit()
         self.text_line.completion_tail = ''
         self.text_line.setPlaceholderText('Variable name, float or expression')
+        self.expression_editor = ExpressionEditor(self.text_line, self.variables_scrollArea)
         self.ui.layout.insertWidget(3, self.text_line)
+        self.ui.layout.insertWidget(3, self.expression_editor)
         self.text_line.textChanged.connect(self.on_changed)
 
         self.ui.logic_switch.setCurrentIndex(0)
@@ -94,22 +97,26 @@ class PropertyCombobox(QWidget):
         if self.ui.logic_switch.currentIndex() == 0:
             self.text_line.OnlyFloat = False
             self.text_line.hide()
+            self.expression_editor.hide()
             self.ui.value.hide()
             self.variable_frame.hide()
             self.spacer.show()
         elif self.ui.logic_switch.currentIndex() == 1:
             self.text_line.hide()
+            self.expression_editor.hide()
             self.ui.value.show()
             self.variable_frame.hide()
             self.spacer.hide()
         elif self.ui.logic_switch.currentIndex() == 2:
             self.text_line.hide()
+            self.expression_editor.hide()
             self.ui.value.hide()
             self.variable_frame.show()
             self.spacer.hide()
         else:
             self.text_line.OnlyFloat = False
             self.text_line.show()
+            self.expression_editor.show()
             self.variable_frame.hide()
             self.ui.value.hide()
             self.spacer.hide()
