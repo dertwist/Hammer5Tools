@@ -4,11 +4,10 @@ from src.editors.smartprop_editor.property.ui_float import Ui_Widget
 from src.widgets.completer.main import CompletingPlainTextEdit
 from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
-from src.editors.smartprop_editor.objects import expression_completer
 from src.widgets import FloatWidget
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
-from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
+from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 
 class PropertyFloat(QWidget):
     edited = Signal()
