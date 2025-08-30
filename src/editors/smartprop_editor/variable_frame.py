@@ -7,10 +7,10 @@ from src.property.methods import PropertyMethods
 from src.widgets.element_id import *
 from src.settings.main import get_settings_bool
 from src.widgets.popup_menu.main import PopupMenu
-from src.editors.smartprop_editor.objects import variables_list, expression_completer
+from src.editors.smartprop_editor.objects import variables_list
 from src.widgets.completer.main import CompletingPlainTextEdit
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
-from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
+from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 
 
 class VariableFrame(QWidget):
