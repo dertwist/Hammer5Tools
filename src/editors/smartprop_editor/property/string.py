@@ -164,7 +164,10 @@ class PropertyString(QWidget):
         # Expression
         elif self.ui.logic_switch.currentIndex() == 3:
             value = self.text_line.toPlainText()
-            self.value = {self.value_class: {'m_Expression': str(value)}}
+            if not self.expression_bool:
+                self.value = {self.value_class: {'m_Expression': str(value)}}
+            else:
+                self.value = {self.value_class: str(value)}
 
     def get_variables(self, search_term=None):
         return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
