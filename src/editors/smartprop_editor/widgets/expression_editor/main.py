@@ -12,12 +12,12 @@ class ExpressionSyntaxHighlighter(QSyntaxHighlighter):
         self.variables_info = variables_info or {}
         self.highlighting_rules = []
         
-        # Define colors for different elements
+        # Define colors for different elements - matching project color scheme
         keyword_color = QColor(86, 156, 214)  # Blue for keywords
-        operator_color = QColor(212, 212, 212)  # Light gray for operators
+        operator_color = QColor(227, 227, 227)  # Light gray for operators (matching #E3E3E3)
         number_color = QColor(181, 206, 168)  # Light green for numbers
         function_color = QColor(220, 220, 170)  # Yellow for functions
-        comment_color = QColor(106, 153, 85)  # Green for comments
+        comment_color = QColor(109, 109, 109)  # Desaturated gray for comments (matching #6D6D6D)
         
         # Type-specific colors for variables
         bool_color = QColor(86, 156, 214)  # Blue for bool
@@ -126,7 +126,8 @@ class CodeEditor(CompletingPlainTextEdit):
             max_num //= 10
             digits += 1
         
-        space = 3 + self.fontMetrics().horizontalAdvance('9') * digits
+        # Ensure minimum width and add padding for better appearance
+        space = max(12, 8 + self.fontMetrics().horizontalAdvance('9') * digits)
         return space
     
     def update_line_number_area_width(self, new_block_count):
@@ -148,20 +149,48 @@ class CodeEditor(CompletingPlainTextEdit):
     
     def line_number_area_paint_event(self, event):
         painter = QPainter(self.line_number_area)
-        painter.fillRect(event.rect(), QColor(45, 45, 45))  # #2D2D2D
+        
+        # Fill background with darker color matching project theme
+        painter.fillRect(event.rect(), QColor(29, 29, 31))  # #1d1d1f - project secondary background
+        
+        # Draw a subtle border on the right side
+        painter.setPen(QColor(54, 54, 57))  # #363639 - project stroke color
+        painter.drawLine(self.line_number_area.width() - 1, event.rect().top(), 
+                        self.line_number_area.width() - 1, event.rect().bottom())
         
         block = self.firstVisibleBlock()
         block_number = block.blockNumber()
         top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
         bottom = top + self.blockBoundingRect(block).height()
         
+        # Get current line for highlighting
+        current_line = self.textCursor().blockNumber()
+        
+        # Set up font for line numbers
+        font = self.font()
+        font.setPointSize(max(8, font.pointSize() - 1))  # Slightly smaller than editor font
+        painter.setFont(font)
+        
         height = self.fontMetrics().height()
         while block.isValid() and (top <= event.rect().bottom()):
             if block.isVisible() and (bottom >= event.rect().top()):
                 number = str(block_number + 1)
-                painter.setPen(QColor(128, 128, 128))  # Gray color for line numbers
-                painter.drawText(0, int(top), self.line_number_area.width(), height,
-                               Qt.AlignRight, number)
+                
+                # Highlight current line number
+                if block_number == current_line:
+                    # Highlight background for current line
+                    highlight_rect = QRect(0, int(top), self.line_number_area.width() - 1, height)
+                    painter.fillRect(highlight_rect, QColor(65, 73, 86, 80))  # #414956 with transparency
+                    
+                    # Use brighter color for current line number
+                    painter.setPen(QColor(227, 227, 227))  # #E3E3E3 - project primary text
+                else:
+                    # Use muted color for other line numbers
+                    painter.setPen(QColor(157, 157, 157))  # #9D9D9D - project neutral text
+                
+                # Draw line number with right alignment and padding
+                painter.drawText(0, int(top), self.line_number_area.width() - 6, height,
+                               Qt.AlignRight | Qt.AlignVCenter, number)
             
             block = block.next()
             top = bottom
