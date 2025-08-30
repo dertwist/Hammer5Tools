@@ -67,10 +67,6 @@ class CompletingPlainTextEdit(QPlainTextEdit):
                 event.ignore()
                 return
 
-        if event.key() == Qt.Key_Return:
-            event.ignore()
-            return
-
         if self.completer.popup().isVisible() and event.key() in [
             Qt.Key_Up,
             Qt.Key_Down,

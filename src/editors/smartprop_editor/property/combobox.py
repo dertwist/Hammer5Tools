@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QSizePolicy, QSpacerItem, QHBoxLayout, QWidget
 from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
-from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
+from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 
 class PropertyCombobox(QWidget):
     edited = Signal()
