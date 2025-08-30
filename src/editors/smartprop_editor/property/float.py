@@ -8,6 +8,7 @@ from src.editors.smartprop_editor.objects import expression_completer
 from src.widgets import FloatWidget
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
+from src.editors.smartprop_editor.property.expression_editor import ExpressionEditor
 
 class PropertyFloat(QWidget):
     edited = Signal()
@@ -87,7 +88,9 @@ class PropertyFloat(QWidget):
         self.text_line.completion_tail = ''
         self.text_line.OnlyFloat = True
         self.text_line.setPlaceholderText('Variable name, float or expression')
+        self.expression_editor = ExpressionEditor(self.text_line, self.variables_scrollArea)
         self.ui.layout.insertWidget(2, self.text_line)
+        self.ui.layout.insertWidget(2, self.expression_editor)
         self.text_line.textChanged.connect(self.on_changed)
 
         self.ui.logic_switch.setCurrentIndex(0)
@@ -114,22 +117,26 @@ class PropertyFloat(QWidget):
         if self.ui.logic_switch.currentIndex() == 0:
             self.text_line.OnlyFloat = False
             self.text_line.hide()
+            self.expression_editor.hide()
             self.float_widget.hide()
             self.variable_frame.hide()
             self.spacer.show()
         elif self.ui.logic_switch.currentIndex() == 1:
             self.text_line.hide()
+            self.expression_editor.hide()
             self.float_widget.show()
             self.variable_frame.hide()
             self.spacer.hide()
         elif self.ui.logic_switch.currentIndex() == 2:
             self.text_line.hide()
+            self.expression_editor.hide()
             self.float_widget.hide()
             self.variable_frame.show()
             self.spacer.hide()
         else:
             self.text_line.OnlyFloat = False
             self.text_line.show()
+            self.expression_editor.show()
             self.variable_frame.hide()
             self.float_widget.hide()
             self.spacer.hide()
