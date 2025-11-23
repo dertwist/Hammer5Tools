@@ -267,14 +267,7 @@ class ExpressionEditor(QToolButton):
         dialog.setMinimumSize(750, 550)
         dialog.resize(900, 650)
 
-        # Apply application-consistent styling to dialog
-        # dialog.setStyleSheet("""
-        #     QDialog {
-        #         background-color: #1E1E1E;
-        #         color: #E3E3E3;
-        #         border: 1px solid #404040;
-        #     }
-        # """)
+
 
         # Main layout
         main_layout = QVBoxLayout(dialog)
@@ -297,13 +290,6 @@ class ExpressionEditor(QToolButton):
         # Left panel - Variables and functions
         left_panel = QFrame()
         left_panel.setMaximumWidth(280)
-        # left_panel.setStyleSheet("""
-        #     QFrame {
-        #         background-color: #252526;
-        #         border: 1px solid #404040;
-        #         border-radius: 4px;
-        #     }
-        # """)
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(8, 8, 8, 8)
         left_layout.setSpacing(6)
