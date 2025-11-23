@@ -32,3 +32,5 @@ cffi
 vdf
 pycparser
 Pillow
+matplotlib
+pynvml
