@@ -237,6 +237,15 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.ComboBoxSelectAddon)
 
+        self.mapbuilder = QToolButton(self.centralwidget)
+        self.mapbuilder.setObjectName(u"mapbuilder")
+        icon14 = QIcon()
+        icon14.addFile(u":/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.mapbuilder.setIcon(icon14)
+        self.mapbuilder.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.mapbuilder)
+
         self.launch_settings = QToolButton(self.centralwidget)
         self.launch_settings.setObjectName(u"launch_settings")
         self.launch_settings.setIcon(icon10)
@@ -250,9 +259,9 @@ class Ui_MainWindow(object):
         self.Launch_Addon_Button.setMinimumSize(QSize(128, 0))
         self.Launch_Addon_Button.setStyleSheet(u"padding: 5px;\n"
 "font: 700 10pt \"Segoe UI\";")
-        icon14 = QIcon()
-        icon14.addFile(u":/icons/icons/hammer_icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Launch_Addon_Button.setIcon(icon14)
+        icon15 = QIcon()
+        icon15.addFile(u":/icons/icons/hammer_icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Launch_Addon_Button.setIcon(icon15)
         self.Launch_Addon_Button.setIconSize(QSize(20, 20))
         self.Launch_Addon_Button.setCheckable(False)
 
@@ -265,9 +274,9 @@ class Ui_MainWindow(object):
         self.open_addons_folder_button = QToolButton(self.centralwidget)
         self.open_addons_folder_button.setObjectName(u"open_addons_folder_button")
         self.open_addons_folder_button.setFont(font)
-        icon15 = QIcon()
-        icon15.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_addons_folder_button.setIcon(icon15)
+        icon16 = QIcon()
+        icon16.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_addons_folder_button.setIcon(icon16)
 
         self.horizontalLayout_2.addWidget(self.open_addons_folder_button)
 
@@ -290,9 +299,9 @@ class Ui_MainWindow(object):
         self.cleanup_button.setMinimumSize(QSize(92, 0))
         self.cleanup_button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
-        icon16 = QIcon()
-        icon16.addFile(u":/valve_common/icons/tools/common/find.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.cleanup_button.setIcon(icon16)
+        icon17 = QIcon()
+        icon17.addFile(u":/valve_common/icons/tools/common/find.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.cleanup_button.setIcon(icon17)
         self.cleanup_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.cleanup_button)
@@ -352,6 +361,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.ComboBoxSelectAddon.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">Addon selection</span></p><p>In the Addon selection, all tools apply changes to the addon selected in this section.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
+        self.mapbuilder.setText(QCoreApplication.translate("MainWindow", u"...", None))
         self.launch_settings.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Addon launch</span></p><p>Launches the current addon selected in the addon selection.</p></body></html>", None))
