@@ -4,6 +4,7 @@ from PySide6.QtGui import QIcon, QFont, QPainter, QColor, QTextFormat, QSyntaxHi
 from src.widgets.completer.main import CompletingPlainTextEdit
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.objects import expression_completer
+from src.styles.common import *
 import re
 
 
@@ -267,13 +268,13 @@ class ExpressionEditor(QToolButton):
         dialog.resize(900, 650)
 
         # Apply application-consistent styling to dialog
-        dialog.setStyleSheet("""
-            QDialog {
-                background-color: #1E1E1E;
-                color: #E3E3E3;
-                border: 1px solid #404040;
-            }
-        """)
+        # dialog.setStyleSheet("""
+        #     QDialog {
+        #         background-color: #1E1E1E;
+        #         color: #E3E3E3;
+        #         border: 1px solid #404040;
+        #     }
+        # """)
 
         # Main layout
         main_layout = QVBoxLayout(dialog)
@@ -296,13 +297,13 @@ class ExpressionEditor(QToolButton):
         # Left panel - Variables and functions
         left_panel = QFrame()
         left_panel.setMaximumWidth(280)
-        left_panel.setStyleSheet("""
-            QFrame {
-                background-color: #252526;
-                border: 1px solid #404040;
-                border-radius: 4px;
-            }
-        """)
+        # left_panel.setStyleSheet("""
+        #     QFrame {
+        #         background-color: #252526;
+        #         border: 1px solid #404040;
+        #         border-radius: 4px;
+        #     }
+        # """)
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(8, 8, 8, 8)
         left_layout.setSpacing(6)
@@ -312,40 +313,16 @@ class ExpressionEditor(QToolButton):
         variables_label.setFont(QFont("Segoe UI", 9, QFont.Bold))
         variables_label.setStyleSheet("""
             QLabel {
-                color: #E3E3E3; 
-                padding: 4px;
-                background-color: #2D2D2D;
-                border: 1px solid #404040;
-                border-radius: 3px;
+                color: #E3E3E3;
+                # padding: 4px;
+                # background-color: #2D2D2D;
+                # border: 1px solid #404040;
+                # border-radius: 3px;
             }
         """)
         left_layout.addWidget(variables_label)
 
         variables_list = QListWidget()
-        variables_list.setStyleSheet("""
-            QListWidget {
-                background-color: #1E1E1E;
-                border: 1px solid #404040;
-                color: #E3E3E3;
-                font: 8pt "Segoe UI";
-                selection-background-color: #094771;
-                selection-color: #FFFFFF;
-                outline: none;
-                border-radius: 3px;
-            }
-            QListWidget::item {
-                padding: 4px 8px;
-                border-bottom: 1px solid #2D2D2D;
-                min-height: 18px;
-            }
-            QListWidget::item:hover {
-                background-color: #2A2D2E;
-            }
-            QListWidget::item:selected {
-                background-color: #094771;
-                color: #FFFFFF;
-            }
-        """)
 
         # Gather variable type information and populate variables list
         variables_info = {}
@@ -467,26 +444,6 @@ class ExpressionEditor(QToolButton):
 
         # Create the code editor with line numbers and syntax highlighting
         editor = CodeEditor(variables_info)
-        editor.setStyleSheet("""
-            QPlainTextEdit {
-                font: 580 10pt "Consolas", "Courier New", monospace;
-                border: 2px solid #404040;
-                border-radius: 4px;
-                padding: 8px;
-                color: #E3E3E3;
-                background-color: #1E1E1E;
-                selection-background-color: #094771;
-                selection-color: #FFFFFF;
-                line-height: 1.3;
-            }
-            QPlainTextEdit:focus {
-                border-color: #007ACC;
-                background-color: #1E1E1E;
-            }
-            QPlainTextEdit:hover {
-                border-color: #505050;
-            }
-        """)
 
         # Set up completer with expression_completer functions included
         completions = CompletionUtils.generate_type_aware_completions(
@@ -530,7 +487,7 @@ class ExpressionEditor(QToolButton):
         splitter.addWidget(right_panel)
         
         # Set splitter proportions
-        splitter.setSizes([280, 620])
+        splitter.setSizes([380, 920])
 
         # Button layout
         btn_layout = QHBoxLayout()
@@ -538,46 +495,10 @@ class ExpressionEditor(QToolButton):
         btn_layout.addStretch()
         
         save_btn = QPushButton("Save")
-        save_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #007ACC;
-                color: #FFFFFF;
-                border: 1px solid #007ACC;
-                padding: 8px 20px;
-                border-radius: 3px;
-                font: 580 9pt "Segoe UI";
-                min-width: 80px;
-            }
-            QPushButton:hover {
-                background-color: #1177BB;
-                border-color: #1177BB;
-            }
-            QPushButton:pressed {
-                background-color: #005A9E;
-                border-color: #005A9E;
-            }
-        """)
+        save_btn.setStyleSheet(qt_stylesheet_button)
         
         cancel_btn = QPushButton("Cancel")
-        cancel_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #3C3C3C;
-                color: #E3E3E3;
-                border: 1px solid #404040;
-                padding: 8px 20px;
-                border-radius: 3px;
-                font: 580 9pt "Segoe UI";
-                min-width: 80px;
-            }
-            QPushButton:hover {
-                background-color: #464647;
-                border-color: #505050;
-            }
-            QPushButton:pressed {
-                background-color: #2D2D2D;
-                border-color: #404040;
-            }
-        """)
+        cancel_btn.setStyleSheet(qt_stylesheet_button)
         
         btn_layout.addWidget(cancel_btn)
         btn_layout.addWidget(save_btn)
