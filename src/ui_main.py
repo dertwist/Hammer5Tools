@@ -184,7 +184,7 @@ class Ui_MainWindow(object):
 
         self.preferences_button = QPushButton(self.centralwidget)
         self.preferences_button.setObjectName(u"preferences_button")
-        self.preferences_button.setMinimumSize(QSize(128, 0))
+        self.preferences_button.setMinimumSize(QSize(130, 0))
         self.preferences_button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
         icon10 = QIcon()
@@ -237,15 +237,6 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.ComboBoxSelectAddon)
 
-        self.mapbuilder = QToolButton(self.centralwidget)
-        self.mapbuilder.setObjectName(u"mapbuilder")
-        icon14 = QIcon()
-        icon14.addFile(u":/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.mapbuilder.setIcon(icon14)
-        self.mapbuilder.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.mapbuilder)
-
         self.launch_settings = QToolButton(self.centralwidget)
         self.launch_settings.setObjectName(u"launch_settings")
         self.launch_settings.setIcon(icon10)
@@ -259,13 +250,22 @@ class Ui_MainWindow(object):
         self.Launch_Addon_Button.setMinimumSize(QSize(128, 0))
         self.Launch_Addon_Button.setStyleSheet(u"padding: 5px;\n"
 "font: 700 10pt \"Segoe UI\";")
-        icon15 = QIcon()
-        icon15.addFile(u":/icons/icons/hammer_icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Launch_Addon_Button.setIcon(icon15)
+        icon14 = QIcon()
+        icon14.addFile(u":/icons/icons/hammer_icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Launch_Addon_Button.setIcon(icon14)
         self.Launch_Addon_Button.setIconSize(QSize(20, 20))
         self.Launch_Addon_Button.setCheckable(False)
 
         self.horizontalLayout_2.addWidget(self.Launch_Addon_Button)
+
+        self.mapbuilder = QToolButton(self.centralwidget)
+        self.mapbuilder.setObjectName(u"mapbuilder")
+        icon15 = QIcon()
+        icon15.addFile(u":/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.mapbuilder.setIcon(icon15)
+        self.mapbuilder.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout_2.addWidget(self.mapbuilder)
 
         self.horizontalSpacer = QSpacerItem(24, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
 
@@ -361,12 +361,12 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.ComboBoxSelectAddon.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">Addon selection</span></p><p>In the Addon selection, all tools apply changes to the addon selected in this section.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.mapbuilder.setText(QCoreApplication.translate("MainWindow", u"...", None))
         self.launch_settings.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Addon launch</span></p><p>Launches the current addon selected in the addon selection.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setText(QCoreApplication.translate("MainWindow", u"Edit map", None))
+        self.mapbuilder.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.open_addons_folder_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Open Game/Content Addons folder</span></p><p><span style=\" font-size:9pt;\">Opens the game addons or content addons folder for the current addon selection. </span></p><p><span style=\" font-size:9pt;\">To choose the folder type to open, select a folder in the </span><span style=\" font-size:9pt; font-style:italic;\">Addon Folder Selection</span><span style=\" font-size:9pt;\">.</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
