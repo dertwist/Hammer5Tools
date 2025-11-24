@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QGroupBox,
-    QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-    QProgressBar, QPushButton, QScrollArea, QSizePolicy,
-    QSpacerItem, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout,
+    QLabel, QListWidget, QListWidgetItem, QProgressBar,
+    QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
+    QTabWidget, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_mapbuilder_dialog(object):
@@ -145,14 +145,15 @@ class Ui_mapbuilder_dialog(object):
         self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 500, 658))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents_2)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.groupBox = QGroupBox(self.scrollAreaWidgetContents_2)
-        self.groupBox.setObjectName(u"groupBox")
+        self.verticalLayout.setContentsMargins(0, 0, 0, -1)
+        self.build_settings_content = QVBoxLayout()
+        self.build_settings_content.setObjectName(u"build_settings_content")
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.verticalLayout.addWidget(self.groupBox)
+        self.build_settings_content.addItem(self.verticalSpacer)
 
-        self.verticalSpacer = QSpacerItem(20, 615, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
-        self.verticalLayout.addItem(self.verticalSpacer)
+        self.verticalLayout.addLayout(self.build_settings_content)
 
         self.build_settings_area.setWidget(self.scrollAreaWidgetContents_2)
 
@@ -194,6 +195,7 @@ class Ui_mapbuilder_dialog(object):
         self.report.setObjectName(u"report")
         self.verticalLayout_5 = QVBoxLayout(self.report)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
         self.report_widget = QListWidget(self.report)
         self.report_widget.setObjectName(u"report_widget")
 
@@ -255,11 +257,13 @@ class Ui_mapbuilder_dialog(object):
         self.output.setObjectName(u"output")
         self.verticalLayout_3 = QVBoxLayout(self.output)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.tabWidget.addTab(self.output, "")
         self.logs = QWidget()
         self.logs.setObjectName(u"logs")
         self.verticalLayout_4 = QVBoxLayout(self.logs)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.listWidget_2 = QListWidget(self.logs)
         self.listWidget_2.setObjectName(u"listWidget_2")
 
@@ -295,11 +299,10 @@ class Ui_mapbuilder_dialog(object):
         self.pushButton_8.setText(QCoreApplication.translate("mapbuilder_dialog", u"Full Compile", None))
         self.pushButton_12.setText(QCoreApplication.translate("mapbuilder_dialog", u"Full Compile", None))
         self.pushButton_11.setText(QCoreApplication.translate("mapbuilder_dialog", u"Full Compile", None))
-        self.groupBox.setTitle(QCoreApplication.translate("mapbuilder_dialog", u"GroupBox", None))
         self.build_button.setText(QCoreApplication.translate("mapbuilder_dialog", u"Build", None))
         self.run_button.setText(QCoreApplication.translate("mapbuilder_dialog", u"Run (Skip Build)", None))
         self.abort_button.setText(QCoreApplication.translate("mapbuilder_dialog", u"Abort", None))
-        self.last_build_stats_label.setText(QCoreApplication.translate("mapbuilder_dialog", u"TextLabel", None))
+        self.last_build_stats_label.setText(QCoreApplication.translate("mapbuilder_dialog", u"Last Build time: 2h 15m", None))
         self.current_state_label.setText(QCoreApplication.translate("mapbuilder_dialog", u"Current progress (3m):", None))
         self.global_state_label.setText(QCoreApplication.translate("mapbuilder_dialog", u"Global progress (2h 14m):", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.report), QCoreApplication.translate("mapbuilder_dialog", u"Report", None))
