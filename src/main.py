@@ -29,6 +29,7 @@ from PySide6.QtCore import (
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
 from src.forms.about.main import AboutDialog
+from src.forms.mapbuilder.main import MapBuilderDialog
 from src.settings.main import (
     PreferencesDialog,
     get_steam_path,
@@ -154,6 +155,7 @@ class Widget(QMainWindow):
         self.populate_addon_combobox()
         self.setup_buttons()
         self.preferences_dialog = None
+        self.mapbuilder_dialog = None
         self.launch_options = None
         self.Create_addon_Dialog = None
         self.Delete_addon_Dialog = None
@@ -391,6 +393,7 @@ class Widget(QMainWindow):
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
         self.ui.discord.clicked.connect(self.open_discord)
         self.ui.documentation_button.clicked.connect(self.open_about)
+        self.ui.mapbuilder.clicked.connect(self.open_mapbuilder_dialog)
         self.ui.cleanup_button.clicked.connect(lambda: CleanupDialog(self).show())
         self.updateLaunchAddonButton()
 
@@ -482,6 +485,15 @@ class Widget(QMainWindow):
             QMessageBox.warning(self, "Folder Not Found", 
                               f"The addon folder does not exist:\n{full_path}")
 
+    @exception_handler
+    def open_mapbuilder_dialog(self):
+        if self.mapbuilder_dialog is None:
+            self.mapbuilder_dialog = MapBuilderDialog(self)
+            self.mapbuilder_dialog.show()
+            self.mapbuilder_dialog.finished.connect(self.mapbuilder_dialog_closed)
+
+    def mapbuilder_dialog_closed(self):
+        self.mapbuilder_dialog = None
     @exception_handler
     def open_preferences_dialog(self):
         if self.preferences_dialog is None:
