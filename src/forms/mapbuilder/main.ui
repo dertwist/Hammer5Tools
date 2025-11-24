@@ -36,7 +36,7 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QScrollArea" name="scrollArea">
+      <widget class="QScrollArea" name="build_presets">
        <property name="maximumSize">
         <size>
          <width>16777215</width>
@@ -350,32 +350,62 @@
       </widget>
      </item>
      <item>
-      <widget class="QTreeWidget" name="treeWidget_2">
-       <column>
-        <property name="text">
-         <string notr="true">1</string>
+      <widget class="QScrollArea" name="build_settings_area">
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="scrollAreaWidgetContents_2">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>500</width>
+          <height>658</height>
+         </rect>
         </property>
-       </column>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string>GroupBox</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>615</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="build_button">
          <property name="text">
           <string>Build</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_2">
+        <widget class="QPushButton" name="run_button">
          <property name="text">
           <string>Run (Skip Build)</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_3">
+        <widget class="QPushButton" name="abort_button">
          <property name="text">
           <string>Abort</string>
          </property>
@@ -384,7 +414,7 @@
       </layout>
      </item>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="last_build_stats_label">
        <property name="text">
         <string>TextLabel</string>
        </property>
@@ -399,20 +429,83 @@
        <property name="currentIndex">
         <number>0</number>
        </property>
-       <widget class="QWidget" name="tab">
+       <widget class="QWidget" name="report">
         <attribute name="title">
-         <string>View</string>
+         <string>Report</string>
         </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <item>
+          <widget class="QListWidget" name="report_widget"/>
+         </item>
+         <item>
+          <widget class="QFrame" name="frame_2">
+           <property name="frameShape">
+            <enum>QFrame::Shape::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Shadow::Raised</enum>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QLabel" name="current_state_label">
+              <property name="text">
+               <string>Current progress (3m):</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QProgressBar" name="current_state_progressbar">
+              <property name="value">
+               <number>24</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="frame">
+           <property name="frameShape">
+            <enum>QFrame::Shape::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Shadow::Raised</enum>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLabel" name="global_state_label">
+              <property name="text">
+               <string>Global progress (2h 14m):</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QProgressBar" name="global_state_progressbar">
+              <property name="value">
+               <number>24</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
        </widget>
-       <widget class="QWidget" name="tab_2">
+       <widget class="QWidget" name="output">
         <attribute name="title">
          <string>Output</string>
         </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_3"/>
        </widget>
-       <widget class="QWidget" name="tab_3">
+       <widget class="QWidget" name="logs">
         <attribute name="title">
          <string>Logs</string>
         </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <widget class="QListWidget" name="listWidget_2"/>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>
