@@ -489,6 +489,29 @@
            </layout>
           </widget>
          </item>
+         <item>
+          <widget class="QFrame" name="system_monitor">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>128</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>128</height>
+            </size>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Shape::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Shadow::Raised</enum>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_7"/>
+          </widget>
+         </item>
         </layout>
        </widget>
        <widget class="QWidget" name="output">
