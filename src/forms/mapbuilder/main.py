@@ -16,6 +16,11 @@ class BuildPreset:
     name: str
     default: bool
     settings: BuildSettings
+@dataclasses.dataclass
+class BuildLog:
+    timestamp: str
+    log: str
+    elapsed_time: float
 
 class BuildSettingsGroup(QWidget):
     def __init__(self, parent=None, group_name: str = "Settings"):
@@ -49,6 +54,14 @@ class BuildPresetButton(QWidget):
 
 
 class MapBuilderDialog(QDialog):
+    """
+    A tool to compile VPK map for Counter Strike 2.
+    Output tab - raw HTML output of the compilation process.
+    Logs tab - compilation logs (saved next to the hammer5tools executable, path:Logs/MapBuilder/addon/timestamp.log).
+    Report tab - a beautiful report of the compilation process. This tab will process the raw HTML output and generate a nice looking report.
+        Also have a system minotor at the bottom to show how much PC resources is used (self.ui.system_monitor Qframe).
+        self.ui.report_widget shows warning, issues and errors item by item, have copy button next to each item.
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = Ui_mapbuilder_dialog()
