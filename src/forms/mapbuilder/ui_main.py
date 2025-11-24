@@ -239,6 +239,17 @@ class Ui_mapbuilder_dialog(object):
 
         self.verticalLayout_5.addWidget(self.frame)
 
+        self.system_monitor = QFrame(self.report)
+        self.system_monitor.setObjectName(u"system_monitor")
+        self.system_monitor.setMinimumSize(QSize(0, 128))
+        self.system_monitor.setMaximumSize(QSize(16777215, 128))
+        self.system_monitor.setFrameShape(QFrame.Shape.StyledPanel)
+        self.system_monitor.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_7 = QHBoxLayout(self.system_monitor)
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+
+        self.verticalLayout_5.addWidget(self.system_monitor)
+
         self.tabWidget.addTab(self.report, "")
         self.output = QWidget()
         self.output.setObjectName(u"output")
