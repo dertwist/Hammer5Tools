@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1166</width>
-    <height>878</height>
+    <width>1144</width>
+    <height>799</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -496,6 +496,9 @@ font: 700 10pt &quot;Segoe UI&quot;;</string>
       </item>
       <item>
        <widget class="QToolButton" name="mapbuilder">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Mapbuilder: an external tool to compile vmap files (by addon name)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>...</string>
         </property>
