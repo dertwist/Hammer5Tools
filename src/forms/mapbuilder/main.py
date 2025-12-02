@@ -1,332 +1,109 @@
-from PIL.ImageChops import invert
+"""
+Enhanced Map Builder Dialog with complete preset management,
+real-time output parsing, and dynamic UI generation.
+"""
+import sys
+import subprocess
+import threading
+import time
+from pathlib import Path
+from datetime import datetime
+from PySide6.QtWidgets import (
+    QDialog, QApplication, QMessageBox, QInputDialog,
+    QListWidgetItem, QMenu
+)
+from PySide6.QtCore import Qt, QThread, Signal, QTimer
+from PySide6.QtGui import QColor, QIcon
 
+# Import UI and custom modules
 from src.forms.mapbuilder.ui_main import Ui_mapbuilder_dialog
-from PySide6.QtWidgets import QDialog, QApplication, QToolButton, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, \
-    QLabel, QFrame, QSpacerItem, QSizePolicy, QCheckBox
-from PySide6.QtGui import QIcon
-from PySide6.QtCore import QSize
-from src.settings.main import get_addon_name, get_settings_value, set_settings_value
-from src.common import *
+from src.forms.mapbuilder.system_monitor import SystemMonitor
+from src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings
+from src.forms.mapbuilder.output_parser import OutputParser, CompilationPhase, CompilationMessage
+from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
+from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path
 from src.common import enable_dark_title_bar
-import dataclasses
-from typing import List, Optional
 
 
-def is_text_file(path: str) -> bool:
-    # Mirror IsTextFile(mappath) logic; adjust as needed for your app.
-    # Treat .txt or .lst as filelists.
-    lower = (path or "").lower()
-    return lower.endswith(".txt") or lower.endswith(".lst")
+class CompilationThread(QThread):
+    """Thread for running compilation process"""
 
+    outputReceived = Signal(str)  # Raw output line
+    progressUpdated = Signal(object)  # CompilationProgress object
+    messageReceived = Signal(object)  # CompilationMessage object
+    finished = Signal(int, float)  # exit code, elapsed time
 
-@dataclasses.dataclass
-class BuildSettings:
-    # Inputs and core switches
-    mappath: str = ""
-    threads_selected: int = 1  # threadcount.SelectedItem
-    entitiesOnly: bool = False
-    build_world: bool = True
-    build_vis_geometry: bool = True  # maps to -vis if desired
+    def __init__(self, command: str, working_dir: str):
+        super().__init__()
+        self.command = command
+        self.working_dir = working_dir
+        self.process = None
+        self.should_abort = False
+        self.parser = OutputParser()
+        self.start_time = None
 
-    # Optional toggles mapped from UI
-    builddynamicsurfaceeffects: bool = True  # if False -> -skipauxfiles
-    settlephys: bool = True  # if False -> -nosettle
-    debugVisGeo: bool = False  # -> -debugvisgeo
-    onlyBaseTileMesh: bool = False  # -> -tileMeshBaseGeometry
-    genLightmaps: bool = False  # -> group of lightmap flags
-    compression: bool = True  # affects -lightmapCompressionDisabled
-    cpu: bool = False  # -> -lightmapcpu
-    noiseremoval: bool = True  # if False -> -lightmapDisableFiltering
-    noLightCalc: bool = False  # -> -disableLightingCalculations
-    useDeterCharts: bool = False  # -> -lightmapDeterministicCharts
-    writeDebugPT: bool = False  # -> -write_debug_path_trace_scene_info
-    vrad3LargeSize: bool = False  # -> -vrad3LargeBlockSize
-    lightmapres_text: str = "512"  # lightmapres.Text
-    lightmapquality_index: int = 0  # lightmapquality.SelectedIndex
-    buildPhys: bool = False  # -> -phys
-    legacyCompileColMesh: bool = False  # -> -legacycompilecollisionmesh
-    buildVis: bool = False  # -> -vis
-    buildNav: bool = False  # -> -nav
-    navDbg: bool = False  # -> -navdbg
-    gridNav: bool = False  # -> -gridnav
+    def run(self):
+        """Run compilation process and parse output"""
+        self.start_time = time.time()
 
-    # Audio related
-    saReverb: bool = False  # -> -sareverb
-    baPaths: bool = False  # -> -sapaths
-    bakeCustom: bool = False  # -> -sacustomdata
-    audio_threads_selected: Optional[int] = None  # AudioThreadsBox.SelectedItem
-
-    # Logging / diagnostics
-    vconPrint: bool = False  # -> -vconsole, -vconport 29000
-    vprofPrint: bool = False  # -> -resourcecompiler_log_compile_stats
-    logPrint: bool = False  # -> -condebug -consolelog
-
-    # Base switches always present from C# snippet
-    fshallow: bool = True
-    maxtextureres: int = 256
-    dxlevel: int = 110
-    quiet: bool = True
-    unbuffered_io: bool = True
-
-    # Outroot flags
-    include_outroot: bool = True  # control adding -outroot group
-
-    def assemble_commands(self) -> str:
-        # Base argument string
-        input_flag = "-filelist" if is_text_file(self.mappath) else "-i"
-        quoted_map = f"\"{self.mappath}\"" if self.mappath else ""
-
-        base_parts: List[str] = []
-        base_parts.append(f"-threads {self.threads_selected}")
-        if self.fshallow:
-            base_parts.append("-fshallow")
-        base_parts.append(f"-maxtextureres {self.maxtextureres}")
-        base_parts.append(f"-dxlevel {self.dxlevel}")
-        if self.quiet:
-            base_parts.append("-quiet")
-        if self.unbuffered_io:
-            base_parts.append("-unbufferedio")
-        base_parts.append(input_flag)
-        base_parts.append(quoted_map)
-        base_parts.append("-noassert")
-
-        args: List[str] = []
-
-        # World vs entities toggles
-        if self.build_world:
-            if "-entities" in args:
-                args.remove("-entities")
-            args.append("-world")
-        if self.entitiesOnly:
-            args.append("-entities")
-            if "-world" in args:
-                args.remove("-world")
-            if self.audio_threads_selected is not None:
-                # Remove the audio thread flags if present in ents only
-                self._remove_arg_prefix(args, f"-sareverb_threads {self.audio_threads_selected}")
-                self._remove_arg_prefix(args, f"-sacustomdata_threads {self.audio_threads_selected}")
-
-        # Optional toggles
-        if not self.builddynamicsurfaceeffects:
-            args.append("-skipauxfiles")
-        if not self.settlephys:
-            args.append("-nosettle")
-        if self.debugVisGeo:
-            args.append("-debugvisgeo")
-        if self.onlyBaseTileMesh:
-            args.append("-tileMeshBaseGeometry")
-
-        # Lightmapping block
-        if self.genLightmaps:
-            args.append("-bakelighting")
-            if self.lightmapres_text:
-                args.append(f"-lightmapMaxResolution {self.lightmapres_text}")
-            args.append("-lightmapDoWeld")
-            args.append(f"-lightmapVRadQuality {self.lightmapquality_index}")
-            if not self.noiseremoval:
-                args.append("-lightmapDisableFiltering")
-            if not self.compression:
-                args.append("-lightmapCompressionDisabled")
-            if self.noLightCalc:
-                args.append("-disableLightingCalculations")
-            if self.useDeterCharts:
-                args.append("-lightmapDeterministicCharts")
-            if self.writeDebugPT:
-                args.append("-write_debug_path_trace_scene_info")
-            if self.vrad3LargeSize:
-                args.append("-vrad3LargeBlockSize")
-            args.append("-lightmapLocalCompile")
-        else:
-            # mirror: else if (!genLightmaps.Checked) { args.Add("-nolightmaps"); }
-            args.append("-nolightmaps")
-
-        # Physical/vis/nav toggles
-        if self.buildPhys:
-            args.append("-phys")
-        if self.legacyCompileColMesh:
-            args.append("-legacycompilecollisionmesh")
-        if self.buildVis:
-            args.append("-vis")
-        if self.buildNav:
-            args.append("-nav")
-        if self.navDbg:
-            args.append("-navdbg")
-        if self.gridNav:
-            args.append("-gridnav")
-
-        # Audio toggles
-        if self.saReverb:
-            args.append("-sareverb")
-            if self.audio_threads_selected is not None:
-                args.append(f"-sareverb_threads {self.audio_threads_selected}")
-                if self.oldsource2pre2020:
-                    self._safe_remove(args, f"-sareverb_threads {self.audio_threads_selected}")
-        if self.baPaths:
-            args.append("-sapaths")
-            if self.audio_threads_selected is not None:
-                args.append(f"-sareverb_threads {self.audio_threads_selected}")
-                if self.oldsource2pre2020:
-                    self._safe_remove(args, f"-sareverb_threads {self.audio_threads_selected}")
-        if self.bakeCustom:
-            args.append("-sacustomdata")
-            if self.audio_threads_selected is not None:
-                args.append(f"-sacustomdata_threads {self.audio_threads_selected}")
-
-        # Logging / diagnostics
-        if self.vconPrint:
-            args.append("-vconsole")
-            args.append("-vconport 29000")
-        if self.vprofPrint:
-            args.append("-resourcecompiler_log_compile_stats")
-        if self.logPrint:
-            args.append("-condebug")
-            args.append("-consolelog")
-
-        # Outroot and version specifics
-        if self.include_outroot:
-            combo = "-retail -breakpad -nop4 -outroot "
-            args.append(combo)
-            if self.oldsource2pre2020:
-                self._safe_remove(args, combo)
-                args.append("-retail -breakpad -nompi -nop4 -outroot ")
-
-        # Final join: base string + dynamic args
-        base = " ".join([p for p in base_parts if p])  # keep order, skip empties
-        return f"{base} " + " ".join(args)
-
-    @staticmethod
-    def _safe_remove(args: List[str], item: str) -> None:
         try:
-            args.remove(item)
-        except ValueError:
-            pass
+            # Start process
+            self.process = subprocess.Popen(
+                self.command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                cwd=self.working_dir,
+                universal_newlines=True
+            )
 
-    @staticmethod
-    def _remove_arg_prefix(args: List[str], starts_with: str) -> None:
-        # Convenience for removing exactly matching strings used above.
-        BuildSettings._safe_remove(args, starts_with)
+            # Read output line by line
+            for line in iter(self.process.stdout.readline, ''):
+                if self.should_abort:
+                    self.process.terminate()
+                    break
 
+                line = line.rstrip()
+                if line:
+                    self.outputReceived.emit(line)
 
-@dataclasses.dataclass
-class BuildPreset:
-    name: str
-    default: bool
-    settings: BuildSettings
+                    # Parse line
+                    message, progress = self.parser.parse_line(line)
 
+                    if message:
+                        self.messageReceived.emit(message)
 
-@dataclasses.dataclass
-class BuildLog:
-    timestamp: str
-    log: str
-    elapsed_time: float
+                    if progress:
+                        self.progressUpdated.emit(progress)
 
+            # Wait for process to complete
+            self.process.wait()
+            exit_code = self.process.returncode
+            elapsed = time.time() - self.start_time
 
-class BuildSettingsGroup(QWidget):
-    def __init__(self, parent=None, group_name: str = "Settings"):
-        """Category of settings, used to group settings or buttons together."""
-        super().__init__(parent)
-        self.collapsed = False
-        self.height = 512
-        self.setContentsMargins(0, 0, 0, 0)
-        self.setMaximumHeight(self.height)
-        self.group_header = QHBoxLayout()
-        self.group_header_frame = QFrame()
-        self.group_header.setContentsMargins(0, 0, 0, 0)
-        self.group_header_frame.setContentsMargins(0, 0, 0, 0)
-        self.group_header_frame.setLayout(self.group_header)
-        self.group_header_frame.setMaximumHeight(32)
-        self.group_header_frame.setMinimumHeight(32)
-        self.group_collapse_button = QToolButton(self)
-        self.group_label = QLabel(group_name, self)
-        self.group_content_frame = QFrame()
-        self.group_content = QVBoxLayout()
+            self.finished.emit(exit_code, elapsed)
 
-        self.group_collapse_button.setIcon(QIcon(":/icons/arrow_drop_down_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
-        self.group_collapse_button.setIconSize(QSize(16, 16))
+        except Exception as e:
+            print(f"Compilation error: {e}")
+            self.finished.emit(-1, 0)
 
-        # Styles
-        self.group_content_frame.setStyleSheet("""background-color: red""")
-        self.group_header_frame.setStyleSheet("""background-color: blue""")
-
-        # Widgets population
-        self.layout = QVBoxLayout(self)
-        self.layout.addWidget(self.group_header_frame)
-        self.layout.addWidget(self.group_content_frame)
-        self.group_header.addWidget(self.group_label)
-        self.group_header.addWidget(self.group_collapse_button)
-        self.group_content_frame.setLayout(self.group_content)
-        self.group_content_frame.setContentsMargins(0, 0, 0, 0)
-
-        self.spacer_widget = QWidget()
-        self.spacer_layout = QVBoxLayout(self.spacer_widget)
-        self.spacer_layout.addStretch(1)
-        self.spacer_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # self.group_content.addWidget(self.spacer_widget)
-
-        # Connections
-        self.group_collapse_button.clicked.connect(self.do_collapse)
-
-    def do_collapse(self):
-        if self.collapsed:
-            self.collapsed = False
-            self.group_content_frame.setMaximumHeight(self.height)
-            self.group_collapse_button.setIcon(
-                QIcon(":/icons/arrow_drop_down_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
-            # self.group_content_frame.setMinimumHeight(self.height)
-        else:
-            self.collapsed = True
-            self.group_collapse_button.setIcon(
-                QIcon(":/icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
-            self.group_content_frame.setMaximumHeight(0)
-            self.group_content_frame.setMinimumHeight(0)
-
-class BuildPresetWidgetBool(QWidget):
-    """
-    A checkbox widget. Input value is variable, which is caused to create an instance of the button.
-    The purpose of giving varialbe is that it can be easily serializated to json format to keep presets on user drive.
-    The variable name should be interpretated for UI. For instance varialbe name BuildVis would looks like Build Vis, we separeted one word to 2 by finding big characters and inserting a space between them.
-    """
-    def __init__(self, parent=None, variable: bool=False):
-        super().__init__(parent)
-        self.variable = variable
-        self.checkbox = QCheckBox()
-        self.checkbox.setCheckState(self.variable)
-        self.checkbox.setText(self.convert_name())
-    def convert_name(self):
-        return self.variable.__name__
-
-class BuildPresetButton(QWidget):
-    def __init__(self, parent=None):
-        """
-        A preset of settings to build map, user can add a new preset by clicking the + button. This actions will capture all current settings and save them as a preset
-        Default preset cannot be deleted or renamed.
-        """
-        super().__init__(parent)
-
-    def activate(self):
-        """Sets highlighting on the current instance of build preset and loads all the settings from it to the property list"""
-        pass
-
-    def deactivate(self):
-        """Removes highliting and this means the preset is non-active"""
-        pass
-
-    def rename(self):
-        pass
-
-    def delete(self):
-        pass
+    def abort(self):
+        """Abort compilation"""
+        self.should_abort = True
+        if self.process:
+            self.process.terminate()
 
 
 class MapBuilderDialog(QDialog):
     """
-    A tool to compile VPK map for Counter Strike 2.
-    Output tab - raw HTML output of the compilation process.
-    Logs tab - compilation logs (saved next to the hammer5tools executable, path:Logs/MapBuilder/addon/timestamp.log).
-    Report tab - a beautiful report of the compilation process. This tab will process the raw HTML output and generate a nice looking report.
-        Also have a system minotor at the bottom to show how much PC resources is used (self.ui.system_monitor Qframe).
-        self.ui.report_widget shows warning, issues and errors item by item, have copy button next to each item.
+    Enhanced Map Builder Dialog for CS2 map compilation.
+    Features:
+    - Preset-based build configurations
+    - Real-time output parsing with progress tracking
+    - System resource monitoring
+    - Warning/Error reporting
     """
 
     def __init__(self, parent=None):
@@ -334,21 +111,365 @@ class MapBuilderDialog(QDialog):
         self.ui = Ui_mapbuilder_dialog()
         self.ui.setupUi(self)
         enable_dark_title_bar(self)
-        self.populate_widgets()
-        self.__connections()
 
-    def __connections(self):
-        """Adding connections to the buttons and checkboxes"""
+        # Get paths from settings
+        self.addon_path = get_addon_dir()
+        self.cs2_path = get_cs2_path()
 
-    def populate_widgets(self):
-        """Set the checkboxes and fill the custom commands line from the settings"""
-        self.settings_group = BuildSettingsGroup(self, 'Settings')
-        self.world_group = BuildSettingsGroup(self, 'World')
-        self.physics_group = BuildSettingsGroup(self, 'Physics')
-        self.nav_group = BuildSettingsGroup(self, 'Nav')
-        self.ui.build_settings_content.layout().insertWidget(0, self.settings_group)
-        # self.ui.build_settings_content.layout().insertWidget(0, self.world_group)
-        # self.ui.build_settings_area.widget().layout().insertWidget(0, self.world_group)
-        self.settings_group.group_content.layout().addWidget(self.world_group)
-        self.settings_group.group_content.layout().addWidget(self.physics_group)
-        self.settings_group.group_content.layout().addWidget(self.nav_group)
+        # Initialize managers
+        presets_file = Path(self.addon_path) / ".hammer5tools" / "build_presets.json"
+        self.preset_manager = PresetManager(presets_file)
+
+        # Current state
+        self.current_preset: BuildPreset = None
+        self.compilation_thread: CompilationThread = None
+        self.is_compiling = False
+        self.last_build_time = 0.0
+
+        # Setup UI
+        self.setup_settings_panel()
+        self.setup_preset_buttons()
+        self.setup_system_monitor()
+        self.setup_connections()
+
+        # Load first preset
+        presets = self.preset_manager.get_all_presets()
+        if presets:
+            self.load_preset(presets[0])
+
+    def setup_settings_panel(self):
+        """Setup dynamically generated settings panel"""
+        self.settings_panel = SettingsPanel()
+
+        # Clear existing widgets from build_settings_content
+        while self.ui.build_settings_content.count():
+            item = self.ui.build_settings_content.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Add settings panel
+        self.ui.build_settings_content.addWidget(self.settings_panel)
+        self.ui.build_settings_content.addStretch()
+
+    def setup_preset_buttons(self):
+        """Setup preset buttons"""
+        # Clear existing preset buttons
+        preset_layout = self.ui.build_presets.widget().layout()
+        while preset_layout.count() > 1:  # Keep spacer
+            item = preset_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Create buttons for each preset
+        self.preset_buttons = {}
+        for preset in self.preset_manager.get_all_presets():
+            btn = PresetButton(preset.name, preset.is_default)
+            btn.presetClicked.connect(self.on_preset_clicked)
+            btn.setContextMenuPolicy(Qt.CustomContextMenu)
+            btn.customContextMenuRequested.connect(
+                lambda pos, p=preset: self.show_preset_context_menu(pos, p)
+            )
+            preset_layout.insertWidget(preset_layout.count() - 1, btn)
+            self.preset_buttons[preset.name] = btn
+
+        # Add "New Preset" button
+        new_btn = PresetButton("+", False)
+        new_btn.setText("+")
+        new_btn.setToolTip("Create new preset")
+        new_btn.presetClicked.connect(self.create_new_preset)
+        preset_layout.insertWidget(preset_layout.count() - 1, new_btn)
+
+    def setup_system_monitor(self):
+        """Setup system resource monitor"""
+        # Remove any existing widgets
+        while self.ui.system_monitor.layout() and self.ui.system_monitor.layout().count():
+            item = self.ui.system_monitor.layout().takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Create new system monitor
+        self.system_monitor = SystemMonitor()
+
+        # Add to frame
+        if not self.ui.system_monitor.layout():
+            from PySide6.QtWidgets import QVBoxLayout
+            layout = QVBoxLayout(self.ui.system_monitor)
+            layout.setContentsMargins(0, 0, 0, 0)
+
+        self.ui.system_monitor.layout().addWidget(self.system_monitor)
+
+    def setup_connections(self):
+        """Setup signal connections"""
+        self.ui.build_button.clicked.connect(self.start_compilation)
+        self.ui.run_button.clicked.connect(self.run_map)
+        self.ui.abort_button.clicked.connect(self.abort_compilation)
+
+        # Initially disable abort button
+        self.ui.abort_button.setEnabled(False)
+
+    def on_preset_clicked(self, preset_name: str):
+        """Handle preset button click"""
+        preset = self.preset_manager.get_preset(preset_name)
+        if preset:
+            self.load_preset(preset)
+
+    def load_preset(self, preset: BuildPreset):
+        """Load preset into UI"""
+        self.current_preset = preset
+        self.settings_panel.set_settings(preset.settings)
+
+        # Update button states
+        for name, btn in self.preset_buttons.items():
+            btn.set_active(name == preset.name)
+
+        self.setWindowTitle(f"Map Builder - {preset.name}")
+
+    def show_preset_context_menu(self, pos, preset: BuildPreset):
+        """Show context menu for preset button"""
+        menu = QMenu(self)
+
+        # Save changes
+        save_action = menu.addAction("Save Changes")
+        save_action.triggered.connect(lambda: self.save_preset_changes(preset))
+
+        if not preset.is_default:
+            # Rename
+            rename_action = menu.addAction("Rename")
+            rename_action.triggered.connect(lambda: self.rename_preset(preset))
+
+            # Delete
+            delete_action = menu.addAction("Delete")
+            delete_action.triggered.connect(lambda: self.delete_preset(preset))
+
+        menu.exec_(self.sender().mapToGlobal(pos))
+
+    def create_new_preset(self):
+        """Create new preset from current settings"""
+        name, ok = QInputDialog.getText(
+            self, "New Preset", "Enter preset name:"
+        )
+
+        if ok and name:
+            current_settings = self.settings_panel.get_settings()
+            new_preset = BuildPreset(
+                name=name,
+                settings=current_settings,
+                is_default=False,
+                description=f"Created {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            )
+
+            if self.preset_manager.add_preset(new_preset):
+                self.setup_preset_buttons()
+                self.load_preset(new_preset)
+            else:
+                QMessageBox.warning(self, "Error", "Preset with this name already exists")
+
+    def save_preset_changes(self, preset: BuildPreset):
+        """Save current settings to preset"""
+        current_settings = self.settings_panel.get_settings()
+        self.preset_manager.update_preset(preset.name, current_settings)
+        QMessageBox.information(self, "Success", f"Preset '{preset.name}' updated")
+
+    def rename_preset(self, preset: BuildPreset):
+        """Rename preset"""
+        new_name, ok = QInputDialog.getText(
+            self, "Rename Preset", "Enter new name:", text=preset.name
+        )
+
+        if ok and new_name and new_name != preset.name:
+            if self.preset_manager.rename_preset(preset.name, new_name):
+                self.setup_preset_buttons()
+                preset.name = new_name
+                self.load_preset(preset)
+            else:
+                QMessageBox.warning(self, "Error", "Could not rename preset")
+
+    def delete_preset(self, preset: BuildPreset):
+        """Delete preset"""
+        reply = QMessageBox.question(
+            self, "Delete Preset",
+            f"Delete preset '{preset.name}'?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            if self.preset_manager.delete_preset(preset.name):
+                self.setup_preset_buttons()
+                # Load first available preset
+                presets = self.preset_manager.get_all_presets()
+                if presets:
+                    self.load_preset(presets[0])
+
+    def start_compilation(self):
+        """Start map compilation"""
+        if self.is_compiling:
+            QMessageBox.warning(self, "Already Compiling", "Compilation already in progress")
+            return
+
+        # Get current settings
+        settings = self.settings_panel.get_settings()
+
+        # Validate mappath
+        if not settings.mappath or not Path(settings.mappath).exists():
+            QMessageBox.warning(self, "Invalid Map", "Please select a valid map file")
+            return
+
+        # Generate command
+        command = settings.to_command_line(self.addon_path, self.cs2_path)
+
+        # Clear outputs
+        self.ui.report_widget.clear()
+        self.ui.output_list_widget.clear()
+
+        # Reset progress bars
+        self.ui.current_state_progressbar.setValue(0)
+        self.ui.global_state_progressbar.setValue(0)
+
+        # Create compilation thread
+        self.compilation_thread = CompilationThread(command, self.addon_path)
+        self.compilation_thread.outputReceived.connect(self.on_output_received)
+        self.compilation_thread.progressUpdated.connect(self.on_progress_updated)
+        self.compilation_thread.messageReceived.connect(self.on_message_received)
+        self.compilation_thread.finished.connect(self.on_compilation_finished)
+
+        # Update UI state
+        self.is_compiling = True
+        self.ui.build_button.setEnabled(False)
+        self.ui.abort_button.setEnabled(True)
+
+        # Start compilation
+        self.compilation_thread.start()
+
+        # Log to output tab
+        self.add_log_message(f"Starting compilation: {settings.mappath}")
+        self.add_log_message(f"Command: {command}")
+
+    def abort_compilation(self):
+        """Abort running compilation"""
+        if self.compilation_thread:
+            self.compilation_thread.abort()
+            self.add_log_message("Aborting compilation...")
+
+    def on_output_received(self, line: str):
+        """Handle raw output line"""
+        # Add to logs tab
+        self.add_log_message(line)
+
+    def on_progress_updated(self, progress):
+        """Handle progress update"""
+        # Update progress bars
+        phase_pct = int(progress.phase_progress * 100)
+        global_pct = int(progress.global_progress * 100)
+
+        self.ui.current_state_progressbar.setValue(phase_pct)
+        self.ui.global_state_progressbar.setValue(global_pct)
+
+        # Update labels
+        self.ui.current_state_label.setText(
+            f"{progress.current_phase_name}: {progress.current_operation[:30]}"
+        )
+
+        # Estimate remaining time
+        if self.compilation_thread and self.compilation_thread.start_time:
+            elapsed = time.time() - self.compilation_thread.start_time
+            if progress.global_progress > 0.01:
+                estimated_total = elapsed / progress.global_progress
+                remaining = estimated_total - elapsed
+
+                elapsed_str = self.format_time(elapsed)
+                remaining_str = self.format_time(remaining)
+
+                self.ui.global_state_label.setText(
+                    f"Global Progress ({elapsed_str} elapsed, ~{remaining_str} remaining)"
+                )
+
+    def on_message_received(self, message: CompilationMessage):
+        """Handle warning/error message"""
+        item = QListWidgetItem(message.message)
+
+        if message.severity == "error":
+            item.setForeground(QColor(255, 100, 100))
+            item.setIcon(QIcon(":/icons/error_24dp_FF6464_FILL0_wght400_GRAD0_opsz24.svg"))
+        elif message.severity == "warning":
+            item.setForeground(QColor(255, 200, 100))
+            item.setIcon(QIcon(":/icons/warning_24dp_FFC864_FILL0_wght400_GRAD0_opsz24.svg"))
+        else:
+            item.setForeground(QColor(200, 200, 200))
+
+        self.ui.report_widget.addItem(item)
+
+    def on_compilation_finished(self, exit_code: int, elapsed_time: float):
+        """Handle compilation finished"""
+        self.is_compiling = False
+        self.ui.build_button.setEnabled(True)
+        self.ui.abort_button.setEnabled(False)
+
+        # Update last build time
+        self.last_build_time = elapsed_time
+        time_str = self.format_time(elapsed_time)
+        self.ui.last_build_stats_label.setText(f"Last Build Time: {time_str}")
+
+        # Show result
+        if exit_code == 0:
+            QMessageBox.information(
+                self, "Compilation Complete",
+                f"Map compiled successfully in {time_str}"
+            )
+            self.add_log_message(f"✓ Compilation completed successfully ({time_str})")
+        else:
+            QMessageBox.warning(
+                self, "Compilation Failed",
+                f"Compilation failed with exit code {exit_code}"
+            )
+            self.add_log_message(f"✗ Compilation failed with exit code {exit_code}")
+
+    def run_map(self):
+        """Run map without building"""
+        # Get map name from current settings
+        settings = self.settings_panel.get_settings()
+        if not settings.mappath:
+            QMessageBox.warning(self, "No Map", "No map file specified")
+            return
+
+        map_name = Path(settings.mappath).stem
+
+        # Build launch command
+        cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
+        addon_name = get_addon_name()
+
+        launch_cmd = f'"{cs2_exe}" -tools -addon {addon_name} +map {map_name}'
+
+        self.add_log_message(f"Launching: {launch_cmd}")
+
+        # Launch in separate process
+        subprocess.Popen(launch_cmd, shell=True)
+
+    def add_log_message(self, message: str):
+        """Add message to logs tab"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.ui.output_list_widget.addItem(f"[{timestamp}] {message}")
+        self.ui.output_list_widget.scrollToBottom()
+
+    def format_time(self, seconds: float) -> str:
+        """Format seconds as human-readable time"""
+        if seconds < 60:
+            return f"{seconds:.1f}s"
+        elif seconds < 3600:
+            minutes = int(seconds / 60)
+            secs = int(seconds % 60)
+            return f"{minutes}m {secs}s"
+        else:
+            hours = int(seconds / 3600)
+            minutes = int((seconds % 3600) / 60)
+            return f"{hours}h {minutes}m"
+
+
+def main():
+    app = QApplication(sys.argv)
+    dialog = MapBuilderDialog()
+    dialog.show()
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
