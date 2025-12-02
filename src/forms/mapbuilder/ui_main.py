@@ -18,7 +18,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout,
     QLabel, QListWidget, QListWidgetItem, QProgressBar,
     QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
-    QTabWidget, QVBoxLayout, QWidget)
+    QSplitter, QTabWidget, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_mapbuilder_dialog(object):
@@ -32,17 +32,24 @@ class Ui_mapbuilder_dialog(object):
         icon.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         mapbuilder_dialog.setWindowIcon(icon)
         mapbuilder_dialog.setModal(False)
-        self.horizontalLayout_3 = QHBoxLayout(mapbuilder_dialog)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.verticalLayout_2 = QVBoxLayout()
+        self.verticalLayout_6 = QVBoxLayout(mapbuilder_dialog)
+        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
+        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.splitter = QSplitter(mapbuilder_dialog)
+        self.splitter.setObjectName(u"splitter")
+        self.splitter.setOrientation(Qt.Orientation.Horizontal)
+        self.layoutWidget = QWidget(self.splitter)
+        self.layoutWidget.setObjectName(u"layoutWidget")
+        self.verticalLayout_2 = QVBoxLayout(self.layoutWidget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.build_presets = QScrollArea(mapbuilder_dialog)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.build_presets = QScrollArea(self.layoutWidget)
         self.build_presets.setObjectName(u"build_presets")
         self.build_presets.setMaximumSize(QSize(16777215, 90))
         self.build_presets.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 500, 88))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 648, 88))
         self.horizontalLayout_6 = QHBoxLayout(self.scrollAreaWidgetContents)
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
         self.pushButton_6 = QPushButton(self.scrollAreaWidgetContents)
@@ -137,12 +144,12 @@ class Ui_mapbuilder_dialog(object):
 
         self.verticalLayout_2.addWidget(self.build_presets)
 
-        self.build_settings_area = QScrollArea(mapbuilder_dialog)
+        self.build_settings_area = QScrollArea(self.layoutWidget)
         self.build_settings_area.setObjectName(u"build_settings_area")
         self.build_settings_area.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 500, 658))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 648, 676))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents_2)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, -1)
@@ -161,17 +168,17 @@ class Ui_mapbuilder_dialog(object):
 
         self.horizontalLayout_4 = QHBoxLayout()
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.build_button = QPushButton(mapbuilder_dialog)
+        self.build_button = QPushButton(self.layoutWidget)
         self.build_button.setObjectName(u"build_button")
 
         self.horizontalLayout_4.addWidget(self.build_button)
 
-        self.run_button = QPushButton(mapbuilder_dialog)
+        self.run_button = QPushButton(self.layoutWidget)
         self.run_button.setObjectName(u"run_button")
 
         self.horizontalLayout_4.addWidget(self.run_button)
 
-        self.abort_button = QPushButton(mapbuilder_dialog)
+        self.abort_button = QPushButton(self.layoutWidget)
         self.abort_button.setObjectName(u"abort_button")
 
         self.horizontalLayout_4.addWidget(self.abort_button)
@@ -179,17 +186,18 @@ class Ui_mapbuilder_dialog(object):
 
         self.verticalLayout_2.addLayout(self.horizontalLayout_4)
 
-        self.last_build_stats_label = QLabel(mapbuilder_dialog)
+        self.last_build_stats_label = QLabel(self.layoutWidget)
         self.last_build_stats_label.setObjectName(u"last_build_stats_label")
 
         self.verticalLayout_2.addWidget(self.last_build_stats_label)
 
-
-        self.horizontalLayout_3.addLayout(self.verticalLayout_2)
-
-        self.horizontalLayout_2 = QHBoxLayout()
+        self.splitter.addWidget(self.layoutWidget)
+        self.layoutWidget1 = QWidget(self.splitter)
+        self.layoutWidget1.setObjectName(u"layoutWidget1")
+        self.horizontalLayout_2 = QHBoxLayout(self.layoutWidget1)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.tabWidget = QTabWidget(mapbuilder_dialog)
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.tabWidget = QTabWidget(self.layoutWidget1)
         self.tabWidget.setObjectName(u"tabWidget")
         self.report = QWidget()
         self.report.setObjectName(u"report")
@@ -258,23 +266,29 @@ class Ui_mapbuilder_dialog(object):
         self.verticalLayout_3 = QVBoxLayout(self.output)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.output_list_widget = QListWidget(self.output)
+        self.output_list_widget.setObjectName(u"output_list_widget")
+
+        self.verticalLayout_3.addWidget(self.output_list_widget)
+
         self.tabWidget.addTab(self.output, "")
         self.logs = QWidget()
         self.logs.setObjectName(u"logs")
         self.verticalLayout_4 = QVBoxLayout(self.logs)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.listWidget_2 = QListWidget(self.logs)
-        self.listWidget_2.setObjectName(u"listWidget_2")
+        self.logs_filelist = QListWidget(self.logs)
+        self.logs_filelist.setObjectName(u"logs_filelist")
 
-        self.verticalLayout_4.addWidget(self.listWidget_2)
+        self.verticalLayout_4.addWidget(self.logs_filelist)
 
         self.tabWidget.addTab(self.logs, "")
 
         self.horizontalLayout_2.addWidget(self.tabWidget)
 
+        self.splitter.addWidget(self.layoutWidget1)
 
-        self.horizontalLayout_3.addLayout(self.horizontalLayout_2)
+        self.verticalLayout_6.addWidget(self.splitter)
 
 
         self.retranslateUi(mapbuilder_dialog)
@@ -285,7 +299,7 @@ class Ui_mapbuilder_dialog(object):
         self.pushButton_8.setDefault(False)
         self.pushButton_12.setDefault(False)
         self.pushButton_11.setDefault(False)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(mapbuilder_dialog)

@@ -178,6 +178,7 @@ class HistoryGraph(QWidget):
     def __init__(self, title, max_points=60):
         super().__init__()
         self.title = title
+        self.setContentsMargins(0,0,0,0)
         self.max_points = max_points
         self.values = deque([0.0] * max_points, maxlen=max_points)
 
@@ -220,7 +221,8 @@ class SystemMonitor(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("System Monitor")
-        self.setMinimumWidth(1100)
+        self.setMinimumWidth(200)
+        self.setContentsMargins(0,0,0,0)
 
         self.cpu_graph = HistoryGraph("CPU Usage")
         self.ram_graph = HistoryGraph("Memory Usage")
