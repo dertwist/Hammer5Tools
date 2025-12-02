@@ -34,3 +34,4 @@ pycparser
 Pillow
 matplotlib
 pynvml
+GPUtil

@@ -24,7 +24,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1166, 878)
+        MainWindow.resize(1144, 799)
         icon = QIcon()
         icon.addFile(u":/icons/appicon.ico", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         MainWindow.setWindowIcon(icon)
@@ -366,6 +366,9 @@ class Ui_MainWindow(object):
         self.Launch_Addon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Addon launch</span></p><p>Launches the current addon selected in the addon selection.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setText(QCoreApplication.translate("MainWindow", u"Edit map", None))
+#if QT_CONFIG(tooltip)
+        self.mapbuilder.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Mapbuilder: an external tool to compile vmap files (by addon name)</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
         self.mapbuilder.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.open_addons_folder_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Open Game/Content Addons folder</span></p><p><span style=\" font-size:9pt;\">Opens the game addons or content addons folder for the current addon selection. </span></p><p><span style=\" font-size:9pt;\">To choose the folder type to open, select a folder in the </span><span style=\" font-size:9pt; font-style:italic;\">Addon Folder Selection</span><span style=\" font-size:9pt;\">.</span></p></body></html>", None))
