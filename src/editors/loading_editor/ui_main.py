@@ -25,7 +25,7 @@ class Ui_Loading_editorMainWindow(object):
     def setupUi(self, Loading_editorMainWindow):
         if not Loading_editorMainWindow.objectName():
             Loading_editorMainWindow.setObjectName(u"Loading_editorMainWindow")
-        Loading_editorMainWindow.resize(1292, 983)
+        Loading_editorMainWindow.resize(1065, 566)
         Loading_editorMainWindow.setStyleSheet(u"background-color: rgb(28, 28, 28);")
         self.centralwidget = QWidget(Loading_editorMainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -666,7 +666,7 @@ class Ui_Loading_editorMainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.delete_existings.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Delete existing", None))
 #if QT_CONFIG(tooltip)
-        self.camera_name_mode.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Deletes all existing screenshots on the loading screen.</p></body></html>", None))
+        self.camera_name_mode.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Adds name of point_camera to image</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.camera_name_mode.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Camera Name", None))
 #if QT_CONFIG(tooltip)
@@ -676,10 +676,10 @@ class Ui_Loading_editorMainWindow(object):
 "hr { height: 1px; border-width: 0; }\n"
 "li.unchecked::marker { content: \"\\2610\"; }\n"
 "li.checked::marker { content: \"\\2612\"; }\n"
-"</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:'Segoe UI'; font-size:9pt; font-weight:580; font-style:normal;\">\n"
+"<p style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:10pt;\">Apply images that are located in </span><span style=\" font-family:'Courier New';\">game/screenshots/Hammer5Tools/LoadingScreen as loading screen images</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.apply_screenshots_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Set loading screenshots", None))
+        self.apply_screenshots_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Set loading images", None))
         self.screenshot_preview.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshot Preview", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Icon", None))
         self.apply_icon_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply Icon", None))
