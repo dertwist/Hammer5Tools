@@ -15,26 +15,26 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout,
-    QLabel, QListWidget, QListWidgetItem, QProgressBar,
+from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QFrame,
+    QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
     QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
-    QSplitter, QTabWidget, QVBoxLayout, QWidget)
+    QSplitter, QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_mapbuilder_dialog(object):
     def setupUi(self, mapbuilder_dialog):
         if not mapbuilder_dialog.objectName():
             mapbuilder_dialog.setObjectName(u"mapbuilder_dialog")
-        mapbuilder_dialog.resize(1031, 830)
+        mapbuilder_dialog.resize(1031, 804)
         mapbuilder_dialog.setMinimumSize(QSize(0, 0))
         mapbuilder_dialog.setMaximumSize(QSize(16777215, 16777215))
         icon = QIcon()
         icon.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         mapbuilder_dialog.setWindowIcon(icon)
         mapbuilder_dialog.setModal(False)
-        self.verticalLayout_6 = QVBoxLayout(mapbuilder_dialog)
-        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_4 = QVBoxLayout(mapbuilder_dialog)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.splitter = QSplitter(mapbuilder_dialog)
         self.splitter.setObjectName(u"splitter")
         self.splitter.setOrientation(Qt.Orientation.Horizontal)
@@ -50,7 +50,7 @@ class Ui_mapbuilder_dialog(object):
         self.build_presets.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 648, 88))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 633, 88))
         self.horizontalLayout_6 = QHBoxLayout(self.scrollAreaWidgetContents)
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
         self.pushButton_6 = QPushButton(self.scrollAreaWidgetContents)
@@ -150,7 +150,7 @@ class Ui_mapbuilder_dialog(object):
         self.build_settings_area.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 648, 676))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 633, 650))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents_2)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, -1)
@@ -195,62 +195,39 @@ class Ui_mapbuilder_dialog(object):
         self.splitter.addWidget(self.layoutWidget)
         self.layoutWidget1 = QWidget(self.splitter)
         self.layoutWidget1.setObjectName(u"layoutWidget1")
-        self.horizontalLayout_2 = QHBoxLayout(self.layoutWidget1)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.tabWidget = QTabWidget(self.layoutWidget1)
-        self.tabWidget.setObjectName(u"tabWidget")
-        self.report = QWidget()
-        self.report.setObjectName(u"report")
-        self.verticalLayout_5 = QVBoxLayout(self.report)
-        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.verticalLayout_5.setContentsMargins(4, 4, 4, 0)
-        self.report_widget = QListWidget(self.report)
-        self.report_widget.setObjectName(u"report_widget")
+        self.verticalLayout_3 = QVBoxLayout(self.layoutWidget1)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.output_list_widget = QListWidget(self.layoutWidget1)
+        self.output_list_widget.setObjectName(u"output_list_widget")
 
-        self.verticalLayout_5.addWidget(self.report_widget)
+        self.verticalLayout_3.addWidget(self.output_list_widget)
 
-        self.frame_2 = QFrame(self.report)
-        self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_5 = QHBoxLayout(self.frame_2)
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.current_state_label = QLabel(self.frame_2)
-        self.current_state_label.setObjectName(u"current_state_label")
-
-        self.horizontalLayout_5.addWidget(self.current_state_label)
-
-        self.current_state_progressbar = QProgressBar(self.frame_2)
-        self.current_state_progressbar.setObjectName(u"current_state_progressbar")
-        self.current_state_progressbar.setValue(24)
-
-        self.horizontalLayout_5.addWidget(self.current_state_progressbar)
-
-
-        self.verticalLayout_5.addWidget(self.frame_2)
-
-        self.frame = QFrame(self.report)
+        self.frame = QFrame(self.layoutWidget1)
         self.frame.setObjectName(u"frame")
         self.frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.global_state_label = QLabel(self.frame)
-        self.global_state_label.setObjectName(u"global_state_label")
+        self.text_wrap = QCheckBox(self.frame)
+        self.text_wrap.setObjectName(u"text_wrap")
 
-        self.horizontalLayout.addWidget(self.global_state_label)
+        self.horizontalLayout.addWidget(self.text_wrap)
 
-        self.global_state_progressbar = QProgressBar(self.frame)
-        self.global_state_progressbar.setObjectName(u"global_state_progressbar")
-        self.global_state_progressbar.setValue(24)
+        self.sound_on_finish = QCheckBox(self.frame)
+        self.sound_on_finish.setObjectName(u"sound_on_finish")
 
-        self.horizontalLayout.addWidget(self.global_state_progressbar)
+        self.horizontalLayout.addWidget(self.sound_on_finish)
+
+        self.save_log_button = QPushButton(self.frame)
+        self.save_log_button.setObjectName(u"save_log_button")
+
+        self.horizontalLayout.addWidget(self.save_log_button)
 
 
-        self.verticalLayout_5.addWidget(self.frame)
+        self.verticalLayout_3.addWidget(self.frame)
 
-        self.system_monitor = QFrame(self.report)
+        self.system_monitor = QFrame(self.layoutWidget1)
         self.system_monitor.setObjectName(u"system_monitor")
         self.system_monitor.setMinimumSize(QSize(0, 128))
         self.system_monitor.setMaximumSize(QSize(16777215, 128))
@@ -261,37 +238,11 @@ class Ui_mapbuilder_dialog(object):
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
         self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
 
-        self.verticalLayout_5.addWidget(self.system_monitor)
-
-        self.tabWidget.addTab(self.report, "")
-        self.output = QWidget()
-        self.output.setObjectName(u"output")
-        self.verticalLayout_3 = QVBoxLayout(self.output)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.output_list_widget = QListWidget(self.output)
-        self.output_list_widget.setObjectName(u"output_list_widget")
-
-        self.verticalLayout_3.addWidget(self.output_list_widget)
-
-        self.tabWidget.addTab(self.output, "")
-        self.logs = QWidget()
-        self.logs.setObjectName(u"logs")
-        self.verticalLayout_4 = QVBoxLayout(self.logs)
-        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.logs_filelist = QListWidget(self.logs)
-        self.logs_filelist.setObjectName(u"logs_filelist")
-
-        self.verticalLayout_4.addWidget(self.logs_filelist)
-
-        self.tabWidget.addTab(self.logs, "")
-
-        self.horizontalLayout_2.addWidget(self.tabWidget)
+        self.verticalLayout_3.addWidget(self.system_monitor)
 
         self.splitter.addWidget(self.layoutWidget1)
 
-        self.verticalLayout_6.addWidget(self.splitter)
+        self.verticalLayout_4.addWidget(self.splitter)
 
 
         self.retranslateUi(mapbuilder_dialog)
@@ -302,7 +253,6 @@ class Ui_mapbuilder_dialog(object):
         self.pushButton_8.setDefault(False)
         self.pushButton_12.setDefault(False)
         self.pushButton_11.setDefault(False)
-        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(mapbuilder_dialog)
@@ -320,10 +270,8 @@ class Ui_mapbuilder_dialog(object):
         self.run_button.setText(QCoreApplication.translate("mapbuilder_dialog", u"Run (Skip Build)", None))
         self.abort_button.setText(QCoreApplication.translate("mapbuilder_dialog", u"Abort", None))
         self.last_build_stats_label.setText(QCoreApplication.translate("mapbuilder_dialog", u"Last Build time: 2h 15m", None))
-        self.current_state_label.setText(QCoreApplication.translate("mapbuilder_dialog", u"Current progress (3m):", None))
-        self.global_state_label.setText(QCoreApplication.translate("mapbuilder_dialog", u"Global progress (2h 14m):", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.report), QCoreApplication.translate("mapbuilder_dialog", u"Report", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.output), QCoreApplication.translate("mapbuilder_dialog", u"Output", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.logs), QCoreApplication.translate("mapbuilder_dialog", u"Logs", None))
+        self.text_wrap.setText(QCoreApplication.translate("mapbuilder_dialog", u"Text wrap", None))
+        self.sound_on_finish.setText(QCoreApplication.translate("mapbuilder_dialog", u"Sound on finish", None))
+        self.save_log_button.setText(QCoreApplication.translate("mapbuilder_dialog", u"Save log", None))
     # retranslateUi
 
