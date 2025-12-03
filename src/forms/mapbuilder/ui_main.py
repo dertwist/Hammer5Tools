@@ -46,6 +46,7 @@ class Ui_mapbuilder_dialog(object):
         self.build_presets = QScrollArea(self.layoutWidget)
         self.build_presets.setObjectName(u"build_presets")
         self.build_presets.setMaximumSize(QSize(16777215, 90))
+        self.build_presets.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.build_presets.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
@@ -203,7 +204,7 @@ class Ui_mapbuilder_dialog(object):
         self.report.setObjectName(u"report")
         self.verticalLayout_5 = QVBoxLayout(self.report)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_5.setContentsMargins(4, 4, 4, 0)
         self.report_widget = QListWidget(self.report)
         self.report_widget.setObjectName(u"report_widget")
 
@@ -256,7 +257,9 @@ class Ui_mapbuilder_dialog(object):
         self.system_monitor.setFrameShape(QFrame.Shape.StyledPanel)
         self.system_monitor.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_7 = QHBoxLayout(self.system_monitor)
+        self.horizontalLayout_7.setSpacing(0)
         self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
 
         self.verticalLayout_5.addWidget(self.system_monitor)
 
@@ -299,7 +302,7 @@ class Ui_mapbuilder_dialog(object):
         self.pushButton_8.setDefault(False)
         self.pushButton_12.setDefault(False)
         self.pushButton_11.setDefault(False)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(mapbuilder_dialog)
