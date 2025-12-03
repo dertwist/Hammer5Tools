@@ -26,6 +26,9 @@ from src.forms.mapbuilder.system_monitor import SystemMonitor
 from src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings
 from src.forms.mapbuilder.output_parser import OutputParser, CompilationPhase, CompilationMessage
 from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
+from src.forms.mapbuilder.progress_tracker import ProgressTracker, CompilationPhase as TrackerPhase
+from src.forms.mapbuilder.mapbuilder_parser import MapBuilderParser, MessageSeverity
+from src.forms.mapbuilder.mapbuilder_integration import MapBuilderIntegration
 from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path
 from src.common import enable_dark_title_bar, app_dir
 
@@ -151,6 +154,15 @@ class MapBuilderDialog(QDialog):
         
         # Setup logs tab
         self.setup_logs_tab()
+
+        # Initialize integration layer
+        self.integration = MapBuilderIntegration(
+            report_widget=self.ui.report_widget,
+            progress_bars={
+                "phase": self.ui.current_state_progressbar,
+                "global": self.ui.global_state_progressbar,
+            },
+        )
         
         # Current build log buffer
         self.current_build_logs = []
@@ -457,9 +469,10 @@ class MapBuilderDialog(QDialog):
         self.ui.report_widget.clear()
         self.ui.output_list_widget.clear()
 
-        # Reset progress bars
+        # Reset progress bars and integration
         self.ui.current_state_progressbar.setValue(0)
         self.ui.global_state_progressbar.setValue(0)
+        self.integration.reset()
 
         # Create compilation thread
         self.compilation_thread = CompilationThread(command, self.addon_path)
@@ -491,18 +504,24 @@ class MapBuilderDialog(QDialog):
         # Add to logs tab
         self.add_log_message(line)
 
+        # Process through integration layer
+        self.integration.process_output_line(line)
+
     def on_progress_updated(self, progress):
         """Handle progress update"""
-        # Update progress bars
+        # Update progress bars via integration
         phase_pct = int(progress.phase_progress * 100)
         global_pct = int(progress.global_progress * 100)
 
         self.ui.current_state_progressbar.setValue(phase_pct)
         self.ui.global_state_progressbar.setValue(global_pct)
 
-        # Update labels
+        # Get current phase from integration
+        current_phase = self.integration.get_current_phase()
+
+        # Update labels with phase information
         self.ui.current_state_label.setText(
-            f"{progress.current_phase_name}: {progress.current_operation[:30]}"
+            f"{current_phase}: {progress.current_operation[:30]}"
         )
 
         # Estimate remaining time
@@ -521,18 +540,16 @@ class MapBuilderDialog(QDialog):
 
     def on_message_received(self, message: CompilationMessage):
         """Handle warning/error message"""
-        item = QListWidgetItem(message.message)
+        # Map severity string to MessageSeverity enum
+        severity_map = {
+            "error": MessageSeverity.ERROR,
+            "warning": MessageSeverity.WARNING,
+            "success": MessageSeverity.SUCCESS,
+        }
+        severity = severity_map.get(message.severity, MessageSeverity.INFO)
 
-        if message.severity == "error":
-            item.setForeground(QColor(255, 100, 100))
-            item.setIcon(QIcon(":/icons/error_24dp_FF6464_FILL0_wght400_GRAD0_opsz24.svg"))
-        elif message.severity == "warning":
-            item.setForeground(QColor(255, 200, 100))
-            item.setIcon(QIcon(":/icons/warning_24dp_FFC864_FILL0_wght400_GRAD0_opsz24.svg"))
-        else:
-            item.setForeground(QColor(200, 200, 200))
-
-        self.ui.report_widget.addItem(item)
+        # Add to report via integration (includes copy button)
+        self.integration._add_report_item(message.message, severity)
 
     def on_compilation_finished(self, exit_code: int, elapsed_time: float):
         """Handle compilation finished"""
@@ -551,19 +568,30 @@ class MapBuilderDialog(QDialog):
         # Refresh logs list
         self.refresh_logs_list()
 
+        # Get compilation statistics
+        errors = self.integration.get_errors()
+        warnings = self.integration.get_warnings()
+
         # Show result
         if exit_code == 0:
             QMessageBox.information(
                 self, "Compilation Complete",
-                f"Map compiled successfully in {time_str}"
+                f"Map compiled successfully in {time_str}\n\n"
+                f"Warnings: {len(warnings)}\n"
+                f"Errors: {len(errors)}"
             )
             self.add_log_message(f"✓ Compilation completed successfully ({time_str})")
         else:
             QMessageBox.warning(
                 self, "Compilation Failed",
-                f"Compilation failed with exit code {exit_code}"
+                f"Compilation failed with exit code {exit_code}\n\n"
+                f"Warnings: {len(warnings)}\n"
+                f"Errors: {len(errors)}"
             )
             self.add_log_message(f"✗ Compilation failed with exit code {exit_code}")
+
+        # Reset integration for next build
+        self.integration.reset()
 
     def run_map(self):
         """Run map without building"""
