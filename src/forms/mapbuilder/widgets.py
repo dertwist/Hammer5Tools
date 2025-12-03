@@ -13,6 +13,8 @@ from PySide6.QtGui import QIcon
 from dataclasses import fields
 from typing import Any, Dict, Optional
 from src.forms.mapbuilder.preset_manager import BuildSettings
+from PySide6.QtWidgets import QPushButton, QLabel, QGridLayout
+from PySide6.QtCore import Qt, QSize, Signal
 
 
 class SettingWidget(QWidget):
@@ -55,6 +57,7 @@ class BoolSettingWidget(SettingWidget):
     def setup_ui(self):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        self.setStyleSheet("border: none; padding: 0px;")
 
         self.checkbox = QCheckBox(self.display_name)
         self.checkbox.setChecked(self.default_value)
@@ -141,19 +144,22 @@ class SettingsGroup(QWidget):
         header_frame.setMaximumHeight(32)
         header_layout = QHBoxLayout(header_frame)
         header_layout.setContentsMargins(8, 4, 8, 4)
+        header_frame.setStyleSheet('background-color: #1D1D1F;')
 
         self.collapse_button = QToolButton()
         self.collapse_button.setIcon(QIcon(":/icons/arrow_drop_down_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
-        self.collapse_button.setIconSize(QSize(16, 16))
+        self.collapse_button.setIconSize(QSize(24, 24))
+        self.collapse_button.setStyleSheet('padding: 0px; margin: 0px;')
         self.collapse_button.setFixedSize(24, 24)
         self.collapse_button.clicked.connect(self.toggle_collapse)
 
         self.group_label = QLabel(self.group_name)
-        self.group_label.setStyleSheet("font-weight: bold; font-size: 12pt;")
+        self.group_label.setStyleSheet("font-weight: 500; font-size: 16px;")
 
         header_layout.addWidget(self.group_label)
         header_layout.addStretch()
         header_layout.addWidget(self.collapse_button)
+
 
         # Content
         self.content_frame = QFrame()
@@ -272,6 +278,7 @@ class PresetButton(QPushButton):
     """Button representing a build preset"""
 
     presetClicked = Signal(str)  # preset name
+    contextMenuRequested = Signal(object)
 
     def __init__(self, preset_name: str, is_default: bool, parent=None):
         super().__init__(parent)
@@ -281,12 +288,30 @@ class PresetButton(QPushButton):
 
         self.setMinimumSize(QSize(64, 64))
         self.setMaximumSize(QSize(64, 64))
-        self.setText(preset_name)
-        self.setCheckable(True)
 
+        layout = QGridLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
+
+        self.label = QLabel(preset_name)
+        self.label.setWordWrap(True)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignCenter)
+
+        self.label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+
+        self.label.setStyleSheet("font-size: 10px; background-color: transparent; color: white;")
+
+        layout.addWidget(self.label, 0, 0)
+
+        self.setCheckable(True)
         self.clicked.connect(lambda: self.presetClicked.emit(self.preset_name))
 
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.on_context_menu)
+
         self.update_style()
+    def on_context_menu(self, pos):
+        """Emit context menu signal with position"""
+        self.contextMenuRequested.emit((self, pos))
 
     def set_active(self, active: bool):
         """Set active state"""
