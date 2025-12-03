@@ -8,13 +8,17 @@ from PySide6.QtWidgets import (
     QToolButton, QFrame, QSizePolicy, QPushButton,
     QScrollArea
 )
+import os
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QIcon
 from dataclasses import fields
 from typing import Any, Dict, Optional
 from src.forms.mapbuilder.preset_manager import BuildSettings
-from PySide6.QtWidgets import QPushButton, QLabel, QGridLayout
+from PySide6.QtWidgets import QPushButton, QLabel, QGridLayout, QFileDialog, QMessageBox
 from PySide6.QtCore import Qt, QSize, Signal
+
+from src.settings.common import get_addon_dir, get_addon_name
+from src.widgets.common import Button
 
 
 class SettingWidget(QWidget):
@@ -119,6 +123,63 @@ class StringSettingWidget(SettingWidget):
     def set_value(self, value: str):
         self.lineedit.setText(value)
 
+class FolderSettingWidget(SettingWidget):
+    def setup_ui(self):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        label = QLabel(self.display_name)
+        self.lineedit = QLineEdit()
+        self.lineedit.setPlaceholderText(self.find_default_vmap())
+        self.lineedit.setText(str(self.default_value))
+        self.lineedit.textChanged.connect(lambda: self.valueChanged.emit(self.get_value()))
+
+        self.browse_vmap_path = Button()
+        self.browse_vmap_path.set_icon_folder_open()
+        self.browse_vmap_path.clicked.connect(self.browse_path)
+
+        layout.addWidget(label)
+        layout.addWidget(self.lineedit)
+        layout.addWidget(self.browse_vmap_path)
+
+    def get_value(self) -> str:
+        if self.lineedit.text() == '':
+            return self.find_default_vmap()
+        else:
+            return self.lineedit.text()
+
+    def set_value(self, value: str):
+        self.lineedit.setText(value)
+    def find_default_vmap(self):
+        return os.path.relpath(os.path.join(get_addon_dir(), 'maps', f'{get_addon_name()}.vmap'), get_addon_dir())
+
+    def browse_path(self):
+        addon_dir = get_addon_dir()
+        maps_dir = os.path.join(addon_dir, 'maps')
+
+        # Ensure maps directory exists
+        os.makedirs(maps_dir, exist_ok=True)
+
+        selected_file, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Vmap file",
+            maps_dir,
+            "Vmap files (*.vmap);;All files (*)"
+        )
+
+        if selected_file:
+            if not selected_file.endswith('.vmap'):
+                QMessageBox.warning(self, "Invalid File", "Please select a .vmap file.")
+                return
+
+            rel_path = os.path.relpath(selected_file, addon_dir)
+            if rel_path.startswith('..'):
+                QMessageBox.warning(self, "Invalid Location",
+                                    "Please select a file within the addon's directory.")
+                return
+
+            self.set_value(rel_path)
+
 
 class SettingsGroup(QWidget):
     """Collapsible group of settings"""
@@ -201,7 +262,7 @@ class SettingsPanel(QWidget):
 
     # Define which fields go in which groups
     FIELD_GROUPS = {
-        "Core": ["mappath", "threads"],
+        "Common": ["mappath", "threads"],
         "World": ["build_world", "entities_only", "build_vis_geometry",
                   "skip_aux_files", "no_settle", "debug_vis_geo",
                   "tile_mesh_base_geometry"],
@@ -255,6 +316,8 @@ class SettingsPanel(QWidget):
                     return BoolSettingWidget(field_name, field_type, default_value)
                 elif field_type == int:
                     return IntSettingWidget(field_name, field_type, default_value)
+                elif field_type == str and field_name == "mappath":
+                    return FolderSettingWidget(field_name, field_type, default_value)
                 elif field_type == str:
                     return StringSettingWidget(field_name, field_type, default_value)
 

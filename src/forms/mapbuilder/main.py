@@ -2,6 +2,7 @@
 Enhanced Map Builder Dialog with complete preset management,
 real-time output parsing, and dynamic UI generation.
 """
+import os.path
 import sys
 import subprocess
 import threading
@@ -307,9 +308,9 @@ class MapBuilderDialog(QDialog):
 
         # Get current settings
         settings = self.settings_panel.get_settings()
-
+        mappath = os.path.join(get_addon_dir(), settings.mappath)
         # Validate mappath
-        if not settings.mappath or not Path(settings.mappath).exists():
+        if not mappath or not Path(mappath).exists():
             QMessageBox.warning(self, "Invalid Map", "Please select a valid map file")
             return
 
