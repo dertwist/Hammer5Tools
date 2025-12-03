@@ -165,10 +165,11 @@ class MapBuilderDialog(QDialog):
         for preset in self.preset_manager.get_all_presets():
             btn = PresetButton(preset.name, preset.is_default)
             btn.presetClicked.connect(self.on_preset_clicked)
-            btn.setContextMenuPolicy(Qt.CustomContextMenu)
-            btn.customContextMenuRequested.connect(
-                lambda pos, p=preset: self.show_preset_context_menu(pos, p)
+
+            btn.contextMenuRequested.connect(
+                lambda data, p=preset: self.show_preset_context_menu(data, p)
             )
+
             preset_layout.insertWidget(preset_layout.count() - 1, btn)
             self.preset_buttons[preset.name] = btn
 
@@ -224,24 +225,22 @@ class MapBuilderDialog(QDialog):
 
         self.setWindowTitle(f"Map Builder - {preset.name}")
 
-    def show_preset_context_menu(self, pos, preset: BuildPreset):
+    def show_preset_context_menu(self, signal_data, preset: BuildPreset):
         """Show context menu for preset button"""
+        button, local_pos = signal_data
         menu = QMenu(self)
 
-        # Save changes
         save_action = menu.addAction("Save Changes")
         save_action.triggered.connect(lambda: self.save_preset_changes(preset))
 
         if not preset.is_default:
-            # Rename
             rename_action = menu.addAction("Rename")
             rename_action.triggered.connect(lambda: self.rename_preset(preset))
 
-            # Delete
             delete_action = menu.addAction("Delete")
             delete_action.triggered.connect(lambda: self.delete_preset(preset))
-
-        menu.exec_(self.sender().mapToGlobal(pos))
+        global_pos = button.mapToGlobal(local_pos)
+        menu.exec_(global_pos)
 
     def create_new_preset(self):
         """Create new preset from current settings"""
