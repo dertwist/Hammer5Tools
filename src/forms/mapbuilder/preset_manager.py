@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, asdict, field
 import copy
+from src.settings.common import get_settings_value, set_settings_value
 
 
 @dataclass
@@ -238,26 +239,43 @@ class BuildPreset:
 
 
 class PresetManager:
-    """Manages saving/loading of build presets"""
+    """Manages saving/loading of build presets from main settings"""
 
-    def __init__(self, presets_file: Path):
+    SETTINGS_KEY = "MapBuilder/Presets"
+
+    def __init__(self, presets_file: Path = None):
+        """Initialize preset manager. presets_file is kept for backwards compatibility."""
         self.presets_file = presets_file
         self.presets: List[BuildPreset] = []
         self._load_presets()
 
     def _load_presets(self):
-        """Load presets from JSON file"""
-        if not self.presets_file.exists():
-            self._create_default_presets()
-            return
-
-        try:
-            with open(self.presets_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+        """Load presets from main settings, with fallback to file if needed"""
+        # Try to load from main settings first
+        presets_json = get_settings_value("MapBuilder", "Presets", default=None)
+        
+        if presets_json:
+            try:
+                data = json.loads(presets_json)
                 self.presets = [BuildPreset.from_dict(p) for p in data.get("presets", [])]
-        except Exception as e:
-            print(f"Error loading presets: {e}")
-            self._create_default_presets()
+                return
+            except Exception as e:
+                print(f"Error loading presets from settings: {e}")
+        
+        # Fallback: try to load from old file if it exists
+        if self.presets_file and self.presets_file.exists():
+            try:
+                with open(self.presets_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.presets = [BuildPreset.from_dict(p) for p in data.get("presets", [])]
+                    # Save to settings for future use
+                    self.save_presets()
+                    return
+            except Exception as e:
+                print(f"Error loading presets from file: {e}")
+        
+        # Create default presets if nothing found
+        self._create_default_presets()
 
     def _create_default_presets(self):
         """Create default presets"""
@@ -326,14 +344,13 @@ class PresetManager:
         self.save_presets()
 
     def save_presets(self):
-        """Save presets to JSON file"""
+        """Save presets to main settings"""
         try:
-            self.presets_file.parent.mkdir(parents=True, exist_ok=True)
             data = {
                 "presets": [p.to_dict() for p in self.presets]
             }
-            with open(self.presets_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2)
+            presets_json = json.dumps(data)
+            set_settings_value("MapBuilder", "Presets", presets_json)
         except Exception as e:
             print(f"Error saving presets: {e}")
 
