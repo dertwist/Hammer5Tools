@@ -489,8 +489,10 @@ class Widget(QMainWindow):
     def open_mapbuilder_dialog(self):
         if self.mapbuilder_dialog is None:
             self.mapbuilder_dialog = MapBuilderDialog(self)
-            self.mapbuilder_dialog.show()
-            self.mapbuilder_dialog.finished.connect(self.mapbuilder_dialog_closed)
+
+        self.mapbuilder_dialog.show()
+        self.mapbuilder_dialog.raise_()
+        self.mapbuilder_dialog.activateWindow()
 
     def mapbuilder_dialog_closed(self):
         self.mapbuilder_dialog = None
