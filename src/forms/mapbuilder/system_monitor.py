@@ -9,7 +9,7 @@ import GPUtil
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QFrame
 )
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QTimer, Qt, QThread, QObject, Signal, Slot
 from PySide6.QtGui import QColor, QFont
 
 # Matplotlib embed
@@ -70,116 +70,153 @@ def _clamp_percent(v):
 
 
 # -------------------------
-# GPU stat functions
+# Worker for GPU stats (runs in separate thread)
 # -------------------------
-def get_nvidia_stats():
-    """Use nvidia-smi CSV query for robust GPU stats"""
-    try:
-        cmd = [
-            "nvidia-smi",
-            "--query-gpu=utilization.gpu,memory.used,memory.total",
-            "--format=csv,noheader,nounits",
-        ]
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
-        out = proc.stdout.strip()
-        if not out:
-            return None
+class GPUStatsWorker(QObject):
+    """Worker object for fetching GPU stats in a separate thread"""
+    statsReady = Signal(object, object, object, object)  # usage, used_gb, total_gb, vendor
+    finished = Signal()
 
-        first_line = None
-        for line in out.splitlines():
-            s = line.strip()
-            if s:
-                first_line = s
-                break
-        if not first_line:
-            return None
+    def __init__(self):
+        super().__init__()
+        self._running = True
 
-        parts = [p.strip() for p in first_line.split(",")]
-        if len(parts) < 3:
-            return None
+    @Slot()
+    def fetch_gpu_stats(self):
+        """Fetch GPU stats - runs in worker thread"""
+        # Check if we're in the correct thread context
+        if QThread.currentThread().loopLevel() > 0:
+            # We're in an event loop, safe to proceed
+            pass
 
-        usage_pct = _clamp_percent(_safe_float(parts[0]))
-        used_mb = _safe_float(parts[1])
-        total_mb = _safe_float(parts[2])
+        usage, used_gb, total_gb, vendor = self._get_gpu_stats()
+        self.statsReady.emit(usage, used_gb, total_gb, vendor)
+        self.finished.emit()
 
-        used_gb = used_mb / 1024.0
-        total_gb = total_mb / 1024.0
+    def _get_gpu_stats(self):
+        """Try NVIDIA first, then AMD, then GPUtil fallback"""
+        n = self._get_nvidia_stats()
+        if n:
+            return n[0], n[1], n[2], "NVIDIA"
 
-        return usage_pct, used_gb, total_gb
-    except Exception:
-        return None
+        a = self._get_amd_stats()
+        if a:
+            return a[0], a[1], a[2], "AMD"
 
+        try:
+            gpus = GPUtil.getGPUs()
+            if gpus:
+                g = gpus[0]
+                usage = _clamp_percent(g.load * 100)
+                used_gb = (g.memoryUsed / 1024.0) if g.memoryUsed is not None else None
+                total_gb = (g.memoryTotal / 1024.0) if g.memoryTotal is not None else None
+                return usage, used_gb, total_gb, "GPUtil"
+        except Exception:
+            pass
 
-def get_amd_stats():
-    """Try to parse rocm-smi output for AMD GPU stats"""
-    try:
-        proc = subprocess.run(["rocm-smi"], capture_output=True, text=True, timeout=2)
-        out = proc.stdout + proc.stderr
-        if not out:
-            return None
+        return None, None, None, None
 
-        usage_match = re.search(r"GPU\s*use\s*\(%\)\s*[:\-]\s*([0-9]+(?:\.[0-9]+)?)", out, re.IGNORECASE)
-        if not usage_match:
-            usage_match = re.search(r"GPU\s*use\s*\(%\)\s*[:]\s*([0-9]+(?:\.[0-9]+)?)", out, re.IGNORECASE)
+    def _get_nvidia_stats(self):
+        """Use nvidia-smi CSV query for robust GPU stats"""
+        try:
+            cmd = [
+                "nvidia-smi",
+                "--query-gpu=utilization.gpu,memory.used,memory.total",
+                "--format=csv,noheader,nounits",
+            ]
+            # Run silently with no window (CREATE_NO_WINDOW on Windows)
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=2,
+                shell=False,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            out = proc.stdout.strip()
+            if not out:
+                return None
 
-        usage_pct = None
-        if usage_match:
-            usage_pct = _clamp_percent(_safe_float(usage_match.group(1)))
+            first_line = None
+            for line in out.splitlines():
+                s = line.strip()
+                if s:
+                    first_line = s
+                    break
+            if not first_line:
+                return None
 
-        mem_match = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*/\s*([0-9]+(?:\.[0-9]+)?)\s*MiB", out, re.IGNORECASE)
-        used_gb = None
-        total_gb = None
-        if mem_match:
-            used_mb = _safe_float(mem_match.group(1))
-            total_mb = _safe_float(mem_match.group(2))
+            parts = [p.strip() for p in first_line.split(",")]
+            if len(parts) < 3:
+                return None
+
+            usage_pct = _clamp_percent(_safe_float(parts[0]))
+            used_mb = _safe_float(parts[1])
+            total_mb = _safe_float(parts[2])
+
             used_gb = used_mb / 1024.0
             total_gb = total_mb / 1024.0
 
-        if usage_pct is not None and used_gb is not None and total_gb is not None:
             return usage_pct, used_gb, total_gb
+        except Exception:
+            return None
 
-        if usage_pct is None:
-            p = re.search(r"([0-9]{1,3})\s*%", out)
-            if p:
-                usage_pct = _clamp_percent(_safe_float(p.group(1)))
+    def _get_amd_stats(self):
+        """Try to parse rocm-smi output for AMD GPU stats"""
+        try:
+            proc = subprocess.run(
+                ["rocm-smi"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            out = proc.stdout + proc.stderr
+            if not out:
+                return None
 
-        if used_gb is None or total_gb is None:
-            all_mib = re.findall(r"([0-9]+(?:\.[0-9]+)?)\s*MiB", out, re.IGNORECASE)
-            if len(all_mib) >= 2:
-                used_gb = _safe_float(all_mib[0]) / 1024.0
-                total_gb = _safe_float(all_mib[1]) / 1024.0
+            usage_match = re.search(r"GPU\s*use\s*\(%\)\s*[:\-]\s*([0-9]+(?:\.[0-9]+)?)", out, re.IGNORECASE)
+            if not usage_match:
+                usage_match = re.search(r"GPU\s*use\s*\(%\)\s*[:]\s*([0-9]+(?:\.[0-9]+)?)", out, re.IGNORECASE)
 
-        if usage_pct is not None and used_gb is not None and total_gb is not None:
-            return usage_pct, used_gb, total_gb
+            usage_pct = None
+            if usage_match:
+                usage_pct = _clamp_percent(_safe_float(usage_match.group(1)))
 
-    except Exception:
-        pass
+            mem_match = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*/\s*([0-9]+(?:\.[0-9]+)?)\s*MiB", out, re.IGNORECASE)
+            used_gb = None
+            total_gb = None
+            if mem_match:
+                used_mb = _safe_float(mem_match.group(1))
+                total_mb = _safe_float(mem_match.group(2))
+                used_gb = used_mb / 1024.0
+                total_gb = total_mb / 1024.0
 
-    return None
+            if usage_pct is not None and used_gb is not None and total_gb is not None:
+                return usage_pct, used_gb, total_gb
 
+            if usage_pct is None:
+                p = re.search(r"([0-9]{1,3})\s*%", out)
+                if p:
+                    usage_pct = _clamp_percent(_safe_float(p.group(1)))
 
-def get_gpu_stats():
-    """Try NVIDIA first, then AMD, then GPUtil fallback"""
-    n = get_nvidia_stats()
-    if n:
-        return n[0], n[1], n[2], "NVIDIA"
+            if used_gb is None or total_gb is None:
+                all_mib = re.findall(r"([0-9]+(?:\.[0-9]+)?)\s*MiB", out, re.IGNORECASE)
+                if len(all_mib) >= 2:
+                    used_gb = _safe_float(all_mib[0]) / 1024.0
+                    total_gb = _safe_float(all_mib[1]) / 1024.0
 
-    a = get_amd_stats()
-    if a:
-        return a[0], a[1], a[2], "AMD"
+            if usage_pct is not None and used_gb is not None and total_gb is not None:
+                return usage_pct, used_gb, total_gb
 
-    try:
-        gpus = GPUtil.getGPUs()
-        if gpus:
-            g = gpus[0]
-            usage = _clamp_percent(g.load * 100)
-            used_gb = (g.memoryUsed / 1024.0) if g.memoryUsed is not None else None
-            total_gb = (g.memoryTotal / 1024.0) if g.memoryTotal is not None else None
-            return usage, used_gb, total_gb, "GPUtil"
-    except Exception:
-        pass
+        except Exception:
+            pass
 
-    return None, None, None, None
+        return None
+
+    def stop(self):
+        """Stop the worker gracefully"""
+        self._running = False
 
 
 # -------------------------
@@ -274,7 +311,10 @@ class HistoryGraph(QWidget):
 # Main System Monitor Widget
 # -------------------------
 class SystemMonitor(QWidget):
-    """System resource monitor with design system styling"""
+    """System resource monitor with design system styling and threaded GPU queries"""
+
+    # Signal to trigger GPU fetch in worker thread
+    requestGPUStats = Signal()
 
     def __init__(self):
         super().__init__()
@@ -303,6 +343,19 @@ class SystemMonitor(QWidget):
 
         self.setLayout(layout)
 
+        # Setup GPU worker thread (modern Qt pattern)
+        self.gpu_thread = QThread()
+        self.gpu_worker = GPUStatsWorker()
+        self.gpu_worker.moveToThread(self.gpu_thread)
+
+        # Connect signals
+        self.requestGPUStats.connect(self.gpu_worker.fetch_gpu_stats)
+        self.gpu_worker.statsReady.connect(self.handle_gpu_stats)
+        self.gpu_thread.finished.connect(self.gpu_worker.deleteLater)
+
+        # Start the thread
+        self.gpu_thread.start()
+
         # Timer for updates
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_stats)
@@ -310,18 +363,25 @@ class SystemMonitor(QWidget):
 
         self.update_stats()
 
+    @Slot()
     def update_stats(self):
-        """Update all system stats"""
-        # CPU
+        """Update CPU and RAM stats (fast), trigger GPU fetch in thread"""
+        # CPU (fast, run in main thread)
         cpu = psutil.cpu_percent(interval=0.0)
         self.cpu_graph.update_value(cpu)
 
-        # RAM
+        # RAM (fast, run in main thread)
         ram = psutil.virtual_memory().percent
         self.ram_graph.update_value(ram)
 
-        # GPU
-        usage, used_gb, total_gb, vendor = get_gpu_stats()
+        # GPU (slow subprocess, run in worker thread)
+        # Only trigger if thread is running and has event loop
+        if self.gpu_thread.isRunning():
+            self.requestGPUStats.emit()
+
+    @Slot(object, object, object, object)
+    def handle_gpu_stats(self, usage, used_gb, total_gb, vendor):
+        """Handle GPU stats from worker thread (runs in main thread)"""
         if usage is not None:
             suffix = ""
             if used_gb is not None and total_gb is not None:
@@ -331,6 +391,14 @@ class SystemMonitor(QWidget):
             self.gpu_graph.update_value(usage, suffix)
         else:
             self.gpu_graph.update_value(0.0, " (No GPU detected)")
+
+    def closeEvent(self, event):
+        """Clean shutdown of worker thread"""
+        self.timer.stop()
+        self.gpu_worker.stop()
+        self.gpu_thread.quit()
+        self.gpu_thread.wait()
+        event.accept()
 
 
 # -------------------------
