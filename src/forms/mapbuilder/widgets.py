@@ -349,6 +349,11 @@ class SettingsPanel(QWidget):
         "Visibility": ["build_vis", "debug_vis_geo", "build_vis_geometry"],
         "Navigation": ["build_nav", "nav_debug", "grid_nav"],
         "Audio": ["build_reverb", "build_paths", "bake_custom_audio", "audio_threads"],
+        "Load Map In Engine": [
+            "load_in_engine_after_build",
+            "build_cubemaps_on_load",
+            "build_minimap_on_load"
+        ],
     }
 
     def __init__(self, parent=None):
