@@ -268,10 +268,10 @@ class SettingsGroup(QWidget):
         self.group_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.group_label.setStyleSheet("font-weight: 500; font-size: 16px;")
 
-        header_layout.addWidget(self.collapse_button)
         header_layout.addStretch()
         header_layout.addWidget(self.group_label)
         header_layout.addStretch()
+        header_layout.addWidget(self.collapse_button)
 
 
         # Content
