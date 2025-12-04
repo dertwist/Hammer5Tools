@@ -26,7 +26,7 @@ from src.forms.mapbuilder.system_monitor import SystemMonitor
 from src.forms.mapbuilder.output_formater import OutputFormatter
 from src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings
 from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
-from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path
+from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value
 from src.common import enable_dark_title_bar, app_dir
 
 
@@ -129,6 +129,13 @@ class MapBuilderDialog(QDialog):
         self.compilation_thread: CompilationThread = None
         self.is_compiling = False
         self.last_build_time = 0.0
+        # Load last build duration from settings to display on start
+        last_time_str = get_settings_value("MapBuilder", "LastBuildTime", default="")
+        if last_time_str:
+            try:
+                self.ui.last_build_stats_label.setText(f"Last Build Time: {last_time_str}")
+            except Exception:
+                pass
 
         # Setup UI
         self.setup_settings_panel()
@@ -364,6 +371,11 @@ class MapBuilderDialog(QDialog):
         self.last_build_time = elapsed_time
         time_str = self.format_time(elapsed_time)
         self.ui.last_build_stats_label.setText(f"Last Build Time: {time_str}")
+        # Persist last build duration string in settings for display on next load
+        try:
+            set_settings_value("MapBuilder", "LastBuildTime", time_str)
+        except Exception as e:
+            print(f"Failed to save LastBuildTime: {e}")
 
         if exit_code == 0:
             QMessageBox.information(
@@ -387,7 +399,7 @@ class MapBuilderDialog(QDialog):
         cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
         addon_name = get_addon_name()
 
-        launch_cmd = f'"{cs2_exe}" -tools -addon {addon_name} +map {map_name}'
+        launch_cmd = f'"{cs2_exe}" -tools -addon {addon_name} +map_workshop {addon_name} {map_name}'
 
         self.add_log_message(f"Launching: {launch_cmd}")
 
