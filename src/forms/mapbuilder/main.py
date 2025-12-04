@@ -384,6 +384,23 @@ class MapBuilderDialog(QDialog):
             )
             self.add_log_message(f"✓ Compilation completed successfully ({time_str})")
 
+            # Optionally launch game and load map in engine after building
+            try:
+                settings = self.settings_panel.get_settings()
+                if settings.load_in_engine_after_build:
+                    map_name = Path(settings.mappath).stem
+                    addon_name = get_addon_name()
+                    cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
+                    launch_cmd = f'"{cs2_exe}" -tools -addon {addon_name} +map_workshop {addon_name} {map_name}'
+                    if settings.build_cubemaps_on_load:
+                        launch_cmd += ' +buildcubemaps'
+                    if settings.build_minimap_on_load:
+                        launch_cmd += ' +minimap_create'
+                    self.add_log_message(f"Launching after build: {launch_cmd}")
+                    subprocess.Popen(launch_cmd, shell=True)
+            except Exception as e:
+                self.add_log_message(f"Failed to launch after build: {e}")
+
 
     def run_map(self):
         """Run map without building"""
@@ -400,6 +417,10 @@ class MapBuilderDialog(QDialog):
         addon_name = get_addon_name()
 
         launch_cmd = f'"{cs2_exe}" -tools -addon {addon_name} +map_workshop {addon_name} {map_name}'
+        if settings.build_cubemaps_on_load:
+            launch_cmd += ' +buildcubemaps'
+        if settings.build_minimap_on_load:
+            launch_cmd += ' +minimap_create'
 
         self.add_log_message(f"Launching: {launch_cmd}")
 

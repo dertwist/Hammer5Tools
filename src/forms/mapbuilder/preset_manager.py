@@ -54,6 +54,11 @@ class BuildSettings:
     bake_custom_audio: bool = False
     audio_threads: int = -1  # -1 = use main threads value
 
+    # === Load Map In Engine ===
+    load_in_engine_after_build: bool = True
+    build_cubemaps_on_load: bool = True
+    build_minimap_on_load: bool = False
+
     # === Base Arguments (usually fixed) ===
     fshallow: bool = True
     max_texture_res: int = 256
