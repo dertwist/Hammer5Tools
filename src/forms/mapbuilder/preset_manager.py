@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 from typing import List, Optional, Dict, Any
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, asdict, field, fields
 import copy
 from src.settings.common import get_settings_value, set_settings_value
 
@@ -23,24 +23,17 @@ class BuildSettings:
     build_world: bool = True
     entities_only: bool = False
     build_vis_geometry: bool = True
-    skip_aux_files: bool = False  # Dynamic surface effects
+
     no_settle: bool = False  # Physics settling
-    debug_vis_geo: bool = False
-    tile_mesh_base_geometry: bool = False
 
     # === Lightmapping ===
     bake_lighting: bool = True
     lightmap_max_resolution: int = 512
     lightmap_quality: int = 2  # 0=Low, 1=Medium, 2=High, 3=Ultra
-    lightmap_do_weld: bool = True
+
     lightmap_compression: bool = True
-    lightmap_cpu: bool = False  # Use CPU instead of GPU
     lightmap_filtering: bool = True  # Noise removal
     no_light_calculations: bool = False
-    lightmap_deterministic_charts: bool = False
-    write_debug_path_trace: bool = False
-    vrad3_large_block_size: bool = False
-    lightmap_local_compile: bool = True
 
     # === Physics ===
     build_physics: bool = False
@@ -48,6 +41,7 @@ class BuildSettings:
 
     # === Visibility ===
     build_vis: bool = False
+    debug_vis_geo: bool = False
 
     # === Navigation ===
     build_nav: bool = False
@@ -59,13 +53,6 @@ class BuildSettings:
     build_paths: bool = False
     bake_custom_audio: bool = False
     audio_threads: int = -1  # -1 = use main threads value
-
-    # === Advanced ===
-    vconsole: bool = False
-    vcon_port: int = 29000
-    log_compile_stats: bool = False
-    condebug: bool = False
-    console_log: bool = False
 
     # === Base Arguments (usually fixed) ===
     fshallow: bool = True
@@ -119,21 +106,13 @@ class BuildSettings:
             args.append("-world")
 
         # World settings
-        if self.skip_aux_files:
-            args.append("-skipauxfiles")
         if self.no_settle:
             args.append("-nosettle")
-        if self.debug_vis_geo:
-            args.append("-debugvisgeo")
-        if self.tile_mesh_base_geometry:
-            args.append("-tileMeshBaseGeometry")
-
         # Lightmapping
         if self.bake_lighting and not self.entities_only:
             args.append("-bakelighting")
             args.append(f"-lightmapMaxResolution {self.lightmap_max_resolution}")
-            if self.lightmap_do_weld:
-                args.append("-lightmapDoWeld")
+
             args.append(f"-lightmapVRadQuality {self.lightmap_quality}")
             if not self.lightmap_filtering:
                 args.append("-lightmapDisableFiltering")
@@ -141,16 +120,7 @@ class BuildSettings:
                 args.append("-lightmapCompressionDisabled")
             if self.no_light_calculations:
                 args.append("-disableLightingCalculations")
-            if self.lightmap_deterministic_charts:
-                args.append("-lightmapDeterministicCharts")
-            if self.write_debug_path_trace:
-                args.append("-write_debug_path_trace_scene_info")
-            if self.vrad3_large_block_size:
-                args.append("-vrad3LargeBlockSize")
-            if self.lightmap_local_compile:
-                args.append("-lightmapLocalCompile")
-            if self.lightmap_cpu:
-                args.append("-lightmapcpu")
+
         else:
             args.append("-nolightmaps")
 
@@ -163,6 +133,8 @@ class BuildSettings:
         # Visibility
         if self.build_vis:
             args.append("-vis")
+        if self.debug_vis_geo:
+            args.append("-debugvisgeo")
 
         # Navigation
         if self.build_nav:
@@ -184,16 +156,7 @@ class BuildSettings:
             args.append("-sacustomdata")
             args.append(f"-sacustomdata_threads {audio_threads}")
 
-        # Logging/Diagnostics
-        if self.vconsole:
-            args.append("-vconsole")
-            args.append(f"-vconport {self.vcon_port}")
-        if self.log_compile_stats:
-            args.append("-resourcecompiler_log_compile_stats")
-        if self.condebug:
-            args.append("-condebug")
-        if self.console_log:
-            args.append("-consolelog")
+        # Logging/Diagnostics (removed deprecated options)
 
         # Outroot flags
         if self.retail:
@@ -227,9 +190,14 @@ class BuildPreset:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'BuildPreset':
-        """Create from dict"""
+        """Create from dict with filtering for unknown/removed keys"""
         settings_dict = data.get("settings", {})
-        settings = BuildSettings(**settings_dict)
+        try:
+            allowed = {f.name for f in fields(BuildSettings)}
+            filtered = {k: v for k, v in settings_dict.items() if k in allowed}
+            settings = BuildSettings(**filtered)
+        except Exception:
+            settings = BuildSettings()
         return cls(
             name=data["name"],
             settings=settings,
