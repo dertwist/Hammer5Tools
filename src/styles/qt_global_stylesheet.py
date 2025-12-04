@@ -498,6 +498,48 @@ QPlainTextEdit:pressed {
 
 
 
+QTextBrowser{
+
+    font: 700 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+
+
+QTextBrowser{
+
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+QTextBrowser:hover {
+} 
+
+QTextBrowser:pressed {
+    background-color: red;
+    background-color: #1C1C1C;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+
+}
+
 
 QLineEdit {
     border: 2px solid #CCCCCC;

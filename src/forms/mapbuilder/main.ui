@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1031</width>
-    <height>804</height>
+    <width>1280</width>
+    <height>901</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -71,7 +71,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>633</width>
+            <width>826</width>
             <height>88</height>
            </rect>
           </property>
@@ -379,8 +379,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>633</width>
-            <height>650</height>
+            <width>826</width>
+            <height>747</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
@@ -451,39 +451,59 @@
      <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <widget class="QListWidget" name="output_list_widget"/>
-       </item>
-       <item>
-        <widget class="QFrame" name="frame">
-         <property name="frameShape">
-          <enum>QFrame::Shape::StyledPanel</enum>
+        <widget class="QTextBrowser" name="output_list_widget">
+         <property name="styleSheet">
+          <string notr="true">QTextBrowser{
+
+    font: 700 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+
+
+QTextBrowser{
+
+    font: 580 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    padding: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+QTextBrowser:hover {
+} 
+
+QTextBrowser:pressed {
+    background-color: red;
+    background-color: #1C1C1C;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+
+}</string>
          </property>
-         <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
+         <property name="lineWrapMode">
+          <enum>QTextEdit::LineWrapMode::NoWrap</enum>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QCheckBox" name="text_wrap">
-            <property name="text">
-             <string>Text wrap</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="sound_on_finish">
-            <property name="text">
-             <string>Sound on finish</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="save_log_button">
-            <property name="text">
-             <string>Save log</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="openExternalLinks">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
        <item>
@@ -499,6 +519,43 @@
            <width>16777215</width>
            <height>128</height>
           </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QFrame#system_monitor{
+
+    font: 700 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+
+
+QFram#system_monitore{
+
+    font: 580 10pt &quot;Segoe UI&quot;;
+    border: 2px solid black;
+    border-radius: 4px;
+    border-color: rgba(80, 80, 80, 255);
+    height:18px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+
+QFrame#system_monitor:hover {
+} 
+
+QFrame#system_monitor:pressed {
+    background-color: red;
+    background-color: #1C1C1C;
+    margin: 1 px;
+    margin-left: 2px;
+    margin-right: 2px;
+
+}</string>
          </property>
          <property name="frameShape">
           <enum>QFrame::Shape::StyledPanel</enum>
