@@ -123,6 +123,56 @@ class StringSettingWidget(SettingWidget):
     def set_value(self, value: str):
         self.lineedit.setText(value)
 
+class EnumSettingWidget(SettingWidget):
+    """ComboBox for enumerated settings (supports (label,value) or raw values)"""
+
+    def __init__(self, field_name: str, field_type: type, default_value: Any, options: list, cast: type = str, parent=None):
+        self.options = options
+        self.cast = cast
+        super().__init__(field_name, field_type, default_value, parent)
+
+    def setup_ui(self):
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        label = QLabel(self.display_name)
+        self.combobox = QComboBox()
+        # Populate options (support (label, value) tuples)
+        self._values = []
+        for opt in self.options:
+            if isinstance(opt, tuple) and len(opt) == 2:
+                display, value = opt
+            else:
+                display, value = str(opt), opt
+            self.combobox.addItem(str(display), userData=value)
+            self._values.append(value)
+        # Set current by matching default value to value list
+        try:
+            idx = self._values.index(self.default_value)
+        except ValueError:
+            idx = 0
+        self.combobox.setCurrentIndex(idx)
+        self.combobox.currentIndexChanged.connect(lambda: self.valueChanged.emit(self.get_value()))
+
+        layout.addWidget(label)
+        layout.addWidget(self.combobox)
+
+    def get_value(self) -> Any:
+        value = self.combobox.currentData()
+        try:
+            return self.cast(value)
+        except Exception:
+            return value
+
+    def set_value(self, value: Any):
+        try:
+            # Cast for comparison consistency
+            cast_val = self.cast(value)
+            idx = self._values.index(cast_val)
+            self.combobox.setCurrentIndex(idx)
+        except ValueError:
+            pass
+
 class FolderSettingWidget(SettingWidget):
     def setup_ui(self):
         layout = QHBoxLayout(self)
@@ -238,6 +288,28 @@ class SettingsGroup(QWidget):
         self.setting_widgets[field_name] = widget
         self.content_layout.addWidget(widget)
 
+    def add_row(self, field_names: list[str]):
+        """Group existing field widgets into a single horizontal row."""
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(12)
+        container = QWidget()
+        container.setLayout(row)
+        # collect widgets in order
+        widgets = []
+        for name in field_names:
+            w = self.setting_widgets.get(name)
+            if w is not None:
+                widgets.append(w)
+        if not widgets:
+            return
+        # remove widgets from current parent layout and add to row
+        for w in widgets:
+            self.content_layout.removeWidget(w)
+            row.addWidget(w)
+        row.addStretch()
+        self.content_layout.addWidget(container)
+
     def toggle_collapse(self):
         """Collapse/expand the group"""
         self.collapsed = not self.collapsed
@@ -301,6 +373,12 @@ class SettingsPanel(QWidget):
                 if widget:
                     group.add_setting(field_name, widget)
 
+            # Horizontal groupings
+            if group_name == "Lightmapping":
+                group.add_row(["lightmap_max_resolution", "lightmap_quality", "lightmap_compression"])
+            if group_name == "Audio":
+                group.add_row(["build_reverb", "build_paths", "audio_threads"])
+
             main_layout.addWidget(group)
 
         main_layout.addStretch()
@@ -317,7 +395,16 @@ class SettingsPanel(QWidget):
                 if field_type == bool:
                     return BoolSettingWidget(field_name, field_type, default_value)
                 elif field_type == int:
-                    return IntSettingWidget(field_name, field_type, default_value)
+                    # Special cases for enum-like ints
+                    if field_name == "lightmap_max_resolution":
+                        return EnumSettingWidget(field_name, field_type, default_value,
+                                                 [256, 512, 1024, 2048, 4096, 8192], cast=int)
+                    elif field_name == "lightmap_quality":
+                        # Display friendly names while keeping internal int mapping 0/1/2
+                        return EnumSettingWidget(field_name, field_type, default_value,
+                                                 [("Fast", 0), ("Standard", 1), ("Final", 2)], cast=int)
+                    else:
+                        return IntSettingWidget(field_name, field_type, default_value)
                 elif field_type == str and field_name == "mappath":
                     return FolderSettingWidget(field_name, field_type, default_value)
                 elif field_type == str:
