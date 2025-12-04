@@ -13,16 +13,17 @@ from pathlib import Path
 from datetime import datetime
 from PySide6.QtWidgets import (
     QDialog, QApplication, QMessageBox, QInputDialog,
-    QListWidgetItem, QMenu, QTextEdit, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog
+    QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog
 )
-from PySide6.QtCore import Qt, QThread, Signal, QTimer
-from PySide6.QtGui import QColor, QIcon
+from PySide6.QtCore import Qt, QThread, Signal, QTimer, QPoint
+from PySide6.QtGui import QColor, QIcon, QTextDocument, QTextCursor
 from PySide6.QtCore import QUrl
 from PySide6.QtGui import QDesktopServices
 
 # Import UI and custom modules
 from src.forms.mapbuilder.ui_main import Ui_mapbuilder_dialog
 from src.forms.mapbuilder.system_monitor import SystemMonitor
+from src.forms.mapbuilder.output_formater import OutputFormatter
 from src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings
 from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
 from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path
@@ -71,15 +72,6 @@ class CompilationThread(QThread):
                 line = line.rstrip()
                 if line:
                     self.outputReceived.emit(line)
-
-                    # Parse line
-                    message, progress = self.parser.parse_line(line)
-
-                    if message:
-                        self.messageReceived.emit(message)
-
-                    if progress:
-                        self.progressUpdated.emit(progress)
 
             # Wait for process to complete
             self.process.wait()
@@ -130,6 +122,8 @@ class MapBuilderDialog(QDialog):
         presets_file = Path(self.addon_path) / ".hammer5tools" / "build_presets.json"
         self.preset_manager = PresetManager(presets_file)
 
+        self.ui.output_list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.output_list_widget.customContextMenuRequested.connect(self._output_context_menu)
         # Current state
         self.current_preset: BuildPreset = None
         self.compilation_thread: CompilationThread = None
@@ -218,7 +212,6 @@ class MapBuilderDialog(QDialog):
         self.ui.build_button.clicked.connect(self.start_compilation)
         self.ui.run_button.clicked.connect(self.run_map)
         self.ui.abort_button.clicked.connect(self.abort_compilation)
-        self.ui.save_log_button.clicked.connect(self.save_build_log)
 
         # Initially disable abort button
         self.ui.abort_button.setEnabled(False)
@@ -358,7 +351,7 @@ class MapBuilderDialog(QDialog):
 
     def on_output_received(self, line: str):
         """Handle raw output line"""
-        # Add to logs tab
+        # Add to output list; line may already be HTML (e.g., resourcecompiler -html)
         self.add_log_message(line)
 
 
@@ -402,10 +395,30 @@ class MapBuilderDialog(QDialog):
         subprocess.Popen(launch_cmd, shell=True)
 
     def add_log_message(self, message: str):
-        """Add message to logs tab"""
+        """Append a timestamped, styled HTML message to the output panel (no wrapping)."""
         timestamp = datetime.now().strftime("%H:%M:%S")
-        self.ui.output_list_widget.addItem(f"[{timestamp}] {message}")
-        self.ui.output_list_widget.scrollToBottom()
+
+        # Enhance message (may contain HTML spans, links, etc.)
+        formatted_message = OutputFormatter.parse_output_line(message)
+
+        # Compose line HTML with timestamp styling
+        line_html = (f"<span style='color:#9aa0a6; font-size: 11px;'>[{timestamp}]</span> "
+                     f"{formatted_message}<br/>")
+
+        # Insert HTML at the end and scroll to bottom
+        cursor = self.ui.output_list_widget.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        self.ui.output_list_widget.setTextCursor(cursor)
+        self.ui.output_list_widget.insertHtml(line_html)
+        self.ui.output_list_widget.moveCursor(QTextCursor.End)
+        self.ui.output_list_widget.ensureCursorVisible()
+
+    def _output_context_menu(self, pos: QPoint):
+        menu = QMenu(self)
+        save_action = menu.addAction("Save log...")
+        save_action.triggered.connect(self.save_build_log)
+        global_pos = self.ui.output_list_widget.mapToGlobal(pos)
+        menu.exec_(global_pos)
 
     def save_build_log(self):
         """Save the current build log to file via Save As dialog"""
@@ -413,11 +426,8 @@ class MapBuilderDialog(QDialog):
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             default_name = f"{timestamp}.txt"
 
-            log_content = []
-            for i in range(self.ui.output_list_widget.count()):
-                item = self.ui.output_list_widget.item(i)
-                log_content.append(item.text())
-            text = "\n".join(log_content)
+            # Get the buffer content directly from the plain text editor
+            text = self.ui.output_list_widget.toPlainText()
 
             filename, _ = QFileDialog.getSaveFileName(
                 self,
@@ -435,6 +445,8 @@ class MapBuilderDialog(QDialog):
 
         except Exception as e:
             print(f"Error saving build log: {e}")
+
+
 
     def format_time(self, seconds: float) -> str:
         """Format seconds as human-readable time"""

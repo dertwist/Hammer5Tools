@@ -15,17 +15,17 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QFrame,
-    QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-    QPushButton, QScrollArea, QSizePolicy, QSpacerItem,
-    QSplitter, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout,
+    QLabel, QPushButton, QScrollArea, QSizePolicy,
+    QSpacerItem, QSplitter, QTextBrowser, QTextEdit,
+    QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_mapbuilder_dialog(object):
     def setupUi(self, mapbuilder_dialog):
         if not mapbuilder_dialog.objectName():
             mapbuilder_dialog.setObjectName(u"mapbuilder_dialog")
-        mapbuilder_dialog.resize(1031, 804)
+        mapbuilder_dialog.resize(1280, 901)
         mapbuilder_dialog.setMinimumSize(QSize(0, 0))
         mapbuilder_dialog.setMaximumSize(QSize(16777215, 16777215))
         icon = QIcon()
@@ -50,7 +50,7 @@ class Ui_mapbuilder_dialog(object):
         self.build_presets.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 633, 88))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 826, 88))
         self.horizontalLayout_6 = QHBoxLayout(self.scrollAreaWidgetContents)
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
         self.pushButton_6 = QPushButton(self.scrollAreaWidgetContents)
@@ -150,7 +150,7 @@ class Ui_mapbuilder_dialog(object):
         self.build_settings_area.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 633, 650))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 826, 747))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents_2)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, -1)
@@ -198,39 +198,94 @@ class Ui_mapbuilder_dialog(object):
         self.verticalLayout_3 = QVBoxLayout(self.layoutWidget1)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.output_list_widget = QListWidget(self.layoutWidget1)
+        self.output_list_widget = QTextBrowser(self.layoutWidget1)
         self.output_list_widget.setObjectName(u"output_list_widget")
+        self.output_list_widget.setStyleSheet(u"QTextBrowser{\n"
+"\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 2px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    padding: 4px;\n"
+"    padding-left: 6px;\n"
+"    padding-right: 6px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"\n"
+"QTextBrowser{\n"
+"\n"
+"    font: 580 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    padding: 4px;\n"
+"    padding-left: 6px;\n"
+"    padding-right: 6px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"QTextBrowser:hover {\n"
+"} \n"
+"\n"
+"QTextBrowser:pressed {\n"
+"    background-color: red;\n"
+"    background-color: #1C1C1C;\n"
+"    margin: 1 px;\n"
+"    margin-left: 2px;\n"
+"    margin-right: 2px;\n"
+"\n"
+"}")
+        self.output_list_widget.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        self.output_list_widget.setReadOnly(True)
+        self.output_list_widget.setOpenExternalLinks(False)
 
         self.verticalLayout_3.addWidget(self.output_list_widget)
-
-        self.frame = QFrame(self.layoutWidget1)
-        self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout = QHBoxLayout(self.frame)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.text_wrap = QCheckBox(self.frame)
-        self.text_wrap.setObjectName(u"text_wrap")
-
-        self.horizontalLayout.addWidget(self.text_wrap)
-
-        self.sound_on_finish = QCheckBox(self.frame)
-        self.sound_on_finish.setObjectName(u"sound_on_finish")
-
-        self.horizontalLayout.addWidget(self.sound_on_finish)
-
-        self.save_log_button = QPushButton(self.frame)
-        self.save_log_button.setObjectName(u"save_log_button")
-
-        self.horizontalLayout.addWidget(self.save_log_button)
-
-
-        self.verticalLayout_3.addWidget(self.frame)
 
         self.system_monitor = QFrame(self.layoutWidget1)
         self.system_monitor.setObjectName(u"system_monitor")
         self.system_monitor.setMinimumSize(QSize(0, 128))
         self.system_monitor.setMaximumSize(QSize(16777215, 128))
+        self.system_monitor.setStyleSheet(u"QFrame#system_monitor{\n"
+"\n"
+"    font: 700 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 2px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"\n"
+"\n"
+"QFram#system_monitore{\n"
+"\n"
+"    font: 580 10pt \"Segoe UI\";\n"
+"    border: 2px solid black;\n"
+"    border-radius: 4px;\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"    height:18px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #1C1C1C;\n"
+"}\n"
+"\n"
+"QFrame#system_monitor:hover {\n"
+"} \n"
+"\n"
+"QFrame#system_monitor:pressed {\n"
+"    background-color: red;\n"
+"    background-color: #1C1C1C;\n"
+"    margin: 1 px;\n"
+"    margin-left: 2px;\n"
+"    margin-right: 2px;\n"
+"\n"
+"}")
         self.system_monitor.setFrameShape(QFrame.Shape.StyledPanel)
         self.system_monitor.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_7 = QHBoxLayout(self.system_monitor)
@@ -270,8 +325,5 @@ class Ui_mapbuilder_dialog(object):
         self.run_button.setText(QCoreApplication.translate("mapbuilder_dialog", u"Run (Skip Build)", None))
         self.abort_button.setText(QCoreApplication.translate("mapbuilder_dialog", u"Abort", None))
         self.last_build_stats_label.setText(QCoreApplication.translate("mapbuilder_dialog", u"Last Build time: 2h 15m", None))
-        self.text_wrap.setText(QCoreApplication.translate("mapbuilder_dialog", u"Text wrap", None))
-        self.sound_on_finish.setText(QCoreApplication.translate("mapbuilder_dialog", u"Sound on finish", None))
-        self.save_log_button.setText(QCoreApplication.translate("mapbuilder_dialog", u"Save log", None))
     # retranslateUi
 
