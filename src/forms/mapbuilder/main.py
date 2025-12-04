@@ -92,14 +92,6 @@ class CompilationThread(QThread):
 
 
 class MapBuilderDialog(QDialog):
-    """
-    Enhanced Map Builder Dialog for CS2 map compilation.
-    Features:
-    - Preset-based build configurations
-    - Real-time output parsing with progress tracking
-    - System resource monitoring
-    - Warning/Error reporting
-    """
 
     def __init__(self, parent=None):
         super().__init__(parent)
