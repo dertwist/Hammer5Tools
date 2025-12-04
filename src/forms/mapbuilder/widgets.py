@@ -337,8 +337,8 @@ class SettingsPanel(QWidget):
     # Define which fields go in which groups
     FIELD_GROUPS = {
         "Common": ["mappath", "threads"],
-        "World": ["build_world", "entities_only", "build_vis_geometry",
-                  "skip_aux_files", "no_settle", "debug_vis_geo",
+        "World": ["build_world", "entities_only",
+                  "skip_aux_files", "no_settle",
                   "tile_mesh_base_geometry"],
         "Lightmapping": ["bake_lighting", "lightmap_max_resolution", "lightmap_quality",
                          "lightmap_do_weld", "lightmap_compression", "lightmap_cpu",
@@ -346,11 +346,9 @@ class SettingsPanel(QWidget):
                          "lightmap_deterministic_charts", "write_debug_path_trace",
                          "vrad3_large_block_size", "lightmap_local_compile"],
         "Physics": ["build_physics", "legacy_compile_collision_mesh"],
-        "Visibility": ["build_vis"],
+        "Visibility": ["build_vis", "debug_vis_geo", "build_vis_geometry"],
         "Navigation": ["build_nav", "nav_debug", "grid_nav"],
         "Audio": ["build_reverb", "build_paths", "bake_custom_audio", "audio_threads"],
-        "Advanced": ["vconsole", "vcon_port", "log_compile_stats",
-                     "condebug", "console_log"],
     }
 
     def __init__(self, parent=None):
@@ -392,16 +390,20 @@ class SettingsPanel(QWidget):
                 default_value = field.default
 
                 # Create widget based on type
-                if field_type == bool:
+                if field_name == "lightmap_filtering":
+                    return BoolSettingWidget("Noise removal", field_type, default_value)
+                elif field_name == "lightmap_compression":
+                    return BoolSettingWidget("Compression", field_type, default_value)
+                elif field_type == bool:
                     return BoolSettingWidget(field_name, field_type, default_value)
                 elif field_type == int:
                     # Special cases for enum-like ints
                     if field_name == "lightmap_max_resolution":
-                        return EnumSettingWidget(field_name, field_type, default_value,
+                        return EnumSettingWidget("Resolution", field_type, default_value,
                                                  [256, 512, 1024, 2048, 4096, 8192], cast=int)
                     elif field_name == "lightmap_quality":
                         # Display friendly names while keeping internal int mapping 0/1/2
-                        return EnumSettingWidget(field_name, field_type, default_value,
+                        return EnumSettingWidget("Quality", field_type, default_value,
                                                  [("Fast", 0), ("Standard", 1), ("Final", 2)], cast=int)
                     else:
                         return IntSettingWidget(field_name, field_type, default_value)
