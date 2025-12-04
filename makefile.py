@@ -118,7 +118,6 @@ def build_hammer5_tools(fast=False) -> None:
         '--exclude-module=scipy',
         '--exclude-module=pandas',
         '--exclude-module=tabulate',
-        '--exclude-module=matplotlib',
         external,
         # Bundle all .NET DLLs
         *[f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls],
