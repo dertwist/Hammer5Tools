@@ -215,6 +215,31 @@ class MapBuilderDialog(QDialog):
         # Initially disable abort button
         self.ui.abort_button.setEnabled(False)
 
+    def closeEvent(self, event):
+        """Handle dialog close event - check if compilation is running"""
+        if self.is_compiling and self.compilation_thread:
+            reply = QMessageBox.question(
+                self,
+                "Abort Compilation?",
+                "Compilation is currently running.\n\n"
+                "Do you want to abort the compilation and close this dialog?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+
+            if reply == QMessageBox.Yes:
+                self.add_log_message("⚠ User closed dialog - aborting compilation...")
+                self.compilation_thread.abort()
+                self.compilation_thread.wait(2000)
+
+                event.accept()
+                self.hide()
+            else:
+                event.ignore()
+        else:
+            event.accept()
+            self.hide()
+
     def on_preset_clicked(self, preset_name: str):
         """Handle preset button click"""
         preset = self.preset_manager.get_preset(preset_name)
