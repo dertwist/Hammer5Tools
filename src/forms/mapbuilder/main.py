@@ -13,7 +13,7 @@ from pathlib import Path
 from datetime import datetime
 from PySide6.QtWidgets import (
     QDialog, QApplication, QMessageBox, QInputDialog,
-    QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog
+    QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog, QMainWindow
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QPoint
 from PySide6.QtGui import QColor, QIcon, QTextDocument, QTextCursor
@@ -91,7 +91,7 @@ class CompilationThread(QThread):
             self.process.terminate()
 
 
-class MapBuilderDialog(QDialog):
+class MapBuilderDialog(QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__(parent)
