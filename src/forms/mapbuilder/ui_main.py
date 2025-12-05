@@ -15,8 +15,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QFrame, QHBoxLayout,
-    QLabel, QPushButton, QScrollArea, QSizePolicy,
+from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
+    QMainWindow, QPushButton, QScrollArea, QSizePolicy,
     QSpacerItem, QSplitter, QTextBrowser, QTextEdit,
     QVBoxLayout, QWidget)
 import resources_rc
@@ -31,11 +31,12 @@ class Ui_mapbuilder_dialog(object):
         icon = QIcon()
         icon.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         mapbuilder_dialog.setWindowIcon(icon)
-        mapbuilder_dialog.setModal(False)
-        self.verticalLayout_4 = QVBoxLayout(mapbuilder_dialog)
+        self.centralwidget = QWidget(mapbuilder_dialog)
+        self.centralwidget.setObjectName(u"centralwidget")
+        self.verticalLayout_4 = QVBoxLayout(self.centralwidget)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.splitter = QSplitter(mapbuilder_dialog)
+        self.splitter = QSplitter(self.centralwidget)
         self.splitter.setObjectName(u"splitter")
         self.splitter.setOrientation(Qt.Orientation.Horizontal)
         self.layoutWidget = QWidget(self.splitter)
@@ -299,6 +300,7 @@ class Ui_mapbuilder_dialog(object):
 
         self.verticalLayout_4.addWidget(self.splitter)
 
+        mapbuilder_dialog.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(mapbuilder_dialog)
 
