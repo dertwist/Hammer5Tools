@@ -410,7 +410,7 @@ class MapBuilderDialog(QMainWindow):
         # Create compilation thread
         self.compilation_thread = CompilationThread(command, self.addon_path)
         # Use DirectConnection to ensure immediate processing
-        self.compilation_thread.outputReceived.connect(self.on_output_received, Qt.DirectConnection)
+        self.compilation_thread.outputReceived.connect(self.on_output_received)
         self.compilation_thread.finished.connect(self.on_compilation_finished)
 
         # Update UI state
@@ -512,9 +512,6 @@ class MapBuilderDialog(QMainWindow):
         # Ensure scrolled to bottom
         scrollbar = self.ui.output_list_widget.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
-
-        # Force immediate GUI update
-        QApplication.processEvents()
 
     def _output_context_menu(self, pos: QPoint):
         menu = QMenu(self)
