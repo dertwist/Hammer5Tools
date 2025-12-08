@@ -378,7 +378,7 @@
              <x>0</x>
              <y>0</y>
              <width>826</width>
-             <height>747</height>
+             <height>769</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout">
@@ -436,13 +436,6 @@
            </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="last_build_stats_label">
-          <property name="text">
-           <string>Last Build time: 2h 15m</string>
-          </property>
-         </widget>
         </item>
        </layout>
       </widget>
@@ -578,6 +571,13 @@ QFrame#system_monitor:pressed {
             <number>0</number>
            </property>
           </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="last_build_stats_label">
+          <property name="text">
+           <string>Last Build time: 2h 15m</string>
+          </property>
          </widget>
         </item>
        </layout>
