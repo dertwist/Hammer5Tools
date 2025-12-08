@@ -1,1 +1,576 @@
-"""\nEnhanced Map Builder Dialog with complete preset management,\nreal-time output parsing, and dynamic UI generation.\n"""\nimport os.path\nimport sys\nimport subprocess\nimport threading\nimport pathlib\nimport os\nimport time\nimport signal\nfrom pathlib import Path\nfrom datetime import datetime\nfrom PySide6.QtWidgets import (\n    QDialog, QApplication, QMessageBox, QInputDialog,\n    QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog, QMainWindow\n)\nfrom PySide6.QtCore import Qt, QThread, Signal, QTimer, QPoint\nfrom PySide6.QtGui import QColor, QIcon, QTextDocument, QTextCursor\nfrom PySide6.QtCore import QUrl\nfrom PySide6.QtGui import QDesktopServices\n\n# Import UI and custom modules\nfrom src.forms.mapbuilder.ui_main import Ui_mapbuilder_dialog\nfrom src.forms.mapbuilder.system_monitor import SystemMonitor\nfrom src.forms.mapbuilder.output_formater import OutputFormatter\nfrom src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings\nfrom src.forms.mapbuilder.widgets import SettingsPanel, PresetButton\nfrom src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value\nfrom src.common import enable_dark_title_bar, app_dir\n\n\nclass CompilationThread(QThread):\n    \"\"\"Thread for running compilation process\"\"\"\n\n    outputReceived = Signal(str)  # Raw output line\n    finished = Signal(int, float)  # exit code, elapsed time\n\n    def __init__(self, command: str, working_dir: str):\n        super().__init__()\n        self.command = command\n        self.working_dir = working_dir\n        self.process = None\n        self.should_abort = False\n        self.start_time = None\n\n    def run(self):\n        \"\"\"Run compilation process and stream output real-time\"\"\"\n        self.start_time = time.time()\n\n        try:\n            # Start process with unbuffered output\n            popen_kwargs = dict(\n                args=self.command,\n                shell=True,\n                stdout=subprocess.PIPE,\n                stderr=subprocess.STDOUT,\n                bufsize=0,  # Unbuffered binary stream\n                cwd=self.working_dir,\n                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP\n            )\n\n            self.process = subprocess.Popen(**popen_kwargs)\n\n            # Buffer to accumulate characters until we find a break\n            buffer = bytearray()\n\n            while True:\n                if self.should_abort:\n                    self.process.terminate()\n                    break\n\n                # Read 1 byte at a time to ensure we never block waiting for a full line\n                byte = self.process.stdout.read(1)\n\n                # If read returns empty and process is dead, we are done\n                if not byte and self.process.poll() is not None:\n                    break\n\n                if byte:\n                    buffer.extend(byte)\n\n                    # Check if we have a complete \"visual\" line\n                    # The compiler uses both \\n and <br/> (or <br>) as delimiters\n                    current_str = \"\"\n                    try:\n                        current_str = buffer.decode('utf-8', errors='ignore')\n                    except:\n                        pass  # Wait for more bytes if decoding fails\n\n                    # Check for delimiters\n                    is_newline = current_str.endswith('\\n')\n                    is_html_br = current_str.endswith('<br/>') or current_str.endswith('<br>')\n\n                    if is_newline or is_html_br:\n                        # Decode fully\n                        try:\n                            line = buffer.decode('utf-8', errors='replace')\n                        except:\n                            line = buffer.decode('latin-1', errors='replace')\n\n                        # Clean up the line for display\n                        # We strip the trailing breaks because append() adds its own new paragraph\n                        line = line.replace('<br/>', '').replace('<br>', '').rstrip()\n\n                        if line:\n                            self.outputReceived.emit(line)\n                            # Tiny sleep to let the main thread process the event\n                            self.msleep(1)\n\n                        # Clear buffer\n                        buffer = bytearray()\n\n            # Emit any remaining text in buffer\n            if buffer:\n                try:\n                    line = buffer.decode('utf-8', errors='replace').rstrip()\n                    if line:\n                        self.outputReceived.emit(line)\n                except:\n                    pass\n\n            self.process.wait()\n            exit_code = self.process.returncode\n            elapsed = time.time() - self.start_time\n\n            self.finished.emit(exit_code, elapsed)\n\n        except Exception as e:\n            print(f\"Compilation error: {e}\")\n            self.finished.emit(-1, 0)\n\n    def abort(self):\n        self.should_abort = True\n        if self.process and hasattr(self.process, 'pid') and self.process.pid:\n            pid = self.process.pid\n            try:\n                self.process.poll()\n                if self.process.returncode is None:  # Still alive\n                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(pid)],\n                                   capture_output=True, check=False)\n                else:\n                    print(f\"Process {pid} already finished\")\n            except:\n                pass\n            finally:\n                self.process = None  # Reset immediately\n\n\nclass MapBuilderDialog(QMainWindow):\n\n    def __init__(self, parent=None):\n        super().__init__(parent)\n        self.ui = Ui_mapbuilder_dialog()\n        self.ui.setupUi(self)\n        enable_dark_title_bar(self)\n\n        # Get paths from settings\n        self.addon_path = get_addon_dir()\n        self.cs2_path = get_cs2_path()\n        \n        # Ensure cs2_path is a string (not None)\n        if not self.cs2_path:\n            raise ValueError(\"CS2 path not found. Please set CS2 installation path in settings.\")\n        \n        # Convert to string if it's a Path object\n        self.cs2_path = str(self.cs2_path)\n\n        # Initialize managers\n        presets_file = Path(self.addon_path) / \".hammer5tools\" / \"build_presets.json\"\n        self.preset_manager = PresetManager(presets_file)\n\n        self.ui.output_list_widget.setContextMenuPolicy(Qt.CustomContextMenu)\n        self.ui.output_list_widget.customContextMenuRequested.connect(self._output_context_menu)\n        # Current state\n        self.current_preset: BuildPreset = None\n        self.compilation_thread: CompilationThread = None\n        self.is_compiling = False\n        self.last_build_time = 0.0\n        # Load last build duration from settings to display on start\n        last_time_str = get_settings_value(\"MapBuilder\", \"LastBuildTime\", default=\"\")\n        if last_time_str:\n            try:\n                self.ui.last_build_stats_label.setText(f\"Last Build Time: {last_time_str}\")\n            except Exception:\n                pass\n\n        # Setup UI\n        self.setup_settings_panel()\n        self.setup_preset_buttons()\n        self.setup_system_monitor()\n        self.setup_connections()\n\n        # Load first preset\n        presets = self.preset_manager.get_all_presets()\n        if presets:\n            self.load_preset(presets[0])\n\n        # Current build log buffer\n        self.current_build_logs = []\n        self.current_build_timestamp = None\n\n    def setup_settings_panel(self):\n        \"\"\"Setup dynamically generated settings panel\"\"\"\n        self.settings_panel = SettingsPanel()\n\n        # Clear existing widgets from build_settings_content\n        while self.ui.build_settings_content.count():\n            item = self.ui.build_settings_content.takeAt(0)\n            if item.widget():\n                item.widget().deleteLater()\n\n        # Add settings panel\n        self.ui.build_settings_content.addWidget(self.settings_panel)\n        self.ui.build_settings_content.addStretch()\n\n    def setup_preset_buttons(self):\n        \"\"\"Setup preset buttons\"\"\"\n        # Clear existing preset buttons\n        preset_layout = self.ui.build_presets.widget().layout()\n        while preset_layout.count() > 1:  # Keep spacer\n            item = preset_layout.takeAt(0)\n            if item.widget():\n                item.widget().deleteLater()\n\n        # Create buttons for each preset\n        self.preset_buttons = {}\n        for preset in self.preset_manager.get_all_presets():\n            btn = PresetButton(preset.name, preset.is_default)\n            btn.presetClicked.connect(self.on_preset_clicked)\n\n            btn.contextMenuRequested.connect(\n                lambda data, p=preset: self.show_preset_context_menu(data, p)\n            )\n\n            preset_layout.insertWidget(preset_layout.count() - 1, btn)\n            self.preset_buttons[preset.name] = btn\n\n        # Add \"New Preset\" button\n        new_btn = PresetButton(\"+\", False)\n        new_btn.setText(\"+\")\n        new_btn.setToolTip(\"Create new preset\")\n        new_btn.presetClicked.connect(self.create_new_preset)\n        preset_layout.insertWidget(preset_layout.count() - 1, new_btn)\n\n    def setup_system_monitor(self):\n        \"\"\"Setup system resource monitor\"\"\"\n        # Remove any existing widgets\n        while self.ui.system_monitor.layout() and self.ui.system_monitor.layout().count():\n            item = self.ui.system_monitor.layout().takeAt(0)\n            if item.widget():\n                item.widget().deleteLater()\n\n        # Create new system monitor\n        self.system_monitor = SystemMonitor()\n\n        # Add to frame\n        if not self.ui.system_monitor.layout():\n            from PySide6.QtWidgets import QVBoxLayout\n            layout = QVBoxLayout(self.ui.system_monitor)\n            layout.setContentsMargins(0, 0, 0, 0)\n\n        self.ui.system_monitor.layout().addWidget(self.system_monitor)\n\n    def setup_connections(self):\n        \"\"\"Setup signal connections\"\"\"\n        self.ui.build_button.clicked.connect(self.start_compilation)\n        self.ui.run_button.clicked.connect(self.run_map)\n        self.ui.abort_button.clicked.connect(self.abort_compilation)\n\n        # Initially disable abort button\n        self.ui.abort_button.setEnabled(False)\n\n    def closeEvent(self, event):\n        \"\"\"Handle dialog close event - check if compilation is running\"\"\"\n        if self.is_compiling and self.compilation_thread:\n            reply = QMessageBox.question(\n                self,\n                \"Abort Compilation?\",\n                \"Compilation is currently running.\\n\\n\"\n                \"Do you want to abort the compilation and close this dialog?\",\n                QMessageBox.Yes | QMessageBox.No,\n                QMessageBox.No\n            )\n\n            if reply == QMessageBox.Yes:\n                self.add_log_message(\"⚠ User closed dialog - aborting compilation...\")\n                self.compilation_thread.abort()\n                self.compilation_thread.wait(2000)\n\n                event.accept()\n                self.hide()\n            else:\n                event.ignore()\n        else:\n            event.accept()\n            self.hide()\n\n    def on_preset_clicked(self, preset_name: str):\n        \"\"\"Handle preset button click\"\"\"\n        preset = self.preset_manager.get_preset(preset_name)\n        if preset:\n            self.load_preset(preset)\n\n    def load_preset(self, preset: BuildPreset):\n        \"\"\"Load preset into UI\"\"\"\n        self.current_preset = preset\n        self.settings_panel.set_settings(preset.settings)\n\n        # Update button states\n        for name, btn in self.preset_buttons.items():\n            btn.set_active(name == preset.name)\n\n        self.setWindowTitle(f\"Map Builder - {preset.name}\")\n\n    def show_preset_context_menu(self, signal_data, preset: BuildPreset):\n        \"\"\"Show context menu for preset button\"\"\"\n        button, local_pos = signal_data\n        menu = QMenu(self)\n\n        save_action = menu.addAction(\"Save Changes\")\n        save_action.triggered.connect(lambda: self.save_preset_changes(preset))\n\n        if not preset.is_default:\n            rename_action = menu.addAction(\"Rename\")\n            rename_action.triggered.connect(lambda: self.rename_preset(preset))\n\n            delete_action = menu.addAction(\"Delete\")\n            delete_action.triggered.connect(lambda: self.delete_preset(preset))\n        global_pos = button.mapToGlobal(local_pos)\n        menu.exec_(global_pos)\n\n    def create_new_preset(self):\n        \"\"\"Create new preset from current settings\"\"\"\n        name, ok = QInputDialog.getText(\n            self, \"New Preset\", \"Enter preset name:\"\n        )\n\n        if ok and name:\n            current_settings = self.settings_panel.get_settings()\n            new_preset = BuildPreset(\n                name=name,\n                settings=current_settings,\n                is_default=False,\n                description=f\"Created {datetime.now().strftime('%Y-%m-%d %H:%M')}\"\n            )\n\n            if self.preset_manager.add_preset(new_preset):\n                self.setup_preset_buttons()\n                self.load_preset(new_preset)\n            else:\n                QMessageBox.warning(self, \"Error\", \"Preset with this name already exists\")\n\n    def save_preset_changes(self, preset: BuildPreset):\n        \"\"\"Save current settings to preset\"\"\"\n        current_settings = self.settings_panel.get_settings()\n        self.preset_manager.update_preset(preset.name, current_settings)\n        QMessageBox.information(self, \"Success\", f\"Preset '{preset.name}' updated\")\n\n    def rename_preset(self, preset: BuildPreset):\n        \"\"\"Rename preset\"\"\"\n        new_name, ok = QInputDialog.getText(\n            self, \"Rename Preset\", \"Enter new name:\", text=preset.name\n        )\n\n        if ok and new_name and new_name != preset.name:\n            if self.preset_manager.rename_preset(preset.name, new_name):\n                self.setup_preset_buttons()\n                preset.name = new_name\n                self.load_preset(preset)\n            else:\n                QMessageBox.warning(self, \"Error\", \"Could not rename preset\")\n\n    def delete_preset(self, preset: BuildPreset):\n        \"\"\"Delete preset\"\"\"\n        reply = QMessageBox.question(\n            self, \"Delete Preset\",\n            f\"Delete preset '{preset.name}'?\",\n            QMessageBox.Yes | QMessageBox.No\n        )\n\n        if reply == QMessageBox.Yes:\n            if self.preset_manager.delete_preset(preset.name):\n                self.setup_preset_buttons()\n                # Load first available preset\n                presets = self.preset_manager.get_all_presets()\n                if presets:\n                    self.load_preset(presets[0])\n\n    def start_compilation(self):\n        \"\"\"Start map compilation\"\"\"\n        if self.is_compiling:\n            QMessageBox.warning(self, \"Already Compiling\", \"Compilation already in progress\")\n            return\n\n        # Get current settings\n        settings = self.settings_panel.get_settings()\n        mappath = os.path.join(get_addon_dir(), settings.mappath)\n        # Validate mappath\n        if not mappath or not Path(mappath).exists():\n            QMessageBox.warning(self, \"Invalid Map\", \"Please select a valid map file\")\n            return\n\n        # Generate command\n        command = settings.to_command_line(self.addon_path, self.cs2_path)\n\n        self.ui.output_list_widget.clear()\n\n        # Create compilation thread\n        self.compilation_thread = CompilationThread(command, self.addon_path)\n        # Use DirectConnection to ensure immediate processing\n        self.compilation_thread.outputReceived.connect(self.on_output_received, Qt.DirectConnection)\n        self.compilation_thread.finished.connect(self.on_compilation_finished)\n\n        # Update UI state\n        self.is_compiling = True\n        self.ui.build_button.setEnabled(False)\n        self.ui.abort_button.setEnabled(True)\n\n        # Start compilation\n        self.compilation_thread.start()\n\n        # Log to output tab\n        self.add_log_message(f\"Starting compilation: {settings.mappath}\")\n        self.add_log_message(f\"Command: {command}\")\n\n    def abort_compilation(self):\n        \"\"\"Abort running compilation\"\"\"\n        if self.compilation_thread:\n            self.compilation_thread.abort()\n            self.add_log_message(\"Aborting compilation...\")\n\n    def on_output_received(self, line: str):\n        \"\"\"Handle raw output line - called for EACH line\"\"\"\n        # Add each line immediately\n        self.add_log_message(line)\n\n    def on_compilation_finished(self, exit_code: int, elapsed_time: float):\n        \"\"\"Handle compilation finished\"\"\"\n        self.is_compiling = False\n        self.ui.build_button.setEnabled(True)\n        self.ui.abort_button.setEnabled(False)\n\n        self.last_build_time = elapsed_time\n        time_str = self.format_time(elapsed_time)\n        self.ui.last_build_stats_label.setText(f\"Last Build Time: {time_str}\")\n        # Persist last build duration string in settings for display on next load\n        try:\n            set_settings_value(\"MapBuilder\", \"LastBuildTime\", time_str)\n        except Exception as e:\n            print(f\"Failed to save LastBuildTime: {e}\")\n\n        if exit_code == 0:\n            # Play system beep sound instead of showing message\n            QApplication.beep()\n            self.add_log_message(f\"✓ Compilation completed successfully ({time_str})\")\n\n            # Optionally launch game and load map in engine after building\n            try:\n                settings = self.settings_panel.get_settings()\n                if settings.load_in_engine_after_build:\n                    map_name = Path(settings.mappath).stem\n                    addon_name = get_addon_name()\n                    cs2_exe = Path(self.cs2_path) / \"game\" / \"bin\" / \"win64\" / \"cs2.exe\"\n                    launch_cmd = f'\"{cs2_exe}\" -tools -addon {addon_name} +map_workshop {addon_name} {map_name}'\n                    if settings.build_cubemaps_on_load:\n                        launch_cmd += ' +buildcubemaps'\n                    if settings.build_minimap_on_load:\n                        launch_cmd += ' +minimap_create'\n                    self.add_log_message(f\"Launching after build: {launch_cmd}\")\n                    subprocess.Popen(launch_cmd, shell=True)\n            except Exception as e:\n                self.add_log_message(f\"Failed to launch after build: {e}\")\n\n\n    def run_map(self):\n        \"\"\"Run map without building\"\"\"\n        # Get map name from current settings\n        settings = self.settings_panel.get_settings()\n        if not settings.mappath:\n            QMessageBox.warning(self, \"No Map\", \"No map file specified\")\n            return\n\n        map_name = Path(settings.mappath).stem\n\n        # Build launch command\n        cs2_exe = Path(self.cs2_path) / \"game\" / \"bin\" / \"win64\" / \"cs2.exe\"\n        addon_name = get_addon_name()\n\n        launch_cmd = f'\"{cs2_exe}\" -tools -addon {addon_name} +map_workshop {addon_name} {map_name}'\n        if settings.build_cubemaps_on_load:\n            launch_cmd += ' +buildcubemaps'\n        if settings.build_minimap_on_load:\n            launch_cmd += ' +minimap_create'\n\n        self.add_log_message(f\"Launching: {launch_cmd}\")\n\n        # Launch in separate process\n        subprocess.Popen(launch_cmd, shell=True)\n\n    def add_log_message(self, message: str):\n        \"\"\"Append message to the output panel as HTML with timestamp - called for EACH line\"\"\"\n        # Get current timestamp\n        timestamp = datetime.now().strftime(\"%H:%M\")\n        \n        # Pass through formatter (decodes HTML entities)\n        formatted_message = OutputFormatter.parse_output_line(message)\n        \n        # Prepend gray timestamp to the message\n        timestamped_message = f'<span style=\"color:#808080;\">[{timestamp}]</span> {formatted_message}'\n\n        # Append HTML directly - QTextEdit will handle it\n        self.ui.output_list_widget.append(timestamped_message)\n\n        # Ensure scrolled to bottom\n        scrollbar = self.ui.output_list_widget.verticalScrollBar()\n        scrollbar.setValue(scrollbar.maximum())\n\n        # Force immediate GUI update\n        QApplication.processEvents()\n\n    def _output_context_menu(self, pos: QPoint):\n        menu = QMenu(self)\n        save_action = menu.addAction(\"Save log...\")\n        save_action.triggered.connect(self.save_build_log)\n        global_pos = self.ui.output_list_widget.mapToGlobal(pos)\n        menu.exec_(global_pos)\n\n    def save_build_log(self):\n        \"\"\"Save the current build log to file via Save As dialog\"\"\"\n        try:\n            timestamp = datetime.now().strftime(\"%Y-%m-%d_%H-%M-%S\")\n            default_name = f\"{timestamp}.txt\"\n\n            # Get the buffer content directly from the plain text editor\n            text = self.ui.output_list_widget.toPlainText()\n\n            filename, _ = QFileDialog.getSaveFileName(\n                self,\n                \"Save build log\",\n                default_name,\n                \"Text Files (*.txt);;All Files (*)\"\n            )\n\n            if not filename:\n                return  # user cancelled\n\n            log_file = pathlib.Path(filename)\n            log_file.write_text(text, encoding=\"utf-8\")\n            print(f\"Build log saved to: {log_file}\")\n\n        except Exception as e:\n            print(f\"Error saving build log: {e}\")\n\n\n\n    def format_time(self, seconds: float) -> str:\n        \"\"\"Format seconds as human-readable time\"\"\"\n        if seconds < 60:\n            return f\"{seconds:.1f}s\"\n        elif seconds < 3600:\n            minutes = int(seconds / 60)\n            secs = int(seconds % 60)\n            return f\"{minutes}m {secs}s\"\n        else:\n            hours = int(seconds / 3600)\n            minutes = int((seconds % 3600) / 60)\n            return f\"{hours}h {minutes}m\"\n\n\ndef main():\n    app = QApplication(sys.argv)\n    dialog = MapBuilderDialog()\n    dialog.show()\n    sys.exit(app.exec())\n\n\nif __name__ == \"__main__\":\n    main()\n
+"""
+Enhanced Map Builder Dialog with complete preset management,
+real-time output parsing, and dynamic UI generation.
+"""
+import os.path
+import sys
+import subprocess
+import threading
+import pathlib
+import os
+import time
+import signal
+from pathlib import Path
+from datetime import datetime
+from PySide6.QtWidgets import (
+    QDialog, QApplication, QMessageBox, QInputDialog,
+    QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog, QMainWindow
+)
+from PySide6.QtCore import Qt, QThread, Signal, QTimer, QPoint
+from PySide6.QtGui import QColor, QIcon, QTextDocument, QTextCursor
+from PySide6.QtCore import QUrl
+from PySide6.QtGui import QDesktopServices
+
+# Import UI and custom modules
+from src.forms.mapbuilder.ui_main import Ui_mapbuilder_dialog
+from src.forms.mapbuilder.system_monitor import SystemMonitor
+from src.forms.mapbuilder.output_formater import OutputFormatter
+from src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings
+from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
+from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value
+from src.common import enable_dark_title_bar, app_dir
+
+
+class CompilationThread(QThread):
+    """Thread for running compilation process"""
+
+    outputReceived = Signal(str)  # Raw output line
+    finished = Signal(int, float)  # exit code, elapsed time
+
+    def __init__(self, command: str, working_dir: str):
+        super().__init__()
+        self.command = command
+        self.working_dir = working_dir
+        self.process = None
+        self.should_abort = False
+        self.start_time = None
+
+    def run(self):
+        """Run compilation process and stream output real-time"""
+        self.start_time = time.time()
+
+        try:
+            # Start process with unbuffered output
+            popen_kwargs = dict(
+                args=self.command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                bufsize=0,  # Unbuffered binary stream
+                cwd=self.working_dir,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+            )
+
+            self.process = subprocess.Popen(**popen_kwargs)
+
+            # Buffer to accumulate characters until we find a break
+            buffer = bytearray()
+
+            while True:
+                if self.should_abort:
+                    self.process.terminate()
+                    break
+
+                # Read 1 byte at a time to ensure we never block waiting for a full line
+                byte = self.process.stdout.read(1)
+
+                # If read returns empty and process is dead, we are done
+                if not byte and self.process.poll() is not None:
+                    break
+
+                if byte:
+                    buffer.extend(byte)
+
+                    # Check if we have a complete "visual" line
+                    # The compiler uses both \n and <br/> (or <br>) as delimiters
+                    current_str = ""
+                    try:
+                        current_str = buffer.decode('utf-8', errors='ignore')
+                    except:
+                        pass  # Wait for more bytes if decoding fails
+
+                    # Check for delimiters
+                    is_newline = current_str.endswith('\n')
+                    is_html_br = current_str.endswith('<br/>') or current_str.endswith('<br>')
+
+                    if is_newline or is_html_br:
+                        # Decode fully
+                        try:
+                            line = buffer.decode('utf-8', errors='replace')
+                        except:
+                            line = buffer.decode('latin-1', errors='replace')
+
+                        # Clean up the line for display
+                        # We strip the trailing breaks because append() adds its own new paragraph
+                        line = line.replace('<br/>', '').replace('<br>', '').rstrip()
+
+                        if line:
+                            self.outputReceived.emit(line)
+                            # Tiny sleep to let the main thread process the event
+                            self.msleep(1)
+
+                        # Clear buffer
+                        buffer = bytearray()
+
+            # Emit any remaining text in buffer
+            if buffer:
+                try:
+                    line = buffer.decode('utf-8', errors='replace').rstrip()
+                    if line:
+                        self.outputReceived.emit(line)
+                except:
+                    pass
+
+            self.process.wait()
+            exit_code = self.process.returncode
+            elapsed = time.time() - self.start_time
+
+            self.finished.emit(exit_code, elapsed)
+
+        except Exception as e:
+            print(f"Compilation error: {e}")
+            self.finished.emit(-1, 0)
+
+    def abort(self):
+        self.should_abort = True
+        if self.process and hasattr(self.process, 'pid') and self.process.pid:
+            pid = self.process.pid
+            try:
+                self.process.poll()
+                if self.process.returncode is None:  # Still alive
+                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(pid)],
+                                   capture_output=True, check=False)
+                else:
+                    print(f"Process {pid} already finished")
+            except:
+                pass
+            finally:
+                self.process = None  # Reset immediately
+
+
+class MapBuilderDialog(QMainWindow):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.ui = Ui_mapbuilder_dialog()
+        self.ui.setupUi(self)
+        enable_dark_title_bar(self)
+
+        # Get paths from settings
+        self.addon_path = get_addon_dir()
+        self.cs2_path = get_cs2_path()
+
+        # Ensure cs2_path is a string (not None)
+        if not self.cs2_path:
+            raise ValueError("CS2 path not found. Please set CS2 installation path in settings.")
+
+        # Convert to string if it's a Path object
+        self.cs2_path = str(self.cs2_path)
+
+        # Initialize managers
+        presets_file = Path(self.addon_path) / ".hammer5tools" / "build_presets.json"
+        self.preset_manager = PresetManager(presets_file)
+
+        self.ui.output_list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.output_list_widget.customContextMenuRequested.connect(self._output_context_menu)
+        # Current state
+        self.current_preset: BuildPreset = None
+        self.compilation_thread: CompilationThread = None
+        self.is_compiling = False
+        self.last_build_time = 0.0
+        # Load last build duration from settings to display on start
+        last_time_str = get_settings_value("MapBuilder", "LastBuildTime", default="")
+        if last_time_str:
+            try:
+                self.ui.last_build_stats_label.setText(f"Last Build Time: {last_time_str}")
+            except Exception:
+                pass
+
+        # Setup UI
+        self.setup_settings_panel()
+        self.setup_preset_buttons()
+        self.setup_system_monitor()
+        self.setup_connections()
+
+        # Load first preset
+        presets = self.preset_manager.get_all_presets()
+        if presets:
+            self.load_preset(presets[0])
+
+        # Current build log buffer
+        self.current_build_logs = []
+        self.current_build_timestamp = None
+
+    def setup_settings_panel(self):
+        """Setup dynamically generated settings panel"""
+        self.settings_panel = SettingsPanel()
+
+        # Clear existing widgets from build_settings_content
+        while self.ui.build_settings_content.count():
+            item = self.ui.build_settings_content.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Add settings panel
+        self.ui.build_settings_content.addWidget(self.settings_panel)
+        self.ui.build_settings_content.addStretch()
+
+    def setup_preset_buttons(self):
+        """Setup preset buttons"""
+        # Clear existing preset buttons
+        preset_layout = self.ui.build_presets.widget().layout()
+        while preset_layout.count() > 1:  # Keep spacer
+            item = preset_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Create buttons for each preset
+        self.preset_buttons = {}
+        for preset in self.preset_manager.get_all_presets():
+            btn = PresetButton(preset.name, preset.is_default)
+            btn.presetClicked.connect(self.on_preset_clicked)
+
+            btn.contextMenuRequested.connect(
+                lambda data, p=preset: self.show_preset_context_menu(data, p)
+            )
+
+            preset_layout.insertWidget(preset_layout.count() - 1, btn)
+            self.preset_buttons[preset.name] = btn
+
+        # Add "New Preset" button
+        new_btn = PresetButton("+", False)
+        new_btn.setText("+")
+        new_btn.setToolTip("Create new preset")
+        new_btn.presetClicked.connect(self.create_new_preset)
+        preset_layout.insertWidget(preset_layout.count() - 1, new_btn)
+
+    def setup_system_monitor(self):
+        """Setup system resource monitor"""
+        # Remove any existing widgets
+        while self.ui.system_monitor.layout() and self.ui.system_monitor.layout().count():
+            item = self.ui.system_monitor.layout().takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Create new system monitor
+        self.system_monitor = SystemMonitor()
+
+        # Add to frame
+        if not self.ui.system_monitor.layout():
+            from PySide6.QtWidgets import QVBoxLayout
+            layout = QVBoxLayout(self.ui.system_monitor)
+            layout.setContentsMargins(0, 0, 0, 0)
+
+        self.ui.system_monitor.layout().addWidget(self.system_monitor)
+
+    def setup_connections(self):
+        """Setup signal connections"""
+        self.ui.build_button.clicked.connect(self.start_compilation)
+        self.ui.run_button.clicked.connect(self.run_map)
+        self.ui.abort_button.clicked.connect(self.abort_compilation)
+
+        # Initially disable abort button
+        self.ui.abort_button.setEnabled(False)
+
+    def closeEvent(self, event):
+        """Handle dialog close event - check if compilation is running"""
+        if self.is_compiling and self.compilation_thread:
+            reply = QMessageBox.question(
+                self,
+                "Abort Compilation?",
+                "Compilation is currently running.\n\n"
+                "Do you want to abort the compilation and close this dialog?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+
+            if reply == QMessageBox.Yes:
+                self.add_log_message("⚠ User closed dialog - aborting compilation...")
+                self.compilation_thread.abort()
+                self.compilation_thread.wait(2000)
+
+                event.accept()
+                self.hide()
+            else:
+                event.ignore()
+        else:
+            event.accept()
+            self.hide()
+
+    def on_preset_clicked(self, preset_name: str):
+        """Handle preset button click"""
+        preset = self.preset_manager.get_preset(preset_name)
+        if preset:
+            self.load_preset(preset)
+
+    def load_preset(self, preset: BuildPreset):
+        """Load preset into UI"""
+        self.current_preset = preset
+        self.settings_panel.set_settings(preset.settings)
+
+        # Update button states
+        for name, btn in self.preset_buttons.items():
+            btn.set_active(name == preset.name)
+
+        self.setWindowTitle(f"Map Builder - {preset.name}")
+
+    def show_preset_context_menu(self, signal_data, preset: BuildPreset):
+        """Show context menu for preset button"""
+        button, local_pos = signal_data
+        menu = QMenu(self)
+
+        save_action = menu.addAction("Save Changes")
+        save_action.triggered.connect(lambda: self.save_preset_changes(preset))
+
+        if not preset.is_default:
+            rename_action = menu.addAction("Rename")
+            rename_action.triggered.connect(lambda: self.rename_preset(preset))
+
+            delete_action = menu.addAction("Delete")
+            delete_action.triggered.connect(lambda: self.delete_preset(preset))
+        global_pos = button.mapToGlobal(local_pos)
+        menu.exec_(global_pos)
+
+    def create_new_preset(self):
+        """Create new preset from current settings"""
+        name, ok = QInputDialog.getText(
+            self, "New Preset", "Enter preset name:"
+        )
+
+        if ok and name:
+            current_settings = self.settings_panel.get_settings()
+            new_preset = BuildPreset(
+                name=name,
+                settings=current_settings,
+                is_default=False,
+                description=f"Created {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            )
+
+            if self.preset_manager.add_preset(new_preset):
+                self.setup_preset_buttons()
+                self.load_preset(new_preset)
+            else:
+                QMessageBox.warning(self, "Error", "Preset with this name already exists")
+
+    def save_preset_changes(self, preset: BuildPreset):
+        """Save current settings to preset"""
+        current_settings = self.settings_panel.get_settings()
+        self.preset_manager.update_preset(preset.name, current_settings)
+        QMessageBox.information(self, "Success", f"Preset '{preset.name}' updated")
+
+    def rename_preset(self, preset: BuildPreset):
+        """Rename preset"""
+        new_name, ok = QInputDialog.getText(
+            self, "Rename Preset", "Enter new name:", text=preset.name
+        )
+
+        if ok and new_name and new_name != preset.name:
+            if self.preset_manager.rename_preset(preset.name, new_name):
+                self.setup_preset_buttons()
+                preset.name = new_name
+                self.load_preset(preset)
+            else:
+                QMessageBox.warning(self, "Error", "Could not rename preset")
+
+    def delete_preset(self, preset: BuildPreset):
+        """Delete preset"""
+        reply = QMessageBox.question(
+            self, "Delete Preset",
+            f"Delete preset '{preset.name}'?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            if self.preset_manager.delete_preset(preset.name):
+                self.setup_preset_buttons()
+                # Load first available preset
+                presets = self.preset_manager.get_all_presets()
+                if presets:
+                    self.load_preset(presets[0])
+
+    def start_compilation(self):
+        """Start map compilation"""
+        if self.is_compiling:
+            QMessageBox.warning(self, "Already Compiling", "Compilation already in progress")
+            return
+
+        # Get current settings
+        settings = self.settings_panel.get_settings()
+        mappath = os.path.join(get_addon_dir(), settings.mappath)
+        # Validate mappath
+        if not mappath or not Path(mappath).exists():
+            QMessageBox.warning(self, "Invalid Map", "Please select a valid map file")
+            return
+
+        # Generate command
+        command = settings.to_command_line(self.addon_path, self.cs2_path)
+
+        self.ui.output_list_widget.clear()
+
+        # Create compilation thread
+        self.compilation_thread = CompilationThread(command, self.addon_path)
+        # Use DirectConnection to ensure immediate processing
+        self.compilation_thread.outputReceived.connect(self.on_output_received, Qt.DirectConnection)
+        self.compilation_thread.finished.connect(self.on_compilation_finished)
+
+        # Update UI state
+        self.is_compiling = True
+        self.ui.build_button.setEnabled(False)
+        self.ui.abort_button.setEnabled(True)
+
+        # Start compilation
+        self.compilation_thread.start()
+
+        # Log to output tab
+        self.add_log_message(f"Starting compilation: {settings.mappath}")
+        self.add_log_message(f"Command: {command}")
+
+    def abort_compilation(self):
+        """Abort running compilation"""
+        if self.compilation_thread:
+            self.compilation_thread.abort()
+            self.add_log_message("Aborting compilation...")
+
+    def on_output_received(self, line: str):
+        """Handle raw output line - called for EACH line"""
+        # Add each line immediately
+        self.add_log_message(line)
+
+    def on_compilation_finished(self, exit_code: int, elapsed_time: float):
+        """Handle compilation finished"""
+        self.is_compiling = False
+        self.ui.build_button.setEnabled(True)
+        self.ui.abort_button.setEnabled(False)
+
+        self.last_build_time = elapsed_time
+        time_str = self.format_time(elapsed_time)
+        self.ui.last_build_stats_label.setText(f"Last Build Time: {time_str}")
+        # Persist last build duration string in settings for display on next load
+        try:
+            set_settings_value("MapBuilder", "LastBuildTime", time_str)
+        except Exception as e:
+            print(f"Failed to save LastBuildTime: {e}")
+
+        if exit_code == 0:
+            QApplication.beep()
+            try:
+                settings = self.settings_panel.get_settings()
+                if settings.load_in_engine_after_build:
+                    map_name = Path(settings.mappath).stem
+                    addon_name = get_addon_name()
+                    cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
+                    launch_cmd = f'"{cs2_exe}" -tools -addon {addon_name} +map_workshop {addon_name} {map_name}'
+                    if settings.build_cubemaps_on_load:
+                        launch_cmd += ' +buildcubemaps'
+                    if settings.build_minimap_on_load:
+                        launch_cmd += ' +minimap_create'
+                    self.add_log_message(f"Launching after build: {launch_cmd}")
+                    subprocess.Popen(launch_cmd, shell=True)
+            except Exception as e:
+                self.add_log_message(f"Failed to launch after build: {e}")
+
+
+    def run_map(self):
+        """Run map without building"""
+        # Get map name from current settings
+        settings = self.settings_panel.get_settings()
+        if not settings.mappath:
+            QMessageBox.warning(self, "No Map", "No map file specified")
+            return
+
+        map_name = Path(settings.mappath).stem
+
+        # Build launch command
+        cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
+        addon_name = get_addon_name()
+
+        launch_cmd = f'"{cs2_exe}" -tools -addon {addon_name} +map_workshop {addon_name} {map_name}'
+        if settings.build_cubemaps_on_load:
+            launch_cmd += ' +buildcubemaps'
+        if settings.build_minimap_on_load:
+            launch_cmd += ' +minimap_create'
+
+        self.add_log_message(f"Launching: {launch_cmd}")
+
+        # Launch in separate process
+        subprocess.Popen(launch_cmd, shell=True)
+
+    def add_log_message(self, message: str):
+        """Append message to the output panel as HTML with timestamp - called for EACH line"""
+        # Get current timestamp
+        timestamp = datetime.now().strftime("%H:%M")
+
+        # Pass through formatter (decodes HTML entities)
+        formatted_message = OutputFormatter.parse_output_line(message)
+
+        # Prepend gray timestamp to the message
+        timestamped_message = f'<span style="color:#808080;">[{timestamp}]</span> {formatted_message}'
+
+        # Append HTML directly - QTextEdit will handle it
+        self.ui.output_list_widget.append(timestamped_message)
+
+        # Ensure scrolled to bottom
+        scrollbar = self.ui.output_list_widget.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+
+        # Force immediate GUI update
+        QApplication.processEvents()
+
+    def _output_context_menu(self, pos: QPoint):
+        menu = QMenu(self)
+        save_action = menu.addAction("Save log...")
+        save_action.triggered.connect(self.save_build_log)
+        global_pos = self.ui.output_list_widget.mapToGlobal(pos)
+        menu.exec_(global_pos)
+
+    def save_build_log(self):
+        """Save the current build log to file via Save As dialog"""
+        try:
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            default_name = f"{timestamp}.txt"
+
+            # Get the buffer content directly from the plain text editor
+            text = self.ui.output_list_widget.toPlainText()
+
+            filename, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save build log",
+                default_name,
+                "Text Files (*.txt);;All Files (*)"
+            )
+
+            if not filename:
+                return  # user cancelled
+
+            log_file = pathlib.Path(filename)
+            log_file.write_text(text, encoding="utf-8")
+            print(f"Build log saved to: {log_file}")
+
+        except Exception as e:
+            print(f"Error saving build log: {e}")
+
+
+
+    def format_time(self, seconds: float) -> str:
+        """Format seconds as human-readable time"""
+        if seconds < 60:
+            return f"{seconds:.1f}s"
+        elif seconds < 3600:
+            minutes = int(seconds / 60)
+            secs = int(seconds % 60)
+            return f"{minutes}m {secs}s"
+        else:
+            hours = int(seconds / 3600)
+            minutes = int((seconds % 3600) / 60)
+            return f"{hours}h {minutes}m"
+
+
+def main():
+    app = QApplication(sys.argv)
+    dialog = MapBuilderDialog()
+    dialog.show()
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
