@@ -141,7 +141,7 @@ class BuildSettings:
         if self.debug_vis_geo:
             args.append("-debugvisgeo")
 
-        # args.append("-html")
+        args.append("-html")
 
         # Navigation
         if self.build_nav:
