@@ -502,12 +502,18 @@ class MapBuilderDialog(QMainWindow):
         subprocess.Popen(launch_cmd, shell=True)
 
     def add_log_message(self, message: str):
-        """Append message to the output panel as HTML - called for EACH line"""
-        # Pass through formatter (just decodes HTML entities)
+        """Append message to the output panel as HTML with timestamp - called for EACH line"""
+        # Get current timestamp
+        timestamp = datetime.now().strftime("%H:%M")
+        
+        # Pass through formatter (decodes HTML entities)
         formatted_message = OutputFormatter.parse_output_line(message)
+        
+        # Prepend gray timestamp to the message
+        timestamped_message = f'<span style="color:#808080;">[{timestamp}]</span> {formatted_message}'
 
         # Append HTML directly - QTextEdit will handle it
-        self.ui.output_list_widget.append(formatted_message)
+        self.ui.output_list_widget.append(timestamped_message)
 
         # Ensure scrolled to bottom
         scrollbar = self.ui.output_list_widget.verticalScrollBar()
