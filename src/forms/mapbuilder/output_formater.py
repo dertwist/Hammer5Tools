@@ -8,6 +8,7 @@ class OutputFormatter:
     """
     Enhanced output formatter for CS2 resource compiler logs
     Handles mixed plain text, HTML tags, HTML entities, and color codes
+    Designed for QTextEdit display with HTML support
     """
 
     # Enhanced color palette for better visibility
@@ -28,21 +29,19 @@ class OutputFormatter:
         """
         Parse and enhance a single output line
         Handles: HTML tags, HTML entities, color codes, progress indicators, timestamps
+        Returns HTML-formatted string ready for QTextEdit
         """
         if not line:
             return ""
 
-        # First, decode HTML entities
+        # First, decode HTML entities (e.g., &#39; becomes ')
         line = html.unescape(line)
 
-        # Remove <br/> tags as they'll be handled by the display widget
-        line = re.sub(r'<br\s*/?>', '', line)
+        # Check if line already contains HTML from compiler (with <br/> or <font> tags)
+        if '<br' in line.lower() or '<font' in line.lower():
+            return OutputFormatter._process_compiler_html(line)
 
-        # Already contains color font tags - convert to styled spans
-        if '<font color=' in line:
-            return OutputFormatter._process_html_colors(line)
-
-        # Detect log level from content
+        # For plain text lines, detect log level and format accordingly
         line_type = OutputFormatter._classify_line(line)
 
         # Apply appropriate formatting based on type
@@ -66,31 +65,59 @@ class OutputFormatter:
         return f'<span style="color:{OutputFormatter.COLOR_MAP["normal"]}">{html.escape(line)}</span>'
 
     @staticmethod
-    def _process_html_colors(line: str) -> str:
+    def _process_compiler_html(line: str) -> str:
         """
-        Process lines with existing HTML color tags and convert to clean spans
+        Process lines with existing HTML from the compiler
+        These lines contain <br/> tags and <font color> tags that need to be converted
         """
-        # Convert font color tags to styled spans
+        # Split by <br/> or <br> to process each segment
+        segments = re.split(r'<br\s*/?>', line)
+        
+        processed_segments = []
+        for segment in segments:
+            if not segment.strip():
+                continue
+                
+            # Process font color tags
+            segment = OutputFormatter._convert_font_tags(segment)
+            processed_segments.append(segment)
+        
+        # Join with actual line breaks for QTextEdit
+        return '<br/>'.join(processed_segments)
+
+    @staticmethod
+    def _convert_font_tags(text: str) -> str:
+        """
+        Convert <font color="#XXX"> tags to styled spans with appropriate icons
+        """
         def replace_font_tag(match):
             color = match.group(1)
             content = match.group(2)
-            # Classify content to apply appropriate styling
+            
+            # Add icons based on content
+            icon = ""
+            weight = "normal"
+            
             if 'Failed' in content or 'ERROR' in content:
-                return f'<span style="color:{color};font-weight:bold;">✗ {html.escape(content)}</span>'
+                icon = "✗ "
+                weight = "bold"
             elif 'Missing' in content or 'Bad' in content:
-                return f'<span style="color:{color};font-weight:500;">⚠ {html.escape(content)}</span>'
-            elif 'Initialized' in content or content.strip().startswith('OK'):
-                return f'<span style="color:{color};font-weight:500;">✓ {html.escape(content)}</span>'
-            else:
-                return f'<span style="color:{color}">{html.escape(content)}</span>'
+                icon = "⚠ "
+                weight = "500"
+            elif 'Initialized' in content:
+                icon = "✓ "
+                weight = "500"
+            
+            return f'<span style="color:{color};font-weight:{weight};">{icon}{html.escape(content)}</span>'
         
         # Match font tags with color attribute
-        line = re.sub(r'<font color="([^"]+)">([^<]*)</font>', replace_font_tag, line)
+        text = re.sub(r'<font color="([^"]+)">([^<]*)</font>', replace_font_tag, text)
         
-        # Handle any remaining HTML tags
-        line = re.sub(r'</?[^>]+>', '', line)
+        # If no font tags but text exists, escape and return with default color
+        if '<span' not in text and text.strip():
+            return f'<span style="color:{OutputFormatter.COLOR_MAP["normal"]}">{html.escape(text)}</span>'
         
-        return line
+        return text
 
     @staticmethod
     def _classify_line(line: str) -> str:
@@ -155,8 +182,9 @@ class OutputFormatter:
             message = match.group(2)
             
             # Classify the message part
-            msg_type = OutputFormatter._classify_line(message)
             icon = ""
+            color = OutputFormatter.COLOR_MAP["normal"]
+            weight = "normal"
             
             if "✓" in message or "Compilation completed successfully" in message:
                 icon = "✓ "
@@ -166,9 +194,6 @@ class OutputFormatter:
                 icon = "▶ "
                 color = OutputFormatter.COLOR_MAP["info"]
                 weight = "500"
-            else:
-                color = OutputFormatter.COLOR_MAP["normal"]
-                weight = "normal"
             
             return (f'<span style="color:{OutputFormatter.COLOR_MAP["timestamp"]};font-weight:bold;">{html.escape(timestamp)}</span> '
                    f'<span style="color:{color};font-weight:{weight};">{icon}{html.escape(message)}</span>')
@@ -194,13 +219,18 @@ class OutputFormatter:
 
         # Handle "Done (X.XX seconds)" format
         if "Done (" in line:
-            line = re.sub(
-                r'(Done \()([^)]+)(\))',
-                r'<span style="color:#50FA7B;font-weight:bold;">Done</span> '
-                r'<span style="color:#6272A4">(<span style="color:#FFB86C;font-weight:bold;">\2</span>)</span>',
-                line
-            )
-            return line
+            done_match = re.search(r'(Done \()([^)]+)(\))', line)
+            if done_match:
+                before = line[:done_match.start()]
+                after = line[done_match.end():]
+                timing = done_match.group(2)
+                
+                return (f'<span style="color:{OutputFormatter.COLOR_MAP["normal"]}">{html.escape(before)}</span>'
+                       f'<span style="color:#50FA7B;font-weight:bold;">Done</span> '
+                       f'<span style="color:#6272A4">(</span>'
+                       f'<span style="color:#FFB86C;font-weight:bold;">{html.escape(timing)}</span>'
+                       f'<span style="color:#6272A4">)</span>'
+                       f'<span style="color:{OutputFormatter.COLOR_MAP["normal"]}">{html.escape(after)}</span>')
 
         return f'<span style="color:{OutputFormatter.COLOR_MAP["normal"]}">{html.escape(line)}</span>'
 
