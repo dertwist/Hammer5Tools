@@ -9,6 +9,7 @@ import threading
 import pathlib
 import os
 import time
+import signal
 from pathlib import Path
 from datetime import datetime
 from PySide6.QtWidgets import (
@@ -52,16 +53,20 @@ class CompilationThread(QThread):
 
         try:
             # Start process
-            self.process = subprocess.Popen(
-                self.command,
+            # Start the subprocess in its own process group so we can kill the whole tree
+            popen_kwargs = dict(
+                args=self.command,
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
                 cwd=self.working_dir,
-                universal_newlines=True
+                universal_newlines=True,
             )
+            popen_kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+
+            self.process = subprocess.Popen(**popen_kwargs)
 
             # Read output line by line
             for line in iter(self.process.stdout.readline, ''):
@@ -85,10 +90,20 @@ class CompilationThread(QThread):
             self.finished.emit(-1, 0)
 
     def abort(self):
-        """Abort compilation"""
         self.should_abort = True
-        if self.process:
-            self.process.terminate()
+        if self.process and hasattr(self.process, 'pid') and self.process.pid:
+            pid = self.process.pid
+            try:
+                self.process.poll()
+                if self.process.returncode is None:  # Still alive
+                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(pid)],
+                                   capture_output=True, check=False)
+                else:
+                    print(f"Process {pid} already finished")
+            except:
+                pass
+            finally:
+                self.process = None  # Reset immediately
 
 
 class MapBuilderDialog(QMainWindow):
