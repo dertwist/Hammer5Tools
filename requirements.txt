@@ -35,3 +35,4 @@ Pillow
 matplotlib
 pynvml
 GPUtil
+pyinstaller
