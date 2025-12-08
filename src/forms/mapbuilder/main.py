@@ -52,31 +52,35 @@ class CompilationThread(QThread):
         self.start_time = time.time()
 
         try:
-            # Start process
-            # Start the subprocess in its own process group so we can kill the whole tree
+            # Start process with unbuffered output
             popen_kwargs = dict(
                 args=self.command,
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
+                bufsize=0,  # Unbuffered
                 cwd=self.working_dir,
-                universal_newlines=True,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
             )
-            popen_kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
 
             self.process = subprocess.Popen(**popen_kwargs)
 
-            # Read output line by line
-            for line in iter(self.process.stdout.readline, ''):
+            # Read output line by line in real-time
+            for line in iter(self.process.stdout.readline, b''):
                 if self.should_abort:
                     self.process.terminate()
                     break
 
-                line = line.rstrip()
+                # Decode and strip the line
+                try:
+                    line = line.decode('utf-8', errors='replace').rstrip()
+                except:
+                    line = line.decode('latin-1', errors='replace').rstrip()
+
                 if line:
                     self.outputReceived.emit(line)
+                    # Force the signal to be processed immediately
+                    QApplication.processEvents()
 
             # Wait for process to complete
             self.process.wait()
@@ -390,9 +394,8 @@ class MapBuilderDialog(QMainWindow):
 
     def on_output_received(self, line: str):
         """Handle raw output line"""
-        # Add to output list; line may already be HTML (e.g., resourcecompiler -html)
+        # Process through formatter and add to output
         self.add_log_message(line)
-
 
     def on_compilation_finished(self, exit_code: int, elapsed_time: float):
         """Handle compilation finished"""
@@ -460,23 +463,23 @@ class MapBuilderDialog(QMainWindow):
         subprocess.Popen(launch_cmd, shell=True)
 
     def add_log_message(self, message: str):
-        """Append a timestamped, styled HTML message to the output panel (no wrapping)."""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-
-        # Enhance message (may contain HTML spans, links, etc.)
+        """Append message to the output panel"""
+        # Pass through formatter (just decodes HTML entities)
         formatted_message = OutputFormatter.parse_output_line(message)
-
-        # Compose line HTML with timestamp styling
-        line_html = (f"<span style='color:#9aa0a6; font-size: 11px;'>[{timestamp}]</span> "
-                     f"{formatted_message}<br/>")
-
-        # Insert HTML at the end and scroll to bottom
+        
+        # Insert HTML at the end
         cursor = self.ui.output_list_widget.textCursor()
         cursor.movePosition(QTextCursor.End)
         self.ui.output_list_widget.setTextCursor(cursor)
-        self.ui.output_list_widget.insertHtml(line_html)
+        self.ui.output_list_widget.insertHtml(formatted_message)
+        
+        # Scroll to bottom
         self.ui.output_list_widget.moveCursor(QTextCursor.End)
         self.ui.output_list_widget.ensureCursorVisible()
+        
+        # Force immediate update
+        self.ui.output_list_widget.repaint()
+        QApplication.processEvents()
 
     def _output_context_menu(self, pos: QPoint):
         menu = QMenu(self)
