@@ -35,8 +35,6 @@ class CompilationThread(QThread):
     """Thread for running compilation process"""
 
     outputReceived = Signal(str)  # Raw output line
-    progressUpdated = Signal(object)  # CompilationProgress object
-    messageReceived = Signal(object)  # CompilationMessage object
     finished = Signal(int, float)  # exit code, elapsed time
 
     def __init__(self, command: str, working_dir: str):
@@ -48,7 +46,7 @@ class CompilationThread(QThread):
         self.start_time = None
 
     def run(self):
-        """Run compilation process and parse output"""
+        """Run compilation process and stream output real-time"""
         self.start_time = time.time()
 
         try:
@@ -58,32 +56,71 @@ class CompilationThread(QThread):
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                bufsize=0,  # Unbuffered
+                bufsize=0,  # Unbuffered binary stream
                 cwd=self.working_dir,
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
             )
 
             self.process = subprocess.Popen(**popen_kwargs)
 
-            # Read output line by line in real-time
-            for line in iter(self.process.stdout.readline, b''):
+            # Buffer to accumulate characters until we find a break
+            buffer = bytearray()
+
+            while True:
                 if self.should_abort:
                     self.process.terminate()
                     break
 
-                # Decode and strip the line
+                # Read 1 byte at a time to ensure we never block waiting for a full line
+                byte = self.process.stdout.read(1)
+
+                # If read returns empty and process is dead, we are done
+                if not byte and self.process.poll() is not None:
+                    break
+
+                if byte:
+                    buffer.extend(byte)
+
+                    # Check if we have a complete "visual" line
+                    # The compiler uses both \n and <br/> (or <br>) as delimiters
+                    current_str = ""
+                    try:
+                        current_str = buffer.decode('utf-8', errors='ignore')
+                    except:
+                        pass  # Wait for more bytes if decoding fails
+
+                    # Check for delimiters
+                    is_newline = current_str.endswith('\n')
+                    is_html_br = current_str.endswith('<br/>') or current_str.endswith('<br>')
+
+                    if is_newline or is_html_br:
+                        # Decode fully
+                        try:
+                            line = buffer.decode('utf-8', errors='replace')
+                        except:
+                            line = buffer.decode('latin-1', errors='replace')
+
+                        # Clean up the line for display
+                        # We strip the trailing breaks because append() adds its own new paragraph
+                        line = line.replace('<br/>', '').replace('<br>', '').rstrip()
+
+                        if line:
+                            self.outputReceived.emit(line)
+                            # Tiny sleep to let the main thread process the event
+                            self.msleep(1)
+
+                        # Clear buffer
+                        buffer = bytearray()
+
+            # Emit any remaining text in buffer
+            if buffer:
                 try:
-                    line = line.decode('utf-8', errors='replace').rstrip()
+                    line = buffer.decode('utf-8', errors='replace').rstrip()
+                    if line:
+                        self.outputReceived.emit(line)
                 except:
-                    line = line.decode('latin-1', errors='replace').rstrip()
+                    pass
 
-                if line:
-                    # Emit signal for EACH line
-                    self.outputReceived.emit(line)
-                    # Small sleep to allow GUI to process
-                    self.msleep(1)
-
-            # Wait for process to complete
             self.process.wait()
             exit_code = self.process.returncode
             elapsed = time.time() - self.start_time
@@ -347,7 +384,7 @@ class MapBuilderDialog(QMainWindow):
             if self.preset_manager.delete_preset(preset.name):
                 self.setup_preset_buttons()
                 # Load first available preset
-                presets = self.preset_manager.get_all_presets():
+                presets = self.preset_manager.get_all_presets()
                 if presets:
                     self.load_preset(presets[0])
 
@@ -468,14 +505,14 @@ class MapBuilderDialog(QMainWindow):
         """Append message to the output panel as HTML - called for EACH line"""
         # Pass through formatter (just decodes HTML entities)
         formatted_message = OutputFormatter.parse_output_line(message)
-        
+
         # Append HTML directly - QTextEdit will handle it
         self.ui.output_list_widget.append(formatted_message)
-        
+
         # Ensure scrolled to bottom
         scrollbar = self.ui.output_list_widget.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
-        
+
         # Force immediate GUI update
         QApplication.processEvents()
 
