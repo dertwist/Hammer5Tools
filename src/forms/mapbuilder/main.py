@@ -79,8 +79,6 @@ class CompilationThread(QThread):
 
                 if line:
                     self.outputReceived.emit(line)
-                    # Force the signal to be processed immediately
-                    QApplication.processEvents()
 
             # Wait for process to complete
             self.process.wait()
@@ -463,23 +461,16 @@ class MapBuilderDialog(QMainWindow):
         subprocess.Popen(launch_cmd, shell=True)
 
     def add_log_message(self, message: str):
-        """Append message to the output panel"""
+        """Append message to the output panel as HTML"""
         # Pass through formatter (just decodes HTML entities)
         formatted_message = OutputFormatter.parse_output_line(message)
         
-        # Insert HTML at the end
-        cursor = self.ui.output_list_widget.textCursor()
-        cursor.movePosition(QTextCursor.End)
-        self.ui.output_list_widget.setTextCursor(cursor)
-        self.ui.output_list_widget.insertHtml(formatted_message)
+        # Append HTML directly - QTextEdit will handle it
+        self.ui.output_list_widget.append(formatted_message)
         
-        # Scroll to bottom
-        self.ui.output_list_widget.moveCursor(QTextCursor.End)
-        self.ui.output_list_widget.ensureCursorVisible()
-        
-        # Force immediate update
-        self.ui.output_list_widget.repaint()
-        QApplication.processEvents()
+        # Ensure scrolled to bottom
+        scrollbar = self.ui.output_list_widget.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
 
     def _output_context_menu(self, pos: QPoint):
         menu = QMenu(self)
