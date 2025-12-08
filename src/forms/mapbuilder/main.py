@@ -78,7 +78,10 @@ class CompilationThread(QThread):
                     line = line.decode('latin-1', errors='replace').rstrip()
 
                 if line:
+                    # Emit signal for EACH line
                     self.outputReceived.emit(line)
+                    # Small sleep to allow GUI to process
+                    self.msleep(1)
 
             # Wait for process to complete
             self.process.wait()
@@ -344,7 +347,7 @@ class MapBuilderDialog(QMainWindow):
             if self.preset_manager.delete_preset(preset.name):
                 self.setup_preset_buttons()
                 # Load first available preset
-                presets = self.preset_manager.get_all_presets()
+                presets = self.preset_manager.get_all_presets():
                 if presets:
                     self.load_preset(presets[0])
 
@@ -369,7 +372,8 @@ class MapBuilderDialog(QMainWindow):
 
         # Create compilation thread
         self.compilation_thread = CompilationThread(command, self.addon_path)
-        self.compilation_thread.outputReceived.connect(self.on_output_received)
+        # Use DirectConnection to ensure immediate processing
+        self.compilation_thread.outputReceived.connect(self.on_output_received, Qt.DirectConnection)
         self.compilation_thread.finished.connect(self.on_compilation_finished)
 
         # Update UI state
@@ -391,8 +395,8 @@ class MapBuilderDialog(QMainWindow):
             self.add_log_message("Aborting compilation...")
 
     def on_output_received(self, line: str):
-        """Handle raw output line"""
-        # Process through formatter and add to output
+        """Handle raw output line - called for EACH line"""
+        # Add each line immediately
         self.add_log_message(line)
 
     def on_compilation_finished(self, exit_code: int, elapsed_time: float):
@@ -461,7 +465,7 @@ class MapBuilderDialog(QMainWindow):
         subprocess.Popen(launch_cmd, shell=True)
 
     def add_log_message(self, message: str):
-        """Append message to the output panel as HTML"""
+        """Append message to the output panel as HTML - called for EACH line"""
         # Pass through formatter (just decodes HTML entities)
         formatted_message = OutputFormatter.parse_output_line(message)
         
@@ -471,6 +475,9 @@ class MapBuilderDialog(QMainWindow):
         # Ensure scrolled to bottom
         scrollbar = self.ui.output_list_widget.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
+        
+        # Force immediate GUI update
+        QApplication.processEvents()
 
     def _output_context_menu(self, pos: QPoint):
         menu = QMenu(self)
