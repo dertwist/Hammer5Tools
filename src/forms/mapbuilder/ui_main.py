@@ -151,7 +151,7 @@ class Ui_mapbuilder_dialog(object):
         self.build_settings_area.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 826, 747))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 826, 769))
         self.verticalLayout = QVBoxLayout(self.scrollAreaWidgetContents_2)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(0, 0, 0, -1)
@@ -187,11 +187,6 @@ class Ui_mapbuilder_dialog(object):
 
 
         self.verticalLayout_2.addLayout(self.horizontalLayout_4)
-
-        self.last_build_stats_label = QLabel(self.layoutWidget)
-        self.last_build_stats_label.setObjectName(u"last_build_stats_label")
-
-        self.verticalLayout_2.addWidget(self.last_build_stats_label)
 
         self.splitter.addWidget(self.layoutWidget)
         self.layoutWidget1 = QWidget(self.splitter)
@@ -295,6 +290,11 @@ class Ui_mapbuilder_dialog(object):
         self.horizontalLayout_7.setContentsMargins(0, 0, 0, 0)
 
         self.verticalLayout_3.addWidget(self.system_monitor)
+
+        self.last_build_stats_label = QLabel(self.layoutWidget1)
+        self.last_build_stats_label.setObjectName(u"last_build_stats_label")
+
+        self.verticalLayout_3.addWidget(self.last_build_stats_label)
 
         self.splitter.addWidget(self.layoutWidget1)
 
