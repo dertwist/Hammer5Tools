@@ -34,6 +34,7 @@ class BuildSettings:
     lightmap_compression: bool = True
     lightmap_filtering: bool = True  # Noise removal
     no_light_calculations: bool = False
+    vrad3_large_block_size: bool = False
 
     # === Physics ===
     build_physics: bool = False
@@ -125,6 +126,8 @@ class BuildSettings:
                 args.append("-lightmapCompressionDisabled")
             if self.no_light_calculations:
                 args.append("-disableLightingCalculations")
+            if self.vrad3_large_block_size:
+                args.append("-vrad3LargeBlockSize")
 
         else:
             args.append("-nolightmaps")
