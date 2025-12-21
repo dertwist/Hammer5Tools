@@ -848,8 +848,6 @@ class SmartPropDocument(QMainWindow):
                 element_dict = {
                     "_class": "CSmartPropElement_Model",
                     "m_sModelName": rel_path,
-                    "m_vModelScale": None,
-                    "m_MaterialGroupName": None,
                     "m_Modifiers": [],
                     "m_SelectionCriteria": []
                 }
