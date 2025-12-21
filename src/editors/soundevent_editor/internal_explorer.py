@@ -2,13 +2,14 @@ from src.property.methods import QDrag
 import os
 import vpk
 import time
-from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QMessageBox
+from PySide6.QtWidgets import QApplication, QTreeWidget, QTreeWidgetItem, QMessageBox, QTreeWidgetItemIterator
 from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess, QThread, Signal
 from PySide6.QtMultimedia import QMediaPlayer
 from src.settings.main import get_cs2_path, get_addon_dir, debug, get_settings_value
 from src.common import SoundEventEditor_sounds_path, SoundEventEditor_path
 from src.widgets import exception_handler
 from src.dotnet import extract_vsnd_file
+
 
 @exception_handler
 class VPKLoaderThread(QThread):
@@ -28,9 +29,11 @@ class VPKLoaderThread(QThread):
         except Exception as e:
             self.vpk_loaded.emit([])
 
+
 @exception_handler
 class InternalSoundFileExplorer(QTreeWidget):
     play_sound = Signal(str)
+
     def __init__(self, audio_player: QMediaPlayer):
         super().__init__()
         self.setHeaderHidden(True)
@@ -42,6 +45,48 @@ class InternalSoundFileExplorer(QTreeWidget):
         self.vpk_loader_thread = VPKLoaderThread()
         self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
         self.vpk_loader_thread.start()
+
+    def filter_tree(self, filter_text):
+        """Filter tree items based on search text and expand matching items"""
+        filter_text = filter_text.lower().strip()
+
+        if not filter_text:
+            # Show all items and collapse all
+            iterator = QTreeWidgetItemIterator(self)
+            while iterator.value():
+                item = iterator.value()
+                item.setHidden(False)
+                iterator += 1
+            self.collapseAll()
+            return
+
+        # First pass: hide all items
+        iterator = QTreeWidgetItemIterator(self)
+        while iterator.value():
+            item = iterator.value()
+            item.setHidden(True)
+            iterator += 1
+
+        # Second pass: find matches and show them with their parents
+        iterator = QTreeWidgetItemIterator(self)
+        found_items = []
+        while iterator.value():
+            item = iterator.value()
+            if filter_text in item.text(0).lower():
+                found_items.append(item)
+                # Show this item and all its parents
+                current = item
+                while current is not None:
+                    current.setHidden(False)
+                    current = current.parent()
+            iterator += 1
+
+        # Expand all parent items of found items
+        for item in found_items:
+            current = item.parent()
+            while current is not None:
+                self.expandItem(current)
+                current = current.parent()
 
     def _play_audio_file(self, file_path):
         debug(f'Playing audio {file_path}')
@@ -112,6 +157,7 @@ class InternalSoundFileExplorer(QTreeWidget):
             export=True
         )
         self.play_audio_file(assembled_path)
+
     def assemble_path(self, item):
         path_elements = []
         current_item = item
@@ -179,6 +225,7 @@ class InternalSoundFileExplorer(QTreeWidget):
                 parent_key = current_key
 
         self.setUpdatesEnabled(True)
+
 
 if __name__ == "__main__":
     app = QApplication([])

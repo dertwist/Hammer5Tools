@@ -139,7 +139,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.internal_explorer = InternalSoundFileExplorer(self.audio_player)
         self.internal_explorer.setStyleSheet("""border:none""")
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
-        self.ui.internal_explorer_search_bar.textChanged.connect(lambda text: self.search_hierarchy(text, self.internal_explorer.invisibleRootItem()))
+        self.ui.internal_explorer_search_bar.textChanged.connect(self.internal_explorer.filter_tree)
         self.internal_explorer.play_sound.connect(self.play_sound)
 
         # Audio player init
