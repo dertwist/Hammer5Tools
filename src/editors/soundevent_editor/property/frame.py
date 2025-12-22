@@ -324,17 +324,22 @@ class SoundEventEditorPropertyFrame(QWidget):
 
     def populate_properties(self, data: dict):
         """Adding properties from received data"""
-        for name, value in data.items():
-            self.add_property(name, value)
+        debug(f"populate_properties frame Data: \n {data}")
+        if data:
+            for name, value in data.items():
+                self.add_property(name, value)
     def serialize_properties(self):
         """Geather all values into dict value"""
         _data = {}
-        for index in range(self.ui.content.layout().count()):
-            widget_instance = self.ui.content.layout().itemAt(index).widget()
-            value_dict = widget_instance.value
-            _data.update(value_dict)
-        debug(f"serialize_properties frame Data: \n {_data}")
-        return _data
+        if _data is None:
+            pass
+        else:
+            for index in range(self.ui.content.layout().count()):
+                widget_instance = self.ui.content.layout().itemAt(index).widget()
+                value_dict = widget_instance.value
+                _data.update(value_dict)
+            debug(f"serialize_properties frame Data: \n {_data}")
+            return _data
 
     def get_property(self, index):
         """Getting single property from the frame widget"""
