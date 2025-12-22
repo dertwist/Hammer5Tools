@@ -341,13 +341,10 @@ class SoundEventEditorMainWindow(QMainWindow):
             # Safely convert column text to dict value
             try:
                 data = current_item.data(0, Qt.UserRole)
-                if data:
-                    if isinstance(data, dict):
-                        self.PropertiesWindow.populate_properties(data)
-                    else:
-                        raise ValueError("Parsed data is not a dictionary.")
+                if isinstance(data, dict):
+                    self.PropertiesWindow.populate_properties(data)
                 else:
-                    raise ValueError("No data found in the item.")
+                    raise ValueError("Parsed data is not a dictionary.")
             except (ValueError, SyntaxError) as e:
                 debug(f"Error parsing item data: {e}")
                 QMessageBox.warning(self, "Data Error", "Failed to parse item data. Please check the format.")
