@@ -484,7 +484,7 @@ class MapBuilderDialog(QMainWindow):
         cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
         addon_name = get_addon_name()
 
-        launch_cmd = f'"{cs2_exe}" -tools -addon {addon_name} +map_workshop {addon_name} {map_name}'
+        launch_cmd = f'"{cs2_exe}" -tools -gpuraytracing -addon {addon_name} +map_workshop {addon_name} {map_name}'
         if settings.build_cubemaps_on_load:
             launch_cmd += ' +buildcubemaps'
         if settings.build_minimap_on_load:
