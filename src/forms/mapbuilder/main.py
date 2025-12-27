@@ -1,6 +1,6 @@
 """
 Enhanced Map Builder Dialog with complete preset management,
-real-time output parsing, and dynamic UI generation.
+real-time output parsing, dynamic UI generation, and elapsed time tracking.
 """
 import os.path
 import sys
@@ -14,7 +14,7 @@ from pathlib import Path
 from datetime import datetime
 from PySide6.QtWidgets import (
     QDialog, QApplication, QMessageBox, QInputDialog,
-    QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog, QMainWindow
+    QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog, QMainWindow, QLabel
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer, QPoint
 from PySide6.QtGui import QColor, QIcon, QTextDocument, QTextCursor
@@ -148,6 +148,47 @@ class CompilationThread(QThread):
                 self.process = None  # Reset immediately
 
 
+class ElapsedTimeTracker:
+    """Tracks elapsed time with formatted output and animated dots"""
+
+    def __init__(self):
+        self.start_time = None
+        self.paused_time = 0.0
+
+    def start(self):
+        """Start timing"""
+        self.start_time = time.time()
+        self.paused_time = 0.0
+
+    def get_elapsed(self) -> float:
+        """Get elapsed seconds"""
+        if self.start_time is None:
+            return 0.0
+        return (time.time() - self.start_time) - self.paused_time
+
+    def format_time(self, seconds: float) -> str:
+        """Format seconds as MM:SS or HH:MM:SS"""
+        if seconds < 0:
+            seconds = 0
+
+        if seconds < 3600:  # Less than 1 hour
+            minutes = int(seconds // 60)
+            secs = int(seconds % 60)
+            return f"{minutes:02d}:{secs:02d}"
+        else:
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            secs = int(seconds % 60)
+            return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+    def format_with_dots(self, seconds: float, dot_cycle: int) -> str:
+        """Format time with animated dots based on cycle"""
+        time_str = self.format_time(seconds)
+        # Cycle through: . .. ... (repeats)
+        dots = '.' * ((dot_cycle % 3) + 1)
+        return f"{time_str}{dots}"
+
+
 class MapBuilderDialog(QMainWindow):
 
     def __init__(self, parent=None):
@@ -173,11 +214,19 @@ class MapBuilderDialog(QMainWindow):
 
         self.ui.output_list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.output_list_widget.customContextMenuRequested.connect(self._output_context_menu)
+
         # Current state
         self.current_preset: BuildPreset = None
         self.compilation_thread: CompilationThread = None
         self.is_compiling = False
         self.last_build_time = 0.0
+
+        # Elapsed time tracking
+        self.elapsed_tracker = ElapsedTimeTracker()
+        self.elapsed_timer = QTimer()
+        self.elapsed_timer.timeout.connect(self._update_elapsed_display)
+        self.dot_cycle = 0
+
         # Load last build duration from settings to display on start
         last_time_str = get_settings_value("MapBuilder", "LastBuildTime", default="")
         if last_time_str:
@@ -288,6 +337,7 @@ class MapBuilderDialog(QMainWindow):
                 self.add_log_message("⚠ User closed dialog - aborting compilation...")
                 self.compilation_thread.abort()
                 self.compilation_thread.wait(2000)
+                self.elapsed_timer.stop()
 
                 event.accept()
                 self.hide()
@@ -418,6 +468,11 @@ class MapBuilderDialog(QMainWindow):
         self.ui.build_button.setEnabled(False)
         self.ui.abort_button.setEnabled(True)
 
+        # Start elapsed time tracking
+        self.elapsed_tracker.start()
+        self.dot_cycle = 0
+        self.elapsed_timer.start(500)  # Update every 500ms for smooth dot animation
+
         # Start compilation
         self.compilation_thread.start()
 
@@ -425,9 +480,18 @@ class MapBuilderDialog(QMainWindow):
         self.add_log_message(f"Starting compilation: {settings.mappath}")
         self.add_log_message(f"Command: {command}")
 
+    def _update_elapsed_display(self):
+        """Update elapsed time display with animated dots"""
+        if self.is_compiling and self.elapsed_tracker.start_time:
+            elapsed = self.elapsed_tracker.get_elapsed()
+            time_with_dots = self.elapsed_tracker.format_with_dots(elapsed, self.dot_cycle)
+            self.ui.last_build_stats_label.setText(f"Compiling: [{time_with_dots}]")
+            self.dot_cycle += 1
+
     def abort_compilation(self):
         """Abort running compilation"""
         if self.compilation_thread:
+            self.elapsed_timer.stop()
             self.compilation_thread.abort()
             self.add_log_message("Aborting compilation...")
 
@@ -438,6 +502,9 @@ class MapBuilderDialog(QMainWindow):
 
     def on_compilation_finished(self, exit_code: int, elapsed_time: float):
         """Handle compilation finished"""
+        # Stop elapsed time tracking
+        self.elapsed_timer.stop()
+
         self.is_compiling = False
         self.ui.build_button.setEnabled(True)
         self.ui.abort_button.setEnabled(False)
@@ -445,6 +512,12 @@ class MapBuilderDialog(QMainWindow):
         self.last_build_time = elapsed_time
         time_str = self.format_time(elapsed_time)
         self.ui.last_build_stats_label.setText(f"Last Build Time: {time_str}")
+
+        # Add elapsed time to final log
+        self.add_log_message(f"\n{'='*60}")
+        self.add_log_message(f"Compilation completed in {time_str}")
+        self.add_log_message(f"{'='*60}\n")
+
         # Persist last build duration string in settings for display on next load
         try:
             set_settings_value("MapBuilder", "LastBuildTime", time_str)
@@ -459,7 +532,7 @@ class MapBuilderDialog(QMainWindow):
                     map_name = Path(settings.mappath).stem
                     addon_name = get_addon_name()
                     cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
-                    launch_cmd = f'"{cs2_exe}" -tools -addon {addon_name} +map_workshop {addon_name} {map_name}'
+                    launch_cmd = f'"{cs2_exe}" -tools -gpuraytracing -addon {addon_name} +map_workshop {addon_name} {map_name}'
                     if settings.build_cubemaps_on_load:
                         launch_cmd += ' +buildcubemaps'
                     if settings.build_minimap_on_load:
@@ -468,7 +541,6 @@ class MapBuilderDialog(QMainWindow):
                     subprocess.Popen(launch_cmd, shell=True)
             except Exception as e:
                 self.add_log_message(f"Failed to launch after build: {e}")
-
 
     def run_map(self):
         """Run map without building"""
@@ -498,7 +570,7 @@ class MapBuilderDialog(QMainWindow):
     def add_log_message(self, message: str):
         """Append message to the output panel as HTML with timestamp - called for EACH line"""
         # Get current timestamp
-        timestamp = datetime.now().strftime("%H:%M")
+        timestamp = datetime.now().strftime("%H:%M:%S")
 
         # Pass through formatter (decodes HTML entities)
         formatted_message = OutputFormatter.parse_output_line(message)
@@ -545,8 +617,6 @@ class MapBuilderDialog(QMainWindow):
 
         except Exception as e:
             print(f"Error saving build log: {e}")
-
-
 
     def format_time(self, seconds: float) -> str:
         """Format seconds as human-readable time"""
