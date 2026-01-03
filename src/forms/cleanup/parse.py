@@ -5,6 +5,8 @@ from src.dotnet import extract_vmap_references
 import unittest
 from src.settings.main import get_addon_name, get_addon_dir
 import os
+import re
+
 
 def get_vmap_references(addon_dir=None, vmap=None):
     """
@@ -16,7 +18,80 @@ def get_vmap_references(addon_dir=None, vmap=None):
     if vmap is None:
         raise ValueError("vmap must be provided")
 
-    #Subfuncitons
+    # Subfunctions
+
+    def parse_vtex_dmx(vtex_path):
+        """
+        Parse .vtex file in DMX format with keyvalues2_noids encoding.
+        Extracts texture dependencies from m_inputTextureArray.
+        """
+        try:
+            with open(vtex_path, 'r', encoding='utf-8', errors='ignore') as file:
+                content = file.read()
+        except FileNotFoundError:
+            print(f"Error: File '{vtex_path}' not found")
+            return []
+        except Exception as e:
+            print(f"Error reading '{vtex_path}': {e}")
+            return []
+
+        references = []
+
+        # Pattern to match m_fileName entries in DMX format
+        # Looks for: "m_fileName" "string" "path/to/file.png"
+        pattern = r'"m_fileName"\s+"string"\s+"([^"]+)"'
+        matches = re.findall(pattern, content)
+
+        for match in matches:
+            # Normalize path separators
+            normalized_path = match.replace('\\', '/').lower()
+            references.append(normalized_path)
+
+        return references
+
+    def get_particle_references(vpcf_path):
+        """
+        Extract references from a .vpcf (Valve Particle) file.
+        Uses KV3 format parser to extract resource: prefixed dependencies.
+        """
+        try:
+            with open(vpcf_path, 'r', encoding='utf-8') as file:
+                kv3_data = file.read()
+            file_data = Kv3ToJson(kv3_data)
+        except FileNotFoundError:
+            print(f"Error: File '{vpcf_path}' not found")
+            return []
+        except Exception as e:
+            print(f"Error parsing '{vpcf_path}': {e}")
+            return []
+
+        references = []
+
+        def extract_references(data):
+            """Recursively extract resource: prefixed strings from KV3 data."""
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    if isinstance(value, str):
+                        # Check for resource: prefix
+                        if value.startswith('resource:'):
+                            # Remove the 'resource:' prefix and normalize
+                            resource_path = value[9:].strip('"').replace('\\', '/').lower()
+                            references.append(resource_path)
+                    elif isinstance(value, (dict, list)):
+                        extract_references(value)
+            elif isinstance(data, list):
+                for item in data:
+                    extract_references(item)
+
+        extract_references(file_data)
+        return references
+
+    def get_texture_references(vtex_path):
+        """
+        Extract texture source file references from a .vtex file.
+        Uses DMX parser to extract m_inputTextureArray entries.
+        """
+        return parse_vtex_dmx(vtex_path)
 
     def get_soundevent_references(vsndevts_path):
         """Extract sound event references from a .vsndevts file."""
@@ -182,7 +257,8 @@ def get_vmap_references(addon_dir=None, vmap=None):
         def extract_references(d):
             if isinstance(d, dict):
                 for key, value in d.items():
-                    if key in ('filename', 'target_file', 'to', 'global_default_material', 'single_override_material') and isinstance(value, str) and value:
+                    if key in ('filename', 'target_file', 'to', 'global_default_material',
+                               'single_override_material') and isinstance(value, str) and value:
                         normalised = os.path.normpath(value).replace('\\', '/').lower()
                         references.append(normalised)
                     elif isinstance(value, (dict, list)):
@@ -208,13 +284,18 @@ def get_vmap_references(addon_dir=None, vmap=None):
             return texture_refs + mat_refs
         elif ext == '.vsndevts':
             return get_soundevent_references(full_path)
+        elif ext == '.vpcf':
+            return get_particle_references(full_path)
+        elif ext == '.vtex':
+            return get_texture_references(full_path)
 
         return []
 
-    # Define file extensions
+    # Define file extensions - UPDATED to include .vpcf and .vtex
     asset_extensions = ['.vmat', '.vmdl', '.vmdl_prefab', '.vsndevts', '.vsmart', '.vmap',
-'.png', '.tga', '.fbx', '.obj', '.jpg', '.wav', '.mp3', '.ogg', '.vmap','.hdri', '.tif', '.psd', '.exr', '.hdr']
-    directories_to_search = ['maps', 'models', 'materials', 'sounds', 'soundevents', 'smartprops']
+                        '.png', '.tga', '.fbx', '.obj', '.jpg', '.wav', '.mp3', '.ogg', '.vmap', '.hdri', '.tif',
+                        '.psd', '.exr', '.hdr', '.vpcf', '.vtex']
+    directories_to_search = ['maps', 'models', 'materials', 'sounds', 'soundevents', 'smartprops', 'particles']
     directories_to_ignore = ['materials\\default', 'weapons', 'RadGen', 'materials\\radgen']
     essentials_files = [f'soundevents/soundevents_addon.vsndevts']
     # Get the main .vmap file path
@@ -239,19 +320,24 @@ def get_vmap_references(addon_dir=None, vmap=None):
 
     print(f"Found {len(assets_collection)} assets in the addon.")
 
-    addon_assets = [file for file in assets_collection if not (file.startswith('csgo/') or file.startswith('csgo_addons/'))]
+    addon_assets = [file for file in assets_collection if
+                    not (file.startswith('csgo/') or file.startswith('csgo_addons/'))]
 
     # --- Recursive reference collection with ordered stages -----------------
     # Stage priority:
     #   1) All .vmap files (including child vmaps)
-    #      ↳ can reference: other .vmap, .vsmart, .vmat, .vmdl files
+    #      ↳ can reference: other .vmap, .vsmart, .vmat, .vmdl, .vpcf files
     #   2) All .vsmart files (including child smartprops)
     #      ↳ can reference: other .vsmart, .vmdl files
-    #   3) All .vmdl / .vmdl_prefab files (including child models)
+    #   3) All .vpcf files (particle systems)
+    #      ↳ can reference: .vmat, .vtex, .vmdl files
+    #   4) All .vmdl / .vmdl_prefab files (including child models)
     #      ↳ can reference: .vmdl, .vmdl_prefab, .vmat, geometry sources (.fbx, .obj, .dmx, …)
-    #   4) All .vmat files (including child materials)
+    #   5) All .vmat files (including child materials)
     #      ↳ can reference: other .vmat and texture assets (.png, .tga, .tif, etc.)
-    #   5) All .vsndevts files
+    #   6) All .vtex files (texture compiler)
+    #      ↳ can reference: source texture files (.png, .tga, .psd, .tif, .exr, etc.)
+    #   7) All .vsndevts files
     #      ↳ can reference: audio assets (.mp3, .wav, .ogg, …)
 
     referenced_files: set[str] = set()
@@ -259,8 +345,10 @@ def get_vmap_references(addon_dir=None, vmap=None):
     # Separate queues for each priority level
     queue_vmap: deque[str] = deque([vmap_relative_path])  # start with root vmap
     queue_vsmart: deque[str] = deque()
+    queue_vpcf: deque[str] = deque()
     queue_vmdl: deque[str] = deque()
     queue_vmat: deque[str] = deque()
+    queue_vtex: deque[str] = deque()
     queue_vsndevts: deque[str] = deque()
     queue_other: deque[str] = deque()
 
@@ -271,10 +359,14 @@ def get_vmap_references(addon_dir=None, vmap=None):
             queue_vmap.append(path)
         elif ext == '.vsmart':
             queue_vsmart.append(path)
+        elif ext == '.vpcf':
+            queue_vpcf.append(path)
         elif ext in ('.vmdl', '.vmdl_prefab'):
             queue_vmdl.append(path)
         elif ext == '.vmat':
             queue_vmat.append(path)
+        elif ext == '.vtex':
+            queue_vtex.append(path)
         elif ext == '.vsndevts':
             queue_vsndevts.append(path)
         else:
@@ -317,17 +409,27 @@ def get_vmap_references(addon_dir=None, vmap=None):
         smart_to_process = queue_vsmart.popleft()
         process_file(smart_to_process)
 
-    # Stage 3 – process all models (.vmdl / .vmdl_prefab)
+    # Stage 3 – process all particle systems (.vpcf)
+    while queue_vpcf:
+        vpcf_to_process = queue_vpcf.popleft()
+        process_file(vpcf_to_process)
+
+    # Stage 4 – process all models (.vmdl / .vmdl_prefab)
     while queue_vmdl:
         model_to_process = queue_vmdl.popleft()
         process_file(model_to_process)
 
-    # Stage 4 – process all materials (.vmat)
+    # Stage 5 – process all materials (.vmat)
     while queue_vmat:
         vmat_to_process = queue_vmat.popleft()
         process_file(vmat_to_process)
 
-    # Stage 5 – process all sound event files (.vsndevts)
+    # Stage 6 – process all texture compiler files (.vtex)
+    while queue_vtex:
+        vtex_to_process = queue_vtex.popleft()
+        process_file(vtex_to_process)
+
+    # Stage 7 – process all sound event files (.vsndevts)
     while queue_vsndevts:
         vsnd_to_process = queue_vsndevts.popleft()
         process_file(vsnd_to_process)
@@ -336,9 +438,8 @@ def get_vmap_references(addon_dir=None, vmap=None):
     while queue_other:
         process_file(queue_other.popleft())
 
-
-
     return addon_assets, referenced_files
+
 
 def get_junk_files(addon_dir=None, vmap=None):
     addon_assets, referenced_files = get_vmap_references(addon_dir, vmap)
@@ -359,7 +460,9 @@ def get_junk_files(addon_dir=None, vmap=None):
 class TestJunkCollect(unittest.TestCase):
     def test_junkcollect(self):
         addon_name = "de_sanctum"
-        addon_dir = os.path.normpath(r"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_sanctum")
-        vmap = os.path.normpath(r"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_sanctum\maps\de_sanctum.vmap")
+        addon_dir = os.path.normpath(
+            r"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_sanctum")
+        vmap = os.path.normpath(
+            r"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_sanctum\maps\de_sanctum.vmap")
         junk_files = get_junk_files(addon_dir, vmap)
         print(f'Junk collect for addon: {addon_name}: {len(junk_files)}')

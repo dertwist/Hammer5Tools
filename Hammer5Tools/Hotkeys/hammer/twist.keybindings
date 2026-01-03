@@ -3,7 +3,7 @@
 	editor_info = 
 	{
 		name = "Hammer 5 Tools"
-		version = "4.5.3"
+		version = "4.8.0"
 	}
 	m_InputMacros = 
 	[
@@ -237,141 +237,9 @@
 		},
 		
 		{
-			m_Context = "SessionCycleWidget"
-			m_Command = "KeepActive"
-			m_Input = "Ctrl"
-		},
-		
-		{
-			m_Context = "SessionCycleWidget"
-			m_Command = "NextSession"
-			m_Input = "Ctrl+Tab"
-		},
-		
-		{
-			m_Context = "SessionCycleWidget"
-			m_Command = "PreviousSession"
-			m_Input = "Ctrl+Shift+Tab"
-		},
-		
-		{
-			m_Context = "MapManifestWidget"
-			m_Command = "RefreshView"
-			m_Input = "F5"
-		},
-		
-		{
-			m_Context = "HammerObjectPropertyPopup"
-			m_Command = "HidePropertyWindow"
-			m_Input = "Alt+Enter"
-		},
-		
-		{
-			m_Context = "HammerObjectPropertyPopup"
-			m_Command = "HidePropertyWindow"
-			m_Input = "Alt+NumEnter"
-		},
-		
-		{
-			m_Context = "HammerObjectPropertyPopup"
-			m_Command = "HidePropertyWindow"
-			m_Input = "Esc"
-		},
-		
-		{
-			m_Context = "MapView"
-			m_Command = "ShowContextMenu"
-			m_Input = "RMouse"
-		},
-		
-		{
-			m_Context = "MapView"
-			m_Command = "MaterialTraceLift"
-			m_Input = "Shift+RMouse"
-		},
-		
-		{
-			m_Context = "MapView"
-			m_Command = "MaterialTraceLift"
-			m_Input = "Ctrl+M"
-		},
-		
-		{
-			m_Context = "MapView"
-			m_Command = "SnapCameraToTargetUnderMouse"
-			m_Input = "Shift+Alt+A"
-		},
-		
-		{
-			m_Context = "MapView"
-			m_Command = "DetachViewFromObject"
-			m_Input = "Ctrl+Backspace"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "2D_Top"
-			m_Input = "F2"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "2D_Front"
-			m_Input = "F3"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "2D_Side"
-			m_Input = "F4"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "3D_FullBrightNoLighting"
-			m_Input = "F5"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "3D_AllLighting"
-			m_Input = "F6"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "Rtx_Path_Tracing"
-			m_Input = "Ctrl+Shift+Alt+F11"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "3D_ToolsVis"
-			m_Input = "F7"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "ToggleWireframeOverlay"
-			m_Input = "F8"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "ToggleShadows"
-			m_Input = "F10"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "ToggleMeshEdges"
-			m_Input = "F11"
-		},
-		
-		{
-			m_Context = "PaneContainer"
-			m_Command = "RTX_Visualization"
-			m_Input = "Ctrl+Shift+Alt+F10"
+			m_Context = "HammerEditorSession"
+			m_Command = "CreateBoundingMesh"
+			m_Input = "Ctrl+Alt+C"
 		},
 		
 		{
@@ -948,6 +816,144 @@
 			m_Context = "HammerEditorSession"
 			m_Command = "ConvertObjectsToModel"
 			m_Input = "Ctrl+Shift+Alt+F5"
+		},
+		
+		{
+			m_Context = "SessionCycleWidget"
+			m_Command = "KeepActive"
+			m_Input = "Ctrl"
+		},
+		
+		{
+			m_Context = "SessionCycleWidget"
+			m_Command = "NextSession"
+			m_Input = "Ctrl+Tab"
+		},
+		
+		{
+			m_Context = "SessionCycleWidget"
+			m_Command = "PreviousSession"
+			m_Input = "Ctrl+Shift+Tab"
+		},
+		
+		{
+			m_Context = "MapManifestWidget"
+			m_Command = "RefreshView"
+			m_Input = "F5"
+		},
+		
+		{
+			m_Context = "HammerObjectPropertyPopup"
+			m_Command = "HidePropertyWindow"
+			m_Input = "Alt+Enter"
+		},
+		
+		{
+			m_Context = "HammerObjectPropertyPopup"
+			m_Command = "HidePropertyWindow"
+			m_Input = "Alt+NumEnter"
+		},
+		
+		{
+			m_Context = "HammerObjectPropertyPopup"
+			m_Command = "HidePropertyWindow"
+			m_Input = "Esc"
+		},
+		
+		{
+			m_Context = "MapView"
+			m_Command = "ShowContextMenu"
+			m_Input = "RMouse"
+		},
+		
+		{
+			m_Context = "MapView"
+			m_Command = "MaterialTraceLift"
+			m_Input = "Shift+RMouse"
+		},
+		
+		{
+			m_Context = "MapView"
+			m_Command = "MaterialTraceLift"
+			m_Input = "Ctrl+M"
+		},
+		
+		{
+			m_Context = "MapView"
+			m_Command = "SnapCameraToTargetUnderMouse"
+			m_Input = "Shift+Alt+A"
+		},
+		
+		{
+			m_Context = "MapView"
+			m_Command = "DetachViewFromObject"
+			m_Input = "Ctrl+Backspace"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "2D_Top"
+			m_Input = "F2"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "2D_Front"
+			m_Input = "F3"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "2D_Side"
+			m_Input = "F4"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "3D_FullBrightNoLighting"
+			m_Input = "F5"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "3D_AllLighting"
+			m_Input = "F6"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "Rtx_Path_Tracing"
+			m_Input = "Ctrl+Shift+Alt+F11"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "3D_ToolsVis"
+			m_Input = "F7"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleWireframeOverlay"
+			m_Input = "F8"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleShadows"
+			m_Input = "F10"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "ToggleMeshEdges"
+			m_Input = "F11"
+		},
+		
+		{
+			m_Context = "PaneContainer"
+			m_Command = "RTX_Visualization"
+			m_Input = "Ctrl+Shift+Alt+F10"
 		},
 		
 		{
