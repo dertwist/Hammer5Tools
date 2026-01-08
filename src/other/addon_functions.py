@@ -95,8 +95,42 @@ def __launch_addon():
 
 
 @exception_handler
+def configure_particle_editor():
+    """
+    Automatically configure the Particle Editor in sdkenginetools.txt.
+    Finds the "pet" (Particle Editor) entry and removes any m_ExcludeFromMods
+    restriction to ensure it's available for CS:GO addons.
+    """
+    cs2_path = get_cs2_path()
+    if cs2_path is None:
+        return
+    
+    sdk_tools_path = os.path.join(cs2_path, "game", "bin", "sdkenginetools.txt")
+    
+    if not os.path.exists(sdk_tools_path):
+        return
+    
+    try:
+        import re
+        
+        with open(sdk_tools_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+
+        pet_pattern = r'(\{\s*m_Name\s*=\s*"pet".*?m_AssetTypes\s*=\s*\[.*?"particle_asset".*?\])\s*m_ExcludeFromMods\s*=\s*\[.*?"dota".*?"csgo".*?\]\s*'
+        
+        modified_content = re.sub(pet_pattern, r'\1\n\n', content, flags=re.DOTALL)
+        
+        if modified_content != content:
+            with open(sdk_tools_path, 'w', encoding='utf-8') as file:
+                file.write(modified_content)
+    
+    except Exception as e:
+        pass
+
+@exception_handler
 def launch_addon():
     ensure_vsmart_configured()
+    configure_particle_editor()
     __launch_addon()
 
 
