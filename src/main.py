@@ -16,7 +16,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QLabel,
     QCheckBox,
-    QDockWidget
+    QDockWidget,
+    QDialog
 )
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtCore import (
@@ -129,6 +130,12 @@ class Widget(QMainWindow):
         self.ui.setupUi(self)
         enable_dark_title_bar(self)
 
+        self.preferences_dialog = None
+        self.mapbuilder_dialog = None
+        self.launch_options = None
+        self.Create_addon_Dialog = None
+        self.Delete_addon_Dialog = None
+
         #Checking for Counter Strike 2 installation
         if cs2_path is None:
             msg_box = QMessageBox()
@@ -152,13 +159,7 @@ class Widget(QMainWindow):
         # Setup tray icon early so that restoration has a fallback.
         self.setup_tray_icon()
         self.setup_tabs()
-        self.populate_addon_combobox()
         self.setup_buttons()
-        self.preferences_dialog = None
-        self.mapbuilder_dialog = None
-        self.launch_options = None
-        self.Create_addon_Dialog = None
-        self.Delete_addon_Dialog = None
         self.current_tab(False)
         self.settings = settings
 
@@ -301,7 +302,9 @@ class Widget(QMainWindow):
                     QMessageBox.Yes | QMessageBox.No
                 )
                 if response == QMessageBox.Yes:
-                    self.open_create_addon_dialog()
+                    Create_addon_Dialog(self).exec()
+                    self.refresh_addon_combobox()
+                    return
                 else:
                     self.ui.ComboBoxSelectAddon.addItem("")
                     self.ui.ComboBoxSelectAddon.setCurrentIndex(0)
@@ -422,6 +425,9 @@ class Widget(QMainWindow):
     @exception_handler
     def selected_addon_name(self, text=None):
         new_addon = self.ui.ComboBoxSelectAddon.currentText()
+        # If no addon selected, do nothing until user selects one
+        if not new_addon:
+            return
         if get_addon_name() == new_addon and getattr(self, 'SmartPropEditorMainWindow', None):
             return
 
