@@ -10,7 +10,7 @@ from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, 
 
 from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, debug
 from src.widgets.common import ErrorInfo
-from src.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess
+from src.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange
 from src.styles.common import *
 from src.common import enable_dark_title_bar
 
@@ -430,6 +430,7 @@ class Explorer(QMainWindow):
         file_extension = os.path.splitext(file_path)[1]
         file_path = self.model.filePath(index)
         file_extension = file_path.split('.')[-1].lower()
+        image_extensions = ["png", "tga", "jpg", "jpeg", "tif", "tiff"]
 
         if file_extension == "hbat":
             open_config_action = QAction("Open Config", self)
@@ -475,6 +476,14 @@ class Explorer(QMainWindow):
             quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
             quick_process_action.triggered.connect(lambda: QuickProcess(filepath=file_path).process())
             menu.addAction(quick_process_action)
+            menu.addSeparator()
+
+        # Fix PBR Range for images
+        if file_extension in image_extensions:
+            fix_pbr_action = QAction("Fix PBR Range", self)
+            fix_pbr_action.setIcon(QIcon(":/icons/contrast_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png"))
+            fix_pbr_action.triggered.connect(lambda: FixPBRRange(file_path))
+            menu.addAction(fix_pbr_action)
             menu.addSeparator()
 
         open_path_action = QAction("Open File Folder", self)
