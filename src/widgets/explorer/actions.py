@@ -5,6 +5,15 @@ from src.editors.assetgroup_maker.objects import DEFAULT_VMDL, get_default_file
 from src.settings.main import get_addon_dir, debug
 from src.editors.assetgroup_maker.process import perform_batch_processing
 
+# Optional dependencies for image processing
+try:
+    import numpy as np
+    from PIL import Image
+except Exception as _e:
+    np = None
+    Image = None
+    # Handled at runtime with debug logs
+
 class QuickVmdlFile():
     def __init__(self, filepath):
         model_path = os.path.relpath(filepath, get_addon_dir())
@@ -133,3 +142,68 @@ class QuickProcess:
             debug(f"Quick process completed for {self._filepath}")
         except Exception as e:
             debug(f"QuickProcess error for {self._filepath}: {e}")
+
+
+def FixPBRRange(filepath: str, low: float = 0.25, high: float = 0.99) -> bool:
+    """
+    Clamp the image RGB channels to [low, high] in normalized 0..1 space.
+    Alpha (if present) is preserved. Overwrites file in-place.
+    Returns True on success.
+    """
+    try:
+        if Image is None or np is None:
+            debug("FixPBRRange: Pillow or NumPy not available. Install 'Pillow' and 'numpy'.")
+            return False
+        if not os.path.isfile(filepath):
+            debug(f"FixPBRRange: file not found: {filepath}")
+            return False
+
+        img = Image.open(filepath)
+        original_mode = img.mode
+        if original_mode in ("P",):
+            img = img.convert("RGBA")
+        elif original_mode in ("CMYK", "YCbCr"):
+            img = img.convert("RGB")
+
+        arr = np.array(img)
+
+        def clamp_norm(chan, lo, hi, max_val, dtype):
+            f = chan.astype(np.float32) / max_val
+            f = np.clip(f, lo, hi)
+            f = (f * max_val).round()
+            f = np.clip(f, 0, max_val)
+            return f.astype(dtype)
+
+        if arr.ndim == 2:
+            # single-channel
+            if np.issubdtype(arr.dtype, np.integer):
+                max_val = float(np.iinfo(arr.dtype).max)
+            else:
+                max_val = 1.0
+            out = clamp_norm(arr, low, high, max_val, arr.dtype)
+        else:
+            ch = arr.shape[-1]
+            if np.issubdtype(arr.dtype, np.integer):
+                max_val = float(np.iinfo(arr.dtype).max)
+            else:
+                max_val = 1.0
+            if ch == 4:
+                rgb = clamp_norm(arr[..., :3], low, high, max_val, arr.dtype)
+                a = arr[..., 3]
+                out = np.dstack([rgb, a])
+            else:
+                rgb = clamp_norm(arr[..., :3], low, high, max_val, arr.dtype)
+                out = rgb
+
+        out_img = Image.fromarray(out)
+        try:
+            if original_mode in ("RGB", "RGBA", "L"):
+                out_img = out_img.convert(original_mode)
+        except Exception:
+            pass
+        out_img.save(filepath)
+        debug(f"FixPBRRange: clamped '{filepath}' to [{low}, {high}]")
+        return True
+    except Exception as e:
+        debug(f"FixPBRRange error for '{filepath}': {e}")
+        return False
