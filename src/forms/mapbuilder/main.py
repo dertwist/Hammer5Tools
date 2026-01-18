@@ -30,6 +30,7 @@ from src.forms.mapbuilder.system_monitor import SystemMonitor
 from src.forms.mapbuilder.output_formater import OutputFormatter
 from src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings
 from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
+from src.forms.mapbuilder.cs2_remote_console import CS2RemoteConsoleController
 from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value
 from src.common import enable_dark_title_bar, app_dir
 
@@ -253,19 +254,21 @@ class MapBuilderDialog(QMainWindow):
         self.current_build_logs = []
         self.current_build_timestamp = None
 
-        # Batch processing state
-        self.batch_queue = []  # list of relative map paths
+        # Batch processing state - Phase 1: Compilation
+        self.batch_queue = []  # list of relative map paths to compile
         self.current_batch_index = 0
-        self.batch_stats = []  # list of dicts per map
+        self.batch_stats = []  # list of dicts per map with timing data
         self.current_map_stats = {}
         self.is_batch_mode = False
+        self.batch_start_time = None
 
-        # CS2 automation/monitoring
-        self.vpk_timer = None
+        # Batch processing state - Phase 2: CS2 Baking via RemoteConsole
+        self.cs2_queue = []  # list of successfully compiled maps to bake
         self.cs2_process = None
-        self.target_vpk = None
-        self.initial_vpk_mtime = 0.0
-        self.current_map_rel = None
+        self.remote_console_controller = None
+        self.bake_timer = None
+        self.bake_index = 0
+        self.cs2_initialized = False
 
     def setup_settings_panel(self):
         """Setup dynamically generated settings panel"""
@@ -467,13 +470,16 @@ class MapBuilderDialog(QMainWindow):
 
         # Determine batch mode
         self.is_batch_mode = len(mappaths) > 1
-        print(self.is_batch_mode)
         if self.is_batch_mode:
-            # Initialize batch
+            # Initialize batch - Phase 1: Compilation
             self.batch_queue = mappaths
             self.current_batch_index = 0
             self.batch_stats = []
-            self.add_log_message(f"Batch mode: queued {len(self.batch_queue)} maps")
+            self.cs2_queue = []
+            self.batch_start_time = time.time()
+            self.add_log_message("=" * 70)
+            self.add_log_message(f"PHASE 1: Batch compilation - queued {len(self.batch_queue)} maps")
+            self.add_log_message("=" * 70)
 
             # Kick off the first compile without clearing logs
             self.process_next_batch_map()
@@ -585,44 +591,22 @@ class MapBuilderDialog(QMainWindow):
         except Exception as e:
             print(f"Failed to save LastBuildTime: {e}")
 
-        # Batch handling: on success, launch CS2 and start VPK monitor; on failure, continue to next map
+        # Batch handling: Phase 1 - Compilation phase
         if self.is_batch_mode:
             if exit_code == 0:
-                try:
-                    # Record total compile time in stats (human readable)
-                    self.current_map_stats = self.current_map_stats or {}
-                    self.current_map_stats['Total'] = self.format_time(elapsed_time)
-
-                    addon_name = get_addon_name()
-                    map_name = Path(self.current_map_rel or '').stem
-                    cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
-                    launch_cmd = f'"{cs2_exe}" -tools -gpuraytracing -addon {addon_name} +map_workshop {addon_name} {map_name} +buildcubemaps +minimap_create'
-                    self.add_log_message(f"Launching CS2 for baking: {launch_cmd}")
-
-                    # Determine VPK target path (addon workspace)
-                    self.target_vpk = str(Path(self.cs2_path) / "game" / "csgo_addons" / addon_name / "maps" / f"{map_name}.vpk")
-                    print(" self.target_vpk " +  self.target_vpk)
-
-                    # Capture initial mtime (0 if not existing)
-                    try:
-                        self.initial_vpk_mtime = os.path.getmtime(self.target_vpk)
-                    except Exception:
-                        self.initial_vpk_mtime = 0.0
-
-                    # Launch CS2 and start monitoring
-                    self.cs2_process = subprocess.Popen(launch_cmd, shell=True)
-
-                    if self.vpk_timer is None:
-                        self.vpk_timer = QTimer()
-                        self.vpk_timer.timeout.connect(self.check_vpk_change)
-                    self.vpk_timer.start(1500)
-                except Exception as e:
-                    self.add_log_message(f"Failed to launch CS2 for baking: {e}")
-                    # Proceed to next map
-                    self.process_next_batch_map()
+                # Record total compile time in stats (human readable)
+                self.current_map_stats = self.current_map_stats or {}
+                self.current_map_stats['Total'] = self.format_time(elapsed_time)
+                
+                # Add to baking queue for Phase 2
+                map_name = Path(self.current_map_rel or '').stem
+                self.cs2_queue.append(map_name)
+                self.add_log_message(f"✓ {map_name} compiled successfully, added to baking queue")
             else:
-                self.add_log_message("Compilation failed for current map, proceeding to next in batch.")
-                self.process_next_batch_map()
+                self.add_log_message(f"✗ Compilation failed for {Path(self.current_map_rel or '').stem}, skipping baking")
+            
+            # Continue to next map compilation
+            self.process_next_batch_map()
             return
 
         if exit_code == 0:
@@ -644,15 +628,18 @@ class MapBuilderDialog(QMainWindow):
                 self.add_log_message(f"Failed to launch after build: {e}")
 
     def process_next_batch_map(self):
-        """Controller to process the next map in the batch queue"""
+        """Phase 1: Compile the next map in the batch queue"""
         try:
             # Stop re-entry if a compile is running
             if self.compilation_thread and self.compilation_thread.isRunning():
                 return
 
-            # If finished, summarize
+            # If finished with compilation phase, move to baking phase
             if self.current_batch_index >= len(self.batch_queue):
-                self.finish_batch()
+                self.add_log_message("\n" + "=" * 70)
+                self.add_log_message("PHASE 1 COMPLETE: All maps compiled")
+                self.add_log_message("=" * 70)
+                self.start_batch_baking()
                 return
 
             rel = self.batch_queue[self.current_batch_index]
@@ -680,83 +667,222 @@ class MapBuilderDialog(QMainWindow):
             self.dot_cycle = 0
             self.elapsed_timer.start(500)
 
-            self.add_log_message(f"Starting compilation ({self.current_batch_index}/{len(self.batch_queue)}): {rel}")
-            self.add_log_message(f"Command: {command}")
+            self.add_log_message(f"Compiling ({self.current_batch_index}/{len(self.batch_queue)}): {rel}")
 
             self.compilation_thread.start()
         except Exception as e:
-            self.add_log_message(f"Batch controller error: {e}")
+            self.add_log_message(f"Batch compilation error: {e}")
             self.finish_batch()
 
-    def check_vpk_change(self):
-        """Timer callback to monitor VPK modification time and terminate CS2 when done."""
-        try:
-            if not self.target_vpk:
-                return
-            current_mtime = os.path.getmtime(self.target_vpk)
-            if current_mtime > self.initial_vpk_mtime:
-                # Stop monitoring and kill CS2
-                if self.vpk_timer:
-                    self.vpk_timer.stop()
-                self.kill_cs2()
 
-                # Store stats for this map and proceed
-                self.batch_stats.append(self.current_map_stats.copy())
-                self.add_log_message(f"Baking detected for {self.current_map_stats.get('Map','')}, proceeding to next map...")
-                self.process_next_batch_map()
-        except OSError:
-            # Target may not exist yet; ignore until created
-            pass
+    def start_batch_baking(self):
+        """Phase 2: Launch CS2 once and use RemoteConsole to bake all maps"""
+        if not self.cs2_queue:
+            self.add_log_message("No maps to bake. Finishing batch.")
+            self.finish_batch()
+            return
+
+        self.add_log_message("\n" + "=" * 70)
+        self.add_log_message(f"PHASE 2: Starting CS2 baking for {len(self.cs2_queue)} maps via RemoteConsole")
+        self.add_log_message("=" * 70)
+
+        try:
+            addon_name = get_addon_name()
+            cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
+            
+            # Check for vconsole2.exe interference
+            try:
+                result = subprocess.run(
+                    ["tasklist", "/FI", "IMAGENAME eq vconsole2.exe"],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                if "vconsole2.exe" in result.stdout:
+                    self.add_log_message("⚠ WARNING: vconsole2.exe is running and may interfere with RemoteConsole")
+                    self.add_log_message("  Consider closing it before proceeding")
+            except Exception:
+                pass
+            
+            # Launch CS2 with console enabled
+            launch_cmd = f'"{cs2_exe}" -tools -gpuraytracing -addon {addon_name} -console'
+            self.add_log_message(f"Launching CS2: {launch_cmd}")
+            
+            self.cs2_process = subprocess.Popen(launch_cmd, shell=True)
+            self.cs2_initialized = False
+            self.bake_index = 0
+            
+            # Wait for CS2 to initialize before connecting RemoteConsole
+            if self.bake_timer is None:
+                self.bake_timer = QTimer()
+                self.bake_timer.timeout.connect(self.process_next_bake)
+            
+            # Start with a longer delay for CS2 initialization (~15 seconds)
+            self.bake_timer.start(15000)
+            self.add_log_message("Waiting for CS2 initialization...")
+            
         except Exception as e:
-            self.add_log_message(f"VPK monitor error: {e}")
-            # Attempt to proceed to avoid stalling
-            if self.vpk_timer:
-                self.vpk_timer.stop()
-            self.process_next_batch_map()
+            self.add_log_message(f"Failed to launch CS2 for baking: {e}")
+            self.finish_batch()
+
+    def process_next_bake(self):
+        """Send RemoteConsole commands to bake the next map"""
+        try:
+            # First call: connect RemoteConsole to CS2
+            if not self.cs2_initialized:
+                self.cs2_initialized = True
+                self.add_log_message("CS2 initialized, connecting RemoteConsole...")
+                
+                # Stop the initialization timer
+                self.bake_timer.stop()
+
+                remote_console_path = Path(__file__).parent.parent.parent / 'external' / 'RemoteConsole' /'CS2RemoteConsole-client.exe'
+                
+                if not remote_console_path.exists():
+                    self.add_log_message(f"ERROR: CS2RemoteConsole not found at {remote_console_path}")
+                    self.add_log_message("Please ensure CS2 is properly installed with RemoteConsole support")
+                    self.kill_cs2()
+                    self.finish_batch()
+                    return
+                
+                # Create and connect RemoteConsole controller
+                self.remote_console_controller = CS2RemoteConsoleController(
+                    cs2_remote_console_path=str(remote_console_path),
+                    log_callback=self.add_log_message
+                )
+                
+                if not self.remote_console_controller.connect(timeout=10.0):
+                    self.add_log_message("ERROR: Failed to connect RemoteConsole to CS2")
+                    self.kill_cs2()
+                    self.finish_batch()
+                    return
+                
+                self.add_log_message("✓ RemoteConsole connected, starting baking sequence...")
+                
+                # Restart timer for baking commands (shorter interval)
+                self.bake_timer.start(10000)  # 10 seconds between maps
+                return
+
+            # Check if we're done
+            if self.bake_index >= len(self.cs2_queue):
+                self.add_log_message("\nAll maps baked. Closing RemoteConsole and CS2...")
+                self.bake_timer.stop()
+                
+                if self.remote_console_controller:
+                    self.remote_console_controller.disconnect()
+                    self.remote_console_controller = None
+                
+                self.kill_cs2()
+                self.finish_batch()
+                return
+
+            if not self.remote_console_controller:
+                self.add_log_message("ERROR: RemoteConsole controller not initialized")
+                self.bake_timer.stop()
+                self.kill_cs2()
+                self.finish_batch()
+                return
+
+            map_name = self.cs2_queue[self.bake_index]
+            addon_name = get_addon_name()
+            
+            self.add_log_message(f"\nBaking map ({self.bake_index + 1}/{len(self.cs2_queue)}): {map_name}")
+            
+            try:
+                # Send baking commands via RemoteConsole
+                self.remote_console_controller.send_command(f"map_workshop {addon_name} {map_name}")
+                time.sleep(1)
+                
+                self.remote_console_controller.send_command("buildcubemaps")
+                time.sleep(1)
+                
+                self.remote_console_controller.send_command("minimap_create")
+                
+                self.add_log_message(f"✓ Baking commands sent for {map_name}")
+                
+            except Exception as e:
+                self.add_log_message(f"Warning: Error sending baking commands: {e}")
+
+            self.bake_index += 1
+            
+        except Exception as e:
+            self.add_log_message(f"Baking error: {e}")
+            self.bake_timer.stop()
+            
+            if self.remote_console_controller:
+                self.remote_console_controller.disconnect()
+                self.remote_console_controller = None
+            
+            self.kill_cs2()
+            self.finish_batch()
 
     def kill_cs2(self):
+        """Terminate CS2 process"""
         try:
+            if self.remote_console_controller:
+                self.remote_console_controller.disconnect()
+                self.remote_console_controller = None
+            
             if self.cs2_process and getattr(self.cs2_process, 'pid', None):
                 pid = self.cs2_process.pid
                 subprocess.run(['taskkill', '/F', '/T', '/PID', str(pid)], capture_output=True, check=False)
+                self.add_log_message("CS2 process terminated")
         except Exception:
             pass
         finally:
             self.cs2_process = None
 
     def finish_batch(self):
-        # End-of-batch summary
+        """End-of-batch summary and statistics"""
         try:
             self.is_compiling = False
             self.ui.build_button.setEnabled(True)
             self.ui.abort_button.setEnabled(False)
-            if self.vpk_timer:
-                self.vpk_timer.stop()
+            
+            if self.vconsole_timer:
+                self.vconsole_timer.stop()
 
             # Build summary table
-            self.add_log_message("\n" + "=" * 70)
-            self.add_log_message("BATCH COMPLETE - SUMMARY")
-            self.add_log_message("=" * 70)
+            self.add_log_message("\n" + "=" * 80)
+            self.add_log_message("BATCH COMPLETE - FINAL SUMMARY")
+            self.add_log_message("=" * 80)
             
             # Header with better formatting
-            header = f"{'Map Name':<20} | {'Total':<12} | {'Compile':<12} | {'Lightmap':<12}"
+            header = f"{'Map Name':<20} | {'Total':<12} | {'Compile':<12} | {'Lightmap':<12} | {'Light':<12}"
             self.add_log_message(header)
-            self.add_log_message("-" * 70)
+            self.add_log_message("-" * 80)
             
             # Rows for each map
+            total_time = 0.0
             for entry in self.batch_stats:
                 map_name = entry.get('Map', 'unknown')[:20]
                 total = entry.get('Total', 'N/A')[:12]
                 compile_time = entry.get('CompileTime', 'N/A')[:12]
                 lightmap_time = entry.get('Lightmap', 'N/A')[:12]
-                row = f"{map_name:<20} | {total:<12} | {compile_time:<12} | {lightmap_time:<12}"
+                light_time = entry.get('Light', 'N/A')[:12]
+                row = f"{map_name:<20} | {total:<12} | {compile_time:<12} | {lightmap_time:<12} | {light_time:<12}"
                 self.add_log_message(row)
             
-            self.add_log_message("=" * 70)
+            self.add_log_message("=" * 80)
             
-            # Calculate and display total batch time
+            # Statistics
             if self.batch_stats:
-                self.add_log_message(f"Total maps processed: {len(self.batch_stats)}")
+                self.add_log_message(f"Total maps compiled: {len(self.batch_stats)}")
+                self.add_log_message(f"Total maps baked: {len(self.cs2_queue)}")
+                
+                # Calculate total batch time
+                if self.batch_start_time:
+                    batch_elapsed = time.time() - self.batch_start_time
+                    self.add_log_message(f"Total batch time: {self.format_time(batch_elapsed)}")
+                    
+                    # Estimate per-map average
+                    if len(self.cs2_queue) > 0:
+                        avg_time = batch_elapsed / len(self.cs2_queue)
+                        self.add_log_message(f"Average time per map: {self.format_time(avg_time)}")
+            
+            self.add_log_message("=" * 80)
+            winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
+            
         except Exception as e:
             self.add_log_message(f"Error finishing batch: {e}")
 
