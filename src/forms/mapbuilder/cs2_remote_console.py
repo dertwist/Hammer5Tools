@@ -80,6 +80,21 @@ class CS2RemoteConsoleController:
         """Log a message via callback"""
         self.log_callback(message)
 
+    def is_alive(self) -> bool:
+        """
+        Check if the PTY is still alive and responsive.
+        
+        Returns:
+            True if PTY is alive, False otherwise
+        """
+        if not self.pty:
+            return False
+        
+        try:
+            # Check if the PTY process is still running
+            return self.pty.isalive()
+        except Exception:
+            return False
 
     def connect(self, timeout: float = 10.0) -> bool:
         """
@@ -113,6 +128,11 @@ class CS2RemoteConsoleController:
             # Wait for connection prompt/response
             start_time = time.time()
             while time.time() - start_time < timeout:
+                if not self.is_alive():
+                    self._log("ERROR: RemoteConsole process died during connection")
+                    self.connected = False
+                    return False
+                
                 try:
                     output = self.pty.read()
                     if output:
@@ -134,10 +154,15 @@ class CS2RemoteConsoleController:
                 
                 time.sleep(0.1)
             
-            # If we got here, assume connected (RemoteConsole may not always print "connected")
-            self.connected = True
-            self._log("✓ RemoteConsole PTY established (assuming connected)")
-            return True
+            # If we got here, check if PTY is still alive
+            if self.is_alive():
+                self.connected = True
+                self._log("✓ RemoteConsole PTY established (assuming connected)")
+                return True
+            else:
+                self._log("ERROR: RemoteConsole PTY closed unexpectedly")
+                self.connected = False
+                return False
             
         except Exception as e:
             self._log(f"ERROR: Failed to connect: {e}")
@@ -158,6 +183,12 @@ class CS2RemoteConsoleController:
         if not self.connected or not self.pty:
             self._log(f"ERROR: Not connected to RemoteConsole")
             return ""
+        
+        # Check if PTY is still alive before sending
+        if not self.is_alive():
+            self._log(f"ERROR: RemoteConsole PTY is not alive (process may have terminated)")
+            self.connected = False
+            return ""
 
         try:
             self._log(f"Sending: {command}")
@@ -169,6 +200,11 @@ class CS2RemoteConsoleController:
             response = ""
             start_time = time.time()
             while time.time() - start_time < wait_time:
+                if not self.is_alive():
+                    self._log("WARNING: RemoteConsole PTY closed during command execution")
+                    self.connected = False
+                    break
+                
                 try:
                     output = self.pty.read()
                     if output:
@@ -187,7 +223,12 @@ class CS2RemoteConsoleController:
             return response
             
         except Exception as e:
-            self._log(f"ERROR: Failed to send command: {e}")
+            error_msg = str(e)
+            if "pty is closed" in error_msg.lower() or "closed" in error_msg.lower():
+                self._log(f"ERROR: RemoteConsole PTY closed unexpectedly")
+                self.connected = False
+            else:
+                self._log(f"ERROR: Failed to send command: {e}")
             return ""
 
 
@@ -211,6 +252,12 @@ class CS2RemoteConsoleController:
         if not self.connected or not self.pty:
             self._log(f"ERROR: Not connected to RemoteConsole")
             return False
+        
+        # Check if PTY is still alive before sending
+        if not self.is_alive():
+            self._log(f"ERROR: RemoteConsole PTY is not alive")
+            self.connected = False
+            return False
 
         try:
             self._log(f"Sending: {command} (waiting for '{marker}')")
@@ -222,6 +269,11 @@ class CS2RemoteConsoleController:
             start_time = time.time()
             accumulated = ""
             while time.time() - start_time < timeout:
+                if not self.is_alive():
+                    self._log("WARNING: RemoteConsole PTY closed while waiting for marker")
+                    self.connected = False
+                    return False
+                
                 try:
                     output = self.pty.read()
                     if output:
@@ -246,7 +298,12 @@ class CS2RemoteConsoleController:
             return False
             
         except Exception as e:
-            self._log(f"ERROR: Failed to send command: {e}")
+            error_msg = str(e)
+            if "pty is closed" in error_msg.lower() or "closed" in error_msg.lower():
+                self._log(f"ERROR: RemoteConsole PTY closed unexpectedly")
+                self.connected = False
+            else:
+                self._log(f"ERROR: Failed to send command: {e}")
             return False
 
 
@@ -255,15 +312,34 @@ class CS2RemoteConsoleController:
         try:
             if self.pty:
                 self._log("Disconnecting from RemoteConsole...")
-                self.pty.write("quit\r\n")
-                time.sleep(0.5)
-                self.pty.terminate()
+                
+                # Only try to send quit if PTY is still alive
+                if self.is_alive():
+                    try:
+                        self.pty.write("quit\r\n")
+                        time.sleep(0.5)
+                    except Exception as e:
+                        self._log(f"Note: Could not send quit command: {e}")
+                
+                # Terminate the PTY process
+                try:
+                    if self.is_alive():
+                        self.pty.terminate(force=True)
+                except Exception as e:
+                    self._log(f"Note: PTY already terminated: {e}")
+                
                 self.pty = None
+            
             self.connected = False
             self._log("✓ Disconnected")
+            
         except Exception as e:
-            self._log(f"Warning: Error during disconnect: {e}")
+            # Don't report "Pty is closed" as an error during disconnect
+            error_msg = str(e)
+            if "pty is closed" not in error_msg.lower():
+                self._log(f"Warning: Error during disconnect: {e}")
             self.connected = False
+            self.pty = None
 
     def __enter__(self):
         """Context manager entry"""
