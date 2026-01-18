@@ -30,7 +30,7 @@ from src.forms.mapbuilder.system_monitor import SystemMonitor
 from src.forms.mapbuilder.output_formater import OutputFormatter
 from src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings
 from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
-from src.forms.mapbuilder.cs2_vconsole_controller import CS2VConsoleController
+from VConsoleLib.vconsole2_lib import VConsole2Lib
 from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value
 from src.common import enable_dark_title_bar, app_dir
 from src.other.addon_functions import launch_addon
@@ -549,18 +549,18 @@ class MapBuilderDialog(QMainWindow):
         try:
             if not isinstance(self.current_map_stats, dict):
                 self.current_map_stats = {}
-            
+
             # Match various timing patterns from compiler output
             # Pattern: "Baked Lighting Total Time : (0 hrs 0 mins 13 seconds)"
             m = re.search(r"Baked Lighting Total Time\s*:\s*\(([^)]+)\)", line, re.IGNORECASE)
             if m:
                 self.current_map_stats['Light'] = m.group(1).strip()
-            
+
             # Pattern: "Lightmapping took 3.77 seconds"
             m = re.search(r"Lightmapping took\s+([0-9\.]+\s+seconds)", line, re.IGNORECASE)
             if m:
                 self.current_map_stats['Lightmap'] = m.group(1).strip()
-            
+
             # Pattern: "Compile of 1 file(s)... took 14.930 seconds"
             m = re.search(r"Compile of.*took\s+([0-9\.]+\s+seconds)", line, re.IGNORECASE)
             if m:
@@ -598,14 +598,14 @@ class MapBuilderDialog(QMainWindow):
                 # Record total compile time in stats (human readable)
                 self.current_map_stats = self.current_map_stats or {}
                 self.current_map_stats['Total'] = self.format_time(elapsed_time)
-                
+
                 # Add to baking queue for Phase 2
                 map_name = Path(self.current_map_rel or '').stem
                 self.cs2_queue.append(map_name)
                 self.add_log_message(f"✓ {map_name} compiled successfully, added to baking queue")
             else:
                 self.add_log_message(f"✗ Compilation failed for {Path(self.current_map_rel or '').stem}, skipping baking")
-            
+
             # Continue to next map compilation
             self.process_next_batch_map()
             return
@@ -675,6 +675,19 @@ class MapBuilderDialog(QMainWindow):
             self.add_log_message(f"Batch compilation error: {e}")
             self.finish_batch()
 
+    def _on_vconsole_disconnected(self, vconsole):
+        self.add_log_message("VConsole disconnected")
+
+    def _on_vconsole_adon_received(self, vconsole, name):
+        self.add_log_message(f"VConsole: Addon received: {name}")
+
+    def _on_vconsole_cvars_loaded(self, vconsole, cvars):
+        self.add_log_message("VConsole: Cvars loaded")
+
+    def _on_vconsole_prnt_received(self, vconsole, channel_name, msg):
+        # Optional: Filter out noisy channels if needed
+        self.add_log_message(f"[{channel_name}] {msg}")
+
 
     def start_batch_baking(self):
         """Phase 2: Launch CS2 once and use VConsole2Lib to bake all maps"""
@@ -690,38 +703,47 @@ class MapBuilderDialog(QMainWindow):
         try:
             addon_name = get_addon_name()
             cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
-            
-            # Check for vconsole2.exe interference (it can take the socket)
+
+            # Check for vconsole2.exe interference
             try:
                 result = subprocess.run(
                     ["tasklist", "/FI", "IMAGENAME eq vconsole2.exe"],
-                    capture_output=True,
-                    text=True,
-                    check=False
+                    capture_output=True, text=True, check=False
                 )
                 if "vconsole2.exe" in result.stdout:
                     self.add_log_message("⚠ WARNING: vconsole2.exe is running and may block VConsole2 connections")
-                    self.add_log_message("  Consider closing it before proceeding")
             except Exception:
                 pass
-            
+
+            # Initialize VConsole2Lib
+            self.vconsole = VConsole2Lib()
+            self.vconsole.html_output = False
+            self.vconsole.log_to_screen = False  # Set to False since we redirect to UI
+            self.vconsole.channels_custom_color = {'VConComm': '009900', 'VScript': '3333CC'}
+
+            # Bind callbacks
+            self.vconsole.on_disconnected = self._on_vconsole_disconnected
+            self.vconsole.on_adon_received = self._on_vconsole_adon_received
+            self.vconsole.on_cvars_loaded = self._on_vconsole_cvars_loaded
+            self.vconsole.on_prnt_received = self._on_vconsole_prnt_received
+
             # Launch CS2 with console enabled
             launch_cmd = f'"{cs2_exe}" -tools -gpuraytracing -addon {addon_name} -console'
             self.add_log_message(f"Launching CS2: {launch_cmd}")
-            
+
             self.cs2_process = subprocess.Popen(launch_cmd, shell=True)
             self.cs2_initialized = False
             self.bake_index = 0
-            
+
             # Wait for CS2 to initialize before connecting VConsole
             if self.bake_timer is None:
                 self.bake_timer = QTimer()
                 self.bake_timer.timeout.connect(self.process_next_bake)
-            
+
             # Start with a longer delay for CS2 initialization
-            self.bake_timer.start(30000)
+            self.bake_timer.start(15000)
             self.add_log_message("Waiting for CS2 initialization...")
-            
+
         except Exception as e:
             self.add_log_message(f"Failed to launch CS2 for baking: {e}")
             self.finish_batch()
@@ -733,42 +755,47 @@ class MapBuilderDialog(QMainWindow):
             if not self.cs2_initialized:
                 self.cs2_initialized = True
                 self.add_log_message("CS2 initialized, connecting VConsole2Lib...")
-                
+
                 # Stop the initialization timer
                 self.bake_timer.stop()
 
-                # Create and connect VConsole2Lib controller (direct socket)
-                self.remote_console_controller = CS2VConsoleController(
-                    log_callback=self.add_log_message
-                )
-                
-                # Allow time for CS2 to open the VConsole port
-                if not self.remote_console_controller.connect(timeout=30.0):
+                # Attempt connection with a timeout loop (similar to the working example but safe for GUI)
+                connected = False
+                start_time = time.time()
+                self.add_log_message("Trying connect...")
+
+                # Try to connect for up to 5 seconds
+                while time.time() - start_time < 5.0:
+                    if self.vconsole.connect():
+                        connected = True
+                        break
+                    time.sleep(1)  # Wait 1s between attempts, just like the working example
+
+                if not connected:
                     self.add_log_message("ERROR: Failed to connect VConsole2Lib to CS2")
                     self.kill_cs2()
                     self.finish_batch()
                     return
-                
+
                 self.add_log_message("✓ VConsole2Lib connected, starting baking sequence...")
-                
-                # Restart timer for baking commands (shorter interval)
-                self.bake_timer.start(45000)  # 45 seconds between maps for stability
+
+                # Restart timer for baking commands
+                self.bake_timer.start(15)
                 return
 
             # Check if we're done
             if self.bake_index >= len(self.cs2_queue):
                 self.add_log_message("\nAll maps baked. Closing VConsole2Lib and CS2...")
                 self.bake_timer.stop()
-                
-                if self.remote_console_controller:
-                    self.remote_console_controller.disconnect()
-                    self.remote_console_controller = None
-                
+
+                # Cleanup
+                self.vconsole = None  # VConsole2Lib doesn't seem to have a disconnect() method in the snippet, just dereference
+
                 self.kill_cs2()
                 self.finish_batch()
                 return
 
-            if not self.remote_console_controller:
+            if not self.vconsole:
                 self.add_log_message("ERROR: VConsole2Lib controller not initialized")
                 self.bake_timer.stop()
                 self.kill_cs2()
@@ -777,41 +804,35 @@ class MapBuilderDialog(QMainWindow):
 
             map_name = self.cs2_queue[self.bake_index]
             addon_name = get_addon_name()
-            
+
             self.add_log_message(f"\nBaking map ({self.bake_index + 1}/{len(self.cs2_queue)}): {map_name}")
-            
+
             try:
-                # Focus CS2 window before baking
-                self.remote_console_controller.bring_cs2_to_front()
-                time.sleep(1)
-                
                 # Send baking commands via VConsole2Lib
-                # The controller now handles auto-reconnection internally
-                if not self.remote_console_controller.send_command(f"map_workshop {addon_name} {map_name}"):
-                    self.add_log_message(f"Warning: Failed to load map {map_name}")
-                    
+                self.vconsole.send_cmd(f"map_workshop {addon_name} {map_name}")
+
+                # Wait for map load
                 time.sleep(12)
-                
-                if not self.remote_console_controller.send_command("buildcubemaps"):
-                    self.add_log_message(f"Warning: Failed to build cubemaps for {map_name}")
-                    
+
+                self.vconsole.send_cmd("buildcubemaps")
+
+                # Wait for build
                 time.sleep(12)
-                
+
                 self.add_log_message(f"✓ Baking commands sent for {map_name}")
-                
+
             except Exception as e:
                 self.add_log_message(f"Warning: Error sending baking commands: {e}")
 
+            # Move to next map
             self.bake_index += 1
-            
+
+            # Schedule next bake (allow time for current bake to finish)
+            # Adjust this timing based on how long baking usually takes
+            self.bake_timer.start(45000)
+
         except Exception as e:
-            self.add_log_message(f"Baking error: {e}")
-            self.bake_timer.stop()
-            
-            if self.remote_console_controller:
-                self.remote_console_controller.disconnect()
-                self.remote_console_controller = None
-            
+            self.add_log_message(f"Error in baking process: {e}")
             self.kill_cs2()
             self.finish_batch()
 
@@ -821,7 +842,7 @@ class MapBuilderDialog(QMainWindow):
             if self.remote_console_controller:
                 self.remote_console_controller.disconnect()
                 self.remote_console_controller = None
-            
+
             if self.cs2_process and getattr(self.cs2_process, 'pid', None):
                 pid = self.cs2_process.pid
                 subprocess.run(['taskkill', '/F', '/T', '/PID', str(pid)], capture_output=True, check=False)
@@ -842,12 +863,12 @@ class MapBuilderDialog(QMainWindow):
             self.add_log_message("\n" + "=" * 80)
             self.add_log_message("BATCH COMPLETE - FINAL SUMMARY")
             self.add_log_message("=" * 80)
-            
+
             # Header with better formatting
             header = f"{'Map Name':<20} | {'Total':<12} | {'Compile':<12} | {'Lightmap':<12} | {'Light':<12}"
             self.add_log_message(header)
             self.add_log_message("-" * 80)
-            
+
             # Rows for each map
             total_time = 0.0
             for entry in self.batch_stats:
@@ -858,28 +879,28 @@ class MapBuilderDialog(QMainWindow):
                 light_time = entry.get('Light', 'N/A')[:12]
                 row = f"{map_name:<20} | {total:<12} | {compile_time:<12} | {lightmap_time:<12} | {light_time:<12}"
                 self.add_log_message(row)
-            
+
             self.add_log_message("=" * 80)
-            
+
             # Statistics
             if self.batch_stats:
                 self.add_log_message(f"Total maps compiled: {len(self.batch_stats)}")
                 self.add_log_message(f"Total maps baked: {len(self.cs2_queue)}")
-                
+
                 # Calculate total batch time
                 if self.batch_start_time:
                     batch_elapsed = time.time() - self.batch_start_time
                     self.add_log_message(f"Total batch time: {self.format_time(batch_elapsed)}")
-                    
+
                     # Estimate per-map average
                     if len(self.cs2_queue) > 0:
                         avg_time = batch_elapsed / len(self.cs2_queue)
                         self.add_log_message(f"Average time per map: {self.format_time(avg_time)}")
-            
+
             self.add_log_message("=" * 80)
             winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
             launch_addon()
-            
+
         except Exception as e:
             self.add_log_message(f"Error finishing batch: {e}")
 
