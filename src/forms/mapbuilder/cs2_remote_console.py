@@ -9,6 +9,7 @@ Strips ANSI escape codes (colors, cursor movements) from TUI output for readabil
 import os
 import time
 import re
+import winpty
 import subprocess
 from pathlib import Path
 from typing import Optional, Callable
@@ -106,11 +107,6 @@ class CS2RemoteConsoleController:
         Returns:
             True if connected, False otherwise
         """
-        try:
-            import winpty
-        except ImportError:
-            self._log("ERROR: pywinpty not installed. Install with: pip install pywinpty")
-            return False
 
         if not Path(self.cs2_remote_console_path).exists():
             self._log(f"ERROR: CS2RemoteConsole not found at {self.cs2_remote_console_path}")
