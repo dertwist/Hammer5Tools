@@ -8,6 +8,7 @@ Replaces the legacy PTY-based RemoteConsole implementation.
 """
 import socket
 import time
+import ctypes
 from typing import Optional, Callable
 from VConsoleLib.vconsole2_lib import VConsole2Lib
 
@@ -66,8 +67,15 @@ class CS2VConsoleController:
         if len(self.last_messages) > 100:
             self.last_messages.pop(0)
         
-        # Log to user
-        self._log(f"[{channel_name}] {msg}")
+        # Clean up channel name presentation
+        # VConsole2Lib often returns 'Unknown:<hash>' if channel isn't mapped
+        if channel_name.startswith("Unknown:"):
+            # If it's unknown, just print the message cleanly (Valve style)
+            # This avoids the ugly [Unknown:12345] prefix
+            self._log(f"{msg}")
+        else:
+            # If we have a known channel name, show it
+            self._log(f"[{channel_name}] {msg}")
 
     def _on_disconnected(self, vconsole: VConsole2Lib):
         """
@@ -169,9 +177,12 @@ class CS2VConsoleController:
         Returns:
             True if command was sent, False otherwise
         """
+        # Auto-reconnect logic
         if not self.connected or not self.vconsole:
-            self._log(f"ERROR: Not connected to CS2 console")
-            return False
+            self._log("Connection lost, attempting to reconnect...")
+            if not self.connect(timeout=5.0, retry_count=2):
+                self._log(f"ERROR: Could not reconnect to send command: {command}")
+                return False
 
         try:
             self._log(f"Sending: {command}")
@@ -179,7 +190,29 @@ class CS2VConsoleController:
             return True
         except Exception as e:
             self._log(f"ERROR: Failed to send command: {e}")
+            self.connected = False # Mark as disconnected on error
             return False
+
+    def bring_cs2_to_front(self):
+        """
+        Attempt to find the CS2 window and bring it to the foreground.
+        Uses ctypes to call Windows API directly.
+        """
+        try:
+            # CS2 window title is usually "Counter-Strike 2"
+            hwnd = ctypes.windll.user32.FindWindowW(None, "Counter-Strike 2")
+            if hwnd:
+                # Restore if minimized
+                if ctypes.windll.user32.IsIconic(hwnd):
+                    ctypes.windll.user32.ShowWindow(hwnd, 9) # SW_RESTORE
+                
+                # Bring to front
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+                self._log("Focused CS2 window")
+            else:
+                self._log("Could not find CS2 window to focus")
+        except Exception as e:
+            self._log(f"Failed to focus CS2 window: {e}")
 
     def disconnect(self):
         """
