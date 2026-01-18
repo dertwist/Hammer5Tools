@@ -30,7 +30,7 @@ from src.forms.mapbuilder.system_monitor import SystemMonitor
 from src.forms.mapbuilder.output_formater import OutputFormatter
 from src.forms.mapbuilder.preset_manager import PresetManager, BuildPreset, BuildSettings
 from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
-from src.forms.mapbuilder.cs2_remote_console import CS2RemoteConsoleController
+from src.forms.mapbuilder.cs2_vconsole_controller import CS2VConsoleController
 from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value
 from src.common import enable_dark_title_bar, app_dir
 from src.other.addon_functions import launch_addon
@@ -747,7 +747,7 @@ class MapBuilderDialog(QMainWindow):
                     return
                 
                 # Create and connect RemoteConsole controller
-                self.remote_console_controller = CS2RemoteConsoleController(
+                self.remote_console_controller = CS2VConsoleController(
                     cs2_remote_console_path=str(remote_console_path),
                     log_callback=self.add_log_message
                 )
