@@ -36,3 +36,4 @@ matplotlib
 pynvml
 GPUtil
 pyinstaller
+winpty
