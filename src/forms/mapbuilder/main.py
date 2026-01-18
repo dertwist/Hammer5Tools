@@ -263,7 +263,7 @@ class MapBuilderDialog(QMainWindow):
         self.is_batch_mode = False
         self.batch_start_time = None
 
-        # Batch processing state - Phase 2: CS2 Baking via RemoteConsole
+        # Batch processing state - Phase 2: CS2 Baking via VConsole2Lib
         self.cs2_queue = []  # list of successfully compiled maps to bake
         self.cs2_process = None
         self.remote_console_controller = None
@@ -677,21 +677,21 @@ class MapBuilderDialog(QMainWindow):
 
 
     def start_batch_baking(self):
-        """Phase 2: Launch CS2 once and use RemoteConsole to bake all maps"""
+        """Phase 2: Launch CS2 once and use VConsole2Lib to bake all maps"""
         if not self.cs2_queue:
             self.add_log_message("No maps to bake. Finishing batch.")
             self.finish_batch()
             return
 
         self.add_log_message("\n" + "=" * 70)
-        self.add_log_message(f"PHASE 2: Starting CS2 baking for {len(self.cs2_queue)} maps via RemoteConsole")
+        self.add_log_message(f"PHASE 2: Starting CS2 baking for {len(self.cs2_queue)} maps via VConsole2Lib")
         self.add_log_message("=" * 70)
 
         try:
             addon_name = get_addon_name()
             cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
             
-            # Check for vconsole2.exe interference
+            # Check for vconsole2.exe interference (it can take the socket)
             try:
                 result = subprocess.run(
                     ["tasklist", "/FI", "IMAGENAME eq vconsole2.exe"],
@@ -700,7 +700,7 @@ class MapBuilderDialog(QMainWindow):
                     check=False
                 )
                 if "vconsole2.exe" in result.stdout:
-                    self.add_log_message("⚠ WARNING: vconsole2.exe is running and may interfere with RemoteConsole")
+                    self.add_log_message("⚠ WARNING: vconsole2.exe is running and may block VConsole2 connections")
                     self.add_log_message("  Consider closing it before proceeding")
             except Exception:
                 pass
@@ -713,12 +713,12 @@ class MapBuilderDialog(QMainWindow):
             self.cs2_initialized = False
             self.bake_index = 0
             
-            # Wait for CS2 to initialize before connecting RemoteConsole
+            # Wait for CS2 to initialize before connecting VConsole
             if self.bake_timer is None:
                 self.bake_timer = QTimer()
                 self.bake_timer.timeout.connect(self.process_next_bake)
             
-            # Start with a longer delay for CS2 initialization (~15 seconds)
+            # Start with a longer delay for CS2 initialization
             self.bake_timer.start(30000)
             self.add_log_message("Waiting for CS2 initialization...")
             
@@ -727,38 +727,29 @@ class MapBuilderDialog(QMainWindow):
             self.finish_batch()
 
     def process_next_bake(self):
-        """Send RemoteConsole commands to bake the next map"""
+        """Send VConsole2Lib commands to bake the next map"""
         try:
-            # First call: connect RemoteConsole to CS2
+            # First call: connect to CS2 via VConsole2Lib
             if not self.cs2_initialized:
                 self.cs2_initialized = True
-                self.add_log_message("CS2 initialized, connecting RemoteConsole...")
+                self.add_log_message("CS2 initialized, connecting VConsole2Lib...")
                 
                 # Stop the initialization timer
                 self.bake_timer.stop()
 
-                remote_console_path = Path(__file__).parent.parent.parent / 'external' / 'RemoteConsole' /'CS2RemoteConsole-client.exe'
-                
-                if not remote_console_path.exists():
-                    self.add_log_message(f"ERROR: CS2RemoteConsole not found at {remote_console_path}")
-                    self.add_log_message("Please ensure CS2 is properly installed with RemoteConsole support")
-                    self.kill_cs2()
-                    self.finish_batch()
-                    return
-                
-                # Create and connect RemoteConsole controller
+                # Create and connect VConsole2Lib controller (direct socket)
                 self.remote_console_controller = CS2VConsoleController(
-                    cs2_remote_console_path=str(remote_console_path),
                     log_callback=self.add_log_message
                 )
                 
-                if not self.remote_console_controller.connect(timeout=10.0):
-                    self.add_log_message("ERROR: Failed to connect RemoteConsole to CS2")
+                # Allow time for CS2 to open the VConsole port
+                if not self.remote_console_controller.connect(timeout=30.0):
+                    self.add_log_message("ERROR: Failed to connect VConsole2Lib to CS2")
                     self.kill_cs2()
                     self.finish_batch()
                     return
                 
-                self.add_log_message("✓ RemoteConsole connected, starting baking sequence...")
+                self.add_log_message("✓ VConsole2Lib connected, starting baking sequence...")
                 
                 # Restart timer for baking commands (shorter interval)
                 self.bake_timer.start(40000)  # 40 seconds between maps
@@ -766,7 +757,7 @@ class MapBuilderDialog(QMainWindow):
 
             # Check if we're done
             if self.bake_index >= len(self.cs2_queue):
-                self.add_log_message("\nAll maps baked. Closing RemoteConsole and CS2...")
+                self.add_log_message("\nAll maps baked. Closing VConsole2Lib and CS2...")
                 self.bake_timer.stop()
                 
                 if self.remote_console_controller:
@@ -778,7 +769,7 @@ class MapBuilderDialog(QMainWindow):
                 return
 
             if not self.remote_console_controller:
-                self.add_log_message("ERROR: RemoteConsole controller not initialized")
+                self.add_log_message("ERROR: VConsole2Lib controller not initialized")
                 self.bake_timer.stop()
                 self.kill_cs2()
                 self.finish_batch()
@@ -790,7 +781,7 @@ class MapBuilderDialog(QMainWindow):
             self.add_log_message(f"\nBaking map ({self.bake_index + 1}/{len(self.cs2_queue)}): {map_name}")
             
             try:
-                # Send baking commands via RemoteConsole
+                # Send baking commands via VConsole2Lib
                 self.remote_console_controller.send_command(f"map_workshop {addon_name} {map_name}")
                 time.sleep(10)
                 
