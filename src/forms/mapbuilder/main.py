@@ -752,7 +752,7 @@ class MapBuilderDialog(QMainWindow):
                 self.add_log_message("✓ VConsole2Lib connected, starting baking sequence...")
                 
                 # Restart timer for baking commands (shorter interval)
-                self.bake_timer.start(40000)  # 40 seconds between maps
+                self.bake_timer.start(45000)  # 45 seconds between maps for stability
                 return
 
             # Check if we're done
@@ -781,12 +781,21 @@ class MapBuilderDialog(QMainWindow):
             self.add_log_message(f"\nBaking map ({self.bake_index + 1}/{len(self.cs2_queue)}): {map_name}")
             
             try:
-                # Send baking commands via VConsole2Lib
-                self.remote_console_controller.send_command(f"map_workshop {addon_name} {map_name}")
-                time.sleep(10)
+                # Focus CS2 window before baking
+                self.remote_console_controller.bring_cs2_to_front()
+                time.sleep(1)
                 
-                self.remote_console_controller.send_command("buildcubemaps")
-                time.sleep(10)
+                # Send baking commands via VConsole2Lib
+                # The controller now handles auto-reconnection internally
+                if not self.remote_console_controller.send_command(f"map_workshop {addon_name} {map_name}"):
+                    self.add_log_message(f"Warning: Failed to load map {map_name}")
+                    
+                time.sleep(12)
+                
+                if not self.remote_console_controller.send_command("buildcubemaps"):
+                    self.add_log_message(f"Warning: Failed to build cubemaps for {map_name}")
+                    
+                time.sleep(12)
                 
                 self.add_log_message(f"✓ Baking commands sent for {map_name}")
                 
