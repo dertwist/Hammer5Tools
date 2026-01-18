@@ -11,8 +11,10 @@ import os
 import time
 import signal
 import winsound
+import re
 from pathlib import Path
 from datetime import datetime
+from dataclasses import fields
 from PySide6.QtWidgets import (
     QDialog, QApplication, QMessageBox, QInputDialog,
     QMenu, QVBoxLayout, QHBoxLayout, QPushButton, QWidget, QFileDialog, QMainWindow, QLabel
@@ -251,6 +253,20 @@ class MapBuilderDialog(QMainWindow):
         self.current_build_logs = []
         self.current_build_timestamp = None
 
+        # Batch processing state
+        self.batch_queue = []  # list of relative map paths
+        self.current_batch_index = 0
+        self.batch_stats = []  # list of dicts per map
+        self.current_map_stats = {}
+        self.is_batch_mode = False
+
+        # CS2 automation/monitoring
+        self.vpk_timer = None
+        self.cs2_process = None
+        self.target_vpk = None
+        self.initial_vpk_mtime = 0.0
+        self.current_map_rel = None
+
     def setup_settings_panel(self):
         """Setup dynamically generated settings panel"""
         self.settings_panel = SettingsPanel()
@@ -440,22 +456,43 @@ class MapBuilderDialog(QMainWindow):
                     self.load_preset(presets[0])
 
     def start_compilation(self):
-        """Start map compilation"""
+        """Start map compilation (supports batch mode)"""
         if self.is_compiling:
             QMessageBox.warning(self, "Already Compiling", "Compilation already in progress")
             return
 
         # Get current settings
         settings = self.settings_panel.get_settings()
-        mappath = os.path.join(get_addon_dir(), settings.mappath)
-        # Validate mappath
-        if not mappath or not Path(mappath).exists():
+        mappaths = [p for p in str(settings.mappath).split(';') if p]
+
+        # Determine batch mode
+        self.is_batch_mode = len(mappaths) > 1
+        print(self.is_batch_mode)
+        if self.is_batch_mode:
+            # Initialize batch
+            self.batch_queue = mappaths
+            self.current_batch_index = 0
+            self.batch_stats = []
+            self.add_log_message(f"Batch mode: queued {len(self.batch_queue)} maps")
+
+            # Kick off the first compile without clearing logs
+            self.process_next_batch_map()
+            return
+
+        # Single map flow
+        single_rel = mappaths[0] if mappaths else settings.mappath
+        mappath_abs = os.path.join(get_addon_dir(), single_rel)
+        if not single_rel or not Path(mappath_abs).exists():
             QMessageBox.warning(self, "Invalid Map", "Please select a valid map file")
             return
+
+        # Ensure settings refers to the single map (not a combined string)
+        settings.mappath = single_rel
 
         # Generate command
         command = settings.to_command_line(self.addon_path, self.cs2_path)
 
+        # Clear logs for single run only
         self.ui.output_list_widget.clear()
 
         # Create compilation thread
@@ -501,6 +538,29 @@ class MapBuilderDialog(QMainWindow):
         # Add each line immediately
         self.add_log_message(line)
 
+        # Parse build metrics when available
+        try:
+            if not isinstance(self.current_map_stats, dict):
+                self.current_map_stats = {}
+            
+            # Match various timing patterns from compiler output
+            # Pattern: "Baked Lighting Total Time : (0 hrs 0 mins 13 seconds)"
+            m = re.search(r"Baked Lighting Total Time\s*:\s*\(([^)]+)\)", line, re.IGNORECASE)
+            if m:
+                self.current_map_stats['Light'] = m.group(1).strip()
+            
+            # Pattern: "Lightmapping took 3.77 seconds"
+            m = re.search(r"Lightmapping took\s+([0-9\.]+\s+seconds)", line, re.IGNORECASE)
+            if m:
+                self.current_map_stats['Lightmap'] = m.group(1).strip()
+            
+            # Pattern: "Compile of 1 file(s)... took 14.930 seconds"
+            m = re.search(r"Compile of.*took\s+([0-9\.]+\s+seconds)", line, re.IGNORECASE)
+            if m:
+                self.current_map_stats['CompileTime'] = m.group(1).strip()
+        except Exception:
+            pass
+
     def on_compilation_finished(self, exit_code: int, elapsed_time: float):
         """Handle compilation finished"""
         # Stop elapsed time tracking
@@ -525,6 +585,46 @@ class MapBuilderDialog(QMainWindow):
         except Exception as e:
             print(f"Failed to save LastBuildTime: {e}")
 
+        # Batch handling: on success, launch CS2 and start VPK monitor; on failure, continue to next map
+        if self.is_batch_mode:
+            if exit_code == 0:
+                try:
+                    # Record total compile time in stats (human readable)
+                    self.current_map_stats = self.current_map_stats or {}
+                    self.current_map_stats['Total'] = self.format_time(elapsed_time)
+
+                    addon_name = get_addon_name()
+                    map_name = Path(self.current_map_rel or '').stem
+                    cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
+                    launch_cmd = f'"{cs2_exe}" -tools -gpuraytracing -addon {addon_name} +map_workshop {addon_name} {map_name} +buildcubemaps +minimap_create'
+                    self.add_log_message(f"Launching CS2 for baking: {launch_cmd}")
+
+                    # Determine VPK target path (addon workspace)
+                    self.target_vpk = str(Path(self.cs2_path) / "game" / "csgo_addons" / addon_name / "maps" / f"{map_name}.vpk")
+                    print(" self.target_vpk " +  self.target_vpk)
+
+                    # Capture initial mtime (0 if not existing)
+                    try:
+                        self.initial_vpk_mtime = os.path.getmtime(self.target_vpk)
+                    except Exception:
+                        self.initial_vpk_mtime = 0.0
+
+                    # Launch CS2 and start monitoring
+                    self.cs2_process = subprocess.Popen(launch_cmd, shell=True)
+
+                    if self.vpk_timer is None:
+                        self.vpk_timer = QTimer()
+                        self.vpk_timer.timeout.connect(self.check_vpk_change)
+                    self.vpk_timer.start(1500)
+                except Exception as e:
+                    self.add_log_message(f"Failed to launch CS2 for baking: {e}")
+                    # Proceed to next map
+                    self.process_next_batch_map()
+            else:
+                self.add_log_message("Compilation failed for current map, proceeding to next in batch.")
+                self.process_next_batch_map()
+            return
+
         if exit_code == 0:
             winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
             try:
@@ -542,6 +642,123 @@ class MapBuilderDialog(QMainWindow):
                     subprocess.Popen(launch_cmd, shell=True)
             except Exception as e:
                 self.add_log_message(f"Failed to launch after build: {e}")
+
+    def process_next_batch_map(self):
+        """Controller to process the next map in the batch queue"""
+        try:
+            # Stop re-entry if a compile is running
+            if self.compilation_thread and self.compilation_thread.isRunning():
+                return
+
+            # If finished, summarize
+            if self.current_batch_index >= len(self.batch_queue):
+                self.finish_batch()
+                return
+
+            rel = self.batch_queue[self.current_batch_index]
+            self.current_map_rel = rel
+            self.current_batch_index += 1
+            self.current_map_stats = {"Map": Path(rel).stem}
+
+            # Build settings for this map only
+            settings = self.settings_panel.get_settings()
+            single_settings = BuildSettings(**{f.name: getattr(settings, f.name) for f in fields(BuildSettings)})
+            single_settings.mappath = rel
+            command = single_settings.to_command_line(self.addon_path, self.cs2_path)
+
+            # Create and start thread
+            self.compilation_thread = CompilationThread(command, self.addon_path)
+            self.compilation_thread.outputReceived.connect(self.on_output_received)
+            self.compilation_thread.finished.connect(self.on_compilation_finished)
+
+            # Update UI state
+            self.is_compiling = True
+            self.ui.build_button.setEnabled(False)
+            self.ui.abort_button.setEnabled(True)
+
+            self.elapsed_tracker.start()
+            self.dot_cycle = 0
+            self.elapsed_timer.start(500)
+
+            self.add_log_message(f"Starting compilation ({self.current_batch_index}/{len(self.batch_queue)}): {rel}")
+            self.add_log_message(f"Command: {command}")
+
+            self.compilation_thread.start()
+        except Exception as e:
+            self.add_log_message(f"Batch controller error: {e}")
+            self.finish_batch()
+
+    def check_vpk_change(self):
+        """Timer callback to monitor VPK modification time and terminate CS2 when done."""
+        try:
+            if not self.target_vpk:
+                return
+            current_mtime = os.path.getmtime(self.target_vpk)
+            if current_mtime > self.initial_vpk_mtime:
+                # Stop monitoring and kill CS2
+                if self.vpk_timer:
+                    self.vpk_timer.stop()
+                self.kill_cs2()
+
+                # Store stats for this map and proceed
+                self.batch_stats.append(self.current_map_stats.copy())
+                self.add_log_message(f"Baking detected for {self.current_map_stats.get('Map','')}, proceeding to next map...")
+                self.process_next_batch_map()
+        except OSError:
+            # Target may not exist yet; ignore until created
+            pass
+        except Exception as e:
+            self.add_log_message(f"VPK monitor error: {e}")
+            # Attempt to proceed to avoid stalling
+            if self.vpk_timer:
+                self.vpk_timer.stop()
+            self.process_next_batch_map()
+
+    def kill_cs2(self):
+        try:
+            if self.cs2_process and getattr(self.cs2_process, 'pid', None):
+                pid = self.cs2_process.pid
+                subprocess.run(['taskkill', '/F', '/T', '/PID', str(pid)], capture_output=True, check=False)
+        except Exception:
+            pass
+        finally:
+            self.cs2_process = None
+
+    def finish_batch(self):
+        # End-of-batch summary
+        try:
+            self.is_compiling = False
+            self.ui.build_button.setEnabled(True)
+            self.ui.abort_button.setEnabled(False)
+            if self.vpk_timer:
+                self.vpk_timer.stop()
+
+            # Build summary table
+            self.add_log_message("\n" + "=" * 70)
+            self.add_log_message("BATCH COMPLETE - SUMMARY")
+            self.add_log_message("=" * 70)
+            
+            # Header with better formatting
+            header = f"{'Map Name':<20} | {'Total':<12} | {'Compile':<12} | {'Lightmap':<12}"
+            self.add_log_message(header)
+            self.add_log_message("-" * 70)
+            
+            # Rows for each map
+            for entry in self.batch_stats:
+                map_name = entry.get('Map', 'unknown')[:20]
+                total = entry.get('Total', 'N/A')[:12]
+                compile_time = entry.get('CompileTime', 'N/A')[:12]
+                lightmap_time = entry.get('Lightmap', 'N/A')[:12]
+                row = f"{map_name:<20} | {total:<12} | {compile_time:<12} | {lightmap_time:<12}"
+                self.add_log_message(row)
+            
+            self.add_log_message("=" * 70)
+            
+            # Calculate and display total batch time
+            if self.batch_stats:
+                self.add_log_message(f"Total maps processed: {len(self.batch_stats)}")
+        except Exception as e:
+            self.add_log_message(f"Error finishing batch: {e}")
 
     def run_map(self):
         """Run map without building"""

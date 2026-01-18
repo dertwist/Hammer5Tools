@@ -175,60 +175,91 @@ class EnumSettingWidget(SettingWidget):
 
 class FolderSettingWidget(SettingWidget):
     def setup_ui(self):
-        layout = QHBoxLayout(self)
+        # Use vertical layout with a list of maps and +/- controls
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        label = QLabel(self.display_name)
-        self.lineedit = QLineEdit()
-        self.lineedit.setPlaceholderText(self.find_default_vmap())
-        self.lineedit.setText(str(self.default_value))
-        self.lineedit.textChanged.connect(lambda: self.valueChanged.emit(self.get_value()))
+        self.label = QLabel(self.display_name)
+        from PySide6.QtWidgets import QListWidget, QAbstractItemView
+        self.map_list = QListWidget()
+        self.map_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
-        self.browse_vmap_path = Button()
-        self.browse_vmap_path.set_icon_folder_open()
-        self.browse_vmap_path.clicked.connect(self.browse_path)
+        btn_layout = QHBoxLayout()
+        self.add_btn = QPushButton("+")
+        self.remove_btn = QPushButton("-")
+        self.add_btn.setToolTip("Add .vmap files to the queue")
+        self.remove_btn.setToolTip("Remove selected maps from the queue")
+        btn_layout.addWidget(self.add_btn)
+        btn_layout.addWidget(self.remove_btn)
+        btn_layout.addStretch()
 
-        layout.addWidget(label)
-        layout.addWidget(self.lineedit)
-        layout.addWidget(self.browse_vmap_path)
+        layout.addWidget(self.label)
+        layout.addWidget(self.map_list)
+        layout.addLayout(btn_layout)
+
+        self.add_btn.clicked.connect(self.browse_maps)
+        self.remove_btn.clicked.connect(self.remove_selected)
+
+        # Initialize from default value
+        self.set_value(str(self.default_value))
 
     def get_value(self) -> str:
-        if self.lineedit.text() == '':
+        items = [self.map_list.item(i).text() for i in range(self.map_list.count())]
+        if not items:
             return self.find_default_vmap()
-        else:
-            return self.lineedit.text()
+        return ";".join(items)
 
     def set_value(self, value: str):
-        self.lineedit.setText(value)
+        self.map_list.clear()
+        if value:
+            parts = [p for p in value.split(";") if p]
+            if parts:
+                self.map_list.addItems(parts)
+            else:
+                self.map_list.addItem(self.find_default_vmap())
+        else:
+            self.map_list.addItem(self.find_default_vmap())
+        self.valueChanged.emit(self.get_value())
+
     def find_default_vmap(self):
         return os.path.relpath(os.path.join(get_addon_dir(), 'maps', f'{get_addon_name()}.vmap'), get_addon_dir())
 
-    def browse_path(self):
+    def browse_maps(self):
         addon_dir = get_addon_dir()
         maps_dir = os.path.join(addon_dir, 'maps')
 
         # Ensure maps directory exists
         os.makedirs(maps_dir, exist_ok=True)
 
-        selected_file, _ = QFileDialog.getOpenFileName(
+        files, _ = QFileDialog.getOpenFileNames(
             self,
-            "Select Vmap file",
+            "Select Vmap files",
             maps_dir,
             "Vmap files (*.vmap);;All files (*)"
         )
 
-        if selected_file:
-            if not selected_file.endswith('.vmap'):
-                QMessageBox.warning(self, "Invalid File", "Please select a .vmap file.")
-                return
+        if not files:
+            return
 
-            rel_path = os.path.relpath(selected_file, addon_dir)
+        # Validate and add unique relative paths
+        existing = {self.map_list.item(i).text() for i in range(self.map_list.count())}
+        for f in files:
+            if not f.endswith('.vmap'):
+                continue
+            rel_path = os.path.relpath(f, addon_dir)
             if rel_path.startswith('..'):
-                QMessageBox.warning(self, "Invalid Location",
-                                    "Please select a file within the addon's directory.")
-                return
+                continue
+            if rel_path not in existing:
+                self.map_list.addItem(rel_path)
+                existing.add(rel_path)
 
-            self.set_value(rel_path)
+        self.valueChanged.emit(self.get_value())
+
+    def remove_selected(self):
+        for item in self.map_list.selectedItems():
+            row = self.map_list.row(item)
+            self.map_list.takeItem(row)
+        self.valueChanged.emit(self.get_value())
 
 
 class SettingsGroup(QWidget):
