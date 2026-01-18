@@ -3,59 +3,71 @@ from winpty import PTY
 import threading
 import sys
 import time
+import queue
 
 EXE = r"D:\CG\Projects\Other\Hammer5Tools\src\external\RemoteConsole\CS2RemoteConsole-client.exe"
 
-def pty_reader(pty: PTY):
-    """Continuously forward child output to our stdout."""
-    while True:
+def pty_reader(pty: PTY, stop: threading.Event):
+    while not stop.is_set():
         try:
-            data = pty.read(4096)  # bytes
+            data = pty.read(4096)
         except Exception:
-            return
+            break
         if not data:
-            return
+            break
         sys.stdout.write(data.decode("utf-8", errors="replace"))
         sys.stdout.flush()
 
-def pty_writer_from_keyboard(pty: PTY):
-    """Optional: let user type into the child after auto command."""
-    # Read raw lines and forward; good enough for basic typing.
-    for line in sys.stdin:
+def pty_writer(pty: PTY, q: "queue.Queue[str]", stop: threading.Event):
+    while not stop.is_set():
         try:
-            pty.write(line)
+            msg = q.get(timeout=0.1)
+        except queue.Empty:
+            continue
+        try:
+            pty.write(msg)
         except Exception:
-            return
+            break
 
-def send_command(pty: PTY, cmd: str, delay_s: float = 2.0):
-    """
-    Send a command into the client's TUI input line and press Enter.
-    Uses CRLF because that's typically what Windows console apps expect.
-    """
-    time.sleep(delay_s)
-    payload = cmd + "\r\n"
-    pty.write(payload)
+def keyboard_feeder(q: "queue.Queue[str]", stop: threading.Event):
+    # Forward lines you type into the child (press Enter).
+    # This avoids touching sys.stdin from multiple places.
+    while not stop.is_set():
+        line = sys.stdin.readline()
+        if not line:
+            break
+        q.put(line)
+
+def send_cmd(q: "queue.Queue[str]", cmd: str):
+    # CRLF is typically safest for Windows console apps / PTY usage. [web:9]
+    q.put(cmd + "\r\n")
 
 def main():
+    stop = threading.Event()
+    q: "queue.Queue[str]" = queue.Queue()
+
     pty = PTY(160, 40)
     pty.spawn(EXE)
 
-    # Start reading output
-    threading.Thread(target=pty_reader, args=(pty,), daemon=True).start()
+    threading.Thread(target=pty_reader, args=(pty, stop), daemon=True).start()
+    threading.Thread(target=pty_writer, args=(pty, q, stop), daemon=True).start()
+    threading.Thread(target=keyboard_feeder, args=(q, stop), daemon=True).start()
 
-    # Auto-send the command after the client boots
-    threading.Thread(
-        target=send_command,
-        args=(pty, "say hello world", 2.5),
-        daemon=True
-    ).start()
+    # Give the TUI a moment to initialize, then send your command
+    time.sleep(2.5)
+    send_cmd(q, "say hello world")
 
-    # Optional: allow manual interaction too
-    threading.Thread(target=pty_writer_from_keyboard, args=(pty,), daemon=True).start()
+    # Example: send more commands later
+    # time.sleep(1.0)
+    # send_cmd(q, "status")
 
-    # Keep the main thread alive
-    while True:
-        time.sleep(1)
+    try:
+        while True:
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        stop.set()
+        # Best-effort: attempt to tell the app to exit if it supports it.
+        # send_cmd(q, "quit")
 
 if __name__ == "__main__":
     main()
