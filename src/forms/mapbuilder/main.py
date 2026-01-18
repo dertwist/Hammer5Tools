@@ -719,7 +719,7 @@ class MapBuilderDialog(QMainWindow):
                 self.bake_timer.timeout.connect(self.process_next_bake)
             
             # Start with a longer delay for CS2 initialization (~15 seconds)
-            self.bake_timer.start(15000)
+            self.bake_timer.start(30000)
             self.add_log_message("Waiting for CS2 initialization...")
             
         except Exception as e:
