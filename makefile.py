@@ -12,7 +12,6 @@ external = f"--add-data={os.path.join(cur_dir, 'src', 'external')};src\\external
 print(f"External path: {external}")
 
 # Path to your .NET DLLs
-remote_console_exe = os.path.join(cur_dir, 'src', 'external', 'RemoteConsole', 'CS2RemoteConsole-client.exe')
 dotnet_dlls = [
     ("Datamodel.NET.dll", "src\\external"),
     ("ValveKeyValue.dll", "src\\external"),
@@ -122,7 +121,6 @@ def build_hammer5_tools(fast=False) -> None:
         external,
         # Bundle all .NET DLLs
         *[f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls],
-        f'--add-binary={remote_console_exe};src\\external\\RemoteConsole',
         # Bundle pycparser parser tables
         f'--add-data={lextab_path};pycparser',
         f'--add-data={yacctab_path};pycparser',
