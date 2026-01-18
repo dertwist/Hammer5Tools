@@ -10,6 +10,7 @@ import pathlib
 import os
 import time
 import signal
+import winsound
 from pathlib import Path
 from datetime import datetime
 from PySide6.QtWidgets import (
@@ -525,7 +526,7 @@ class MapBuilderDialog(QMainWindow):
             print(f"Failed to save LastBuildTime: {e}")
 
         if exit_code == 0:
-            QApplication.beep()
+            winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
             try:
                 settings = self.settings_panel.get_settings()
                 if settings.load_in_engine_after_build:
