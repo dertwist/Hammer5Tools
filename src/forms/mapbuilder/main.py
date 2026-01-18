@@ -33,6 +33,7 @@ from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
 from src.forms.mapbuilder.cs2_remote_console import CS2RemoteConsoleController
 from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value
 from src.common import enable_dark_title_bar, app_dir
+from src.other.addon_functions import launch_addon
 
 
 class CompilationThread(QThread):
@@ -760,7 +761,7 @@ class MapBuilderDialog(QMainWindow):
                 self.add_log_message("✓ RemoteConsole connected, starting baking sequence...")
                 
                 # Restart timer for baking commands (shorter interval)
-                self.bake_timer.start(10000)  # 10 seconds between maps
+                self.bake_timer.start(40000)  # 40 seconds between maps
                 return
 
             # Check if we're done
@@ -791,12 +792,10 @@ class MapBuilderDialog(QMainWindow):
             try:
                 # Send baking commands via RemoteConsole
                 self.remote_console_controller.send_command(f"map_workshop {addon_name} {map_name}")
-                time.sleep(1)
+                time.sleep(10)
                 
                 self.remote_console_controller.send_command("buildcubemaps")
-                time.sleep(1)
-                
-                self.remote_console_controller.send_command("minimap_create")
+                time.sleep(10)
                 
                 self.add_log_message(f"✓ Baking commands sent for {map_name}")
                 
@@ -838,9 +837,6 @@ class MapBuilderDialog(QMainWindow):
             self.is_compiling = False
             self.ui.build_button.setEnabled(True)
             self.ui.abort_button.setEnabled(False)
-            
-            if self.vconsole_timer:
-                self.vconsole_timer.stop()
 
             # Build summary table
             self.add_log_message("\n" + "=" * 80)
@@ -882,6 +878,7 @@ class MapBuilderDialog(QMainWindow):
             
             self.add_log_message("=" * 80)
             winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
+            launch_addon()
             
         except Exception as e:
             self.add_log_message(f"Error finishing batch: {e}")
