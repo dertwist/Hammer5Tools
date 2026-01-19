@@ -18,7 +18,12 @@ def my_on_cvars_loaded(vconsole, cvars):
 
 
 def my_on_prnt_received(vconsole, channel_name, msg):
-    print(f"[{channel_name}] {msg}")
+    # Clean up the message
+    clean_msg = msg.rstrip('\n\x00')
+
+    # Filter empty-set symbol
+    if "\u2205" not in channel_name and "\u2205" not in clean_msg:
+        print(f"[{channel_name}] {clean_msg}")
 
 
 def main():
@@ -26,10 +31,10 @@ def main():
     # vconsole.log_to_file = "vconsole.htm" # Changed to local path for safety
     vconsole.html_output = False
     vconsole.log_to_screen = True
-    vconsole.channels_custom_color = {'VConComm': '009900', 'VScript': '3333CC'}
+    # vconsole.channels_custom_color = {'VConComm': '009900', 'VScript': '3333CC'}
     vconsole.on_disconnected = my_on_disconnected
-    vconsole.on_adon_received = my_on_adon_received
-    vconsole.on_cvars_loaded = my_on_cvars_loaded
+    # vconsole.on_adon_received = my_on_adon_received
+    # vconsole.on_cvars_loaded = my_on_cvars_loaded
     vconsole.on_prnt_received = my_on_prnt_received
 
     vconsole.log("Trying connect...")
@@ -37,9 +42,9 @@ def main():
         time.sleep(1)
 
     vconsole.log("Connected...")
-    for i in range(10):
+    for i in range(2):
         vconsole.send_cmd(f"say {i}")
-        time.sleep(1)
+        time.sleep(0.1)
 
     try:
         while True:
