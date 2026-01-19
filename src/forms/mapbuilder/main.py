@@ -36,6 +36,16 @@ from src.common import enable_dark_title_bar, app_dir
 from src.other.addon_functions import launch_addon
 
 
+"""
+
+New Baking process:
+Check is cs2 process is active, ask to force close it
+Compile vmap file using resourcecompiler (or a few vmaps if need)
+Check if localhost 29000 is available, connect to local host and listen all. 
+Open all maps and bildcibemaps.
+After all
+open hammer editor
+"""
 class CompilationThread(QThread):
     """Thread for running compilation process"""
 
