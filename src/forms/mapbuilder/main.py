@@ -171,8 +171,6 @@ class MapBuilderDialog(QMainWindow):
         self.ui = Ui_mapbuilder_dialog()
         self.ui.setupUi(self)
         enable_dark_title_bar(self)
-
-        self.addon_path = get_addon_dir()
         self.cs2_path = get_cs2_path()
         self.ui.splitter.setSizes([200, 300])
 
@@ -181,7 +179,7 @@ class MapBuilderDialog(QMainWindow):
 
         self.cs2_path = str(self.cs2_path)
 
-        presets_file = Path(self.addon_path) / ".hammer5tools" / "build_presets.json"
+        presets_file = Path(get_addon_dir()) / ".hammer5tools" / "build_presets.json"
         self.preset_manager = PresetManager(presets_file)
 
         self.ui.output_list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -484,7 +482,7 @@ class MapBuilderDialog(QMainWindow):
                 return
 
             rel = self.map_queue[self.current_map_index]
-            mappath_abs = os.path.join(self.addon_path, rel)
+            mappath_abs = os.path.join(get_addon_dir(), rel)
 
             if not os.path.exists(mappath_abs):
                 self.log_error(f'Map file not found: {mappath_abs}')
@@ -505,9 +503,9 @@ class MapBuilderDialog(QMainWindow):
                 single_settings.lightmap_max_resolution = 2048
                 self.log_phase(f'Skybox map detected: {Path(rel).stem} - disabling nav/vis, setting lightmap to 2048')
 
-            command = single_settings.to_command_line(self.addon_path, self.cs2_path)
+            command = single_settings.to_command_line(get_addon_dir(), self.cs2_path)
 
-            self.compilation_thread = CompilationThread(command, self.addon_path)
+            self.compilation_thread = CompilationThread(command, get_addon_dir())
             self.compilation_thread.outputReceived.connect(self.on_output_received)
             self.compilation_thread.finished.connect(self.on_compilation_finished)
 
