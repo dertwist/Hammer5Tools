@@ -57,8 +57,6 @@ class BuildSettings:
 
     # === Load Map In Engine ===
     load_in_engine_after_build: bool = True
-    build_cubemaps_on_load: bool = True
-    build_minimap_on_load: bool = False
 
     # === Base Arguments (usually fixed) ===
     fshallow: bool = True
