@@ -66,14 +66,17 @@ class VConsole2Lib:
             print(f"Error sending command: {e}")
 
     def _clean_text(self, text):
-        """Removes null terminators and the empty set symbol."""
+        """Removes null terminators, empty set symbol, and trailing newlines."""
         if not text:
             return text
         # Remove null terminator
         text = text.rstrip('\x00')
         # Remove empty set symbol (U+2205)
         text = text.replace('\u2205', '')
+        # Remove trailing newlines/carriage returns to prevent double spacing
+        text = text.rstrip('\r\n')
         return text
+
 
     def log(self, text, color='000000'):
         if self.log_to_file:

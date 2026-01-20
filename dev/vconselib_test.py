@@ -26,8 +26,9 @@ def my_on_prnt_received(vconsole, channel_name, msg):
 
     if initializated is True:
         pass
+    #AddGameInputHandler - handle=3, flags=0xfd dbgContextName=TeamSelect, panelName=TeamSelectMenu
     else:
-        if "AddGameInputHandler - handle=0, flags=0xfd dbgContextName=MainMenu, panelName=MainMenu" in clean_msg:
+        if "AddGameInputHandler - handle=0, flags=0xfd dbgContextName=MainMenu, panelName=MainMenu" in msg:
             initializated = True
             print('Game Loaded')
         else:
