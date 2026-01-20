@@ -10,8 +10,9 @@ from PySide6.QtWidgets import (
 )
 import os
 from PySide6.QtCore import Qt, Signal, QSize
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QColor
 from dataclasses import fields
+from src.styles.common import qt_stylesheet_widgetlist2
 from typing import Any, Dict, Optional
 from src.forms.mapbuilder.preset_manager import BuildSettings
 from PySide6.QtWidgets import QPushButton, QLabel, QGridLayout, QFileDialog, QMessageBox
@@ -183,10 +184,13 @@ class FolderSettingWidget(SettingWidget):
         from PySide6.QtWidgets import QListWidget, QAbstractItemView
         self.map_list = QListWidget()
         self.map_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.map_list.setStyleSheet(qt_stylesheet_widgetlist2)
 
         btn_layout = QHBoxLayout()
-        self.add_btn = QPushButton("+")
-        self.remove_btn = QPushButton("-")
+        self.add_btn = QPushButton("Add vmap")
+        self.add_btn.setIcon(QIcon(":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.remove_btn = QPushButton("Remove")
+        self.remove_btn.setIcon(QIcon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         self.add_btn.setToolTip("Add .vmap files to the queue")
         self.remove_btn.setToolTip("Remove selected maps from the queue")
         btn_layout.addWidget(self.add_btn)
@@ -211,14 +215,22 @@ class FolderSettingWidget(SettingWidget):
 
     def set_value(self, value: str):
         self.map_list.clear()
+        default_vmap = self.find_default_vmap()
+        default_color = QColor("#65666D")
         if value:
             parts = [p for p in value.split(";") if p]
             if parts:
-                self.map_list.addItems(parts)
+                for part in parts:
+                    item = self.map_list.addItem(part)
+                    # Highlight default vmap with gray color
+                    if part == default_vmap:
+                        self.map_list.item(self.map_list.count() - 1).setForeground(default_color)
             else:
-                self.map_list.addItem(self.find_default_vmap())
+                item = self.map_list.addItem(default_vmap)
+                self.map_list.item(0).setForeground(default_color)
         else:
-            self.map_list.addItem(self.find_default_vmap())
+            item = self.map_list.addItem(default_vmap)
+            self.map_list.item(0).setForeground(default_color)
         self.valueChanged.emit(self.get_value())
 
     def find_default_vmap(self):
@@ -381,9 +393,7 @@ class SettingsPanel(QWidget):
         "Navigation": ["build_nav", "nav_debug", "grid_nav"],
         "Audio": ["build_reverb", "build_paths", "bake_custom_audio", "audio_threads"],
         "Load Map In Engine": [
-            "load_in_engine_after_build",
-            "build_cubemaps_on_load",
-            "build_minimap_on_load"
+            "load_in_engine_after_build"
         ],
     }
 
