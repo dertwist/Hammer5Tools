@@ -365,6 +365,33 @@ background-color: None;
 }
 """
 
+qt_stylesheet_widgetlist2 = """
+QListWidget, QListView {
+    border: 2px solid #CCCCCC;
+    border-color: rgba(80, 80, 80, 255);
+    border-radius: 2px;
+    padding: 2px;
+    color: #E3E3E3;
+    background-color: #1D1D1F;
+}
+
+QListWidget::item, QListView::item {
+    padding: 0px;
+}
+
+QListWidget::item:selected, QListView::item:selected {
+    background-color: #414956;
+    color: white;
+}
+
+QListWidget::item:hover, QListView::item:hover {
+    background-color: #414956;
+}
+QLabel {
+background-color: None;
+}
+"""
+
 qt_stylesheet_tabbar = """
 QTabBar::tab {
     background-color: #323232;
