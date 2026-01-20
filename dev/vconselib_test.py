@@ -2,6 +2,9 @@ from VConsoleLib.vconsole2_lib import VConsole2Lib
 
 import time
 
+
+initializated = False
+
 def my_on_disconnected(vconsole):
     """
     :param vconsole: VConsole2Lib
@@ -18,12 +21,17 @@ def my_on_cvars_loaded(vconsole, cvars):
 
 
 def my_on_prnt_received(vconsole, channel_name, msg):
-    # Clean up the message
-    clean_msg = msg.rstrip('\n\x00')
+    global initializated
+    # print(initializated)
 
-    # Filter empty-set symbol
-    if "\u2205" not in channel_name and "\u2205" not in clean_msg:
-        print(f"[{channel_name}] {clean_msg}")
+    if initializated is True:
+        pass
+    else:
+        if "AddGameInputHandler - handle=0, flags=0xfd dbgContextName=MainMenu, panelName=MainMenu" in clean_msg:
+            initializated = True
+            print('Game Loaded')
+        else:
+            pass
 
 
 def main():
@@ -31,10 +39,10 @@ def main():
     # vconsole.log_to_file = "vconsole.htm" # Changed to local path for safety
     vconsole.html_output = False
     vconsole.log_to_screen = True
-    # vconsole.channels_custom_color = {'VConComm': '009900', 'VScript': '3333CC'}
+    vconsole.channels_custom_color = {'VConComm': '009900', 'VScript': '3333CC'}
     vconsole.on_disconnected = my_on_disconnected
-    # vconsole.on_adon_received = my_on_adon_received
-    # vconsole.on_cvars_loaded = my_on_cvars_loaded
+    vconsole.on_adon_received = my_on_adon_received
+    vconsole.on_cvars_loaded = my_on_cvars_loaded
     vconsole.on_prnt_received = my_on_prnt_received
 
     vconsole.log("Trying connect...")
