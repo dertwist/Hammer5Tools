@@ -65,6 +65,16 @@ class VConsole2Lib:
         except Exception as e:
             print(f"Error sending command: {e}")
 
+    def _clean_text(self, text):
+        """Removes null terminators and the empty set symbol."""
+        if not text:
+            return text
+        # Remove null terminator
+        text = text.rstrip('\x00')
+        # Remove empty set symbol (U+2205)
+        text = text.replace('\u2205', '')
+        return text
+
     def log(self, text, color='000000'):
         if self.log_to_file:
             with open(self.log_to_file, "a") as myfile:
@@ -81,16 +91,24 @@ class VConsole2Lib:
         return ":".join("{0:02x}".format(c) for c in data)
 
     def __listen(self):
+        import socket as sock_module
+        import struct as struct_module
+        from .binary import BinaryStream as BS
+        from .channel import Channel
+
         cvars_loaded = False
         channel = None
 
         try:
             while True:
-                self.stream = BinaryStream(self.client_socket)
+                self.stream = BS(self.client_socket)
                 self.stream.load_packet_info()
 
                 if self.stream.msg_type == 'PRNT':
                     prnt = PacketPRNT(self.stream)
+                    # Clean the message immediately
+                    prnt.msg = self._clean_text(prnt.msg)
+
                     # Check if we can resolve the channel name
                     if hasattr(channel, 'channelById'):
                         this_channel = channel.channelById(prnt.channelID, self.channels)
@@ -101,25 +119,30 @@ class VConsole2Lib:
                                 this_channel = ch
                                 break
                         if not this_channel:
-                            # Create dummy if missing
-                            from .channel import Channel
                             this_channel = Channel()
                             this_channel.name = f"Unknown:{prnt.channelID}"
                             this_channel.RGBA_Override = "000000"
 
                     if this_channel.name not in self.ignore_channels:
+                        # Skip if empty set is in channel name
+                        if '\u2205' in this_channel.name:
+                            continue
+
                         color = this_channel.RGBA_Override
                         if this_channel.name in self.channels_custom_color:
                             color = self.channels_custom_color[this_channel.name]
-                        self.log("PRNT (%s): %s" % (this_channel.name, prnt.msg), color)
-                        if self.on_prnt_received:
-                            self.on_prnt_received(self, this_channel.name, prnt.msg)
+
+                        # Only log if message isn't empty after cleaning
+                        if prnt.msg:
+                            self.log("PRNT (%s): %s" % (this_channel.name, prnt.msg), color)
+                            if self.on_prnt_received:
+                                self.on_prnt_received(self, this_channel.name, prnt.msg)
 
                 elif self.stream.msg_type == 'AINF':
                     self.ainf = PacketAINF(self.stream)
                 elif self.stream.msg_type == 'ADON':
                     adon = PacketADON(self.stream)
-                    self.adon_name = adon.name
+                    self.adon_name = self._clean_text(adon.name)
                     self.log("ADON: %s \n" % (self.adon_name))
                     if self.on_adon_received:
                         self.on_adon_received(self, self.adon_name)
@@ -135,7 +158,6 @@ class VConsole2Lib:
                 else:
                     self.stream.readAllBytes()
 
-        except (socket.error, ValueError, struct.error) as error:
-            # print(f"Disconnected or Packet Error: {error}")
+        except (sock_module.error, ValueError, struct_module.error) as error:
             if self.on_disconnected:
                 self.on_disconnected(self)
