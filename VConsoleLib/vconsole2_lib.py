@@ -37,9 +37,9 @@ class VConsole2Lib:
         self.on_cvars_loaded = None
         self.on_adon_received = None
         self.on_disconnected = None
-        self.on_connected = None  # New callback
-        self.on_reconnecting = None  # New callback
-        self.on_packet_error = None  # New callback for packet errors
+        self.on_connected = None
+        self.on_reconnecting = None
+        self.on_packet_error = None
         
         self.ignore_channels = []
         self.client_socket = None
@@ -58,15 +58,17 @@ class VConsole2Lib:
         # Configuration
         self.ip = '127.0.0.1'
         self.port = 29000
-        self.reconnect_delay = 5.0  # seconds
-        self.socket_timeout = 30.0  # seconds
+        self.reconnect_delay = 5.0
+        self.socket_timeout = 10.0  # Reduced from 30s for better responsiveness
         self.auto_reconnect = True
-        self.max_reconnect_attempts = 0  # 0 = infinite
-        self.skip_invalid_packets = True  # Skip invalid packets instead of disconnecting
+        self.max_reconnect_attempts = 0
+        self.skip_invalid_packets = True
+        self.max_invalid_packet_warnings = 10  # Only log first N invalid packets
         
         # Statistics
         self._packets_received = 0
         self._packets_skipped = 0
+        self._invalid_warnings_shown = 0
         
         # Setup logging
         self.logger = logging.getLogger('VConsole2Lib')
@@ -90,6 +92,14 @@ class VConsole2Lib:
     def packets_skipped(self):
         """Get number of invalid packets skipped"""
         return self._packets_skipped
+    
+    @property
+    def packet_success_rate(self):
+        """Get packet success rate (0.0 - 1.0)"""
+        total = self._packets_received + self._packets_skipped
+        if total == 0:
+            return 0.0
+        return self._packets_received / total
 
     def connect(self, ip='127.0.0.1', port=29000):
         """Connect to VConsole server"""
@@ -103,6 +113,7 @@ class VConsole2Lib:
         self._stop_event.clear()
         self._packets_received = 0
         self._packets_skipped = 0
+        self._invalid_warnings_shown = 0
         return self._establish_connection()
     
     def _establish_connection(self):
@@ -111,30 +122,22 @@ class VConsole2Lib:
             self._connection_state = ConnectionState.CONNECTING
             
             with self._socket_lock:
-                # Close existing socket if any
                 if self.client_socket:
                     try:
                         self.client_socket.close()
                     except:
                         pass
                 
-                # Create new socket
                 self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.client_socket.settimeout(self.socket_timeout)
-                
-                # Enable TCP keepalive
                 self.client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-                
-                # Connect
                 self.client_socket.connect((self.ip, self.port))
             
             self._connection_state = ConnectionState.CONNECTED
             
-            # Start listen thread
             self._listen_thread = Thread(target=self.__listen, daemon=True)
             self._listen_thread.start()
             
-            # Trigger connected callback
             if self.on_connected:
                 try:
                     self.on_connected(self)
@@ -147,7 +150,6 @@ class VConsole2Lib:
             self.logger.error(f"Connection failed: {e}")
             self._connection_state = ConnectionState.DISCONNECTED
             
-            # Start auto-reconnect if enabled
             if self.auto_reconnect and not self._stop_event.is_set():
                 self._start_reconnect()
             
@@ -171,14 +173,12 @@ class VConsole2Lib:
             
             attempt += 1
             
-            # Check max attempts
             if self.max_reconnect_attempts > 0 and attempt > self.max_reconnect_attempts:
                 self.logger.error("Max reconnection attempts reached")
                 break
             
             self._connection_state = ConnectionState.RECONNECTING
             
-            # Trigger reconnecting callback
             if self.on_reconnecting:
                 try:
                     self.on_reconnecting(self, attempt)
@@ -191,7 +191,6 @@ class VConsole2Lib:
                 self.logger.info("Reconnected successfully")
                 break
             
-            # Wait before next attempt
             self._stop_event.wait(self.reconnect_delay)
         
         if self._stop_event.is_set():
@@ -210,7 +209,6 @@ class VConsole2Lib:
                     pass
                 self.client_socket = None
         
-        # Wait for threads to finish
         if self._listen_thread and self._listen_thread.is_alive():
             self._listen_thread.join(timeout=2.0)
         
@@ -280,7 +278,6 @@ class VConsole2Lib:
         prev_state = self._connection_state
         self._connection_state = ConnectionState.DISCONNECTED
         
-        # Close socket
         with self._socket_lock:
             if self.client_socket:
                 try:
@@ -289,14 +286,12 @@ class VConsole2Lib:
                     pass
                 self.client_socket = None
         
-        # Trigger disconnected callback
         if self.on_disconnected and prev_state == ConnectionState.CONNECTED:
             try:
                 self.on_disconnected(self)
             except Exception as e:
                 self.logger.error(f"Error in on_disconnected callback: {e}")
         
-        # Start auto-reconnect if enabled
         if self.auto_reconnect and not self._stop_event.is_set():
             self._start_reconnect()
 
@@ -308,11 +303,11 @@ class VConsole2Lib:
 
         cvars_loaded = False
         channel = None
+        last_stats_log = time.time()
 
         try:
             while not self._stop_event.is_set() and self.is_connected:
                 try:
-                    # Create stream from socket
                     with self._socket_lock:
                         if not self.client_socket:
                             break
@@ -323,11 +318,30 @@ class VConsole2Lib:
                     try:
                         self.stream.load_packet_info()
                         self._packets_received += 1
+                        
+                        # Log stats every 100 successful packets
+                        if self._packets_received % 100 == 0:
+                            success_rate = self.packet_success_rate * 100
+                            self.logger.info(
+                                f"Stats: {self._packets_received} received, "
+                                f"{self._packets_skipped} skipped ({success_rate:.1f}% success)"
+                            )
+                        
                     except InvalidPacketError as e:
-                        # Invalid packet - skip if configured to do so
                         if self.skip_invalid_packets:
                             self._packets_skipped += 1
-                            self.logger.warning(f"Skipping invalid packet: {e}")
+                            
+                            # Only show first N warnings to avoid spam
+                            if self._invalid_warnings_shown < self.max_invalid_packet_warnings:
+                                self.logger.warning(f"Skipping invalid packet: {e}")
+                                self._invalid_warnings_shown += 1
+                            elif self._invalid_warnings_shown == self.max_invalid_packet_warnings:
+                                self.logger.warning(
+                                    f"Suppressing further invalid packet warnings "
+                                    f"({self._packets_skipped} total skipped so far)"
+                                )
+                                self._invalid_warnings_shown += 1
+                            
                             if self.on_packet_error:
                                 try:
                                     self.on_packet_error(self, str(e))
@@ -335,14 +349,12 @@ class VConsole2Lib:
                                     self.logger.error(f"Error in on_packet_error callback: {cb_error}")
                             continue
                         else:
-                            # Treat as fatal error
                             raise
 
                     if self.stream.msg_type == 'PRNT':
                         prnt = PacketPRNT(self.stream)
                         prnt.msg = self._clean_text(prnt.msg)
 
-                        # Resolve channel
                         this_channel = None
                         for ch in self.channels:
                             if ch.id == prnt.channelID:
@@ -401,12 +413,9 @@ class VConsole2Lib:
                         self.stream.readAllBytes()
                 
                 except socket.timeout:
-                    # Timeout is normal, just continue
                     continue
                 
                 except InvalidPacketError as e:
-                    # This shouldn't reach here if skip_invalid_packets is True
-                    # But handle it anyway
                     self.logger.error(f"Invalid packet error (fatal): {e}")
                     break
                     
@@ -420,10 +429,13 @@ class VConsole2Lib:
                 self.logger.error(f"Unexpected error in listen thread: {e}")
         
         finally:
-            # Log statistics before disconnect
-            if self._packets_skipped > 0:
-                self.logger.info(f"Session stats - Received: {self._packets_received}, Skipped: {self._packets_skipped}")
+            # Log final statistics
+            if self._packets_received > 0 or self._packets_skipped > 0:
+                success_rate = self.packet_success_rate * 100
+                self.logger.info(
+                    f"Session ended - Packets: {self._packets_received} received, "
+                    f"{self._packets_skipped} skipped ({success_rate:.1f}% success)"
+                )
             
-            # Handle disconnection
             if not self._stop_event.is_set():
                 self._handle_disconnect()
