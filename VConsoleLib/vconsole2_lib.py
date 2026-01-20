@@ -11,7 +11,7 @@ from .packet_adon import PacketADON
 from .packet_chan import PacketCHAN
 from .packet_cvar import PacketCVAR
 from .packet_cfgv import PacketCFGV
-from .binary import BinaryStream
+from .binary import BinaryStream, InvalidPacketError
 
 __author__ = 'DarkSupremo'
 
@@ -39,6 +39,7 @@ class VConsole2Lib:
         self.on_disconnected = None
         self.on_connected = None  # New callback
         self.on_reconnecting = None  # New callback
+        self.on_packet_error = None  # New callback for packet errors
         
         self.ignore_channels = []
         self.client_socket = None
@@ -61,6 +62,11 @@ class VConsole2Lib:
         self.socket_timeout = 30.0  # seconds
         self.auto_reconnect = True
         self.max_reconnect_attempts = 0  # 0 = infinite
+        self.skip_invalid_packets = True  # Skip invalid packets instead of disconnecting
+        
+        # Statistics
+        self._packets_received = 0
+        self._packets_skipped = 0
         
         # Setup logging
         self.logger = logging.getLogger('VConsole2Lib')
@@ -74,6 +80,16 @@ class VConsole2Lib:
     def connection_state(self):
         """Get current connection state"""
         return self._connection_state
+    
+    @property
+    def packets_received(self):
+        """Get number of packets received"""
+        return self._packets_received
+    
+    @property
+    def packets_skipped(self):
+        """Get number of invalid packets skipped"""
+        return self._packets_skipped
 
     def connect(self, ip='127.0.0.1', port=29000):
         """Connect to VConsole server"""
@@ -85,6 +101,8 @@ class VConsole2Lib:
             return False
         
         self._stop_event.clear()
+        self._packets_received = 0
+        self._packets_skipped = 0
         return self._establish_connection()
     
     def _establish_connection(self):
@@ -301,7 +319,24 @@ class VConsole2Lib:
                         sock = self.client_socket
                     
                     self.stream = BinaryStream(sock)
-                    self.stream.load_packet_info()
+                    
+                    try:
+                        self.stream.load_packet_info()
+                        self._packets_received += 1
+                    except InvalidPacketError as e:
+                        # Invalid packet - skip if configured to do so
+                        if self.skip_invalid_packets:
+                            self._packets_skipped += 1
+                            self.logger.warning(f"Skipping invalid packet: {e}")
+                            if self.on_packet_error:
+                                try:
+                                    self.on_packet_error(self, str(e))
+                                except Exception as cb_error:
+                                    self.logger.error(f"Error in on_packet_error callback: {cb_error}")
+                            continue
+                        else:
+                            # Treat as fatal error
+                            raise
 
                     if self.stream.msg_type == 'PRNT':
                         prnt = PacketPRNT(self.stream)
@@ -368,6 +403,12 @@ class VConsole2Lib:
                 except socket.timeout:
                     # Timeout is normal, just continue
                     continue
+                
+                except InvalidPacketError as e:
+                    # This shouldn't reach here if skip_invalid_packets is True
+                    # But handle it anyway
+                    self.logger.error(f"Invalid packet error (fatal): {e}")
+                    break
                     
                 except (sock_module.error, ValueError, struct_module.error, OSError) as error:
                     if not self._stop_event.is_set():
@@ -379,6 +420,10 @@ class VConsole2Lib:
                 self.logger.error(f"Unexpected error in listen thread: {e}")
         
         finally:
+            # Log statistics before disconnect
+            if self._packets_skipped > 0:
+                self.logger.info(f"Session stats - Received: {self._packets_received}, Skipped: {self._packets_skipped}")
+            
             # Handle disconnection
             if not self._stop_event.is_set():
                 self._handle_disconnect()
