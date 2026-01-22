@@ -29,6 +29,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
+from src.ipc.protocol import IPCMessage, IPCCommand
 from src.forms.about.main import AboutDialog
 from src.forms.mapbuilder.main import MapBuilderDialog
 from src.settings.main import (
@@ -103,6 +104,7 @@ def allocate_console():
         ctypes.windll.kernel32.AllocConsole()
         sys.stdout = open("CONOUT$", "w")
         sys.stderr = open("CONOUT$", "w")
+        
 class DevWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -122,6 +124,7 @@ class DevWidget(QWidget):
         window.resize(500, 300)
         window.show()
         self.setLayout(layout)
+        
 class Widget(QMainWindow):
     def __init__(self, parent=None, dev_mode=False):
         super().__init__(parent)
@@ -265,10 +268,31 @@ class Widget(QMainWindow):
             for dock in child.findChildren(QDockWidget):
                 dock.show()
 
+    def open_file_in_smartprop(self, file_path):
+        """
+        Open a file in SmartProp Editor. If already open, focus that document.
+        
+        Args:
+            file_path: Absolute path to the .vsmart or .vdata file
+        """
+        if not self.SmartPropEditorMainWindow:
+            print("SmartProp Editor not initialized")
+            return
+        
+        # Switch to SmartProp Editor tab
+        smartprop_tab_index = self.ui.MainWindowTools_tabs.indexOf(
+            self.ui.smartpropeditor_tab
+        )
+        if smartprop_tab_index >= 0:
+            self.ui.MainWindowTools_tabs.setCurrentIndex(smartprop_tab_index)
+        
+        # Open the file (will focus if already open)
+        self.SmartPropEditorMainWindow.open_file(filename=file_path)
 
     def setup_tabs(self):
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
         self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
+        
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
         
@@ -502,6 +526,7 @@ class Widget(QMainWindow):
 
     def mapbuilder_dialog_closed(self):
         self.mapbuilder_dialog = None
+        
     @exception_handler
     def open_preferences_dialog(self):
         if self.preferences_dialog is None:
@@ -621,19 +646,41 @@ def start_instance_server(widget):
     return server
 
 def handle_new_connection(server, widget):
+    """
+    Handle incoming IPC messages from new instances.
+    Supports both legacy 'show' message and new JSON-based protocol.
+    """
     client_connection = server.nextPendingConnection()
     if client_connection:
         client_connection.waitForReadyRead(1000)
-        msg = bytes(client_connection.readAll()).decode().strip()
-        # If the message is "show", restore the window.
-        if msg == "show":
-            widget.show_from_tray()
+        msg_bytes = bytes(client_connection.readAll())
+        
+        message = IPCMessage.parse(msg_bytes)
+        if message:
+            command = message.get("command")
+            
+            if command == IPCCommand.SHOW_WINDOW.value:
+                widget.show_from_tray()
+            
+            elif command == IPCCommand.OPEN_FILE.value:
+                file_path = message.get("file_path")
+                editor_type = message.get("editor_type", "smartprop")
+                
+                # Show window first
+                widget.show_from_tray()
+                
+                # Route to appropriate editor
+                if editor_type == "smartprop":
+                    widget.open_file_in_smartprop(file_path)
+                # Add other editor types as needed
+        
         client_connection.disconnectFromServer()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
     parser.add_argument('--console', action='store_true', help='Enable console output for debug purposes')
+    parser.add_argument('file', nargs='?', help='File to open (.vsmart, .vdata, etc.)')
     args, unknown = parser.parse_known_args()
 
     # Allocate a console window if requested (works when built with --windowed)
@@ -644,10 +691,19 @@ if __name__ == "__main__":
     existing_socket = QLocalSocket()
     existing_socket.connectToServer(INSTANCE_KEY)
     if existing_socket.waitForConnected(500):
-        # Another instance is already running. Send a message to show the window.
-        existing_socket.write(b"show")
+        # Another instance is already running
+        if args.file:
+            # Send file open command
+            file_path = os.path.abspath(args.file)
+            message = IPCMessage.create_open_file(file_path)
+            existing_socket.write(message.encode('utf-8'))
+        else:
+            # Just show the window
+            message = IPCMessage.create_show()
+            existing_socket.write(message.encode('utf-8'))
+        
         existing_socket.flush()
-        existing_socket.waitForBytesWritten(500)
+        existing_socket.waitForBytesWritten(1000)
         sys.exit(0)
 
     # No instance running, so create the server.
@@ -658,6 +714,15 @@ if __name__ == "__main__":
     widget = Widget(dev_mode=args.dev)
     widget.show()
     instance_server = start_instance_server(widget)
+
+    # Handle initial file argument for first instance
+    if args.file:
+        file_path = os.path.abspath(args.file)
+        extension = os.path.splitext(file_path)[1].lower()
+        
+        if extension in ('.vsmart', '.vdata'):
+            # Small delay to ensure widget is fully initialized
+            QTimer.singleShot(200, lambda: widget.open_file_in_smartprop(file_path))
 
     if get_settings_bool('DISCORD_STATUS', 'show_status'):
         from other.discord_status import discord_status_clear, update_discord_status
