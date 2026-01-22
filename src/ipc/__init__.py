@@ -1,0 +1,1 @@
+"""Inter-process communication module for handling file operations between instances."""
