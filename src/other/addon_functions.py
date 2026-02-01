@@ -104,28 +104,48 @@ def configure_particle_editor():
     cs2_path = get_cs2_path()
     if cs2_path is None:
         return
-    
+
     sdk_tools_path = os.path.join(cs2_path, "game", "bin", "sdkenginetools.txt")
-    
+
     if not os.path.exists(sdk_tools_path):
         return
-    
+
     try:
         import re
-        
-        with open(sdk_tools_path, 'r', encoding='utf-8') as file:
-            content = file.read()
 
-        pet_pattern = r'(\{\s*m_Name\s*=\s*"pet".*?m_AssetTypes\s*=\s*\[.*?"particle_asset".*?\])\s*m_ExcludeFromMods\s*=\s*\[.*?"dota".*?"csgo".*?\]\s*'
-        
-        modified_content = re.sub(pet_pattern, r'\1\n\n', content, flags=re.DOTALL)
-        
-        if modified_content != content:
+        with open(sdk_tools_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+
+        modified = False
+        inside_pet = False
+        inside_exclude = False
+        skip_lines = []
+
+        for i, line in enumerate(lines):
+            if 'm_Name = "pet"' in line:
+                inside_pet = True
+            if inside_pet and re.match(r'^\s*\},?\s*$', line):
+                inside_pet = False
+
+            if inside_pet and 'm_ExcludeFromMods' in line:
+                inside_exclude = True
+                skip_lines.append(i)
+                modified = True
+
+            elif inside_exclude:
+                skip_lines.append(i)
+                if ']' in line:
+                    inside_exclude = False
+
+        if modified:
+            new_lines = [line for i, line in enumerate(lines) if i not in skip_lines]
+
             with open(sdk_tools_path, 'w', encoding='utf-8') as file:
-                file.write(modified_content)
-    
+                file.writelines(new_lines)
+
     except Exception as e:
         pass
+
 
 @exception_handler
 def launch_addon():
