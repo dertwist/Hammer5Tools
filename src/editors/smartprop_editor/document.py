@@ -9,7 +9,11 @@ from PySide6.QtWidgets import (
     QMenu,
     QApplication,
     QHeaderView,
-    QTreeWidget
+    QTreeWidget,
+    QSpinBox,
+    QHBoxLayout,
+    QLabel,
+    QWidget
 )
 from PySide6.QtGui import (
     QAction,
@@ -114,6 +118,18 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.setAcceptDrops(True)
         self.ui.tree_hierarchy_widget.setDropIndicatorShown(True)
         self.ui.tree_hierarchy_widget.setDragDropMode(QTreeWidget.InternalMove)
+
+        # Content version
+        self.content_version_spinbox = QSpinBox()
+        self.content_version_label = QLabel("Content Version")
+        self.content_version_layout = QHBoxLayout()
+        self.content_version_layout.setContentsMargins(0,0,0,0)
+        self.content_version_layout.addWidget(self.content_version_label)
+        self.content_version_layout.addWidget(self.content_version_spinbox)
+        content_version_widget = QWidget()
+        content_version_widget.setContentsMargins(0,0,0,0)
+        content_version_widget.setLayout(self.content_version_layout)
+        self.ui.frame_2.layout().addWidget(content_version_widget)
 
         # Choices setup
         self.ui.choices_tree_widget.hideColumn(2)
@@ -610,6 +626,7 @@ class SmartPropDocument(QMainWindow):
             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
         )
         variables = vsmart_instance.variables
+        self.content_version_spinbox.setValue(vsmart_instance.content_version)
 
         # Clear existing variables
         index = 0
@@ -689,10 +706,11 @@ class SmartPropDocument(QMainWindow):
                 "VSmart Files (*.vsmart);;All Files (*)"
             )
         self.get_variables(self.variable_viewport.ui.variables_scrollArea)
+        content_version = self.content_version_spinbox.value()
         if filename:
             if not realtime_save:
                 try:
-                    VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget,variables_layout=self.variable_viewport.ui.variables_scrollArea)
+                    VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget,variables_layout=self.variable_viewport.ui.variables_scrollArea, content_version=content_version)
                 except Exception as e:
                     error_message = f"An error while saving Vsmart File: {e}"
                     error_details = traceback.format_exc()
@@ -705,7 +723,7 @@ class SmartPropDocument(QMainWindow):
                     else:
                         print("Error: QApplication instance is not available.")
             else:
-                VsmartSaveInstance = VsmartSave(filename=filename,tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget, variables_layout=self.variable_viewport.ui.variables_scrollArea)
+                VsmartSaveInstance = VsmartSave(filename=filename,tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget, variables_layout=self.variable_viewport.ui.variables_scrollArea, content_version=content_version)
 
             self.opened_file = VsmartSaveInstance.filename
             if self.update_title:
