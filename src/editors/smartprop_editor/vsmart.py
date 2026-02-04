@@ -232,6 +232,7 @@ class VsmartOpen:
         self.choices_tree.clear()
         # Set next element ID if available.
         self.next_element_id = data.get("editor_info", None)
+        self.content_version = data.get("m_nContentVersion", 0)
         if self.next_element_id:
             if isinstance(self.next_element_id, dict):
                 self.next_element_id = self.next_element_id.get("m_nElementID", None)
@@ -311,13 +312,14 @@ class VsmartOpen:
                 self.fix_names(child_item)
 
 class VsmartSave:
-    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_layout=None):
+    def __init__(self, filename, tree=None, choices_tree=QTreeWidget, variables_layout=None, content_version=None):
         self.filename = filename
         self.tree = tree
         self.variables_layout = variables_layout
         self.choices_tree = choices_tree
         self.ref_objects = {}  # To store non-processed reference objects
         self.var_data = self.save_variables()
+        self.content_version = content_version
         self.choices_data = self.choices(self.choices_tree.invisibleRootItem())
         self.save_file()
 
@@ -389,7 +391,7 @@ class VsmartSave:
 
     def save_file(self):
         """Save file while processing references and merging reference objects."""
-        out_data = {"generic_data_type": "CSmartPropRoot"}
+        out_data = {"generic_data_type": "CSmartPropRoot", "m_nContentVersion": self.content_version}
         editor_info["editor_info"].update({"m_nElementID": get_ElementID_last()})
         out_data.update(editor_info)
         if self.var_data is not None:
