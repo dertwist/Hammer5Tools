@@ -147,7 +147,7 @@
            <string>Open</string>
           </property>
           <property name="icon">
-           <iconset resource="../resources.qrc">
+           <iconset resource="../../resources.qrc">
             <normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
           </property>
           <property name="iconSize">
@@ -199,7 +199,7 @@
            <string>Save</string>
           </property>
           <property name="icon">
-           <iconset resource="../resources.qrc">
+           <iconset resource="../../resources.qrc">
             <normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
           </property>
           <property name="iconSize">
@@ -254,7 +254,7 @@
            <string>New file</string>
           </property>
           <property name="icon">
-           <iconset resource="../resources.qrc">
+           <iconset resource="../../resources.qrc">
             <normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</normaloff>:/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg</iconset>
           </property>
           <property name="iconSize">
@@ -339,7 +339,7 @@
            <string>Save as</string>
           </property>
           <property name="icon">
-           <iconset resource="../resources.qrc">
+           <iconset resource="../../resources.qrc">
             <normaloff>:/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
           </property>
           <property name="iconSize">
@@ -394,7 +394,7 @@
            <string>Open as</string>
           </property>
           <property name="icon">
-           <iconset resource="../resources.qrc">
+           <iconset resource="../../resources.qrc">
             <normaloff>:/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
           </property>
           <property name="iconSize">
@@ -449,7 +449,7 @@
   </widget>
   <action name="actionCreateNewsmartprop">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/new.png</normaloff>:/valve_common/icons/tools/common/new.png</iconset>
    </property>
    <property name="text">
@@ -461,7 +461,7 @@
   </action>
   <action name="actionOpen_from_Explorer">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/open.png</normaloff>:/valve_common/icons/tools/common/open.png</iconset>
    </property>
    <property name="text">
@@ -470,7 +470,7 @@
   </action>
   <action name="actionSave_as">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/save_all.png</normaloff>:/valve_common/icons/tools/common/save_all.png</iconset>
    </property>
    <property name="text">
@@ -479,7 +479,7 @@
   </action>
   <action name="actionSave_current_file">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/save.png</normaloff>:/valve_common/icons/tools/common/save.png</iconset>
    </property>
    <property name="text">
@@ -488,7 +488,7 @@
   </action>
   <action name="actionRecompile_file">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
    </property>
    <property name="text">
@@ -497,7 +497,7 @@
   </action>
   <action name="actionRecompile_all_in_addon">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/options_activated.png</normaloff>:/valve_common/icons/tools/common/options_activated.png</iconset>
    </property>
    <property name="text">
@@ -506,7 +506,7 @@
   </action>
   <action name="actionConvert_all_vsmart_file_to_vdata">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</normaloff>:/valve_common/icons/tools/common/move_to_changelist.png</iconset>
    </property>
    <property name="text">
@@ -518,7 +518,7 @@
   </action>
   <action name="actionFormat_serttings">
    <property name="icon">
-    <iconset resource="../resources.qrc">
+    <iconset resource="../../resources.qrc">
      <normaloff>:/valve_common/icons/tools/common/setting.png</normaloff>:/valve_common/icons/tools/common/setting.png</iconset>
    </property>
    <property name="text">
@@ -527,7 +527,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../resources.qrc"/>
+  <include location="../../resources.qrc"/>
  </resources>
  <connections/>
 </ui>

@@ -26,7 +26,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(987, 808)
+        MainWindow.resize(1273, 931)
         MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
         self.actionCreateNewsmartprop = QAction(MainWindow)
         self.actionCreateNewsmartprop.setObjectName(u"actionCreateNewsmartprop")
@@ -100,7 +100,7 @@ class Ui_MainWindow(object):
         self.PropertiesArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 721, 804))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 1007, 927))
         self.scrollAreaWidgetContents.setStyleSheet(u"QWidget: {\n"
 "	border: 0px;\n"
 "}")
