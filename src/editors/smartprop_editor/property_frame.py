@@ -38,25 +38,25 @@ class PropertyFrame(QWidget):
     _prop_classes_map_cache = {
         # Elements
         'FitOnLine': [
-            'm_nReferenceID', 'm_bEnabled', 'm_vStart','m_vEnd', 'm_vUpDirection', 'm_PointSpace', 'm_nScaleMode', 'm_nPickMode', 'm_bOrientAlongLine'
+            'm_nReferenceID', 'm_bEnabled', 'm_vStart','m_vEnd', 'm_PointSpace', 'm_bOrientAlongLine', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_bPrioritizeUp', 'm_nScaleMode', 'm_nPickMode'
         ],
         'PickOne': [
-            'm_nReferenceID', 'm_bEnabled', 'm_SelectionMode','m_PointSpace','m_HandleShape','m_HandleColor', 'm_HandleSize','m_vHandleOffset','m_bConfigurable'
+            'm_nReferenceID', 'm_bEnabled', 'm_SelectionMode', 'm_SpecificChildIndex', 'm_OutputChoiceVariableName', 'm_bConfigurable', 'm_vHandleOffset', 'm_HandleColor', 'm_HandleSize', 'm_HandleShape'
         ],
         'PlaceInSphere': [
-            'm_nReferenceID', 'm_bEnabled', 'm_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode'
+            'm_nReferenceID', 'm_bEnabled', 'm_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode', 'm_DistributionMode', 'm_vAlignDirection', 'm_vPlaneUpDirection'
         ],
         'PlaceOnPath': [
-            'm_nReferenceID', 'm_bEnabled', 'm_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace', 'm_flSpacing', 'm_DefaultPath', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_UpDirectionSpace', 'm_vUpDirection'
+            'm_nReferenceID', 'm_bEnabled', 'm_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace', 'm_flSpacing', 'm_SpacingSpace', 'm_bContinuousSpline', 'm_DefaultPath', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_UpDirectionSpace', 'm_vUpDirection'
         ],
         'Model': [
-            'm_nReferenceID', 'm_bEnabled','m_vModelScale','m_MaterialGroupName', 'm_sModelName'
+            'm_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_bForceStatic', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_DetailObjectFadeLevel'
         ],
         'SmartProp': [
             'm_nReferenceID', 'm_bEnabled', 'm_sSmartProp','m_vModelScale'
         ],
         'PlaceMultiple': [
-            'm_nReferenceID', 'm_bEnabled', 'm_nCount', 'm_Expression'
+            'm_nReferenceID', 'm_bEnabled', 'm_nCountMin', 'm_nCountMax', 'm_flSpacing', 'm_PlacementMode', 'm_bRandomizeOrder'
         ],
         'Group': [
             'm_nReferenceID', 'm_bEnabled'
@@ -66,6 +66,21 @@ class PropertyFrame(QWidget):
         ],
         'BendDeformer': [
             'm_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vSize', 'm_vOrigin', 'm_vAngles', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'
+        ],
+        'ModelEntity': [
+            'm_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_DetailObjectFadeLevel'
+        ],
+        'PropPhysics': [
+            'm_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_flMass', 'm_bStartAsleep', 'm_nHealth', 'm_bEnableMotion',
+        ],
+        'PropDynamic': [
+            'm_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_sAnimationSequence', 'm_sDefaultAnimation', 'm_vModelScale', 'm_MaterialGroupName'
+        ],
+        'MidpointDeformer': [
+            'm_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vStart', 'm_vEnd', 'm_fRadius', 'm_bContinuousSpline', 'm_vOffset', 'm_vAngles', 'm_vScale', 'm_fFalloff', 'm_OutputVariable'
+        ],
+        'Layout2DGrid': [
+            'm_nReferenceID', 'm_bEnabled', 'm_flWidth', 'm_flLength', 'm_bVerticalLength', 'm_GridArrangement', 'm_GridOriginMode', 'm_nCountW', 'm_nCountL', 'm_flSpacingWidth', 'm_flSpacingLength', 'm_bAlternateShift', 'm_flAlternateShiftWidth', 'm_flAlternateShiftLength'
         ],
         # Operators
         'CreateSizer': [
@@ -189,7 +204,8 @@ class PropertyFrame(QWidget):
             'm_OutputVariableMinY',
             'm_OutputVariableMaxX',
             'm_OutputVariableMinX',
-            'm_OutputVariable'
+            'm_OutputVariable',
+            'm_OutputChoiceVariableName'
         ]
 
         # Defer heavier property initialization to the event loop,
@@ -201,6 +217,9 @@ class PropertyFrame(QWidget):
         self._add_properties_by_class()
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
+
+        # Setup dynamic suppression for specific element types
+        self._setup_layout2dgrid_suppression()
 
         self.init_ui()
         self.on_edited()
@@ -231,12 +250,19 @@ class PropertyFrame(QWidget):
             elif 'm_CoordinateSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_DirectionSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['DirectionSpace'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_GridPlacementMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SEGMENT','FILL'], filter_types=['GridPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_GridArrangement' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SEGMENT','FILL'], filter_types=['GridPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_GridOriginMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['CENTER','CORNER'], filter_types=['GridOriginMode'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_nNoHitResult' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NOTHING','DISCARD','MOVE_TO_START','MOVE_TO_END'], filter_types=['TraceNoHit'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_SelectionMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM','FIRST','SPECIFIC'], filter_types=['ChoiceSelectionMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_PlacementMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SPHERE','CIRCLE'], filter_types=['RadiusPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_DistributionMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM','REGULAR'], filter_types=['DistributionMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_PlacementMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SPHERE','CIRCLE','RING'], filter_types=['RadiusPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_DistributionMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM','UNIFORM'], filter_types=['DistributionMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_SpacingSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_sPhysicsType' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['normal','multiplayer'], filter_types=['String'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_DetailObjectFadeLevel' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NEAR','MEDIUM','FAR','ALWAYS'], filter_types=['String'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_RotationAxes' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['X','Y','Z','XY','XZ','YZ','XYZ'], filter_types=['Axes'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_HandleShape' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SQUARE','DIAMOND','CIRCLE'], filter_types=['HandleShape'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_nDeformableAttachmentMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['DEFAULT','ATTACH'], filter_types=['SmartPropDeformableAttachMode_t'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_nDeformableOrientationMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['DEFAULT','FOLLOW','IGNORE'], filter_types=['SmartPropDeformableOrientMode_t'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_PointSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_PathSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_UpDirectionSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
@@ -245,9 +271,13 @@ class PropertyFrame(QWidget):
             elif 'm_ApplyColorMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT','MULTIPLY_CURRENT','REPLACE'], filter_types=['ApplyColorMode'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_v' in value_class: property_instance = PropertyVector3D(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator= self.element_id_generator); add_instance()
             elif 'm_flBendPoint' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, slider_range=[0,1], element_id_generator=self.element_id_generator); add_instance()
+            elif value_class in ('m_flWidth','m_flLength','m_flSpacingWidth','m_flSpacingLength','m_flAlternateShiftWidth','m_flAlternateShiftLength'): property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, slider_range=[0,4096], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_fl' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_f' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_HandleSize' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
+            elif value_class in ('m_nCountW','m_nCountL'): property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, slider_range=[0,256], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_n' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_SpecificChildIndex' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_ColorSelection' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_HandleColor' in value_class: property_instance = PropertyColor(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_ColorChoices' in value_class: property_instance = PropertyColorMatch(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
@@ -311,6 +341,90 @@ class PropertyFrame(QWidget):
 
     def update_self(self):
         pass
+
+    def _setup_layout2dgrid_suppression(self):
+        # Apply visibility rules for Layout2DGrid element
+        if getattr(self, 'prop_class', None) != 'Layout2DGrid':
+            return
+
+        # Helper to find widgets by value_class
+        def find_widget(value_class_name):
+            for i in range(self.ui.layout.count()):
+                w = self.ui.layout.itemAt(i).widget()
+                if w is not None and hasattr(w, 'value_class') and w.value_class == value_class_name:
+                    return w
+            return None
+
+        # Cache relevant widgets
+        self._w_arrangement = find_widget('m_GridArrangement') or find_widget('m_GridPlacementMode')
+        self._w_count_w = find_widget('m_nCountW')
+        self._w_count_l = find_widget('m_nCountL')
+        self._w_spacing_w = find_widget('m_flSpacingWidth') or find_widget('m_flSpacingW')
+        self._w_spacing_l = find_widget('m_flSpacingLength') or find_widget('m_flSpacingL')
+        self._w_alt = find_widget('m_bAlternateShift')
+        self._w_shift_w = find_widget('m_flAlternateShiftWidth')
+        self._w_shift_l = find_widget('m_flAlternateShiftLength')
+
+        # Connect signals
+        if self._w_arrangement and hasattr(self._w_arrangement, 'edited'):
+            self._w_arrangement.edited.connect(self._update_layout2dgrid_visibility)
+        if self._w_alt and hasattr(self._w_alt, 'edited'):
+            self._w_alt.edited.connect(self._update_layout2dgrid_visibility)
+
+        # Initial apply
+        self._update_layout2dgrid_visibility()
+
+    def _update_layout2dgrid_visibility(self):
+        if getattr(self, 'prop_class', None) != 'Layout2DGrid':
+            return
+
+        # Read arrangement mode as string when possible
+        mode = None
+        if getattr(self, '_w_arrangement', None) is not None:
+            val = getattr(self._w_arrangement, 'value', None)
+            if isinstance(val, dict):
+                v = val.get('m_GridArrangement') or val.get('m_GridPlacementMode')
+                if isinstance(v, str):
+                    mode = v
+
+        # Read alternate shift as bool when possible
+        alt = False
+        if getattr(self, '_w_alt', None) is not None:
+            val = getattr(self._w_alt, 'value', None)
+            if isinstance(val, dict):
+                v = val.get('m_bAlternateShift')
+                if isinstance(v, bool):
+                    alt = v
+
+        # Default: if mode unknown, show everything to avoid hiding usable fields
+        show_all = mode not in ('SEGMENT', 'FILL')
+
+        widgets = [
+            ('segment', [self._w_count_w, self._w_count_l, self._w_alt]),
+            ('shift', [self._w_shift_w, self._w_shift_l]),
+            ('fill', [self._w_spacing_w, self._w_spacing_l])
+        ]
+
+        # Helper for visibility
+        def set_list_visible(lst, visible):
+            for w in lst:
+                if w is not None:
+                    w.setVisible(visible)
+
+        if show_all:
+            # Show everything if we cannot evaluate mode
+            for _, lst in widgets:
+                set_list_visible(lst, True)
+            return
+
+        if mode == 'SEGMENT':
+            set_list_visible([self._w_count_w, self._w_count_l, self._w_alt], True)
+            set_list_visible([self._w_spacing_w, self._w_spacing_l], False)
+            # Shift fields depend on alt
+            set_list_visible([self._w_shift_w, self._w_shift_l], bool(alt))
+        elif mode == 'FILL':
+            set_list_visible([self._w_spacing_w, self._w_spacing_l], True)
+            set_list_visible([self._w_count_w, self._w_count_l, self._w_alt, self._w_shift_w, self._w_shift_l], False)
 
     def init_ui(self):
         if self.element:
