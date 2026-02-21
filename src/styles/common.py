@@ -373,6 +373,7 @@ QListWidget, QListView {
     padding: 2px;
     color: #E3E3E3;
     background-color: #1D1D1F;
+    font: 580 10pt "Segoe UI";
 }
 
 QListWidget::item, QListView::item {
