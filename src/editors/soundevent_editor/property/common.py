@@ -346,7 +346,7 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
 
         # Initialize the vertical layout
         self.vertical_layout = QVBoxLayout(self.frame)
-        self.vertical_layout.setSpacing(0)
+        self.vertical_layout.setSpacing(4)
 
         self.spacer = QSpacerItem(40, 2, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -391,6 +391,47 @@ class SoundEventEditorPropertyFiles(SoundEventEditorPropertyList):
         Files Property. Have a button to create an element in the list.
         """
         super().__init__(parent, label_text, value)
+
+    def init_button(self):
+        """Override parent to add both Paste and Add buttons"""
+        self.button = Button()
+        self.button.set_text("Add")
+        self.button.set_icon_add()
+        self.button.clicked.connect(lambda: self.add_element())
+        self.vertical_layout.addWidget(self.button)
+
+        self.paste_button = Button()
+        self.paste_button.set_text("Paste from clipboard")
+        self.paste_button.set_icon_paste()
+        self.paste_button.clicked.connect(self.paste_from_clipboard)
+        self.vertical_layout.addWidget(self.paste_button)
+
+    def paste_from_clipboard(self):
+        """
+        Reads clipboard text, splits by newlines, and creates
+        a FileElement for each valid vsnd path.
+        Supports:
+          - One path per line
+          - Paths with or without 'sounds/' prefix
+          - .vsnd, .wav, .mp3 extensions (normalized to .vsnd)
+        """
+        clipboard = QGuiApplication.clipboard()
+        clipboard_text = clipboard.text().strip()
+
+        if not clipboard_text:
+            return
+
+        lines = clipboard_text.splitlines()
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            # Normalize path to vsnd format
+            path = vsnd_filepath_convert(line)
+            if path:
+                self.add_element(path)
+
+        self.on_property_update()
     def add_element(self, value: str = None):
         """Adding float widget instance using given name"""
         widget_instance = FileElement(value=value)
@@ -677,22 +718,6 @@ class ListElement(QWidget):
 class FileElement(ListElement):
     def __init__(self, value: str = None):
         super().__init__(value)
-        # Add paste from clipboard button
-        self.paste_button = Button()
-        self.paste_button.set_text("Paste")
-        self.paste_button.set_icon_paste()
-        self.paste_button.setMaximumWidth(60)
-        self.paste_button.clicked.connect(self.paste_from_clipboard)
-        self.layout().insertWidget(2, self.paste_button)
-    
-    def paste_from_clipboard(self):
-        """Paste file path from clipboard"""
-        clipboard = QGuiApplication.clipboard()
-        clipboard_text = clipboard.text().strip()
-        if clipboard_text:
-            # Convert to relative path if needed
-            clipboard_text = vsnd_filepath_convert(clipboard_text)
-            self.set_value(clipboard_text)
     
     def call_search_popup_menu(self):
         elements = []
