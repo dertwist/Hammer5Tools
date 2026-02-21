@@ -15,6 +15,8 @@ from src.editors.soundevent_editor.properties_window import SoundEventEditorProp
 from src.editors.soundevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
 from src.common import *
 from src.editors.soundevent_editor.internal_explorer import InternalSoundFileExplorer
+from src.editors.soundevent_editor.internal_soundevent_explorer import InternalSoundEventExplorer
+from src.editors.soundevent_editor.soundevent_player import play_soundevent
 from src.editors.soundevent_editor.audio_player import AudioPlayer
 from src.widgets.common import exception_handler
 
@@ -102,7 +104,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Init Hierarchy
         self.ui.hierarchy_widget.deleteLater()
         self.ui.hierarchy_widget = HierarchyTreeWidget(self.undo_stack, True)
-        self.ui.frame_2.layout().insertWidget(1, self.ui.hierarchy_widget)
+        self.ui.addon_soundevents_tab.layout().insertWidget(1, self.ui.hierarchy_widget)
 
         self.ui.hierarchy_widget.header().setSectionHidden(1, True)
         self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
@@ -160,6 +162,27 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
         self.ui.internal_explorer_search_bar.textChanged.connect(self.internal_explorer.filter_tree)
         self.internal_explorer.play_sound.connect(self.play_sound)
+
+        # Internal SoundEvents Explorer
+        self.internal_soundevents_explorer = InternalSoundEventExplorer()
+        self.ui.internal_soundevents_tab.layout().addWidget(self.internal_soundevents_explorer)
+
+        # Single click → play in-game sound event
+        self.internal_soundevents_explorer.play_soundevent.connect(
+            lambda name: play_soundevent(str(name))
+        )
+
+        # Double click → show event properties in the Properties Window
+        self.internal_soundevents_explorer.preview_soundevent.connect(
+            self._preview_internal_soundevent
+        )
+
+        # Context menu "Copy to Addon" → add as new hierarchy item + save
+        self.internal_soundevents_explorer.copy_to_addon_requested.connect(
+            self._copy_internal_soundevent_to_addon
+        )
+
+        set_qdock_tab_style(self.findChildren)
 
         # Audio player init
         self.add_player()
@@ -243,6 +266,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.PropertiesWindow.edited.connect(self.PropertiesWindowUpdate)
     def PropertiesWindowUpdate(self):
         item = self.ui.hierarchy_widget.currentItem()
+        if item is None:
+            return
         _data = self.PropertiesWindow.value
         self.update_hierarchy_item(item, _data)
 
@@ -289,13 +314,13 @@ class SoundEventEditorMainWindow(QMainWindow):
         return super().eventFilter(source, event)
 
     #=========================================================<  Hierarchy Actions  >=======================================================
-    def new_soundevent(self, _data: dict = None, __soundevent_name: str = None):
+    def new_soundevent(self, _data: dict = None, _soundevent_name: str = None):
         """Creates new soundevent using given data. Input dict"""
-        if __soundevent_name is None:
-            __soundevent_name = "SoundEvent"
-        __soundevent_name = self.unique_soundevent_int(__soundevent_name)
-        __soundevent = HierarchyItemModel(_name=__soundevent_name, _data=_data, _class='Event')
-        self.ui.hierarchy_widget.invisibleRootItem().addChild(__soundevent)
+        if _soundevent_name is None:
+            _soundevent_name = "SoundEvent"
+        _soundevent_name = self.unique_soundevent_int(_soundevent_name)
+        _soundevent = HierarchyItemModel(_name=_soundevent_name, _data=_data, _class='Event')
+        self.ui.hierarchy_widget.invisibleRootItem().addChild(_soundevent)
 
     def unique_soundevent_int(self, _name: str = None):
         """Creating Unique name for new hierarchy element"""
@@ -321,13 +346,13 @@ class SoundEventEditorMainWindow(QMainWindow):
     def new_soundevent_blank(self):
         """Create empty soundevent using """
         self.new_soundevent(_data={})
-    def new_soundevent_preset(self, _preset: str = None, __preset_url: str = None):
+    def new_soundevent_preset(self, _preset: str = None, _preset_url: str = None):
         """Call popup menu with all presets that are in the folder"""
         # Load data form preset path
-        __data = self.load_preset(__preset_url)
+        _data = self.load_preset(_preset_url)
         # Get clean name of preset file
-        __name = os.path.splitext(os.path.basename(__preset_url))[0]
-        self.new_soundevent(__data, __name)
+        _name = os.path.splitext(os.path.basename(_preset_url))[0]
+        self.new_soundevent(_data=_data, _soundevent_name=_name)
 
     #=========================================================<  Preset Popup menu  >=======================================================
 
@@ -624,3 +649,35 @@ class SoundEventEditorMainWindow(QMainWindow):
     #============================================================<  File actions  >=========================================================
     def save_file(self, file_path):
         """Serializing tree and save to the filepath"""
+
+    #============================================================< Internal SoundEvent Explorer handlers >=========================================================
+
+    def _preview_internal_soundevent(self, name: str) -> None:
+        """
+        Show a read-only preview of an internal CS2 sound event in the Properties Window.
+        Triggered by double-clicking an event in InternalSoundEventExplorer.
+        """
+        data = self.internal_soundevents_explorer.get_event_data(name)
+        if not data:
+            debug(f"[vsndevts] No data to preview for '{name}'")
+            return
+        self.PropertiesWindow.properties_clear()
+        self.PropertiesWindow.properties_groups_show()
+        self.PropertiesWindow.populate_properties(data)
+        debug(f"[vsndevts] Previewing '{name}'")
+
+    def _copy_internal_soundevent_to_addon(self, name: str, data: dict) -> None:
+        """
+        Copy an internal CS2 sound event into the addon hierarchy.
+        Triggered by 'Copy to Addon' in InternalSoundEventExplorer context menu.
+        Deduplicates the name automatically via new_soundevent → unique_soundevent_int.
+        """
+        if not data:
+            # Lazy-load if the explorer emitted an empty dict (shouldn't happen, but safe)
+            data = self.internal_soundevents_explorer.get_event_data(name)
+        self.new_soundevent(_data=data, _soundevent_name=name)
+        if self.realtime_save():
+            self.realtime_save_timer.start()
+        else:
+            self.save_soundevents()
+        debug(f"[vsndevts] Copied '{name}' to addon")
