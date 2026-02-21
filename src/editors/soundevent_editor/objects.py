@@ -14,7 +14,7 @@ soundevent_editor_properties = [
     {'Occlusion Intensity': {'occlusion_intensity': 0.0}},
     {'Distance Effect Mix': {'distance_effect_mix': 0.0}},
     {'Reverb Wet': {'reverb_wet': 1.0}},
-    {'Occlusion Frequency Scale': {'occlusion_frequency_scale ': 1.0}},
+    {'Occlusion Frequency Scale': {'occlusion_frequency_scale': 1.0}},
     {'Vsnd Duration': {'vsnd_duration': 10}},
     {'Block Duration': {'block_duration': 0.0}},
     {'Block Distance': {'block_distance': 0.0}},
@@ -58,7 +58,7 @@ soundevent_editor_properties = [
 
     # Vector3
     {'Position': {'position': [0, 0, 0]}},
-    {'Position Offset': {'position_offset': [0.0, 0.0, 20.0]}},
+    {'Position Offset': {'position_offset': [0.0, 0.0, 0.0]}},
 
     # Bool
     {'Enable Child Events': {'enable_child_events': True}},
