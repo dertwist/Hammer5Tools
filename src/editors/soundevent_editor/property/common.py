@@ -189,13 +189,14 @@ class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
         return "#d1494a"
 
 class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
-    def __init__(self, parent=None, label_text: str = None, value: list = None):
+    def __init__(self, parent=None, label_text: str = None, value: list = None, slider_range: list = None):
         """
         Vector3 Property. Have a button to paste the value form hammer editor.
         """
         super().__init__(parent, label_text, value)
 
         self.value_class = label_text
+        self.slider_range = slider_range if slider_range is not None else [-10, 10]
 
         # Init Vertical layout
         self.init_vertical_layout()
@@ -216,9 +217,9 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
     def add_float_widget(self, value):
         """Adding float widget instance using given name"""
         float_value = 0
-        if isinstance(value, float):
+        if isinstance(value, (float, int)):
             float_value = value
-        float_widget_instance = FloatWidget(value=float_value, spacer_enable=False)
+        float_widget_instance = FloatWidget(value=float_value, slider_range=self.slider_range, spacer_enable=False)
         float_widget_instance.edited.connect(self.on_property_update)
         float_widget_instance.setMaximumHeight(30)
         float_widget_instance.setMinimumHeight(30)
@@ -676,6 +677,23 @@ class ListElement(QWidget):
 class FileElement(ListElement):
     def __init__(self, value: str = None):
         super().__init__(value)
+        # Add paste from clipboard button
+        self.paste_button = Button()
+        self.paste_button.set_text("Paste")
+        self.paste_button.set_icon_paste()
+        self.paste_button.setMaximumWidth(60)
+        self.paste_button.clicked.connect(self.paste_from_clipboard)
+        self.layout().insertWidget(2, self.paste_button)
+    
+    def paste_from_clipboard(self):
+        """Paste file path from clipboard"""
+        clipboard = QGuiApplication.clipboard()
+        clipboard_text = clipboard.text().strip()
+        if clipboard_text:
+            # Convert to relative path if needed
+            clipboard_text = vsnd_filepath_convert(clipboard_text)
+            self.set_value(clipboard_text)
+    
     def call_search_popup_menu(self):
         elements = []
         __sounds_path = os.path.join(get_addon_dir(), 'sounds')

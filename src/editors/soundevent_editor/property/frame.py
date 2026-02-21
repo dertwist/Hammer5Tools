@@ -297,9 +297,9 @@ class SoundEventEditorPropertyFrame(QWidget):
         
         # Vector3
         elif name == 'position':
-            self.property_instance = SoundEventEditorPropertyVector3(label_text=name, value=value)
+            self.property_instance = SoundEventEditorPropertyVector3(label_text=name, value=value, slider_range=[-1000, 1000])
         elif name == 'position_offset':
-            self.property_instance = SoundEventEditorPropertyVector3(label_text=name, value=value)
+            self.property_instance = SoundEventEditorPropertyVector3(label_text=name, value=value, slider_range=[-1000, 1000])
         
         # List/Files
         elif name == 'vsnd_files_track_01':
