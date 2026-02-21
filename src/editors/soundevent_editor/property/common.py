@@ -424,12 +424,8 @@ class SoundEventEditorPropertyFiles(SoundEventEditorPropertyList):
         lines = clipboard_text.splitlines()
         for line in lines:
             line = line.strip()
-            if not line:
-                continue
-            # Normalize path to vsnd format
-            path = vsnd_filepath_convert(line)
-            if path:
-                self.add_element(path)
+            if line:
+                self.add_element(line)
 
         self.on_property_update()
     def add_element(self, value: str = None):
