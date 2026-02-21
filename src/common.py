@@ -34,93 +34,6 @@ def enable_dark_title_bar(window):
     except Exception as e:
         print(f"Failed to set dark mode title bar: {e}")
 
-#=============================================================<  Performance Profiling  >==================================================
-
-# Global dictionary to store startup timings
-_startup_timings: Dict[str, float] = {}
-_profile_enabled = False
-
-def enable_profiling():
-    """Enable startup profiling."""
-    global _profile_enabled
-    _profile_enabled = True
-
-def is_profiling_enabled() -> bool:
-    """Check if profiling is enabled."""
-    return _profile_enabled
-
-def profile_start(label: str):
-    """
-    Mark the start of a startup phase.
-    
-    Args:
-        label: Name of the phase being profiled
-    """
-    if not _profile_enabled:
-        return
-    _startup_timings[f"{label}_start"] = time.perf_counter()
-
-def profile_end(label: str, print_result: bool = True):
-    """
-    Mark the end of a startup phase and calculate duration.
-    
-    Args:
-        label: Name of the phase being profiled
-        print_result: Whether to print the timing immediately
-    """
-    if not _profile_enabled:
-        return
-        
-    start = _startup_timings.get(f"{label}_start")
-    if start:
-        duration = time.perf_counter() - start
-        _startup_timings[label] = duration
-        
-        if print_result:
-            print(f"[STARTUP] {label}: {duration:.3f}s")
-
-def get_startup_report() -> str:
-    """
-    Generate a formatted startup performance report.
-    
-    Returns:
-        Formatted string with all startup timings
-    """
-    if not _profile_enabled:
-        return "Profiling not enabled"
-    
-    # Filter out _start entries and sort by duration
-    timings = {k: v for k, v in _startup_timings.items() if not k.endswith('_start')}
-    
-    if not timings:
-        return "No timing data collected"
-    
-    # Calculate total time
-    total_time = sum(timings.values())
-    
-    # Build report
-    lines = []
-    lines.append("\n" + "="*60)
-    lines.append("STARTUP PERFORMANCE REPORT")
-    lines.append("="*60)
-    
-    # Sort by duration (longest first)
-    sorted_timings = sorted(timings.items(), key=lambda x: x[1], reverse=True)
-    
-    for label, duration in sorted_timings:
-        percentage = (duration / total_time * 100) if total_time > 0 else 0
-        lines.append(f"{label:<35} {duration:>6.3f}s ({percentage:>5.1f}%)")
-    
-    lines.append("-"*60)
-    lines.append(f"{'TOTAL':<35} {total_time:>6.3f}s (100.0%)")
-    lines.append("="*60 + "\n")
-    
-    return "\n".join(lines)
-
-def reset_profiling():
-    """Reset all profiling data."""
-    global _startup_timings
-    _startup_timings.clear()
 
 #===============================================================<  Variables  >=============================================================
 
@@ -144,7 +57,7 @@ SoundEventEditor_path = os.path.join(app_dir, "SoundEventEditor")
 discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
 
 # other
-default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0"
+default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0 -netconport 2121"
 
 #------------<  QT functions  >----------
 
