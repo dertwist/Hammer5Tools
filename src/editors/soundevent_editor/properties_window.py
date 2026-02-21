@@ -1,6 +1,8 @@
 import ast
 
 from src.editors.soundevent_editor.ui_properties_window import Ui_MainWindow
+from PySide6.QtWidgets import QPushButton
+from PySide6.QtCore import QTimer
 from src.settings.main import settings, debug
 from src.editors.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
 from src.widgets.popup_menu.main import PopupMenu
@@ -28,6 +30,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Init QT settings variable from preferences
         self.settings = settings
 
+        # Read-only flag for internal/game events
+        self.readonly_mode: bool = False
+
         # Init common state variables
         self.realtime_save = False
 
@@ -36,6 +41,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
         # Init variables
         self.tree = tree
+
 
         # Init context menu
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -166,6 +172,12 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Remove context menu connection
         self.setContextMenuPolicy(Qt.NoContextMenu)
         self.customContextMenuRequested.disconnect(self.open_context_menu)
+        
+        # Keep Play button accessible in hidden state
+        try:
+            self.play_button.setEnabled(True)
+        except Exception:
+            pass
     def properties_groups_show(self):
         """Show properties and hide placeholder"""
         self.ui.properties_placeholder.hide()
@@ -178,6 +190,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Add context menu connection
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.open_context_menu)
+
+        # Apply read-only state to widgets
+        self.apply_readonly_mode()
     
     def collapse_all_properties(self):
         """Collapse all property frames"""
@@ -203,6 +218,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                 widget.deleteLater()
 
         self.delete_comment()
+        # keep play button and badge intact
     def populate_properties(self, _data):
         """Loading properties from given data"""
         if isinstance(_data, dict):
@@ -221,6 +237,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                     pass
                 else:
                     self.create_property(item,value)
+
+            # Ensure readonly mode applied after population
+            self.apply_readonly_mode()
         else:
             print(f"[SoundEventEditorProperties]: Wrong input data format. Given data: \n {_data} \n {type(_data)}")
 
@@ -291,3 +310,36 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         expand_all.triggered.connect(self.expand_all_properties)
         
         menu.exec(self.ui.scrollArea.viewport().mapToGlobal(position))
+
+    def set_readonly_mode(self, enabled: bool):
+        """Public API to toggle read-only mode without affecting Play button."""
+        self.readonly_mode = bool(enabled)
+        self.apply_readonly_mode()
+
+    def apply_readonly_mode(self):
+        """Apply read-only state to all property frames and comment widget, keep Play enabled."""
+        try:
+            # Toggle badge
+            if hasattr(self, 'readonly_badge'):
+                self.readonly_badge.setVisible(self.readonly_mode)
+            # Toggle property frames
+            for index in range(self.ui.properties_layout.count()):
+                widget = self.ui.properties_layout.itemAt(index).widget()
+                if isinstance(widget, SoundEventEditorPropertyFrame):
+                    try:
+                        widget.setEnabled(not self.readonly_mode)
+                    except Exception:
+                        pass
+            # Toggle comment widget
+            try:
+                if hasattr(self, 'comment_widget') and self.comment_widget is not None:
+                    self.comment_widget.setReadOnly(self.readonly_mode)
+            except Exception:
+                pass
+            # Play button always enabled
+            try:
+                self.play_button.setEnabled(True)
+            except Exception:
+                pass
+        except Exception:
+            pass
