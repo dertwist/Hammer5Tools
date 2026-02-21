@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1490, 941)
+        MainWindow.resize(978, 738)
         MainWindow.setStyleSheet(u"background-color: #1C1C1C;")
         self.actionCreateNewsmartprop = QAction(MainWindow)
         self.actionCreateNewsmartprop.setObjectName(u"actionCreateNewsmartprop")
@@ -101,7 +101,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.dockWidget_4 = QDockWidget(MainWindow)
         self.dockWidget_4.setObjectName(u"dockWidget_4")
-        self.dockWidget_4.setMinimumSize(QSize(320, 189))
+        self.dockWidget_4.setMinimumSize(QSize(320, 198))
         self.dockWidget_4.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.dockWidget_4.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
         self.dockWidgetContents_2 = QWidget()
@@ -117,12 +117,19 @@ class Ui_MainWindow(object):
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.hierarchy_search_bar_widget = QLineEdit(self.frame_2)
+        self.tabWidget_2 = QTabWidget(self.frame_2)
+        self.tabWidget_2.setObjectName(u"tabWidget_2")
+        self.addon_soundevents_tab = QWidget()
+        self.addon_soundevents_tab.setObjectName(u"addon_soundevents_tab")
+        self.verticalLayout_2 = QVBoxLayout(self.addon_soundevents_tab)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.hierarchy_search_bar_widget = QLineEdit(self.addon_soundevents_tab)
         self.hierarchy_search_bar_widget.setObjectName(u"hierarchy_search_bar_widget")
 
-        self.verticalLayout_3.addWidget(self.hierarchy_search_bar_widget)
+        self.verticalLayout_2.addWidget(self.hierarchy_search_bar_widget)
 
-        self.hierarchy_widget = QTreeWidget(self.frame_2)
+        self.hierarchy_widget = QTreeWidget(self.addon_soundevents_tab)
         __qtreewidgetitem = QTreeWidgetItem()
         __qtreewidgetitem.setText(0, u"Name");
         self.hierarchy_widget.setHeaderItem(__qtreewidgetitem)
@@ -146,7 +153,17 @@ class Ui_MainWindow(object):
         self.hierarchy_widget.header().setProperty(u"showSortIndicator", False)
         self.hierarchy_widget.header().setStretchLastSection(True)
 
-        self.verticalLayout_3.addWidget(self.hierarchy_widget)
+        self.verticalLayout_2.addWidget(self.hierarchy_widget)
+
+        self.tabWidget_2.addTab(self.addon_soundevents_tab, "")
+        self.internal_soundevents_tab = QWidget()
+        self.internal_soundevents_tab.setObjectName(u"internal_soundevents_tab")
+        self.verticalLayout_7 = QVBoxLayout(self.internal_soundevents_tab)
+        self.verticalLayout_7.setObjectName(u"verticalLayout_7")
+        self.verticalLayout_7.setContentsMargins(0, 0, 0, 0)
+        self.tabWidget_2.addTab(self.internal_soundevents_tab, "")
+
+        self.verticalLayout_3.addWidget(self.tabWidget_2)
 
         self.open_preset_manager_button = QPushButton(self.frame_2)
         self.open_preset_manager_button.setObjectName(u"open_preset_manager_button")
@@ -410,6 +427,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
+        self.tabWidget_2.setCurrentIndex(0)
         self.tabWidget.setCurrentIndex(0)
 
 
@@ -434,6 +452,8 @@ class Ui_MainWindow(object):
         self.hierarchy_search_bar_widget.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Search...", None))
         ___qtreewidgetitem = self.hierarchy_widget.headerItem()
         ___qtreewidgetitem.setText(1, QCoreApplication.translate("MainWindow", u"Data", None));
+        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.addon_soundevents_tab), QCoreApplication.translate("MainWindow", u"Addon", None))
+        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.internal_soundevents_tab), QCoreApplication.translate("MainWindow", u"Internal", None))
 #if QT_CONFIG(tooltip)
         self.open_preset_manager_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Oopen Preset Manager Ctrl + P</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)

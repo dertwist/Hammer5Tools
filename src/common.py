@@ -51,6 +51,7 @@ SoundEventEditor_Preset_Path = os.path.join(app_dir, "SoundEventEditor", "Preset
 SmartPropEditor_Preset_Path = os.path.join(app_dir, "SmartPropEditor", "Presets")
 Presets_Path = os.path.join(app_dir, "presets")
 SoundEventEditor_sounds_path = os.path.join(app_dir, "SoundEventEditor", 'sounds')
+SoundEventEditor_soundevents_path = os.path.join(app_dir, "SoundEventEditor", 'soundevents')
 SoundEventEditor_path = os.path.join(app_dir, "SoundEventEditor")
 
 # web
