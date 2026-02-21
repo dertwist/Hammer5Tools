@@ -178,6 +178,24 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Add context menu connection
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.open_context_menu)
+    
+    def collapse_all_properties(self):
+        """Collapse all property frames"""
+        for index in range(self.ui.properties_layout.count()):
+            widget = self.ui.properties_layout.itemAt(index).widget()
+            if isinstance(widget, SoundEventEditorPropertyFrame):
+                if hasattr(widget, 'ui') and hasattr(widget.ui, 'show_child'):
+                    widget.ui.show_child.setChecked(False)
+                    widget.show_child_action()
+    
+    def expand_all_properties(self):
+        """Expand all property frames"""
+        for index in range(self.ui.properties_layout.count()):
+            widget = self.ui.properties_layout.itemAt(index).widget()
+            if isinstance(widget, SoundEventEditorPropertyFrame):
+                if hasattr(widget, 'ui') and hasattr(widget.ui, 'show_child'):
+                    widget.ui.show_child.setChecked(True)
+                    widget.show_child_action()
     def properties_clear(self):
         for i in range(self.ui.properties_layout.count()):
             widget = self.ui.properties_layout.itemAt(i).widget()
@@ -261,4 +279,15 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         paste = menu.addAction("Paste")
         paste.triggered.connect(self.paste_property)
         paste.setShortcut(QKeySequence("Ctrl+V"))
+        
+        menu.addSeparator()
+        
+        # Collapse all action
+        collapse_all = menu.addAction("Collapse All")
+        collapse_all.triggered.connect(self.collapse_all_properties)
+        
+        # Expand all action
+        expand_all = menu.addAction("Expand All")
+        expand_all.triggered.connect(self.expand_all_properties)
+        
         menu.exec(self.ui.scrollArea.viewport().mapToGlobal(position))
