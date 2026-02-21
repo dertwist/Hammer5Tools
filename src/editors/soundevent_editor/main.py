@@ -1,12 +1,12 @@
 import ast, shutil
 
-from src.settings.main import get_addon_name, get_cs2_path, debug, get_settings_bool, settings, get_addon_dir
+from src.settings.main import get_addon_name, get_cs2_path, debug, get_settings_bool, get_settings_value, settings, get_addon_dir
 from src.editors.soundevent_editor.ui_main import Ui_MainWindow
 from src.widgets.tree import HierarchyTreeWidget
 from src.widgets.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem, QFileDialog
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from src.widgets.popup_menu.main import PopupMenu
 from src.widgets import HierarchyItemModel, ErrorInfo
 from src.editors.soundevent_editor.commands import *
@@ -85,6 +85,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.undo_stack = QUndoStack(self)
         self.update_title = update_title
 
+        # Realtime save debounced timer (as in SmartPropEditor)
+        delay = 50
+        self.realtime_save_timer = QTimer(self)
+        self.realtime_save_timer.setInterval(delay)
+        self.realtime_save_timer.timeout.connect(self.realtime_save_all)
+
         # Variables
         self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
         self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'sounds')
@@ -103,6 +109,19 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.ui.hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.hierarchy_widget.setHeaderLabels(['Event'])
+
+        from src.editors.soundevent_editor.soundevent_player import SoundEventPlayerWidget
+        self.soundevent_player_widget = SoundEventPlayerWidget(self)
+        self.soundevent_player_widget.set_event_resolver(lambda: self.ui.hierarchy_widget.currentItem().text(0) if self.ui.hierarchy_widget.currentItem() else None)
+        try:
+            layout = self.ui.verticalLayout_3
+            idx = layout.indexOf(self.ui.open_preset_manager_button)
+            if idx != -1:
+                layout.insertWidget(idx, self.soundevent_player_widget)
+            else:
+                layout.addWidget(self.soundevent_player_widget)
+        except Exception:
+            pass
 
         # Init LoadSoundEvents
         self.load_soundevents(self.filepath_vsndevts)
@@ -166,6 +185,14 @@ class SoundEventEditorMainWindow(QMainWindow):
     # #==============================================================<  Actions  >============================================================
     def realtime_save(self):
         return self.ui.realtime_save_checkbox.isChecked()
+
+    def realtime_save_all(self):
+        """Triggered by the debounce timer to save all changes."""
+        try:
+            self.realtime_save_timer.stop()
+        except Exception:
+            pass
+        self.save_soundevents()
     #============================================================<  SoundEvents  >==========================================================
     def open_soundevnets_file(self):
         os.startfile(self.filepath_vsndevts)
@@ -211,6 +238,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def PropertiesWindowInit(self):
         self.PropertiesWindow = SoundEventEditorPropertiesWindow(tree=self.ui.hierarchy_widget)
+        # If properties window had its own play button earlier, it remains harmless; main Play is primary now.
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
         self.PropertiesWindow.edited.connect(self.PropertiesWindowUpdate)
     def PropertiesWindowUpdate(self):
@@ -330,7 +358,11 @@ class SoundEventEditorMainWindow(QMainWindow):
         item.setData(0, Qt.UserRole, _data)
         debug(f'Updated hierarchy item {item.data(0, Qt.UserRole)} with data: \n {_data}')
         if self.realtime_save():
-            self.save_soundevents()
+            try:
+                self.realtime_save_timer.stop()
+            except Exception:
+                pass
+            self.realtime_save_timer.start()
 
     def on_changed_hierarchy_item(self, current_item: HierarchyItemModel):
         """Handles changes in the hierarchy item by updating the properties window."""
