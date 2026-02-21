@@ -504,8 +504,31 @@ class SoundEventEditorMainWindow(QMainWindow):
                     parent.takeChild(index)
 
     def duplicate_hierarchy_items(self, tree):
-        data = self.copy_item(tree=tree, copy_to_clipboard=False)
-        self.paste_item(tree, data, paste_to_parent=True)
+        """Duplicate selected items and place them directly below the original"""
+        selected_items = tree.selectedItems()
+        if not selected_items:
+            return
+        
+        # Process each selected item
+        for item in selected_items:
+            data = self.serialization_hierarchy_items_single(item)
+            parent = item.parent() or tree.invisibleRootItem()
+            current_index = parent.indexOfChild(item)
+            
+            # Deserialize and insert right after the original
+            tree_items = self.deserialize_hierarchy_items(data)
+            for tree_item in tree_items:
+                parent.insertChild(current_index + 1, tree_item)
+                current_index += 1
+    
+    def serialization_hierarchy_items_single(self, item):
+        """Convert single tree item to dict"""
+        data = {}
+        value_row = item.data(0, Qt.UserRole)
+        name_row = item.text(0)
+        parent_data = value_row
+        data.update({name_row: parent_data})
+        return data
 
     # ======================================[Tree item serialization and deserialization]========================================
 
