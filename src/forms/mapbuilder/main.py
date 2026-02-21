@@ -553,6 +553,9 @@ class MapBuilderDialog(QMainWindow):
                 commands = default_commands
                 set_settings_value("LAUNCH", "commands", commands)
 
+            if '-netconport' not in commands:
+                commands += ' -netconport 2121'
+
             def assemble_commands(commands: str, addon_name):
                 return commands.replace('addon_name', addon_name)
 

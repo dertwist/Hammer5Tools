@@ -67,6 +67,10 @@ def __launch_addon():
         set_settings_value("LAUNCH", "commands", commands)
 
     commands = assemble_commands(commands, addon_name)
+    
+    # Ensure -netconport 2121 is always included (mandatory flag)
+    if '-netconport' not in commands:
+        commands += ' -netconport 2121'
 
     cs2_exe_path = os.path.join(cs2_path, "game", "bin", "win64", "cs2.exe")
     
