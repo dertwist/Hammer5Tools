@@ -358,7 +358,7 @@ font: 580 10pt &quot;Segoe UI&quot;;</string>
          </font>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Archive addon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Create an archive on from game and content folders.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Archive addon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Create an archive from game and content folders.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -383,7 +383,7 @@ font: 580 10pt &quot;Segoe UI&quot;;</string>
          </font>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Delete addon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Deletes selected addon.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Delete addon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Delete the selected addon.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -408,7 +408,7 @@ font: 580 10pt &quot;Segoe UI&quot;;</string>
          </font>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Create addon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Quick create an addon with custom presets.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Create addon&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Quickly create an addon with custom presets.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -434,7 +434,7 @@ font: 580 10pt &quot;Segoe UI&quot;;</string>
          </size>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:700;&quot;&gt;Addon selection&lt;/span&gt;&lt;/p&gt;&lt;p&gt;In the Addon selection, all tools apply changes to the addon selected in this section.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:700;&quot;&gt;Addon selection&lt;/span&gt;&lt;/p&gt;&lt;p&gt;All tools apply changes to the addon selected in this section.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
          <string notr="true">font: 700 10pt &quot;Segoe UI&quot;;</string>
@@ -564,7 +564,7 @@ font: 700 10pt &quot;Segoe UI&quot;;</string>
          </size>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Addon Folder Selection&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Used to choose the folder that should be oppened in the &lt;span style=&quot; font-style:italic;&quot;&gt;Open Game/Content Addons Folder.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Addon Folder Selection&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Used to choose the folder that should be opened in the &lt;span style=&quot; font-style:italic;&quot;&gt;Open Game/Content Addons Folder.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
          <string notr="true">font: 580 10pt &quot;Segoe UI&quot;;</string>
