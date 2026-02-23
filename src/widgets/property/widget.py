@@ -85,7 +85,7 @@ class PropertyWidget(QFrame):
         # Quick operation buttons (toggle, add, edit) - all on the left
         self.show_content = QCheckBox()
         self.show_content.setChecked(True)
-        self.show_content.setToolTip("Show/Hide content")
+        self.show_content.setToolTip("Show or hide content")
         self.show_content.setStyleSheet(qt_stylesheet_checkbox_showchild)
         self.show_content.stateChanged.connect(self.toggleContent)
         self._frame_layout.addWidget(self.show_content)
@@ -120,11 +120,8 @@ class PropertyWidget(QFrame):
         self.updateSize()
 
     def createAddButton(self):
-        btn = QLabel("+")
-        btn.setStyleSheet("color: #73849e; font-weight: bold; font-size: 18px; padding: 0 6px;")
-        btn.setToolTip("Add")
-        btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        # Connect to add action if needed
+        btn = QCheckBox()
+        btn.setToolTip("Add a new property")
         return btn
     def addControl(self):
         property_widget = QFrame()
@@ -136,11 +133,8 @@ class PropertyWidget(QFrame):
         return property_widget
 
     def createEditButton(self):
-        btn = QLabel("✎")
-        btn.setStyleSheet("color: #73849e; font-size: 16px; padding: 0 6px;")
-        btn.setToolTip("Edit")
-        btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        # Connect to edit action if needed
+        btn = QCheckBox()
+        btn.setToolTip("Edit this property")
         return btn
 
     def getContentHeight(self):
