@@ -47,7 +47,7 @@ class SvgPreviewWidget(QWidget):
         self.svg_preview.hide()
         layout.addWidget(self.svg_preview, alignment=Qt.AlignCenter)
 
-        self.info_label = QLabel("Drag and drop an SVG file", self)
+        self.info_label = QLabel("Drop svg file", self)
         self.info_label.setAlignment(Qt.AlignCenter)
         self.info_label.setStyleSheet("margin: 0px; border: 0px; color: gray; font-size: 13px;")
         layout.addWidget(self.info_label, alignment=Qt.AlignCenter)

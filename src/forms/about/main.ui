@@ -147,8 +147,8 @@
          </font>
         </property>
         <property name="text">
-         <string>Use tooltips for understanding the program: 
-For almost all buttons, an explanation appears when you hold your cursor over a button.</string>
+         <string>Use tooltips to understand the program:
+For almost all buttons, an explanation appears when you hover your cursor over a button.</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignmentFlag::AlignCenter</set>
