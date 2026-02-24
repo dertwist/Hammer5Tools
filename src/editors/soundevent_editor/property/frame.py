@@ -262,7 +262,7 @@ class SoundEventEditorPropertyFrame(QWidget):
             # Convert string 'true'/'false' to boolean for the UI
             bool_value = value == 'true' if isinstance(value, str) else bool(value)
             self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=bool_value)
-        
+
         # Curve
         elif name == 'distance_volume_mapping_curve':
             self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value, labels=["Distance", "Volume"])
