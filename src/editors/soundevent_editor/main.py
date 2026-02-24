@@ -399,6 +399,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             try:
                 data = current_item.data(0, Qt.UserRole)
                 if isinstance(data, dict):
+                    self.ui.label.setText(f"Properties: {current_item.text(0)}")
                     self.PropertiesWindow.populate_properties(data)
                 else:
                     raise ValueError("Parsed data is not a dictionary.")
@@ -409,44 +410,43 @@ class SoundEventEditorMainWindow(QMainWindow):
             self.PropertiesWindow.properties_clear()
             self.PropertiesWindow.properties_groups_hide()
 
-
     # ======================================[Tree widget hierarchy filter]========================================
     def search_hierarchy(self, filter_text, parent_item):
-        # Reset the root visibility and start the filtering process
-        self.filter_tree_item(parent_item, filter_text.lower(), True)
+        self.filter_tree_item(parent_item, filter_text.strip().lower(), is_root=True)
 
     def filter_tree_item(self, item, filter_text, is_root=False):
         if not isinstance(item, (HierarchyItemModel, QTreeWidgetItem)):
             return False
 
-        # Check if the current item's text matches the filter
-        item_text = str(item.data(0, Qt.UserRole)).lower()
-        item_visible = filter_text in item_text
+        role_data = item.text(0)
+        role_text = str(role_data).lower() if role_data is not None else ""
+        display_text = item.text(0).lower()
 
-        # Always show the root, regardless of filter
+        if not filter_text:
+            item.setHidden(False)
+            if not is_root:
+                item.setExpanded(False)
+            for i in range(item.childCount()):
+                self.filter_tree_item(item.child(i), filter_text, False)
+            return True
+        item_visible = filter_text in role_text or filter_text in display_text
+
         if is_root:
             item.setHidden(False)
         else:
-            # Hide the item if it doesn't match the filter
             item.setHidden(not item_visible)
 
-        # Track visibility of any child matching the filter
         any_child_visible = False
 
-        # Recursively filter all children
         for i in range(item.childCount()):
-            child_item = item.child(i)
-            child_visible = self.filter_tree_item(child_item, filter_text, False)
-
+            child_visible = self.filter_tree_item(item.child(i), filter_text, False)
             if child_visible:
                 any_child_visible = True
 
-        # If any child is visible, make sure this item is also visible
         if any_child_visible:
             item.setHidden(False)
             item.setExpanded(True)
 
-        # Return True if this item or any of its children is visible
         return item_visible or any_child_visible
 
     # ======================================[Tree widget hierarchy context menu]========================================

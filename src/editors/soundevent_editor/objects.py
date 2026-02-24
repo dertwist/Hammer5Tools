@@ -53,7 +53,7 @@ soundevent_editor_properties = [
 
 
     # Files
-    {'Sound Files track': {'vsnd_files_track_01': []}},
+    {'Vsnd Files track 01': {'vsnd_files_track_01': []}},
     {'Vsnd Files': {'vsnd_files': 'sounds/music/survival_review_victory.vsnd'}},
 
     # Vector3
