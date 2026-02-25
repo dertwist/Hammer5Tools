@@ -13,7 +13,7 @@ import time
 from typing import Dict, List, Optional
 
 # Versions
-app_version = '4.9.1'
+app_version = '4.9.2'
 
 #======================================================<  Copied from preferences.py file  >===================================================
 
