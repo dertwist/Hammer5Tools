@@ -1,4 +1,5 @@
 import ast
+import copy
 
 from src.editors.soundevent_editor.ui_properties_window import Ui_MainWindow
 from PySide6.QtWidgets import QPushButton
@@ -9,8 +10,28 @@ from src.widgets.popup_menu.main import PopupMenu
 from src.editors.soundevent_editor.objects import *
 from src.widgets import ErrorInfo
 from PySide6.QtWidgets import QMainWindow, QMenu, QPlainTextEdit, QApplication, QTreeWidget
-from PySide6.QtGui import QKeySequence, QKeyEvent
+from PySide6.QtGui import QKeySequence, QKeyEvent, QUndoStack, QUndoCommand, QShortcut
 from PySide6.QtCore import Qt, Signal
+
+class PropertyStateCommand(QUndoCommand):
+    """
+    Snapshots the full properties dict before and after a change.
+    Undo restores the before-state, redo restores the after-state.
+    """
+    def __init__(self, window, before: dict, after: dict, description="Edit Property"):
+        super().__init__(description)
+        self.window = window
+        self.before = copy.deepcopy(before)
+        self.after = copy.deepcopy(after)
+
+    def undo(self):
+        self.window._restore_state(self.before)
+
+    def redo(self):
+        # On first push Qt calls redo() immediately — skip to avoid double-apply
+        if getattr(self, '_first_redo_done', False):
+            self.window._restore_state(self.after)
+        self._first_redo_done = True
 
 class SoundEventEditorPropertiesWindow(QMainWindow):
     edited = Signal()
@@ -39,6 +60,10 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Init value variable:
         self.value = self.load_value(value)
 
+        # Init undo/redo system
+        self.undo_stack = QUndoStack(self)
+        self._undo_enabled = False   # suppress pushes during load/clear
+
         # Init variables
         self.tree = tree
 
@@ -48,6 +73,16 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self.customContextMenuRequested.connect(self.open_context_menu)
 
         self.ui.centralwidget.setFocusPolicy(Qt.StrongFocus)
+
+        # Setup undo/redo keyboard shortcuts
+        undo_shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
+        undo_shortcut.activated.connect(self.undo_stack.undo)
+
+        redo_shortcut = QShortcut(QKeySequence("Ctrl+Y"), self)
+        redo_shortcut.activated.connect(self.undo_stack.redo)
+
+        redo_shortcut_alt = QShortcut(QKeySequence("Ctrl+Shift+Z"), self)
+        redo_shortcut_alt.activated.connect(self.undo_stack.redo)
 
         # Hide properties on start
         self.properties_groups_hide()
@@ -212,6 +247,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                     widget.ui.show_child.setChecked(True)
                     widget.show_child_action()
     def properties_clear(self):
+        self._undo_enabled = False   # prevent clear from pushing a command
         for i in range(self.ui.properties_layout.count()):
             widget = self.ui.properties_layout.itemAt(i).widget()
             if isinstance(widget, SoundEventEditorPropertyFrame):
@@ -240,6 +276,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
             # Ensure readonly mode applied after population
             self.apply_readonly_mode()
+
+            # Enable undo/redo after population so initial load doesn't pollute stack
+            self._undo_enabled = True
         else:
             print(f"[SoundEventEditorProperties]: Wrong input data format. Given data: \n {_data} \n {type(_data)}")
 
@@ -272,10 +311,26 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                     pass
         return _data
 
+    def _restore_state(self, state: dict):
+        """Rebuild the properties UI from a full state snapshot."""
+        self._undo_enabled = False       # don't push a new command while restoring
+        self.properties_clear()
+        self.populate_properties(state)
+        self.update_value()
+        self._undo_enabled = True
+        self.edited.emit()
+
     #==============================================================<  Updating  >===========================================================
     def on_update(self):
         """Updating dict value and send signal"""
-        self.update_value()
+        if self._undo_enabled:
+            before = copy.deepcopy(self.value)   # snapshot BEFORE
+            self.update_value()
+            after = copy.deepcopy(self.value)    # snapshot AFTER
+            if before != after:
+                self.undo_stack.push(PropertyStateCommand(self, before, after))
+        else:
+            self.update_value()
         self.edited.emit()
     def clean_comment(self, text):
         return text.replace('"', "''")
@@ -289,6 +344,19 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     def open_context_menu(self, position):
         """Layout context menu"""
         menu = QMenu()
+
+        # Undo action
+        undo_action = menu.addAction("Undo")
+        undo_action.setShortcut(QKeySequence("Ctrl+Z"))
+        undo_action.setEnabled(self.undo_stack.canUndo())
+        undo_action.triggered.connect(self.undo_stack.undo)
+
+        # Redo action
+        redo_action = menu.addAction("Redo")
+        redo_action.setShortcut(QKeySequence("Ctrl+Y"))
+        redo_action.setEnabled(self.undo_stack.canRedo())
+        redo_action.triggered.connect(self.undo_stack.redo)
+
         menu.addSeparator()
         # New Property action
         new_property = menu.addAction("New Property")
