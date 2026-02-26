@@ -14,12 +14,10 @@ QCheckBox::indicator:unchecked {
 QCheckBox {
     font: 700 10pt "Segoe UI";
     height:14px;
+    width:8x;
     color: #E3E3E3;
 }
 QCheckBox:hover {
     color: white;
-}
-QCheckBox{
-	margin-right:15px;
-	margin-left:15px;
+    background-color: #414956;
 }"""

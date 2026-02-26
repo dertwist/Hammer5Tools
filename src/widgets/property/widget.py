@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QFrame, QLabel, QScrollArea, QMenu, QCheckBox, QLineEdit
 )
-from PySide6.QtCore import Qt, Signal, QPoint
+from PySide6.QtCore import Qt, Signal, QPoint, QSize
 from PySide6.QtGui import QPixmap, QUndoCommand, QUndoStack, QKeySequence, QShortcut
 from random import random
 from src.styles.widgets import *
@@ -75,7 +75,6 @@ class PropertyWidget(QFrame):
         self._frame_layout.setContentsMargins(4, 2, 2, 4)
         self._frame_layout.setSpacing(4)
 
-
         self.drag_handler = QLabel()
         self.drag_handler.setText("⋮")
         self.drag_handler.setStyleSheet("color: #888; font-size: 32px; padding: 0px;")
@@ -89,6 +88,28 @@ class PropertyWidget(QFrame):
         self.show_content.setStyleSheet(qt_stylesheet_checkbox_showchild)
         self.show_content.stateChanged.connect(self.toggleContent)
         self._frame_layout.addWidget(self.show_content)
+
+
+        # self.drag_handler = QLabel()
+        # drag_icon = QPixmap(":/icons/functions_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png")
+        # self.drag_handler.setPixmap(drag_icon.scaled(24, 24, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        # self.drag_handler.setText("")
+        # self.drag_handler.setStyleSheet("color: #888; font-size: 32px; padding: 0px;")
+        # self.drag_handler.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        # self._frame_layout.addWidget(self.drag_handler)
+
+        self.property_icon = QLabel()
+        drag_icon = QPixmap(":/icons/functions_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png")
+        self.property_icon.setPixmap(drag_icon.scaled(16, 16, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.property_icon.setText("")
+        self.property_icon.setStyleSheet("color: #888; font-size: 32px; padding: 0px;")
+        self.property_icon.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        self._frame_layout.addWidget(self.property_icon)
+
+
+        self.property_label = QLabel("Fitonline")
+        self.property_label.setStyleSheet("color: white;")
+        self._frame_layout.addWidget(self.property_label)
 
         self.add_button = self.createAddButton()
         self._frame_layout.addWidget(self.add_button)
