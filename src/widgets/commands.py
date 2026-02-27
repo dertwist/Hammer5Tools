@@ -269,7 +269,7 @@ class SelectItemsCommand(QUndoCommand):
         for item in items:
             if isinstance(item, QTreeWidgetItem):
                 item.setSelected(True)
-        
+
         # Set focus and scroll to first item if there are any selected items
         if items:
             self.tree.setCurrentItem(items[0])

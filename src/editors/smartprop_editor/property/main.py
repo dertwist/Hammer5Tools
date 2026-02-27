@@ -103,6 +103,9 @@ class PropertyFloat(PropertyBase):
         self.int_bool = int_bool
 
         self.float_widget = FloatWidget(slider_range=slider_range, int_output=int_bool)
+        self._slider_dragging = False
+        self.float_widget.slider_pressed.connect(self._on_slider_pressed)
+        self.float_widget.committed.connect(self._on_slider_committed)
         self.float_widget.edited.connect(self.on_changed)
         self.ui.layout.addWidget(self.float_widget)
 
@@ -158,6 +161,14 @@ class PropertyFloat(PropertyBase):
 
         self.on_changed()
 
+    def _on_slider_pressed(self):
+        self._slider_dragging = True
+
+    def _on_slider_committed(self):
+        self._slider_dragging = False
+        self.change_value()
+        self.emit_edited()
+
     def logic_switch(self):
         idx = self.ui.logic_switch.currentIndex()
         self.text_line.OnlyFloat = False
@@ -174,12 +185,13 @@ class PropertyFloat(PropertyBase):
             CompletionUtils.setup_completer_for_widget(
                 self.text_line,
                 self.variables_scrollArea,
-                filter_types=None,  # No filtering - show all variable types
+                filter_types=None,
                 context='numeric'
             )
 
         self.change_value()
-        self.emit_edited()
+        if not self._slider_dragging:
+            self.emit_edited()
 
     def change_value(self):
         idx = self.ui.logic_switch.currentIndex()
@@ -349,6 +361,9 @@ class PropertyVector3D(PropertyBase):
         self.ui.layout.insertWidget(2, self.variable_logic_switch)
 
         self.float_widget_x = FloatWidget()
+        self._slider_dragging_x = False
+        self.float_widget_x.slider_pressed.connect(lambda: setattr(self, '_slider_dragging_x', True))
+        self.float_widget_x.committed.connect(self._on_any_slider_committed)
         self.float_widget_x.edited.connect(self.on_changed)
         self.ui.layout_x.insertWidget(2, self.float_widget_x)
 
@@ -377,6 +392,9 @@ class PropertyVector3D(PropertyBase):
         self.ui.comboBox_x.currentIndexChanged.connect(self.on_changed)
 
         self.float_widget_y = FloatWidget()
+        self._slider_dragging_y = False
+        self.float_widget_y.slider_pressed.connect(lambda: setattr(self, '_slider_dragging_y', True))
+        self.float_widget_y.committed.connect(self._on_any_slider_committed)
         self.float_widget_y.edited.connect(self.on_changed)
         self.ui.layout_y.insertWidget(2, self.float_widget_y)
 
@@ -405,6 +423,9 @@ class PropertyVector3D(PropertyBase):
         self.ui.comboBox_y.currentIndexChanged.connect(self.on_changed)
 
         self.float_widget_z = FloatWidget()
+        self._slider_dragging_z = False
+        self.float_widget_z.slider_pressed.connect(lambda: setattr(self, '_slider_dragging_z', True))
+        self.float_widget_z.committed.connect(self._on_any_slider_committed)
         self.float_widget_z.edited.connect(self.on_changed)
         self.ui.layout_z.insertWidget(2, self.float_widget_z)
 
@@ -533,31 +554,39 @@ class PropertyVector3D(PropertyBase):
                 widget.hide()
             self.variable_logic_switch.hide()
 
+    def _on_any_slider_committed(self):
+        self._slider_dragging_x = False
+        self._slider_dragging_y = False
+        self._slider_dragging_z = False
+        self.change_value()
+        self.emit_edited()
+
     def on_changed(self):
         # Setup type-aware completer for expression mode without filters
         CompletionUtils.setup_completer_for_widget(
             self.text_line_x,
             self.variables_scrollArea,
-            filter_types=None,  # No filtering - show all variable types
+            filter_types=None,
             context='numeric'
         )
         CompletionUtils.setup_completer_for_widget(
             self.text_line_y,
             self.variables_scrollArea,
-            filter_types=None,  # No filtering - show all variable types
+            filter_types=None,
             context='numeric'
         )
         CompletionUtils.setup_completer_for_widget(
             self.text_line_z,
             self.variables_scrollArea,
-            filter_types=None,  # No filtering - show all variable types
+            filter_types=None,
             context='numeric'
         )
 
         self.logic_switch_line()
         self.logic_switch()
         self.change_value()
-        self.emit_edited()
+        if not (self._slider_dragging_x or self._slider_dragging_y or self._slider_dragging_z):
+            self.emit_edited()
 
     def change_value(self):
         if self.ui.logic_switch.currentIndex() == 0:

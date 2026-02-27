@@ -26,6 +26,9 @@ class PropertyFloat(QWidget):
 
         # Float widget setup
         self.float_widget = FloatWidget(slider_range=slider_range, int_output=int_bool)
+        self._slider_dragging = False
+        self.float_widget.slider_pressed.connect(self._on_slider_pressed)
+        self.float_widget.committed.connect(self._on_slider_committed)
         self.float_widget.edited.connect(self.on_changed)
         self.ui.layout.addWidget(self.float_widget)
 
@@ -140,6 +143,15 @@ class PropertyFloat(QWidget):
             self.float_widget.hide()
             self.spacer.hide()
 
+    def _on_slider_pressed(self):
+        self._slider_dragging = True
+
+    def _on_slider_committed(self):
+        self._slider_dragging = False
+        # Emit once at the end of the drag
+        self.change_value()
+        self.edited.emit()
+
     def on_changed(self):
         self.logic_switch()
         
@@ -153,8 +165,11 @@ class PropertyFloat(QWidget):
             )
         
         self.change_value()
-        self.edited.emit()
-        
+        # Don't emit edited while the slider is being dragged —
+        # _on_slider_committed will fire a single emit at the end.
+        if not self._slider_dragging:
+            self.edited.emit()
+
     def change_value(self):
         # Default
         if self.ui.logic_switch.currentIndex() == 0:

@@ -44,6 +44,9 @@ class PropertyVariableValue(QWidget):
 
             # Float widget setup
             self.float_widget = FloatWidget(slider_range=[0,0], int_output=False, spacer_enable=False)
+            self._slider_dragging = False
+            self.float_widget.slider_pressed.connect(self._on_slider_pressed)
+            self.float_widget.committed.connect(self._on_slider_committed)
             self.float_widget.edited.connect(self.on_changed)
             self.ui.layout_3.addWidget(self.float_widget)
 
@@ -205,6 +208,14 @@ class PropertyVariableValue(QWidget):
         except Exception as e:
             print(f"Error in logic_switch: {e}")
 
+    def _on_slider_pressed(self):
+        self._slider_dragging = True
+
+    def _on_slider_committed(self):
+        self._slider_dragging = False
+        self.change_value()
+        self.edited.emit()
+
     def on_changed(self):
         """Handle any change in the widget state"""
         try:
@@ -216,12 +227,13 @@ class PropertyVariableValue(QWidget):
                 CompletionUtils.setup_completer_for_widget(
                     self.text_line,
                     self.variables_scrollArea,
-                    filter_types=None,  # No filtering - show all variable types
+                    filter_types=None,
                     context='general'
                 )
             
             self.change_value()
-            self.edited.emit()
+            if not self._slider_dragging:
+                self.edited.emit()
         except Exception as e:
             print(f"Error in on_changed: {e}")
 

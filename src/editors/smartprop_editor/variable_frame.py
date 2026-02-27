@@ -15,6 +15,8 @@ from src.editors.smartprop_editor.widgets.expression_editor.main import Expressi
 
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
+    edited = Signal()
+    deleted = Signal()
 
     def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list,
                  element_id_generator):
@@ -247,10 +249,12 @@ class VariableFrame(QWidget):
                 'm_nElementID': self.element_id,
                 'm_HideExpression': self.hide_expression if self.hide_expression is not None else None
             }
+        self.edited.emit()
 
     def update_self(self):
         self.var_visible_in_editor = self.ui.visible_in_editor.isChecked()
         self.var_display_name = self.ui.varialbe_display_name.text()
+        self.edited.emit()
 
     def _make_unique(self, name):
         existing_names = []
@@ -311,6 +315,7 @@ class VariableFrame(QWidget):
         action = context_menu.exec(QCursor.pos())
 
         if action == delete_action:
+            self.deleted.emit()
             self.deleteLater()
         elif action == copy_action:
             clipboard = QApplication.clipboard()

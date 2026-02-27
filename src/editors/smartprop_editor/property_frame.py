@@ -210,7 +210,7 @@ class PropertyFrame(QWidget):
 
         # Defer heavier property initialization to the event loop,
         # improving UI responsiveness and perceived performance.
-        QTimer.singleShot(0, self._finish_init)
+        self._finish_init()
 
     def _finish_init(self):
         # Populate property widgets after the constructor returns

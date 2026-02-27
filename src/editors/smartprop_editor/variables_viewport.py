@@ -30,9 +30,9 @@ class SmartPropEditorVariableViewport(QWidget):
         self.ui.setupUi(self)
         self.element_id_generator = parent.element_id_generator
 
-        self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
+        self.ui.add_new_variable_button.clicked.connect(self._on_add_new_variable_clicked)
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
-        self.ui.paste_variable_button.clicked.connect(self.paste_variable)
+        self.ui.paste_variable_button.clicked.connect(self._on_paste_variable_clicked)
 
         # Add variable classes to combobox
         for item in variables_list:
@@ -40,6 +40,22 @@ class SmartPropEditorVariableViewport(QWidget):
 
 
     # ======================================[Variables Actions]========================================
+    def _on_add_new_variable_clicked(self):
+        """Route add-new through parent document for undo wrapping."""
+        parent_doc = self.parent()
+        if parent_doc is not None and hasattr(parent_doc, '_variables_mutate'):
+            parent_doc._variables_mutate(self.add_new_variable, "Add New Variable")
+        else:
+            self.add_new_variable()
+
+    def _on_paste_variable_clicked(self):
+        """Route paste through parent document for undo wrapping."""
+        parent_doc = self.parent()
+        if parent_doc is not None and hasattr(parent_doc, '_variables_mutate'):
+            parent_doc._variables_mutate(self.paste_variable, "Paste Variable")
+        else:
+            self.paste_variable()
+
     def add_variable(
             self,
             name,
@@ -59,6 +75,12 @@ class SmartPropEditorVariableViewport(QWidget):
             element_id_generator=self.element_id_generator
         )
         variable.duplicate.connect(self.duplicate_variable)
+        # Connect edited/deleted signals to parent document for undo
+        parent_doc = self.parent()
+        if parent_doc is not None and hasattr(parent_doc, '_on_variable_edited'):
+            variable.edited.connect(parent_doc._on_variable_edited)
+        if parent_doc is not None and hasattr(parent_doc, '_on_variable_deleted'):
+            variable.deleted.connect(parent_doc._on_variable_deleted)
         if index is None:
             index = (self.ui.variables_scrollArea.count()) - 1
         else:
@@ -66,6 +88,16 @@ class SmartPropEditorVariableViewport(QWidget):
         self.ui.variables_scrollArea.insertWidget(index, variable)
 
     def duplicate_variable(self, __data, __index):
+        parent_doc = self.parent()
+        if parent_doc is not None and hasattr(parent_doc, '_variables_mutate'):
+            parent_doc._variables_mutate(
+                lambda: self._do_duplicate_variable(__data, __index),
+                "Duplicate Variable"
+            )
+        else:
+            self._do_duplicate_variable(__data, __index)
+
+    def _do_duplicate_variable(self, __data, __index):
         __data[2] = self.element_id_generator.update_value(__data[2], force=True)
         self.add_variable(__data[0], __data[1], __data[2], __data[3], __data[4], __index)
 
