@@ -9,6 +9,8 @@ from src.editors.soundevent_editor.property.curve.ui_main import Ui_CurveWidget
 
 class DataPointItem(QWidget):
     edited = Signal()
+    slider_pressed = Signal()   # emitted when any BoxSlider drag starts
+    committed = Signal()        # emitted when any BoxSlider drag ends
 
     # Column configurations with customizable labels
     COLUMNS = [
@@ -30,6 +32,8 @@ class DataPointItem(QWidget):
             'layouts': {},
             'frames': {}
         }
+        # Default: not suppressing signals. Parent widget may toggle this flag during bulk population
+        self._suppress_signals = False
         self.setup_widgets()
 
     def setup_widgets(self):
@@ -61,8 +65,21 @@ class DataPointItem(QWidget):
             digits=column["digits"],
             sensitivity=column["sensitivity"]
         )
+        # If parent is in bulk-populate mode, block signals while setting initial value to avoid spurious edits
+        parent_suppress = getattr(self.parent_widget, '_suppress_signals', False)
+        if parent_suppress:
+            float_widget.blockSignals(True)
+
         float_widget.set_value(value)
+
+        # Connect signals after initial set_value
         float_widget.edited.connect(self.on_edited)
+        float_widget.slider_pressed.connect(self.slider_pressed)
+        float_widget.committed.connect(self.committed)
+
+        if parent_suppress:
+            # Re-enable normal signal delivery for user interactions after setup
+            float_widget.blockSignals(False)
         return float_widget
 
     def setup_action_buttons(self):
@@ -115,6 +132,9 @@ class DataPointItem(QWidget):
 
     def on_edited(self):
         """Handle value editing"""
+        # Respect parent suppression flag (set during programmatic population or undo/redo restore)
+        if getattr(self.parent_widget, '_suppress_signals', False) or getattr(self, '_suppress_signals', False):
+            return
         self.edited.emit()
 
     def get_values(self):
@@ -130,9 +150,18 @@ class DataPointItem(QWidget):
     def delete_item(self):
         """Remove this item and its associated widgets"""
         if self.parent_widget:
-            self.parent_widget.datapoint_items.remove(self)
+            # remove from parent's list and UI, then trigger parent to update state
+            try:
+                self.parent_widget.datapoint_items.remove(self)
+            except ValueError:
+                pass
             self.cleanup()
-            self.parent_widget.plot_graph()
+            # Allow deletion to be handled as a user action (so it can be captured by undo)
+            if not getattr(self.parent_widget, '_suppress_signals', False):
+                self.parent_widget.plot_graph()
+            else:
+                # If in suppressed mode, still refresh graph but don't notify parent higher-level
+                self.parent_widget.plot_graph()
             self.deleteLater()
 
     def cleanup(self):
@@ -165,6 +194,8 @@ class DataPointItem(QWidget):
 
 class SoundEventEditorPropertyCurve(QWidget):
     edited = Signal()
+    slider_pressed = Signal()   # emitted when any datapoint BoxSlider drag starts
+    committed = Signal()        # emitted when any datapoint BoxSlider drag ends
 
     # Constants
     MIN_POINTS_REQUIRED = 2
@@ -184,6 +215,10 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.datapoint_items = []
         self.points = []
 
+        # Flag used to suppress signals/undo pushes while programmatically populating or restoring state
+        self._suppress_signals = False
+        self.current_element_name = None
+
         # Update labels if provided
         if labels:
             self.update_labels(labels)
@@ -195,7 +230,12 @@ class SoundEventEditorPropertyCurve(QWidget):
         if value:
             self.value_update(value)
             for point_values in value:
-                self.add_datapoint(point_values)
+                # When initializing from a value, suppress emitting edits (undo should not capture programmatic load)
+                self._suppress_signals = True
+                try:
+                    self.add_datapoint(point_values)
+                finally:
+                    self._suppress_signals = False
             self.on_property_update()
 
     def update_labels(self, labels):
@@ -279,19 +319,56 @@ class SoundEventEditorPropertyCurve(QWidget):
     def add_datapoint(self, values: list = None):
         """Add a new datapoint to the curve"""
         values = values or [0, 0, 0, 0, 2, 3]
+        # Create datapoint. DataPointItem will internally block signals for initial value if parent is suppressing
         datapoint = DataPointItem(values=values, parent=self)
+        # Wire up signals (these should be connected, but DataPointItem will avoid emitting during suppressed loads)
         datapoint.edited.connect(self.on_property_update)
+        datapoint.slider_pressed.connect(self.slider_pressed)
+        datapoint.committed.connect(self.committed)
         self.datapoint_items.append(datapoint)
-        self.on_property_update()
+        # Only notify outer systems if not suppressing (e.g., when user triggers changes)
+        if not getattr(self, '_suppress_signals', False):
+            self.on_property_update()
+        else:
+            # Still refresh the graph to reflect programmatic changes but do not emit the edited signal
+            self.plot_graph()
 
     def on_property_update(self):
         """Handle updates to curve properties"""
+        # If we are restoring state or programmatically populating, avoid emitting an edited signal
         values = [item.get_values() for item in self.datapoint_items]
         self.value_update(values)
         self.plot_graph()
-        self.edited.emit()
+        if not getattr(self, '_suppress_signals', False):
+            self.edited.emit()
 
     def resizeEvent(self, event):
         """Handle widget resize events"""
         self.on_property_update()
         super().resizeEvent(event)
+
+    # --- New API for context/undo handling ---
+    def set_context_element(self, name: str):
+        """Set the current element name/context for this property widget.
+
+        This updates a visible label (plot title) so the user sees which element is being edited.
+        Call this when the properties panel is switched to a new tree element.
+        """
+        self.current_element_name = name
+        try:
+            # Use the plot title to display current element and property class
+            title = name if not self.value_class else f"{name} — {self.value_class}"
+            self.plot_item.setTitle(title)
+        except Exception:
+            # If plot_item isn't ready or fails, ignore silently
+            pass
+
+    def begin_bulk_update(self):
+        """Call before programmatic population/restoration to suppress undo/signal pushes."""
+        self._suppress_signals = True
+
+    def end_bulk_update(self):
+        """Call after programmatic population/restoration to re-enable signal pushing."""
+        self._suppress_signals = False
+        # After finishing population, ensure UI and graph are in sync
+        self.on_property_update()

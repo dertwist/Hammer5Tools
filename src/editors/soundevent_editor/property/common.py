@@ -73,6 +73,10 @@ class SoundEventEditorPropertyBase(QWidget):
         self.setMaximumHeight(44)
         self.setMinimumHeight(44)
 class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
+    edited = Signal()
+    slider_pressed = Signal()
+    committed = Signal()
+
     def __init__(self, parent=None, label_text: str = None, value: dict = None, slider_range: list = [0, 0],only_positive: bool = False):
         """
         Float property. Accepts inputs:
@@ -89,6 +93,8 @@ class SoundEventEditorPropertyFloat(SoundEventEditorPropertyBase):
             float_value = value
         self.float_widget_instance = FloatWidget(slider_range=slider_range, only_positive=only_positive, value=float_value, spacer_enable=False)
         self.float_widget_instance.edited.connect(self.on_property_update)
+        self.float_widget_instance.slider_pressed.connect(self.slider_pressed)
+        self.float_widget_instance.committed.connect(self.committed)
         self.add_property_widget(self.float_widget_instance)
         self.value_class = label_text
         self.init_float_widget()
@@ -189,6 +195,10 @@ class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
         return "#d1494a"
 
 class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
+    edited = Signal()
+    slider_pressed = Signal()
+    committed = Signal()
+
     def __init__(self, parent=None, label_text: str = None, value: list = None, slider_range: list = None):
         """
         Vector3 Property. Have a button to paste the value form hammer editor.
@@ -221,6 +231,8 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
             float_value = value
         float_widget_instance = FloatWidget(value=float_value, slider_range=self.slider_range, spacer_enable=False)
         float_widget_instance.edited.connect(self.on_property_update)
+        float_widget_instance.slider_pressed.connect(self.slider_pressed)
+        float_widget_instance.committed.connect(self.committed)
         float_widget_instance.setMaximumHeight(30)
         float_widget_instance.setMinimumHeight(30)
         self.vertical_layout.addWidget(float_widget_instance)
