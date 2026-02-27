@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QWidget,
     QLineEdit,
     QHBoxLayout,
+    QVBoxLayout,
+    QSlider,
     QSpacerItem,
     QSizePolicy,
 )
@@ -29,8 +31,27 @@ class Spacer(QWidget):
         self.setContentsMargins(0,0,0,0)
 #============================================================<  Property widgets  >=========================================================
 
+class _UndoAwareSlider(QSlider):
+    """QSlider subclass that emits a signal BEFORE valueChanged on mouse press.
+
+    Qt's default signal order on a track-click is:
+        valueChanged → sliderPressed
+    This is a problem because the undo snapshot must be captured before the
+    first valueChanged.  We fix this by emitting ``pre_press`` from
+    ``mousePressEvent`` before calling the base implementation.
+    """
+    pre_press = Signal()   # fires before valueChanged on any mouse interaction
+
+    def mousePressEvent(self, event):
+        print(f"[DEBUG] _UndoAwareSlider.mousePressEvent - emitting pre_press")
+        self.pre_press.emit()
+        super().mousePressEvent(event)
+
+
 class FloatWidget(QWidget):
     edited = Signal(float)
+    slider_pressed = Signal()   # emitted once when the user begins dragging the slider
+    committed = Signal()        # emitted once when the user releases the slider (one undo entry)
 
     def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0, only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True, vertical: bool = False, digits: int = 3, value_step: float = 1, slider_scale: int = 5):
         """Float widget is a widget with a spin box and a slider that are synchronized.
@@ -60,7 +81,7 @@ class FloatWidget(QWidget):
             self.SpinBox.setValidator(QDoubleValidator(self.slider_range[0], self.slider_range[1], digits, self))
 
         # Slider setup
-        self.Slider = QSlider()
+        self.Slider = _UndoAwareSlider()
         self.Slider.wheelEvent = lambda event: None
         self.Slider.setOrientation(Qt.Vertical if vertical else Qt.Horizontal)
         # Range setup: if slider_range is default (0,0) then use dynamic scaling.
@@ -77,7 +98,11 @@ class FloatWidget(QWidget):
         else:
             self.Slider.setMinimum(self.slider_range[0] * 100)
             self.Slider.setMaximum(self.slider_range[1] * 100)
+        # pre_press fires from mousePressEvent BEFORE valueChanged — guarantees
+        # the undo snapshot is captured before the first value change.
+        self.Slider.pre_press.connect(self._on_slider_pressed)
         self.Slider.valueChanged.connect(self.on_Slider_updated)
+        self.Slider.sliderReleased.connect(self._on_slider_released)
 
         # Layout setup
         layout = QVBoxLayout() if vertical else QHBoxLayout()
@@ -99,6 +124,16 @@ class FloatWidget(QWidget):
     def set_color(self, color):
         self.SpinBox.setStyleSheet(f"color: {color};")
 
+    def _on_slider_pressed(self):
+        """Called from pre_press (before valueChanged). Emit slider_pressed exactly once."""
+        print(f"[DEBUG] FloatWidget._on_slider_pressed - emitting slider_pressed")
+        self.slider_pressed.emit()
+
+    def _on_slider_released(self):
+        """Emit committed once at the end of a drag gesture."""
+        print(f"[DEBUG] FloatWidget._on_slider_released - emitting committed")
+        self.committed.emit()
+
     # Handler when the spinbox value is updated
     def on_SpinBox_updated(self):
         try:
@@ -115,8 +150,10 @@ class FloatWidget(QWidget):
                 else:
                     self.Slider.setMinimum(-abs(value) * self.slider_scale * 100 - 1000)
                 self.Slider.setMaximum(abs(value) * self.slider_scale * 100 + 1000)
-        # Otherwise, when lock_range is True, slider range remains fixed as set in __init__
+        # Block slider signals to avoid double-emit when syncing slider to spinbox
+        self.Slider.blockSignals(True)
         self.Slider.setValue(value * 100)
+        self.Slider.blockSignals(False)
         self.value = value
         self.edited.emit(value)
 
@@ -125,8 +162,12 @@ class FloatWidget(QWidget):
         value = self.Slider.value() / 100
         if self.int_output:
             value = round(value)
+        # Block spinbox signals to avoid re-entrant emit when syncing text
+        self.SpinBox.blockSignals(True)
         self.SpinBox.setText(str(value))
+        self.SpinBox.blockSignals(False)
         self.value = value
+        print(f"[DEBUG] FloatWidget.on_Slider_updated - value={value}, emitting edited")
         self.edited.emit(value)
 
     # Programmatically set the value
@@ -137,6 +178,8 @@ class FloatWidget(QWidget):
 
 class BoxSlider(QWidget):
     edited = Signal(float)
+    slider_pressed = Signal()   # emitted once when the user begins a drag gesture
+    committed = Signal()        # emitted once when the user releases the drag
 
     STYLE = """
     QLineEdit {
@@ -305,6 +348,7 @@ class BoxSlider(QWidget):
         if not self.in_edit_mode:
             self.dragging = True
             self.last_drag_x = x
+            self.slider_pressed.emit()
 
     def update_value_by_drag(self, x):
         """Update value based on drag movement"""
@@ -324,6 +368,7 @@ class BoxSlider(QWidget):
     def finish_drag(self):
         """End drag operation"""
         self.dragging = False
+        self.committed.emit()
 
     def set_value(self, value):
         """Set widget value with constraints"""

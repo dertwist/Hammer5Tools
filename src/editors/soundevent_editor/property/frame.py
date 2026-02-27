@@ -15,6 +15,8 @@ from src.editors.soundevent_editor.common import vsnd_filepath_convert
 class SoundEventEditorPropertyFrame(QWidget):
     """PropertyFrame suppose to collect properties and gives dict value"""
     edited = Signal()
+    slider_pressed = Signal()   # emitted when a float slider drag starts
+    committed = Signal()        # emitted when a float slider drag ends
     def __init__(self, _data: dict = None, widget_list: QHBoxLayout = None, tree:QTreeWidget = None):
         """Data variable is _data:d can receive only dict value"""
         super().__init__()
@@ -316,6 +318,11 @@ class SoundEventEditorPropertyFrame(QWidget):
         else:
             self.property_instance = SoundEventEditorPropertyLegacy(label_text=name,value=value)
         self.property_instance.edited.connect(self.on_property_updated)
+        # Bubble up slider press/release signals (only FloatWidget-backed properties emit them)
+        if hasattr(self.property_instance, 'slider_pressed'):
+            self.property_instance.slider_pressed.connect(self.slider_pressed)
+        if hasattr(self.property_instance, 'committed'):
+            self.property_instance.committed.connect(self.committed)
         self.ui.content.layout().addWidget(self.property_instance)
     def on_property_updated(self):
         """If some of the properties were changed send signa with dict value"""
@@ -372,6 +379,10 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.ui.content.setMaximumHeight(0)
         else:
             self.ui.content.setMaximumHeight(16666)
+
+    def set_context_element(self, name: str):
+        """Forward the active element name to the inner property widget, if supported.
+        """
 
     #===========================================================<  Drag and drop  >=========================================================
 

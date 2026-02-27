@@ -17,25 +17,83 @@ class PropertyStateCommand(QUndoCommand):
     """
     Snapshots the full properties dict before and after a change.
     Undo restores the before-state, redo restores the after-state.
+
+    This command is element-aware: it stores a target element key (m_nElementID or name)
+    so that undo/redo can switch the tree selection to the element whose state it restores,
+    and also updates the tree item's stored data accordingly.
     """
-    def __init__(self, window, before: dict, after: dict, description="Edit Property"):
+    def __init__(self, window, target_key, before: dict, after: dict, description="Edit Property"):
         super().__init__(description)
         self.window = window
+        self.target_key = target_key
         self.before = copy.deepcopy(before)
         self.after = copy.deepcopy(after)
 
+    def _find_item_for_key(self):
+        """Attempt to find a QTreeWidgetItem in the associated tree matching the target_key.
+        Two strategies are tried:
+          - If target_key is an int, match against stored data['m_nElementID']
+          - Otherwise, match by item text (name)
+        Returns the QTreeWidgetItem or None if not found.
+        """
+        try:
+            tree = self.window.tree
+            if tree is None:
+                return None
+            root = tree.invisibleRootItem()
+            for i in range(root.childCount()):
+                child = root.child(i)
+                try:
+                    data = child.data(0, Qt.UserRole)
+                    if isinstance(self.target_key, int):
+                        if isinstance(data, dict) and data.get('m_nElementID') == self.target_key:
+                            return child
+                    else:
+                        # fallback: match by visible name
+                        if child.text(0) == str(self.target_key):
+                            return child
+                except Exception:
+                    continue
+        except Exception:
+            return None
+        return None
+
+    def _apply_state(self, state: dict):
+        """Switch to the target tree item (if needed) and restore the given state."""
+        item = self._find_item_for_key()
+
+        # Block the normal currentItemChanged handler so switch_to_item is not
+        # called twice (once from the signal, once from _restore_state).
+        self.window._restoring_from_undo = True
+        try:
+            if item is not None:
+                try:
+                    self.window.tree.setCurrentItem(item)
+                except Exception:
+                    pass
+            # Rebuild the properties UI from the snapshot
+            self.window._restore_state(state)
+            # Write the restored data back into the tree item so tree stays in sync
+            if item is not None:
+                try:
+                    item.setData(0, Qt.UserRole, copy.deepcopy(self.window.value))
+                except Exception:
+                    pass
+        finally:
+            self.window._restoring_from_undo = False
+
     def undo(self):
-        self.window._restore_state(self.before)
+        self._apply_state(self.before)
 
     def redo(self):
         # On first push Qt calls redo() immediately — skip to avoid double-apply
         if getattr(self, '_first_redo_done', False):
-            self.window._restore_state(self.after)
+            self._apply_state(self.after)
         self._first_redo_done = True
 
 class SoundEventEditorPropertiesWindow(QMainWindow):
     edited = Signal()
-    def __init__(self, parent=None, value: str = None, tree:QTreeWidget = None):
+    def __init__(self, parent=None, value: str = None, tree:QTreeWidget = None, undo_stack:QUndoStack = None):
         """
         The properties window is supposed to store property frame instances in the layout.
         When any of the frames are edited, the value updates and
@@ -60,9 +118,15 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Init value variable:
         self.value = self.load_value(value)
 
-        # Init undo/redo system
-        self.undo_stack = QUndoStack(self)
+        # Init undo/redo system. Allow injection of a global undo stack (recommended).
+        if undo_stack is not None:
+            self.undo_stack = undo_stack
+        else:
+            self.undo_stack = QUndoStack(self)
         self._undo_enabled = False   # suppress pushes during load/clear
+        self._slider_dragging = False          # True while a slider is being dragged
+        self._pre_commit_snapshot = None       # value snapshot taken at sliderPressed
+        self._restoring_from_undo = False      # True while undo/redo is restoring state
 
         # Init variables
         self.tree = tree
@@ -277,6 +341,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             # Ensure readonly mode applied after population
             self.apply_readonly_mode()
 
+            # Sync self.value so callers can read it immediately after populate_properties()
+            self.update_value()
+
             # Enable undo/redo after population so initial load doesn't pollute stack
             self._undo_enabled = True
         else:
@@ -288,6 +355,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Create frame widget instance"""
         widget_instance = SoundEventEditorPropertyFrame(_data={key: value}, widget_list=self.ui.properties_layout, tree=self.tree)
         widget_instance.edited.connect(self.on_update)
+        widget_instance.slider_pressed.connect(self._capture_pre_commit_snapshot)
+        widget_instance.committed.connect(self.on_commit)
         index = self.ui.properties_layout.count() - 1
         self.ui.properties_layout.insertWidget(index, widget_instance)
 
@@ -315,23 +384,85 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Rebuild the properties UI from a full state snapshot."""
         self._undo_enabled = False       # don't push a new command while restoring
         self.properties_clear()
+        self.properties_groups_show()
         self.populate_properties(state)
+
+        # Update per-frame context labels for the current tree item
+        try:
+            current_item = self.tree.currentItem()
+            if current_item is not None:
+                element_name = current_item.text(0)
+                for idx in range(self.ui.properties_layout.count()):
+                    widget = self.ui.properties_layout.itemAt(idx).widget()
+                    if hasattr(widget, 'set_context_element'):
+                        try:
+                            widget.set_context_element(element_name)
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
         self.update_value()
         self._undo_enabled = True
         self.edited.emit()
 
     #==============================================================<  Updating  >===========================================================
+    def _get_current_element_key_and_name(self):
+        """Return (element_key, element_name) for the currently selected tree item."""
+        element_key = None
+        element_name = None
+        try:
+            current_item = self.tree.currentItem()
+            if current_item is not None:
+                element_name = current_item.text(0)
+                data = current_item.data(0, Qt.UserRole)
+                if isinstance(data, dict) and 'm_nElementID' in data:
+                    element_key = data.get('m_nElementID')
+                else:
+                    element_key = element_name
+        except Exception:
+            pass
+        return element_key, element_name
+
     def on_update(self):
-        """Updating dict value and send signal"""
-        if self._undo_enabled:
-            before = copy.deepcopy(self.value)   # snapshot BEFORE
+        """Updating dict value and send signal.
+        For slider drags this is called on every tick — only real-time save, NO undo push.
+        Undo is pushed once in on_commit() when the slider is released.
+        For discrete widgets (bool, text, combobox) the slider is never pressed so
+        _slider_dragging is False and we push to the undo stack as normal.
+        """
+        if self._undo_enabled and not self._slider_dragging:
+            before = copy.deepcopy(self.value)
             self.update_value()
-            after = copy.deepcopy(self.value)    # snapshot AFTER
+            after = copy.deepcopy(self.value)
             if before != after:
-                self.undo_stack.push(PropertyStateCommand(self, before, after))
+                element_key, element_name = self._get_current_element_key_and_name()
+                desc = f"Edit '{element_name}'" if element_name else "Edit Property"
+                self.undo_stack.push(PropertyStateCommand(self, element_key, before, after, desc))
         else:
             self.update_value()
         self.edited.emit()
+
+    def _capture_pre_commit_snapshot(self):
+        """Called at sliderPressed — snapshot the value BEFORE the drag begins."""
+        if self._undo_enabled:
+            self._pre_commit_snapshot = copy.deepcopy(self.value)
+        self._slider_dragging = True
+
+    def on_commit(self):
+        """Called at sliderReleased — push a single undo entry for the whole drag."""
+        # update_value() first so self.value reflects the final slider position
+        self.update_value()
+        if self._undo_enabled and self._pre_commit_snapshot is not None:
+            after = copy.deepcopy(self.value)
+            if self._pre_commit_snapshot != after:
+                element_key, element_name = self._get_current_element_key_and_name()
+                desc = f"Edit '{element_name}'" if element_name else "Edit Property"
+                self.undo_stack.push(PropertyStateCommand(self, element_key, self._pre_commit_snapshot, after, desc))
+        self._pre_commit_snapshot = None
+        # Clear the dragging flag LAST so any late valueChanged that arrives
+        # during this method is still suppressed by on_update().
+        self._slider_dragging = False
     def clean_comment(self, text):
         return text.replace('"', "''")
     def update_value(self):
@@ -411,3 +542,70 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                 pass
         except Exception:
             pass
+
+    # ------------------------------------------------------------------
+    def switch_to_item(self, item):
+        """Centralized switching logic for when the active tree item changes.
+
+        This method suppresses undo pushes while populating the properties UI
+        and also updates child property frames with the active element name.
+
+        When an undo/redo command is in progress (_restoring_from_undo is True),
+        we skip this method entirely because the command itself handles the UI rebuild.
+        """
+        # If undo/redo is driving the tree selection, don't interfere
+        if self._restoring_from_undo:
+            return
+        # Ensure any UI-changing logic we perform does not push undo entries
+        self._undo_enabled = False
+
+        if item is None:
+            self.properties_clear()
+            self.properties_groups_hide()
+            self._undo_enabled = True
+            self.edited.emit()
+            return
+
+        # Try to get a dict value for the item
+        try:
+            data = item.data(0, Qt.UserRole)
+            if not isinstance(data, dict):
+                data = {}
+        except Exception:
+            data = {}
+
+        # Populate UI from the item's data
+        self.properties_clear()
+        self.properties_groups_show()
+        self.populate_properties(data)
+
+        # Update per-frame context labels if frames expose set_context_element
+        element_name = item.text(0)
+        for idx in range(self.ui.properties_layout.count()):
+            widget = self.ui.properties_layout.itemAt(idx).widget()
+            try:
+                if hasattr(widget, 'set_context_element'):
+                    widget.set_context_element(element_name)
+            except Exception:
+                pass
+
+        # Re-enable undo pushes and notify listeners
+        self._undo_enabled = True
+        self.edited.emit()
+
+    def find_tree_item_by_element_key(self, key):
+        """Public helper to find a tree item by element key (m_nElementID or name)."""
+        try:
+            root = self.tree.invisibleRootItem()
+            for i in range(root.childCount()):
+                child = root.child(i)
+                data = child.data(0, Qt.UserRole)
+                if isinstance(key, int):
+                    if isinstance(data, dict) and data.get('m_nElementID') == key:
+                        return child
+                else:
+                    if child.text(0) == str(key):
+                        return child
+        except Exception:
+            pass
+        return None

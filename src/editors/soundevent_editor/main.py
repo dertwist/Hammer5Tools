@@ -260,16 +260,35 @@ class SoundEventEditorMainWindow(QMainWindow):
     #=======================================================<  Properties Window  >=====================================================
 
     def PropertiesWindowInit(self):
-        self.PropertiesWindow = SoundEventEditorPropertiesWindow(tree=self.ui.hierarchy_widget)
-        # If properties window had its own play button earlier, it remains harmless; main Play is primary now.
+        self.PropertiesWindow = SoundEventEditorPropertiesWindow(tree=self.ui.hierarchy_widget, undo_stack=self.undo_stack)
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
         self.PropertiesWindow.edited.connect(self.PropertiesWindowUpdate)
+
     def PropertiesWindowUpdate(self):
         item = self.ui.hierarchy_widget.currentItem()
         if item is None:
             return
         _data = self.PropertiesWindow.value
         self.update_hierarchy_item(item, _data)
+        self.update_properties_label()
+
+    def update_properties_label(self):
+        """Refresh the Properties header label with the active event name and property count."""
+        item = self.ui.hierarchy_widget.currentItem()
+        if item is None:
+            self.ui.label.setText("Properties")
+            return
+        event_name = item.text(0)
+        value = self.PropertiesWindow.value
+        if not isinstance(value, dict):
+            self.ui.label.setText(f"Properties: {event_name}")
+            return
+        # Count properties: all keys except 'comment' and 'm_sLabel'
+        prop_count = sum(
+            1 for k in value
+            if k not in ('comment', 'm_sLabel')
+        )
+        self.ui.label.setText(f"Properties: {event_name}    |    {prop_count} properties")
 
     #===============================================================<  Filter  >============================================================
     def eventFilter(self, source, event):
@@ -391,24 +410,17 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def on_changed_hierarchy_item(self, current_item: HierarchyItemModel):
         """Handles changes in the hierarchy item by updating the properties window."""
-        if current_item is not None:
-            self.PropertiesWindow.properties_clear()
-            self.PropertiesWindow.properties_groups_show()
-
-            # Safely convert column text to dict value
-            try:
-                data = current_item.data(0, Qt.UserRole)
-                if isinstance(data, dict):
-                    self.ui.label.setText(f"Properties: {current_item.text(0)}")
-                    self.PropertiesWindow.populate_properties(data)
-                else:
-                    raise ValueError("Parsed data is not a dictionary.")
-            except (ValueError, SyntaxError) as e:
-                debug(f"Error parsing item data: {e}")
-                QMessageBox.warning(self, "Data Error", "Failed to parse item data. Please check the format.")
-        else:
-            self.PropertiesWindow.properties_clear()
-            self.PropertiesWindow.properties_groups_hide()
+        # Delegate switching logic to PropertiesWindow so it can suppress undo pushes
+        try:
+            self.PropertiesWindow.switch_to_item(current_item)
+            # Update the header label to reflect the currently selected element.
+            # Skip during undo/redo — the label will be refreshed when _restore_state
+            # emits 'edited' and PropertiesWindowUpdate runs.
+            if not self.PropertiesWindow._restoring_from_undo:
+                self.update_properties_label()
+        except Exception as e:
+            debug(f"Error switching properties view: {e}")
+            QMessageBox.warning(self, "Properties Error", "Failed to switch properties view for the selected item.")
 
     # ======================================[Tree widget hierarchy filter]========================================
     def search_hierarchy(self, filter_text, parent_item):
