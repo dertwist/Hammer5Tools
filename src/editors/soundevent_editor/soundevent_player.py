@@ -2,97 +2,50 @@
 
 This module provides a simple, fire-and-forget function to trigger
 CS2 sound events using the already running CS2 instance started with
--netconport 2121. It uses the netconsole TCP transport located in dev/rcon_protocol.py.
+-netconport 2121.
 
 Constraints:
 - Fire-and-forget: no completion/finish detection.
 - Fail silently if CS2 is not running or connection fails (returns False).
 - Do not spawn a CS2 process. Only talk to an existing one.
-
-If settings provide host/port values, they are used. Otherwise
-defaults are host=127.0.0.1, port=2121.
 """
 from __future__ import annotations
 
-import socket
-from contextlib import closing
 from typing import Callable, Optional
 
-from PySide6.QtCore import QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton
 
 try:
-    # Use settings if available to allow overriding host/port
-    from src.settings.main import get_settings_value, debug  # type: ignore
+    from src.settings.main import debug  # type: ignore
     from src.styles.common import qt_stylesheet_button  # type: ignore
-except Exception:  # Fallbacks if settings are not importable in some contexts
-    def get_settings_value(section: str, key: str, default: Optional[str] = None) -> Optional[str]:
-        return default
+except Exception:
     def debug(msg: str):
         print(msg)
     qt_stylesheet_button = ""
 
-
-def _get_netcon_target() -> tuple[str, int]:
-    """Resolve netcon target host and port from settings with sane defaults."""
-    host = get_settings_value('CS2', 'netcon_host', '127.0.0.1') or '127.0.0.1'
-    try:
-        port_str = get_settings_value('CS2', 'netcon_port', '2121') or '2121'
-        port = int(float(port_str))
-    except Exception:
-        port = 2121
-    return host, port
+from src.other.cs2_netcon import CS2Netcon
 
 
 def _send_netcon_command(cmd: str) -> bool:
-    """Send a single command line to CS2 netconsole.
-
-    Args:
-        cmd: The command to send (a single line, newline will be appended)
-
-    Returns:
-        True if the command was sent successfully, False otherwise.
-    """
-    host, port = _get_netcon_target()
-    try:
-        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as client:
-            client.settimeout(0.25)
-            client.connect((host, port))
-            # best-effort: ignore response and close immediately
-            payload = (cmd.rstrip("\n") + "\n").encode('utf-8')
-            client.sendall(payload)
-        return True
-    except Exception as e:
-        # Silent failure per spec, but keep an internal debug log entry
-        try:
-            debug(f"[soundevent_player] Netcon send failed: {e}")
-        except Exception:
-            pass
-        return False
+    """Send a single command line to CS2 netconsole. Kept for backwards compatibility."""
+    return CS2Netcon.send(cmd)
 
 
 def play_soundevent(event_name: str) -> bool:
     """Trigger a CS2 sound event by name using netconsole.
 
-    This is fire-and-forget and will not raise dialogs. If CS2 is not
-    running or netcon is unreachable, returns False.
-
-    The function now sends two commands in order:
+    Sends two commands in order:
     1) snd_sos_stop_all_soundevents
     2) snd_sos_start_soundevent <event_name>
-
-    Args:
-        event_name: Sound event name to start (e.g., 'Player.Footstep')
 
     Returns:
         True if both commands were sent successfully, False otherwise.
     """
     if not event_name or not isinstance(event_name, str):
         return False
-    # Stop any currently playing sound events, then start the requested one.
-    ok1 = _send_netcon_command("snd_sos_stop_all_soundevents")
-    ok2 = _send_netcon_command(f"snd_sos_start_soundevent {event_name}")
+    ok1 = CS2Netcon.send("snd_sos_stop_all_soundevents")
+    ok2 = CS2Netcon.send(f"snd_sos_start_soundevent {event_name}")
     return ok1 and ok2
 
 
