@@ -556,6 +556,10 @@ class MapBuilderDialog(QMainWindow):
             if '-netconport' not in commands:
                 commands += ' -netconport 2121'
 
+            # Ensure -disable_workshop_command_filtering is always included (mandatory flag)
+            if '-disable_workshop_command_filtering' not in commands:
+                commands += ' -disable_workshop_command_filtering'
+
             def assemble_commands(commands: str, addon_name):
                 return commands.replace('addon_name', addon_name)
 
@@ -634,6 +638,13 @@ class MapBuilderDialog(QMainWindow):
             return commands.replace('addon_name', addon_name)
 
         commands = assemble_commands(commands, addon_name)
+
+        # Ensure mandatory flags are always included
+        if '-netconport' not in commands:
+            commands += ' -netconport 2121'
+        if '-disable_workshop_command_filtering' not in commands:
+            commands += ' -disable_workshop_command_filtering'
+
         launch_cmd = f'"{cs2_exe}" {commands} +map_workshop {addon_name} {map_name}'
 
         self.log_phase(f'Launching: {launch_cmd}')
