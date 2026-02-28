@@ -8,6 +8,11 @@ except:
     except:
         from src.editors.loading_editor.commands.vmap_parser import parse
 
+try:
+    from src.other.cs2_netcon import CS2Netcon
+except Exception:
+    CS2Netcon = None
+
 def generate_commands(vmap_path, history=False):
     """
     Generate CS2 console commands for point_camera entities in a VMAP file.
@@ -20,6 +25,16 @@ def generate_commands(vmap_path, history=False):
     cameras = parse(vmap_path, show_entity_properties=False)
     print(cameras)
     print(f"Loaded {len(cameras)} point_camera entities from the VMAP file.")
+
+    # Query the user's current value of r_always_render_all_windows so we
+    # can restore it after taking screenshots.
+    render_cvar = "r_always_render_all_windows"
+    user_render_value = "false"  # safe default
+    if CS2Netcon is not None:
+        queried = CS2Netcon.query(render_cvar)
+        if queried is not None:
+            user_render_value = queried
+
     map_name = os.path.splitext(os.path.basename(vmap_path))[0]
     current_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     if history:
@@ -97,6 +112,7 @@ def generate_commands(vmap_path, history=False):
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos {origin_str}>{delay}>1"',
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setang {angles_str}>{delay}>1"' if angles_str else "",
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>fov_cs_debug {fov}>{delay}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>r_always_render_all_windows true>{delay}>1"',
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>jpeg_screenshot>{delay + (tick * 2)}>1"'
             ])
     commands = [cmd for cmd in commands if cmd]
@@ -105,6 +121,7 @@ def generate_commands(vmap_path, history=False):
         commands.extend([
             f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix shot>{final_delay}>1"',
             f'ent_fire worldent addoutput "OnUser1>cmd>command>r_drawviewmodel 1;cl_drawhud 1;r_drawpanorama 1;noclip 0>{final_delay}>1"',
+            f'ent_fire worldent addoutput "OnUser1>cmd>command>r_always_render_all_windows {user_render_value}>{final_delay}>1"',
             "r_drawviewmodel 0",
             "cl_drawhud 0",
             "r_drawpanorama 0",

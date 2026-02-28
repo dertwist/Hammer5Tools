@@ -21,13 +21,14 @@ from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool
 from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent
 from PySide6.QtSvgWidgets import QSvgWidget
 
-from src.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir, set_settings_bool, get_settings_bool
+from src.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir
 from src.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from src.editors.loading_editor.viewport import ImageExplorer
 from src.editors.loading_editor.timeline import TimelineExplorer
 from src.common import compile
 from src.widgets import ErrorInfo
 from src.editors.loading_editor.commands.main import generate_commands
+from src.other.cs2_netcon import CS2Netcon
 
 class SvgPreviewWidget(QWidget):
     """
@@ -424,8 +425,8 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.apply_description_button.clicked.connect(self.do_loading_editor_cs2_description)
         self.ui.apply_screenshots_button.clicked.connect(self.start_apply_screenshots)
         self.ui.apply_icon_button.clicked.connect(self.icon_processs)
-        self.ui.open_folder_button.clicked.connect(self.open_images_folder)
-        self.ui.make_commands.clicked.connect(self.generate_commands_action)
+        self.ui.take_history_shots.clicked.connect(self.take_history_shots_action)
+        self.ui.take_loading_screen_shots.clicked.connect(self.take_loading_screen_shots_action)
         self.ui.refresh.clicked.connect(self.refresh_timeline)
         self.ui.generate_gifs.clicked.connect(self.export_all_to_gif)
 
@@ -518,41 +519,37 @@ class Loading_editorMainWindow(QMainWindow):
             pass
         self.unified_dialog.cancel_button.clicked.connect(self.unified_dialog.close)
 
-    def show_copy_message_once(self, parent=None):
-        if not get_settings_bool("LoadingEditor", "show_copy_message", True):
-            return
-        msg = QMessageBox(parent or self)
-        msg.setWindowTitle("Copied to Clipboard")
-        msg.setText("Commands were copied to clipboard.")
-        msg.setIcon(QMessageBox.Information)
-        ok_button = msg.addButton(QMessageBox.Ok)
-        do_not_show_button = msg.addButton("Do not show again", QMessageBox.ActionRole)
-        msg.exec_()
-        if msg.clickedButton() == do_not_show_button:
-            set_settings_bool("LoadingEditor", "show_copy_message", False)
-
-    def generate_commands_action(self):
+    def take_history_shots_action(self):
+        """Generate commands for history screenshots and send directly to CS2 via netcon."""
         path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
-        history_mode: bool = self.ui.history_mode.isChecked()
-        if history_mode is False:
-            if os.path.exists(self.loadingscreen_path):
-                for filename in os.listdir(self.loadingscreen_path):
-                    file_path = os.path.join(self.loadingscreen_path, filename)
-                    try:
-                        if os.path.isfile(file_path) or os.path.islink(file_path):
-                            os.remove(file_path)
-                        elif os.path.isdir(file_path):
-                            shutil.rmtree(file_path)
-                    except Exception as e:
-                        debug(f"Failed to delete {file_path}: {e}")
-        commands = generate_commands(path, history_mode)
+        commands = generate_commands(path, history=True)
         if commands:
-            QApplication.clipboard().setText(";".join(commands))
-            self.show_copy_message_once(self)
+            if not CS2Netcon.send_many(commands):
+                QMessageBox.warning(self, "CS2 Not Reachable",
+                    "Could not send commands to CS2.\n"
+                    "Make sure CS2 is running with -netconport 2121.")
 
+    def take_loading_screen_shots_action(self):
+        """Generate commands for loading screen screenshots, clear previous shots, and send to CS2 via netcon."""
+        # Clear previous loading screen shots first
+        if os.path.exists(self.loadingscreen_path):
+            for filename in os.listdir(self.loadingscreen_path):
+                file_path = os.path.join(self.loadingscreen_path, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.remove(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    debug(f"Failed to delete {file_path}: {e}")
 
-    def open_images_folder(self):
-        os.startfile(self.game_screenshot_path)
+        path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
+        commands = generate_commands(path, history=False)
+        if commands:
+            if not CS2Netcon.send_many(commands):
+                QMessageBox.warning(self, "CS2 Not Reachable",
+                    "Could not send commands to CS2.\n"
+                    "Make sure CS2 is running with -netconport 2121.")
 
     def loading_editor_cs2_description(self, description_text: str):
         file_name = os.path.join(get_cs2_path(), "game", "csgo_addons", get_addon_name(), "maps", f"{get_addon_name()}.txt")

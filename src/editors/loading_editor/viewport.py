@@ -418,10 +418,17 @@ class ImageExplorer(QMainWindow):
 
         menu = QMenu(self)
         if self.file_model.isDir(index):
+            open_folder_action = QAction("Open Folder", self)
+            open_folder_action.triggered.connect(lambda: os.startfile(self.file_model.filePath(index)))
+            menu.addAction(open_folder_action)
             remove_action = QAction("Remove Folder", self)
             remove_action.triggered.connect(lambda: self.removeSelectedFolder(index))
             menu.addAction(remove_action)
         else:
+            open_folder_action = QAction("Open Folder", self)
+            file_path = self.file_model.filePath(index)
+            open_folder_action.triggered.connect(lambda: os.startfile(os.path.dirname(file_path)))
+            menu.addAction(open_folder_action)
             remove_action = QAction("Remove Image", self)
             remove_action.triggered.connect(lambda: self.removeSelectedImage(index))
             menu.addAction(remove_action)
