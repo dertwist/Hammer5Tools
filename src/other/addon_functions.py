@@ -72,6 +72,10 @@ def __launch_addon():
     if '-netconport' not in commands:
         commands += ' -netconport 2121'
 
+    # Ensure -disable_workshop_command_filtering is always included (mandatory flag)
+    if '-disable_workshop_command_filtering' not in commands:
+        commands += ' -disable_workshop_command_filtering'
+
     cs2_exe_path = os.path.join(cs2_path, "game", "bin", "win64", "cs2.exe")
     
     if not os.path.exists(cs2_exe_path):
