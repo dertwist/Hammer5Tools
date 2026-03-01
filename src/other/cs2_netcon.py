@@ -26,8 +26,10 @@ from __future__ import annotations
 
 import re
 import socket
+import time
+import threading
 from contextlib import closing
-from typing import Optional, Sequence
+from typing import Callable, Optional, Sequence
 
 try:
     from src.settings.main import get_settings_value, debug  # type: ignore
@@ -56,7 +58,7 @@ class CS2Netcon:
         return host, port
 
     @staticmethod
-    def query(cvar: str, timeout: float = 1.0) -> Optional[str]:
+    def query(cvar: str, timeout: float = 3.0) -> Optional[str]:
         """Query a CS2 cvar and return its current value as a string.
 
         Sends the cvar name as a command and reads the response line which
@@ -73,31 +75,37 @@ class CS2Netcon:
             Value string or None.
         """
         host, port = CS2Netcon._get_target()
+        pattern = re.compile(
+            r'^\s*' + re.escape(cvar) + r'\s*=\s*(\S+)',
+            re.MULTILINE | re.IGNORECASE
+        )
         try:
             with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
                 sock.settimeout(timeout)
                 sock.connect((host, port))
                 sock.sendall((cvar.strip() + "\n").encode('utf-8'))
                 response = b""
+                deadline = time.time() + timeout
                 try:
-                    while True:
+                    while time.time() < deadline:
+                        sock.settimeout(max(0.1, deadline - time.time()))
                         chunk = sock.recv(4096)
                         if not chunk:
                             break
                         response += chunk
-                        # Stop as soon as we have a newline — first line is the answer
-                        if b"\n" in response:
-                            break
+                        # Check accumulated response for the cvar pattern
+                        text = response.decode('utf-8', errors='replace')
+                        match = pattern.search(text)
+                        if match:
+                            value = match.group(1).strip(' "\'')
+                            debug(f"[CS2Netcon] Query '{cvar}' = '{value}'")
+                            return value
                 except (TimeoutError, socket.timeout):
-                    pass  # timeout after first line is expected
+                    pass  # timeout is expected once all output is consumed
 
+            # Final attempt to parse whatever we got
             text = response.decode('utf-8', errors='replace')
-            # CS2 responds: "r_always_render_all_windows = true ( def. "false" ..."
-            # or simply:    "r_always_render_all_windows = true"
-            match = re.search(
-                r'^\s*' + re.escape(cvar) + r'\s*=\s*(\S+)',
-                text, re.MULTILINE | re.IGNORECASE
-            )
+            match = pattern.search(text)
             if match:
                 value = match.group(1).strip(' "\'')
                 debug(f"[CS2Netcon] Query '{cvar}' = '{value}'")
@@ -165,5 +173,84 @@ class CS2Netcon:
             return False
         except Exception as e:
             debug(f"[CS2Netcon] Send failed: {e}")
+            return False
+
+    @staticmethod
+    def send_and_listen(
+        command: str,
+        sentinel: str,
+        on_line: 'Optional[Callable[[str], None]]' = None,
+        timeout: float = 300.0,
+        poll_interval: float = 0.1,
+        stop_event: 'Optional[threading.Event]' = None,
+    ) -> bool:
+        """Send a command and keep reading output until *sentinel* appears in a line.
+
+        This keeps the TCP connection open and streams every line back via the
+        *on_line* callback.  It returns True when the sentinel is found, or
+        False on timeout / error / abort.
+
+        Args:
+            command:        Console command to send (e.g. "buildcubemaps").
+            sentinel:       A substring to look for in the output that signals
+                            completion (e.g. "Cubemap build complete").
+            on_line:        Optional callback invoked with each output line.
+            timeout:        Maximum seconds to wait for the sentinel.
+            poll_interval:  Seconds between recv attempts when no data arrives.
+            stop_event:     Optional threading.Event; if set, aborts early.
+
+        Returns:
+            True if the sentinel was detected, False otherwise.
+        """
+        host, port = CS2Netcon._get_target()
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(poll_interval)
+            sock.connect((host, port))
+
+            # Send the command
+            sock.sendall((command.strip() + "\n").encode('utf-8'))
+            debug(f"[CS2Netcon] send_and_listen: sent '{command}' to {host}:{port}")
+
+            buffer = b""
+            deadline = time.time() + timeout
+
+            while time.time() < deadline:
+                if stop_event and stop_event.is_set():
+                    debug("[CS2Netcon] send_and_listen: aborted via stop_event")
+                    sock.close()
+                    return False
+
+                try:
+                    chunk = sock.recv(4096)
+                    if not chunk:
+                        # Server closed the connection
+                        break
+                    buffer += chunk
+                except (TimeoutError, socket.timeout):
+                    continue
+                except OSError:
+                    break
+
+                # Process complete lines
+                while b"\n" in buffer:
+                    line_bytes, buffer = buffer.split(b"\n", 1)
+                    line = line_bytes.decode('utf-8', errors='replace').rstrip()
+                    if line:
+                        if on_line:
+                            on_line(line)
+                        if sentinel in line:
+                            debug(f"[CS2Netcon] send_and_listen: sentinel '{sentinel}' found")
+                            sock.close()
+                            return True
+
+            sock.close()
+            debug(f"[CS2Netcon] send_and_listen: timed out after {timeout}s")
+            return False
+        except ConnectionRefusedError:
+            debug("[CS2Netcon] send_and_listen: connection refused")
+            return False
+        except Exception as e:
+            debug(f"[CS2Netcon] send_and_listen failed: {e}")
             return False
 

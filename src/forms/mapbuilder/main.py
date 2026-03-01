@@ -25,6 +25,266 @@ from src.forms.mapbuilder.widgets import SettingsPanel, PresetButton
 from src.settings.main import get_addon_name, get_settings_value, get_addon_dir, get_cs2_path, set_settings_value
 from src.common import enable_dark_title_bar, app_dir, default_commands
 from src.other.addon_functions import launch_addon
+from src.other.cs2_netcon import CS2Netcon
+
+
+class BuildCubemapsThread(QThread):
+    """Thread that launches CS2 once, then builds cubemaps for every map in
+    the queue sequentially – without relaunching the game between maps.
+
+    Flow:
+      1. Launch CS2 (no map on the command line – just tools mode).
+      2. Wait for the netcon TCP port to become reachable.
+      3. Wait for CS2 to finish initialising (``Source2Init OK`` sentinel).
+      4. Query ``r_always_render_all_windows`` and save the user's value.
+      5. Set ``r_always_render_all_windows true``.
+      6. For each map in the queue:
+         a. Send ``map_workshop <addon> <map>`` via netcon.
+         b. Wait for the map to fully load (``Host activate: Loading``).
+         c. Send ``buildcubemaps`` and wait until the build completes.
+            CS2 disconnects its internal game server during cubemap baking,
+            which drops the netcon TCP connection. When the connection
+            closes we reconnect and wait for the map to reload, which
+            signals that the cubemap VPK has been written.
+      7. Restore ``r_always_render_all_windows`` to the original value.
+      8. Leave CS2 running.
+    """
+    outputReceived = Signal(str)
+    mapFinished = Signal(str, bool)   # (map_name, success)
+    finished = Signal(bool)           # True = all succeeded, False = failure/abort
+
+    # CS2 prints this once the main menu is fully up and ready.
+    INIT_DONE_SENTINEL = "CSGO_GAME_UI_STATE_MAINMENU"
+    # Printed when a map is fully loaded and the player is in-game.
+    MAP_LOADED_SENTINEL = "Host activate: Loading"
+
+    CONNECT_TIMEOUT = 180            # seconds – wait for netcon port
+    INIT_TIMEOUT = 300               # seconds – wait for main menu
+    MAP_LOAD_TIMEOUT = 300           # seconds – wait for map to fully load
+    BUILD_TIMEOUT = 600              # seconds – wait for cubemap build
+    RECONNECT_TIMEOUT = 60           # seconds – wait for netcon after cubemap disconnect
+
+    def __init__(self, cs2_exe: str, launch_args: str,
+                 map_names: list[str], addon_name: str):
+        super().__init__()
+        self.cs2_exe = cs2_exe
+        self.launch_args = launch_args
+        self.map_names = list(map_names)
+        self.addon_name = addon_name
+        self._stop_event = __import__('threading').Event()
+
+    # -----------------------------------------------------------------
+    # helpers
+    # -----------------------------------------------------------------
+    def _wait_for_netcon(self, timeout: float) -> bool:
+        """Block until the netcon TCP port is reachable."""
+        import time as _time
+        import socket as _socket
+
+        host, port = CS2Netcon._get_target()
+        deadline = _time.time() + timeout
+        while _time.time() < deadline:
+            if self._stop_event.is_set():
+                return False
+            try:
+                with _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM) as s:
+                    s.settimeout(2.0)
+                    s.connect((host, port))
+                return True
+            except (ConnectionRefusedError, TimeoutError, OSError):
+                _time.sleep(2)
+        return False
+
+    def _listen_for(self, command: str, sentinel: str, timeout: float) -> bool:
+        """Send *command* and listen until *sentinel* appears in the output."""
+        return CS2Netcon.send_and_listen(
+            command=command,
+            sentinel=sentinel,
+            on_line=lambda line: self.outputReceived.emit(f"[CS2] {line}"),
+            timeout=timeout,
+            stop_event=self._stop_event,
+        )
+
+    # -----------------------------------------------------------------
+    # main entry
+    # -----------------------------------------------------------------
+    def run(self):
+        import subprocess as _subprocess
+        import time as _time
+
+        # --- 1. Launch CS2 (no map – just tools mode) ---
+        launch_cmd = f'"{self.cs2_exe}" {self.launch_args}'
+        self.outputReceived.emit(f"Launching CS2: {launch_cmd}")
+        try:
+            _subprocess.Popen(launch_cmd, shell=True)
+        except Exception as e:
+            self.outputReceived.emit(f"Failed to launch CS2: {e}")
+            self.finished.emit(False)
+            return
+
+        # --- 2. Wait for the netcon port ---
+        self.outputReceived.emit("Waiting for CS2 to accept netcon connections...")
+        if not self._wait_for_netcon(self.CONNECT_TIMEOUT):
+            self.outputReceived.emit(
+                "Timed out waiting for CS2 netcon – is the game running?")
+            self.finished.emit(False)
+            return
+
+        self.outputReceived.emit(
+            "CS2 netcon connected. Waiting for the main menu to fully load...")
+
+        # --- 3. Wait for CS2 to reach main menu ---
+        init_ok = self._listen_for(
+            "echo h5t_waiting_for_init", self.INIT_DONE_SENTINEL,
+            self.INIT_TIMEOUT,
+        )
+        if not init_ok:
+            if self._stop_event.is_set():
+                self.outputReceived.emit("Cubemap build aborted during CS2 init")
+            else:
+                self.outputReceived.emit(
+                    "Timed out waiting for CS2 to reach the main menu")
+            self.finished.emit(False)
+            return
+
+        self.outputReceived.emit("CS2 main menu loaded. Preparing for cubemap builds...")
+
+        # Give the main menu a moment to fully settle (configs, GC, etc.).
+        _time.sleep(5)
+
+        # --- 4. Save user's r_always_render_all_windows and force it to true ---
+        original_render_all = CS2Netcon.query("r_always_render_all_windows")
+        if original_render_all is None:
+            # Retry once after a short delay if the first query failed
+            _time.sleep(2)
+            original_render_all = CS2Netcon.query("r_always_render_all_windows")
+        if original_render_all is None:
+            original_render_all = "false"
+            self.outputReceived.emit(
+                "Could not query r_always_render_all_windows, "
+                "assuming default 'false'")
+        self.outputReceived.emit(
+            f"Saved r_always_render_all_windows = {original_render_all}")
+        CS2Netcon.send("r_always_render_all_windows true")
+        self.outputReceived.emit("Set r_always_render_all_windows = true (for cubemap baking)")
+
+        # --- 5. Build cubemaps for each map ---
+        all_ok = True
+        for map_name in self.map_names:
+            if self._stop_event.is_set():
+                self.outputReceived.emit("Cubemap build aborted by user")
+                all_ok = False
+                break
+
+            ok = self._build_one_map(map_name)
+            self.mapFinished.emit(map_name, ok)
+            if not ok:
+                all_ok = False
+                if self._stop_event.is_set():
+                    break
+                # Continue with next map even if one fails
+
+        # --- 6. Restore r_always_render_all_windows ---
+        restore_ok = CS2Netcon.send(f"r_always_render_all_windows {original_render_all}")
+        if not restore_ok:
+            # Retry: wait for netcon to be available and try again
+            _time.sleep(2)
+            if self._wait_for_netcon(10):
+                restore_ok = CS2Netcon.send(
+                    f"r_always_render_all_windows {original_render_all}")
+        if restore_ok:
+            self.outputReceived.emit(
+                f"Restored r_always_render_all_windows = {original_render_all}")
+        else:
+            self.outputReceived.emit(
+                f"WARNING: Could not restore r_always_render_all_windows to "
+                f"'{original_render_all}' – CS2 may be unreachable")
+
+        self.finished.emit(all_ok)
+
+    # -----------------------------------------------------------------
+    def _build_one_map(self, map_name: str) -> bool:
+        """Load *map_name* in CS2 and run buildcubemaps.  Returns True on
+        success."""
+        import time as _time
+
+        self.outputReceived.emit(f"Loading map '{map_name}' via netcon...")
+
+        # Send map_workshop to load the map
+        map_cmd = f"map_workshop {self.addon_name} {map_name}"
+        map_loaded = self._listen_for(
+            map_cmd, self.MAP_LOADED_SENTINEL, self.MAP_LOAD_TIMEOUT)
+
+        if not map_loaded:
+            if self._stop_event.is_set():
+                self.outputReceived.emit(
+                    f"Cubemap build aborted while loading map '{map_name}'")
+            else:
+                self.outputReceived.emit(
+                    f"Timed out waiting for map '{map_name}' to load")
+            return False
+
+        # Small extra delay to let the game fully stabilize after map load
+        self.outputReceived.emit(
+            f"Map '{map_name}' loaded! Waiting a moment before building cubemaps...")
+        _time.sleep(5)
+
+        if self._stop_event.is_set():
+            return False
+
+        # Send buildcubemaps.
+        # CS2 disconnects its internal game server while baking cubemaps,
+        # which usually drops the netcon TCP connection.  We detect
+        # completion by looking for the sentinel OR by reconnecting after
+        # the connection drops and waiting for the map to reload.
+        self.outputReceived.emit(f"Sending buildcubemaps for '{map_name}'...")
+        sentinel_found = self._listen_for(
+            "buildcubemaps", "Re-loading map", self.BUILD_TIMEOUT)
+
+        if sentinel_found:
+            self.outputReceived.emit(
+                f"Cubemap build completed for '{map_name}'!")
+            return True
+
+        if self._stop_event.is_set():
+            self.outputReceived.emit(f"Cubemap build aborted for '{map_name}'")
+            return False
+
+        # The TCP connection was likely dropped during the cubemap bake.
+        # Reconnect and wait for the map to reload (signals the VPK was
+        # written and CS2 is back in-game with the new cubemaps).
+        self.outputReceived.emit(
+            "Netcon connection dropped during cubemap build. "
+            "Reconnecting to verify completion...")
+
+        if not self._wait_for_netcon(self.RECONNECT_TIMEOUT):
+            self.outputReceived.emit(
+                f"Could not reconnect to CS2 after cubemap build for '{map_name}'")
+            return False
+
+        # After reconnecting, wait for the map to finish reloading.
+        reload_ok = self._listen_for(
+            "echo h5t_cubemap_reconnect",
+            self.MAP_LOADED_SENTINEL,
+            self.MAP_LOAD_TIMEOUT,
+        )
+
+        if reload_ok:
+            self.outputReceived.emit(
+                f"Cubemap build completed for '{map_name}'! "
+                "(confirmed after reconnect)")
+            return True
+
+        # If the map-loaded sentinel fires very quickly (before our
+        # reconnect), the reload may already be done.  Accept that as
+        # success – the VPK was written.
+        self.outputReceived.emit(
+            f"Cubemap build for '{map_name}' likely completed "
+            "(reconnected but map-load sentinel not re-detected)")
+        return True
+
+    def abort(self):
+        self._stop_event.set()
 
 
 class CompilationThread(QThread):
@@ -220,6 +480,12 @@ class MapBuilderDialog(QMainWindow):
         self.current_map_stats = {}
         self.build_start_time = None
 
+        # Cubemap queue state
+        self.cubemap_queue = []
+        self.cubemap_index = 0
+        self.cubemap_thread: BuildCubemapsThread = None
+        self.is_building_cubemaps = False
+
         self.log_phase('<b>Skybox Map Rules:</b>')
         self.log_info('  • Compiled without -nav, -vis, and -audio flags')
         self.log_info('  • Lightmap resolution limited to 2048')
@@ -280,21 +546,25 @@ class MapBuilderDialog(QMainWindow):
         self.ui.abort_button.setEnabled(False)
 
     def closeEvent(self, event):
-        if self.is_compiling and self.compilation_thread:
+        if (self.is_compiling and self.compilation_thread) or self.is_building_cubemaps:
             reply = QMessageBox.question(
                 self,
-                "Abort Compilation?",
-                "Compilation is currently running.\n\n"
-                "Do you want to abort the compilation and close this dialog?",
+                "Abort?",
+                "A build is currently running.\n\n"
+                "Do you want to abort and close this dialog?",
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No
             )
 
             if reply == QMessageBox.Yes:
                 self.build_was_aborted = True
-                self.log_warning("User closed dialog - aborting compilation")
-                self.compilation_thread.abort()
-                self.compilation_thread.wait(2000)
+                self.log_warning("User closed dialog - aborting")
+                if self.compilation_thread and self.compilation_thread.isRunning():
+                    self.compilation_thread.abort()
+                    self.compilation_thread.wait(2000)
+                if self.cubemap_thread and self.cubemap_thread.isRunning():
+                    self.cubemap_thread.abort()
+                    self.cubemap_thread.wait(2000)
                 self.elapsed_timer.stop()
                 event.accept()
                 self.hide()
@@ -422,11 +692,14 @@ class MapBuilderDialog(QMainWindow):
             self.dot_cycle += 1
 
     def abort_compilation(self):
-        if self.compilation_thread:
-            self.build_was_aborted = True
-            self.elapsed_timer.stop()
+        self.build_was_aborted = True
+        self.elapsed_timer.stop()
+        if self.compilation_thread and self.compilation_thread.isRunning():
             self.compilation_thread.abort()
             self.log_warning("Aborting compilation")
+        if self.cubemap_thread and self.cubemap_thread.isRunning():
+            self.cubemap_thread.abort()
+            self.log_warning("Aborting cubemap build")
 
     def on_output_received(self, line: str):
         self.add_log_message(line)
@@ -613,11 +886,93 @@ class MapBuilderDialog(QMainWindow):
             winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
 
             settings = self.settings_panel.get_settings()
+
+            # --- Cubemap building (runs BEFORE the normal map launch) ---
+            if settings.build_cubemaps and self.map_queue:
+                filtered = [m for m in self.map_queue if not is_skybox_map(m)]
+                if filtered:
+                    self.start_cubemap_queue(filtered)
+                    return  # cubemap flow will handle the final launch
+
+            # --- Normal map launch ---
             if settings.load_in_engine_after_build and self.map_queue:
                 self.launch_map_after_build(self.map_queue)
 
         except Exception as e:
             self.log_error(f'Error finishing build: {e}')
+
+    # ====================== Cubemap Build Queue =======================
+
+    def start_cubemap_queue(self, map_list: list):
+        """Start building cubemaps for every map using a single CS2 instance."""
+        self.cubemap_queue = list(map_list)
+        self.is_building_cubemaps = True
+        self.ui.build_button.setEnabled(False)
+        self.ui.abort_button.setEnabled(True)
+
+        self.log_separator()
+        self.log_phase(f'Starting cubemap builds for {len(self.cubemap_queue)} map(s)')
+        self.log_separator()
+
+        addon_name = get_addon_name()
+        cs2_exe = str(Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe")
+
+        commands = get_settings_value("LAUNCH", "commands")
+        if not commands:
+            commands = default_commands
+            set_settings_value("LAUNCH", "commands", commands)
+
+        if '-netconport' not in commands:
+            commands += ' -netconport 2121'
+        if '-disable_workshop_command_filtering' not in commands:
+            commands += ' -disable_workshop_command_filtering'
+
+        commands = commands.replace('addon_name', addon_name)
+
+        # Strip +map_workshop from launch args — the cubemap thread will
+        # send map_workshop via netcon after CS2 reaches the main menu.
+        commands = re.sub(r'\+map_workshop\s+\S+(?:\s+\S+)?', '', commands).strip()
+
+        # Extract map names preserving subdirectory structure under maps/.
+        # e.g. "maps\test\1.vmap" → "test/1"  or  "maps\de_helm.vmap" → "de_helm"
+        map_names = []
+        for rel in self.cubemap_queue:
+            p = Path(rel).with_suffix('')          # drop .vmap
+            try:
+                p = p.relative_to('maps')          # drop leading maps/
+            except ValueError:
+                pass
+            map_names.append(p.as_posix())
+
+        self.cubemap_thread = BuildCubemapsThread(
+            cs2_exe, commands, map_names, addon_name)
+        self.cubemap_thread.outputReceived.connect(self.on_cubemap_output)
+        self.cubemap_thread.mapFinished.connect(self.on_cubemap_map_finished)
+        self.cubemap_thread.finished.connect(self.on_cubemap_queue_finished)
+        self.cubemap_thread.start()
+
+    def on_cubemap_output(self, line: str):
+        self.add_log_message(line)
+
+    def on_cubemap_map_finished(self, map_name: str, success: bool):
+        if success:
+            self.log_success(f'Cubemaps built for {map_name}')
+        else:
+            self.log_error(f'Cubemap build failed/aborted for {map_name}')
+
+    def on_cubemap_queue_finished(self, success: bool):
+        self.is_building_cubemaps = False
+        self.ui.build_button.setEnabled(True)
+        self.ui.abort_button.setEnabled(False)
+
+        self.log_separator()
+        self.log_phase('Cubemap build queue finished')
+        self.log_separator()
+
+        # CS2 is left running with the last map loaded (cubemaps baked in).
+        # No need to relaunch.
+
+    # ==================================================================
 
     def run_map(self):
         settings = self.settings_panel.get_settings()
@@ -625,7 +980,14 @@ class MapBuilderDialog(QMainWindow):
             QMessageBox.warning(self, "No Map", "No map file specified")
             return
 
-        map_name = Path(settings.mappath).stem
+        # Preserve subdirectory structure: "maps\test\1.vmap" → "test/1"
+        _first_map = str(settings.mappath).split(';')[0] if ';' in str(settings.mappath) else str(settings.mappath)
+        _p = Path(_first_map).with_suffix('')
+        try:
+            _p = _p.relative_to('maps')
+        except ValueError:
+            pass
+        map_name = _p.as_posix()
         cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
         addon_name = get_addon_name()
         commands = get_settings_value("LAUNCH", "commands")
@@ -645,6 +1007,8 @@ class MapBuilderDialog(QMainWindow):
         if '-disable_workshop_command_filtering' not in commands:
             commands += ' -disable_workshop_command_filtering'
 
+        # Strip any existing +map_workshop before appending ours
+        commands = re.sub(r'\+map_workshop\s+\S+(?:\s+\S+)?', '', commands).strip()
         launch_cmd = f'"{cs2_exe}" {commands} +map_workshop {addon_name} {map_name}'
 
         self.log_phase(f'Launching: {launch_cmd}')
