@@ -393,7 +393,8 @@ class SettingsPanel(QWidget):
         "Navigation": ["build_nav", "nav_debug", "grid_nav"],
         "Audio": ["build_reverb", "build_paths", "bake_custom_audio", "audio_threads"],
         "Load Map In Engine": [
-            "load_in_engine_after_build"
+            "load_in_engine_after_build",
+            "build_cubemaps",
         ],
     }
 
