@@ -58,6 +58,9 @@ class BuildSettings:
     # === Load Map In Engine ===
     load_in_engine_after_build: bool = True
 
+    # === Cubemaps ===
+    build_cubemaps: bool = False
+
     # === Base Arguments (usually fixed) ===
     fshallow: bool = True
     max_texture_res: int = 256
