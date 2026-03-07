@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QMessageBox
 )
-from PySide6.QtGui import QUndoStack
+from PySide6.QtGui import QShortcut, QKeySequence
 from PySide6.QtCore import QTimer
 from src.settings.main import get_settings_value, get_settings_bool
 from src.editors.smartprop_editor.ui_main import Ui_MainWindow
@@ -47,8 +47,6 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         set_qdock_tab_style(self.findChildren)
 
-        self.undo_stack = QUndoStack(self)
-
         # Initialize realtime save timer (interval from settings or default to 2000ms)
         delay = int(float(get_settings_value('SmartPropEditor', 'realtime_saving_delay', 5)))
         self.realtime_save_timer = QTimer(self)
@@ -57,6 +55,32 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         # Set initial UI state based on document availability
         self.update_placeholder_visibility()
+
+        # Global undo/redo shortcuts that delegate to active document
+        self._undo_shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
+        self._undo_shortcut.activated.connect(self._on_undo_shortcut)
+
+        self._redo_shortcut = QShortcut(QKeySequence("Ctrl+Shift+Z"), self)
+        self._redo_shortcut.activated.connect(self._on_redo_shortcut)
+
+    def _active_document(self):
+        """Get the currently visible document, or None if no tabs are open."""
+        idx = self.ui.DocumentTabWidget.currentIndex()
+        if idx < 0:
+            return None
+        return self.ui.DocumentTabWidget.widget(idx)
+
+    def _on_undo_shortcut(self):
+        """Handle Ctrl+Z by delegating to the active document's undo stack."""
+        doc = self._active_document()
+        if doc is not None and hasattr(doc, "undo_stack"):
+            doc.undo_stack.undo()
+
+    def _on_redo_shortcut(self):
+        """Handle Ctrl+Shift+Z by delegating to the active document's redo stack."""
+        doc = self._active_document()
+        if doc is not None and hasattr(doc, "undo_stack"):
+            doc.undo_stack.redo()
 
     def update_placeholder_visibility(self):
         """
@@ -120,6 +144,7 @@ class SmartPropEditorMainWindow(QMainWindow):
                     if doc.opened_file:
                         base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
                     self.update_document_tab_title(doc, base_name)
+
     def create_new_file(self):
         """
         Creates a new blank document in a new tab.
@@ -252,6 +277,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         removed_widget = self.ui.DocumentTabWidget.widget(index)
         self.ui.DocumentTabWidget.removeTab(index)
         if removed_widget is not None:
+            if hasattr(removed_widget, "cleanup_event_filter"):
+                removed_widget.cleanup_event_filter()
             removed_widget.deleteLater()
         self.update_placeholder_visibility()
 
