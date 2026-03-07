@@ -4,6 +4,23 @@ from PySide6.QtWidgets import QTreeWidget
 from PySide6.QtGui import QUndoCommand
 from src.widgets import HierarchyItemModel
 from src.editors.smartprop_editor._common import get_ElementID_key
+
+
+class _SkipFirstRedo(QUndoCommand):
+    """Base class for commands that skip the first redo (already applied at construction time)."""
+    def __init__(self, description=""):
+        super().__init__(description)
+        self._first_redo_done = False
+
+    def redo(self):
+        if self._first_redo_done:
+            self._redo_impl()
+        self._first_redo_done = True
+
+    def _redo_impl(self):
+        raise NotImplementedError
+
+
 class GroupElementsCommand(QUndoCommand):
     def __init__(self, tree: QTreeWidget):
         super().__init__("Group Selected Items")
@@ -13,6 +30,7 @@ class GroupElementsCommand(QUndoCommand):
         self._selected_order = [item for item in self.tree.selectedItems()]
         # Keep references to all items to prevent deletion
         self._item_refs = list(self._selected_order)
+
     def redo(self):
         group_data = {'_class': 'CSmartPropElement_Group', 'm_Modifiers': [], 'm_SelectionCriteria': []}
         group_id = get_ElementID_key(group_data)
@@ -33,6 +51,7 @@ class GroupElementsCommand(QUndoCommand):
         self.tree.clearSelection()
         self.group_element.setSelected(True)
         self.tree.scrollToItem(self.group_element)
+
     def undo(self):
         if self.group_element is None:
             return
@@ -52,26 +71,8 @@ class GroupElementsCommand(QUndoCommand):
             self._item_refs = [item for item, _, _ in self.moved_items_info]
         except (RuntimeError, ReferenceError):
             pass
-class PasteItemsCommand(QUndoCommand):
-    def __init__(self, tree, parent, items):
-        super().__init__("Paste Items")
-        self.tree = tree
-        self.parent = parent
-        self.items = items
-        self.added = []
-    def redo(self):
-        for item in self.items:
-            self.parent.addChild(item)
-            self.parent.setExpanded(True)
-            self.added.append(item)
-        if self.items:
-            self.tree.clearSelection()
-            self.items[0].setSelected(True)
-            self.tree.scrollToItem(self.items[0])
-    def undo(self):
-        for item in self.added:
-            self.parent.removeChild(item)
-        self.added.clear()
+
+
 class BulkModelImportCommand(QUndoCommand):
     def __init__(self, document, parent_item, items):
         super().__init__("Bulk Model Import")
@@ -80,6 +81,7 @@ class BulkModelImportCommand(QUndoCommand):
         self.parent_item = parent_item
         self.items = items
         self.added = []
+
     def redo(self):
         for item in self.items:
             self.parent_item.addChild(item)
@@ -89,10 +91,13 @@ class BulkModelImportCommand(QUndoCommand):
             self.tree.clearSelection()
             self.items[0].setSelected(True)
             self.tree.scrollToItem(self.items[0])
+
     def undo(self):
         for item in self.added:
             self.parent_item.removeChild(item)
         self.added.clear()
+
+
 class NewFromPresetCommand(QUndoCommand):
     def __init__(self, tree, parent, items):
         super().__init__("New From Preset")
@@ -100,6 +105,7 @@ class NewFromPresetCommand(QUndoCommand):
         self.parent = parent
         self.items = items
         self.added = []
+
     def redo(self):
         for item in self.items:
             self.parent.addChild(item)
@@ -109,18 +115,20 @@ class NewFromPresetCommand(QUndoCommand):
             self.tree.clearSelection()
             self.items[0].setSelected(True)
             self.tree.scrollToItem(self.items[0])
+
     def undo(self):
         for item in self.added:
             self.parent.removeChild(item)
         self.added.clear()
-class PropertiesStateCommand(QUndoCommand):
+
+
+class PropertiesStateCommand(_SkipFirstRedo):
     def __init__(self, document, item, before, after, description="Edit Properties"):
         super().__init__(description)
         self.document = document
         self.item = item
         self.before = copy.deepcopy(before)
         self.after = copy.deepcopy(after)
-        self._first_redo_done = False
 
     def _item_is_valid(self):
         """Check if self.item is still alive and present in the tree."""
@@ -160,17 +168,17 @@ class PropertiesStateCommand(QUndoCommand):
     def undo(self):
         self._apply(self.before)
 
-    def redo(self):
-        if self._first_redo_done:
-            self._apply(self.after)
-        self._first_redo_done = True
-class ChoicesStateCommand(QUndoCommand):
+    def _redo_impl(self):
+        self._apply(self.after)
+
+
+class ChoicesStateCommand(_SkipFirstRedo):
     def __init__(self, document, before, after, description="Edit Choices"):
         super().__init__(description)
         self.document = document
         self.before = copy.deepcopy(before)
         self.after = copy.deepcopy(after)
-        self._first_redo_done = False
+
     def _apply(self, state):
         self.document._restoring_from_undo = True
         try:
@@ -179,19 +187,21 @@ class ChoicesStateCommand(QUndoCommand):
             pass
         finally:
             self.document._restoring_from_undo = False
+
     def undo(self):
         self._apply(self.before)
-    def redo(self):
-        if self._first_redo_done:
-            self._apply(self.after)
-        self._first_redo_done = True
-class VariablesStateCommand(QUndoCommand):
+
+    def _redo_impl(self):
+        self._apply(self.after)
+
+
+class VariablesStateCommand(_SkipFirstRedo):
     def __init__(self, document, before, after, description="Edit Variables"):
         super().__init__(description)
         self.document = document
         self.before = copy.deepcopy(before)
         self.after = copy.deepcopy(after)
-        self._first_redo_done = False
+
     def _apply(self, state):
         self.document._restoring_from_undo = True
         try:
@@ -200,9 +210,9 @@ class VariablesStateCommand(QUndoCommand):
             pass
         finally:
             self.document._restoring_from_undo = False
+
     def undo(self):
         self._apply(self.before)
-    def redo(self):
-        if self._first_redo_done:
-            self._apply(self.after)
-        self._first_redo_done = True
+
+    def _redo_impl(self):
+        self._apply(self.after)
