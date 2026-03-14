@@ -1,22 +1,12 @@
-import ast
-import uuid
-from PySide6.QtWidgets import QTreeWidget
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QUndoCommand
-from src.widgets import HierarchyItemModel
-from src.editors.smartprop_editor._common import get_clean_class_name_value, get_ElementID_key
-import sys
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem,
-    QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QAbstractItemView
-)
-from PySide6.QtGui import QUndoStack, QUndoCommand
+import copy
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PySide6.QtGui import QUndoCommand
+
 from src.widgets import HierarchyItemModel
 from src.editors.smartprop_editor._common import get_clean_class_name_value, get_ElementID_key
-import copy
+
 
 class GroupElementsCommand(QUndoCommand):
     def __init__(self, tree: QTreeWidget):
@@ -25,52 +15,70 @@ class GroupElementsCommand(QUndoCommand):
         self.group_element = None
         self.moved_items_info = []  # (item, old_parent, old_index)
         self._selected_order = [item for item in self.tree.selectedItems()]
-        # Keep references to all items to prevent deletion
         self._item_refs = list(self._selected_order)
 
     def redo(self):
-        group_data = {'_class': 'CSmartPropElement_Group', 'm_Modifiers': [], 'm_SelectionCriteria': []}
-        group_id = get_ElementID_key(group_data)
-        self.group_element = HierarchyItemModel(_data=group_data, _name='Group', _class='Group', _id=group_id)
-        invisible_root = self.tree.invisibleRootItem()
-        self.moved_items_info = []
-        # Use the original selection order
-        for item in self._selected_order:
-            if item is None or item == invisible_root:
-                continue
-            old_parent = item.parent() or invisible_root
-            old_index = old_parent.indexOfChild(item)
-            self.moved_items_info.append((item, old_parent, old_index))
-        # Remove from parents in reverse order to avoid index shifting
-        for item, old_parent, old_index in sorted(self.moved_items_info, key=lambda x: (id(x[1]), x[2]), reverse=True):
-            old_parent.takeChild(old_index)
-        # Add to group in original order
-        for item, _, _ in self.moved_items_info:
-            self.group_element.addChild(item)
-        invisible_root.addChild(self.group_element)
-        self.tree.clearSelection()
-        self.group_element.setSelected(True)
-        self.tree.scrollToItem(self.group_element)
+        print(f"[SPE][GroupSelected] redo: grouping {len(self._selected_order)} item(s)")
+        try:
+            if self.tree is None:
+                print("[SPE][GroupSelected] redo: SKIP — tree is None")
+                return
+            group_data = {
+                '_class': 'CSmartPropElement_Group',
+                'm_Modifiers': [],
+                'm_SelectionCriteria': []
+            }
+            group_id = get_ElementID_key(group_data)
+            self.group_element = HierarchyItemModel(
+                _data=group_data, _name='Group',
+                _class='Group', _id=group_id
+            )
+            invisible_root = self.tree.invisibleRootItem()
+            self.moved_items_info = []
+            for item in self._selected_order:
+                if item is None or item == invisible_root:
+                    continue
+                old_parent = item.parent() or invisible_root
+                old_index = old_parent.indexOfChild(item)
+                if old_index == -1:
+                    print(f"[SPE][GroupSelected] redo: WARN — item '{item.text(0)}' not found in parent, skipping")
+                    continue
+                self.moved_items_info.append((item, old_parent, old_index))
+            for item, old_parent, old_index in sorted(
+                self.moved_items_info, key=lambda x: (id(x[1]), x[2]), reverse=True
+            ):
+                old_parent.takeChild(old_index)
+            for item, _, _ in self.moved_items_info:
+                self.group_element.addChild(item)
+            invisible_root.addChild(self.group_element)
+            self.tree.clearSelection()
+            self.group_element.setSelected(True)
+            self.tree.scrollToItem(self.group_element)
+        except Exception as e:
+            print(f"[SPE][GroupSelected] redo: ERROR — {e}")
 
     def undo(self):
-        if self.group_element is None:
-            return
-        invisible_root = self.tree.invisibleRootItem()
-        invisible_root.removeChild(self.group_element)
-        # Remove from group in reverse order to avoid index shifting
-        for item, _, _ in reversed(self.moved_items_info):
-            idx = self.group_element.indexOfChild(item)
-            if idx != -1:
-                self.group_element.takeChild(idx)
-        # Restore to original parents/positions in original order
-        for item, old_parent, old_index in self.moved_items_info:
-            old_parent.insertChild(old_index, item)
-        self.tree.clearSelection()
-        for item, _, _ in self.moved_items_info:
-            item.setSelected(True)
-            self.tree.scrollToItem(item)
-        # Keep references alive
-        self._item_refs = [item for item, _, _ in self.moved_items_info]
+        print(f"[SPE][GroupSelected] undo: restoring {len(self.moved_items_info)} item(s) to original parents")
+        try:
+            if self.group_element is None or self.tree is None:
+                print("[SPE][GroupSelected] undo: SKIP — group_element or tree is None")
+                return
+            invisible_root = self.tree.invisibleRootItem()
+            if invisible_root.indexOfChild(self.group_element) != -1:
+                invisible_root.removeChild(self.group_element)
+            for item, _, _ in reversed(self.moved_items_info):
+                idx = self.group_element.indexOfChild(item)
+                if idx != -1:
+                    self.group_element.takeChild(idx)
+            for item, old_parent, old_index in self.moved_items_info:
+                old_parent.insertChild(old_index, item)
+            self.tree.clearSelection()
+            for item, _, _ in self.moved_items_info:
+                item.setSelected(True)
+                self.tree.scrollToItem(item)
+            self._item_refs = [item for item, _, _ in self.moved_items_info]
+        except Exception as e:
+            print(f"[SPE][GroupSelected] undo: ERROR — {e}")
 
 
 class PasteItemsCommand(QUndoCommand):
@@ -82,19 +90,37 @@ class PasteItemsCommand(QUndoCommand):
         self.added = []
 
     def redo(self):
-        for item in self.items:
-            self.parent.addChild(item)
-            self.parent.setExpanded(True)
-            self.added.append(item)
-        if self.items:
-            self.tree.clearSelection()
-            self.items[0].setSelected(True)
-            self.tree.scrollToItem(self.items[0])
+        print(f"[SPE][Paste] redo: pasting {len(self.items)} item(s) under '{self.parent.text(0) if self.parent else 'root'}'")
+        try:
+            if self.parent is None or self.tree is None:
+                print("[SPE][Paste] redo: SKIP — parent or tree is None")
+                return
+            for item in self.items:
+                self.parent.addChild(item)
+                self.parent.setExpanded(True)
+                self.added.append(item)
+            if self.items:
+                self.tree.clearSelection()
+                self.items[0].setSelected(True)
+                self.tree.scrollToItem(self.items[0])
+        except Exception as e:
+            print(f"[SPE][Paste] redo: ERROR — {e}")
 
     def undo(self):
-        for item in self.added:
-            self.parent.removeChild(item)
-        self.added.clear()
+        print(f"[SPE][Paste] undo: removing {len(self.added)} pasted item(s)")
+        try:
+            if self.parent is None:
+                print("[SPE][Paste] undo: SKIP — parent is None")
+                return
+            for item in list(self.added):
+                if self.parent.indexOfChild(item) != -1:
+                    self.parent.removeChild(item)
+                else:
+                    print(f"[SPE][Paste] undo: WARN — item '{item.text(0)}' not found in parent, skipping")
+            self.added.clear()
+        except Exception as e:
+            print(f"[SPE][Paste] undo: ERROR — {e}")
+
 
 class BulkModelImportCommand(QUndoCommand):
     def __init__(self, document, parent_item, items):
@@ -106,19 +132,37 @@ class BulkModelImportCommand(QUndoCommand):
         self.added = []
 
     def redo(self):
-        for item in self.items:
-            self.parent_item.addChild(item)
-            self.parent_item.setExpanded(True)
-            self.added.append(item)
-        if self.items:
-            self.tree.clearSelection()
-            self.items[0].setSelected(True)
-            self.tree.scrollToItem(self.items[0])
+        print(f"[SPE][BulkImport] redo: importing {len(self.items)} model(s) under '{self.parent_item.text(0) if self.parent_item else 'root'}'")
+        try:
+            if self.parent_item is None or self.tree is None:
+                print("[SPE][BulkImport] redo: SKIP — parent_item or tree is None")
+                return
+            for item in self.items:
+                self.parent_item.addChild(item)
+                self.parent_item.setExpanded(True)
+                self.added.append(item)
+            if self.items:
+                self.tree.clearSelection()
+                self.items[0].setSelected(True)
+                self.tree.scrollToItem(self.items[0])
+        except Exception as e:
+            print(f"[SPE][BulkImport] redo: ERROR — {e}")
 
     def undo(self):
-        for item in self.added:
-            self.parent_item.removeChild(item)
-        self.added.clear()
+        print(f"[SPE][BulkImport] undo: removing {len(self.added)} imported model(s)")
+        try:
+            if self.parent_item is None:
+                print("[SPE][BulkImport] undo: SKIP — parent_item is None")
+                return
+            for item in list(self.added):
+                if self.parent_item.indexOfChild(item) != -1:
+                    self.parent_item.removeChild(item)
+                else:
+                    print(f"[SPE][BulkImport] undo: WARN — item '{item.text(0)}' not found in parent, skipping")
+            self.added.clear()
+        except Exception as e:
+            print(f"[SPE][BulkImport] undo: ERROR — {e}")
+
 
 class NewFromPresetCommand(QUndoCommand):
     def __init__(self, tree, parent, items):
@@ -129,20 +173,179 @@ class NewFromPresetCommand(QUndoCommand):
         self.added = []
 
     def redo(self):
-        for item in self.items:
-            self.parent.addChild(item)
-            self.parent.setExpanded(True)
-            self.added.append(item)
-        if self.items:
-            self.tree.clearSelection()
-            self.items[0].setSelected(True)
-            self.tree.scrollToItem(self.items[0])
+        print(f"[SPE][NewFromPreset] redo: adding {len(self.items)} preset item(s)")
+        try:
+            if self.parent is None or self.tree is None:
+                print("[SPE][NewFromPreset] redo: SKIP — parent or tree is None")
+                return
+            for item in self.items:
+                self.parent.addChild(item)
+                self.parent.setExpanded(True)
+                self.added.append(item)
+            if self.items:
+                self.tree.clearSelection()
+                self.items[0].setSelected(True)
+                self.tree.scrollToItem(self.items[0])
+        except Exception as e:
+            print(f"[SPE][NewFromPreset] redo: ERROR — {e}")
 
     def undo(self):
-        for item in self.added:
-            self.parent.removeChild(item)
-        self.added.clear()
+        print(f"[SPE][NewFromPreset] undo: removing {len(self.added)} preset item(s)")
+        try:
+            if self.parent is None:
+                print("[SPE][NewFromPreset] undo: SKIP — parent is None")
+                return
+            for item in list(self.added):
+                if self.parent.indexOfChild(item) != -1:
+                    self.parent.removeChild(item)
+                else:
+                    print(f"[SPE][NewFromPreset] undo: WARN — item '{item.text(0)}' not found in parent, skipping")
+            self.added.clear()
+        except Exception as e:
+            print(f"[SPE][NewFromPreset] undo: ERROR — {e}")
 
-#End of GroupElementsCommand
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Properties Panel — snapshot-based undo (actions 11-20)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class PropertySnapshotCommand(QUndoCommand):
+    """Snapshot the full data of one hierarchy tree item before/after a property edit.
+
+    Consecutive edits on the *same* item are merged so rapid keystrokes produce a
+    single undo entry.  The first redo() call is intentionally skipped because the
+    change was already applied before the command was pushed.
+    """
+    _MERGE_ID = 1001
+
+    def __init__(self, document, item, old_data, new_data):
+        super().__init__("Edit Properties")
+        self.document = document
+        self.item = item
+        self.old_data = old_data
+        self.new_data = new_data
+        self._item_id = id(item)
+        self._first_redo = True
+
+    # QUndoCommand virtual — non-negative id enables merging
+    def id(self):
+        return self._MERGE_ID
+
+    def mergeWith(self, other):
+        if not isinstance(other, PropertySnapshotCommand):
+            return False
+        if self._item_id != other._item_id:
+            return False
+        self.new_data = other.new_data
+        return True
+
+    def _select_in_tree(self):
+        """Select self.item in the hierarchy tree without triggering a panel rebuild.
+
+        on_tree_current_item_changed returns early while _undo_redo_rebuilding is
+        True, so the only rebuild that happens is the explicit call to
+        _rebuild_properties_panel that follows this helper.
+        """
+        tree = self.document.ui.tree_hierarchy_widget
+        if tree.currentItem() is not self.item:
+            self.document._undo_redo_rebuilding = True
+            tree.setCurrentItem(self.item)
+            self.document._undo_redo_rebuilding = False
+        tree.scrollToItem(self.item)
+
+    def redo(self):
+        if self._first_redo:
+            self._first_redo = False
+            print(f"[SPE][PropertyEdit] redo: (initial apply) '{self.item.text(0)}'")
+            return
+        print(f"[SPE][PropertyEdit] redo: restoring edit on '{self.item.text(0)}'")
+        try:
+            self._select_in_tree()
+            self.item.setData(0, Qt.UserRole, copy.deepcopy(self.new_data))
+            self.document._rebuild_properties_panel(self.item)
+        except Exception as e:
+            print(f"[SPE][PropertyEdit] redo: ERROR — {e}")
+
+    def undo(self):
+        print(f"[SPE][PropertyEdit] undo: reverting edit on '{self.item.text(0)}'")
+        try:
+            self._select_in_tree()
+            self.item.setData(0, Qt.UserRole, copy.deepcopy(self.old_data))
+            self.document._rebuild_properties_panel(self.item)
+        except Exception as e:
+            print(f"[SPE][PropertyEdit] undo: ERROR — {e}")
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Variables Panel — full-snapshot undo (actions 21-31)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class VariablesSnapshotCommand(QUndoCommand):
+    """Store a serialised snapshot of all variables before and after an edit.
+
+    On undo/redo the entire variable list is cleared and rebuilt from the stored
+    snapshot, which keeps the command implementation simple and reliable.
+    The first redo() is skipped because the change was already applied.
+    """
+
+    def __init__(self, document, old_state, new_state, description="Edit Variables"):
+        super().__init__(description)
+        self.document = document
+        self.old_state = copy.deepcopy(old_state)
+        self.new_state = copy.deepcopy(new_state)
+        self._first_redo = True
+
+    def redo(self):
+        if self._first_redo:
+            self._first_redo = False
+            print(f"[SPE][Variables] redo: (initial apply) {self.text()}")
+            return
+        print(f"[SPE][Variables] redo: {self.text()}")
+        try:
+            self.document._restore_variables(self.new_state)
+        except Exception as e:
+            print(f"[SPE][Variables] redo: ERROR — {e}")
+
+    def undo(self):
+        print(f"[SPE][Variables] undo: {self.text()}")
+        try:
+            self.document._restore_variables(self.old_state)
+        except Exception as e:
+            print(f"[SPE][Variables] undo: ERROR — {e}")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Choices Panel — full-snapshot undo (actions 32-40)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class ChoicesSnapshotCommand(QUndoCommand):
+    """Store a serialised snapshot of the entire choices tree before/after an edit.
+
+    On undo/redo the choices tree is cleared and rebuilt from the stored snapshot.
+    The first redo() is skipped because the change was already applied.
+    """
+
+    def __init__(self, document, old_state, new_state, description="Edit Choices"):
+        super().__init__(description)
+        self.document = document
+        self.old_state = copy.deepcopy(old_state)
+        self.new_state = copy.deepcopy(new_state)
+        self._first_redo = True
+
+    def redo(self):
+        if self._first_redo:
+            self._first_redo = False
+            print(f"[SPE][Choices] redo: (initial apply) {self.text()}")
+            return
+        print(f"[SPE][Choices] redo: {self.text()}")
+        try:
+            self.document._restore_choices(self.new_state)
+        except Exception as e:
+            print(f"[SPE][Choices] redo: ERROR — {e}")
+
+    def undo(self):
+        print(f"[SPE][Choices] undo: {self.text()}")
+        try:
+            self.document._restore_choices(self.old_state)
+        except Exception as e:
+            print(f"[SPE][Choices] undo: ERROR — {e}")
