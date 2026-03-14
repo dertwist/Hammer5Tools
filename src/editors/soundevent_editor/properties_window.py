@@ -210,7 +210,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             try:
                 value = ast.literal_eval(value)
             except (ValueError, SyntaxError) as e:
-                debug(f"Error converting string to dictionary: {e}")
+                debug(f"[props] str→dict: {e}")
                 value = {}
 
         # Ensure value is a dictionary and has at least one item
@@ -218,7 +218,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             key, val = next(iter(value.items()))
             self.create_property(key, val)
         else:
-            debug("Value is not a valid dictionary or is empty.")
+            debug("[props] new_property: invalid value")
         self.on_update()
 
     def paste_property(self):
@@ -312,10 +312,14 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                     widget.show_child_action()
     def properties_clear(self):
         self._undo_enabled = False   # prevent clear from pushing a command
-        for i in range(self.ui.properties_layout.count()):
+        i = 0
+        while i < self.ui.properties_layout.count():
             widget = self.ui.properties_layout.itemAt(i).widget()
             if isinstance(widget, SoundEventEditorPropertyFrame):
+                self.ui.properties_layout.takeAt(i)
                 widget.deleteLater()
+            else:
+                i += 1
 
         self.delete_comment()
         # keep play button and badge intact
@@ -323,7 +327,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Loading properties from given data"""
         if isinstance(_data, dict):
             # Reverse input data and use insertWidget with index 0 because in that way all widgets will be upper spacer
-            debug(f"populate_properties _data \n {_data}")
+            debug(f"[props] populate: {list(_data.keys())}")
             # If there is no comment in data init comment widget
             if 'comment' in _data:
                 pass
@@ -343,9 +347,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
 
             # Sync self.value so callers can read it immediately after populate_properties()
             self.update_value()
-
-            # Enable undo/redo after population so initial load doesn't pollute stack
-            self._undo_enabled = True
         else:
             print(f"[SoundEventEditorProperties]: Wrong input data format. Given data: \n {_data} \n {type(_data)}")
 
@@ -364,9 +365,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Getting dict value from widget instance frame"""
         widget_instance = self.ui.properties_layout.itemAt(index).widget()
         if isinstance(widget_instance, SoundEventEditorPropertyFrame):
-            value = widget_instance.value
-            debug(f"Getting SoundEventEditorPropertyFrame Value: \n {value}")
-            return value
+            return widget_instance.value
         else:
             return {}
     def get_properties_value(self):
