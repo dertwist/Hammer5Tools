@@ -1,6 +1,7 @@
 import os.path
 import re
 import ast
+import copy
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -13,17 +14,20 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QHBoxLayout,
     QLabel,
-    QWidget
+    QWidget,
+    QDockWidget,
+    QUndoView,
 )
 from PySide6.QtGui import (
     QAction,
     QKeyEvent,
     QUndoStack,
-    QKeySequence
+    QKeySequence,
+    QShortcut,
 )
 import uuid
 import traceback, ctypes
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import Qt, QTimer, Signal, QEvent
 
 from src.settings.common import get_addon_dir
 from src.settings.main import get_settings_value, get_settings_bool
@@ -39,12 +43,17 @@ from src.editors.smartprop_editor.objects import (
     selection_criteria_list,
     filters_list
 )
-from src.editors.smartprop_editor.vsmart import VsmartOpen, VsmartSave, serialization_hierarchy_items, deserialize_hierarchy_item
+from src.editors.smartprop_editor.vsmart import (
+    VsmartOpen, VsmartSave, serialization_hierarchy_items, deserialize_hierarchy_item
+)
 from src.editors.smartprop_editor.property_frame import PropertyFrame
 from src.editors.smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from src.editors.smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from src.widgets.popup_menu.main import PopupMenu
-from src.editors.smartprop_editor.commands import GroupElementsCommand, BulkModelImportCommand, NewFromPresetCommand, PasteItemsCommand
+from src.editors.smartprop_editor.commands import (
+    GroupElementsCommand, BulkModelImportCommand, NewFromPresetCommand, PasteItemsCommand,
+    PropertySnapshotCommand, VariablesSnapshotCommand, ChoicesSnapshotCommand,
+)
 from src.forms.replace_dialog.main import FindAndReplaceDialog
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, error, exception_handler
 from src.widgets.element_id import ElementIDGenerator
@@ -86,6 +95,40 @@ class SmartPropDocument(QMainWindow):
         enable_dark_title_bar(self)
 
         self.undo_stack = QUndoStack(self)
+
+        # Window-level undo/redo shortcuts so they work regardless of which
+        # child widget has focus (properties panel, variable fields, etc.).
+        # QShortcut with WindowShortcut context fires before the key event is
+        # dispatched to the focused widget, so there is no double-triggering
+        # with the identical bindings in the tree's event filter.
+        _undo_sc = QShortcut(QKeySequence.Undo, self)
+        _undo_sc.activated.connect(self.undo_stack.undo)
+        _redo_sc = QShortcut(QKeySequence.Redo, self)
+        _redo_sc.activated.connect(self.undo_stack.redo)
+
+        # Guard counter: while > 0, update_tree_item_value skips pushing to the undo stack.
+        # Incremented before rebuilding the properties panel during undo/redo; decremented
+        # after all deferred QTimer.singleShot(0) callbacks have had a chance to fire.
+        self._property_undo_guard = 0
+
+        # Guard flag: while True, add_variable skips marking the document as modified
+        # and emitting _edited (used during undo/redo restore).
+        self._restoring_state = False
+
+        # Flag set by PropertySnapshotCommand before it calls tree.setCurrentItem()
+        # to sync the tree selection.  on_tree_current_item_changed returns early
+        # when this is True so the panel is not double-rebuilt.
+        self._undo_redo_rebuilding = False
+
+        # Choices rename undo state: captured on itemDoubleClicked, consumed by itemChanged.
+        self._choices_rename_old_state = None
+
+        # Choices widget-edit debounce (ComboboxTreeChild, VariableWidget, etc.)
+        self._choices_widget_old_state = None
+        self._choices_widget_debounce_desc = "Edit Choices"
+        self._choices_widget_debounce = QTimer()
+        self._choices_widget_debounce.setSingleShot(True)
+        self._choices_widget_debounce.timeout.connect(self._push_choices_widget_edit)
 
         #Viewports
         self.variable_viewport = SmartPropEditorVariableViewport(self)
@@ -135,6 +178,8 @@ class SmartPropDocument(QMainWindow):
         self.ui.choices_tree_widget.hideColumn(2)
         self.ui.choices_tree_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.choices_tree_widget.customContextMenuRequested.connect(self.open_MenuChoices)
+        self.ui.choices_tree_widget.itemDoubleClicked.connect(self._on_choices_item_about_to_edit)
+        self.ui.choices_tree_widget.itemChanged.connect(self._on_choices_item_changed)
 
         # Groups setup
         self.properties_groups_init()
@@ -145,13 +190,12 @@ class SmartPropDocument(QMainWindow):
 
         self._restore_user_prefs()
 
-        # Group dockwidgets
+        # Hierarchy lives on the left; History / Variables / Choices stack on the right.
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.ui.HierarchyDock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.ui.VariablesDock)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.ui.HierarchyDock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.ui.ChoicesDock)
-        self.splitDockWidget(self.ui.VariablesDock, self.ui.HierarchyDock, Qt.Vertical)
-        self.tabifyDockWidget(self.ui.HierarchyDock, self.ui.ChoicesDock)
-        self.ui.HierarchyDock.raise_()
+
+        self._setup_history_dock()
 
         set_qdock_tab_style(self.findChildren)
 
@@ -192,11 +236,18 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Tree Hierarchy updating]========================================
     def on_tree_current_item_changed(self, current_item, previous_item):
-        # Use the new selection command for selection changes
-        if current_item is not None:
-            self.ui.tree_hierarchy_widget.setSelectedItemsWithUndo([current_item])
-        else:
-            self.ui.tree_hierarchy_widget.setSelectedItemsWithUndo([])
+        # When a PropertySnapshotCommand undo/redo calls setCurrentItem to sync
+        # the tree selection, we must not rebuild the panel here — the command
+        # handles that itself via _rebuild_properties_panel.
+        if self._undo_redo_rebuilding:
+            return
+
+        # Raise the guard BEFORE creating any PropertyFrame so the guard decrement
+        # is queued AFTER all _finish_init singleShot(0) callbacks.  The decrement
+        # is scheduled at the very end of this function, after all frames are
+        # instantiated, ensuring the queue order is:
+        #   [_finish_init callbacks …, _dec_property_undo_guard]
+        self._property_undo_guard += 1
 
         item = current_item
         if current_item is not None:
@@ -205,28 +256,32 @@ class SmartPropDocument(QMainWindow):
             self.properties_groups_hide()
 
         try:
-            # Remove any existing PropertyFrame widgets
+            # Remove any existing PropertyFrame widgets.  hide() is called
+            # synchronously so the stale panel disappears immediately; deleteLater()
+            # then handles the asynchronous memory cleanup.
             for i in range(self.ui.properties_layout.count()):
                 widget = self.ui.properties_layout.itemAt(i).widget()
                 if isinstance(widget, PropertyFrame):
+                    widget.hide()
                     widget.deleteLater()
             for i in range(self.modifiers_group_instance.layout.count()):
                 widget = self.modifiers_group_instance.layout.itemAt(i).widget()
                 if isinstance(widget, PropertyFrame):
+                    widget.hide()
                     widget.deleteLater()
             for i in range(self.selection_criteria_group_instance.layout.count()):
                 widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
                 if isinstance(widget, PropertyFrame):
+                    widget.hide()
                     widget.deleteLater()
         except Exception as error:
             print(error)
 
         try:
-            data = item.data(0, Qt.UserRole)
-            data_modif = data.get("m_Modifiers", {})
-            data_sel_criteria = data.get("m_SelectionCriteria", {})
-            data.pop("m_Modifiers", None)
-            data.pop("m_SelectionCriteria", None)
+            # deepcopy so we never mutate the data stored in the tree item
+            data = copy.deepcopy(item.data(0, Qt.UserRole))
+            data_modif = data.pop("m_Modifiers", None) or []
+            data_sel_criteria = data.pop("m_SelectionCriteria", None) or []
             property_instance = PropertyFrame(
                 widget_list=self.ui.properties_layout,
                 value=data,
@@ -242,7 +297,7 @@ class SmartPropDocument(QMainWindow):
                 for entry in reversed(data_modif):
                     prop_instance = PropertyFrame(
                         widget_list=self.modifiers_group_instance.layout,
-                        value=entry,
+                        value=copy.deepcopy(entry),
                         variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                         tree_hierarchy=self.ui.tree_hierarchy_widget,
                         element_id_generator=self.element_id_generator
@@ -254,7 +309,7 @@ class SmartPropDocument(QMainWindow):
                 for entry in reversed(data_sel_criteria):
                     prop_instance = PropertyFrame(
                         widget_list=self.selection_criteria_group_instance.layout,
-                        value=entry,
+                        value=copy.deepcopy(entry),
                         variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                         tree_hierarchy=self.ui.tree_hierarchy_widget,
                         element_id_generator=self.element_id_generator
@@ -264,10 +319,19 @@ class SmartPropDocument(QMainWindow):
         except Exception as error:
             print(error)
 
+        # Schedule the guard decrement HERE — after all PropertyFrame __init__ calls
+        # have queued their own singleShot(0, _finish_init) callbacks.  Qt's event
+        # queue is FIFO, so _dec_property_undo_guard will fire after every _finish_init,
+        # keeping the guard active for the entire async initialisation window.
+        QTimer.singleShot(0, self._dec_property_undo_guard)
+
     def update_tree_item_value(self, item=None):
         if item is None:
             item = self.ui.tree_hierarchy_widget.currentItem()
         if item:
+            # Capture old state BEFORE assembling the new value
+            old_data = copy.deepcopy(item.data(0, Qt.UserRole))
+
             output_value = {}
             modifiers = []
             selection_criteria = []
@@ -299,12 +363,12 @@ class SmartPropDocument(QMainWindow):
             try:
                 if modifiers[0] is None:
                     modifiers = []
-            except:
+            except IndexError:
                 pass
             try:
                 if selection_criteria[0] is None:
                     selection_criteria = []
-            except:
+            except IndexError:
                 pass
 
             output_value.update({"m_Modifiers": modifiers})
@@ -314,6 +378,14 @@ class SmartPropDocument(QMainWindow):
             # Mark document as modified
             self._modified = True
             self._edited.emit()
+
+            # Push undo command only when something actually changed and we are
+            # not inside a panel rebuild triggered by undo/redo.  Skipping the
+            # push when old == new avoids no-op entries that confuse mergeWith.
+            if not self._property_undo_guard and output_value != old_data:
+                new_data = copy.deepcopy(output_value)
+                cmd = PropertySnapshotCommand(self, item, old_data, new_data)
+                self.undo_stack.push(cmd)
 
     # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
@@ -473,8 +545,20 @@ class SmartPropDocument(QMainWindow):
     def load_preset(self, name: str = None, path: str = None):
         with open(path, "r") as file:
             __data = file.read()
-        __data = Kv3ToJson(__data)
-        self.file_deserialization(__data, to_parent=False)
+        __data = Kv3ToJson(self.fix_format(__data))
+
+        parent = (
+            self.ui.tree_hierarchy_widget.currentItem()
+            or self.ui.tree_hierarchy_widget.invisibleRootItem()
+        )
+        items = [
+            deserialize_hierarchy_item(child, self.element_id_generator)
+            for child in __data.get("m_Children", [])
+        ]
+        if items:
+            self.undo_stack.push(NewFromPresetCommand(self.ui.tree_hierarchy_widget, parent, items))
+            self._modified = True
+            self._edited.emit()
 
     def add_an_element(self):
         self.popup_menu = PopupMenu(elements_list, add_once=False, window_name="SPE_elements")
@@ -617,70 +701,81 @@ class SmartPropDocument(QMainWindow):
     # ======================================[Open File]========================================
     @exception_handler
     def open_file(self, filename):
-        self.opened_file = filename
-        vsmart_instance = VsmartOpen(
-            element_id_generator= self.element_id_generator,
-            filename=filename,
-            tree=self.ui.tree_hierarchy_widget,
-            choices_tree=self.ui.choices_tree_widget,
-            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
-        )
-        variables = vsmart_instance.variables
-        self.content_version_spinbox.setValue(vsmart_instance.content_version)
+        # Suppress property snapshot commands while the file is being loaded.
+        # The guard is released in the finally block so that @exception_handler
+        # catching a mid-load exception can never leave the guard permanently
+        # raised (which would permanently block all future property undo entries).
+        self._property_undo_guard += 1
+        try:
+            self.opened_file = filename
+            vsmart_instance = VsmartOpen(
+                element_id_generator= self.element_id_generator,
+                filename=filename,
+                tree=self.ui.tree_hierarchy_widget,
+                choices_tree=self.ui.choices_tree_widget,
+                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
+            )
+            variables = vsmart_instance.variables
+            self.content_version_spinbox.setValue(vsmart_instance.content_version)
 
-        # Clear existing variables
-        index = 0
-        while index < self.variable_viewport.ui.variables_scrollArea.count() - 1:
-            item = self.variable_viewport.ui.variables_scrollArea.takeAt(index)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-            else:
-                index += 1
-
-        # Rebuild variables
-        if isinstance(variables, list):
-            for item in variables:
-                var_class = (item["_class"]).replace(variable_prefix, "")
-                var_name = item.get("m_VariableName", None)
-                var_display_name = item.get("m_DisplayName", None)
-                if var_display_name is None:
-                    var_display_name = item.get("m_ParameterName", None)
-                var_visible_in_editor = bool(item.get("m_bExposeAsParameter", None))
-
-                var_value = {
-                    "default": item.get("m_DefaultValue", None),
-                    "model": item.get("m_sModelName", None),
-                    "m_nElementID": item.get("m_nElementID", None),
-                    'm_HideExpression': item.get("m_HideExpression", None)
-                }
-                element_id = var_value['m_nElementID']
-                if element_id is not None:
-                    self.element_id_generator.add_id(element_id)
+            # Clear existing variables
+            index = 0
+            while index < self.variable_viewport.ui.variables_scrollArea.count() - 1:
+                item = self.variable_viewport.ui.variables_scrollArea.takeAt(index)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
                 else:
-                    var_value = self.element_id_generator.update_value(var_value)
-                if var_class == "Float":
-                    var_value.update({
-                        "min": item.get("m_flParamaterMinValue", None),
-                        "max": item.get("m_flParamaterMaxValue", None)
-                    })
-                elif var_class == "Int":
-                    var_value.update({
-                        "min": item.get("m_nParamaterMinValue", None),
-                        "max": item.get("m_nParamaterMaxValue", None)
-                    })
-                else:
-                    var_value.update({"min": None, "max": None})
-                self.add_variable(
-                    name=var_name,
-                    var_value=var_value,
-                    var_visible_in_editor=var_visible_in_editor,
-                    var_class=var_class,
-                    var_display_name=var_display_name
-                )
+                    index += 1
 
-        # Reset modification tracking
-        self._modified = False
+            # Rebuild variables
+            if isinstance(variables, list):
+                for item in variables:
+                    var_class = (item["_class"]).replace(variable_prefix, "")
+                    var_name = item.get("m_VariableName", None)
+                    var_display_name = item.get("m_DisplayName", None)
+                    if var_display_name is None:
+                        var_display_name = item.get("m_ParameterName", None)
+                    var_visible_in_editor = bool(item.get("m_bExposeAsParameter", None))
+
+                    var_value = {
+                        "default": item.get("m_DefaultValue", None),
+                        "model": item.get("m_sModelName", None),
+                        "m_nElementID": item.get("m_nElementID", None),
+                        'm_HideExpression': item.get("m_HideExpression", None)
+                    }
+                    element_id = var_value['m_nElementID']
+                    if element_id is not None:
+                        self.element_id_generator.add_id(element_id)
+                    else:
+                        var_value = self.element_id_generator.update_value(var_value)
+                    if var_class == "Float":
+                        var_value.update({
+                            "min": item.get("m_flParamaterMinValue", None),
+                            "max": item.get("m_flParamaterMaxValue", None)
+                        })
+                    elif var_class == "Int":
+                        var_value.update({
+                            "min": item.get("m_nParamaterMinValue", None),
+                            "max": item.get("m_nParamaterMaxValue", None)
+                        })
+                    else:
+                        var_value.update({"min": None, "max": None})
+                    self.add_variable(
+                        name=var_name,
+                        var_value=var_value,
+                        var_visible_in_editor=var_visible_in_editor,
+                        var_class=var_class,
+                        var_display_name=var_display_name
+                    )
+
+            self._modified = False
+        finally:
+            # Always release the guard and clear the stack, even if an exception
+            # occurred mid-load.  Both are deferred so all singleShot(0)
+            # _finish_init callbacks that were queued during file load fire first.
+            QTimer.singleShot(0, self._dec_property_undo_guard)
+            QTimer.singleShot(0, self.undo_stack.clear)
 
     # ======================================[Save File]========================================
     def save_file(self, external=False, realtime_save=False):
@@ -735,18 +830,27 @@ class SmartPropDocument(QMainWindow):
     def open_MenuChoices(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
+
         add_choice = menu.addAction("Add Choice")
-        add_choice.triggered.connect(
-            lambda: AddChoice(tree=self.ui.choices_tree_widget, variables_scrollArea=self.variable_viewport.ui.variables_scrollArea)
-        )
+        add_choice.triggered.connect(lambda: self._choices_op_with_undo(
+            "Add Choice",
+            lambda: AddChoice(
+                tree=self.ui.choices_tree_widget,
+                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
+            )
+        ))
 
         if item:
             if item.text(2) == "choice":
                 add_option = menu.addAction("Add Option")
-                add_option.triggered.connect(lambda: AddOption(parent=item, name="Option"))
+                add_option.triggered.connect(lambda: self._choices_op_with_undo(
+                    "Add Option",
+                    lambda: AddOption(parent=item, name="Option")
+                ))
             elif item.text(2) == "option":
                 add_variable = menu.addAction("Add Variable")
-                add_variable.triggered.connect(
+                add_variable.triggered.connect(lambda: self._choices_op_with_undo(
+                    "Add Variable to Choice",
                     lambda: AddVariable(
                         parent=item,
                         variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
@@ -755,17 +859,23 @@ class SmartPropDocument(QMainWindow):
                         type="",
                         element_id_generator=self.element_id_generator
                     )
-                )
+                ))
 
         menu.addSection("")
         move_up_action = menu.addAction("Move Up")
         move_down_action = menu.addAction("Move Down")
-        move_up_action.triggered.connect(lambda: self.move_tree_item(self.ui.choices_tree_widget, -1))
-        move_down_action.triggered.connect(lambda: self.move_tree_item(self.ui.choices_tree_widget, 1))
+        move_up_action.triggered.connect(lambda: self._choices_op_with_undo(
+            "Move Up", lambda: self.move_tree_item(self.ui.choices_tree_widget, -1)
+        ))
+        move_down_action.triggered.connect(lambda: self._choices_op_with_undo(
+            "Move Down", lambda: self.move_tree_item(self.ui.choices_tree_widget, 1)
+        ))
         menu.addSection("")
 
         remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self.remove_tree_item(self.ui.choices_tree_widget))
+        remove_action.triggered.connect(lambda: self._choices_op_with_undo(
+            "Remove Choice", lambda: self.remove_tree_item(self.ui.choices_tree_widget)
+        ))
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
 
@@ -780,8 +890,9 @@ class SmartPropDocument(QMainWindow):
             index: int = None
     ):
         self.variable_viewport.add_variable(name, var_class, var_value, var_visible_in_editor, var_display_name, index)
-        self._modified = True
-        self._edited.emit()
+        if not self._restoring_state:
+            self._modified = True
+            self._edited.emit()
 
     def duplicate_variable(self, __data, __index):
         self.variable_viewport.duplicate_variable(__data, __index)
@@ -1050,7 +1161,7 @@ class SmartPropDocument(QMainWindow):
         if geo:
             self.restoreGeometry(geo)
 
-        state = self.settings.value("SmartPropEditorMainWindow/windowState")
+        state = self.settings.value("SmartPropEditorMainWindow/windowState_v2")
         if state:
             self.restoreState(state)
 
@@ -1062,7 +1173,324 @@ class SmartPropDocument(QMainWindow):
         current_index = self.ui.add_new_variable_combobox.currentIndex()
         self.settings.setValue("SmartPropEditorMainWindow/currentComboBoxIndex", current_index)
         self.settings.setValue("SmartPropEditorMainWindow/geometry", self.saveGeometry())
-        self.settings.setValue("SmartPropEditorMainWindow/windowState", self.saveState())
+        self.settings.setValue("SmartPropEditorMainWindow/windowState_v2", self.saveState())
+
+    # ======================================[Properties Panel Undo]========================================
+    def _rebuild_properties_panel(self, item):
+        """Rebuild the properties panel from the current tree-item data.
+
+        Called by PropertySnapshotCommand during undo/redo.  The
+        _property_undo_guard counter is incremented here and decremented after
+        all QTimer.singleShot(0) deferred-init callbacks have fired, so that
+        the resulting update_tree_item_value() calls do NOT push new commands.
+        """
+        self._property_undo_guard += 1
+        try:
+            # Clear existing PropertyFrame widgets.  hide() fires synchronously
+            # so the panel is cleared visually before the new content is built.
+            for i in range(self.ui.properties_layout.count()):
+                widget = self.ui.properties_layout.itemAt(i).widget()
+                if isinstance(widget, PropertyFrame):
+                    widget.hide()
+                    widget.deleteLater()
+            for i in range(self.modifiers_group_instance.layout.count()):
+                widget = self.modifiers_group_instance.layout.itemAt(i).widget()
+                if isinstance(widget, PropertyFrame):
+                    widget.hide()
+                    widget.deleteLater()
+            for i in range(self.selection_criteria_group_instance.layout.count()):
+                widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
+                if isinstance(widget, PropertyFrame):
+                    widget.hide()
+                    widget.deleteLater()
+
+            # Show/hide panel groups
+            if item is not None:
+                self.properties_groups_show()
+            else:
+                self.properties_groups_hide()
+                return
+
+            # Create new PropertyFrame widgets from the item's stored data
+            data = copy.deepcopy(item.data(0, Qt.UserRole))
+            if data is None:
+                return
+            data_modif = data.pop("m_Modifiers", None) or []
+            data_sel_criteria = data.pop("m_SelectionCriteria", None) or []
+
+            prop = PropertyFrame(
+                widget_list=self.ui.properties_layout,
+                value=data,
+                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                element=True,
+                tree_hierarchy=self.ui.tree_hierarchy_widget,
+                element_id_generator=self.element_id_generator
+            )
+            prop.edited.connect(self.update_tree_item_value)
+            self.ui.properties_layout.insertWidget(0, prop)
+
+            for entry in reversed(data_modif):
+                p = PropertyFrame(
+                    widget_list=self.modifiers_group_instance.layout,
+                    value=copy.deepcopy(entry),
+                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                    tree_hierarchy=self.ui.tree_hierarchy_widget,
+                    element_id_generator=self.element_id_generator
+                )
+                p.edited.connect(self.update_tree_item_value)
+                self.modifiers_group_instance.layout.insertWidget(0, p)
+
+            for entry in reversed(data_sel_criteria):
+                p = PropertyFrame(
+                    widget_list=self.selection_criteria_group_instance.layout,
+                    value=copy.deepcopy(entry),
+                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                    tree_hierarchy=self.ui.tree_hierarchy_widget,
+                    element_id_generator=self.element_id_generator
+                )
+                p.edited.connect(self.update_tree_item_value)
+                self.selection_criteria_group_instance.layout.insertWidget(0, p)
+
+        except Exception as e:
+            print(f"[SPE] _rebuild_properties_panel: ERROR — {e}")
+        finally:
+            # Decrement AFTER all singleShot(0) deferred-inits have run
+            QTimer.singleShot(0, self._dec_property_undo_guard)
+
+    def _dec_property_undo_guard(self):
+        self._property_undo_guard = max(0, self._property_undo_guard - 1)
+
+    # ======================================[Variables Panel Undo]========================================
+    def _snapshot_variables(self):
+        """Serialise all variable widgets to a list of dicts."""
+        layout = self.variable_viewport.ui.variables_scrollArea
+        state = []
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if widget and hasattr(widget, 'name') and hasattr(widget, 'var_class'):
+                state.append({
+                    'name': widget.name,
+                    'var_class': widget.var_class,
+                    'var_value': copy.deepcopy(widget.var_value),
+                    'var_visible_in_editor': widget.var_visible_in_editor,
+                    'var_display_name': widget.var_display_name,
+                })
+        return state
+
+    def _restore_variables(self, state):
+        """Clear all variable widgets and recreate from a serialised state list."""
+        layout = self.variable_viewport.ui.variables_scrollArea
+        # Remove all VariableFrame widgets, preserving the trailing spacer
+        while layout.count() > 1:
+            item = layout.takeAt(0)
+            if item and item.widget():
+                item.widget().deleteLater()
+        self._restoring_state = True
+        try:
+            for var_data in state:
+                self.add_variable(
+                    name=var_data['name'],
+                    var_class=var_data['var_class'],
+                    var_value=var_data['var_value'],
+                    var_visible_in_editor=var_data['var_visible_in_editor'],
+                    var_display_name=var_data['var_display_name'],
+                )
+        finally:
+            self._restoring_state = False
+        self._modified = True
+        self._edited.emit()
+
+    # ======================================[Choices Panel Undo]========================================
+    def _snapshot_choices(self):
+        """Serialise the choices tree to a list of dicts."""
+        tree = self.ui.choices_tree_widget
+        state = []
+        root = tree.invisibleRootItem()
+        for ci in range(root.childCount()):
+            choice = root.child(ci)
+            combo = tree.itemWidget(choice, 1)
+            choice_data = {
+                'name': choice.text(0),
+                'default': combo.currentText() if combo else '',
+                'options': [],
+            }
+            for oi in range(choice.childCount()):
+                option = choice.child(oi)
+                option_data = {'name': option.text(0), 'variables': []}
+                for vi in range(option.childCount()):
+                    var_item = option.child(vi)
+                    val_widget = tree.itemWidget(var_item, 1)
+                    name_widget = tree.itemWidget(var_item, 0)
+                    var_name = (
+                        name_widget.combobox.currentText()
+                        if name_widget and hasattr(name_widget, 'combobox')
+                        else var_item.text(0)
+                    )
+                    if val_widget and hasattr(val_widget, 'data'):
+                        var_type = val_widget.data.get('m_DataType', '')
+                        var_value = val_widget.data.get('m_Value', '')
+                    else:
+                        var_type = ''
+                        var_value = var_item.text(1)
+                    option_data['variables'].append({
+                        'name': var_name,
+                        'type': var_type,
+                        'value': var_value,
+                    })
+                choice_data['options'].append(option_data)
+            state.append(choice_data)
+        return state
+
+    def _restore_choices(self, state):
+        """Clear the choices tree and rebuild it from a serialised state list."""
+        self.ui.choices_tree_widget.blockSignals(True)
+        try:
+            self.ui.choices_tree_widget.clear()
+            for choice_data in state:
+                choice_item = AddChoice(
+                    tree=self.ui.choices_tree_widget,
+                    name=choice_data['name'],
+                    default=choice_data['default'],
+                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                ).item
+                for option_data in choice_data['options']:
+                    option_item = AddOption(
+                        parent=choice_item, name=option_data['name']
+                    ).item
+                    for var_data in option_data['variables']:
+                        AddVariable(
+                            element_id_generator=self.element_id_generator,
+                            parent=option_item,
+                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                            name=var_data['name'],
+                            value=var_data['value'],
+                            type=var_data['type'],
+                        )
+        finally:
+            self.ui.choices_tree_widget.blockSignals(False)
+        self._connect_choices_widget_signals()
+        self._modified = True
+        self._edited.emit()
+
+    def _connect_choices_widget_signals(self):
+        """Connect change signals on all inline widgets inside the choices tree.
+
+        Called after every structural op and after _restore_choices so that
+        ComboboxTreeChild and VariableWidget/Float/Bool edits are tracked.
+        """
+        tree = self.ui.choices_tree_widget
+        root = tree.invisibleRootItem()
+        for ci in range(root.childCount()):
+            choice = root.child(ci)
+            combo = tree.itemWidget(choice, 1)
+            if combo:
+                try:
+                    combo.currentTextChanged.disconnect()
+                except RuntimeError:
+                    pass
+                combo.currentTextChanged.connect(
+                    lambda _, d="Edit Choice Default": self._on_choices_widget_changed(d)
+                )
+            for oi in range(choice.childCount()):
+                option = choice.child(oi)
+                for vi in range(option.childCount()):
+                    var_item = option.child(vi)
+                    val_widget = tree.itemWidget(var_item, 1)
+                    if val_widget:
+                        if hasattr(val_widget, 'editline'):
+                            try:
+                                val_widget.editline.textChanged.disconnect()
+                            except RuntimeError:
+                                pass
+                            val_widget.editline.textChanged.connect(
+                                lambda _, d="Edit Choice Variable Value": self._on_choices_widget_changed(d)
+                            )
+                        elif hasattr(val_widget, 'checkbox'):
+                            try:
+                                val_widget.checkbox.checkStateChanged.disconnect()
+                            except RuntimeError:
+                                pass
+                            val_widget.checkbox.checkStateChanged.connect(
+                                lambda _, d="Edit Choice Variable Value": self._on_choices_widget_changed(d)
+                            )
+
+    def _choices_op_with_undo(self, description, op_fn):
+        """Helper: flush any pending choices widget edit, run op_fn, push ChoicesSnapshotCommand."""
+        self._flush_choices_widget_if_pending()
+        old = self._snapshot_choices()
+        op_fn()
+        new = self._snapshot_choices()
+        self._connect_choices_widget_signals()
+        if new != old:
+            self.undo_stack.push(ChoicesSnapshotCommand(self, old, new, description))
+
+    def _on_choices_item_about_to_edit(self, item, column):
+        """Capture the 'before' snapshot when the user starts an inline rename."""
+        if column == 0 and (item.flags() & Qt.ItemIsEditable):
+            self._choices_rename_old_state = self._snapshot_choices()
+
+    def _on_choices_item_changed(self, item, column):
+        """Push rename undo command once the inline edit is committed."""
+        if (
+            column == 0
+            and self._choices_rename_old_state is not None
+        ):
+            new_state = self._snapshot_choices()
+            self.undo_stack.push(
+                ChoicesSnapshotCommand(self, self._choices_rename_old_state, new_state, "Rename")
+            )
+            self._choices_rename_old_state = None
+
+    def _on_choices_widget_changed(self, description="Edit Choices"):
+        """Debounce handler for ComboboxTreeChild / VariableWidget changes."""
+        if self._choices_widget_old_state is None:
+            self._choices_widget_old_state = self._snapshot_choices()
+        self._choices_widget_debounce_desc = description
+        self._choices_widget_debounce.start(500)
+
+    def _push_choices_widget_edit(self):
+        """Called when the choices widget debounce timer fires."""
+        if self._choices_widget_old_state is not None:
+            new_state = self._snapshot_choices()
+            if new_state != self._choices_widget_old_state:
+                self.undo_stack.push(
+                    ChoicesSnapshotCommand(
+                        self,
+                        self._choices_widget_old_state,
+                        new_state,
+                        self._choices_widget_debounce_desc,
+                    )
+                )
+            self._choices_widget_old_state = None
+
+    def _flush_choices_widget_if_pending(self):
+        """Flush any in-progress widget edit before a structural choices op."""
+        if self._choices_widget_debounce.isActive():
+            self._choices_widget_debounce.stop()
+            self._push_choices_widget_edit()
+
+    def _setup_history_dock(self):
+        self._history_dock = QDockWidget("History", self)
+        self._history_dock.setObjectName("SPE_history_dock")
+        self._history_dock.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea  |
+            Qt.DockWidgetArea.RightDockWidgetArea |
+            Qt.DockWidgetArea.BottomDockWidgetArea
+        )
+        self._history_dock.setMinimumWidth(160)
+        history_view = QUndoView(self.undo_stack, self._history_dock)
+        self._history_dock.setWidget(history_view)
+
+        # Anchor History at the top of the right column, then split Variables and
+        # Choices below it so the right panel reads: History → Variables → Choices.
+        self.addDockWidget(Qt.RightDockWidgetArea, self._history_dock)
+        self.splitDockWidget(self._history_dock, self.ui.VariablesDock, Qt.Vertical)
+        self.splitDockWidget(self.ui.VariablesDock, self.ui.ChoicesDock, Qt.Vertical)
+        self.resizeDocks(
+            [self._history_dock, self.ui.VariablesDock, self.ui.ChoicesDock],
+            [120, 300, 260],
+            Qt.Vertical,
+        )
 
     def closeEvent(self, event):
         self._save_user_prefs()

@@ -15,6 +15,8 @@ from src.editors.smartprop_editor.widgets.expression_editor.main import Expressi
 
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
+    delete_requested = Signal()
+    content_changed = Signal()
 
     def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list,
                  element_id_generator):
@@ -180,7 +182,7 @@ class VariableFrame(QWidget):
             'max': None,
             'model': None,
             'm_nElementID': self.var_value['m_nElementID'],
-            'm_HideExpression': None  # m_HideExpression = "AdvancedOptions == false"
+            'm_HideExpression': None
         }
         self.var_default = self.var_value['default']
         self.var_min = self.var_value['min']
@@ -194,6 +196,7 @@ class VariableFrame(QWidget):
         # Connect the edited signal directly to on_changed
         self.var_int_instance.edited.connect(self.on_changed)
         self.ui.layout.insertWidget(1, self.var_int_instance)
+        # on_changed will emit content_changed
         self.on_changed()
 
     def get_classes(self):
@@ -213,6 +216,7 @@ class VariableFrame(QWidget):
             self.hide_expression = None
         # Update completer with current variable names and types
         self._setup_hide_expression_completer()
+        # on_changed emits content_changed, so no extra emit needed here
         self.on_changed()
 
     def show_child(self):
@@ -247,10 +251,12 @@ class VariableFrame(QWidget):
                 'm_nElementID': self.element_id,
                 'm_HideExpression': self.hide_expression if self.hide_expression is not None else None
             }
+        self.content_changed.emit()
 
     def update_self(self):
         self.var_visible_in_editor = self.ui.visible_in_editor.isChecked()
         self.var_display_name = self.ui.varialbe_display_name.text()
+        self.content_changed.emit()
 
     def _make_unique(self, name):
         existing_names = []
@@ -293,13 +299,17 @@ class VariableFrame(QWidget):
             if unique_name != new_name:
                 self.ui.variable_name.setText(unique_name)
             self.name = unique_name
+            self.content_changed.emit()
 
         return super().eventFilter(obj, event)
 
     mousePressEvent = PropertyMethods.mousePressEvent
     mouseMoveEvent = PropertyMethods.mouseMoveEvent
     dragEnterEvent = PropertyMethods.dragEnterEvent
-    dropEvent = PropertyMethods.dropEvent
+
+    def dropEvent(self, event):
+        PropertyMethods.dropEvent(self, event)
+        self.content_changed.emit()
 
     def show_context_menu(self):
         context_menu = QMenu()
@@ -311,7 +321,7 @@ class VariableFrame(QWidget):
         action = context_menu.exec(QCursor.pos())
 
         if action == delete_action:
-            self.deleteLater()
+            self.delete_requested.emit()
         elif action == copy_action:
             clipboard = QApplication.clipboard()
             m_variable = {'_class': f'CSmartPropVariable_{self.var_class}', 'm_VariableName': self.name,
