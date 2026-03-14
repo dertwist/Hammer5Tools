@@ -1,3 +1,5 @@
+import copy
+
 from PySide6.QtWidgets import (
     QMainWindow,
     QTreeWidgetItem,
@@ -14,6 +16,7 @@ from PySide6.QtGui import (
     QUndoStack,
     QKeySequence
 )
+from PySide6.QtCore import QTimer
 
 from keyvalues3 import kv3_to_json
 from src.editors.smartprop_editor.variable_frame import VariableFrame
@@ -28,6 +31,7 @@ class SmartPropEditorVariableViewport(QWidget):
         super().__init__(parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
+        self._document = parent
         self.element_id_generator = parent.element_id_generator
 
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
@@ -37,6 +41,12 @@ class SmartPropEditorVariableViewport(QWidget):
         # Add variable classes to combobox
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
+
+        # Debounce timer for field-edit undo commands (fires 500 ms after last change)
+        self._var_edit_old_state = None
+        self._var_edit_debounce = QTimer()
+        self._var_edit_debounce.setSingleShot(True)
+        self._var_edit_debounce.timeout.connect(self._push_var_field_edit)
 
 
     # ======================================[Variables Actions]========================================
@@ -59,6 +69,8 @@ class SmartPropEditorVariableViewport(QWidget):
             element_id_generator=self.element_id_generator
         )
         variable.duplicate.connect(self.duplicate_variable)
+        variable.delete_requested.connect(lambda vf=variable: self._on_delete_requested(vf))
+        variable.content_changed.connect(self._on_content_changed)
         if index is None:
             index = (self.ui.variables_scrollArea.count()) - 1
         else:
@@ -66,10 +78,20 @@ class SmartPropEditorVariableViewport(QWidget):
         self.ui.variables_scrollArea.insertWidget(index, variable)
 
     def duplicate_variable(self, __data, __index):
+        self._flush_var_edit_if_pending()
+        old_state = self._snapshot()
         __data[2] = self.element_id_generator.update_value(__data[2], force=True)
         self.add_variable(__data[0], __data[1], __data[2], __data[3], __data[4], __index)
+        new_state = self._snapshot()
+        from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
+        self._document.undo_stack.push(
+            VariablesSnapshotCommand(self._document, old_state, new_state, "Duplicate Variable")
+        )
 
     def add_new_variable(self):
+        self._flush_var_edit_if_pending()
+        old_state = self._snapshot()
+
         name = "new_var"
         existing_variables = []
         variables_ = self.get_variables(self.ui.variables_scrollArea)
@@ -94,6 +116,12 @@ class SmartPropEditorVariableViewport(QWidget):
             var_visible_in_editor=var_visible_in_editor,
             var_class=var_class,
             var_display_name=var_display_name
+        )
+
+        new_state = self._snapshot()
+        from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
+        self._document.undo_stack.push(
+            VariablesSnapshotCommand(self._document, old_state, new_state, "Add Variable")
         )
 
     # ======================================[Variables Other]========================================
@@ -143,7 +171,10 @@ class SmartPropEditorVariableViewport(QWidget):
         context_menu.exec_(event.globalPos())
 
     def paste_variable(self):
+        self._flush_var_edit_if_pending()
+        old_state = self._snapshot()
         clipboard = QApplication.clipboard()
+        pasted_any = False
         try:
             m_data = kv3_to_json(clipboard.text())
             if not isinstance(m_data, dict):
@@ -180,6 +211,77 @@ class SmartPropEditorVariableViewport(QWidget):
                     var_visible_in_editor=var_visible,
                     var_display_name=variable.get('m_ParameterName')
                 )
+                pasted_any = True
 
         except Exception as e:
             ErrorInfo(text="Failed to paste variable data.", details=str(e)).exec()
+            return
+
+        if pasted_any:
+            new_state = self._snapshot()
+            from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
+            self._document.undo_stack.push(
+                VariablesSnapshotCommand(self._document, old_state, new_state, "Paste Variable")
+            )
+
+    # ======================================[Variables Undo Helpers]========================================
+    def _snapshot(self):
+        """Serialise the current variable list to a list of dicts."""
+        state = []
+        layout = self.ui.variables_scrollArea
+        for i in range(layout.count()):
+            widget = layout.itemAt(i).widget()
+            if widget and hasattr(widget, 'name') and hasattr(widget, 'var_class'):
+                state.append({
+                    'name': widget.name,
+                    'var_class': widget.var_class,
+                    'var_value': copy.deepcopy(widget.var_value),
+                    'var_visible_in_editor': widget.var_visible_in_editor,
+                    'var_display_name': widget.var_display_name,
+                })
+        return state
+
+    def _on_delete_requested(self, variable_frame):
+        """Handle delete_requested signal: snapshot → remove → snapshot → push undo."""
+        self._flush_var_edit_if_pending()
+        old_state = self._snapshot()
+        layout = self.ui.variables_scrollArea
+        idx = -1
+        for i in range(layout.count()):
+            if layout.itemAt(i).widget() == variable_frame:
+                idx = i
+                break
+        if idx != -1:
+            item = layout.takeAt(idx)
+            if item and item.widget():
+                item.widget().deleteLater()
+        new_state = self._snapshot()
+        from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
+        self._document.undo_stack.push(
+            VariablesSnapshotCommand(self._document, old_state, new_state, "Delete Variable")
+        )
+
+    def _on_content_changed(self):
+        """Debounce handler for field-level variable edits."""
+        if self._var_edit_old_state is None:
+            self._var_edit_old_state = self._snapshot()
+        self._var_edit_debounce.start(500)
+
+    def _push_var_field_edit(self):
+        """Called when the debounce timer fires; pushes a VariablesSnapshotCommand."""
+        if self._var_edit_old_state is not None:
+            new_state = self._snapshot()
+            if new_state != self._var_edit_old_state:
+                from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
+                self._document.undo_stack.push(
+                    VariablesSnapshotCommand(
+                        self._document, self._var_edit_old_state, new_state, "Edit Variable"
+                    )
+                )
+            self._var_edit_old_state = None
+
+    def _flush_var_edit_if_pending(self):
+        """Flush any in-progress field-edit before a structural operation."""
+        if self._var_edit_debounce.isActive():
+            self._var_edit_debounce.stop()
+            self._push_var_field_edit()
