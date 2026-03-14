@@ -162,15 +162,9 @@ class PropertyFloat(QWidget):
             self.value = None
         #Float or int
         elif self.ui.logic_switch.currentIndex() == 1:
-            typed = self.text_line.toPlainText().strip()
-            if typed:
-                try:
-                    self.float_widget.blockSignals(True)
-                    self.float_widget.set_value(float(typed))
-                except ValueError:
-                    pass
-                finally:
-                    self.float_widget.blockSignals(False)
+            # In Float mode the text_line is hidden; read the slider/spinbox directly.
+            # The old pattern (text_line → set_value) was resetting the slider to '0'
+            # (the initial placeholder text) on every change, discarding user drags.
             value = self.float_widget.value
             if self.int_bool:
                 self.value = {self.value_class: round(float(value))}
