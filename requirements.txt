@@ -1,6 +1,10 @@
 PySide6==6.9.0
 PySide6_Essentials==6.9.0
 packaging
+pyside6-addons
+PyOpenGL
+PyOpenGL_accelerate
+pyassimp
 markdown2
 pypresence
 portalocker

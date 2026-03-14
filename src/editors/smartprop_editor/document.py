@@ -2,6 +2,7 @@ import os.path
 import re
 import ast
 import copy
+import logging
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -163,8 +164,8 @@ class SmartPropDocument(QMainWindow):
 
         self._undo_enabled = False
         self._restoring_from_undo = False
+        self._suppress_snapshot_sync = False
         self._properties_snapshot = None
-        self._rebuilding_properties = False  # True only during explicit UI rebuild from undo/redo
 
         # Debounced edit tracker for variables
         self._variable_edit_timer = QTimer(self)
@@ -177,6 +178,7 @@ class SmartPropDocument(QMainWindow):
         # ShortcutOverride / KeyPress for Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
         # from ANY descendant widget (including QLineEdit, QPlainTextEdit, etc.).
         QApplication.instance().installEventFilter(self)
+        self._log = logging.getLogger(__name__)
 
     def _is_undo_key(self, event):
         """Check if event is Ctrl+Z (Undo)."""
@@ -227,99 +229,191 @@ class SmartPropDocument(QMainWindow):
         self.selection_criteria_group_instance.show()
 
     # ======================================[Tree Hierarchy updating]========================================
-    def on_tree_current_item_changed(self, current_item, previous_item):
-        # Skip if restoring from undo UNLESS we're explicitly rebuilding properties
-        if self._restoring_from_undo and not self._rebuilding_properties:
-            return
+    def _property_item_context(self, item):
+        """Return a compact debug context string for a tree item."""
+        if item is None:
+            return "item=None"
+        try:
+            name = item.text(0)
+        except Exception:
+            name = "<name-unavailable>"
+        try:
+            data = item.data(0, Qt.UserRole) or {}
+        except Exception:
+            data = {}
+        element_id = data.get("m_nElementID", "<no-id>") if isinstance(data, dict) else "<no-id>"
+        class_name = data.get("_class", "<no-class>") if isinstance(data, dict) else "<no-class>"
+        return f"name={name}, id={element_id}, class={class_name}"
 
+    def _log_properties_error(self, action, err, item):
+        """Log properties errors with item context and stack trace."""
+        ctx = self._property_item_context(item)
+        self._log.exception("[SmartProp][Properties] %s failed (%s): %s", action, ctx, err)
+
+    def _clear_property_frames(self):
+        """Remove all PropertyFrame widgets from the three property layouts."""
+        try:
+            for layout in [
+                self.ui.properties_layout,
+                self.modifiers_group_instance.layout,
+                self.selection_criteria_group_instance.layout
+            ]:
+                widgets_to_remove = []
+                for i in range(layout.count()):
+                    w = layout.itemAt(i).widget()
+                    if isinstance(w, PropertyFrame):
+                        widgets_to_remove.append(w)
+                for w in widgets_to_remove:
+                    layout.removeWidget(w)
+                    w.setParent(None)
+                    w.deleteLater()
+        except Exception as err:
+            self._log_properties_error("clear_property_frames", err, None)
+
+    def _rebuild_properties_for_item(self, item):
+        """
+        Rebuild the entire Properties UI from the data stored in *item*.
+
+        This is the single authoritative method for populating the properties
+        panel.  It is safe to call from undo/redo commands and from the normal
+        ``currentItemChanged`` handler alike — it never touches the undo stack
+        or the tree selection.
+        """
+        self._log.debug("[Properties] _rebuild_properties_for_item called for %s  restoring=%s",
+                        self._property_item_context(item), self._restoring_from_undo)
+        saved = self._undo_enabled
         self._undo_enabled = False
         try:
-            # Use the new selection command for selection changes
-            # but skip adding to undo stack when rebuilding from undo/redo
-            if not self._restoring_from_undo and not self._rebuilding_properties:
-                if current_item is not None:
-                    self.ui.tree_hierarchy_widget.setSelectedItemsWithUndo([current_item])
-                else:
-                    self.ui.tree_hierarchy_widget.setSelectedItemsWithUndo([])
-            else:
-                # Just set the selection directly without pushing to undo stack
-                if current_item is not None:
-                    self.ui.tree_hierarchy_widget.setCurrentItem(current_item)
-
-            item = current_item
-            if current_item is not None:
+            if item is not None:
                 self.properties_groups_show()
             else:
                 self.properties_groups_hide()
 
-            # Remove existing PropertyFrame widgets synchronously (setParent(None) instead of deleteLater)
-            # to avoid stale widgets being read by update_tree_item_value during new frame init
-            try:
-                for layout in [
-                    self.ui.properties_layout,
-                    self.modifiers_group_instance.layout,
-                    self.selection_criteria_group_instance.layout
-                ]:
-                    widgets_to_remove = []
-                    for i in range(layout.count()):
-                        w = layout.itemAt(i).widget()
-                        if isinstance(w, PropertyFrame):
-                            widgets_to_remove.append(w)
-                    for w in widgets_to_remove:
-                        layout.removeWidget(w)
-                        w.setParent(None)
-                        w.deleteLater()
-            except Exception as error:
-                print(error)
+            # Clear old property frames
+            self._clear_property_frames()
 
-            try:
-                # Use a deep copy so we never mutate the data stored in the tree item
-                raw_data = item.data(0, Qt.UserRole)
-                data = copy.deepcopy(raw_data) if raw_data else {}
-                data_modif = data.pop("m_Modifiers", [])
-                data_sel_criteria = data.pop("m_SelectionCriteria", [])
+            if item is None:
+                self._properties_snapshot = {}
+                self._log.debug("[Properties] item is None — clearing snapshot and hiding panels")
+                return
 
-                property_instance = PropertyFrame(
-                    widget_list=self.ui.properties_layout,
-                    value=data,
-                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                    element=True,
-                    tree_hierarchy=self.ui.tree_hierarchy_widget,
-                    element_id_generator=self.element_id_generator
-                )
-                property_instance.edited.connect(self.update_tree_item_value)
-                self.ui.properties_layout.insertWidget(0, property_instance)
+            # Deep-copy so we never mutate the data stored in the tree item
+            raw_data = item.data(0, Qt.UserRole)
+            data = copy.deepcopy(raw_data) if raw_data else {}
+            data_modif = data.pop("m_Modifiers", [])
+            data_sel_criteria = data.pop("m_SelectionCriteria", [])
 
-                if data_modif:
-                    for entry in reversed(data_modif):
-                        prop_instance = PropertyFrame(
-                            widget_list=self.modifiers_group_instance.layout,
-                            value=entry,
-                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                            tree_hierarchy=self.ui.tree_hierarchy_widget,
-                            element_id_generator=self.element_id_generator
-                        )
-                        prop_instance.edited.connect(self.update_tree_item_value)
-                        self.modifiers_group_instance.layout.insertWidget(0, prop_instance)
+            property_instance = PropertyFrame(
+                widget_list=self.ui.properties_layout,
+                value=data,
+                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                element=True,
+                tree_hierarchy=self.ui.tree_hierarchy_widget,
+                element_id_generator=self.element_id_generator
+            )
+            property_instance.edited.connect(self.update_tree_item_value)
+            self.ui.properties_layout.insertWidget(0, property_instance)
 
-                if data_sel_criteria:
-                    for entry in reversed(data_sel_criteria):
-                        prop_instance = PropertyFrame(
-                            widget_list=self.selection_criteria_group_instance.layout,
-                            value=entry,
-                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                            tree_hierarchy=self.ui.tree_hierarchy_widget,
-                            element_id_generator=self.element_id_generator
-                        )
-                        prop_instance.edited.connect(self.update_tree_item_value)
-                        self.selection_criteria_group_instance.layout.insertWidget(0, prop_instance)
-            except Exception as error:
-                print(error)
+            if data_modif:
+                for entry in reversed(data_modif):
+                    prop_instance = PropertyFrame(
+                        widget_list=self.modifiers_group_instance.layout,
+                        value=entry,
+                        variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                        tree_hierarchy=self.ui.tree_hierarchy_widget,
+                        element_id_generator=self.element_id_generator
+                    )
+                    prop_instance.edited.connect(self.update_tree_item_value)
+                    self.modifiers_group_instance.layout.insertWidget(0, prop_instance)
+
+            if data_sel_criteria:
+                for entry in reversed(data_sel_criteria):
+                    prop_instance = PropertyFrame(
+                        widget_list=self.selection_criteria_group_instance.layout,
+                        value=entry,
+                        variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                        tree_hierarchy=self.ui.tree_hierarchy_widget,
+                        element_id_generator=self.element_id_generator
+                    )
+                    prop_instance.edited.connect(self.update_tree_item_value)
+                    self.selection_criteria_group_instance.layout.insertWidget(0, prop_instance)
+
+            # Sync snapshot so the next user edit has the correct baseline.
+            # We do this in two steps:
+            # 1. Immediately use the raw item data so there's no window where
+            #    snapshot is stale (e.g. still pointing at a previous item).
+            self._properties_snapshot = copy.deepcopy(
+                item.data(0, Qt.UserRole) if item else {}
+            )
+            # 2. Defer a second collection pass so that any default values
+            #    the widgets inject during construction (e.g. m_OutputChoiceVariableName)
+            #    are included in the baseline before the next user edit.
+            QTimer.singleShot(0, lambda: self._sync_properties_snapshot_from_widgets(item))
+            self._log.debug("[Properties] _rebuild_properties_for_item done for %s  snapshot_keys=%s",
+                            self._property_item_context(item),
+                            sorted(self._properties_snapshot.keys()) if isinstance(self._properties_snapshot, dict) else None)
+        except Exception as err:
+            self._log_properties_error("rebuild_properties", err, item)
         finally:
-            self._undo_enabled = True
+            self._undo_enabled = saved
 
-        # Snapshot the full original data (NOT the mutated copy) for undo tracking
-        self._properties_snapshot = copy.deepcopy(current_item.data(0, Qt.UserRole) if current_item else {})
+    def _sync_properties_snapshot_from_widgets(self, item):
+        """Deferred snapshot sync: collect what the property widgets currently hold
+        and store it as the baseline so the *next* real user edit compares against
+        the widget-enriched state (e.g. default fields injected during construction).
+
+        This runs via QTimer.singleShot(0) after _rebuild_properties_for_item so
+        that widget initialisation signals cannot cause a spurious undo-stack push.
+        """
+        if self._restoring_from_undo or self._suppress_snapshot_sync:
+            # Undo/redo is driving the state — do not overwrite the restored snapshot
+            # with widget-injected defaults.
+            return
+        try:
+            # Verify the item is still the currently selected one (guard against
+            # a selection change that happened between the rebuild and this timer).
+            current = self.ui.tree_hierarchy_widget.currentItem()
+            if current is not item:
+                return
+            output_value = {}
+            modifiers = []
+            selection_criteria = []
+            for i in range(self.modifiers_group_instance.layout.count()):
+                w = self.modifiers_group_instance.layout.itemAt(i).widget()
+                if isinstance(w, PropertyFrame) and w.value is not None:
+                    modifiers.append(w.value)
+            for i in range(self.selection_criteria_group_instance.layout.count()):
+                w = self.selection_criteria_group_instance.layout.itemAt(i).widget()
+                if isinstance(w, PropertyFrame) and w.value is not None:
+                    selection_criteria.append(w.value)
+            for i in range(self.ui.properties_layout.count()):
+                w = self.ui.properties_layout.itemAt(i).widget()
+                if isinstance(w, PropertyFrame) and w.value is not None:
+                    output_value.update(w.value)
+            output_value["m_Modifiers"] = modifiers
+            output_value["m_SelectionCriteria"] = selection_criteria
+            self._properties_snapshot = copy.deepcopy(output_value)
+            # Also update the stored item data so tree serialisation is consistent
+            item.setData(0, Qt.UserRole, copy.deepcopy(output_value))
+            self._log.debug("[Properties] _sync_properties_snapshot_from_widgets: synced snapshot for %s  keys=%s",
+                            self._property_item_context(item),
+                            sorted(output_value.keys()) if isinstance(output_value, dict) else None)
+        except Exception as err:
+            self._log_properties_error("_sync_properties_snapshot_from_widgets", err, item)
+
+    def on_tree_current_item_changed(self, current_item, previous_item):
+        """Handler for ``currentItemChanged`` — rebuilds the Properties panel.
+
+        During undo/redo (_restoring_from_undo is True) we skip entirely;
+        undo commands call ``_rebuild_properties_for_item`` directly instead.
+        """
+        if self._restoring_from_undo:
+            self._log.debug("[Properties] on_tree_current_item_changed skipped (restoring from undo)")
+            return
+        self._log.debug("[Properties] on_tree_current_item_changed: current=%s  previous=%s",
+                        self._property_item_context(current_item),
+                        self._property_item_context(previous_item))
+        self._rebuild_properties_for_item(current_item)
 
     def update_tree_item_value(self, item=None):
         if self._restoring_from_undo:
@@ -328,57 +422,81 @@ class SmartPropDocument(QMainWindow):
         if item is None:
             item = self.ui.tree_hierarchy_widget.currentItem()
         if item:
-            output_value = {}
-            modifiers = []
-            selection_criteria = []
-
-            # Collect modifiers
-            for i in range(self.modifiers_group_instance.layout.count()):
-                widget = self.modifiers_group_instance.layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    value = widget.value
-                    if value is not None:
-                        modifiers.append(value)
-
-            # Collect selection criteria
-            for i in range(self.selection_criteria_group_instance.layout.count()):
-                widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    value = widget.value
-                    if value is not None:
-                        selection_criteria.append(value)
-
-            # Collect main properties
-            for i in range(self.ui.properties_layout.count()):
-                widget = self.ui.properties_layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    value = widget.value
-                    if value is not None:
-                        output_value.update(value)
-
             try:
-                if modifiers[0] is None:
-                    modifiers = []
-            except:
-                pass
-            try:
-                if selection_criteria[0] is None:
-                    selection_criteria = []
-            except:
-                pass
+                output_value = {}
+                modifiers = []
+                selection_criteria = []
 
-            output_value.update({"m_Modifiers": modifiers})
-            output_value.update({"m_SelectionCriteria": selection_criteria})
-            item.setData(0, Qt.UserRole, output_value)
+                # Collect modifiers
+                for i in range(self.modifiers_group_instance.layout.count()):
+                    widget = self.modifiers_group_instance.layout.itemAt(i).widget()
+                    if isinstance(widget, PropertyFrame):
+                        value = widget.value
+                        if value is not None:
+                            modifiers.append(value)
 
-            if self._undo_enabled and self._properties_snapshot != output_value:
-                self.undo_stack.push(PropertiesStateCommand(self, item, self._properties_snapshot, output_value, "Update Properties"))
+                # Collect selection criteria
+                for i in range(self.selection_criteria_group_instance.layout.count()):
+                    widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
+                    if isinstance(widget, PropertyFrame):
+                        value = widget.value
+                        if value is not None:
+                            selection_criteria.append(value)
 
-            self._properties_snapshot = copy.deepcopy(output_value)
+                # Collect main properties
+                for i in range(self.ui.properties_layout.count()):
+                    widget = self.ui.properties_layout.itemAt(i).widget()
+                    if isinstance(widget, PropertyFrame):
+                        value = widget.value
+                        if value is not None:
+                            output_value.update(value)
 
-            # Mark document as modified
-            self._modified = True
-            self._edited.emit()
+                try:
+                    if modifiers[0] is None:
+                        modifiers = []
+                except Exception:
+                    pass
+                try:
+                    if selection_criteria[0] is None:
+                        selection_criteria = []
+                except Exception:
+                    pass
+
+                output_value.update({"m_Modifiers": modifiers})
+                output_value.update({"m_SelectionCriteria": selection_criteria})
+                item.setData(0, Qt.UserRole, output_value)
+
+                if self._undo_enabled and self._properties_snapshot != output_value:
+                    # Identify which keys actually changed for debug output
+                    changed_keys = []
+                    if isinstance(self._properties_snapshot, dict) and isinstance(output_value, dict):
+                        all_keys = set(self._properties_snapshot.keys()) | set(output_value.keys())
+                        changed_keys = [k for k in all_keys if self._properties_snapshot.get(k) != output_value.get(k)]
+                    self._log.debug(
+                        "[Properties] Value changed for %s — changed_keys=%s",
+                        self._property_item_context(item), changed_keys
+                    )
+                    self._log.debug(
+                        "[UndoStack][Properties] Pushing 'Update Properties' for %s  stack_index=%d  can_undo=%s",
+                        self._property_item_context(item),
+                        self.undo_stack.index(),
+                        self.undo_stack.canUndo()
+                    )
+                    self.undo_stack.push(PropertiesStateCommand(self, item, self._properties_snapshot, output_value, "Update Properties"))
+                    self._log.debug(
+                        "[UndoStack][Properties] Stack after push: index=%d  count=%d  can_undo=%s  can_redo=%s",
+                        self.undo_stack.index(), self.undo_stack.count(),
+                        self.undo_stack.canUndo(), self.undo_stack.canRedo()
+                    )
+
+                self._properties_snapshot = copy.deepcopy(output_value)
+
+                # Mark document as modified
+                self._modified = True
+                self._edited.emit()
+            except Exception as err:
+                self._log_properties_error("update_tree_item_value", err, item)
+                return
 
     # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
@@ -1231,7 +1349,15 @@ class SmartPropDocument(QMainWindow):
         after = self._snapshot_choices()
 
         if before != after and self._undo_enabled:
+            self._log.debug(
+                "[UndoStack][Choices] Pushing '%s'  stack_index=%d  before=%d  after=%d",
+                description, self.undo_stack.index(), len(before), len(after)
+            )
             self.undo_stack.push(ChoicesStateCommand(self, before, after, description))
+            self._log.debug(
+                "[UndoStack][Choices] Stack after push: index=%d  count=%d",
+                self.undo_stack.index(), self.undo_stack.count()
+            )
         self._edited.emit()
 
     # ======================================[Variables Undo Support]========================================
@@ -1284,7 +1410,15 @@ class SmartPropDocument(QMainWindow):
         """Commit variable edits to the undo stack."""
         after = self._snapshot_variables()
         if self._variables_pre_edit_snapshot != after:
+            self._log.debug(
+                "[UndoStack][Variables] Committing debounced 'Edit Variables'  stack_index=%d  before=%d  after=%d",
+                self.undo_stack.index(), len(self._variables_pre_edit_snapshot), len(after)
+            )
             self.undo_stack.push(VariablesStateCommand(self, self._variables_pre_edit_snapshot, after, "Edit Variables"))
+            self._log.debug(
+                "[UndoStack][Variables] Stack after push: index=%d  count=%d",
+                self.undo_stack.index(), self.undo_stack.count()
+            )
         self._variables_pre_edit_snapshot = None
 
     def _variables_mutate(self, fn, description="Edit Variables"):
@@ -1298,7 +1432,15 @@ class SmartPropDocument(QMainWindow):
         after = self._snapshot_variables()
 
         if before != after and self._undo_enabled:
+            self._log.debug(
+                "[UndoStack][Variables] Pushing '%s'  stack_index=%d  before=%d  after=%d",
+                description, self.undo_stack.index(), len(before), len(after)
+            )
             self.undo_stack.push(VariablesStateCommand(self, before, after, description))
+            self._log.debug(
+                "[UndoStack][Variables] Stack after push: index=%d  count=%d",
+                self.undo_stack.index(), self.undo_stack.count()
+            )
         self._modified = True
         self._edited.emit()
 
@@ -1316,7 +1458,15 @@ class SmartPropDocument(QMainWindow):
         """Finalize variable delete undo after deleteLater has been processed."""
         after = self._snapshot_variables()
         if before != after and self._undo_enabled:
+            self._log.debug(
+                "[UndoStack][Variables] Pushing 'Delete Variable'  stack_index=%d  before=%d  after=%d",
+                self.undo_stack.index(), len(before), len(after)
+            )
             self.undo_stack.push(VariablesStateCommand(self, before, after, "Delete Variable"))
+            self._log.debug(
+                "[UndoStack][Variables] Stack after push: index=%d  count=%d",
+                self.undo_stack.index(), self.undo_stack.count()
+            )
         self._modified = True
         self._edited.emit()
 

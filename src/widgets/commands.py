@@ -33,7 +33,9 @@ class AddItemCommand(QUndoCommand):
 
     def undo(self):
         if self.parent_item:
-            self.parent_item.removeChild(self.item)
+            idx = self.parent_item.indexOfChild(self.item)
+            if idx != -1:
+                self.parent_item.takeChild(idx)
         else:
             idx = self.tree.indexOfTopLevelItem(self.item)
             if idx != -1:
@@ -45,8 +47,11 @@ class PasteItemsCommand(QUndoCommand):
         self.parent = parent
         self.items = items
         self.added = []
+        self._item_refs = []
 
     def redo(self):
+        self.added = []
+        self._item_refs = []
         for item in self.items:
             self.parent.addChild(item)
             self.parent.setExpanded(True)
@@ -54,7 +59,11 @@ class PasteItemsCommand(QUndoCommand):
 
     def undo(self):
         for item in self.added:
-            self.parent.removeChild(item)
+            idx = self.parent.indexOfChild(item)
+            if idx != -1:
+                self.parent.takeChild(idx)
+        # Keep Python references alive so the C++ objects survive until redo
+        self._item_refs = list(self.added)
         self.added.clear()
 
 class RemoveItemCommand(QUndoCommand):
@@ -260,25 +269,33 @@ class SelectItemsCommand(QUndoCommand):
         self.tree = tree
         self.old_selected = old_selected
         self.new_selected = new_selected
+        # Keep Python references so C++ objects survive across undo cycles
+        self._item_refs = list(old_selected) + list(new_selected)
 
     def _set_selection(self, items):
-        # Clear any existing selection first
-        self.tree.clearSelection()
-        
-        # Set selection for new items
-        for item in items:
-            if isinstance(item, QTreeWidgetItem):
-                item.setSelected(True)
-
-        # Set focus and scroll to first item if there are any selected items
+        # Block signals to prevent recursive currentItemChanged emissions
+        self.tree.blockSignals(True)
+        try:
+            self.tree.clearSelection()
+            for item in items:
+                if isinstance(item, QTreeWidgetItem):
+                    try:
+                        item.setSelected(True)
+                    except (RuntimeError, ReferenceError):
+                        pass
+            if items:
+                try:
+                    self.tree.setCurrentItem(items[0])
+                    self.tree.scrollToItem(items[0])
+                except (RuntimeError, ReferenceError):
+                    pass
+            else:
+                self.tree.setCurrentItem(None)
+        finally:
+            self.tree.blockSignals(False)
+        # Explicitly set focus outside of blockSignals
         if items:
-            self.tree.setCurrentItem(items[0])
-            self.tree.scrollToItem(items[0])
-            # Explicitly set focus to the tree widget
             self.tree.setFocus(Qt.OtherFocusReason)
-        else:
-            # If no items selected, clear current item
-            self.tree.setCurrentItem(None)
 
     def redo(self):
         self._set_selection(self.new_selected)

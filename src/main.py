@@ -5,6 +5,7 @@ import threading
 import webbrowser
 import time
 import argparse
+import logging
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -682,6 +683,15 @@ if __name__ == "__main__":
     parser.add_argument('--console', action='store_true', help='Enable console output for debug purposes')
     parser.add_argument('file', nargs='?', help='File to open (.vsmart, .vdata, etc.)')
     args, unknown = parser.parse_known_args()
+
+    # Configure logging — DEBUG in dev/console mode, WARNING otherwise
+    log_level = logging.DEBUG if (args.dev or args.console) else logging.WARNING
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
+    logging.getLogger("src.editors.smartprop_editor").setLevel(log_level)
 
     # Allocate a console window if requested (works when built with --windowed)
     if args.console:

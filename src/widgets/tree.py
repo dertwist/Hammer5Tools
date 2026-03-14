@@ -54,7 +54,10 @@ class HierarchyTreeWidget(QTreeWidget):
         if self.list_mode:
             for item in selected_items:
                 if item.parent() is not None:
-                    item.parent().removeChild(item)
+                    parent = item.parent()
+                    idx = parent.indexOfChild(item)
+                    if idx != -1:
+                        parent.takeChild(idx)
                     self.addTopLevelItem(item)
 
         # Collect move infos for items whose position changed
