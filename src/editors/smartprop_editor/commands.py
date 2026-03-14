@@ -1,4 +1,5 @@
 import copy
+import re
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
@@ -212,14 +213,66 @@ class NewFromPresetCommand(QUndoCommand):
 class PropertySnapshotCommand(QUndoCommand):
     """Snapshot the full data of one hierarchy tree item before/after a property edit.
 
-    Consecutive edits on the *same* item are merged so rapid keystrokes produce a
-    single undo entry.  The first redo() call is intentionally skipped because the
-    change was already applied before the command was pushed.
+    Consecutive edits on the *same property* of the *same item* are merged so
+    rapid keystrokes produce a single undo entry.  Editing a *different* property
+    always starts a fresh history entry, giving the user one entry per property.
+    The first redo() call is intentionally skipped because the change was already
+    applied before the command was pushed.
     """
     _MERGE_ID = 1001
 
+    @staticmethod
+    def _changed_keys(old, new):
+        """Return a frozenset of change-discriminator strings.
+
+        For scalar values the discriminator is the dict key itself (e.g. 'm_flScale').
+        For list values we identify which index changed.  If that index holds a dict
+        we recurse into it so that two edits to different sub-properties of the same
+        modifier produce distinct discriminators:
+            m_Modifiers[0].m_flAmount  vs  m_Modifiers[0].m_bEnabled
+        This prevents mergeWith from collapsing them into a single history entry.
+        """
+        all_keys = set((old or {}).keys()) | set((new or {}).keys())
+        result = set()
+        for k in all_keys:
+            v_old = (old or {}).get(k)
+            v_new = (new or {}).get(k)
+            if v_old == v_new:
+                continue
+            if isinstance(v_old, list) and isinstance(v_new, list):
+                if len(v_old) != len(v_new):
+                    result.add(k)
+                else:
+                    for i in range(len(v_old)):
+                        if v_old[i] != v_new[i]:
+                            if isinstance(v_old[i], dict) and isinstance(v_new[i], dict):
+                                sub = PropertySnapshotCommand._changed_keys(v_old[i], v_new[i])
+                                for sk in sub:
+                                    result.add(f'{k}[{i}].{sk}')
+                            else:
+                                result.add(f'{k}[{i}]')
+            else:
+                result.add(k)
+        return frozenset(result)
+
+    @staticmethod
+    def _label_for_keys(keys):
+        """Build a human-readable history label from the set of change discriminators."""
+        content = keys - {'_class', 'm_nElementID'}
+        if len(content) == 1:
+            key = next(iter(content))
+            # For compound discriminators use the leaf key for a clean label
+            if '.' in key:
+                key = key.rsplit('.', 1)[1]
+            key = re.sub(r'\[\d+\]$', '', key)
+            label = re.sub(r'^m_(?:fl|[nbs])?', '', key)
+            label = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', label)
+            return f"Edit {label}"
+        return "Edit Properties"
+
     def __init__(self, document, item, old_data, new_data):
-        super().__init__("Edit Properties")
+        self._diff_keys = self._changed_keys(old_data, new_data)
+        super().__init__(self._label_for_keys(self._diff_keys))
         self.document = document
         self.item = item
         self.old_data = old_data
@@ -234,7 +287,11 @@ class PropertySnapshotCommand(QUndoCommand):
     def mergeWith(self, other):
         if not isinstance(other, PropertySnapshotCommand):
             return False
+        # Different item → never merge
         if self._item_id != other._item_id:
+            return False
+        # Different property (or property set) → start a new history entry
+        if self._diff_keys != other._diff_keys:
             return False
         self.new_data = other.new_data
         return True
@@ -256,9 +313,9 @@ class PropertySnapshotCommand(QUndoCommand):
     def redo(self):
         if self._first_redo:
             self._first_redo = False
-            print(f"[SPE][PropertyEdit] redo: (initial apply) '{self.item.text(0)}'")
+            print(f"[SPE][PropertyEdit] redo: (initial apply) '{self.item.text(0)}' — {self.text()}")
             return
-        print(f"[SPE][PropertyEdit] redo: restoring edit on '{self.item.text(0)}'")
+        print(f"[SPE][PropertyEdit] redo: '{self.item.text(0)}' — {self.text()}")
         try:
             self._select_in_tree()
             self.item.setData(0, Qt.UserRole, copy.deepcopy(self.new_data))
@@ -267,7 +324,7 @@ class PropertySnapshotCommand(QUndoCommand):
             print(f"[SPE][PropertyEdit] redo: ERROR — {e}")
 
     def undo(self):
-        print(f"[SPE][PropertyEdit] undo: reverting edit on '{self.item.text(0)}'")
+        print(f"[SPE][PropertyEdit] undo: '{self.item.text(0)}' — {self.text()}")
         try:
             self._select_in_tree()
             self.item.setData(0, Qt.UserRole, copy.deepcopy(self.old_data))
