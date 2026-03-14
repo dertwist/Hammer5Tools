@@ -126,12 +126,10 @@ class FloatWidget(QWidget):
 
     def _on_slider_pressed(self):
         """Called from pre_press (before valueChanged). Emit slider_pressed exactly once."""
-        print(f"[DEBUG] FloatWidget._on_slider_pressed - emitting slider_pressed")
         self.slider_pressed.emit()
 
     def _on_slider_released(self):
         """Emit committed once at the end of a drag gesture."""
-        print(f"[DEBUG] FloatWidget._on_slider_released - emitting committed")
         self.committed.emit()
 
     # Handler when the spinbox value is updated
@@ -167,13 +165,14 @@ class FloatWidget(QWidget):
         self.SpinBox.setText(str(value))
         self.SpinBox.blockSignals(False)
         self.value = value
-        print(f"[DEBUG] FloatWidget.on_Slider_updated - value={value}, emitting edited")
         self.edited.emit(value)
 
-    # Programmatically set the value
+    # Programmatically set the value without emitting edited
     def set_value(self, value):
+        self.blockSignals(True)
         self.SpinBox.setText(str(value))
         self.on_SpinBox_updated()
+        self.blockSignals(False)
 
 
 class BoxSlider(QWidget):
