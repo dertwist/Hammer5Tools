@@ -256,24 +256,21 @@ class SmartPropDocument(QMainWindow):
             self.properties_groups_hide()
 
         try:
-            # Remove any existing PropertyFrame widgets.  hide() is called
-            # synchronously so the stale panel disappears immediately; deleteLater()
-            # then handles the asynchronous memory cleanup.
-            for i in range(self.ui.properties_layout.count()):
-                widget = self.ui.properties_layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    widget.hide()
-                    widget.deleteLater()
-            for i in range(self.modifiers_group_instance.layout.count()):
-                widget = self.modifiers_group_instance.layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    widget.hide()
-                    widget.deleteLater()
-            for i in range(self.selection_criteria_group_instance.layout.count()):
-                widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    widget.hide()
-                    widget.deleteLater()
+            # Remove any existing PropertyFrame widgets from their layouts immediately
+            # so that update_tree_item_value never sees both the old (pending deletion)
+            # and new frames at the same time.  removeWidget() detaches the widget from
+            # layout management right away; deleteLater() handles deferred memory cleanup.
+            for layout in (
+                self.ui.properties_layout,
+                self.modifiers_group_instance.layout,
+                self.selection_criteria_group_instance.layout,
+            ):
+                for i in reversed(range(layout.count())):
+                    widget = layout.itemAt(i).widget()
+                    if isinstance(widget, PropertyFrame):
+                        layout.removeWidget(widget)
+                        widget.hide()
+                        widget.deleteLater()
         except Exception as error:
             print(error)
 
@@ -373,6 +370,14 @@ class SmartPropDocument(QMainWindow):
 
             output_value.update({"m_Modifiers": modifiers})
             output_value.update({"m_SelectionCriteria": selection_criteria})
+
+            # Safety: if the main PropertyFrame hasn't emitted on_edited yet its value
+            # won't contain '_class', meaning the panel is still initializing.  Writing
+            # an incomplete dict would corrupt the stored data and cause a KeyError the
+            # next time _rebuild_properties_panel tries to recreate the PropertyFrame.
+            if '_class' not in output_value:
+                return
+
             item.setData(0, Qt.UserRole, output_value)
 
             # Mark document as modified
@@ -1188,21 +1193,17 @@ class SmartPropDocument(QMainWindow):
         try:
             # Clear existing PropertyFrame widgets.  hide() fires synchronously
             # so the panel is cleared visually before the new content is built.
-            for i in range(self.ui.properties_layout.count()):
-                widget = self.ui.properties_layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    widget.hide()
-                    widget.deleteLater()
-            for i in range(self.modifiers_group_instance.layout.count()):
-                widget = self.modifiers_group_instance.layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    widget.hide()
-                    widget.deleteLater()
-            for i in range(self.selection_criteria_group_instance.layout.count()):
-                widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
-                if isinstance(widget, PropertyFrame):
-                    widget.hide()
-                    widget.deleteLater()
+            for layout in (
+                self.ui.properties_layout,
+                self.modifiers_group_instance.layout,
+                self.selection_criteria_group_instance.layout,
+            ):
+                for i in reversed(range(layout.count())):
+                    widget = layout.itemAt(i).widget()
+                    if isinstance(widget, PropertyFrame):
+                        layout.removeWidget(widget)
+                        widget.hide()
+                        widget.deleteLater()
 
             # Show/hide panel groups
             if item is not None:
