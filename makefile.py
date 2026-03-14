@@ -66,21 +66,29 @@ def kill_process(process_name: str) -> None:
 
 def find_pycparser_tables():
     """
-    Try to find lextab.py and yacctab.py in the most likely venv locations.
+    Try to find lextab.py and yacctab.py wherever pycparser is installed.
+    Checks local venv paths first, then falls back to pycparser's own location.
     Returns (lextab_path, yacctab_path) or raises FileNotFoundError.
     """
     candidates = [
         os.path.join(cur_dir, '.venv', 'Lib', 'site-packages', 'pycparser'),
         os.path.join(cur_dir, 'venv', 'Lib', 'site-packages', 'pycparser'),
     ]
+    # Fallback: ask pycparser itself where it lives (works with global installs and CI)
+    try:
+        import pycparser as _pycparser
+        candidates.append(os.path.dirname(_pycparser.__file__))
+    except ImportError:
+        pass
+
     for base in candidates:
         lextab = os.path.join(base, 'lextab.py')
         yacctab = os.path.join(base, 'yacctab.py')
         if os.path.isfile(lextab) and os.path.isfile(yacctab):
             return lextab, yacctab
     raise FileNotFoundError(
-        "Could not find pycparser lextab.py and yacctab.py in either .venv or venv. "
-        "Please ensure pycparser is installed in your virtual environment."
+        "Could not find pycparser lextab.py and yacctab.py. "
+        "Please ensure pycparser is installed."
     )
 
 
