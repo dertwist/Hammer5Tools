@@ -31,19 +31,19 @@ dotnet_dlls = [
 runtime_hook_path = os.path.join(cur_dir, "pyi_runtime_hook_pythonnet.py")
 with open(runtime_hook_path, "w") as f:
     f.write(
-        """
-import sys, os, tempfile
-# Fix for pycparser needing writable parser tables
+        """import sys, os, tempfile, shutil
+# Copy pre-bundled pycparser parser tables to a writable tempdir so pycparser
+# can import them. Only runs when the app is frozen by PyInstaller.
 if hasattr(sys, '_MEIPASS'):
-    import shutil
-    import pycparser
-    import pycparser.ply
     tempdir = tempfile.gettempdir()
     for tabfile in ['lextab.py', 'yacctab.py']:
         src = os.path.join(sys._MEIPASS, 'pycparser', tabfile)
         dst = os.path.join(tempdir, tabfile)
         if os.path.exists(src) and not os.path.exists(dst):
-            shutil.copy2(src, dst)
+            try:
+                shutil.copy2(src, dst)
+            except OSError:
+                pass
     sys.path.insert(0, tempdir)
 """
     )
@@ -154,6 +154,20 @@ def build_hammer5_tools(fast=False) -> None:
         '--windowed',
         '--hidden-import=resources_rc',
         '--hidden-import=widgets',
+        # Collect all pycparser submodules (incl. pycparser.ply) so the
+        # frozen runtime hook can find them in sys._MEIPASS.
+        '--collect-submodules=pycparser',
+        # Qt modules that are loaded dynamically and not auto-detected
+        '--hidden-import=PySide6.QtNetwork',
+        '--hidden-import=PySide6.QtMultimedia',
+        '--hidden-import=PySide6.QtMultimediaWidgets',
+        # cffi backend required by clr_loader (pythonnet) and cairocffi
+        '--hidden-import=cffi',
+        '--collect-submodules=cffi',
+        '--hidden-import=clr_loader',
+        '--collect-submodules=clr_loader',
+        # keyvalues3 is a local package at the repo root; add it explicitly
+        '--add-data=keyvalues3;keyvalues3',
         # '--strip',  # Removed to avoid errors with .NET DLLs
         '--optimize=0',
         '--clean',
