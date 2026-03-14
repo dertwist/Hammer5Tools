@@ -1,0 +1,47 @@
+name: Dev Release
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build exe and create zip
+        run: python makefile.py --build-app --archive
+
+      - name: Read app version
+        id: version
+        run: |
+          $ver = python -c "from src.common import app_version; print(app_version)"
+          echo "app_version=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Upload to dev release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev
+          name: "Dev Build v${{ steps.version.outputs.app_version }} (${{ github.sha }})"
+          body: |
+            Automated dev build from commit ${{ github.sha }} on branch `${{ github.ref_name }}`.
+          prerelease: true
+          files: |
+            hammer5tools/Hammer5Tools.exe
+            dist/hammer5tools.zip
