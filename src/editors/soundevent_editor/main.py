@@ -631,8 +631,12 @@ class SoundEventEditorMainWindow(QMainWindow):
                     parent.takeChild(index)
 
     def duplicate_hierarchy_items(self, tree):
-        """Duplicate selected items and place them directly below the original"""
-        tree.DuplicateSelectedItems()
+        """Duplicate selected items with unique names, placed directly below the original."""
+        selected = tree.selectedItems()
+        if not selected:
+            return
+        cmd = DuplicateSoundEventsCommand(self, tree, selected)
+        tree.undo_stack.push(cmd)
     
     def serialization_hierarchy_items_single(self, item):
         """Convert single tree item to dict"""
