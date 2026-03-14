@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt, QTimer
 from src.widgets.popup_menu.main import PopupMenu
 from src.widgets import HierarchyItemModel, ErrorInfo
 from src.editors.soundevent_editor.commands import *
-from src.widgets.commands import AddItemCommand, PasteItemsCommand
+from src.widgets.commands import AddItemCommand, PasteItemsCommand, MoveItemsCommand
 from src.editors.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
 from src.editors.soundevent_editor.preset_manager import SoundEventEditorPresetManagerWindow
 from src.common import *
@@ -110,6 +110,10 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.ui.hierarchy_widget.currentItemChanged.connect(self.on_changed_hierarchy_item)
         self.ui.hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
+        self.ui.hierarchy_widget.itemDoubleClicked.connect(self._on_item_edit_start)
+        self.ui.hierarchy_widget.itemChanged.connect(self._on_item_renamed)
+        self._pre_rename_item = None
+        self._pre_rename_name = None
         self.ui.hierarchy_widget.setHeaderLabels(['Event'])
 
         from src.editors.soundevent_editor.soundevent_player import SoundEventPlayerWidget
@@ -199,8 +203,14 @@ class SoundEventEditorMainWindow(QMainWindow):
         self._history_dock.setMinimumWidth(180)
         history_view = QUndoView(self.undo_stack, self._history_dock)
         self._history_dock.setWidget(history_view)
+        # Stack Soundevents (70%) and History (30%) on the right, no tabs
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._history_dock)
-        self.tabifyDockWidget(self.ui.dockWidget_4, self._history_dock)
+        self.splitDockWidget(self.ui.dockWidget_4, self._history_dock, Qt.Vertical)
+        self.resizeDocks(
+            [self.ui.dockWidget_4, self._history_dock],
+            [700, 300],  # 70% Soundevents, 30% History (height in px)
+            Qt.Vertical,
+        )
 
     #============================================================<  AudioPlayer  >==========================================================
     def add_player(self):
@@ -355,7 +365,11 @@ class SoundEventEditorMainWindow(QMainWindow):
             _soundevent_name = "SoundEvent"
         _soundevent_name = self.unique_soundevent_int(_soundevent_name)
         _soundevent = HierarchyItemModel(_name=_soundevent_name, _data=_data, _class='Event')
-        self.ui.hierarchy_widget.invisibleRootItem().addChild(_soundevent)
+        tree = self.ui.hierarchy_widget
+        cmd = AddItemCommand(tree, tree.invisibleRootItem(), _soundevent)
+        cmd.setText("Add Event")
+        tree.undo_stack.push(cmd)
+        tree.setCurrentItem(_soundevent)
 
     def unique_soundevent_int(self, _name: str = None):
         """Creating Unique name for new hierarchy element"""
@@ -416,7 +430,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         """Sets the value to the data column and saves if in realtime mode."""
         # Convert the dictionary to a string representation
         item.setData(0, Qt.UserRole, _data)
-        debug(f'Updated hierarchy item {item.data(0, Qt.UserRole)} with data: \n {_data}')
+        debug(f"[hier] update: {item.text(0)}")
         if self.realtime_save():
             try:
                 self.realtime_save_timer.stop()
@@ -437,6 +451,28 @@ class SoundEventEditorMainWindow(QMainWindow):
         except Exception as e:
             debug(f"Error switching properties view: {e}")
             QMessageBox.warning(self, "Properties Error", "Failed to switch properties view for the selected item.")
+
+    def _on_item_edit_start(self, item, column):
+        """Capture the name before inline editing begins so rename can be undone."""
+        if column == 0:
+            self._pre_rename_item = item
+            self._pre_rename_name = item.text(0)
+
+    def _on_item_renamed(self, item, column):
+        """Push a RenameItemCommand when an inline edit commits a new name."""
+        if column != 0:
+            return
+        if self._pre_rename_item is not item:
+            return
+        old_name = self._pre_rename_name
+        self._pre_rename_item = None
+        self._pre_rename_name = None
+        new_name = item.text(0)
+        if old_name is None or old_name == new_name:
+            return
+        cmd = RenameItemCommand(item, old_name, new_name, on_renamed=self.update_properties_label)
+        self.undo_stack.push(cmd)
+        self.realtime_save_timer.start()
 
     # ======================================[Tree widget hierarchy filter]========================================
     def search_hierarchy(self, filter_text, parent_item):
@@ -515,33 +551,39 @@ class SoundEventEditorMainWindow(QMainWindow):
     # ======================================[Tree widget functions]========================================
 
     def move_tree_item(self, tree, direction):
-        """Move selected tree items up or down within their parent."""
+        """Move selected tree items up or down. Supports undo via MoveItemsCommand."""
         selected_items = tree.selectedItems()
         if not selected_items:
-            return  # Exit if no items are selected
+            return
 
-        # Group items by parent and sort by current index
-        parent_to_items = {}
+        # Snapshot positions before any moves
+        old_positions = {item: tree.indexOfTopLevelItem(item) for item in selected_items}
+
+        # Apply moves in the right order to avoid cascading index shifts
+        ordered = sorted(selected_items, key=lambda i: old_positions[i], reverse=(direction > 0))
+        for item in ordered:
+            cur = tree.indexOfTopLevelItem(item)
+            tgt = cur + direction
+            if 0 <= tgt < tree.topLevelItemCount():
+                tree.takeTopLevelItem(cur)
+                tree.insertTopLevelItem(tgt, item)
+
+        # Build move_infos from actual post-move positions
+        move_infos = []
         for item in selected_items:
-            parent = item.parent() or tree.invisibleRootItem()
-            if parent not in parent_to_items:
-                parent_to_items[parent] = []
-            parent_to_items[parent].append(item)
+            old_idx = old_positions[item]
+            new_idx = tree.indexOfTopLevelItem(item)
+            if old_idx != new_idx:
+                move_infos.append({
+                    'item': item,
+                    'old_parent': None,
+                    'old_index': old_idx,
+                    'new_parent': None,
+                    'new_index': new_idx,
+                })
 
-        # Move items for each parent separately
-        for parent, items in parent_to_items.items():
-            # Sort items by their index in reverse if moving down (to avoid index shifting)
-            items.sort(key=lambda item: parent.indexOfChild(item), reverse=(direction > 0))
-
-            for item in items:
-                current_index = parent.indexOfChild(item)
-                new_index = current_index + direction
-
-                # Check bounds
-                if 0 <= new_index < parent.childCount():
-                    # Move item
-                    parent.takeChild(current_index)
-                    parent.insertChild(new_index, item)
+        if move_infos:
+            tree.undo_stack.push(MoveItemsCommand(tree, move_infos))
 
         tree.clearSelection()
         for item in selected_items:
@@ -590,21 +632,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def duplicate_hierarchy_items(self, tree):
         """Duplicate selected items and place them directly below the original"""
-        selected_items = tree.selectedItems()
-        if not selected_items:
-            return
-        
-        # Process each selected item
-        for item in selected_items:
-            data = self.serialization_hierarchy_items_single(item)
-            parent = item.parent() or tree.invisibleRootItem()
-            current_index = parent.indexOfChild(item)
-            
-            # Deserialize and insert right after the original
-            tree_items = self.deserialize_hierarchy_items(data)
-            for tree_item in tree_items:
-                parent.insertChild(current_index + 1, tree_item)
-                current_index += 1
+        tree.DuplicateSelectedItems()
     
     def serialization_hierarchy_items_single(self, item):
         """Convert single tree item to dict"""
