@@ -152,8 +152,15 @@ def build_hammer5_tools(fast=False) -> None:
         '--noconfirm',
         '--onefile',
         '--windowed',
+        # Add the project root to PyInstaller's analysis sys.path so that
+        # local packages (src, keyvalues3) are discoverable as packages.
+        '--paths=.',
         '--hidden-import=resources_rc',
         '--hidden-import=widgets',
+        # Collect ALL submodules of local packages so nothing is missed
+        # regardless of whether static analysis can trace the imports.
+        '--collect-all=src',
+        '--collect-all=keyvalues3',
         # Collect all pycparser submodules (incl. pycparser.ply) so the
         # frozen runtime hook can find them in sys._MEIPASS.
         '--collect-submodules=pycparser',
@@ -166,8 +173,6 @@ def build_hammer5_tools(fast=False) -> None:
         '--collect-submodules=cffi',
         '--hidden-import=clr_loader',
         '--collect-submodules=clr_loader',
-        # keyvalues3 is a local package at the repo root; add it explicitly
-        '--add-data=keyvalues3;keyvalues3',
         # '--strip',  # Removed to avoid errors with .NET DLLs
         '--optimize=0',
         '--clean',
