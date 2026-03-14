@@ -15,6 +15,7 @@ from src.editors.soundevent_editor.common import vsnd_filepath_convert
 class SoundEventEditorPropertyFrame(QWidget):
     """PropertyFrame suppose to collect properties and gives dict value"""
     edited = Signal()
+    deleted = Signal(str)       # emits the property name just before the frame is destroyed
     slider_pressed = Signal()   # emitted when a float slider drag starts
     committed = Signal()        # emitted when a float slider drag ends
     def __init__(self, _data: dict = None, widget_list: QHBoxLayout = None, tree:QTreeWidget = None):
@@ -365,6 +366,7 @@ class SoundEventEditorPropertyFrame(QWidget):
 
     def delete_action(self):
         """Set value to None, then send signal that updates value then delete self"""
+        self.deleted.emit(self.name)
         for index in range(self.ui.content.layout().count()):
             widget_instance = self.ui.content.layout().itemAt(index).widget()
             widget_instance.deleteLater()
