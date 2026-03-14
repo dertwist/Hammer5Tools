@@ -127,6 +127,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self._slider_dragging = False          # True while a slider is being dragged
         self._pre_commit_snapshot = None       # value snapshot taken at sliderPressed
         self._restoring_from_undo = False      # True while undo/redo is restoring state
+        self._next_undo_desc = None            # optional label for the next undo push
 
         # Init variables
         self.tree = tree
@@ -216,6 +217,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Ensure value is a dictionary and has at least one item
         if isinstance(value, dict) and value:
             key, val = next(iter(value.items()))
+            self._next_undo_desc = f"Add property '{key}'"
             self.create_property(key, val)
         else:
             debug("[props] new_property: invalid value")
@@ -234,6 +236,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             for item in __properties:
                 existing_items.add(item)
             if key not in existing_items:
+                self._next_undo_desc = f"Paste property '{key}'"
                 self.create_property(key, data[key])
             else:
                 ErrorInfo(
@@ -356,10 +359,15 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Create frame widget instance"""
         widget_instance = SoundEventEditorPropertyFrame(_data={key: value}, widget_list=self.ui.properties_layout, tree=self.tree)
         widget_instance.edited.connect(self.on_update)
+        widget_instance.deleted.connect(self._on_property_deleted)
         widget_instance.slider_pressed.connect(self._capture_pre_commit_snapshot)
         widget_instance.committed.connect(self.on_commit)
         index = self.ui.properties_layout.count() - 1
         self.ui.properties_layout.insertWidget(index, widget_instance)
+
+    def _on_property_deleted(self, prop_name: str):
+        """Called just before a property frame destroys itself — sets the undo label."""
+        self._next_undo_desc = f"Delete property '{prop_name}'"
 
     def get_property_value(self, index):
         """Getting dict value from widget instance frame"""
@@ -436,7 +444,11 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             after = copy.deepcopy(self.value)
             if before != after:
                 element_key, element_name = self._get_current_element_key_and_name()
-                desc = f"Edit '{element_name}'" if element_name else "Edit Property"
+                if self._next_undo_desc:
+                    desc = self._next_undo_desc
+                    self._next_undo_desc = None
+                else:
+                    desc = f"Edit '{element_name}'" if element_name else "Edit Property"
                 self.undo_stack.push(PropertyStateCommand(self, element_key, before, after, desc))
         else:
             self.update_value()
