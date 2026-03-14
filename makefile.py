@@ -99,15 +99,25 @@ def find_pycparser_tables():
 
 def _generate_pycparser_tables():
     """
-    Force pycparser to generate lextab.py and yacctab.py by instantiating
-    its C parser with outputdir set to cur_dir so the files land somewhere
-    predictable regardless of whether the package dir is writable.
+    Force pycparser to generate lextab.py / yacctab.py by instantiating its
+    C parser with outputdir pointed at cur_dir.
+
+    pycparser 2.x bundles PLY under pycparser.ply; 3.x uses the system 'ply'
+    package or dropped PLY entirely.  We try both locations and skip silently
+    if neither is available (pycparser 3.x without PLY just works at runtime).
     """
     try:
-        import pycparser
-        import pycparser.ply.lex as lex
-        import pycparser.ply.yacc as yacc
-        # Monkey-patch outputdir so tables land in cur_dir
+        try:
+            import pycparser.ply.lex as lex
+            import pycparser.ply.yacc as yacc
+        except ImportError:
+            try:
+                import ply.lex as lex
+                import ply.yacc as yacc
+            except ImportError:
+                # pycparser >= 3.0 without bundled or system PLY — no tables needed
+                return
+
         _orig_lex = lex.lex
         _orig_yacc = yacc.yacc
 
@@ -153,14 +163,10 @@ def build_hammer5_tools(fast=False) -> None:
         '--onefile',
         '--windowed',
         # Add the project root to PyInstaller's analysis sys.path so that
-        # local packages (src, keyvalues3) are discoverable as packages.
+        # local packages (src, keyvalues3) are discoverable during analysis.
         '--paths=.',
         '--hidden-import=resources_rc',
         '--hidden-import=widgets',
-        # Collect ALL submodules of local packages so nothing is missed
-        # regardless of whether static analysis can trace the imports.
-        '--collect-all=src',
-        '--collect-all=keyvalues3',
         # Collect all pycparser submodules (incl. pycparser.ply) so the
         # frozen runtime hook can find them in sys._MEIPASS.
         '--collect-submodules=pycparser',
@@ -185,6 +191,8 @@ def build_hammer5_tools(fast=False) -> None:
         '--exclude-module=scipy',
         '--exclude-module=pandas',
         '--exclude-module=tabulate',
+        # pyqtgraph.opengl requires PyOpenGL which is not installed
+        '--exclude-module=pyqtgraph.opengl',
         external,
         # Bundle all .NET DLLs
         *[f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls],
