@@ -43,7 +43,6 @@ class _UndoAwareSlider(QSlider):
     pre_press = Signal()   # fires before valueChanged on any mouse interaction
 
     def mousePressEvent(self, event):
-        print(f"[DEBUG] _UndoAwareSlider.mousePressEvent - emitting pre_press")
         self.pre_press.emit()
         super().mousePressEvent(event)
 
@@ -75,6 +74,7 @@ class FloatWidget(QWidget):
         self.SpinBox.setValidator(QDoubleValidator(-99999999 if not self.only_positive else 0, 99999999, digits, self))
         self.SpinBox.setText(str(value))
         self.SpinBox.editingFinished.connect(self.on_SpinBox_updated)
+        self.SpinBox.textChanged.connect(self._on_spinbox_text_changed)
         self.SpinBox.setStyleSheet('padding: 2px;')
         # If lock_range is enabled and a valid slider_range is provided, enforce boundaries on the validator.
         if (self.slider_range[0] != 0 or self.slider_range[1] != 0) and self.lock_range:
@@ -131,6 +131,10 @@ class FloatWidget(QWidget):
     def _on_slider_released(self):
         """Emit committed once at the end of a drag gesture."""
         self.committed.emit()
+
+    def _on_spinbox_text_changed(self):
+        if self.SpinBox.hasAcceptableInput():
+            self.on_SpinBox_updated()
 
     # Handler when the spinbox value is updated
     def on_SpinBox_updated(self):
