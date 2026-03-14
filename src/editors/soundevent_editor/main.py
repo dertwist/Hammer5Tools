@@ -4,7 +4,7 @@ from src.settings.main import get_addon_name, get_cs2_path, debug, get_settings_
 from src.editors.soundevent_editor.ui_main import Ui_MainWindow
 from src.widgets.tree import HierarchyTreeWidget
 from src.widgets.explorer.main import Explorer
-from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem, QFileDialog
+from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem, QFileDialog, QDockWidget, QUndoView
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
 from PySide6.QtCore import Qt, QTimer
 from src.widgets.popup_menu.main import PopupMenu
@@ -182,10 +182,26 @@ class SoundEventEditorMainWindow(QMainWindow):
             self._copy_internal_soundevent_to_addon
         )
 
+        self._setup_history_dock()
         set_qdock_tab_style(self.findChildren)
 
         # Audio player init
         self.add_player()
+    #============================================================<  History Dock  >==========================================================
+    def _setup_history_dock(self):
+        self._history_dock = QDockWidget("History", self)
+        self._history_dock.setObjectName("history_dock")
+        self._history_dock.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea |
+            Qt.DockWidgetArea.RightDockWidgetArea |
+            Qt.DockWidgetArea.BottomDockWidgetArea
+        )
+        self._history_dock.setMinimumWidth(180)
+        history_view = QUndoView(self.undo_stack, self._history_dock)
+        self._history_dock.setWidget(history_view)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._history_dock)
+        self.tabifyDockWidget(self.ui.dockWidget_4, self._history_dock)
+
     #============================================================<  AudioPlayer  >==========================================================
     def add_player(self):
         self.audio_player_widget = AudioPlayer()
