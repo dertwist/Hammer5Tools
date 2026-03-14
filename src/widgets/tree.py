@@ -6,9 +6,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QUndoStack, QUndoCommand, QMouseEvent
 from PySide6.QtCore import Qt
 try:
-    from .commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand, SelectItemsCommand
+    from .commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand
 except:
-    from commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand, SelectItemsCommand
+    from commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand
 
 class HierarchyTreeWidget(QTreeWidget):
     def __init__(self, undo_stack, list_mode=False):
@@ -79,12 +79,14 @@ class HierarchyTreeWidget(QTreeWidget):
             self.undo_stack.push(MoveItemsCommand(self, move_infos))
 
         event.accept()
+
     def DeleteSelectedItems(self):
         selected_items = self.selectedItems()
         if not selected_items:
             return
         cmd = RemoveItemCommand(self, selected_items)
         self.undo_stack.push(cmd)
+
     def AddItem(self, item):
         if not isinstance(item, QTreeWidgetItem):
             raise TypeError("Item must be a QTreeWidgetItem instance.")
@@ -102,6 +104,7 @@ class HierarchyTreeWidget(QTreeWidget):
             self.setCurrentItem(item)
             self.currentItem().setExpanded(True)
             self.setFocus()
+
     def DuplicateSelectedItems(self, ElementIDGenerator=None):
         selected_items = self.selectedItems()
         if not selected_items:
@@ -109,13 +112,6 @@ class HierarchyTreeWidget(QTreeWidget):
         cmd = DuplicateItemsCommand(self, selected_items, ElementIDGenerator)
         self.undo_stack.push(cmd)
 
-    def setSelectedItemsWithUndo(self, items):
-        """Set selected items with undo support"""
-        old_selected = self.selectedItems()
-        # Only create command if selection actually changes
-        if set(old_selected) != set(items):
-            cmd = SelectItemsCommand(self, old_selected, items)
-            self.undo_stack.push(cmd)
     def mousePressEvent(self, event: QMouseEvent):
         item = self.itemAt(event.pos())
         if item is None and event.button() == Qt.LeftButton:
