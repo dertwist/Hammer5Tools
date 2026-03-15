@@ -119,6 +119,11 @@ class VariableFrame(QWidget):
             self.var_int_instance = Var_class_material_group(
                 default=self.var_default, min=self.var_min, max=self.var_max, model=self.var_model
             )
+        elif var_class == 'Material':
+            from src.editors.smartprop_editor.variables.material import Var_class_material
+            self.var_int_instance = Var_class_material(
+                default=self.var_default, min=self.var_min, max=self.var_max, model=self.var_model
+            )
         elif var_class == 'Bool':
             from src.editors.smartprop_editor.variables.bool import Var_class_bool
             self.var_int_instance = Var_class_bool(

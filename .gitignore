@@ -110,3 +110,4 @@ settings.cfg
 /Hammer5Tools/Logs
 /src/external/RemoteConsole/CS2RemoteConsole-client.log
 /Hammer5Tools/SoundEventEditor/soundevents_cache
+/dumps/*
