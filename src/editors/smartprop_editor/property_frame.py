@@ -34,6 +34,8 @@ from src.widgets import exception_handler
 
 class PropertyFrame(QWidget):
     edited = Signal()
+    slider_pressed = Signal()
+    committed = Signal()
 
     # A lookup dictionary to avoid multiple if/elif checks; cached at class level
     _prop_classes_map_cache = {
@@ -235,6 +237,10 @@ class PropertyFrame(QWidget):
                 property_instance.edited.connect(self.on_edited)
                 property_instance.setAcceptDrops(False)
                 self.ui.layout.insertWidget(0, property_instance)
+                if hasattr(property_instance, 'slider_pressed'):
+                    property_instance.slider_pressed.connect(self.slider_pressed)
+                if hasattr(property_instance, 'committed'):
+                    property_instance.committed.connect(self.committed)
             if value_class == 'm_bEnabled':
                 property_instance = PropertyBool(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator)
                 add_instance()

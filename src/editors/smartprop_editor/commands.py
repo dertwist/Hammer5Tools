@@ -251,6 +251,10 @@ class PropertySnapshotCommand(QUndoCommand):
                                     result.add(f'{k}[{i}].{sk}')
                             else:
                                 result.add(f'{k}[{i}]')
+            elif isinstance(v_old, dict) and isinstance(v_new, dict):
+                sub = PropertySnapshotCommand._changed_keys(v_old, v_new)
+                for sk in sub:
+                    result.add(f'{k}.{sk}')
             else:
                 result.add(k)
         return frozenset(result)
@@ -343,14 +347,58 @@ class VariablesSnapshotCommand(QUndoCommand):
     On undo/redo the entire variable list is cleared and rebuilt from the stored
     snapshot, which keeps the command implementation simple and reliable.
     The first redo() is skipped because the change was already applied.
+
+    Consecutive "Edit Variable" commands that touch the *same field* of the *same
+    variable* are merged (via mergeWith) so rapid spinbox increments produce a
+    single undo entry, while editing a different field always starts a new entry.
     """
+    _MERGE_ID = 1002
+
+    @staticmethod
+    def _discriminator(old_state, new_state):
+        """Return a frozenset identifying which variable/field changed.
+
+        Returns None when the lists differ in length (structural change — never merge).
+        """
+        if len(old_state) != len(new_state):
+            return None
+        result = set()
+        for i, (old_var, new_var) in enumerate(zip(old_state, new_state)):
+            for key in set(old_var.keys()) | set(new_var.keys()):
+                if old_var.get(key) != new_var.get(key):
+                    if key == 'var_value':
+                        ov = old_var.get('var_value') or {}
+                        nv = new_var.get('var_value') or {}
+                        for vk in set(ov.keys()) | set(nv.keys()):
+                            if ov.get(vk) != nv.get(vk):
+                                result.add(f'var_{i}.{vk}')
+                    else:
+                        result.add(f'var_{i}.{key}')
+        return frozenset(result)
 
     def __init__(self, document, old_state, new_state, description="Edit Variables"):
         super().__init__(description)
         self.document = document
         self.old_state = copy.deepcopy(old_state)
         self.new_state = copy.deepcopy(new_state)
+        self._disc = self._discriminator(old_state, new_state)
         self._first_redo = True
+
+    def id(self):
+        return self._MERGE_ID
+
+    def mergeWith(self, other):
+        if not isinstance(other, VariablesSnapshotCommand):
+            return False
+        # Only merge plain field-edits, not structural operations
+        if self.text() != "Edit Variable" or other.text() != "Edit Variable":
+            return False
+        if self._disc is None or other._disc is None:
+            return False
+        if self._disc != other._disc:
+            return False
+        self.new_state = other.new_state
+        return True
 
     def redo(self):
         if self._first_redo:

@@ -16,6 +16,7 @@ from src.editors.smartprop_editor.widgets.expression_editor.main import Expressi
 class VariableFrame(QWidget):
     duplicate = Signal(list, int)
     delete_requested = Signal()
+    pre_change = Signal()    # fires BEFORE var_value/name/etc. are updated
     content_changed = Signal()
 
     def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list,
@@ -231,6 +232,8 @@ class VariableFrame(QWidget):
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
     def on_changed(self, var_default=None, var_min=None, var_max=None, var_model=None):
+        # Signal listeners (variables_viewport) to snapshot state BEFORE we modify it.
+        self.pre_change.emit()
         # Update instance variables with the new values
         self.var_default = var_default
         self.var_min = var_min
@@ -259,6 +262,7 @@ class VariableFrame(QWidget):
         self.content_changed.emit()
 
     def update_self(self):
+        self.pre_change.emit()
         self.var_visible_in_editor = self.ui.visible_in_editor.isChecked()
         self.var_display_name = self.ui.varialbe_display_name.text()
         self.content_changed.emit()
@@ -303,6 +307,8 @@ class VariableFrame(QWidget):
             unique_name = self._make_unique(new_name)
             if unique_name != new_name:
                 self.ui.variable_name.setText(unique_name)
+            # Capture snapshot before self.name is updated.
+            self.pre_change.emit()
             self.name = unique_name
             self.content_changed.emit()
 
@@ -313,6 +319,7 @@ class VariableFrame(QWidget):
     dragEnterEvent = PropertyMethods.dragEnterEvent
 
     def dropEvent(self, event):
+        self.pre_change.emit()
         PropertyMethods.dropEvent(self, event)
         self.content_changed.emit()
 
