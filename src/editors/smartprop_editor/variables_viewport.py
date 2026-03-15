@@ -16,7 +16,7 @@ from PySide6.QtGui import (
     QUndoStack,
     QKeySequence
 )
-from PySide6.QtCore import QTimer
+
 
 from keyvalues3 import kv3_to_json
 from src.editors.smartprop_editor.variable_frame import VariableFrame
@@ -42,11 +42,14 @@ class SmartPropEditorVariableViewport(QWidget):
         for item in variables_list:
             self.ui.add_new_variable_combobox.addItem(item)
 
-        # Debounce timer for field-edit undo commands (fires 500 ms after last change)
-        self._var_edit_old_state = None
-        self._var_edit_debounce = QTimer()
-        self._var_edit_debounce.setSingleShot(True)
-        self._var_edit_debounce.timeout.connect(self._push_var_field_edit)
+        # Committed-state reference for variable field edits.
+        # Represents the last state that was pushed to the undo stack (or the
+        # state when the panel was last loaded/restored).  pre_change signals from
+        # VariableFrame set this BEFORE the widget updates so we always have a
+        # correct "before" snapshot.  On content_changed we push immediately and
+        # update _var_committed_state; VariablesSnapshotCommand.mergeWith() collapses
+        # rapid same-field edits (e.g. holding down a spinbox arrow) into one entry.
+        self._var_committed_state = None
 
 
     # ======================================[Variables Actions]========================================
@@ -70,6 +73,7 @@ class SmartPropEditorVariableViewport(QWidget):
         )
         variable.duplicate.connect(self.duplicate_variable)
         variable.delete_requested.connect(lambda vf=variable: self._on_delete_requested(vf))
+        variable.pre_change.connect(self._on_pre_change)
         variable.content_changed.connect(self._on_content_changed)
         if index is None:
             index = (self.ui.variables_scrollArea.count()) - 1
@@ -87,6 +91,7 @@ class SmartPropEditorVariableViewport(QWidget):
         self._document.undo_stack.push(
             VariablesSnapshotCommand(self._document, old_state, new_state, "Duplicate Variable")
         )
+        self._sync_committed_state()
 
     def add_new_variable(self):
         self._flush_var_edit_if_pending()
@@ -123,6 +128,7 @@ class SmartPropEditorVariableViewport(QWidget):
         self._document.undo_stack.push(
             VariablesSnapshotCommand(self._document, old_state, new_state, "Add Variable")
         )
+        self._sync_committed_state()
 
     # ======================================[Variables Other]========================================
     def search_variables(self, search_term=None):
@@ -223,6 +229,7 @@ class SmartPropEditorVariableViewport(QWidget):
             self._document.undo_stack.push(
                 VariablesSnapshotCommand(self._document, old_state, new_state, "Paste Variable")
             )
+            self._sync_committed_state()
 
     # ======================================[Variables Undo Helpers]========================================
     def _snapshot(self):
@@ -241,9 +248,55 @@ class SmartPropEditorVariableViewport(QWidget):
                 })
         return state
 
+    def _sync_committed_state(self):
+        """Update the committed-state reference to the current snapshot.
+
+        Call after any undo/redo restore or structural operation (add/delete/paste)
+        so the next user edit has a correct "before" reference.
+        """
+        self._var_committed_state = self._snapshot()
+
+    def _on_pre_change(self):
+        """Called BEFORE a VariableFrame modifies its stored values.
+
+        Captures the snapshot while all widgets still reflect the OLD state,
+        giving us a correct "before" reference for the next undo command.
+        Only the FIRST pre_change per edit session sets the snapshot; subsequent
+        pre_change calls (rapid same-field edits) are ignored so the original
+        pre-edit state is preserved.
+        """
+        if self._var_committed_state is None:
+            self._var_committed_state = self._snapshot()
+
+    def _on_content_changed(self):
+        """Push an undo command immediately after any variable field changes.
+
+        Uses _var_committed_state (captured by _on_pre_change before the change)
+        as the "before" snapshot.  VariablesSnapshotCommand.mergeWith() collapses
+        rapid edits to the *same* field into a single history entry, while changes
+        to different fields each get their own entry.
+        """
+        if self._var_committed_state is None:
+            # Fallback: _on_pre_change wasn't called (e.g. a code path that emits
+            # content_changed directly).  We cannot determine the "before" state, so
+            # initialise committed state from the current snapshot and wait for the
+            # next change to produce a proper before/after pair.
+            self._var_committed_state = self._snapshot()
+            return
+
+        new_state = self._snapshot()
+        if new_state != self._var_committed_state:
+            from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
+            self._document.undo_stack.push(
+                VariablesSnapshotCommand(
+                    self._document, self._var_committed_state, new_state, "Edit Variable"
+                )
+            )
+            self._var_committed_state = new_state
+
     def _on_delete_requested(self, variable_frame):
         """Handle delete_requested signal: snapshot → remove → snapshot → push undo."""
-        self._flush_var_edit_if_pending()
+        self._sync_committed_state()
         old_state = self._snapshot()
         layout = self.ui.variables_scrollArea
         idx = -1
@@ -260,28 +313,8 @@ class SmartPropEditorVariableViewport(QWidget):
         self._document.undo_stack.push(
             VariablesSnapshotCommand(self._document, old_state, new_state, "Delete Variable")
         )
-
-    def _on_content_changed(self):
-        """Debounce handler for field-level variable edits."""
-        if self._var_edit_old_state is None:
-            self._var_edit_old_state = self._snapshot()
-        self._var_edit_debounce.start(500)
-
-    def _push_var_field_edit(self):
-        """Called when the debounce timer fires; pushes a VariablesSnapshotCommand."""
-        if self._var_edit_old_state is not None:
-            new_state = self._snapshot()
-            if new_state != self._var_edit_old_state:
-                from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
-                self._document.undo_stack.push(
-                    VariablesSnapshotCommand(
-                        self._document, self._var_edit_old_state, new_state, "Edit Variable"
-                    )
-                )
-            self._var_edit_old_state = None
+        self._sync_committed_state()
 
     def _flush_var_edit_if_pending(self):
-        """Flush any in-progress field-edit before a structural operation."""
-        if self._var_edit_debounce.isActive():
-            self._var_edit_debounce.stop()
-            self._push_var_field_edit()
+        """Sync committed state before a structural operation."""
+        self._sync_committed_state()
