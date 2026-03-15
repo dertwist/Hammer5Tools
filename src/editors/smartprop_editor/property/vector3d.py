@@ -12,6 +12,8 @@ from src.editors.smartprop_editor.widgets.expression_editor.main import Expressi
 
 class PropertyVector3D(QWidget):
     edited = Signal()
+    slider_pressed = Signal()
+    committed = Signal()
 
     # Precompile patterns for faster initialization
     _pattern_phase1 = re.compile(r'm_fl|m_n|m_v|m_')
@@ -56,6 +58,8 @@ class PropertyVector3D(QWidget):
         # Vector X Setup
         self.float_widget_x = FloatWidget()
         self.float_widget_x.edited.connect(self.on_changed)
+        self.float_widget_x.slider_pressed.connect(self.slider_pressed)
+        self.float_widget_x.committed.connect(self.committed)
         self.ui.layout_x.insertWidget(2, self.float_widget_x)
 
         self.variable_x = ComboboxVariablesWidget(
@@ -90,6 +94,8 @@ class PropertyVector3D(QWidget):
         # Vector Y Setup
         self.float_widget_y = FloatWidget()
         self.float_widget_y.edited.connect(self.on_changed)
+        self.float_widget_y.slider_pressed.connect(self.slider_pressed)
+        self.float_widget_y.committed.connect(self.committed)
         self.ui.layout_y.insertWidget(2, self.float_widget_y)
 
         self.variable_y = ComboboxVariablesWidget(
@@ -123,6 +129,8 @@ class PropertyVector3D(QWidget):
         # Vector Z Setup
         self.float_widget_z = FloatWidget()
         self.float_widget_z.edited.connect(self.on_changed)
+        self.float_widget_z.slider_pressed.connect(self.slider_pressed)
+        self.float_widget_z.committed.connect(self.committed)
         self.ui.layout_z.insertWidget(2, self.float_widget_z)
 
         self.variable_z = ComboboxVariablesWidget(

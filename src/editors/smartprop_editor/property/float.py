@@ -11,6 +11,8 @@ from src.editors.smartprop_editor.widgets.expression_editor.main import Expressi
 
 class PropertyFloat(QWidget):
     edited = Signal()
+    slider_pressed = Signal()
+    committed = Signal()
 
     def __init__(self, element_id_generator, value_class, value, variables_scrollArea, int_bool=False, slider_range=[0, 0]):
         super().__init__()
@@ -27,6 +29,8 @@ class PropertyFloat(QWidget):
         # Float widget setup
         self.float_widget = FloatWidget(slider_range=slider_range, int_output=int_bool)
         self.float_widget.edited.connect(self.on_changed)
+        self.float_widget.slider_pressed.connect(self.slider_pressed)
+        self.float_widget.committed.connect(self.committed)
         self.ui.layout.addWidget(self.float_widget)
 
         # Spacer frame
