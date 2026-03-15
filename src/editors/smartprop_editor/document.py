@@ -721,7 +721,11 @@ class SmartPropDocument(QMainWindow):
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
             )
             variables = vsmart_instance.variables
-            self.content_version_spinbox.setValue(vsmart_instance.content_version)
+            cv = vsmart_instance.content_version
+            try:
+                self.content_version_spinbox.setValue(int(cv) if cv not in (None, "") else 0)
+            except (ValueError, TypeError):
+                self.content_version_spinbox.setValue(0)
 
             # Clear existing variables
             index = 0

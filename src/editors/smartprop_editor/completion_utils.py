@@ -203,8 +203,8 @@ class CompletionUtils:
                     f'{var_name} != "{enum_value}"'
                 ])
         
-        # MaterialGroup and Model completions
-        elif var_type in ['MaterialGroup', 'Model']:
+        # MaterialGroup, Material, and Model completions
+        elif var_type in ['MaterialGroup', 'Material', 'Model']:
             completions.extend([
                 f'{var_name} == ""',
                 f'{var_name} != ""',
