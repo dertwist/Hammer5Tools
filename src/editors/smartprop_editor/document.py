@@ -111,6 +111,12 @@ class SmartPropDocument(QMainWindow):
         # after all deferred QTimer.singleShot(0) callbacks have had a chance to fire.
         self._property_undo_guard = 0
 
+        # Slider-drag tracking: while _slider_dragging > 0 the view is updated in
+        # real-time but no undo commands are pushed.  A single command is pushed in
+        # _on_slider_committed once the last active slider is released.
+        self._slider_dragging = 0
+        self._slider_pre_drag_data = None
+
         # Guard flag: while True, add_variable skips marking the document as modified
         # and emitting _edited (used during undo/redo restore).
         self._restoring_state = False
@@ -249,6 +255,10 @@ class SmartPropDocument(QMainWindow):
         #   [_finish_init callbacks …, _dec_property_undo_guard]
         self._property_undo_guard += 1
 
+        # Cancel any in-progress slider drag when the selection changes.
+        self._slider_dragging = 0
+        self._slider_pre_drag_data = None
+
         item = current_item
         if current_item is not None:
             self.properties_groups_show()
@@ -288,6 +298,8 @@ class SmartPropDocument(QMainWindow):
                 element_id_generator=self.element_id_generator
             )
             property_instance.edited.connect(self.update_tree_item_value)
+            property_instance.slider_pressed.connect(self._on_slider_started)
+            property_instance.committed.connect(self._on_slider_committed)
             self.ui.properties_layout.insertWidget(0, property_instance)
 
             if data_modif:
@@ -300,6 +312,8 @@ class SmartPropDocument(QMainWindow):
                         element_id_generator=self.element_id_generator
                     )
                     prop_instance.edited.connect(self.update_tree_item_value)
+                    prop_instance.slider_pressed.connect(self._on_slider_started)
+                    prop_instance.committed.connect(self._on_slider_committed)
                     self.modifiers_group_instance.layout.insertWidget(0, prop_instance)
 
             if data_sel_criteria:
@@ -312,6 +326,8 @@ class SmartPropDocument(QMainWindow):
                         element_id_generator=self.element_id_generator
                     )
                     prop_instance.edited.connect(self.update_tree_item_value)
+                    prop_instance.slider_pressed.connect(self._on_slider_started)
+                    prop_instance.committed.connect(self._on_slider_committed)
                     self.selection_criteria_group_instance.layout.insertWidget(0, prop_instance)
         except Exception as error:
             print(error)
@@ -384,10 +400,12 @@ class SmartPropDocument(QMainWindow):
             self._modified = True
             self._edited.emit()
 
-            # Push undo command only when something actually changed and we are
-            # not inside a panel rebuild triggered by undo/redo.  Skipping the
-            # push when old == new avoids no-op entries that confuse mergeWith.
-            if not self._property_undo_guard and output_value != old_data:
+            # Push undo command only when something actually changed, we are not
+            # inside a panel rebuild triggered by undo/redo, and no slider is
+            # currently being dragged.  During a slider drag the view is updated
+            # in real-time but only one command is pushed on release via
+            # _on_slider_committed, which preserves the true pre-drag state.
+            if not self._property_undo_guard and not self._slider_dragging and output_value != old_data:
                 new_data = copy.deepcopy(output_value)
                 cmd = PropertySnapshotCommand(self, item, old_data, new_data)
                 self.undo_stack.push(cmd)
@@ -1194,6 +1212,9 @@ class SmartPropDocument(QMainWindow):
         the resulting update_tree_item_value() calls do NOT push new commands.
         """
         self._property_undo_guard += 1
+        # Cancel any in-progress slider drag so stale state is not committed.
+        self._slider_dragging = 0
+        self._slider_pre_drag_data = None
         try:
             # Clear existing PropertyFrame widgets.  hide() fires synchronously
             # so the panel is cleared visually before the new content is built.
@@ -1232,6 +1253,8 @@ class SmartPropDocument(QMainWindow):
                 element_id_generator=self.element_id_generator
             )
             prop.edited.connect(self.update_tree_item_value)
+            prop.slider_pressed.connect(self._on_slider_started)
+            prop.committed.connect(self._on_slider_committed)
             self.ui.properties_layout.insertWidget(0, prop)
 
             for entry in reversed(data_modif):
@@ -1243,6 +1266,8 @@ class SmartPropDocument(QMainWindow):
                     element_id_generator=self.element_id_generator
                 )
                 p.edited.connect(self.update_tree_item_value)
+                p.slider_pressed.connect(self._on_slider_started)
+                p.committed.connect(self._on_slider_committed)
                 self.modifiers_group_instance.layout.insertWidget(0, p)
 
             for entry in reversed(data_sel_criteria):
@@ -1254,6 +1279,8 @@ class SmartPropDocument(QMainWindow):
                     element_id_generator=self.element_id_generator
                 )
                 p.edited.connect(self.update_tree_item_value)
+                p.slider_pressed.connect(self._on_slider_started)
+                p.committed.connect(self._on_slider_committed)
                 self.selection_criteria_group_instance.layout.insertWidget(0, p)
 
         except Exception as e:
@@ -1264,6 +1291,35 @@ class SmartPropDocument(QMainWindow):
 
     def _dec_property_undo_guard(self):
         self._property_undo_guard = max(0, self._property_undo_guard - 1)
+
+    def _on_slider_started(self):
+        """Called when any FloatWidget slider begins a drag.
+
+        Captures the element's full data snapshot ONCE (before the first value
+        change) and increments the drag counter so update_tree_item_value skips
+        undo pushes for the duration of the drag.
+        """
+        if self._slider_dragging == 0:
+            item = self.ui.tree_hierarchy_widget.currentItem()
+            if item is not None:
+                self._slider_pre_drag_data = copy.deepcopy(item.data(0, Qt.UserRole))
+        self._slider_dragging += 1
+
+    def _on_slider_committed(self):
+        """Called when a FloatWidget slider is released.
+
+        Decrements the drag counter and, when the last active slider is released,
+        pushes a single PropertySnapshotCommand covering the full drag range.
+        """
+        self._slider_dragging = max(0, self._slider_dragging - 1)
+        if self._slider_dragging == 0 and self._slider_pre_drag_data is not None:
+            item = self.ui.tree_hierarchy_widget.currentItem()
+            if item is not None and not self._property_undo_guard:
+                new_data = copy.deepcopy(item.data(0, Qt.UserRole))
+                if new_data != self._slider_pre_drag_data:
+                    cmd = PropertySnapshotCommand(self, item, self._slider_pre_drag_data, new_data)
+                    self.undo_stack.push(cmd)
+            self._slider_pre_drag_data = None
 
     # ======================================[Variables Panel Undo]========================================
     def _snapshot_variables(self):
@@ -1304,6 +1360,9 @@ class SmartPropDocument(QMainWindow):
             self._restoring_state = False
         self._modified = True
         self._edited.emit()
+        # Sync the variables viewport's committed-state reference so the next
+        # user edit correctly uses the restored state as its "before" snapshot.
+        self.variable_viewport._sync_committed_state()
 
     # ======================================[Choices Panel Undo]========================================
     def _snapshot_choices(self):
