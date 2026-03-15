@@ -19,6 +19,7 @@ from src.editors.smartprop_editor.property.color import PropertyColor
 from src.editors.smartprop_editor.property.comparison import PropertyComparison
 from src.editors.smartprop_editor.property.filtersurface import PropertySurface
 from src.editors.smartprop_editor.property.colormatch import PropertyColorMatch
+from src.editors.smartprop_editor.property.material_replacements import PropertyMaterialReplacements
 from src.editors.smartprop_editor.property.variable import PropertyVariableOutput
 from src.editors.smartprop_editor.property.set_variable import PropertyVariableValue
 from src.editors.smartprop_editor.property.comment import PropertyComment
@@ -114,6 +115,9 @@ class PropertyFrame(QWidget):
         ],
         'SetTintColor': [
             'm_bEnabled', 'm_Mode', 'm_ColorChoices', 'm_SelectionMode', 'm_ColorSelection'
+        ],
+        'MaterialOverride': [
+            'm_bEnabled', 'm_bClearCurrentOverrides', 'm_MaterialReplacements'
         ],
         'SetVariable': [
             'm_bEnabled', 'm_VariableValue'
@@ -281,6 +285,7 @@ class PropertyFrame(QWidget):
             elif 'm_ColorSelection' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_HandleColor' in value_class: property_instance = PropertyColor(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_ColorChoices' in value_class: property_instance = PropertyColorMatch(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_MaterialReplacements' in value_class: property_instance = PropertyMaterialReplacements(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_b' in value_class: property_instance = PropertyBool(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_s' in value_class: property_instance = PropertyString(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, placeholder='String', element_id_generator=self.element_id_generator); add_instance()
             elif 'm_MaterialGroupName' in value_class: property_instance = PropertyString(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, placeholder='Material group name', element_id_generator=self.element_id_generator); add_instance()
