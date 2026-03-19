@@ -194,6 +194,17 @@ class SmartPropDocument(QMainWindow):
         # Groups setup
         self.properties_groups_init()
 
+        # Modifiers panel scroll: cache once for batched repaint suppression (viewport).
+        self._modifiers_scroll_area = None
+        w = self.modifiers_group_instance.parentWidget()
+        for _ in range(8):
+            if w is None:
+                break
+            if isinstance(w, QScrollArea):
+                self._modifiers_scroll_area = w
+                break
+            w = w.parentWidget()
+
         self.ui.tree_hierarchy_search_bar_widget.textChanged.connect(
             lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem())
         )
@@ -246,15 +257,15 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Progressive modifier frames (large m_Modifiers)]========================================
     def _modifier_batch_scroll_target(self):
-        """Nearest QScrollArea ancestor of the modifiers group (outer repaint batching)."""
-        w = self.modifiers_group_instance
-        for _ in range(16):
-            if w is None:
-                break
-            if isinstance(w, QScrollArea):
-                return w
-            w = w.parentWidget()
-        return self.modifiers_group_instance
+        """Scroll area wrapping the modifiers group, or fallback to the group widget."""
+        return self._modifiers_scroll_area or self.modifiers_group_instance
+
+    def _modifier_batch_paint_suppress_widget(self):
+        """Widget whose repaints to suppress during chunked modifier load (scroll viewport)."""
+        t = self._modifier_batch_scroll_target()
+        if isinstance(t, QScrollArea):
+            return t.viewport()
+        return t
 
     def _cancel_modifier_load(self):
         """
@@ -391,10 +402,10 @@ class SmartPropDocument(QMainWindow):
         self._modifier_load_inited_ids = inited_frame_ids
         self._modifier_load_delay_ms = delay_ms
 
-        scroll_target = self._modifier_batch_scroll_target()
-        self._modifier_load_scroll_parent = scroll_target
-        if scroll_target is not None:
-            scroll_target.setUpdatesEnabled(False)
+        paint_w = self._modifier_batch_paint_suppress_widget()
+        self._modifier_load_scroll_parent = paint_w
+        if paint_w is not None:
+            paint_w.setUpdatesEnabled(False)
 
         self._load_next_modifier_chunk(session)
 
@@ -445,6 +456,7 @@ class SmartPropDocument(QMainWindow):
                 for i in reversed(range(layout.count())):
                     widget = layout.itemAt(i).widget()
                     if isinstance(widget, PropertyFrame):
+                        widget.cancel_worker()
                         layout.removeWidget(widget)
                         widget.hide()
                         widget.deleteLater()
@@ -1416,6 +1428,7 @@ class SmartPropDocument(QMainWindow):
                 for i in reversed(range(layout.count())):
                     widget = layout.itemAt(i).widget()
                     if isinstance(widget, PropertyFrame):
+                        widget.cancel_worker()
                         layout.removeWidget(widget)
                         widget.hide()
                         widget.deleteLater()

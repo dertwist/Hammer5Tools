@@ -8,6 +8,7 @@ Widget construction must NEVER happen inside run() — only on the main thread.
 """
 
 import ast
+import threading
 
 from PySide6.QtCore import QRunnable, QObject, Signal, Slot
 
@@ -38,17 +39,25 @@ class PropertyDataWorker(QRunnable):
         element_id_generator,
         prop_classes_map_cache,
         only_variable_properties,
+        ordered_pairs_cache=None,
     ):
         super().__init__()
         self.raw_value = raw_value
         self.element_id_generator = element_id_generator
         self.prop_classes_map_cache = prop_classes_map_cache
         self.only_variable_properties = only_variable_properties
+        self.ordered_pairs_cache = ordered_pairs_cache or {}
         self.signals = PropertyDataSignals()
         self.setAutoDelete(True)
+        self._cancelled = threading.Event()
+
+    def cancel(self):
+        self._cancelled.set()
 
     @Slot()
     def run(self):
+        if self._cancelled.is_set():
+            return
         try:
             # Step 1: parse value
             value = self.raw_value
@@ -71,14 +80,19 @@ class PropertyDataWorker(QRunnable):
             prop_class = name
 
             # Step 4: build ordered_pairs (pure data, no Qt calls)
-            if prop_class in self.prop_classes_map_cache:
+            skeleton = self.ordered_pairs_cache.get(prop_class)
+            if skeleton is not None:
+                ordered_pairs = [(k, normalized.get(k)) for k, _ in skeleton]
+            elif prop_class in self.prop_classes_map_cache:
                 classes = self.prop_classes_map_cache[prop_class]
                 ordered_pairs = [
-                    (item, normalized.get(item, None))
-                    for item in reversed(classes)
+                    (item, normalized.get(item)) for item in reversed(classes)
                 ]
             else:
                 ordered_pairs = list(reversed(list(normalized.items())))
+
+            if self._cancelled.is_set():
+                return
 
             self.signals.finished.emit(
                 {
@@ -92,5 +106,5 @@ class PropertyDataWorker(QRunnable):
             )
 
         except Exception as e:
-            self.signals.error.emit(str(e))
-
+            if not self._cancelled.is_set():
+                self.signals.error.emit(str(e))
