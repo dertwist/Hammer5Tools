@@ -164,8 +164,7 @@ class PropertyFrame(QWidget):
             'm_bEnabled', 'm_Expression'
         ],
         'RandomRotationSnapped': [
-            'm_bEnabled', 'm_RotationAxes', 'm_flSnapIncrement',
-            'm_vMinAngles', 'm_vMaxAngles'
+            'm_bEnabled', 'm_RotationAxes', 'm_flSnapIncrement'
         ],
         'Translate': [
             'm_bEnabled', 'm_vPosition'
@@ -173,7 +172,34 @@ class PropertyFrame(QWidget):
         'Rotate': [
             'm_bEnabled', 'm_vRotation'
         ],
+        'Comment': [
+            'm_bEnabled', 'm_Comment'
+        ],
     }
+
+    # Pre-built ordered_pairs skeletons: (key, None) per known class; worker fills values.
+    _ORDERED_PAIRS_CACHE: dict = {}
+
+    # Dedicated pool for property data prep (avoid flooding QThreadPool.globalInstance()).
+    _PROPERTY_WORKER_POOL = None
+
+    @classmethod
+    def _build_ordered_pairs_cache(cls):
+        """Build once at import — same order as reversed(_prop_classes_map_cache[key])."""
+        cls._ORDERED_PAIRS_CACHE.clear()
+        for prop_class, keys in cls._prop_classes_map_cache.items():
+            cls._ORDERED_PAIRS_CACHE[prop_class] = [
+                (k, None) for k in reversed(keys)
+            ]
+
+    @classmethod
+    def _get_worker_pool(cls) -> QThreadPool:
+        if cls._PROPERTY_WORKER_POOL is None:
+            pool = QThreadPool()
+            pool.setMaxThreadCount(4)
+            pool.setExpiryTimeout(10_000)
+            cls._PROPERTY_WORKER_POOL = pool
+        return cls._PROPERTY_WORKER_POOL
 
     # Keys that must be skipped (no widget created)
     _SKIP_PROPS = frozenset({'m_sLabel', 'm_nElementID', 'm_sReferenceObjectID'})
@@ -517,6 +543,7 @@ class PropertyFrame(QWidget):
         """
         import ast as _ast
 
+        self.cancel_worker()
         # Invalidate any in-flight worker results (race safety).
         self._worker_generation = getattr(self, "_worker_generation", 0) + 1
         self._ordered_pairs = None
@@ -549,6 +576,16 @@ class PropertyFrame(QWidget):
         self.show()
         QTimer.singleShot(0, self._finish_init)
 
+    def cancel_worker(self):
+        """Cancel in-flight PropertyDataWorker (thread-safe); clears active reference."""
+        w = getattr(self, "_active_worker", None)
+        if w is not None:
+            try:
+                w.cancel()
+            except Exception:
+                pass
+            self._active_worker = None
+
     def _start_data_worker(self):
         """Dispatch data preparation to QThreadPool worker."""
         if not hasattr(self, "_worker_raw_value_with_class"):
@@ -557,6 +594,7 @@ class PropertyFrame(QWidget):
             self._finish_init()
             return
 
+        self.cancel_worker()
         self._worker_generation += 1
         expected_gen = self._worker_generation
 
@@ -565,10 +603,12 @@ class PropertyFrame(QWidget):
             element_id_generator=self.element_id_generator,
             prop_classes_map_cache=self._prop_classes_map_cache,
             only_variable_properties=self.only_variable_properties,
+            ordered_pairs_cache=self._ORDERED_PAIRS_CACHE,
         )
 
         # Store signals reference to prevent premature GC.
         self._worker_signals = worker.signals
+        self._active_worker = worker
 
         def _on_ready(prepared_data, gen=expected_gen):
             self._on_data_ready(prepared_data, gen)
@@ -578,7 +618,7 @@ class PropertyFrame(QWidget):
 
         worker.signals.finished.connect(_on_ready)
         worker.signals.error.connect(_on_error)
-        QThreadPool.globalInstance().start(worker)
+        self._get_worker_pool().start(worker)
 
     def _on_data_ready(self, prepared_data: dict, expected_gen: int):
         """
@@ -594,6 +634,8 @@ class PropertyFrame(QWidget):
             _ = self.ui.layout
         except RuntimeError:
             return
+
+        self._active_worker = None
 
         self.value = prepared_data["value"]
         self.name_prefix = prepared_data["name_prefix"]
@@ -611,6 +653,8 @@ class PropertyFrame(QWidget):
         """Fallback when worker fails: build ordered pairs synchronously."""
         if expected_gen != getattr(self, "_worker_generation", None):
             return
+
+        self._active_worker = None
 
         debug(f"PropertyDataWorker error — falling back to sync init: {error_msg}")
         self._ordered_pairs = None
@@ -748,6 +792,7 @@ class PropertyFrame(QWidget):
     def delete_action(self):
         self.value = None
         self.edited.emit()
+        self.cancel_worker()
         # Invalidate any in-flight worker results (race safety).
         self._worker_generation = getattr(self, "_worker_generation", 0) + 1
         self._ordered_pairs = None
@@ -758,3 +803,6 @@ class PropertyFrame(QWidget):
             PropertyWidgetPool.instance().release(self.prop_class, self)
         except Exception:
             self.deleteLater()
+
+
+PropertyFrame._build_ordered_pairs_cache()
