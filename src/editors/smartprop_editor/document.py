@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QDockWidget,
     QUndoView,
+    QScrollArea,
 )
 from PySide6.QtGui import (
     QAction,
@@ -125,6 +126,9 @@ class SmartPropDocument(QMainWindow):
         # to sync the tree selection.  on_tree_current_item_changed returns early
         # when this is True so the panel is not double-rebuilt.
         self._undo_redo_rebuilding = False
+
+        # Progressive m_Modifiers loader (large Group nodes): session bumps invalidate QTimer chunks.
+        self._modifier_load_session = 0
 
         # Choices rename undo state: captured on itemDoubleClicked, consumed by itemChanged.
         self._choices_rename_old_state = None
@@ -240,6 +244,160 @@ class SmartPropDocument(QMainWindow):
         self.modifiers_group_instance.show()
         self.selection_criteria_group_instance.show()
 
+    # ======================================[Progressive modifier frames (large m_Modifiers)]========================================
+    def _modifier_batch_scroll_target(self):
+        """Nearest QScrollArea ancestor of the modifiers group (outer repaint batching)."""
+        w = self.modifiers_group_instance
+        for _ in range(16):
+            if w is None:
+                break
+            if isinstance(w, QScrollArea):
+                return w
+            w = w.parentWidget()
+        return self.modifiers_group_instance
+
+    def _cancel_modifier_load(self):
+        """
+        Invalidate in-flight chunked modifier population (new tree selection / rebuild).
+        Bumps session so scheduled QTimer callbacks no-op.
+        """
+        self._modifier_load_session += 1
+        self._modifier_load_chunks = []
+        self._modifier_load_index = 0
+        sp = getattr(self, "_modifier_load_scroll_parent", None)
+        if sp is not None:
+            try:
+                sp.setUpdatesEnabled(True)
+                sp.update()
+            except Exception:
+                pass
+        self._modifier_load_scroll_parent = None
+
+    def _modifier_load_finish_suppress(self):
+        sp = getattr(self, "_modifier_load_scroll_parent", None)
+        if sp is not None:
+            try:
+                sp.setUpdatesEnabled(True)
+                sp.update()
+            except Exception:
+                pass
+        self._modifier_load_scroll_parent = None
+
+    def _wire_modifier_property_frame(self, frame, pending_init, inited_frame_ids):
+        frame.edited.connect(self.update_tree_item_value)
+        pending_init["remaining"] += 1
+        frame_id = id(frame)
+
+        def _on_prop_frame_inited(fid=frame_id):
+            if fid in inited_frame_ids:
+                return
+            inited_frame_ids.add(fid)
+            pending_init["remaining"] -= 1
+            if pending_init["remaining"] <= 0:
+                self._dec_property_undo_guard()
+
+        frame.edited.connect(_on_prop_frame_inited)
+        frame.slider_pressed.connect(self._on_slider_started)
+        frame.committed.connect(self._on_slider_committed)
+
+    def _acquire_modifier_property_frame(self, modifier_value):
+        """Pool acquire with fallback to direct PropertyFrame (same layout wiring as before)."""
+        val = copy.deepcopy(modifier_value)
+        wc = val.get("_class", "") if isinstance(val, dict) else ""
+        prop_class = wc.split("_", 1)[-1] if wc else ""
+        kwargs = dict(
+            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+            element_id_generator=self.element_id_generator,
+            tree_hierarchy=self.ui.tree_hierarchy_widget,
+        )
+        mod_layout = self.modifiers_group_instance.layout
+        try:
+            from src.editors.smartprop_editor.property_widget_pool import PropertyWidgetPool
+
+            return PropertyWidgetPool.instance().acquire(
+                prop_class=prop_class,
+                value=val,
+                widget_list=mod_layout,
+                **kwargs,
+            )
+        except Exception:
+            return PropertyFrame(
+                value=val,
+                widget_list=mod_layout,
+                **kwargs,
+            )
+
+    def _load_next_modifier_chunk(self, session):
+        if session != self._modifier_load_session:
+            return
+        chunks = getattr(self, "_modifier_load_chunks", None) or []
+        idx = getattr(self, "_modifier_load_index", 0)
+        mod_layout = getattr(self, "_modifier_load_mod_layout", None)
+        pending_init = getattr(self, "_modifier_load_pending_init", None)
+        inited_frame_ids = getattr(self, "_modifier_load_inited_ids", None)
+        delay_ms = getattr(self, "_modifier_load_delay_ms", 40)
+
+        if not chunks or mod_layout is None or pending_init is None or inited_frame_ids is None:
+            self._modifier_load_finish_suppress()
+            return
+
+        if idx >= len(chunks):
+            self._modifier_load_finish_suppress()
+            return
+
+        chunk = chunks[idx]
+        self._modifier_load_index = idx + 1
+
+        for modifier_value in chunk:
+            if session != self._modifier_load_session:
+                return
+            frame = self._acquire_modifier_property_frame(modifier_value)
+            self._wire_modifier_property_frame(frame, pending_init, inited_frame_ids)
+            mod_layout.insertWidget(0, frame)
+
+        if session != self._modifier_load_session:
+            return
+
+        if self._modifier_load_index < len(chunks):
+            QTimer.singleShot(delay_ms, lambda s=session: self._load_next_modifier_chunk(s))
+        else:
+            self._modifier_load_finish_suppress()
+
+    def _populate_modifiers_progressive(
+        self,
+        data_modif,
+        pending_init,
+        inited_frame_ids,
+        chunk_size=4,
+        delay_ms=40,
+    ):
+        """
+        Insert modifier PropertyFrames in chunks so 35 modifiers do not all start
+        workers/timers in one event-loop slice. Order matches reversed(insertWidget(0,...)).
+        """
+        if not data_modif:
+            return
+
+        # Caller must _cancel_modifier_load() before this (selection / rebuild).
+        session = self._modifier_load_session
+
+        ordered = list(reversed(data_modif))
+        self._modifier_load_chunks = [
+            ordered[i : i + chunk_size] for i in range(0, len(ordered), chunk_size)
+        ]
+        self._modifier_load_index = 0
+        self._modifier_load_mod_layout = self.modifiers_group_instance.layout
+        self._modifier_load_pending_init = pending_init
+        self._modifier_load_inited_ids = inited_frame_ids
+        self._modifier_load_delay_ms = delay_ms
+
+        scroll_target = self._modifier_batch_scroll_target()
+        self._modifier_load_scroll_parent = scroll_target
+        if scroll_target is not None:
+            scroll_target.setUpdatesEnabled(False)
+
+        self._load_next_modifier_chunk(session)
+
     # ======================================[Tree Hierarchy updating]========================================
     def on_tree_current_item_changed(self, current_item, previous_item):
         # When a PropertySnapshotCommand undo/redo calls setCurrentItem to sync
@@ -261,6 +419,8 @@ class SmartPropDocument(QMainWindow):
         # for this selection have emitted their initial `edited` (phase 2).
         pending_init = {"remaining": 0}
         inited_frame_ids = set()
+
+        self._cancel_modifier_load()
 
         # Cancel any in-progress slider drag when the selection changes.
         self._slider_dragging = 0
@@ -326,32 +486,9 @@ class SmartPropDocument(QMainWindow):
                 self.ui.properties_layout.insertWidget(0, property_instance)
 
                 if data_modif:
-                    for entry in reversed(data_modif):
-                        prop_instance = PropertyFrame(
-                            widget_list=self.modifiers_group_instance.layout,
-                            value=copy.deepcopy(entry),
-                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                            tree_hierarchy=self.ui.tree_hierarchy_widget,
-                            element_id_generator=self.element_id_generator
-                        )
-                        prop_instance.edited.connect(self.update_tree_item_value)
-
-                        pending_init["remaining"] += 1
-                        frame_id = id(prop_instance)
-
-                        def _on_prop_frame_inited(fid=frame_id):
-                            if fid in inited_frame_ids:
-                                return
-                            inited_frame_ids.add(fid)
-                            pending_init["remaining"] -= 1
-                            if pending_init["remaining"] <= 0:
-                                self._dec_property_undo_guard()
-
-                        prop_instance.edited.connect(_on_prop_frame_inited)
-
-                        prop_instance.slider_pressed.connect(self._on_slider_started)
-                        prop_instance.committed.connect(self._on_slider_committed)
-                        self.modifiers_group_instance.layout.insertWidget(0, prop_instance)
+                    self._populate_modifiers_progressive(
+                        data_modif, pending_init, inited_frame_ids
+                    )
 
                 if data_sel_criteria:
                     for entry in reversed(data_sel_criteria):
@@ -1264,6 +1401,7 @@ class SmartPropDocument(QMainWindow):
         self._property_undo_guard += 1
         pending_init = {"remaining": 0}
         inited_frame_ids = set()
+        self._cancel_modifier_load()
         # Cancel any in-progress slider drag so stale state is not committed.
         self._slider_dragging = 0
         self._slider_pre_drag_data = None
@@ -1323,32 +1461,10 @@ class SmartPropDocument(QMainWindow):
             prop.committed.connect(self._on_slider_committed)
             self.ui.properties_layout.insertWidget(0, prop)
 
-            for entry in reversed(data_modif):
-                p = PropertyFrame(
-                    widget_list=self.modifiers_group_instance.layout,
-                    value=copy.deepcopy(entry),
-                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                    tree_hierarchy=self.ui.tree_hierarchy_widget,
-                    element_id_generator=self.element_id_generator
+            if data_modif:
+                self._populate_modifiers_progressive(
+                    data_modif, pending_init, inited_frame_ids
                 )
-                p.edited.connect(self.update_tree_item_value)
-
-                pending_init["remaining"] += 1
-                frame_id = id(p)
-
-                def _on_prop_frame_inited(fid=frame_id):
-                    if fid in inited_frame_ids:
-                        return
-                    inited_frame_ids.add(fid)
-                    pending_init["remaining"] -= 1
-                    if pending_init["remaining"] <= 0:
-                        self._dec_property_undo_guard()
-
-                p.edited.connect(_on_prop_frame_inited)
-
-                p.slider_pressed.connect(self._on_slider_started)
-                p.committed.connect(self._on_slider_committed)
-                self.modifiers_group_instance.layout.insertWidget(0, p)
 
             for entry in reversed(data_sel_criteria):
                 p = PropertyFrame(
