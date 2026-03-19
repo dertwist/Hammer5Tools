@@ -155,7 +155,24 @@ class PropertyFrame(QWidget):
         ],
         'SaveState': [
             'm_bEnabled', 'm_StateName'
-        ]
+        ],
+        # Filters / operators used in large modifier stacks (ordered_pairs fast-path)
+        'Probability': [
+            'm_bEnabled', 'm_flProbability'
+        ],
+        'Expression': [
+            'm_bEnabled', 'm_Expression'
+        ],
+        'RandomRotationSnapped': [
+            'm_bEnabled', 'm_RotationAxes', 'm_flSnapIncrement',
+            'm_vMinAngles', 'm_vMaxAngles'
+        ],
+        'Translate': [
+            'm_bEnabled', 'm_vPosition'
+        ],
+        'Rotate': [
+            'm_bEnabled', 'm_vRotation'
+        ],
     }
 
     # Keys that must be skipped (no widget created)
