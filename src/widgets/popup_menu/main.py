@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QCursor, QKeyEvent, QScreen
 from PySide6.QtCore import QEvent, Qt, Signal
+from shiboken6 import Shiboken
 from src.widgets.popup_menu.ui_main import Ui_PoPupMenu
 from src.widgets.common import Button
 from src.settings.main import set_settings_value, get_settings_value
@@ -84,11 +85,15 @@ class PropertyItemWidget(QWidget):
 
     def _apply_styles(self, highlighted=False):
         # Apply a global stylesheet to the label
-        style = _label_stylesheet()
-        self.label.setStyleSheet(style)
-        self.label.setProperty("selected", highlighted)
-        self.label.style().unpolish(self.label)
-        self.label.style().polish(self.label)
+        try:
+            style = _label_stylesheet()
+            self.label.setStyleSheet(style)
+            self.label.setProperty("selected", highlighted)
+            self.label.style().unpolish(self.label)
+            self.label.style().polish(self.label)
+        except RuntimeError:
+            # QLabel (or widget) already destroyed — e.g. menu still updating after rebuild.
+            pass
 
     def set_highlighted(self, highlighted):
         self._apply_styles(highlighted)
@@ -373,9 +378,14 @@ class PopupMenu(QDialog):
                     items.append(w)
             return items
         self.visible_items = layout_visible_items(self.bookmarked_layout) + layout_visible_items(self.regular_layout)
-        # Remove highlight from all
+        # Remove highlight from all; drop dead widgets (C++ object deleted) from cache
+        kept = []
         for w in self._all_items:
+            if not Shiboken.isValid(w):
+                continue
             w.set_highlighted(False)
+            kept.append(w)
+        self._all_items = kept
         # Set highlight to current selection only if navigation started
         if self.visible_items and self._keyboard_navigation_started:
             if self.current_selection_index < 0 or self.current_selection_index >= len(self.visible_items):
