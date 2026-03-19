@@ -1,14 +1,13 @@
 """
-PropertyWidgetPool: pre-builds and caches PropertyFrame instances for the most
-frequently-used SmartProp element classes.
+PropertyWidgetPool: caches PropertyFrame instances by prop_class for modifier reuse.
 
 Usage:
     pool = PropertyWidgetPool.instance()
     frame = pool.acquire(
         prop_class, value, variables_scrollArea,
-        element_id_generator, widget_list, tree_hierarchy
+        element_id_generator, widget_list, tree_hierarchy,
+        precomputed=optional_batch_dict,
     )
-    # ... use frame ...
     pool.release(prop_class, frame)
 """
 
@@ -25,7 +24,8 @@ PREWARMED_CLASSES = [
     "RandomOffset",
     "Scale",
 ]
-POOL_SIZE_PER_CLASS = 2
+POOL_SIZE_PER_CLASS = 3
+TOTAL_POOL_CAP = 128
 
 
 class PropertyWidgetPool(QObject):
@@ -40,6 +40,7 @@ class PropertyWidgetPool(QObject):
     def __init__(self):
         super().__init__()
         self._pool = defaultdict(list)
+        self._total = 0
 
     def acquire(
         self,
@@ -49,6 +50,7 @@ class PropertyWidgetPool(QObject):
         element_id_generator,
         widget_list,
         tree_hierarchy,
+        precomputed=None,
     ):
         """
         Return a configured PropertyFrame. Uses pool if available (fast path),
@@ -56,16 +58,30 @@ class PropertyWidgetPool(QObject):
         """
         from src.editors.smartprop_editor.property_frame import PropertyFrame
 
+        use_pc = PropertyFrame._is_complete_precomputed_payload(precomputed)
+
         if self._pool[prop_class]:
             frame = self._pool[prop_class].pop()
+            self._total -= 1
             frame._reconfigure(
                 value,
                 variables_scrollArea,
                 element_id_generator,
                 widget_list,
                 tree_hierarchy,
+                precomputed=precomputed if use_pc else None,
             )
             return frame
+
+        if use_pc:
+            return PropertyFrame(
+                value=precomputed["value"],
+                widget_list=widget_list,
+                variables_scrollArea=variables_scrollArea,
+                element_id_generator=element_id_generator,
+                tree_hierarchy=tree_hierarchy,
+                precomputed=precomputed,
+            )
 
         return PropertyFrame(
             value=value,
@@ -77,16 +93,45 @@ class PropertyWidgetPool(QObject):
 
     def release(self, prop_class, frame):
         """
-        Return a frame to the pool. Clears its child widgets first.
-        Only stores up to POOL_SIZE_PER_CLASS frames per class.
-        Excess frames are destroyed via deleteLater().
+        Return a frame to the pool or destroy if caps exceeded.
         """
-        if len(self._pool[prop_class]) < POOL_SIZE_PER_CLASS:
-            frame._clear_widgets()
-            frame.hide()
-            self._pool[prop_class].append(frame)
-        else:
+        if prop_class is None:
+            try:
+                frame.cancel_worker()
+            except Exception:
+                pass
             frame.deleteLater()
+            return
+
+        if self._total >= TOTAL_POOL_CAP:
+            try:
+                frame.cancel_worker()
+            except Exception:
+                pass
+            frame.deleteLater()
+            return
+
+        per_key = self._pool[prop_class]
+        if len(per_key) >= POOL_SIZE_PER_CLASS:
+            try:
+                frame.cancel_worker()
+            except Exception:
+                pass
+            frame.deleteLater()
+            return
+
+        try:
+            frame.cancel_worker()
+        except Exception:
+            pass
+        frame._clear_widgets()
+        frame.hide()
+        try:
+            frame.setParent(None)
+        except Exception:
+            pass
+        per_key.append(frame)
+        self._total += 1
 
     def prewarm(
         self,
@@ -101,9 +146,6 @@ class PropertyWidgetPool(QObject):
         Call this via QTimer.singleShot(500, ...) AFTER the main window is shown.
 
         dummy_value_factory(class_name: str) -> dict | None
-        Must return a minimal valid value dict for the given class name, e.g.:
-            {'_class': 'SmartProp_Group', 'm_bEnabled': True}
-        Return None to skip pre-warming that class.
         """
         from src.editors.smartprop_editor.property_frame import PropertyFrame
 
@@ -124,19 +166,24 @@ class PropertyWidgetPool(QObject):
                 )
                 frame.hide()
 
-                # _clear_widgets is called after _finish_init completes.
-                # Use a short delay to ensure QTimer.singleShot(0, ...) in
-                # PropertyFrame.__init__ has fired before we clear.
                 QTimer.singleShot(
                     100, lambda f=frame, c=cls_name: self._store_prewarmed(c, f)
                 )
 
     def _store_prewarmed(self, cls_name, frame):
         """Called 100ms after prewarm frame construction — safe to clear now."""
-        if len(self._pool[cls_name]) < POOL_SIZE_PER_CLASS:
-            frame._clear_widgets()
-            frame.hide()
-            self._pool[cls_name].append(frame)
-        else:
+        if self._total >= TOTAL_POOL_CAP:
             frame.deleteLater()
-
+            return
+        per_key = self._pool[cls_name]
+        if len(per_key) >= POOL_SIZE_PER_CLASS:
+            frame.deleteLater()
+            return
+        frame._clear_widgets()
+        frame.hide()
+        try:
+            frame.setParent(None)
+        except Exception:
+            pass
+        per_key.append(frame)
+        self._total += 1
