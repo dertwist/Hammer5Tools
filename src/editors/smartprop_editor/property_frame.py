@@ -2,7 +2,7 @@ from src.settings.main import debug
 from src.editors.smartprop_editor.ui_property_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget, QMenu, QApplication
-from PySide6.QtCore import Signal, Qt, QTimer
+from PySide6.QtCore import Signal, Qt, QTimer, QThreadPool
 from PySide6.QtGui import QAction
 
 from src.property.methods import PropertyMethods
@@ -31,6 +31,9 @@ import uuid
 import ast
 
 from src.widgets import exception_handler
+from src.editors.smartprop_editor.property_data_worker import (
+    PropertyDataWorker,
+)
 
 class PropertyFrame(QWidget):
     edited = Signal()
@@ -155,6 +158,47 @@ class PropertyFrame(QWidget):
         ]
     }
 
+    # Keys that must be skipped (no widget created)
+    _SKIP_PROPS = frozenset({'m_sLabel', 'm_nElementID', 'm_sReferenceObjectID'})
+
+    # Exact-match dispatch: maps value_class -> (WidgetClass, extra_kwargs_dict)
+    # PropertyComment is NOT in this dict — handled separately (different signature)
+    _EXACT_PROP_DISPATCH = None  # populated lazily by _resolve_dispatch()
+    _DISPATCH_RESOLVED = False
+
+    @classmethod
+    def _resolve_dispatch(cls):
+        if cls._DISPATCH_RESOLVED:
+            return
+
+        cls._EXACT_PROP_DISPATCH = {
+            'm_bEnabled':              (PropertyBool,                 {}),
+            'm_nReferenceID':          (PropertyReference,            {}),
+            'm_HandleColor':           (PropertyColor,                {}),
+            'm_HandleSize':            (PropertyFloat,                {}),
+            'm_ColorChoices':          (PropertyColorMatch,           {}),
+            'm_MaterialReplacements':  (PropertyMaterialReplacements, {}),
+            'm_flBendPoint':           (PropertyFloat,   {'slider_range': [0, 1]}),
+            'm_flWidth':               (PropertyFloat,   {'slider_range': [0, 4096]}),
+            'm_flLength':              (PropertyFloat,   {'slider_range': [0, 4096]}),
+            'm_flSpacingWidth':        (PropertyFloat,   {'slider_range': [0, 4096]}),
+            'm_flSpacingLength':       (PropertyFloat,   {'slider_range': [0, 4096]}),
+            'm_flAlternateShiftWidth': (PropertyFloat,   {'slider_range': [0, 4096]}),
+            'm_flAlternateShiftLength':(PropertyFloat,   {'slider_range': [0, 4096]}),
+            'm_nCountW':               (PropertyFloat,   {'int_bool': True, 'slider_range': [0, 256]}),
+            'm_nCountL':               (PropertyFloat,   {'int_bool': True, 'slider_range': [0, 256]}),
+            'm_SpecificChildIndex':    (PropertyFloat,   {'int_bool': True}),
+            'm_ColorSelection':        (PropertyFloat,   {'int_bool': True}),
+            'm_MaterialGroupName':     (PropertyString,  {'expression_bool': False, 'placeholder': 'Material group name'}),
+            'm_Expression':            (PropertyString,  {'expression_bool': True,  'placeholder': 'Expression example: var_bool ? var_sizer * var_multiply'}),
+            'm_StateName':             (PropertyString,  {'expression_bool': False, 'only_string': True, 'placeholder': 'State name'}),
+            'm_VariableName':          (PropertyString,  {'expression_bool': False, 'only_string': False, 'only_variable': True,
+                                                           'force_variable': True, 'placeholder': 'Variable name',
+                                                           'filter_types': ['String','Int','Float','Bool']}),
+        }
+
+        cls._DISPATCH_RESOLVED = True
+
     def __init__(self, value, widget_list, variables_scrollArea, element_id_generator, element=False, tree_hierarchy=None):
         super().__init__()
         self.ui = Ui_Form()
@@ -174,6 +218,10 @@ class PropertyFrame(QWidget):
         if not isinstance(value, dict):
             value = ast.literal_eval(value)
 
+        # Keep a raw payload containing '_class' for the worker thread.
+        # Worker expects to parse and remove '_class' itself.
+        self._worker_raw_value_with_class = dict(value)
+
         self.name_prefix, self.name = value['_class'].split('_', 1)
         del value['_class']
         # Definition of the value variable before getting property data. to have priority for the variable m_bEnabled
@@ -187,6 +235,8 @@ class PropertyFrame(QWidget):
         self.element_id = self.element_id_generator.get_key(self.value)
         debug(f'Property frame get_ElementID: {self.element_id}')
         self.ui.element_id_display.setText(str(self.element_id))
+        if isinstance(self._worker_raw_value_with_class, dict):
+            self._worker_raw_value_with_class['m_nElementID'] = self.element_id
 
         self.prop_class = self.name
 
@@ -214,23 +264,46 @@ class PropertyFrame(QWidget):
             'm_OutputChoiceVariableName'
         ]
 
-        # Defer heavier property initialization to the event loop,
-        # improving UI responsiveness and perceived performance.
-        QTimer.singleShot(0, self._finish_init)
+        # Worker result storage
+        self._ordered_pairs = None
+        self._worker_signals = None
+        self._worker_generation = 0
+        # PySide6 often cannot disconnect(bound_method) reliably; connect once per frame.
+        self._show_child_signal_connected = False
+        self._context_menu_signal_connected = False
+        self._start_data_worker()
 
     def _finish_init(self):
-        # Populate property widgets after the constructor returns
-        self._add_properties_by_class()
+        """
+        Phase 1: populate the first 4 property widgets immediately for fast
+        perceived response. The remaining properties are deferred 30ms.
+        on_edited() is NOT called here — the value dict is incomplete until
+        Phase 2 finishes.
+        """
+        self._add_properties_by_class(limit=4)
         self.show_child()
-        self.ui.show_child.clicked.connect(self.show_child)
 
-        # Setup dynamic suppression for specific element types
-        self._setup_layout2dgrid_suppression()
+        # Connect once per PropertyFrame lifetime (pool reuse / repeated _finish_init).
+        if not self._show_child_signal_connected:
+            self.ui.show_child.clicked.connect(self.show_child)
+            self._show_child_signal_connected = True
 
         self.init_ui()
+
+        # Defer Phase 2 — lets Qt process one paint event first
+        QTimer.singleShot(30, self._finish_init_phase2)
+
+    def _finish_init_phase2(self):
+        """
+        Phase 2: populate remaining properties and finalize the value dict.
+        _setup_layout2dgrid_suppression requires ALL widgets to be present.
+        on_edited() is called here for the first time — value dict is now complete.
+        """
+        self._add_properties_by_class(offset=4)
+        self._setup_layout2dgrid_suppression()
         self.on_edited()
     @exception_handler
-    def _add_properties_by_class(self):
+    def _add_properties_by_class(self, limit=None, offset=0):
         # This function adds property widgets when needed
         def adding_instances(value_class, val):
             def add_instance():
@@ -241,6 +314,39 @@ class PropertyFrame(QWidget):
                     property_instance.slider_pressed.connect(self.slider_pressed)
                 if hasattr(property_instance, 'committed'):
                     property_instance.committed.connect(self.committed)
+
+            # ---- FAST PATH: skip list ----
+            if value_class in PropertyFrame._SKIP_PROPS:
+                return
+
+            # ---- FAST PATH: exact dispatch ----
+            PropertyFrame._resolve_dispatch()
+            dispatch = PropertyFrame._EXACT_PROP_DISPATCH
+            if dispatch is not None and value_class in dispatch:
+                widget_cls, extra_kwargs = dispatch[value_class]
+
+                # PropertyReference needs tree hierarchy to enable its "search" popup.
+                if widget_cls is PropertyReference:
+                    property_instance = widget_cls(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        element_id_generator=self.element_id_generator,
+                        tree_hierarchy=self.tree_hierarchy,
+                        **extra_kwargs
+                    )
+                else:
+                    property_instance = widget_cls(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        element_id_generator=self.element_id_generator,
+                        **extra_kwargs
+                    )
+
+                add_instance()
+                return
+
             if value_class == 'm_bEnabled':
                 property_instance = PropertyBool(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator)
                 add_instance()
@@ -313,18 +419,31 @@ class PropertyFrame(QWidget):
             elif 'm_DisallowedSurfaceProperties' in value_class: property_instance = PropertySurface(value=val,value_class=value_class,variables_scrollArea=self.variables_scrollArea); add_instance()
             else: property_instance = PropertyLegacy(value=val,value_class=value_class,variables_scrollArea=self.variables_scrollArea); add_instance()
 
-        def operator_adding_instances(classes):
-            for item in reversed(classes):
-                if item in self.value:
-                    adding_instances(item, self.value[item])
-                else:
-                    adding_instances(item, None)
+        parent_widget = self.ui.layout.parentWidget()
+        try:
+            if parent_widget is not None:
+                parent_widget.setUpdatesEnabled(False)
 
-        if self.prop_class in self._prop_classes_map_cache:
-            operator_adding_instances(self._prop_classes_map_cache[self.prop_class])
-        else:
-            for value_class, val_data in reversed(list(self.value.items())):
+            # Prefer worker-prepared ordered pairs (Plan 5).
+            if getattr(self, '_ordered_pairs', None) is not None:
+                ordered_pairs = self._ordered_pairs
+            elif self.prop_class in self._prop_classes_map_cache:
+                classes = self._prop_classes_map_cache[self.prop_class]
+                ordered_pairs = [
+                    (item, self.value.get(item, None))
+                    for item in reversed(classes)
+                ]
+            else:
+                ordered_pairs = list(reversed(list(self.value.items())))
+
+            end = (offset + limit) if limit is not None else None
+            sliced = ordered_pairs[offset:end]
+            for value_class, val_data in sliced:
                 adding_instances(value_class, val_data)
+        finally:
+            if parent_widget is not None:
+                parent_widget.setUpdatesEnabled(True)
+                parent_widget.update()
 
     def show_child(self):
         if not self.ui.show_child.isChecked():
@@ -352,6 +471,133 @@ class PropertyFrame(QWidget):
 
     def update_self(self):
         pass
+
+    def _clear_widgets(self):
+        """
+        Remove and schedule destruction of all property child widgets.
+        Calls setParent(None) before deleteLater() to immediately detach from
+        the layout — prevents a double-widget race if the frame is reused
+        before the event loop processes deleteLater().
+        """
+        while self.ui.layout.count():
+            item = self.ui.layout.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.setParent(None)
+                w.deleteLater()
+
+    def _reconfigure(
+        self,
+        value,
+        variables_scrollArea,
+        element_id_generator,
+        widget_list,
+        tree_hierarchy,
+    ):
+        """
+        Reconfigure this pooled PropertyFrame with new data.
+        Called by PropertyWidgetPool.acquire().
+        """
+        import ast as _ast
+
+        # Invalidate any in-flight worker results (race safety).
+        self._worker_generation = getattr(self, "_worker_generation", 0) + 1
+        self._ordered_pairs = None
+
+        self._clear_widgets()
+
+        self.variables_scrollArea = variables_scrollArea
+        self.widget_list = widget_list
+        self.tree_hierarchy = tree_hierarchy
+        self.element_id_generator = element_id_generator
+
+        if not isinstance(value, dict):
+            value = _ast.literal_eval(value)
+
+        self.name_prefix, self.name = value["_class"].split("_", 1)
+        value = dict(value)
+        del value["_class"]
+
+        # Definition of the value variable before getting property data.
+        self.value = {"m_bEnabled": True}
+        self.value.update(value)
+
+        self.element_id_generator.update_value(self.value)
+        self.element_id = self.element_id_generator.get_key(self.value)
+
+        self.ui.element_id_display.setText(str(self.element_id))
+        self.prop_class = self.name
+        self.ui.property_class.setText(self.name)
+
+        self.show()
+        QTimer.singleShot(0, self._finish_init)
+
+    def _start_data_worker(self):
+        """Dispatch data preparation to QThreadPool worker."""
+        if not hasattr(self, "_worker_raw_value_with_class"):
+            # No raw payload available — fall back to synchronous init.
+            self._ordered_pairs = None
+            self._finish_init()
+            return
+
+        self._worker_generation += 1
+        expected_gen = self._worker_generation
+
+        worker = PropertyDataWorker(
+            raw_value=self._worker_raw_value_with_class,
+            element_id_generator=self.element_id_generator,
+            prop_classes_map_cache=self._prop_classes_map_cache,
+            only_variable_properties=self.only_variable_properties,
+        )
+
+        # Store signals reference to prevent premature GC.
+        self._worker_signals = worker.signals
+
+        def _on_ready(prepared_data, gen=expected_gen):
+            self._on_data_ready(prepared_data, gen)
+
+        def _on_error(error_msg, gen=expected_gen):
+            self._on_data_error(error_msg, gen)
+
+        worker.signals.finished.connect(_on_ready)
+        worker.signals.error.connect(_on_error)
+        QThreadPool.globalInstance().start(worker)
+
+    def _on_data_ready(self, prepared_data: dict, expected_gen: int):
+        """
+        Called on main thread when worker finishes.
+        Guards against:
+          1) the frame being destroyed
+          2) staleness (frame reused after a new worker started)
+        """
+        if expected_gen != getattr(self, "_worker_generation", None):
+            return
+
+        try:
+            _ = self.ui.layout
+        except RuntimeError:
+            return
+
+        self.value = prepared_data["value"]
+        self.name_prefix = prepared_data["name_prefix"]
+        self.name = prepared_data["name"]
+        self.element_id = prepared_data["element_id"]
+        self.prop_class = prepared_data["prop_class"]
+        self._ordered_pairs = prepared_data["ordered_pairs"]
+
+        self.ui.element_id_display.setText(str(self.element_id))
+        self.ui.property_class.setText(self.name)
+
+        self._finish_init()
+
+    def _on_data_error(self, error_msg: str, expected_gen: int):
+        """Fallback when worker fails: build ordered pairs synchronously."""
+        if expected_gen != getattr(self, "_worker_generation", None):
+            return
+
+        debug(f"PropertyDataWorker error — falling back to sync init: {error_msg}")
+        self._ordered_pairs = None
+        self._finish_init()
 
     def _setup_layout2dgrid_suppression(self):
         # Apply visibility rules for Layout2DGrid element
@@ -442,7 +688,9 @@ class PropertyFrame(QWidget):
             pass
         else:
             self.setContextMenuPolicy(Qt.CustomContextMenu)
-            self.customContextMenuRequested.connect(self.show_context_menu)
+            if not self._context_menu_signal_connected:
+                self.customContextMenuRequested.connect(self.show_context_menu)
+                self._context_menu_signal_connected = True
 
     mousePressEvent = PropertyMethods.mousePressEvent
     mouseMoveEvent = PropertyMethods.mouseMoveEvent
@@ -483,4 +731,13 @@ class PropertyFrame(QWidget):
     def delete_action(self):
         self.value = None
         self.edited.emit()
-        self.deleteLater()
+        # Invalidate any in-flight worker results (race safety).
+        self._worker_generation = getattr(self, "_worker_generation", 0) + 1
+        self._ordered_pairs = None
+
+        # Deferred import to avoid circular import at module load time.
+        try:
+            from src.editors.smartprop_editor.property_widget_pool import PropertyWidgetPool
+            PropertyWidgetPool.instance().release(self.prop_class, self)
+        except Exception:
+            self.deleteLater()
