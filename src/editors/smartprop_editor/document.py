@@ -2,6 +2,7 @@ import os.path
 import re
 import ast
 import copy
+from collections import deque
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -48,6 +49,7 @@ from src.editors.smartprop_editor.vsmart import (
     VsmartOpen, VsmartSave, serialization_hierarchy_items, deserialize_hierarchy_item
 )
 from src.editors.smartprop_editor.property_frame import PropertyFrame
+from src.editors.smartprop_editor.property_data_worker import BatchPropertyDataWorker
 from src.editors.smartprop_editor.properties_group_frame import PropertiesGroupFrame
 from src.editors.smartprop_editor.choices import AddChoice, AddVariable, AddOption
 from src.widgets.popup_menu.main import PopupMenu
@@ -129,6 +131,13 @@ class SmartPropDocument(QMainWindow):
 
         # Progressive m_Modifiers loader (large Group nodes): session bumps invalidate QTimer chunks.
         self._modifier_load_session = 0
+        self._modifier_batch_worker = None
+        self._modifier_batch_signal_ref = None
+        self._modifier_load_precomputed = None
+        self._prewarm_cache = {}
+        self._prewarm_order = deque()
+        self._prewarm_cache_max = 32
+        self._prewarm_signal_refs = {}
 
         # Choices rename undo state: captured on itemDoubleClicked, consumed by itemChanged.
         self._choices_rename_old_state = None
@@ -163,6 +172,7 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
         self.ui.tree_hierarchy_widget.itemClicked.connect(on_three_hierarchyitem_clicked)
+        self.ui.tree_hierarchy_widget.itemExpanded.connect(self._prewarm_node_modifiers)
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(2, QHeaderView.ResizeToContents)
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(3, QHeaderView.ResizeToContents)
@@ -275,6 +285,18 @@ class SmartPropDocument(QMainWindow):
         self._modifier_load_session += 1
         self._modifier_load_chunks = []
         self._modifier_load_index = 0
+        self._modifier_load_precomputed = None
+        bw = getattr(self, "_modifier_batch_worker", None)
+        if bw is not None:
+            try:
+                bw.cancel()
+            except Exception:
+                pass
+        self._modifier_batch_worker = None
+        br = getattr(self, "_modifier_batch_signal_ref", None)
+        if br is not None:
+            QTimer.singleShot(0, br.deleteLater)
+        self._modifier_batch_signal_ref = None
         sp = getattr(self, "_modifier_load_scroll_parent", None)
         if sp is not None:
             try:
@@ -294,6 +316,118 @@ class SmartPropDocument(QMainWindow):
                 pass
         self._modifier_load_scroll_parent = None
 
+    def _prewarm_evict_if_full(self):
+        while len(self._prewarm_order) >= self._prewarm_cache_max:
+            old = self._prewarm_order.popleft()
+            self._prewarm_cache.pop(old, None)
+
+    def _prewarm_node_modifiers(self, item):
+        """On tree expand: batch-parse m_Modifiers in the background for faster later selection."""
+        if item is None:
+            return
+        node_key = id(item)
+        if node_key in self._prewarm_cache:
+            return
+        data = item.data(0, Qt.UserRole)
+        if not isinstance(data, dict):
+            return
+        modifiers = data.get("m_Modifiers", []) or []
+        if not modifiers:
+            return
+        self._prewarm_evict_if_full()
+        self._prewarm_order.append(node_key)
+        self._prewarm_cache[node_key] = None
+        ordered_mods = list(reversed(modifiers))
+        worker = BatchPropertyDataWorker(
+            raw_values=ordered_mods,
+            element_id_generator=self.element_id_generator,
+            prop_classes_map_cache=PropertyFrame._prop_classes_map_cache,
+            ordered_pairs_cache=PropertyFrame._ORDERED_PAIRS_CACHE,
+        )
+        self._prewarm_signal_refs[node_key] = worker.signals
+        worker.signals.finished.connect(
+            lambda results, k=node_key: self._on_modifier_prewarm_finished(k, results)
+        )
+        worker.signals.error.connect(
+            lambda _err, k=node_key: self._on_modifier_prewarm_failed(k)
+        )
+        PropertyFrame._get_worker_pool().start(worker)
+
+    def _on_modifier_prewarm_finished(self, node_key, results):
+        sigs = self._prewarm_signal_refs.pop(node_key, None)
+        if sigs is not None:
+            QTimer.singleShot(0, sigs.deleteLater)
+        if node_key not in self._prewarm_cache:
+            return
+        self._prewarm_cache[node_key] = results
+
+    def _on_modifier_prewarm_failed(self, node_key):
+        sigs = self._prewarm_signal_refs.pop(node_key, None)
+        if sigs is not None:
+            QTimer.singleShot(0, sigs.deleteLater)
+        self._prewarm_cache.pop(node_key, None)
+        try:
+            self._prewarm_order.remove(node_key)
+        except ValueError:
+            pass
+
+    def _take_prewarm_modifier_results(self, tree_item, ordered_len):
+        """If expand pre-computed the same modifier stack, consume the cache entry."""
+        if tree_item is None:
+            return None
+        node_key = id(tree_item)
+        entry = self._prewarm_cache.get(node_key)
+        if not isinstance(entry, list) or len(entry) != ordered_len:
+            return None
+        del self._prewarm_cache[node_key]
+        try:
+            self._prewarm_order.remove(node_key)
+        except ValueError:
+            pass
+        return entry
+
+    def _submit_modifier_batch_worker(self, session, ordered_modifiers):
+        worker = BatchPropertyDataWorker(
+            raw_values=ordered_modifiers,
+            element_id_generator=self.element_id_generator,
+            prop_classes_map_cache=PropertyFrame._prop_classes_map_cache,
+            ordered_pairs_cache=PropertyFrame._ORDERED_PAIRS_CACHE,
+        )
+        self._modifier_batch_worker = worker
+        self._modifier_batch_signal_ref = worker.signals
+
+        def _on_ready(results, sess=session):
+            self._on_modifier_batch_ready(sess, results)
+
+        def _on_err(msg, sess=session):
+            self._on_modifier_batch_error(sess, msg)
+
+        worker.signals.finished.connect(_on_ready)
+        worker.signals.error.connect(_on_err)
+        PropertyFrame._get_worker_pool().start(worker)
+
+    def _on_modifier_batch_ready(self, session, results):
+        self._modifier_batch_worker = None
+        br = getattr(self, "_modifier_batch_signal_ref", None)
+        if br is not None:
+            QTimer.singleShot(0, br.deleteLater)
+        self._modifier_batch_signal_ref = None
+        if session != self._modifier_load_session:
+            return
+        self._modifier_load_precomputed = results
+        self._load_next_modifier_chunk(session)
+
+    def _on_modifier_batch_error(self, session, _msg):
+        self._modifier_batch_worker = None
+        br = getattr(self, "_modifier_batch_signal_ref", None)
+        if br is not None:
+            QTimer.singleShot(0, br.deleteLater)
+        self._modifier_batch_signal_ref = None
+        if session != self._modifier_load_session:
+            return
+        self._modifier_load_precomputed = None
+        self._load_next_modifier_chunk(session)
+
     def _wire_modifier_property_frame(self, frame, pending_init, inited_frame_ids):
         frame.edited.connect(self.update_tree_item_value)
         pending_init["remaining"] += 1
@@ -311,11 +445,16 @@ class SmartPropDocument(QMainWindow):
         frame.slider_pressed.connect(self._on_slider_started)
         frame.committed.connect(self._on_slider_committed)
 
-    def _acquire_modifier_property_frame(self, modifier_value):
+    def _acquire_modifier_property_frame(self, modifier_value, precomputed=None):
         """Pool acquire with fallback to direct PropertyFrame (same layout wiring as before)."""
         val = copy.deepcopy(modifier_value)
-        wc = val.get("_class", "") if isinstance(val, dict) else ""
-        prop_class = wc.split("_", 1)[-1] if wc else ""
+        if not PropertyFrame._is_complete_precomputed_payload(precomputed):
+            precomputed = None
+        if precomputed is not None:
+            prop_class = precomputed.get("prop_class") or ""
+        else:
+            wc = val.get("_class", "") if isinstance(val, dict) else ""
+            prop_class = wc.split("_", 1)[-1] if wc else ""
         kwargs = dict(
             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
             element_id_generator=self.element_id_generator,
@@ -329,9 +468,17 @@ class SmartPropDocument(QMainWindow):
                 prop_class=prop_class,
                 value=val,
                 widget_list=mod_layout,
+                precomputed=precomputed,
                 **kwargs,
             )
         except Exception:
+            if PropertyFrame._is_complete_precomputed_payload(precomputed):
+                return PropertyFrame(
+                    value=precomputed["value"],
+                    widget_list=mod_layout,
+                    precomputed=precomputed,
+                    **kwargs,
+                )
             return PropertyFrame(
                 value=val,
                 widget_list=mod_layout,
@@ -359,10 +506,21 @@ class SmartPropDocument(QMainWindow):
         chunk = chunks[idx]
         self._modifier_load_index = idx + 1
 
-        for modifier_value in chunk:
+        offset = 0
+        for i in range(idx):
+            offset += len(chunks[i])
+        precomputed_list = getattr(self, "_modifier_load_precomputed", None)
+
+        for j, modifier_value in enumerate(chunk):
             if session != self._modifier_load_session:
                 return
-            frame = self._acquire_modifier_property_frame(modifier_value)
+            pc = None
+            if precomputed_list is not None:
+                try:
+                    pc = precomputed_list[offset + j]
+                except IndexError:
+                    pc = None
+            frame = self._acquire_modifier_property_frame(modifier_value, precomputed=pc)
             self._wire_modifier_property_frame(frame, pending_init, inited_frame_ids)
             mod_layout.insertWidget(0, frame)
 
@@ -379,12 +537,14 @@ class SmartPropDocument(QMainWindow):
         data_modif,
         pending_init,
         inited_frame_ids,
+        tree_item=None,
         chunk_size=4,
         delay_ms=40,
     ):
         """
         Insert modifier PropertyFrames in chunks so 35 modifiers do not all start
         workers/timers in one event-loop slice. Order matches reversed(insertWidget(0,...)).
+        One BatchPropertyDataWorker prepares all modifiers; optional prewarm skips the batch.
         """
         if not data_modif:
             return
@@ -402,12 +562,18 @@ class SmartPropDocument(QMainWindow):
         self._modifier_load_inited_ids = inited_frame_ids
         self._modifier_load_delay_ms = delay_ms
 
+        precomputed_list = self._take_prewarm_modifier_results(tree_item, len(ordered))
+        self._modifier_load_precomputed = precomputed_list
+
         paint_w = self._modifier_batch_paint_suppress_widget()
         self._modifier_load_scroll_parent = paint_w
         if paint_w is not None:
             paint_w.setUpdatesEnabled(False)
 
-        self._load_next_modifier_chunk(session)
+        if precomputed_list is not None:
+            self._load_next_modifier_chunk(session)
+        else:
+            self._submit_modifier_batch_worker(session, ordered)
 
     # ======================================[Tree Hierarchy updating]========================================
     def on_tree_current_item_changed(self, current_item, previous_item):
@@ -459,7 +625,16 @@ class SmartPropDocument(QMainWindow):
                         widget.cancel_worker()
                         layout.removeWidget(widget)
                         widget.hide()
-                        widget.deleteLater()
+                        if layout is self.modifiers_group_instance.layout:
+                            from src.editors.smartprop_editor.property_widget_pool import (
+                                PropertyWidgetPool,
+                            )
+
+                            PropertyWidgetPool.instance().release(
+                                getattr(widget, "prop_class", None), widget
+                            )
+                        else:
+                            widget.deleteLater()
         except Exception as error:
             print(error)
 
@@ -499,7 +674,10 @@ class SmartPropDocument(QMainWindow):
 
                 if data_modif:
                     self._populate_modifiers_progressive(
-                        data_modif, pending_init, inited_frame_ids
+                        data_modif,
+                        pending_init,
+                        inited_frame_ids,
+                        tree_item=item,
                     )
 
                 if data_sel_criteria:
@@ -1431,7 +1609,16 @@ class SmartPropDocument(QMainWindow):
                         widget.cancel_worker()
                         layout.removeWidget(widget)
                         widget.hide()
-                        widget.deleteLater()
+                        if layout is self.modifiers_group_instance.layout:
+                            from src.editors.smartprop_editor.property_widget_pool import (
+                                PropertyWidgetPool,
+                            )
+
+                            PropertyWidgetPool.instance().release(
+                                getattr(widget, "prop_class", None), widget
+                            )
+                        else:
+                            widget.deleteLater()
 
             # Show/hide panel groups
             if item is not None:
@@ -1476,7 +1663,10 @@ class SmartPropDocument(QMainWindow):
 
             if data_modif:
                 self._populate_modifiers_progressive(
-                    data_modif, pending_init, inited_frame_ids
+                    data_modif,
+                    pending_init,
+                    inited_frame_ids,
+                    tree_item=item,
                 )
 
             for entry in reversed(data_sel_criteria):
