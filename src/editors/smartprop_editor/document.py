@@ -255,6 +255,13 @@ class SmartPropDocument(QMainWindow):
         #   [_finish_init callbacks …, _dec_property_undo_guard]
         self._property_undo_guard += 1
 
+        # With PropertyFrame init moving off the main thread (QThreadPool),
+        # the old "decrement after QTimer(0)" timing can release the guard too
+        # early.  We keep it raised until all PropertyFrame instances created
+        # for this selection have emitted their initial `edited` (phase 2).
+        pending_init = {"remaining": 0}
+        inited_frame_ids = set()
+
         # Cancel any in-progress slider drag when the selection changes.
         self._slider_dragging = 0
         self._slider_pre_drag_data = None
@@ -285,58 +292,101 @@ class SmartPropDocument(QMainWindow):
             print(error)
 
         try:
-            # deepcopy so we never mutate the data stored in the tree item
-            data = copy.deepcopy(item.data(0, Qt.UserRole))
-            data_modif = data.pop("m_Modifiers", None) or []
-            data_sel_criteria = data.pop("m_SelectionCriteria", None) or []
-            property_instance = PropertyFrame(
-                widget_list=self.ui.properties_layout,
-                value=data,
-                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                element=True,
-                tree_hierarchy=self.ui.tree_hierarchy_widget,
-                element_id_generator=self.element_id_generator
-            )
-            property_instance.edited.connect(self.update_tree_item_value)
-            property_instance.slider_pressed.connect(self._on_slider_started)
-            property_instance.committed.connect(self._on_slider_committed)
-            self.ui.properties_layout.insertWidget(0, property_instance)
+            # No tree selection: panel was cleared above; do not touch item.data.
+            if item is not None:
+                # deepcopy so we never mutate the data stored in the tree item
+                data = copy.deepcopy(item.data(0, Qt.UserRole))
+                data_modif = data.pop("m_Modifiers", None) or []
+                data_sel_criteria = data.pop("m_SelectionCriteria", None) or []
+                property_instance = PropertyFrame(
+                    widget_list=self.ui.properties_layout,
+                    value=data,
+                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                    element=True,
+                    tree_hierarchy=self.ui.tree_hierarchy_widget,
+                    element_id_generator=self.element_id_generator
+                )
+                property_instance.edited.connect(self.update_tree_item_value)
 
-            if data_modif:
-                for entry in reversed(data_modif):
-                    prop_instance = PropertyFrame(
-                        widget_list=self.modifiers_group_instance.layout,
-                        value=copy.deepcopy(entry),
-                        variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                        tree_hierarchy=self.ui.tree_hierarchy_widget,
-                        element_id_generator=self.element_id_generator
-                    )
-                    prop_instance.edited.connect(self.update_tree_item_value)
-                    prop_instance.slider_pressed.connect(self._on_slider_started)
-                    prop_instance.committed.connect(self._on_slider_committed)
-                    self.modifiers_group_instance.layout.insertWidget(0, prop_instance)
+                pending_init["remaining"] += 1
+                frame_id = id(property_instance)
 
-            if data_sel_criteria:
-                for entry in reversed(data_sel_criteria):
-                    prop_instance = PropertyFrame(
-                        widget_list=self.selection_criteria_group_instance.layout,
-                        value=copy.deepcopy(entry),
-                        variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                        tree_hierarchy=self.ui.tree_hierarchy_widget,
-                        element_id_generator=self.element_id_generator
-                    )
-                    prop_instance.edited.connect(self.update_tree_item_value)
-                    prop_instance.slider_pressed.connect(self._on_slider_started)
-                    prop_instance.committed.connect(self._on_slider_committed)
-                    self.selection_criteria_group_instance.layout.insertWidget(0, prop_instance)
+                def _on_prop_frame_inited(fid=frame_id):
+                    if fid in inited_frame_ids:
+                        return
+                    inited_frame_ids.add(fid)
+                    pending_init["remaining"] -= 1
+                    if pending_init["remaining"] <= 0:
+                        self._dec_property_undo_guard()
+
+                property_instance.edited.connect(_on_prop_frame_inited)
+
+                property_instance.slider_pressed.connect(self._on_slider_started)
+                property_instance.committed.connect(self._on_slider_committed)
+                self.ui.properties_layout.insertWidget(0, property_instance)
+
+                if data_modif:
+                    for entry in reversed(data_modif):
+                        prop_instance = PropertyFrame(
+                            widget_list=self.modifiers_group_instance.layout,
+                            value=copy.deepcopy(entry),
+                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                            tree_hierarchy=self.ui.tree_hierarchy_widget,
+                            element_id_generator=self.element_id_generator
+                        )
+                        prop_instance.edited.connect(self.update_tree_item_value)
+
+                        pending_init["remaining"] += 1
+                        frame_id = id(prop_instance)
+
+                        def _on_prop_frame_inited(fid=frame_id):
+                            if fid in inited_frame_ids:
+                                return
+                            inited_frame_ids.add(fid)
+                            pending_init["remaining"] -= 1
+                            if pending_init["remaining"] <= 0:
+                                self._dec_property_undo_guard()
+
+                        prop_instance.edited.connect(_on_prop_frame_inited)
+
+                        prop_instance.slider_pressed.connect(self._on_slider_started)
+                        prop_instance.committed.connect(self._on_slider_committed)
+                        self.modifiers_group_instance.layout.insertWidget(0, prop_instance)
+
+                if data_sel_criteria:
+                    for entry in reversed(data_sel_criteria):
+                        prop_instance = PropertyFrame(
+                            widget_list=self.selection_criteria_group_instance.layout,
+                            value=copy.deepcopy(entry),
+                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                            tree_hierarchy=self.ui.tree_hierarchy_widget,
+                            element_id_generator=self.element_id_generator
+                        )
+                        prop_instance.edited.connect(self.update_tree_item_value)
+
+                        pending_init["remaining"] += 1
+                        frame_id = id(prop_instance)
+
+                        def _on_prop_frame_inited(fid=frame_id):
+                            if fid in inited_frame_ids:
+                                return
+                            inited_frame_ids.add(fid)
+                            pending_init["remaining"] -= 1
+                            if pending_init["remaining"] <= 0:
+                                self._dec_property_undo_guard()
+
+                        prop_instance.edited.connect(_on_prop_frame_inited)
+
+                        prop_instance.slider_pressed.connect(self._on_slider_started)
+                        prop_instance.committed.connect(self._on_slider_committed)
+                        self.selection_criteria_group_instance.layout.insertWidget(0, prop_instance)
         except Exception as error:
             print(error)
 
-        # Schedule the guard decrement HERE — after all PropertyFrame __init__ calls
-        # have queued their own singleShot(0, _finish_init) callbacks.  Qt's event
-        # queue is FIFO, so _dec_property_undo_guard will fire after every _finish_init,
-        # keeping the guard active for the entire async initialisation window.
-        QTimer.singleShot(0, self._dec_property_undo_guard)
+        # If no PropertyFrames were created, release the guard on the next tick.
+        # Otherwise, it will be released after the last frame emits its initial edited.
+        if pending_init["remaining"] <= 0:
+            QTimer.singleShot(0, self._dec_property_undo_guard)
 
     def update_tree_item_value(self, item=None):
         if item is None:
@@ -1212,6 +1262,8 @@ class SmartPropDocument(QMainWindow):
         the resulting update_tree_item_value() calls do NOT push new commands.
         """
         self._property_undo_guard += 1
+        pending_init = {"remaining": 0}
+        inited_frame_ids = set()
         # Cancel any in-progress slider drag so stale state is not committed.
         self._slider_dragging = 0
         self._slider_pre_drag_data = None
@@ -1253,6 +1305,20 @@ class SmartPropDocument(QMainWindow):
                 element_id_generator=self.element_id_generator
             )
             prop.edited.connect(self.update_tree_item_value)
+
+            pending_init["remaining"] += 1
+            frame_id = id(prop)
+
+            def _on_prop_frame_inited(fid=frame_id):
+                if fid in inited_frame_ids:
+                    return
+                inited_frame_ids.add(fid)
+                pending_init["remaining"] -= 1
+                if pending_init["remaining"] <= 0:
+                    self._dec_property_undo_guard()
+
+            prop.edited.connect(_on_prop_frame_inited)
+
             prop.slider_pressed.connect(self._on_slider_started)
             prop.committed.connect(self._on_slider_committed)
             self.ui.properties_layout.insertWidget(0, prop)
@@ -1266,6 +1332,20 @@ class SmartPropDocument(QMainWindow):
                     element_id_generator=self.element_id_generator
                 )
                 p.edited.connect(self.update_tree_item_value)
+
+                pending_init["remaining"] += 1
+                frame_id = id(p)
+
+                def _on_prop_frame_inited(fid=frame_id):
+                    if fid in inited_frame_ids:
+                        return
+                    inited_frame_ids.add(fid)
+                    pending_init["remaining"] -= 1
+                    if pending_init["remaining"] <= 0:
+                        self._dec_property_undo_guard()
+
+                p.edited.connect(_on_prop_frame_inited)
+
                 p.slider_pressed.connect(self._on_slider_started)
                 p.committed.connect(self._on_slider_committed)
                 self.modifiers_group_instance.layout.insertWidget(0, p)
@@ -1279,6 +1359,20 @@ class SmartPropDocument(QMainWindow):
                     element_id_generator=self.element_id_generator
                 )
                 p.edited.connect(self.update_tree_item_value)
+
+                pending_init["remaining"] += 1
+                frame_id = id(p)
+
+                def _on_prop_frame_inited(fid=frame_id):
+                    if fid in inited_frame_ids:
+                        return
+                    inited_frame_ids.add(fid)
+                    pending_init["remaining"] -= 1
+                    if pending_init["remaining"] <= 0:
+                        self._dec_property_undo_guard()
+
+                p.edited.connect(_on_prop_frame_inited)
+
                 p.slider_pressed.connect(self._on_slider_started)
                 p.committed.connect(self._on_slider_committed)
                 self.selection_criteria_group_instance.layout.insertWidget(0, p)
@@ -1286,8 +1380,10 @@ class SmartPropDocument(QMainWindow):
         except Exception as e:
             print(f"[SPE] _rebuild_properties_panel: ERROR — {e}")
         finally:
-            # Decrement AFTER all singleShot(0) deferred-inits have run
-            QTimer.singleShot(0, self._dec_property_undo_guard)
+            # If no PropertyFrames were created, release the guard on the next tick.
+            # Otherwise it will be released after the last frame emits its initial edited.
+            if pending_init["remaining"] <= 0:
+                QTimer.singleShot(0, self._dec_property_undo_guard)
 
     def _dec_property_undo_guard(self):
         self._property_undo_guard = max(0, self._property_undo_guard - 1)
