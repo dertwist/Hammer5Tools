@@ -204,6 +204,18 @@ class PropertyFrame(QWidget):
     # Keys that must be skipped (no widget created)
     _SKIP_PROPS = frozenset({'m_sLabel', 'm_nElementID', 'm_sReferenceObjectID'})
 
+    # Class-level copy for batch/prewarm workers (same keys as instance only_variable_properties).
+    _ONLY_VARIABLE_PROPERTIES = (
+        'm_OutputVariableMaxZ',
+        'm_OutputVariableMinZ',
+        'm_OutputVariableMaxY',
+        'm_OutputVariableMinY',
+        'm_OutputVariableMaxX',
+        'm_OutputVariableMinX',
+        'm_OutputVariable',
+        'm_OutputChoiceVariableName',
+    )
+
     # Exact-match dispatch: maps value_class -> (WidgetClass, extra_kwargs_dict)
     # PropertyComment is NOT in this dict — handled separately (different signature)
     _EXACT_PROP_DISPATCH = None  # populated lazily by _resolve_dispatch()
@@ -242,7 +254,38 @@ class PropertyFrame(QWidget):
 
         cls._DISPATCH_RESOLVED = True
 
-    def __init__(self, value, widget_list, variables_scrollArea, element_id_generator, element=False, tree_hierarchy=None):
+    @staticmethod
+    def _is_complete_precomputed_payload(prepared) -> bool:
+        """Batch/worker dict must have every key _apply_precomputed_payload needs."""
+        if prepared is None or not isinstance(prepared, dict):
+            return False
+        need = (
+            "value",
+            "ordered_pairs",
+            "name_prefix",
+            "name",
+            "element_id",
+            "prop_class",
+        )
+        if not all(k in prepared for k in need):
+            return False
+        if not isinstance(prepared.get("value"), dict):
+            return False
+        op = prepared.get("ordered_pairs")
+        if not isinstance(op, list):
+            return False
+        return True
+
+    def __init__(
+        self,
+        value,
+        widget_list,
+        variables_scrollArea,
+        element_id_generator,
+        element=False,
+        tree_hierarchy=None,
+        precomputed=None,
+    ):
         super().__init__()
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -257,34 +300,7 @@ class PropertyFrame(QWidget):
 
         self.element_id_generator = element_id_generator
 
-        # Use ast.literal_eval only if not already a dict
-        if not isinstance(value, dict):
-            value = ast.literal_eval(value)
-
-        # Keep a raw payload containing '_class' for the worker thread.
-        # Worker expects to parse and remove '_class' itself.
-        self._worker_raw_value_with_class = dict(value)
-
-        self.name_prefix, self.name = value['_class'].split('_', 1)
-        del value['_class']
-        # Definition of the value variable before getting property data. to have priority for the variable m_bEnabled
-        self.value = {'m_bEnabled' : True}
-        self.value.update(value)
-
         self.layout = self.ui.layout
-
-        #===========================================================<  Element ID  >========================================================
-        self.element_id_generator.update_value(self.value)
-        self.element_id = self.element_id_generator.get_key(self.value)
-        debug(f'Property frame get_ElementID: {self.element_id}')
-        self.ui.element_id_display.setText(str(self.element_id))
-        if isinstance(self._worker_raw_value_with_class, dict):
-            self._worker_raw_value_with_class['m_nElementID'] = self.element_id
-
-        self.prop_class = self.name
-
-        self.ui.property_class.setText(self.name)
-
 
         self.widget_list = widget_list
 
@@ -295,17 +311,7 @@ class PropertyFrame(QWidget):
             self.ui.copy_button.clicked.connect(self.copy_action)
             self.ui.delete_button.clicked.connect(self.delete_action)
 
-        # only_variable_properties
-        self.only_variable_properties = [
-            'm_OutputVariableMaxZ',
-            'm_OutputVariableMinZ',
-            'm_OutputVariableMaxY',
-            'm_OutputVariableMinY',
-            'm_OutputVariableMaxX',
-            'm_OutputVariableMinX',
-            'm_OutputVariable',
-            'm_OutputChoiceVariableName'
-        ]
+        self.only_variable_properties = list(self._ONLY_VARIABLE_PROPERTIES)
 
         # Worker result storage
         self._ordered_pairs = None
@@ -314,7 +320,55 @@ class PropertyFrame(QWidget):
         # PySide6 often cannot disconnect(bound_method) reliably; connect once per frame.
         self._show_child_signal_connected = False
         self._context_menu_signal_connected = False
-        self._start_data_worker()
+
+        if self._is_complete_precomputed_payload(precomputed):
+            self._apply_precomputed_payload(precomputed)
+            QTimer.singleShot(0, self._finish_init)
+        else:
+            # Use ast.literal_eval only if not already a dict
+            if not isinstance(value, dict):
+                value = ast.literal_eval(value)
+
+            # Keep a raw payload containing '_class' for the worker thread.
+            self._worker_raw_value_with_class = dict(value)
+
+            if "_class" not in value:
+                raise ValueError(
+                    "PropertyFrame value dict missing '_class' and no valid precomputed payload"
+                )
+
+            self.name_prefix, self.name = value['_class'].split('_', 1)
+            del value['_class']
+            self.value = {'m_bEnabled': True}
+            self.value.update(value)
+
+            #===========================================================<  Element ID  >========================================================
+            self.element_id_generator.update_value(self.value)
+            self.element_id = self.element_id_generator.get_key(self.value)
+            debug(f'Property frame get_ElementID: {self.element_id}')
+            self.ui.element_id_display.setText(str(self.element_id))
+            if isinstance(self._worker_raw_value_with_class, dict):
+                self._worker_raw_value_with_class['m_nElementID'] = self.element_id
+
+            self.prop_class = self.name
+            self.ui.property_class.setText(self.name)
+
+            self._start_data_worker()
+
+    def _apply_precomputed_payload(self, prepared_data: dict):
+        """Apply worker/batch-prepared fields; no background worker."""
+        self.value = dict(prepared_data["value"])
+        self.name_prefix = prepared_data["name_prefix"]
+        self.name = prepared_data["name"]
+        self.element_id = prepared_data["element_id"]
+        self.prop_class = prepared_data["prop_class"]
+        self._ordered_pairs = prepared_data["ordered_pairs"]
+        self.value["m_nElementID"] = self.element_id
+        debug(f'Property frame get_ElementID (precomputed): {self.element_id}')
+        self.ui.element_id_display.setText(str(self.element_id))
+        self.ui.property_class.setText(self.name)
+        self._worker_raw_value_with_class = dict(self.value)
+        self._worker_raw_value_with_class["_class"] = f"{self.name_prefix}_{self.name}"
 
     def _finish_init(self):
         """
@@ -536,6 +590,7 @@ class PropertyFrame(QWidget):
         element_id_generator,
         widget_list,
         tree_hierarchy,
+        precomputed=None,
     ):
         """
         Reconfigure this pooled PropertyFrame with new data.
@@ -555,8 +610,17 @@ class PropertyFrame(QWidget):
         self.tree_hierarchy = tree_hierarchy
         self.element_id_generator = element_id_generator
 
+        if self._is_complete_precomputed_payload(precomputed):
+            self._apply_precomputed_payload(precomputed)
+            self.show()
+            QTimer.singleShot(0, self._finish_init)
+            return
+
         if not isinstance(value, dict):
             value = _ast.literal_eval(value)
+
+        if "_class" not in value:
+            raise ValueError("PropertyFrame._reconfigure: value dict missing '_class'")
 
         self.name_prefix, self.name = value["_class"].split("_", 1)
         value = dict(value)
