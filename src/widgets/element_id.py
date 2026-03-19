@@ -123,8 +123,12 @@ class ElementIDGenerator:
     """
     def __init__(self):
         # initial id and list of assigned ids
+        import threading
         self._current_id = 0
         self._id_list = [0]
+        # Thread-safety: worker threads may call update_value/get_key concurrently.
+        # RLock is used to allow re-entrant locking within the same thread.
+        self._lock = threading.RLock()
 
     def current_id(self):
         """Return the current element ID."""
@@ -180,23 +184,25 @@ class ElementIDGenerator:
         Update the passed dict with a unique element ID.
         When force is True, a new ID will be generated even if one exists.
         """
-        if force:
-            element_id = self.set_id(force=True)
-            self.add_id(element_id)
-        else:
-            element_id = self.get_element_id(value)
-        value.update({'m_nElementID': element_id})
-        debug(f"Updated value with element ID: {element_id}")
-        return value
+        with self._lock:
+            if force:
+                element_id = self.set_id(force=True)
+                self.add_id(element_id)
+            else:
+                element_id = self.get_element_id(value)
+            value.update({'m_nElementID': element_id})
+            debug(f"Updated value with element ID: {element_id}")
+            return value
 
     def get_key(self, value: dict):
         """
         Retrieve the element ID from the dict; if missing, force its creation.
         """
-        element_id = value.get('m_nElementID', None)
-        if element_id is None:
-            element_id = self.set_id(force=True)
-        return element_id
+        with self._lock:
+            element_id = value.get('m_nElementID', None)
+            if element_id is None:
+                element_id = self.set_id(force=True)
+            return element_id
 
     def get_last_id(self):
         """Return the highest id in the list."""
