@@ -834,11 +834,10 @@ class PropertyFrame(QWidget):
         if getattr(self, 'prop_class', None) != 'Layout2DGrid':
             return
 
-        # Helper to find widgets by value_class
+        # Cached list from _add_properties_by_class — avoids O(n) layout scan.
         def find_widget(value_class_name):
-            for i in range(self.ui.layout.count()):
-                w = self.ui.layout.itemAt(i).widget()
-                if w is not None and hasattr(w, 'value_class') and w.value_class == value_class_name:
+            for w in self._property_widgets:
+                if hasattr(w, 'value_class') and w.value_class == value_class_name:
                     return w
             return None
 
