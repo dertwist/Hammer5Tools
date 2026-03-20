@@ -107,16 +107,7 @@ class PropertyDataWorker(QRunnable):
         if self._cancelled.is_set():
             return
         try:
-            lock = getattr(self.element_id_generator, "_lock", None)
-            if lock is not None:
-                with lock:
-                    prepared = process_property_raw_value(
-                        self.raw_value,
-                        self.element_id_generator,
-                        self.prop_classes_map_cache,
-                        self.ordered_pairs_cache,
-                    )
-            else:
+            with self.element_id_generator._lock:
                 prepared = process_property_raw_value(
                     self.raw_value,
                     self.element_id_generator,
@@ -167,19 +158,10 @@ class BatchPropertyDataWorker(QRunnable):
             return
         results: list[dict] = []
         try:
-            lock = getattr(self.element_id_generator, "_lock", None)
             for raw_value in self.raw_values:
                 if self._cancelled.is_set():
                     return
-                if lock is not None:
-                    with lock:
-                        prepared = process_property_raw_value(
-                            raw_value,
-                            self.element_id_generator,
-                            self.prop_classes_map_cache,
-                            self.ordered_pairs_cache,
-                        )
-                else:
+                with self.element_id_generator._lock:
                     prepared = process_property_raw_value(
                         raw_value,
                         self.element_id_generator,

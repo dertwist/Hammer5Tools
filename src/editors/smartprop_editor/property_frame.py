@@ -244,14 +244,8 @@ class PropertyFrame(QWidget):
         ('m_ApplyColorMode', ['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'], ['ApplyColorMode']),
     )
 
-    # Fallback after exact dispatch + combobox + m_v (m_fl before m_f).
-    _PREFIX_DISPATCH = (
-        ('m_fl', PropertyFloat, {}),
-        ('m_f', PropertyFloat, {}),
-        ('m_n', PropertyFloat, {'int_bool': True}),
-        ('m_b', PropertyBool, {}),
-        ('m_s', PropertyString, {'expression_bool': False, 'placeholder': 'String'}),
-    )
+    # Populated lazily in _resolve_dispatch() — ordered prefix fallthrough.
+    _PREFIX_DISPATCH: list = []
 
     # Exact-match dispatch: maps value_class -> (WidgetClass, extra_kwargs_dict)
     # PropertyComment is NOT in this dict — handled separately (different signature)
@@ -288,6 +282,16 @@ class PropertyFrame(QWidget):
                                                            'force_variable': True, 'placeholder': 'Variable name',
                                                            'filter_types': ['String','Int','Float','Bool']}),
         }
+
+        # Most frequent first; first matching substring wins after exact + combobox miss.
+        cls._PREFIX_DISPATCH = [
+            ('m_fl', PropertyFloat, {}),
+            ('m_f', PropertyFloat, {}),
+            ('m_n', PropertyFloat, {'int_bool': True}),
+            ('m_v', PropertyVector3D, {}),
+            ('m_b', PropertyBool, {}),
+            ('m_s', PropertyString, {'expression_bool': False, 'placeholder': 'String'}),
+        ]
 
         cls._DISPATCH_RESOLVED = True
 
@@ -515,15 +519,26 @@ class PropertyFrame(QWidget):
                     add_instance()
                     return
 
-            if 'm_v' in value_class:
-                property_instance = PropertyVector3D.acquire(
-                    value=val,
-                    value_class=value_class,
-                    variables_scrollArea=self.variables_scrollArea,
-                    element_id_generator=self.element_id_generator,
-                )
-                add_instance()
-                return
+            for prefix, widget_cls, extra_kw in PropertyFrame._PREFIX_DISPATCH:
+                if prefix in value_class:
+                    if hasattr(widget_cls, 'acquire') and callable(getattr(widget_cls, 'acquire')):
+                        property_instance = widget_cls.acquire(
+                            value=val,
+                            value_class=value_class,
+                            variables_scrollArea=self.variables_scrollArea,
+                            element_id_generator=self.element_id_generator,
+                            **extra_kw,
+                        )
+                    else:
+                        property_instance = widget_cls(
+                            value=val,
+                            value_class=value_class,
+                            variables_scrollArea=self.variables_scrollArea,
+                            element_id_generator=self.element_id_generator,
+                            **extra_kw,
+                        )
+                    add_instance()
+                    return
 
             if value_class in self.only_variable_properties:
                 property_instance = PropertyVariableOutput(
@@ -595,27 +610,6 @@ class PropertyFrame(QWidget):
                 add_instance()
                 return
 
-            for prefix, widget_cls, extra_kw in PropertyFrame._PREFIX_DISPATCH:
-                if prefix in value_class:
-                    if hasattr(widget_cls, 'acquire') and callable(getattr(widget_cls, 'acquire')):
-                        property_instance = widget_cls.acquire(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kw,
-                        )
-                    else:
-                        property_instance = widget_cls(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kw,
-                        )
-                    add_instance()
-                    return
-
             property_instance = PropertyLegacy(
                 value=val,
                 value_class=value_class,
@@ -656,20 +650,14 @@ class PropertyFrame(QWidget):
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
     def on_edited(self):
-
         self.value = {
             '_class': f'{self.name_prefix}_{self.name}',
             'm_nElementID': self.element_id,
         }
-
-        try:
-            for widget in self._property_widgets:
-                new_value = getattr(widget, 'value', None)
-                if new_value:
-                    self.value.update(new_value)
-        except Exception:
-            pass
-
+        for w in self._property_widgets:
+            v = getattr(w, 'value', None)
+            if v:
+                self.value.update(v)
         self.edited.emit()
 
     def update_self(self):
@@ -720,6 +708,7 @@ class PropertyFrame(QWidget):
         self._ordered_pairs = None
 
         self._clear_widgets()
+        self._property_widgets = []
 
         self.variables_scrollArea = variables_scrollArea
         self.widget_list = widget_list

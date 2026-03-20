@@ -19,15 +19,55 @@ from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixi
 
 
 PREWARMED_CLASSES = [
+    # Elements
     "Model",
     "Group",
+    "SmartProp",
+    "PlaceMultiple",
+    "PlaceInSphere",
+    "PlaceOnPath",
+    "FitOnLine",
+    "PickOne",
+    "ModelEntity",
+    "PropPhysics",
+    "PropDynamic",
+    "BendDeformer",
+    "MidpointDeformer",
+    "Layout2DGrid",
+    # Operators
     "RandomRotation",
+    "RandomRotationSnapped",
     "RandomScale",
     "RandomOffset",
     "Scale",
+    "Translate",
+    "Rotate",
+    "SetTintColor",
+    "MaterialOverride",
+    "SetVariable",
+    "SaveState",
+    "RestoreState",
+    "CreateLocator",
+    "CreateRotator",
+    "CreateSizer",
+    "ModifyState",
+    # Filters
+    "Probability",
+    "Expression",
+    "SurfaceProperties",
+    "SurfaceAngle",
+    "VariableValue",
+    # Selection criteria
+    "PathPosition",
+    "EndCap",
+    "LinearLength",
+    "ChoiceWeight",
+    "TraceInDirection",
+    # Comment
+    "Comment",
 ]
-POOL_SIZE_PER_CLASS = 8
-TOTAL_POOL_CAP = 256
+POOL_SIZE_PER_CLASS = 4
+TOTAL_POOL_CAP = 512
 
 
 class PropertyWidgetPool(QObject):
