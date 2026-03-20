@@ -192,34 +192,57 @@ class PropertyWidgetPool(QObject):
 
         dummy_value_factory(class_name: str) -> dict | None
         """
-        from src.editors.smartprop_editor.property_frame import PropertyFrame
-
         from PySide6.QtCore import QTimer
 
         holder = PooledPropertyMixin._get_holder()
+        delay_ms = 0
 
         for cls_name in PREWARMED_CLASSES:
             for _ in range(POOL_SIZE_PER_CLASS):
                 val = dummy_value_factory(cls_name)
                 if val is None:
                     continue
-
-                frame = PropertyFrame(
-                    value=val,
-                    widget_list=widget_list,
-                    variables_scrollArea=variables_scrollArea,
-                    element_id_generator=element_id_generator,
-                    tree_hierarchy=tree_hierarchy,
-                    parent=holder,
-                )
-                frame.hide()
-
                 QTimer.singleShot(
-                    100, lambda f=frame, c=cls_name: self._store_prewarmed(c, f)
+                    delay_ms,
+                    lambda c=cls_name, v=val, vs=variables_scrollArea, eid=element_id_generator,
+                           wl=widget_list, th=tree_hierarchy, h=holder: self._construct_and_store(
+                        c, v, vs, eid, wl, th, h
+                    ),
                 )
+                delay_ms += 10
+
+    def _construct_and_store(
+        self,
+        cls_name,
+        val,
+        variables_scrollArea,
+        element_id_generator,
+        widget_list,
+        tree_hierarchy,
+        holder,
+    ):
+        """Build one prewarmed frame; defer _store_prewarmed one tick after init phases."""
+        from src.editors.smartprop_editor.property_frame import PropertyFrame
+        from PySide6.QtCore import QTimer
+
+        if self._total >= TOTAL_POOL_CAP:
+            return
+        if len(self._pool[cls_name]) >= POOL_SIZE_PER_CLASS:
+            return
+
+        frame = PropertyFrame(
+            value=val,
+            widget_list=widget_list,
+            variables_scrollArea=variables_scrollArea,
+            element_id_generator=element_id_generator,
+            tree_hierarchy=tree_hierarchy,
+            parent=holder,
+        )
+        frame.hide()
+        QTimer.singleShot(0, lambda f=frame, c=cls_name: self._store_prewarmed(c, f))
 
     def _store_prewarmed(self, cls_name, frame):
-        """Called 100ms after prewarm frame construction — safe to clear now."""
+        """Called one event-loop tick after frame construction — safe to clear widgets."""
         if self._total >= TOTAL_POOL_CAP:
             frame.deleteLater()
             return

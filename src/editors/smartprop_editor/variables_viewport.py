@@ -295,6 +295,7 @@ class SmartPropEditorVariableViewport(QWidget):
                 )
             )
             self._var_committed_state = new_state
+            CompletionUtils.invalidate_cache(self.ui.variables_scrollArea)
 
     def _on_delete_requested(self, variable_frame):
         """Handle delete_requested signal: snapshot → remove → snapshot → push undo."""
