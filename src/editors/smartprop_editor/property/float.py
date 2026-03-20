@@ -8,8 +8,9 @@ from src.widgets import FloatWidget
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
+from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
 
-class PropertyFloat(QWidget):
+class PropertyFloat(QWidget, PooledPropertyMixin):
     edited = Signal()
     slider_pressed = Signal()
     committed = Signal()
@@ -23,6 +24,8 @@ class PropertyFloat(QWidget):
         self.value = value
         self.int_bool = int_bool
         self.variables_scrollArea = variables_scrollArea
+        self._slider_range = slider_range
+        self._filter_types = ['Int', 'Float'] if int_bool else ['Float', 'Int']
 
         self.ui.logic_switch.wheelEvent = lambda event: None
 
@@ -71,7 +74,12 @@ class PropertyFloat(QWidget):
 
 
         # Variable setup
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=['Float', 'Int'], variable_name=self.value_class, element_id_generator=element_id_generator)
+        self.variable = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            filter_types=self._filter_types,
+            variable_name=self.value_class,
+            element_id_generator=element_id_generator,
+        )
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.variable)
@@ -145,19 +153,22 @@ class PropertyFloat(QWidget):
             self.spacer.hide()
 
     def on_changed(self):
+        self._update_display_and_value()
+        self.edited.emit()
+
+    def _update_display_and_value(self):
         self.logic_switch()
-        
+
         # Setup type-aware completer for expression mode without filters
         if self.ui.logic_switch.currentIndex() == 3:  # Expression mode
             CompletionUtils.setup_completer_for_widget(
                 self.text_line,
                 self.variables_scrollArea,
                 filter_types=None,  # No filtering - show all variable types
-                context='numeric'
+                context='numeric',
             )
-        
+
         self.change_value()
-        self.edited.emit()
         
     def change_value(self):
         # Default
@@ -193,3 +204,106 @@ class PropertyFloat(QWidget):
 
     def get_variables(self, search_term=None):
         return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
+
+    # ===== Pooling implementation =====
+    @classmethod
+    def _pool_key_from_kwargs(cls, int_bool=False, slider_range=None, **kwargs):
+        slider_range = slider_range if slider_range is not None else [0, 0]
+        filter_types = ['Int', 'Float'] if int_bool else ['Float', 'Int']
+        return (bool(int_bool), tuple(filter_types), tuple(slider_range))
+
+    def _current_pool_key(self):
+        return (bool(self.int_bool), tuple(getattr(self, "_filter_types", ['Float', 'Int'])), tuple(getattr(self, "_slider_range", [0, 0])))
+
+    def reconfigure(
+        self,
+        element_id_generator,
+        value_class,
+        value,
+        variables_scrollArea,
+        int_bool=False,
+        slider_range=None,
+        **kwargs,
+    ):
+        """
+        Reconfigure this instance for a new float/int property without reconstruction.
+        """
+        # Normalize slider_range to match constructor behavior.
+        if slider_range is None:
+            slider_range = getattr(self, "_slider_range", [0, 0])
+
+        children_to_block = [
+            self.ui.logic_switch,
+            self.float_widget,
+            self.text_line,
+            self.variable.combobox,
+            self.ui.property_class,
+        ]
+        for c in children_to_block:
+            c.blockSignals(True)
+
+        try:
+            # STEP 2: Update identity attributes FIRST.
+            self.value_class = value_class
+            self.value = value
+            self.int_bool = int_bool
+            self.variables_scrollArea = variables_scrollArea
+            self.element_id_generator = element_id_generator
+            self._slider_range = slider_range
+            self._filter_types = ['Int', 'Float'] if int_bool else ['Float', 'Int']
+
+            # STEP 3: Reset child components holding external references.
+            self.variable.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=self._filter_types,
+                variable_name=value_class,
+                element_id_generator=element_id_generator,
+            )
+            self.expression_editor.reset(variables_scrollArea)
+
+            # STEP 4: Reset CompletingPlainTextEdit state flags.
+            self.text_line.completion_tail = ''
+            self.text_line.setPlainText('0')
+
+            # STEP 5: Update the label text (pure display, no signal path).
+            output = re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class)
+            output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
+            self.ui.property_class.setText(output)
+
+            # STEP 6: Update stylesheet if int_bool changed.
+            if int_bool:
+                self.ui.property_class.setStyleSheet("""
+                    border:0px; background-color: rgba(255,255,255,0);
+                    font: 8pt "Segoe UI"; padding-right: 16px;
+                    color: rgb(108, 135, 255);
+                """)
+            else:
+                self.ui.property_class.setStyleSheet("""
+                    border:0px; background-color: rgba(255,255,255,0);
+                    font: 8pt "Segoe UI"; padding-right: 16px;
+                    color: rgb(181, 255, 239);
+                """)
+
+            # STEP 7: Apply the new mode/value.
+            self.ui.logic_switch.setCurrentIndex(0)
+            self.text_line.setPlainText('0')
+
+            if isinstance(value, dict):
+                if 'm_Expression' in value:
+                    self.ui.logic_switch.setCurrentIndex(3)
+                    self.text_line.setPlainText(str(value['m_Expression']))
+                if 'm_SourceName' in value:
+                    self.ui.logic_switch.setCurrentIndex(2)
+                    self.variable.combobox.set_variable(str(value['m_SourceName']))
+            elif isinstance(value, (float, int)):
+                self.ui.logic_switch.setCurrentIndex(1)
+                self.float_widget.set_value(value)
+
+            # signals were blocked; sync add-button visibility manually.
+            self.variable.update_add_button_visibility(self.variable.combobox.currentText())
+        finally:
+            for c in children_to_block:
+                c.blockSignals(False)
+
+        # STEP 9: Sync display state and compute self.value without emitting edited.
+        self._update_display_and_value()
