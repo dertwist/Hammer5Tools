@@ -48,6 +48,7 @@ from src.editors.smartprop_editor.objects import (
 from src.editors.smartprop_editor.vsmart import (
     VsmartOpen, VsmartSave, serialization_hierarchy_items, deserialize_hierarchy_item
 )
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.property_frame import PropertyFrame
 from src.editors.smartprop_editor.property_data_worker import BatchPropertyDataWorker
 from src.editors.smartprop_editor.properties_group_frame import PropertiesGroupFrame
@@ -586,7 +587,7 @@ class SmartPropDocument(QMainWindow):
         mod_layout = getattr(self, "_modifier_load_mod_layout", None)
         pending_init = getattr(self, "_modifier_load_pending_init", None)
         inited_frame_ids = getattr(self, "_modifier_load_inited_ids", None)
-        delay_ms = getattr(self, "_modifier_load_delay_ms", 40)
+        delay_ms = getattr(self, "_modifier_load_delay_ms", 16)
 
         if not chunks or mod_layout is None or pending_init is None or inited_frame_ids is None:
             self._modifier_load_finish_suppress()
@@ -632,7 +633,7 @@ class SmartPropDocument(QMainWindow):
         inited_frame_ids,
         tree_item=None,
         chunk_size=4,
-        delay_ms=40,
+        delay_ms=16,
     ):
         """
         Insert modifier PropertyFrames in chunks so 35 modifiers do not all start
@@ -1889,6 +1890,7 @@ class SmartPropDocument(QMainWindow):
         # Sync the variables viewport's committed-state reference so the next
         # user edit correctly uses the restored state as its "before" snapshot.
         self.variable_viewport._sync_committed_state()
+        CompletionUtils.invalidate_cache(self.variable_viewport.ui.variables_scrollArea)
 
     # ======================================[Choices Panel Undo]========================================
     def _snapshot_choices(self):
