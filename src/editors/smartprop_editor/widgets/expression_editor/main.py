@@ -231,6 +231,13 @@ class ExpressionEditor(QToolButton):
         self.clicked.connect(lambda: self.open_expression_editor(target_text_field))
         self.variables_scrollArea = variables_scrollArea
 
+    def reset(self, variables_scrollArea):
+        """
+        Update the variables source for completion lookups.
+        This widget reads `variables_scrollArea` when the editor dialog is opened.
+        """
+        self.variables_scrollArea = variables_scrollArea
+
     def _get_variables_with_types(self):
         """Extract variable names and their types from the variables scroll area."""
         variables_info = {}
