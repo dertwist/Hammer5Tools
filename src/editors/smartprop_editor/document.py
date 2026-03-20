@@ -230,8 +230,99 @@ class SmartPropDocument(QMainWindow):
 
         set_qdock_tab_style(self.findChildren)
 
+        # Pre-warm pooled property widgets after first paint.
+        # This pays widget setup cost at startup rather than on first node selection.
+        QTimer.singleShot(500, self._prewarm_property_pools)
+
     def is_modified(self):
         return self._modified
+
+    def _prewarm_property_pools(self):
+        """
+        Create and immediately release a small number of each common pooled
+        property widget type so their constructors are paid during idle time.
+        """
+        try:
+            dummy_sa = self.variable_viewport.ui.variables_scrollArea
+            dummy_eid = self.element_id_generator
+
+            PREWARM_COUNT = 4  # keep in sync with typical progressive chunking
+
+            from src.editors.smartprop_editor.property.float import PropertyFloat
+            from src.editors.smartprop_editor.property.bool import PropertyBool
+            from src.editors.smartprop_editor.property.string import PropertyString
+            from src.editors.smartprop_editor.property.vector3d import PropertyVector3D
+            from src.editors.smartprop_editor.property.combobox import PropertyCombobox
+            from src.editors.smartprop_editor.property.color import PropertyColor
+
+            # Common float: non-int with a wide slider range.
+            float_kwargs = dict(
+                element_id_generator=dummy_eid,
+                value_class='m_flWidth',
+                value=0.0,
+                variables_scrollArea=dummy_sa,
+                int_bool=False,
+                slider_range=[0, 4096],
+            )
+
+            bool_kwargs = dict(
+                value_class='m_bEnabled',
+                value=False,
+                variables_scrollArea=dummy_sa,
+                element_id_generator=dummy_eid,
+            )
+
+            string_kwargs = dict(
+                element_id_generator=dummy_eid,
+                value_class='m_sModelName',
+                value='',
+                variables_scrollArea=dummy_sa,
+                expression_bool=False,
+                only_string=False,
+                only_variable=False,
+                force_variable=False,
+                placeholder='String',
+                filter_types=None,  # use PropertyString default
+            )
+
+            color_kwargs = dict(
+                value_class='m_HandleColor',
+                value=[255, 255, 255],
+                variables_scrollArea=dummy_sa,
+                element_id_generator=dummy_eid,
+            )
+
+            vector_kwargs = dict(
+                value_class='m_v',
+                value=[0.0, 0.0, 0.0],
+                variables_scrollArea=dummy_sa,
+                element_id_generator=dummy_eid,
+            )
+
+            # One common combobox: PickMode.
+            combobox_kwargs = dict(
+                value_class='m_nPickMode',
+                value='LARGEST_FIRST',
+                variables_scrollArea=dummy_sa,
+                items=['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'],
+                filter_types=['PickMode'],
+                element_id_generator=dummy_eid,
+            )
+
+            for _ in range(PREWARM_COUNT):
+                for wcls, kwargs in [
+                    (PropertyBool, bool_kwargs),
+                    (PropertyFloat, float_kwargs),
+                    (PropertyString, string_kwargs),
+                    (PropertyVector3D, vector_kwargs),
+                    (PropertyCombobox, combobox_kwargs),
+                    (PropertyColor, color_kwargs),
+                ]:
+                    w = wcls.acquire(**kwargs)
+                    wcls.release(w)
+        except Exception:
+            # Prewarm must never prevent the editor from loading.
+            pass
 
     # ======================================[Properties groups]========================================
     def properties_groups_init(self):
@@ -634,6 +725,11 @@ class SmartPropDocument(QMainWindow):
                                 getattr(widget, "prop_class", None), widget
                             )
                         else:
+                            try:
+                                # Return pooled child widgets to their pools first.
+                                widget._clear_widgets()
+                            except Exception:
+                                pass
                             widget.deleteLater()
         except Exception as error:
             print(error)
@@ -1618,6 +1714,11 @@ class SmartPropDocument(QMainWindow):
                                 getattr(widget, "prop_class", None), widget
                             )
                         else:
+                            try:
+                                # Return pooled child widgets to their pools first.
+                                widget._clear_widgets()
+                            except Exception:
+                                pass
                             widget.deleteLater()
 
             # Show/hide panel groups
