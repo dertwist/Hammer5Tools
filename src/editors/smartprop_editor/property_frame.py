@@ -285,8 +285,9 @@ class PropertyFrame(QWidget):
         element=False,
         tree_hierarchy=None,
         precomputed=None,
+        parent=None,
     ):
-        super().__init__()
+        super().__init__(parent)
         self.ui = Ui_Form()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)

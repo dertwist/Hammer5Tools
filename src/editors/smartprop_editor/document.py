@@ -568,11 +568,13 @@ class SmartPropDocument(QMainWindow):
                     value=precomputed["value"],
                     widget_list=mod_layout,
                     precomputed=precomputed,
+                    parent=self,
                     **kwargs,
                 )
             return PropertyFrame(
                 value=val,
                 widget_list=mod_layout,
+                parent=self,
                 **kwargs,
             )
 
@@ -747,7 +749,8 @@ class SmartPropDocument(QMainWindow):
                     variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                     element=True,
                     tree_hierarchy=self.ui.tree_hierarchy_widget,
-                    element_id_generator=self.element_id_generator
+                    element_id_generator=self.element_id_generator,
+                    parent=self,
                 )
                 property_instance.edited.connect(self.update_tree_item_value)
 
@@ -783,7 +786,8 @@ class SmartPropDocument(QMainWindow):
                             value=copy.deepcopy(entry),
                             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                             tree_hierarchy=self.ui.tree_hierarchy_widget,
-                            element_id_generator=self.element_id_generator
+                            element_id_generator=self.element_id_generator,
+                            parent=self,
                         )
                         prop_instance.edited.connect(self.update_tree_item_value)
 
@@ -1079,7 +1083,8 @@ class SmartPropDocument(QMainWindow):
             value=element_value,
             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
             tree_hierarchy=self.ui.tree_hierarchy_widget,
-            element_id_generator=self.element_id_generator
+            element_id_generator=self.element_id_generator,
+            parent=self,
         )
         operator_instance.edited.connect(self.update_tree_item_value)
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
@@ -1137,7 +1142,8 @@ class SmartPropDocument(QMainWindow):
                 value=data,
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 tree_hierarchy=self.ui.tree_hierarchy_widget,
-                element_id_generator=self.element_id_generator
+                element_id_generator=self.element_id_generator,
+                parent=self,
             )
             operator_instance.edited.connect(self.update_tree_item_value)
             self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
@@ -1167,7 +1173,8 @@ class SmartPropDocument(QMainWindow):
             value=element_value,
             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
             tree_hierarchy=self.ui.tree_hierarchy_widget,
-            element_id_generator=self.element_id_generator
+            element_id_generator=self.element_id_generator,
+            parent=self,
         )
         operator_instance.edited.connect(self.update_tree_item_value)
         self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
@@ -1186,7 +1193,8 @@ class SmartPropDocument(QMainWindow):
                 value=data,
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 tree_hierarchy=self.ui.tree_hierarchy_widget,
-                element_id_generator=self.element_id_generator
+                element_id_generator=self.element_id_generator,
+                parent=self,
             )
             operator_instance.edited.connect(self.update_tree_item_value)
             self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
@@ -1741,7 +1749,8 @@ class SmartPropDocument(QMainWindow):
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                 element=True,
                 tree_hierarchy=self.ui.tree_hierarchy_widget,
-                element_id_generator=self.element_id_generator
+                element_id_generator=self.element_id_generator,
+                parent=self,
             )
             prop.edited.connect(self.update_tree_item_value)
 
@@ -1776,7 +1785,8 @@ class SmartPropDocument(QMainWindow):
                     value=copy.deepcopy(entry),
                     variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                     tree_hierarchy=self.ui.tree_hierarchy_widget,
-                    element_id_generator=self.element_id_generator
+                    element_id_generator=self.element_id_generator,
+                    parent=self,
                 )
                 p.edited.connect(self.update_tree_item_value)
 
