@@ -20,6 +20,7 @@ from PySide6.QtGui import (
 
 from keyvalues3 import kv3_to_json
 from src.editors.smartprop_editor.variable_frame import VariableFrame
+from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.objects import (
     variables_list,
 )
@@ -80,6 +81,7 @@ class SmartPropEditorVariableViewport(QWidget):
         else:
             index = index + 1
         self.ui.variables_scrollArea.insertWidget(index, variable)
+        CompletionUtils.invalidate_cache(self.ui.variables_scrollArea)
 
     def duplicate_variable(self, __data, __index):
         self._flush_var_edit_if_pending()
@@ -314,6 +316,7 @@ class SmartPropEditorVariableViewport(QWidget):
             VariablesSnapshotCommand(self._document, old_state, new_state, "Delete Variable")
         )
         self._sync_committed_state()
+        CompletionUtils.invalidate_cache(self.ui.variables_scrollArea)
 
     def _flush_var_edit_if_pending(self):
         """Sync committed state before a structural operation."""
