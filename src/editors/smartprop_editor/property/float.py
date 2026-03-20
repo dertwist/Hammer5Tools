@@ -15,8 +15,8 @@ class PropertyFloat(QWidget, PooledPropertyMixin):
     slider_pressed = Signal()
     committed = Signal()
 
-    def __init__(self, element_id_generator, value_class, value, variables_scrollArea, int_bool=False, slider_range=[0, 0]):
-        super().__init__()
+    def __init__(self, element_id_generator, value_class, value, variables_scrollArea, int_bool=False, slider_range=[0, 0], parent=None):
+        super().__init__(parent)
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(False)
