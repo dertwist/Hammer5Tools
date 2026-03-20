@@ -41,12 +41,12 @@ class PooledPropertyMixin:
             # parentless + shown widget becomes a native top-level flash. The
             # caller must show() after reparenting (e.g. insertWidget).
             return inst
-        # Slow path: construct with no parent → would be a top-level window
-        # until parented. Parent to the hidden holder immediately so the OS
-        # never creates a visible frame for pre-warm or first acquire.
-        inst = cls(*args, **kwargs)
+        # Slow path: parent must be set before QWidget.__init__ / setupUi return,
+        # or Qt may create a native top-level window during .ui load (flash on
+        # Windows). Post-init setParent() is too late.
         holder = cls._get_holder()
-        inst.setParent(holder)
+        ctor_kw = {**kwargs, "parent": holder}
+        inst = cls(*args, **ctor_kw)
         inst.hide()
         return inst
 

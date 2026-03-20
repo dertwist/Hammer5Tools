@@ -32,7 +32,8 @@ class MaterialReplacementRow(QWidget):
             variables_scrollArea=variables_scrollArea,
             expression_bool=False,
             placeholder=placeholder,
-            filter_types=filter_types
+            filter_types=filter_types,
+            parent=self,
         )
         self.original_widget.ui.property_class.setText("Origin")
         self.original_widget.edited.connect(self._on_changed)
@@ -44,7 +45,8 @@ class MaterialReplacementRow(QWidget):
             variables_scrollArea=variables_scrollArea,
             expression_bool=False,
             placeholder=placeholder,
-            filter_types=filter_types
+            filter_types=filter_types,
+            parent=self,
         )
         self.replacement_widget.ui.property_class.setText("Target")
         self.replacement_widget.edited.connect(self._on_changed)
