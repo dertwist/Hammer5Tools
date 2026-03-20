@@ -407,6 +407,9 @@ class PropertyFrame(QWidget):
                 property_instance.edited.connect(self.on_edited)
                 property_instance.setAcceptDrops(False)
                 self.ui.layout.insertWidget(0, property_instance)
+                # Pooled widgets return from acquire() hidden (never shown in
+                # acquire to avoid top-level flash); show after reparenting.
+                property_instance.show()
                 if hasattr(property_instance, 'slider_pressed'):
                     property_instance.slider_pressed.connect(self.slider_pressed)
                 if hasattr(property_instance, 'committed'):
