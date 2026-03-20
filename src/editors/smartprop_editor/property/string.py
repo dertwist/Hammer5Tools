@@ -11,8 +11,8 @@ from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixi
 
 class PropertyString(QWidget, PooledPropertyMixin):
     edited = Signal()
-    def __init__(self, element_id_generator, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False, filter_types=None):
-        super().__init__()
+    def __init__(self, element_id_generator, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False, filter_types=None, parent=None):
+        super().__init__(parent)
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(False)
