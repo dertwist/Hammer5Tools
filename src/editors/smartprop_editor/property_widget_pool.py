@@ -15,6 +15,8 @@ from collections import defaultdict
 
 from PySide6.QtCore import QObject
 
+from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
+
 
 PREWARMED_CLASSES = [
     "Model",
@@ -59,6 +61,7 @@ class PropertyWidgetPool(QObject):
         from src.editors.smartprop_editor.property_frame import PropertyFrame
 
         use_pc = PropertyFrame._is_complete_precomputed_payload(precomputed)
+        holder = PooledPropertyMixin._get_holder()
 
         if self._pool[prop_class]:
             frame = self._pool[prop_class].pop()
@@ -81,6 +84,7 @@ class PropertyWidgetPool(QObject):
                 element_id_generator=element_id_generator,
                 tree_hierarchy=tree_hierarchy,
                 precomputed=precomputed,
+                parent=holder,
             )
 
         return PropertyFrame(
@@ -89,6 +93,7 @@ class PropertyWidgetPool(QObject):
             variables_scrollArea=variables_scrollArea,
             element_id_generator=element_id_generator,
             tree_hierarchy=tree_hierarchy,
+            parent=holder,
         )
 
     def release(self, prop_class, frame):
@@ -127,7 +132,7 @@ class PropertyWidgetPool(QObject):
         frame._clear_widgets()
         frame.hide()
         try:
-            frame.setParent(None)
+            frame.setParent(PooledPropertyMixin._get_holder())
         except Exception:
             pass
         per_key.append(frame)
@@ -151,6 +156,8 @@ class PropertyWidgetPool(QObject):
 
         from PySide6.QtCore import QTimer
 
+        holder = PooledPropertyMixin._get_holder()
+
         for cls_name in PREWARMED_CLASSES:
             for _ in range(POOL_SIZE_PER_CLASS):
                 val = dummy_value_factory(cls_name)
@@ -163,6 +170,7 @@ class PropertyWidgetPool(QObject):
                     variables_scrollArea=variables_scrollArea,
                     element_id_generator=element_id_generator,
                     tree_hierarchy=tree_hierarchy,
+                    parent=holder,
                 )
                 frame.hide()
 
@@ -182,7 +190,7 @@ class PropertyWidgetPool(QObject):
         frame._clear_widgets()
         frame.hide()
         try:
-            frame.setParent(None)
+            frame.setParent(PooledPropertyMixin._get_holder())
         except Exception:
             pass
         per_key.append(frame)
