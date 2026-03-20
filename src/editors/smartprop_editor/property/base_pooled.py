@@ -1,3 +1,4 @@
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget
 
 
@@ -22,6 +23,9 @@ class PooledPropertyMixin:
             holder = QWidget()
             holder.setObjectName("_PoolHolder")
             holder.setVisible(False)
+            # Never allocate a visible native window for the holder or its
+            # children while they are parked here (prevents startup flash).
+            holder.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, True)
             # Never show; we only parent pooled instances to keep them alive.
             PooledPropertyMixin._holder = holder
         return PooledPropertyMixin._holder
@@ -33,9 +37,18 @@ class PooledPropertyMixin:
         if pool:
             inst = pool.pop()
             inst.reconfigure(*args, **kwargs)
-            inst.show()
+            # Do NOT show() here: pre-warm calls acquire() then release() and a
+            # parentless + shown widget becomes a native top-level flash. The
+            # caller must show() after reparenting (e.g. insertWidget).
             return inst
-        return cls(*args, **kwargs)
+        # Slow path: construct with no parent → would be a top-level window
+        # until parented. Parent to the hidden holder immediately so the OS
+        # never creates a visible frame for pre-warm or first acquire.
+        inst = cls(*args, **kwargs)
+        holder = cls._get_holder()
+        inst.setParent(holder)
+        inst.hide()
+        return inst
 
     @classmethod
     def release(cls, inst):
