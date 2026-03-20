@@ -7,8 +7,9 @@ from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
+from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
 
-class PropertyBool(QWidget):
+class PropertyBool(QWidget, PooledPropertyMixin):
     edited = Signal()
     def __init__(self, value_class, value, variables_scrollArea, element_id_generator):
         super().__init__()
@@ -103,20 +104,27 @@ class PropertyBool(QWidget):
                 self.variable_frame.hide()
             self.ui.value.hide()
 
-    def on_changed(self):
+    def _update_display_and_value(self):
+        """
+        Pure state update (no edited.emit()).
+        Safe to call during pooling/reconfigure with signals blocked.
+        """
         self.logic_switch()
         self.ui.value.setText(str(self.ui.value.isChecked()))
-        
+
         # Setup type-aware completer for expression mode without filters
         if self.ui.logic_switch.currentIndex() == 3:  # Expression mode
             CompletionUtils.setup_completer_for_widget(
                 self.text_line,
                 self.variables_scrollArea,
                 filter_types=None,  # No filtering - show all variable types
-                context='general'
+                context='general',
             )
-        
+
         self.change_value()
+
+    def on_changed(self):
+        self._update_display_and_value()
         self.edited.emit()
         
     def change_value(self):
@@ -145,3 +153,81 @@ class PropertyBool(QWidget):
 
     def get_variables(self, search_term=None):
         return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
+
+    # ===== Pooling implementation =====
+    @classmethod
+    def _pool_key_from_kwargs(cls, **kwargs):
+        # PropertyBool always uses Bool-only variable filtering.
+        return ("Bool",)
+
+    def _current_pool_key(self):
+        return ("Bool",)
+
+    def reconfigure(
+        self,
+        value_class,
+        value,
+        variables_scrollArea,
+        element_id_generator,
+        **kwargs,
+    ):
+        children_to_block = [
+            self.ui.logic_switch,
+            self.ui.value,
+            self.text_line,
+            self.variable.combobox,
+            self.ui.property_class,
+        ]
+
+        for c in children_to_block:
+            c.blockSignals(True)
+
+        try:
+            # Identity attributes (used by change_value / variable reset).
+            self.value_class = value_class
+            self.value = value
+            self.variables_scrollArea = variables_scrollArea
+            self.element_id_generator = element_id_generator
+
+            # Reset child components holding external references.
+            self.variable.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=['Bool'],
+                variable_name=value_class,
+                element_id_generator=element_id_generator,
+            )
+            self.expression_editor.reset(variables_scrollArea)
+
+            # Reset edit widgets/flags.
+            self.text_line.completion_tail = ''
+            self.text_line.setPlainText('')
+            self.ui.value.setChecked(False)
+
+            # Reset display container state.
+            self.ui.logic_switch.setCurrentIndex(0)
+
+            # Update label text (mirrors __init__ logic).
+            output = re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class)
+            output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
+            self.ui.property_class.setText(output)
+
+            # Apply new value (matches __init__ behavior).
+            if isinstance(value, dict):
+                if 'm_Expression' in value:
+                    self.ui.logic_switch.setCurrentIndex(3)
+                    self.text_line.setPlainText(str(value['m_Expression']))
+                if 'm_SourceName' in value:
+                    self.ui.logic_switch.setCurrentIndex(2)
+                    self.variable.combobox.set_variable(str(value['m_SourceName']))
+            elif isinstance(value, bool):
+                self.ui.logic_switch.setCurrentIndex(1)
+                self.ui.value.setChecked(value)
+            # Because we block signals during reconfigure, we need to manually
+            # sync the add-button visibility with the combobox current text.
+            self.variable.update_add_button_visibility(self.variable.combobox.currentText())
+        finally:
+            for c in children_to_block:
+                c.blockSignals(False)
+
+        # Sync display state and compute self.value without emitting.
+        self._update_display_and_value()

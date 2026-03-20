@@ -433,22 +433,37 @@ class PropertyFrame(QWidget):
                         **extra_kwargs
                     )
                 else:
-                    property_instance = widget_cls(
-                        value=val,
-                        value_class=value_class,
-                        variables_scrollArea=self.variables_scrollArea,
-                        element_id_generator=self.element_id_generator,
-                        **extra_kwargs
-                    )
+                    # Prefer pooling if the widget supports it.
+                    if hasattr(widget_cls, "acquire") and callable(getattr(widget_cls, "acquire")):
+                        property_instance = widget_cls.acquire(
+                            value=val,
+                            value_class=value_class,
+                            variables_scrollArea=self.variables_scrollArea,
+                            element_id_generator=self.element_id_generator,
+                            **extra_kwargs,
+                        )
+                    else:
+                        property_instance = widget_cls(
+                            value=val,
+                            value_class=value_class,
+                            variables_scrollArea=self.variables_scrollArea,
+                            element_id_generator=self.element_id_generator,
+                            **extra_kwargs
+                        )
 
                 add_instance()
                 return
 
             if value_class == 'm_bEnabled':
-                property_instance = PropertyBool(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator)
+                property_instance = PropertyBool.acquire(
+                    value=val,
+                    value_class=value_class,
+                    variables_scrollArea=self.variables_scrollArea,
+                    element_id_generator=self.element_id_generator,
+                )
                 add_instance()
             elif 'm_nPickMode' in value_class:
-                property_instance = PropertyCombobox(value=val, value_class=value_class,variables_scrollArea=self.variables_scrollArea,items=['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'],filter_types=['PickMode'],element_id_generator=self.element_id_generator);
+                property_instance = PropertyCombobox.acquire(value=val, value_class=value_class,variables_scrollArea=self.variables_scrollArea,items=['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'],filter_types=['PickMode'],element_id_generator=self.element_id_generator);
                 add_instance()
             elif value_class == 'm_sLabel':
                 pass
@@ -459,56 +474,66 @@ class PropertyFrame(QWidget):
                 add_instance()
             elif value_class == 'm_sReferenceObjectID':
                 pass
-            elif 'm_nScaleMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NONE','SCALE_END_TO_FIT','SCALE_EQUALLY','SCALE_MAXIMAIZE'], filter_types=['ScaleMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_CoordinateSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_DirectionSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['DirectionSpace'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_GridPlacementMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SEGMENT','FILL'], filter_types=['GridPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_GridArrangement' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SEGMENT','FILL'], filter_types=['GridPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_GridOriginMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['CENTER','CORNER'], filter_types=['GridOriginMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_nNoHitResult' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NOTHING','DISCARD','MOVE_TO_START','MOVE_TO_END'], filter_types=['TraceNoHit'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_SelectionMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM','FIRST','SPECIFIC'], filter_types=['ChoiceSelectionMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_PlacementMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SPHERE','CIRCLE','RING'], filter_types=['RadiusPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_DistributionMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM','UNIFORM'], filter_types=['DistributionMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_SpacingSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_sPhysicsType' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['normal','multiplayer'], filter_types=['String'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_DetailObjectFadeLevel' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NEAR','MEDIUM','FAR','ALWAYS'], filter_types=['String'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_RotationAxes' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['X','Y','Z','XY','XZ','YZ','XYZ'], filter_types=['Axes'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_HandleShape' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SQUARE','DIAMOND','CIRCLE'], filter_types=['HandleShape'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_nDeformableAttachmentMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['DEFAULT','ATTACH'], filter_types=['SmartPropDeformableAttachMode_t'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_nDeformableOrientationMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['DEFAULT','FOLLOW','IGNORE'], filter_types=['SmartPropDeformableOrientMode_t'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_PointSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_PathSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_UpDirectionSpace' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_PlaceAtPositions' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ALL','NTH','START_AND_END','CONTROL_POINTS'], filter_types=['PathPositions'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_Mode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT','MULTIPLY_CURRENT','REPLACE'], filter_types=['ApplyColorMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_ApplyColorMode' in value_class: property_instance = PropertyCombobox(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT','MULTIPLY_CURRENT','REPLACE'], filter_types=['ApplyColorMode'], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_v' in value_class: property_instance = PropertyVector3D(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator= self.element_id_generator); add_instance()
-            elif 'm_flBendPoint' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, slider_range=[0,1], element_id_generator=self.element_id_generator); add_instance()
-            elif value_class in ('m_flWidth','m_flLength','m_flSpacingWidth','m_flSpacingLength','m_flAlternateShiftWidth','m_flAlternateShiftLength'): property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, slider_range=[0,4096], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_fl' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_f' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_HandleSize' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
-            elif value_class in ('m_nCountW','m_nCountL'): property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, slider_range=[0,256], element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_n' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_SpecificChildIndex' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_ColorSelection' in value_class: property_instance = PropertyFloat(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_HandleColor' in value_class: property_instance = PropertyColor(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_nScaleMode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NONE','SCALE_END_TO_FIT','SCALE_EQUALLY','SCALE_MAXIMAIZE'], filter_types=['ScaleMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_CoordinateSpace' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_DirectionSpace' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['DirectionSpace'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_GridPlacementMode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SEGMENT','FILL'], filter_types=['GridPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_GridArrangement' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SEGMENT','FILL'], filter_types=['GridPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_GridOriginMode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['CENTER','CORNER'], filter_types=['GridOriginMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_nNoHitResult' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NOTHING','DISCARD','MOVE_TO_START','MOVE_TO_END'], filter_types=['TraceNoHit'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_SelectionMode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM','FIRST','SPECIFIC'], filter_types=['ChoiceSelectionMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_PlacementMode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SPHERE','CIRCLE','RING'], filter_types=['RadiusPlacementMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_DistributionMode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['RANDOM','UNIFORM'], filter_types=['DistributionMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_SpacingSpace' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_sPhysicsType' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['normal','multiplayer'], filter_types=['String'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_DetailObjectFadeLevel' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['NEAR','MEDIUM','FAR','ALWAYS'], filter_types=['String'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_RotationAxes' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['X','Y','Z','XY','XZ','YZ','XYZ'], filter_types=['Axes'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_HandleShape' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['SQUARE','DIAMOND','CIRCLE'], filter_types=['HandleShape'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_nDeformableAttachmentMode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['DEFAULT','ATTACH'], filter_types=['SmartPropDeformableAttachMode_t'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_nDeformableOrientationMode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['DEFAULT','FOLLOW','IGNORE'], filter_types=['SmartPropDeformableOrientMode_t'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_PointSpace' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_PathSpace' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_UpDirectionSpace' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ELEMENT','OBJECT','WORLD'], filter_types=['CoordinateSpace'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_PlaceAtPositions' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['ALL','NTH','START_AND_END','CONTROL_POINTS'], filter_types=['PathPositions'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_Mode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT','MULTIPLY_CURRENT','REPLACE'], filter_types=['ApplyColorMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_ApplyColorMode' in value_class: property_instance = PropertyCombobox.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, items=['MULTIPLY_OBJECT','MULTIPLY_CURRENT','REPLACE'], filter_types=['ApplyColorMode'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_v' in value_class: property_instance = PropertyVector3D.acquire(
+                value=val,
+                value_class=value_class,
+                variables_scrollArea=self.variables_scrollArea,
+                element_id_generator=self.element_id_generator,
+            ); add_instance()
+            elif 'm_flBendPoint' in value_class: property_instance = PropertyFloat.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, slider_range=[0,1], element_id_generator=self.element_id_generator); add_instance()
+            elif value_class in ('m_flWidth','m_flLength','m_flSpacingWidth','m_flSpacingLength','m_flAlternateShiftWidth','m_flAlternateShiftLength'): property_instance = PropertyFloat.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, slider_range=[0,4096], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_fl' in value_class: property_instance = PropertyFloat.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_f' in value_class: property_instance = PropertyFloat.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_HandleSize' in value_class: property_instance = PropertyFloat.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
+            elif value_class in ('m_nCountW','m_nCountL'): property_instance = PropertyFloat.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, slider_range=[0,256], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_n' in value_class: property_instance = PropertyFloat.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_SpecificChildIndex' in value_class: property_instance = PropertyFloat.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_ColorSelection' in value_class: property_instance = PropertyFloat.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, int_bool=True, element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_HandleColor' in value_class: property_instance = PropertyColor.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_ColorChoices' in value_class: property_instance = PropertyColorMatch(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_MaterialReplacements' in value_class: property_instance = PropertyMaterialReplacements(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_b' in value_class: property_instance = PropertyBool(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_s' in value_class: property_instance = PropertyString(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, placeholder='String', element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_MaterialGroupName' in value_class: property_instance = PropertyString(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, placeholder='Material group name', element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_Expression' in value_class: property_instance = PropertyString(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=True, placeholder='Expression example: var_bool ? var_sizer * var_multiply', element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_StateName' in value_class: property_instance = PropertyString(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='State name', element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_b' in value_class: property_instance = PropertyBool.acquire(
+                value=val,
+                value_class=value_class,
+                variables_scrollArea=self.variables_scrollArea,
+                element_id_generator=self.element_id_generator,
+            ); add_instance()
+            elif 'm_s' in value_class: property_instance = PropertyString.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, placeholder='String', element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_MaterialGroupName' in value_class: property_instance = PropertyString.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, placeholder='Material group name', element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_Expression' in value_class: property_instance = PropertyString.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=True, placeholder='Expression example: var_bool ? var_sizer * var_multiply', element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_StateName' in value_class: property_instance = PropertyString.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=True, placeholder='State name', element_id_generator=self.element_id_generator); add_instance()
             elif value_class in self.only_variable_properties: property_instance = PropertyVariableOutput(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
-            elif 'm_VariableName' in value_class: property_instance = PropertyString(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=False, only_variable=True, force_variable=True, placeholder='Variable name', filter_types=['String','Int','Float','Bool'], element_id_generator=self.element_id_generator); add_instance()
+            elif 'm_VariableName' in value_class: property_instance = PropertyString.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=False, only_string=False, only_variable=True, force_variable=True, placeholder='Variable name', filter_types=['String','Int','Float','Bool'], element_id_generator=self.element_id_generator); add_instance()
             elif 'm_Comment' in value_class: property_instance = PropertyComment(value=val, value_class=value_class); add_instance()
             elif 'm_VariableValue' in value_class:
                 if val is None:
                     property_instance = PropertyVariableValue(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
                 else:
                     if 'm_TargetName' not in val:
-                        property_instance = PropertyString(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=True, element_id_generator=self.element_id_generator); add_instance()
+                        property_instance = PropertyString.acquire(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, expression_bool=True, element_id_generator=self.element_id_generator); add_instance()
                     else:
                         property_instance = PropertyVariableValue(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); add_instance()
             elif 'm_VariableComparison' in value_class: property_instance = PropertyComparison(value=val, value_class=value_class, variables_scrollArea=self.variables_scrollArea, element_id_generator=self.element_id_generator); self.ui.property_class.setText('Variable Comparison'); add_instance()
@@ -580,8 +605,17 @@ class PropertyFrame(QWidget):
             item = self.ui.layout.takeAt(0)
             w = item.widget()
             if w is not None:
-                w.setParent(None)
-                w.deleteLater()
+                try:
+                    # Pooled widgets should be returned to their pool.
+                    if hasattr(type(w), "release") and callable(getattr(type(w), "release")):
+                        type(w).release(w)
+                    else:
+                        w.setParent(None)
+                        w.deleteLater()
+                except Exception:
+                    # If pooling fails for any reason, fall back to safe deletion.
+                    w.setParent(None)
+                    w.deleteLater()
 
     def _reconfigure(
         self,

@@ -7,8 +7,9 @@ from PySide6.QtCore import Signal
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
+from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
 
-class PropertyCombobox(QWidget):
+class PropertyCombobox(QWidget, PooledPropertyMixin):
     edited = Signal()
     def __init__(self, value_class, value, variables_scrollArea, items, filter_types, element_id_generator):
         super().__init__()
@@ -23,6 +24,8 @@ class PropertyCombobox(QWidget):
         self.value_class = value_class
         self.value = value
         self.variables_scrollArea = variables_scrollArea
+        self._pool_items = list(items)
+        self._pool_filter_types = list(filter_types)
 
         # Pre-calculate the output for property_class to reduce repeated compilations
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2',
@@ -122,19 +125,22 @@ class PropertyCombobox(QWidget):
             self.spacer.hide()
 
     def on_changed(self):
+        self._update_display_and_value()
+        self.edited.emit()
+
+    def _update_display_and_value(self):
         self.logic_switch()
-        
+
         # Setup type-aware completer for expression mode without filters
         if self.ui.logic_switch.currentIndex() == 3:  # Expression mode
             CompletionUtils.setup_completer_for_widget(
                 self.text_line,
                 self.variables_scrollArea,
                 filter_types=None,  # No filtering - show all variable types
-                context='general'
+                context='general',
             )
-        
+
         self.change_value()
-        self.edited.emit()
 
     def change_value(self):
         # Default
@@ -162,3 +168,99 @@ class PropertyCombobox(QWidget):
 
     def get_variables(self, search_term=None):
         return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
+
+    # ===== Pooling implementation =====
+    @classmethod
+    def _pool_key_from_kwargs(cls, items=None, filter_types=None, **kwargs):
+        items = items if items is not None else []
+        filter_types = filter_types if filter_types is not None else []
+        return (tuple(items), tuple(filter_types))
+
+    def _current_pool_key(self):
+        return (
+            tuple(getattr(self, "_pool_items", [])),
+            tuple(getattr(self, "_pool_filter_types", [])),
+        )
+
+    def reconfigure(
+        self,
+        value_class,
+        value,
+        variables_scrollArea,
+        items,
+        filter_types,
+        element_id_generator,
+        **kwargs,
+    ):
+        children_to_block = [
+            self.ui.logic_switch,
+            self.ui.value,
+            self.text_line,
+            self.variable.combobox,
+            self.ui.property_class,
+        ]
+
+        for c in children_to_block:
+            c.blockSignals(True)
+
+        try:
+            self.value_class = value_class
+            self.value = value
+            self.variables_scrollArea = variables_scrollArea
+            self.element_id_generator = element_id_generator
+            self._pool_items = list(items)
+            self._pool_filter_types = list(filter_types)
+
+            # Update label text (mirrors __init__ logic).
+            output = re.sub(
+                r'([a-z0-9])([A-Z])',
+                r'\1 \2',
+                re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class),
+            )
+            self.ui.property_class.setText(output)
+            self.ui.logic_switch.setItemText(1, output)
+
+            # Reset value combobox items.
+            self.ui.value.clear()
+            self.ui.value.addItems(self._pool_items)
+
+            # Reset child components holding external references.
+            self.variable.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=list(filter_types),
+                variable_name=value_class,
+                element_id_generator=element_id_generator,
+            )
+            self.expression_editor.reset(variables_scrollArea)
+
+            # Reset edit widgets.
+            self.text_line.completion_tail = ''
+            self.text_line.setPlainText('')
+
+            # Reset base state.
+            self.ui.logic_switch.setCurrentIndex(0)
+
+            # Apply new value.
+            if isinstance(value, dict):
+                if 'm_Expression' in value:
+                    self.ui.logic_switch.setCurrentIndex(3)
+                    self.text_line.setPlainText(str(value['m_Expression']))
+                if 'm_SourceName' in value:
+                    self.ui.logic_switch.setCurrentIndex(2)
+                    self.variable.combobox.set_variable(value['m_SourceName'])
+            elif isinstance(value, str):
+                self.ui.logic_switch.setCurrentIndex(1)
+                self.ui.value.setCurrentText(value)
+
+            # signals were blocked; ensure add-button visibility is correct.
+            self.variable.update_add_button_visibility(self.variable.combobox.currentText())
+
+            self._pool_key = self._pool_key_from_kwargs(
+                items=self._pool_items,
+                filter_types=self._pool_filter_types,
+            )
+        finally:
+            for c in children_to_block:
+                c.blockSignals(False)
+
+        self._update_display_and_value()
