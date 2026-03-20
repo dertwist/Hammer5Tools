@@ -8,9 +8,10 @@ from src.widgets import FloatWidget
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
+from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
 
 
-class PropertyVector3D(QWidget):
+class PropertyVector3D(QWidget, PooledPropertyMixin):
     edited = Signal()
     slider_pressed = Signal()
     committed = Signal()
@@ -274,6 +275,10 @@ class PropertyVector3D(QWidget):
             self.variable_logic_switch.hide()
 
     def on_changed(self):
+        self._update_display_and_value()
+        self.edited.emit()
+
+    def _update_display_and_value(self):
         # Setup type-aware completer for expression mode without filters
         CompletionUtils.setup_completer_for_widget(
             self.text_line_x,
@@ -298,7 +303,6 @@ class PropertyVector3D(QWidget):
         self.logic_switch()
 
         self.change_value()
-        self.edited.emit()
 
     def change_value(self):
         if self.ui.logic_switch.currentIndex() == 0:
@@ -325,3 +329,146 @@ class PropertyVector3D(QWidget):
 
     def get_variables(self, search_term=None):
         return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
+
+    # ===== Pooling implementation =====
+    @classmethod
+    def _pool_key_from_kwargs(cls, **kwargs):
+        # Vector3D widget structure is fixed; pool key is constant.
+        return ("Vector3D",)
+
+    def _current_pool_key(self):
+        return ("Vector3D",)
+
+    def reconfigure(
+        self,
+        value_class,
+        value,
+        variables_scrollArea,
+        element_id_generator,
+        **kwargs,
+    ):
+        children_to_block = [
+            self.ui.logic_switch,
+            self.ui.comboBox_x,
+            self.ui.comboBox_y,
+            self.ui.comboBox_z,
+            self.float_widget_x,
+            self.float_widget_y,
+            self.float_widget_z,
+            self.text_line_x,
+            self.text_line_y,
+            self.text_line_z,
+            self.variable_logic_switch.combobox,
+            self.variable_x.combobox,
+            self.variable_y.combobox,
+            self.variable_z.combobox,
+        ]
+
+        for c in children_to_block:
+            c.blockSignals(True)
+
+        try:
+            # Identity attributes (used by label + variable reset names).
+            self.value_class = value_class
+            self.variables_scrollArea = variables_scrollArea
+            self.element_id_generator = element_id_generator
+
+            # Update label text (mirrors __init__).
+            intermediate = self._pattern_phase1.sub('', self.value_class)
+            output = self._pattern_phase2.sub(r'\1 \2', intermediate)
+            self.ui.property_class.setText(output)
+
+            # Reset sub-widgets that depend on document-wide variables_scrollArea.
+            self.variable_logic_switch.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=['Vector3D'],
+                variable_name=value_class,
+                element_id_generator=element_id_generator,
+            )
+            self.expression_editor_x.reset(variables_scrollArea)
+            self.expression_editor_y.reset(variables_scrollArea)
+            self.expression_editor_z.reset(variables_scrollArea)
+
+            # Component variable widgets.
+            filter_types_float = ['Float', 'Int']
+            self.variable_x.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=filter_types_float,
+                variable_name=f"{self.value_class}_x",
+                element_id_generator=element_id_generator,
+            )
+            self.variable_y.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=filter_types_float,
+                variable_name=f"{self.value_class}_y",
+                element_id_generator=element_id_generator,
+            )
+            self.variable_z.reset(
+                variables_layout=variables_scrollArea,
+                filter_types=filter_types_float,
+                variable_name=f"{self.value_class}_z",
+                element_id_generator=element_id_generator,
+            )
+
+            # Reset component UI to a safe default (prevents stale content when switching modes).
+            self.ui.logic_switch.setCurrentIndex(0)
+            self.ui.comboBox_x.setCurrentIndex(0)
+            self.ui.comboBox_y.setCurrentIndex(0)
+            self.ui.comboBox_z.setCurrentIndex(0)
+
+            self.float_widget_x.set_value(0.0)
+            self.float_widget_y.set_value(0.0)
+            self.float_widget_z.set_value(0.0)
+
+            self.text_line_x.completion_tail = ''
+            self.text_line_y.completion_tail = ''
+            self.text_line_z.completion_tail = ''
+            self.text_line_x.setPlainText('')
+            self.text_line_y.setPlainText('')
+            self.text_line_z.setPlainText('')
+
+            # Apply new value (mirrors __init__ initialization).
+            def apply_component(in_value, line, combo_box, variable, float_widget):
+                if isinstance(in_value, dict):
+                    if 'm_Expression' in in_value:
+                        line.setPlainText(str(in_value['m_Expression']))
+                        combo_box.setCurrentIndex(2)
+                    if 'm_SourceName' in in_value:
+                        variable.combobox.set_variable(in_value['m_SourceName'])
+                        combo_box.setCurrentIndex(1)
+                elif isinstance(in_value, (int, float)):
+                    float_widget.set_value(in_value)
+                    combo_box.setCurrentIndex(0)
+                else:
+                    line.setPlainText(str(in_value))
+                    combo_box.setCurrentIndex(0)
+
+            if isinstance(value, dict):
+                if 'm_Components' in value:
+                    self.ui.logic_switch.setCurrentIndex(2)
+                    comps = value.get('m_Components', [])
+                    if len(comps) >= 3:
+                        apply_component(comps[0], self.text_line_x, self.ui.comboBox_x, self.variable_x, self.float_widget_x)
+                        apply_component(comps[1], self.text_line_y, self.ui.comboBox_y, self.variable_y, self.float_widget_y)
+                        apply_component(comps[2], self.text_line_z, self.ui.comboBox_z, self.variable_z, self.float_widget_z)
+                if 'm_SourceName' in value:
+                    self.ui.logic_switch.setCurrentIndex(1)
+                    self.variable_logic_switch.combobox.set_variable(value['m_SourceName'])
+            elif isinstance(value, list):
+                self.ui.logic_switch.setCurrentIndex(2)
+                if len(value) >= 3:
+                    apply_component(value[0], self.text_line_x, self.ui.comboBox_x, self.variable_x, self.float_widget_x)
+                    apply_component(value[1], self.text_line_y, self.ui.comboBox_y, self.variable_y, self.float_widget_y)
+                    apply_component(value[2], self.text_line_z, self.ui.comboBox_z, self.variable_z, self.float_widget_z)
+
+            # signals were blocked; ensure add-button visibility is correct for any set_variable paths.
+            self.variable_logic_switch.update_add_button_visibility(self.variable_logic_switch.combobox.currentText())
+            self.variable_x.update_add_button_visibility(self.variable_x.combobox.currentText())
+            self.variable_y.update_add_button_visibility(self.variable_y.combobox.currentText())
+            self.variable_z.update_add_button_visibility(self.variable_z.combobox.currentText())
+        finally:
+            for c in children_to_block:
+                c.blockSignals(False)
+
+        # Sync display state and compute self.value without emitting edited.
+        self._update_display_and_value()

@@ -17,6 +17,29 @@ class ComboboxVariables(ComboboxDynamicItems):
         self.filter_types = filter_types
         self.currentTextChanged.connect(self.changed_var)
 
+    def reset(self, variables_layout, filter_types, variable_name_hint=None):
+        """
+        Reconfigure this combobox for a new variables source without reconstructing.
+        Caller should block signals on this widget/container during the reset.
+        """
+        try:
+            # Disconnect only the internal handler; other listeners (if any) remain.
+            self.currentTextChanged.disconnect(self.changed_var)
+        except Exception:
+            pass
+
+        self.variables_scrollArea = variables_layout
+        self.filter_types = filter_types
+
+        self.clear()
+        self.addItem('None')
+        self.setCurrentIndex(0)
+
+        try:
+            self.currentTextChanged.connect(self.changed_var)
+        except Exception:
+            pass
+
     def updateItems(self):
         """Updating widget items on click. Filter items depends on their type if you need"""
         self.currentTextChanged.disconnect(self.changed_var)
@@ -112,6 +135,43 @@ class ComboboxVariablesWidget(QWidget):
         # Set initial visibility of add button.
         self.update_add_button_visibility(self.combobox.currentText())
         self.combobox.currentTextChanged.connect(self.update_add_button_visibility)
+
+    def reset(self, variables_layout, filter_types, variable_name, element_id_generator):
+        """
+        Reconfigure for a new property without reconstructing.
+        Caller should block signals on this widget/container during the reset.
+        """
+        self.element_id_generator = element_id_generator
+        self.variables_layout = variables_layout
+        self.filter_types = filter_types
+
+        # Normalize variable_name exactly as __init__ does.
+        if variable_name is None:
+            vn = "new_var"
+        else:
+            vn = variable_name
+            vn = vn.replace('m_v', '')
+            vn = vn.replace('m_fl', '')
+            vn = vn.replace('m_s', '')
+            vn = vn.replace('m_n', '')
+            vn = vn.replace('m_b', '')
+            vn = vn.replace('m_', '')
+        self.variable_name = vn
+
+        self.variable_type = (
+            'String'
+            if filter_types is None
+            else (filter_types[0] if isinstance(filter_types, list) and filter_types else 'String')
+        )
+
+        self.combobox.reset(
+            variables_layout=variables_layout,
+            filter_types=filter_types,
+            variable_name_hint=variable_name,
+        )
+
+        # Ensure the add button matches the reset empty ("None") state.
+        self.update_add_button_visibility(self.combobox.currentText())
 
     def update_add_button_visibility(self, value):
         """Show the add button if value is blank; otherwise, hide it."""
