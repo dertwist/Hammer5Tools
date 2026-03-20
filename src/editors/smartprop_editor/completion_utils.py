@@ -15,16 +15,12 @@ class CompletionUtils:
 
     @staticmethod
     def invalidate_cache(variables_scrollArea=None):
-        """
-        Clear cached completions. If variables_scrollArea is given, only evict
-        entries for that layout; otherwise clear the entire cache.
-        """
         if variables_scrollArea is None:
             CompletionUtils._completions_cache.clear()
-            return
-        sid = id(variables_scrollArea)
-        for k in list(CompletionUtils._completions_cache.keys()):
-            if k[0] == sid:
+        else:
+            sid = id(variables_scrollArea)
+            keys = [k for k in CompletionUtils._completions_cache if k[0] == sid]
+            for k in keys:
                 del CompletionUtils._completions_cache[k]
 
     @staticmethod
@@ -288,18 +284,11 @@ class CompletionUtils:
             filter_types: List of variable types to include (None = all types)
             context: Context for completions ('general', 'hide_expression', 'comparison', etc.)
         """
-        if variables_scrollArea is None:
-            ft_key: tuple = ()
-        else:
-            ft_key = tuple(filter_types) if filter_types is not None else ()
-        cache_key = (id(variables_scrollArea), ft_key, context)
-        cached = CompletionUtils._completions_cache.get(cache_key)
-        if cached is not None:
-            text_widget.completions.setStringList(cached)
-            return
-
-        completions = CompletionUtils.generate_type_aware_completions(
-            variables_scrollArea, filter_types, context
-        )
-        CompletionUtils._completions_cache[cache_key] = list(completions)
-        text_widget.completions.setStringList(completions)
+        key = (id(variables_scrollArea), tuple(filter_types or []), context)
+        cached = CompletionUtils._completions_cache.get(key)
+        if cached is None:
+            cached = CompletionUtils.generate_type_aware_completions(
+                variables_scrollArea, filter_types, context
+            )
+            CompletionUtils._completions_cache[key] = cached
+        text_widget.completions.setStringList(cached)
