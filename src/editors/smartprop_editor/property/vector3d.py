@@ -21,8 +21,8 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
     _pattern_phase2 = re.compile(r'([a-z0-9])([A-Z])')
 
 
-    def __init__(self, value_class, value, variables_scrollArea, element_id_generator):
-        super().__init__()
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator, parent=None):
+        super().__init__(parent)
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.element_id_generator = element_id_generator
