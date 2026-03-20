@@ -26,8 +26,8 @@ PREWARMED_CLASSES = [
     "RandomOffset",
     "Scale",
 ]
-POOL_SIZE_PER_CLASS = 3
-TOTAL_POOL_CAP = 128
+POOL_SIZE_PER_CLASS = 8
+TOTAL_POOL_CAP = 256
 
 
 class PropertyWidgetPool(QObject):

@@ -8,7 +8,25 @@ from src.editors.smartprop_editor.objects import expression_completer
 
 class CompletionUtils:
     """Utility class for generating type-aware completions."""
-    
+
+    # Cache completion lists: avoid rebuilding on every on_changed keystroke.
+    # Key: (id(scroll_area), tuple(filter_types), context) -> list[str]
+    _completions_cache: dict = {}
+
+    @staticmethod
+    def invalidate_cache(variables_scrollArea=None):
+        """
+        Clear cached completions. If variables_scrollArea is given, only evict
+        entries for that layout; otherwise clear the entire cache.
+        """
+        if variables_scrollArea is None:
+            CompletionUtils._completions_cache.clear()
+            return
+        sid = id(variables_scrollArea)
+        for k in list(CompletionUtils._completions_cache.keys()):
+            if k[0] == sid:
+                del CompletionUtils._completions_cache[k]
+
     @staticmethod
     def get_available_variables_with_types(variables_scrollArea):
         """Get list of available variables with their types from the widget list."""
@@ -270,7 +288,18 @@ class CompletionUtils:
             filter_types: List of variable types to include (None = all types)
             context: Context for completions ('general', 'hide_expression', 'comparison', etc.)
         """
+        if variables_scrollArea is None:
+            ft_key: tuple = ()
+        else:
+            ft_key = tuple(filter_types) if filter_types is not None else ()
+        cache_key = (id(variables_scrollArea), ft_key, context)
+        cached = CompletionUtils._completions_cache.get(cache_key)
+        if cached is not None:
+            text_widget.completions.setStringList(cached)
+            return
+
         completions = CompletionUtils.generate_type_aware_completions(
             variables_scrollArea, filter_types, context
         )
+        CompletionUtils._completions_cache[cache_key] = list(completions)
         text_widget.completions.setStringList(completions)
