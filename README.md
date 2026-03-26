@@ -1,9 +1,7 @@
-
-<p align="center">
-    <a href="https://github.com/dertwist/Hammer5Tools">
-        <img alt="header" src="readme/header_0.png" width="512">
-    </a>
-</p>
+<h1 align="center">
+  <img src="https://hammer5tools.github.io/static/logo.png" width="64" valign="middle" alt="Hammer 5 Tools Logo">
+  &nbsp;Hammer 5 Tools
+</h1>
 
 <p align="center">
     <a href="https://github.com/dertwist/Hammer5Tools/releases/latest">
