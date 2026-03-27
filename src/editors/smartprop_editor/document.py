@@ -329,7 +329,8 @@ class SmartPropDocument(QMainWindow):
     def properties_groups_init(self):
         self.modifiers_group_instance = PropertiesGroupFrame(
             widget_list=self.ui.properties_layout,
-            name=str("Modifiers")
+            name=str("Modifiers"),
+            group_type="modifier"
         )
         self.ui.properties_layout.insertWidget(0, self.modifiers_group_instance)
         self.modifiers_group_instance.add_signal.connect(self.add_an_operator)
@@ -337,11 +338,14 @@ class SmartPropDocument(QMainWindow):
 
         self.selection_criteria_group_instance = PropertiesGroupFrame(
             widget_list=self.ui.properties_layout,
-            name=str("Section criteria")
+            name=str("Section criteria"),
+            group_type="selection_criteria"
         )
         self.selection_criteria_group_instance.add_signal.connect(self.add_a_selection_criteria)
         self.ui.properties_layout.insertWidget(1, self.selection_criteria_group_instance)
         self.selection_criteria_group_instance.paste_signal.connect(self.paste_selection_criteria)
+
+        self._selected_property_frame = None
 
         self.properties_groups_hide()
 
@@ -356,6 +360,19 @@ class SmartPropDocument(QMainWindow):
         self.ui.properties_spacer.show()
         self.modifiers_group_instance.show()
         self.selection_criteria_group_instance.show()
+
+    def _on_property_frame_selected(self, frame):
+        for layout in (self.modifiers_group_instance.layout, self.selection_criteria_group_instance.layout):
+            for i in range(layout.count()):
+                widget = layout.itemAt(i).widget()
+                if isinstance(widget, PropertyFrame) and widget is not frame:
+                    widget.set_selected(False)
+        frame.set_selected(True)
+        self._selected_property_frame = frame
+
+    def _setup_property_frame_group(self, frame, group_type):
+        frame.set_group_type(group_type)
+        frame.selected_signal.connect(lambda f=frame: self._on_property_frame_selected(f))
 
     # ======================================[Progressive modifier frames (large m_Modifiers)]========================================
     def _modifier_batch_scroll_target(self):
@@ -522,6 +539,7 @@ class SmartPropDocument(QMainWindow):
 
     def _wire_modifier_property_frame(self, frame, pending_init, inited_frame_ids):
         frame.edited.connect(self.update_tree_item_value)
+        self._setup_property_frame_group(frame, "modifier")
         pending_init["remaining"] += 1
         frame_id = id(frame)
 
@@ -791,6 +809,7 @@ class SmartPropDocument(QMainWindow):
                             parent=self,
                         )
                         prop_instance.edited.connect(self.update_tree_item_value)
+                        self._setup_property_frame_group(prop_instance, "selection_criteria")
 
                         pending_init["remaining"] += 1
                         frame_id = id(prop_instance)
@@ -1088,6 +1107,7 @@ class SmartPropDocument(QMainWindow):
             parent=self,
         )
         operator_instance.edited.connect(self.update_tree_item_value)
+        self._setup_property_frame_group(operator_instance, "modifier")
         self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
         self.update_tree_item_value()
 
@@ -1147,6 +1167,7 @@ class SmartPropDocument(QMainWindow):
                 parent=self,
             )
             operator_instance.edited.connect(self.update_tree_item_value)
+            self._setup_property_frame_group(operator_instance, "modifier")
             self.modifiers_group_instance.layout.insertWidget(1, operator_instance)
         else:
             print("Clipboard data format is not valid.")
@@ -1178,6 +1199,7 @@ class SmartPropDocument(QMainWindow):
             parent=self,
         )
         operator_instance.edited.connect(self.update_tree_item_value)
+        self._setup_property_frame_group(operator_instance, "selection_criteria")
         self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
         self.update_tree_item_value()
 
@@ -1198,6 +1220,7 @@ class SmartPropDocument(QMainWindow):
                 parent=self,
             )
             operator_instance.edited.connect(self.update_tree_item_value)
+            self._setup_property_frame_group(operator_instance, "selection_criteria")
             self.selection_criteria_group_instance.layout.insertWidget(1, operator_instance)
         else:
             print("Clipboard data format is not valid.")
@@ -1790,6 +1813,7 @@ class SmartPropDocument(QMainWindow):
                     parent=self,
                 )
                 p.edited.connect(self.update_tree_item_value)
+                self._setup_property_frame_group(p, "selection_criteria")
 
                 pending_init["remaining"] += 1
                 frame_id = id(p)
