@@ -1,17 +1,12 @@
 from PySide6.QtWidgets import QMenu, QApplication
-from PySide6.QtCore import Qt, QMimeData, QTimer
-from PySide6.QtGui import QCursor, QDrag,QAction
+from PySide6.QtCore import Qt, QMimeData, QTimer, QPoint
+from PySide6.QtGui import QCursor, QDrag, QAction, QPixmap
 
 class PropertyMethods:
     @staticmethod
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            drag_start_position = None
-            drag_timer = QTimer()
-            drag_start_position = event.pos()
-            drag_timer.setSingleShot(True)
-            drag_timer.timeout.connect(lambda: self.startDragEvent())
-            drag_timer.start(1000)
+            self._drag_start_position = event.pos()
 
     @staticmethod
     def startDragEvent():
@@ -20,19 +15,71 @@ class PropertyMethods:
 
     @staticmethod
     def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.LeftButton:
-            drag = QDrag(self)
-            mime_data = QMimeData()
-            mime_data.setText(self.name)
-            drag.setMimeData(mime_data)
-            drag.exec()
+        if not (event.buttons() & Qt.LeftButton):
+            return
+        start = getattr(self, '_drag_start_position', None)
+        if start is None:
+            return
+        if (event.pos() - start).manhattanLength() < 4:
+            return
+
+        drag = QDrag(self)
+        mime_data = QMimeData()
+        mime_data.setText(self.name)
+
+        # Include group_type in mime data if available
+        group_type = getattr(self, '_group_type', None)
+        if group_type:
+            mime_data.setData('application/x-smartprop-group-type', group_type.encode('utf-8'))
+
+        drag.setMimeData(mime_data)
+
+        # Capture drag ghost from the header frame
+        header = getattr(getattr(self, 'ui', None), 'frame', None)
+        if header is not None:
+            pixmap = header.grab()
+            drag.setPixmap(pixmap)
+            drag.setHotSpot(event.pos() - header.pos())
+
+        drag.exec()
 
     @staticmethod
     def dragEnterEvent(self, event):
         event.accept()
 
     @staticmethod
+    def dragMoveEvent(self, event):
+        widget_list = getattr(self, 'widget_list', None)
+        if widget_list is not None and hasattr(widget_list, '_show_drop_indicator'):
+            # Compute target index based on cursor Y position within the layout
+            layout = widget_list if hasattr(widget_list, 'count') else getattr(widget_list, 'layout', lambda: None)()
+            if layout is not None and hasattr(layout, 'count'):
+                pos = self.mapToGlobal(event.position().toPoint() if hasattr(event.position(), 'toPoint') else event.pos())
+                best_index = layout.count()
+                for i in range(layout.count()):
+                    item = layout.itemAt(i)
+                    w = item.widget() if item else None
+                    if w is not None and w.isVisible():
+                        widget_center = w.mapToGlobal(QPoint(0, w.height() // 2))
+                        if pos.y() < widget_center.y():
+                            best_index = i
+                            break
+                widget_list._show_drop_indicator(best_index)
+        event.accept()
+
+    @staticmethod
+    def dragLeaveEvent(self, event):
+        widget_list = getattr(self, 'widget_list', None)
+        if widget_list is not None and hasattr(widget_list, '_hide_drop_indicator'):
+            widget_list._hide_drop_indicator()
+
+    @staticmethod
     def dropEvent(self, event):
+        # Hide drop indicator
+        widget_list = getattr(self, 'widget_list', None)
+        if widget_list is not None and hasattr(widget_list, '_hide_drop_indicator'):
+            widget_list._hide_drop_indicator()
+
         if event.source() == self:
             return
 

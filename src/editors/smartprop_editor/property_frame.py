@@ -39,6 +39,8 @@ class PropertyFrame(QWidget):
     edited = Signal()
     slider_pressed = Signal()
     committed = Signal()
+    selected_signal = Signal()
+    clicked = Signal(str)
 
     # A lookup dictionary to avoid multiple if/elif checks; cached at class level
     _prop_classes_map_cache = {
@@ -333,6 +335,8 @@ class PropertyFrame(QWidget):
         self.ui.setupUi(self)
         # Mirrors insertWidget(0, ...) order — avoids O(n) layout scan in on_edited.
         self._property_widgets: list = []
+        self._is_selected = False
+        self._group_type = None
         self.setAcceptDrops(True)
         self.ui.property_class.setAcceptDrops(False)
         self.variables_scrollArea = variables_scrollArea
@@ -921,9 +925,19 @@ class PropertyFrame(QWidget):
                 self.customContextMenuRequested.connect(self.show_context_menu)
                 self._context_menu_signal_connected = True
 
-    mousePressEvent = PropertyMethods.mousePressEvent
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_start_position = event.pos()
+            self.selected_signal.emit()
+            prefix = getattr(self, 'name_prefix', None)
+            name = getattr(self, 'prop_class', None)
+            if prefix and name:
+                self.clicked.emit(f"{prefix}_{name}")
+
     mouseMoveEvent = PropertyMethods.mouseMoveEvent
     dragEnterEvent = PropertyMethods.dragEnterEvent
+    dragMoveEvent = PropertyMethods.dragMoveEvent
+    dragLeaveEvent = PropertyMethods.dragLeaveEvent
 
     def dropEvent(self, event):
         if event.source() == self:
@@ -955,7 +969,48 @@ class PropertyFrame(QWidget):
 
     def copy_action(self):
         clipboard = QApplication.clipboard()
-        clipboard.setText(f"hammer5tools:smartprop_editor_property;;{self.name};;{self.value}")
+        group_type = getattr(self, '_group_type', '') or ''
+        clipboard.setText(f"hammer5tools:smartprop_editor_property;;{self.name};;{self.value};;{group_type}")
+
+    def set_group_type(self, group_type):
+        self._group_type = group_type
+        color_map = {
+            'modifier': '#8B5E3C',
+            'selection_criteria': '#2E6B9E',
+        }
+        color = color_map.get(group_type)
+        if color and hasattr(self.ui, 'label'):
+            self.ui.label.setStyleSheet(
+                f"image: url(:/icons/more_vert.png);\n"
+                f"padding-left: 3px;\n"
+                f"padding-right: 3px;\n"
+                f"border: 2px solid #CCCCCC;\n"
+                f"border-top: 0px;\n"
+                f"border-right: 0px;\n"
+                f"border-bottom: 0px;\n"
+                f"border-left: 3px solid {color};\n"
+                f"border-radius: 0px;\n"
+                f"background-color: #242424;"
+            )
+
+    def set_selected(self, selected):
+        self._is_selected = selected
+        self.ui.frame.setProperty('selected', 'true' if selected else 'false')
+        self.ui.frame.style().unpolish(self.ui.frame)
+        self.ui.frame.style().polish(self.ui.frame)
+        if selected:
+            self.ui.frame.setStyleSheet(
+                'QFrame#frame { background-color: #2A2E38; }'
+            )
+        else:
+            self.ui.frame.setStyleSheet('')
+
+    def keyPressEvent(self, event):
+        from PySide6.QtGui import QKeySequence
+        if event.matches(QKeySequence.Copy) and self._is_selected:
+            self.copy_action()
+            return
+        super().keyPressEvent(event)
 
     def delete_action(self):
         self.value = None
