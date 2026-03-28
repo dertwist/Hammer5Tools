@@ -38,3 +38,6 @@ GPUtil
 orjson
 pyinstaller
 lxml
+inkex
+uharfbuzz
+fontTools

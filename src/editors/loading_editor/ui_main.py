@@ -16,7 +16,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGroupBox,
-    QHBoxLayout, QMainWindow, QPlainTextEdit, QPushButton,
+    QHBoxLayout, QLabel, QMainWindow, QPlainTextEdit, QPushButton,
     QSizePolicy, QSplitter, QTabWidget, QVBoxLayout,
     QWidget)
 import resources_rc
@@ -391,6 +391,42 @@ class Ui_Loading_editorMainWindow(object):
 
         self.verticalLayout_4.addWidget(self.svg_icon_frame)
 
+        self.svg_tips_label = QLabel(self.groupBox_2)
+        self.svg_tips_label.setObjectName(u"svg_tips_label")
+        self.svg_tips_label.setWordWrap(True)
+        self.svg_tips_label.setStyleSheet(u"font: 9pt \"Segoe UI\"; color: #888888; border: none; padding: 2px 4px;")
+
+        self.verticalLayout_4.addWidget(self.svg_tips_label)
+
+        self.fit_viewbox_checkbox = QCheckBox(self.groupBox_2)
+        self.fit_viewbox_checkbox.setObjectName(u"fit_viewbox_checkbox")
+        self.fit_viewbox_checkbox.setStyleSheet(u"\n"
+"    QCheckBox {\n"
+"\n"
+"        font: 580 10pt \"Segoe UI\";\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QCheckBox:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QCheckBox:pressed {\n"
+"\n"
+"    }")
+        self.fit_viewbox_checkbox.setChecked(True)
+
+        self.verticalLayout_4.addWidget(self.fit_viewbox_checkbox)
+
         self.apply_icon_button = QPushButton(self.groupBox_2)
         self.apply_icon_button.setObjectName(u"apply_icon_button")
         self.apply_icon_button.setEnabled(True)
@@ -596,6 +632,11 @@ class Ui_Loading_editorMainWindow(object):
         self.apply_screenshots_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Set loading images", None))
         self.screenshot_preview.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshot Preview", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Icon", None))
+        self.svg_tips_label.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Tips: Convert text to paths. Avoid rasterized layers.", None))
+#if QT_CONFIG(tooltip)
+        self.fit_viewbox_checkbox.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Rescale the SVG content to fit a 32x32 viewBox. Removes hidden elements and cleans up Inkscape metadata.</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.fit_viewbox_checkbox.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Fit content to viewbox", None))
         self.apply_icon_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply Icon", None))
         self.groupBox.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Description", None))
 #if QT_CONFIG(tooltip)
