@@ -1,6 +1,7 @@
 ﻿import os
 import shutil
 import sys
+import tempfile
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -28,6 +29,7 @@ from src.editors.loading_editor.timeline import TimelineExplorer
 from src.common import compile
 from src.widgets import ErrorInfo
 from src.editors.loading_editor.commands.main import generate_commands
+from src.editors.loading_editor.svg_utils import rescale_svg
 from src.other.cs2_netcon import CS2Netcon
 
 class SvgPreviewWidget(QWidget):
@@ -565,7 +567,14 @@ class Loading_editorMainWindow(QMainWindow):
         svg_dst = os.path.join(folder_path, f"map_icon_{get_addon_name()}.svg")
         if os.path.exists(svg_dst):
             os.remove(svg_dst)
-        shutil.copy2(svg_path, svg_dst)
+        if self.ui.fit_viewbox_checkbox.isChecked():
+            try:
+                rescale_svg(svg_path, svg_dst)
+            except Exception as e:
+                debug(f"SVG rescale failed, copying original: {e}")
+                shutil.copy2(svg_path, svg_dst)
+        else:
+            shutil.copy2(svg_path, svg_dst)
 
     def do_loading_editor_cs2_description(self):
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
