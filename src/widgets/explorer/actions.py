@@ -1,5 +1,4 @@
-import copy
-from src.common import JsonToKv3, Kv3ToJson
+from src.common import JsonToKv3, Kv3ToJson, fast_deepcopy
 import os, json
 from src.editors.assetgroup_maker.objects import DEFAULT_VMDL, get_default_file
 from src.settings.main import get_addon_dir, debug
@@ -18,7 +17,7 @@ class QuickVmdlFile():
     def __init__(self, filepath):
         model_path = os.path.relpath(filepath, get_addon_dir())
         model_path = model_path.replace(os.path.sep, '/')
-        vmdl_content = copy.deepcopy(DEFAULT_VMDL)
+        vmdl_content = fast_deepcopy(DEFAULT_VMDL)
         vmdl_content['rootNode']['children'][1]['children'][0]['filename'] = model_path
         vmdl_content['rootNode']['children'][2]['children'][0]['filename'] = model_path
         vmdl_file, _ = os.path.splitext(filepath)

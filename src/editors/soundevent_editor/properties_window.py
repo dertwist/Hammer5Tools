@@ -1,5 +1,5 @@
 import ast
-import copy
+from src.common import fast_deepcopy
 
 from src.editors.soundevent_editor.ui_properties_window import Ui_MainWindow
 from PySide6.QtWidgets import QPushButton
@@ -26,8 +26,8 @@ class PropertyStateCommand(QUndoCommand):
         super().__init__(description)
         self.window = window
         self.target_key = target_key
-        self.before = copy.deepcopy(before)
-        self.after = copy.deepcopy(after)
+        self.before = fast_deepcopy(before)
+        self.after = fast_deepcopy(after)
 
     def _find_item_for_key(self):
         """Attempt to find a QTreeWidgetItem in the associated tree matching the target_key.
@@ -76,7 +76,7 @@ class PropertyStateCommand(QUndoCommand):
             # Write the restored data back into the tree item so tree stays in sync
             if item is not None:
                 try:
-                    item.setData(0, Qt.UserRole, copy.deepcopy(self.window.value))
+                    item.setData(0, Qt.UserRole, fast_deepcopy(self.window.value))
                 except Exception:
                     pass
         finally:
@@ -439,9 +439,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         _slider_dragging is False and we push to the undo stack as normal.
         """
         if self._undo_enabled and not self._slider_dragging:
-            before = copy.deepcopy(self.value)
+            before = fast_deepcopy(self.value)
             self.update_value()
-            after = copy.deepcopy(self.value)
+            after = fast_deepcopy(self.value)
             if before != after:
                 element_key, element_name = self._get_current_element_key_and_name()
                 if self._next_undo_desc:
@@ -457,7 +457,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     def _capture_pre_commit_snapshot(self):
         """Called at sliderPressed — snapshot the value BEFORE the drag begins."""
         if self._undo_enabled:
-            self._pre_commit_snapshot = copy.deepcopy(self.value)
+            self._pre_commit_snapshot = fast_deepcopy(self.value)
         self._slider_dragging = True
 
     def on_commit(self):
@@ -465,7 +465,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # update_value() first so self.value reflects the final slider position
         self.update_value()
         if self._undo_enabled and self._pre_commit_snapshot is not None:
-            after = copy.deepcopy(self.value)
+            after = fast_deepcopy(self.value)
             if self._pre_commit_snapshot != after:
                 element_key, element_name = self._get_current_element_key_and_name()
                 desc = f"Edit '{element_name}'" if element_name else "Edit Property"
