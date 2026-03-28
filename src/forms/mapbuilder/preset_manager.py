@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, asdict, field, fields
-import copy
+from src.common import fast_deepcopy
 from src.settings.common import get_settings_value, set_settings_value
 
 
@@ -365,7 +365,7 @@ class PresetManager:
         """Update preset settings"""
         preset = self.get_preset(name)
         if preset:
-            preset.settings = copy.deepcopy(settings)
+            preset.settings = fast_deepcopy(settings)
             self.save_presets()
 
     def get_preset(self, name: str) -> Optional[BuildPreset]:

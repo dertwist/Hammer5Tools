@@ -37,3 +37,4 @@ pynvml
 GPUtil
 orjson
 pyinstaller
+lxml
