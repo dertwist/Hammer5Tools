@@ -1,5 +1,5 @@
 import re
-from src.editors.smartprop_editor.fast_copy import fast_deepcopy
+from src.common import fast_deepcopy
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
@@ -300,20 +300,6 @@ class PropertySnapshotCommand(QUndoCommand):
         self.new_data = other.new_data
         return True
 
-    def _select_in_tree(self):
-        """Select self.item in the hierarchy tree without triggering a panel rebuild.
-
-        on_tree_current_item_changed returns early while _undo_redo_rebuilding is
-        True, so the only rebuild that happens is the explicit call to
-        _rebuild_properties_panel that follows this helper.
-        """
-        tree = self.document.ui.tree_hierarchy_widget
-        if tree.currentItem() is not self.item:
-            self.document._undo_redo_rebuilding = True
-            tree.setCurrentItem(self.item)
-            self.document._undo_redo_rebuilding = False
-        tree.scrollToItem(self.item)
-
     def redo(self):
         if self._first_redo:
             self._first_redo = False
@@ -321,18 +307,30 @@ class PropertySnapshotCommand(QUndoCommand):
             return
         print(f"[SPE][PropertyEdit] redo: '{self.item.text(0)}' — {self.text()}")
         try:
-            self._select_in_tree()
-            self.item.setData(0, Qt.UserRole, fast_deepcopy(self.new_data))
-            self.document._rebuild_properties_panel(self.item)
+            tree = self.document.ui.tree_hierarchy_widget
+            if tree.currentItem() is self.item:
+                self.document._incremental_property_update(
+                    self.item, self.new_data, self._diff_keys
+                )
+            else:
+                self.item.setData(0, Qt.UserRole, fast_deepcopy(self.new_data))
+                tree.setCurrentItem(self.item)
+            tree.scrollToItem(self.item)
         except Exception as e:
             print(f"[SPE][PropertyEdit] redo: ERROR — {e}")
 
     def undo(self):
         print(f"[SPE][PropertyEdit] undo: '{self.item.text(0)}' — {self.text()}")
         try:
-            self._select_in_tree()
-            self.item.setData(0, Qt.UserRole, fast_deepcopy(self.old_data))
-            self.document._rebuild_properties_panel(self.item)
+            tree = self.document.ui.tree_hierarchy_widget
+            if tree.currentItem() is self.item:
+                self.document._incremental_property_update(
+                    self.item, self.old_data, self._diff_keys
+                )
+            else:
+                self.item.setData(0, Qt.UserRole, fast_deepcopy(self.old_data))
+                tree.setCurrentItem(self.item)
+            tree.scrollToItem(self.item)
         except Exception as e:
             print(f"[SPE][PropertyEdit] undo: ERROR — {e}")
 

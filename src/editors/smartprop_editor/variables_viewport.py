@@ -1,4 +1,4 @@
-from src.editors.smartprop_editor.fast_copy import fast_deepcopy
+from src.common import fast_deepcopy
 
 from PySide6.QtWidgets import (
     QMainWindow,
