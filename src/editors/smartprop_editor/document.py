@@ -1,7 +1,7 @@
 import os.path
 import re
 import ast
-import copy
+from src.editors.smartprop_editor.fast_copy import fast_deepcopy
 from collections import deque
 
 from PySide6.QtWidgets import (
@@ -557,7 +557,7 @@ class SmartPropDocument(QMainWindow):
 
     def _acquire_modifier_property_frame(self, modifier_value, precomputed=None):
         """Pool acquire with fallback to direct PropertyFrame (same layout wiring as before)."""
-        val = copy.deepcopy(modifier_value)
+        val = fast_deepcopy(modifier_value)
         if not PropertyFrame._is_complete_precomputed_payload(precomputed):
             precomputed = None
         if precomputed is not None:
@@ -618,9 +618,7 @@ class SmartPropDocument(QMainWindow):
         chunk = chunks[idx]
         self._modifier_load_index = idx + 1
 
-        offset = 0
-        for i in range(idx):
-            offset += len(chunks[i])
+        offset = self._modifier_load_offsets[idx]
         precomputed_list = getattr(self, "_modifier_load_precomputed", None)
 
         for j, modifier_value in enumerate(chunk):
@@ -668,6 +666,10 @@ class SmartPropDocument(QMainWindow):
         self._modifier_load_chunks = [
             ordered[i : i + chunk_size] for i in range(0, len(ordered), chunk_size)
         ]
+        offsets = [0]
+        for chunk in self._modifier_load_chunks:
+            offsets.append(offsets[-1] + len(chunk))
+        self._modifier_load_offsets = offsets
         self._modifier_load_index = 0
         self._modifier_load_mod_layout = self.modifiers_group_instance.layout
         self._modifier_load_pending_init = pending_init
@@ -759,7 +761,7 @@ class SmartPropDocument(QMainWindow):
             # No tree selection: panel was cleared above; do not touch item.data.
             if item is not None:
                 # deepcopy so we never mutate the data stored in the tree item
-                data = copy.deepcopy(item.data(0, Qt.UserRole))
+                data = fast_deepcopy(item.data(0, Qt.UserRole))
                 data_modif = data.pop("m_Modifiers", None) or []
                 data_sel_criteria = data.pop("m_SelectionCriteria", None) or []
                 property_instance = PropertyFrame(
@@ -802,7 +804,7 @@ class SmartPropDocument(QMainWindow):
                     for entry in reversed(data_sel_criteria):
                         prop_instance = PropertyFrame(
                             widget_list=self.selection_criteria_group_instance.layout,
-                            value=copy.deepcopy(entry),
+                            value=fast_deepcopy(entry),
                             variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                             tree_hierarchy=self.ui.tree_hierarchy_widget,
                             element_id_generator=self.element_id_generator,
@@ -840,7 +842,7 @@ class SmartPropDocument(QMainWindow):
             item = self.ui.tree_hierarchy_widget.currentItem()
         if item:
             # Capture old state BEFORE assembling the new value
-            old_data = copy.deepcopy(item.data(0, Qt.UserRole))
+            old_data = fast_deepcopy(item.data(0, Qt.UserRole))
 
             output_value = {}
             modifiers = []
@@ -903,7 +905,7 @@ class SmartPropDocument(QMainWindow):
             # in real-time but only one command is pushed on release via
             # _on_slider_committed, which preserves the true pre-drag state.
             if not self._property_undo_guard and not self._slider_dragging and output_value != old_data:
-                new_data = copy.deepcopy(output_value)
+                new_data = fast_deepcopy(output_value)
                 cmd = PropertySnapshotCommand(self, item, old_data, new_data)
                 self.undo_stack.push(cmd)
 
@@ -1494,7 +1496,7 @@ class SmartPropDocument(QMainWindow):
         from src.editors.smartprop_editor.actions.bulk_model_importer import BulkModelImporterDialog
         from src.editors.smartprop_editor._common import get_clean_class_name_value, get_label_id_from_value
         from src.widgets import HierarchyItemModel
-        import copy, os
+        import os
         dialog = BulkModelImporterDialog(self, current_folder=self.parent.mini_explorer.get_current_folder(True))
         def on_accept(files, create_ref, ref_index):
             addon_path = get_addon_dir()
@@ -1520,7 +1522,7 @@ class SmartPropDocument(QMainWindow):
                     if create_ref and ref_id is not None:
                         element_dict["m_nReferenceID"] = ref_id
                         element_dict["m_sReferenceObjectID"] = str(uuid.uuid4())
-                element_value = copy.deepcopy(element_dict)
+                element_value = fast_deepcopy(element_dict)
                 self.element_id_generator.update_value(element_value)
                 label = element_value.get("m_sLabel", get_label_id_from_value(element_value))
                 new_item = HierarchyItemModel(
@@ -1761,7 +1763,7 @@ class SmartPropDocument(QMainWindow):
                 return
 
             # Create new PropertyFrame widgets from the item's stored data
-            data = copy.deepcopy(item.data(0, Qt.UserRole))
+            data = fast_deepcopy(item.data(0, Qt.UserRole))
             if data is None:
                 return
             data_modif = data.pop("m_Modifiers", None) or []
@@ -1806,7 +1808,7 @@ class SmartPropDocument(QMainWindow):
             for entry in reversed(data_sel_criteria):
                 p = PropertyFrame(
                     widget_list=self.selection_criteria_group_instance.layout,
-                    value=copy.deepcopy(entry),
+                    value=fast_deepcopy(entry),
                     variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
                     tree_hierarchy=self.ui.tree_hierarchy_widget,
                     element_id_generator=self.element_id_generator,
@@ -1853,7 +1855,7 @@ class SmartPropDocument(QMainWindow):
         if self._slider_dragging == 0:
             item = self.ui.tree_hierarchy_widget.currentItem()
             if item is not None:
-                self._slider_pre_drag_data = copy.deepcopy(item.data(0, Qt.UserRole))
+                self._slider_pre_drag_data = fast_deepcopy(item.data(0, Qt.UserRole))
         self._slider_dragging += 1
 
     def _on_slider_committed(self):
@@ -1866,7 +1868,7 @@ class SmartPropDocument(QMainWindow):
         if self._slider_dragging == 0 and self._slider_pre_drag_data is not None:
             item = self.ui.tree_hierarchy_widget.currentItem()
             if item is not None and not self._property_undo_guard:
-                new_data = copy.deepcopy(item.data(0, Qt.UserRole))
+                new_data = fast_deepcopy(item.data(0, Qt.UserRole))
                 if new_data != self._slider_pre_drag_data:
                     cmd = PropertySnapshotCommand(self, item, self._slider_pre_drag_data, new_data)
                     self.undo_stack.push(cmd)
@@ -1883,7 +1885,7 @@ class SmartPropDocument(QMainWindow):
                 state.append({
                     'name': widget.name,
                     'var_class': widget.var_class,
-                    'var_value': copy.deepcopy(widget.var_value),
+                    'var_value': fast_deepcopy(widget.var_value),
                     'var_visible_in_editor': widget.var_visible_in_editor,
                     'var_display_name': widget.var_display_name,
                 })
