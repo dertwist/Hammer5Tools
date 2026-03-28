@@ -104,8 +104,8 @@ def rescale_svg(svg_path: str, out_path: str):
         else:
             child.set("transform", _matrix_to_str(composed))
 
-    svg_elem.set("width", "100%")
-    svg_elem.set("height", "100%")
+    svg_elem.set("width", str(OUT_W))
+    svg_elem.set("height", str(OUT_H))
     svg_elem.set("viewBox", f"0 0 {OUT_W} {OUT_H}")
     svg_elem.set("version", "1.1")
 
