@@ -1,4 +1,4 @@
-import copy
+from src.editors.smartprop_editor.fast_copy import fast_deepcopy
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -244,7 +244,7 @@ class SmartPropEditorVariableViewport(QWidget):
                 state.append({
                     'name': widget.name,
                     'var_class': widget.var_class,
-                    'var_value': copy.deepcopy(widget.var_value),
+                    'var_value': fast_deepcopy(widget.var_value),
                     'var_visible_in_editor': widget.var_visible_in_editor,
                     'var_display_name': widget.var_display_name,
                 })
