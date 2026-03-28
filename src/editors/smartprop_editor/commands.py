@@ -1,5 +1,5 @@
-import copy
 import re
+from src.editors.smartprop_editor.fast_copy import fast_deepcopy
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
@@ -322,7 +322,7 @@ class PropertySnapshotCommand(QUndoCommand):
         print(f"[SPE][PropertyEdit] redo: '{self.item.text(0)}' — {self.text()}")
         try:
             self._select_in_tree()
-            self.item.setData(0, Qt.UserRole, copy.deepcopy(self.new_data))
+            self.item.setData(0, Qt.UserRole, fast_deepcopy(self.new_data))
             self.document._rebuild_properties_panel(self.item)
         except Exception as e:
             print(f"[SPE][PropertyEdit] redo: ERROR — {e}")
@@ -331,7 +331,7 @@ class PropertySnapshotCommand(QUndoCommand):
         print(f"[SPE][PropertyEdit] undo: '{self.item.text(0)}' — {self.text()}")
         try:
             self._select_in_tree()
-            self.item.setData(0, Qt.UserRole, copy.deepcopy(self.old_data))
+            self.item.setData(0, Qt.UserRole, fast_deepcopy(self.old_data))
             self.document._rebuild_properties_panel(self.item)
         except Exception as e:
             print(f"[SPE][PropertyEdit] undo: ERROR — {e}")
@@ -379,8 +379,8 @@ class VariablesSnapshotCommand(QUndoCommand):
     def __init__(self, document, old_state, new_state, description="Edit Variables"):
         super().__init__(description)
         self.document = document
-        self.old_state = copy.deepcopy(old_state)
-        self.new_state = copy.deepcopy(new_state)
+        self.old_state = fast_deepcopy(old_state)
+        self.new_state = fast_deepcopy(new_state)
         self._disc = self._discriminator(old_state, new_state)
         self._first_redo = True
 
@@ -433,8 +433,8 @@ class ChoicesSnapshotCommand(QUndoCommand):
     def __init__(self, document, old_state, new_state, description="Edit Choices"):
         super().__init__(description)
         self.document = document
-        self.old_state = copy.deepcopy(old_state)
-        self.new_state = copy.deepcopy(new_state)
+        self.old_state = fast_deepcopy(old_state)
+        self.new_state = fast_deepcopy(new_state)
         self._first_redo = True
 
     def redo(self):

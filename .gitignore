@@ -111,3 +111,4 @@ settings.cfg
 /src/external/RemoteConsole/CS2RemoteConsole-client.log
 /Hammer5Tools/SoundEventEditor/soundevents_cache
 /dumps/*
+.claude/settings.local.json
