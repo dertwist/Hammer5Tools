@@ -1,7 +1,7 @@
 import os.path
 import re
 import ast
-from src.editors.smartprop_editor.fast_copy import fast_deepcopy
+from src.common import fast_deepcopy
 from collections import deque
 
 from PySide6.QtWidgets import (
@@ -79,6 +79,9 @@ from src.widgets.tree import HierarchyTreeWidget
 from src.editors.smartprop_editor.variables_viewport import SmartPropEditorVariableViewport
 
 cs2_path = get_cs2_path()
+
+# Regex for parsing diff keys like 'm_Modifiers[2].m_flAmount' or 'm_SelectionCriteria[0]'
+_DIFF_KEY_RE = re.compile(r'^(m_Modifiers|m_SelectionCriteria)\[(\d+)\](?:\.(.+))?$')
 
 #TODO Future improvement: Implement a node view for elements.
 # In the node view, users will click on a node to edit its properties, triggering a context menu similar to that found in the Hammer editor (using, for example, Alt+Enter) or just show and hide properties in the viewport.
@@ -1844,6 +1847,147 @@ class SmartPropDocument(QMainWindow):
 
     def _dec_property_undo_guard(self):
         self._property_undo_guard = max(0, self._property_undo_guard - 1)
+
+    def _get_nth_property_frame(self, layout, n):
+        """Return the Nth PropertyFrame in *layout*, skipping non-PropertyFrame widgets."""
+        count = 0
+        for i in range(layout.count()):
+            w = layout.itemAt(i).widget()
+            if isinstance(w, PropertyFrame):
+                if count == n:
+                    return w
+                count += 1
+        return None
+
+    def _rebuild_group_section(self, key, new_data, item):
+        """Rebuild only the modifiers or selection criteria section (not the whole panel)."""
+        if key == 'm_Modifiers':
+            layout = self.modifiers_group_instance.layout
+            new_list = new_data.get('m_Modifiers', [])
+        else:
+            layout = self.selection_criteria_group_instance.layout
+            new_list = new_data.get('m_SelectionCriteria', [])
+
+        # Clear existing PropertyFrames in this section only
+        for i in reversed(range(layout.count())):
+            widget = layout.itemAt(i).widget()
+            if isinstance(widget, PropertyFrame):
+                widget.cancel_worker()
+                layout.removeWidget(widget)
+                widget.hide()
+                if key == 'm_Modifiers':
+                    from src.editors.smartprop_editor.property_widget_pool import (
+                        PropertyWidgetPool,
+                    )
+                    PropertyWidgetPool.instance().release(
+                        getattr(widget, "prop_class", None), widget
+                    )
+                else:
+                    try:
+                        widget._clear_widgets()
+                    except Exception:
+                        pass
+                    widget.deleteLater()
+
+        # Recreate for the new list
+        if key == 'm_Modifiers' and new_list:
+            self._cancel_modifier_load()
+            pending_init = {"remaining": 0}
+            inited_frame_ids = set()
+            self._populate_modifiers_progressive(
+                new_list, pending_init, inited_frame_ids, tree_item=item,
+            )
+        elif key == 'm_SelectionCriteria':
+            for entry in reversed(new_list):
+                p = PropertyFrame(
+                    widget_list=layout,
+                    value=fast_deepcopy(entry),
+                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                    tree_hierarchy=self.ui.tree_hierarchy_widget,
+                    element_id_generator=self.element_id_generator,
+                    parent=self,
+                )
+                p.edited.connect(self.update_tree_item_value)
+                self._setup_property_frame_group(p, "selection_criteria")
+                p.slider_pressed.connect(self._on_slider_started)
+                p.committed.connect(self._on_slider_committed)
+                layout.insertWidget(0, p)
+
+    def _incremental_property_update(self, item, new_data, changed_keys):
+        """Update only the changed property widgets instead of full rebuild.
+
+        Handles all diff key types: top-level properties, modifier/criteria
+        sub-properties, whole-element changes, and structural list changes.
+        """
+        item.setData(0, Qt.UserRole, fast_deepcopy(new_data))
+
+        self._property_undo_guard += 1
+        try:
+            main_frame = None
+            for i in range(self.ui.properties_layout.count()):
+                w = self.ui.properties_layout.itemAt(i).widget()
+                if isinstance(w, PropertyFrame):
+                    main_frame = w
+                    break
+
+            updated_frames = set()
+
+            for key in changed_keys:
+                if key in ('_class', 'm_nElementID'):
+                    continue
+
+                m = _DIFF_KEY_RE.match(key)
+                if m:
+                    # Modifier or criteria sub-property / whole-element change
+                    container = m.group(1)
+                    index = int(m.group(2))
+                    sub_key = m.group(3)  # None when whole element changed
+                    layout = (self.modifiers_group_instance.layout
+                             if container == 'm_Modifiers'
+                             else self.selection_criteria_group_instance.layout)
+                    frame = self._get_nth_property_frame(layout, index)
+                    if frame is not None:
+                        arr = new_data.get(container, [])
+                        if index < len(arr):
+                            if sub_key is not None:
+                                frame.update_property_value(sub_key, arr[index].get(sub_key))
+                            else:
+                                frame._reconfigure(
+                                    value=fast_deepcopy(arr[index]),
+                                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                                    element_id_generator=self.element_id_generator,
+                                    widget_list=layout,
+                                    tree_hierarchy=self.ui.tree_hierarchy_widget,
+                                )
+                            updated_frames.add(id(frame))
+
+                elif key in ('m_Modifiers', 'm_SelectionCriteria'):
+                    # Structural change — rebuild just this section
+                    self._rebuild_group_section(key, new_data, item)
+
+                else:
+                    # Top-level property
+                    if main_frame is not None:
+                        main_frame.update_property_value(key, new_data.get(key))
+                        updated_frames.add(id(main_frame))
+
+            # Silently update value dicts on affected frames (no signal emission)
+            if main_frame is not None and id(main_frame) in updated_frames:
+                main_frame.blockSignals(True)
+                main_frame.on_edited()
+                main_frame.blockSignals(False)
+
+            for layout in (self.modifiers_group_instance.layout,
+                           self.selection_criteria_group_instance.layout):
+                for i in range(layout.count()):
+                    w = layout.itemAt(i).widget()
+                    if isinstance(w, PropertyFrame) and id(w) in updated_frames:
+                        w.blockSignals(True)
+                        w.on_edited()
+                        w.blockSignals(False)
+
+        finally:
+            QTimer.singleShot(0, self._dec_property_undo_guard)
 
     def _on_slider_started(self):
         """Called when any FloatWidget slider begins a drag.

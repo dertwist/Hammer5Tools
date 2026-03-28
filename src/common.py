@@ -152,3 +152,21 @@ def JsonToKv3(input, disable_line_value_length_limit_keys: list = None, format=N
         return kv3.textwriter.encode(kv3_file, options=options)
     else:
         raise ValueError('[JsonToKv3] Invalid input type: Input should be a dictionary or list')
+
+#===============================================================<  Fast Copy  >=============================================================
+import copy
+
+try:
+    import orjson
+
+    def fast_deepcopy(obj):
+        """Deep-copy a JSON-safe nested dict/list via orjson round-trip (3-10x faster than copy.deepcopy)."""
+        try:
+            return orjson.loads(orjson.dumps(obj))
+        except (TypeError, orjson.JSONEncodeError):
+            return copy.deepcopy(obj)
+
+except ImportError:
+    def fast_deepcopy(obj):
+        """Fallback deep-copy when orjson is not installed."""
+        return copy.deepcopy(obj)

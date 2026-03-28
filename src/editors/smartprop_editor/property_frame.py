@@ -667,6 +667,28 @@ class PropertyFrame(QWidget):
     def update_self(self):
         pass
 
+    def update_property_value(self, key, new_value):
+        """Update a single child property widget by key. Returns True if successful."""
+        for w in self._property_widgets:
+            if getattr(w, 'value_class', None) == key:
+                if hasattr(w, 'reconfigure'):
+                    # Collect widget-specific config stored from prior construction
+                    extra_kw = {}
+                    if hasattr(w, '_pool_items'):
+                        extra_kw['items'] = w._pool_items
+                    if hasattr(w, '_pool_filter_types'):
+                        extra_kw['filter_types'] = w._pool_filter_types
+                    w.reconfigure(
+                        element_id_generator=self.element_id_generator,
+                        value_class=key,
+                        value=new_value,
+                        variables_scrollArea=self.variables_scrollArea,
+                        **extra_kw,
+                    )
+                    return True
+                return False
+        return False
+
     def _clear_widgets(self):
         """
         Remove and schedule destruction of all property child widgets.
