@@ -634,7 +634,7 @@ class Ui_Loading_editorMainWindow(object):
         self.groupBox_2.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Icon", None))
         self.svg_tips_label.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Tips: Convert text to paths. Avoid rasterized layers.", None))
 #if QT_CONFIG(tooltip)
-        self.fit_viewbox_checkbox.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Rescale the SVG content to fit a 32x32 viewBox. Removes hidden elements and cleans up Inkscape metadata.</p></body></html>", None))
+        self.fit_viewbox_checkbox.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Rescale the SVG content to fit a 32x32 viewBox and remove hidden elements.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.fit_viewbox_checkbox.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Fit content to viewbox", None))
         self.apply_icon_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Apply Icon", None))
