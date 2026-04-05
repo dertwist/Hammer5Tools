@@ -10,13 +10,14 @@ class DragImage(QWidget):
                          Qt.WindowType.Tool |
                          Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         for frame in frames:
-            pix = QPixmap(frame.size())
-            frame.render(pix)
+            pix = frame.grab()
             label = QLabel()
             label.setPixmap(pix)
             layout.addWidget(label)
