@@ -1950,7 +1950,8 @@ class SmartPropDocument(QMainWindow):
                         arr = new_data.get(container, [])
                         if index < len(arr):
                             if sub_key is not None:
-                                frame.update_property_value(sub_key, arr[index].get(sub_key))
+                                base_sub = sub_key.split('.')[0]
+                                frame.update_property_value(base_sub, arr[index].get(base_sub))
                             else:
                                 frame._reconfigure(
                                     value=fast_deepcopy(arr[index]),
@@ -1968,7 +1969,8 @@ class SmartPropDocument(QMainWindow):
                 else:
                     # Top-level property
                     if main_frame is not None:
-                        main_frame.update_property_value(key, new_data.get(key))
+                        base_key = key.split('.')[0]
+                        main_frame.update_property_value(base_key, new_data.get(base_key))
                         updated_frames.add(id(main_frame))
 
             # Silently update value dicts on affected frames (no signal emission)

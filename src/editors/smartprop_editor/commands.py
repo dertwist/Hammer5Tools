@@ -315,11 +315,25 @@ class PropertySnapshotCommand(QUndoCommand):
 
         if len(content) == 1:
             key = next(iter(content))
+            
+            # Check for vector components
+            if '.m_Components[' in key:
+                base, comp = key.split('.m_Components[')
+                axis_idx = comp.split(']')[0]
+                axis_map = {'0': 'X', '1': 'Y', '2': 'Z'}
+                axis = axis_map.get(axis_idx, '')
+                
+                base_clean = base.split('.')[-1]
+                base_clean = re.sub(r'^m_(?:fl|[nbsv])?', '', base_clean)
+                base_clean = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', base_clean)
+                
+                return f"Edit {base_clean} - {axis} value"
+                
             # For compound discriminators use the leaf key for a clean label
             if '.' in key:
                 key = key.rsplit('.', 1)[1]
             key = re.sub(r'\[\d+\]$', '', key)
-            label = re.sub(r'^m_(?:fl|[nbs])?', '', key)
+            label = re.sub(r'^m_(?:fl|[nbsv])?', '', key)
             label = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', label)
             return f"Edit {label}"
         return "Edit Properties"
