@@ -67,3 +67,4 @@ Run configurations are available for PyCharm and Visual Studio Code.
 - **Installer:**
 
   To create the installer, you need to install [Inno Setup](https://jrsoftware.org/isinfo.php). Do not change the default installation path.
+  
