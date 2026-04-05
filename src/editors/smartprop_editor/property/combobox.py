@@ -90,9 +90,9 @@ class PropertyCombobox(QWidget, PooledPropertyMixin):
                 self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.variable.combobox.set_variable(str(self.var_value))
-        elif isinstance(value, str):
+        elif value is not None:
             self.ui.logic_switch.setCurrentIndex(1)
-            self.ui.value.setCurrentText(value)
+            self.ui.value.setCurrentText(str(value))
 
         self.on_changed()
 
@@ -248,9 +248,9 @@ class PropertyCombobox(QWidget, PooledPropertyMixin):
                 if 'm_SourceName' in value:
                     self.ui.logic_switch.setCurrentIndex(2)
                     self.variable.combobox.set_variable(value['m_SourceName'])
-            elif isinstance(value, str):
+            elif value is not None:
                 self.ui.logic_switch.setCurrentIndex(1)
-                self.ui.value.setCurrentText(value)
+                self.ui.value.setCurrentText(str(value))
 
             # signals were blocked; ensure add-button visibility is correct.
             self.variable.update_add_button_visibility(self.variable.combobox.currentText())
