@@ -32,6 +32,8 @@ class PropertyViewport(QMainWindow):
     DROP_COLOR = "#3A79C9"
     DROP_HEIGHT = 4
 
+    framesReordered = Signal(list)  # emits list of getData() dicts in new order
+
     def __init__(self, undo_stack: QUndoStack | None = None):
         super().__init__()
         central = QWidget()
@@ -59,6 +61,7 @@ class PropertyViewport(QMainWindow):
         self.dragged_frames: List[PropertyWidget] = []
         self.drag_image: DragImage | None = None
         self.drag_offset = QPoint()
+        self.drag_snapshot: list = []
 
         # ---------- drop indicator ----------
         self.drop_indicator = QFrame()
@@ -205,6 +208,9 @@ class PropertyViewport(QMainWindow):
         # Determine which frames are dragged
         self.dragged_frames = self.selected_frames if frame.selected else [frame]
 
+        # Capture property data at drag start
+        self.drag_snapshot = [f.getData() for f in self.dragged_frames]
+
         # Drag image
         drag_pos = event.position().toPoint()
         global_pos = frame.mapToGlobal(drag_pos)
@@ -303,8 +309,13 @@ class PropertyViewport(QMainWindow):
                            for i in range(self.framesLayout.count())
                            if self.framesLayout.itemAt(i).widget() is not None]
 
+            # emit signal with new order and property data
+            all_data = [f.getData() for f in self.frames if isinstance(f, PropertyWidget)]
+            self.framesReordered.emit(all_data)
+
             # clear drag state
             self.dragged_frames = []
+            self.drag_snapshot = []
 
         # remove floating image
         if self.drag_image:
