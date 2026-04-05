@@ -986,77 +986,7 @@ class SmartPropDocument(QMainWindow):
                                 parent.addChild(child_item)
                             populate_tree(item, child_item)
 
-        def populate_choices(data):
-            if data is None:
-                print("No choices")
-                return
-            for choice in data:
-                name = choice["m_Name"]
-                default = choice.get("m_DefaultOption", None)
-                options = choice.get("m_Options", None)
-                new_choice = AddChoice(
-                    name=name,
-                    tree=self.ui.choices_tree_widget,
-                    default=default,
-                    variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
-                ).item
-                if options:
-                    for option in options:
-                        option_item = AddOption(parent=new_choice, name=option["m_Name"]).item
-                        variables_list_ = option["m_VariableValues"]
-                        for variable in variables_list_:
-                            AddVariable(
-                                parent=option_item,
-                                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
-                                name=variable["m_TargetName"],
-                                type=variable.get("m_DataType", ""),
-                                value=variable["m_Value"]
-                            )
-
-        def populate_variables(data):
-            if isinstance(data, list):
-                for item in data:
-                    var_class = (item["_class"]).replace(variable_prefix, "")
-                    var_name = item.get("m_VariableName", None)
-                    var_display_name = item.get("m_DisplayName", None)
-                    if var_display_name is None:
-                        var_display_name = item.get("m_ParameterName", None)
-                    var_visible_in_editor = bool(item.get("m_bExposeAsParameter", None))
-                    var_value = {
-                        "default": item.get("m_DefaultValue", None),
-                        "model": item.get("m_sModelName", None),
-                        "m_nElementID": item.get("m_nElementID", None),
-                        'm_HideExpression': item.get("m_HideExpression", None)
-                    }
-                    if var_class == "Float":
-                        var_value.update({
-                            "min": item.get("m_flParamaterMinValue", None),
-                            "max": item.get("m_flParamaterMaxValue", None)
-                        })
-                    elif var_class == "Int":
-                        var_value.update({
-                            "min": item.get("m_nParamaterMinValue", None),
-                            "max": item.get("m_nParamaterMaxValue", None)
-                        })
-                    else:
-                        var_value.update({"min": None, "max": None})
-
-                    existing_variables = self.get_variables(layout=self.variable_viewport.ui.variables_scrollArea, only_names=True)
-                    variable_exists = False
-                    for index, variable in existing_variables.items():
-                        name_ = variable[0]
-                        if name_ == var_name:
-                            variable_exists = True
-                            break
-
-                    if not variable_exists:
-                        self.add_variable(
-                            name=var_name,
-                            var_value=var_value,
-                            var_visible_in_editor=var_visible_in_editor,
-                            var_class=var_class,
-                            var_display_name=var_display_name
-                        )
+        # Extracted populate_choices and populate_variables to class methods
 
         if self.ui.tree_hierarchy_widget.currentItem() is None:
             parent_item = self.ui.tree_hierarchy_widget.invisibleRootItem()
@@ -1064,8 +994,8 @@ class SmartPropDocument(QMainWindow):
             parent_item = self.ui.tree_hierarchy_widget.currentItem()
 
         populate_tree(__data, parent_item)
-        populate_choices(__data.get("m_Choices", None))
-        populate_variables(__data.get("m_Variables"))
+        self._populate_choices(__data.get("m_Choices", None))
+        self._populate_variables(__data.get("m_Variables"))
 
     def load_preset(self, name: str = None, path: str = None):
         with open(path, "r") as file:
@@ -1084,6 +1014,80 @@ class SmartPropDocument(QMainWindow):
             self.undo_stack.push(NewFromPresetCommand(self.ui.tree_hierarchy_widget, parent, items))
             self._modified = True
             self._edited.emit()
+            
+        self._populate_choices(__data.get("m_Choices", None))
+        self._populate_variables(__data.get("m_Variables"))
+
+    def _populate_choices(self, data):
+        if data is None:
+            return
+        for choice in data:
+            name = choice.get("m_Name", "")
+            default = choice.get("m_DefaultOption", None)
+            options = choice.get("m_Options", None)
+            new_choice = AddChoice(
+                name=name,
+                tree=self.ui.choices_tree_widget,
+                default=default,
+                variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
+            ).item
+            if options:
+                for option in options:
+                    option_item = AddOption(parent=new_choice, name=option.get("m_Name", "")).item
+                    variables_list_ = option.get("m_VariableValues", [])
+                    for variable in variables_list_:
+                        AddVariable(
+                            parent=option_item,
+                            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+                            name=variable.get("m_TargetName", ""),
+                            type=variable.get("m_DataType", ""),
+                            value=variable.get("m_Value", "")
+                        )
+
+    def _populate_variables(self, data):
+        if isinstance(data, list):
+            for item in data:
+                var_class = (item.get("_class", "")).replace(variable_prefix, "")
+                var_name = item.get("m_VariableName", None)
+                var_display_name = item.get("m_DisplayName", None)
+                if var_display_name is None:
+                    var_display_name = item.get("m_ParameterName", None)
+                var_visible_in_editor = bool(item.get("m_bExposeAsParameter", None))
+                var_value = {
+                    "default": item.get("m_DefaultValue", None),
+                    "model": item.get("m_sModelName", None),
+                    "m_nElementID": item.get("m_nElementID", None),
+                    'm_HideExpression': item.get("m_HideExpression", None)
+                }
+                if var_class == "Float":
+                    var_value.update({
+                        "min": item.get("m_flParamaterMinValue", None),
+                        "max": item.get("m_flParamaterMaxValue", None)
+                    })
+                elif var_class == "Int":
+                    var_value.update({
+                        "min": item.get("m_nParamaterMinValue", None),
+                        "max": item.get("m_nParamaterMaxValue", None)
+                    })
+                else:
+                    var_value.update({"min": None, "max": None})
+
+                existing_variables = self.get_variables(layout=self.variable_viewport.ui.variables_scrollArea, only_names=True)
+                variable_exists = False
+                for index, variable in existing_variables.items():
+                    name_ = variable[0]
+                    if name_ == var_name:
+                        variable_exists = True
+                        break
+
+                if not variable_exists:
+                    self.add_variable(
+                        name=var_name,
+                        var_value=var_value,
+                        var_visible_in_editor=var_visible_in_editor,
+                        var_class=var_class,
+                        var_display_name=var_display_name
+                    )
 
     def add_an_element(self):
         self.popup_menu = PopupMenu(elements_list, add_once=False, window_name="SPE_elements")
@@ -1367,27 +1371,37 @@ class SmartPropDocument(QMainWindow):
     def open_MenuChoices(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
+        
+        # Pin callbacks to 'self' to avoid PySide6 Garbage Collector silently dropping lambdas
+        self._active_choices_menu_callbacks = []
+        
+        def add_menu_action(label, op_name, callback):
+            action = menu.addAction(label)
+            
+            def wrapper(*args):
+                self._choices_op_with_undo(op_name, callback)
+                
+            action.triggered.connect(wrapper)
+            self._active_choices_menu_callbacks.append(wrapper)
+            return action
 
-        add_choice = menu.addAction("Add Choice")
-        add_choice.triggered.connect(lambda: self._choices_op_with_undo(
-            "Add Choice",
+        add_menu_action(
+            "Add Choice", "Choice Add",
             lambda: AddChoice(
                 tree=self.ui.choices_tree_widget,
                 variables_scrollArea=self.variable_viewport.ui.variables_scrollArea
             )
-        ))
+        )
 
         if item:
             if item.text(2) == "choice":
-                add_option = menu.addAction("Add Option")
-                add_option.triggered.connect(lambda: self._choices_op_with_undo(
-                    "Add Option",
+                add_menu_action(
+                    "Add Option", "Choice option add",
                     lambda: AddOption(parent=item, name="Option")
-                ))
+                )
             elif item.text(2) == "option":
-                add_variable = menu.addAction("Add Variable")
-                add_variable.triggered.connect(lambda: self._choices_op_with_undo(
-                    "Add Variable to Choice",
+                add_menu_action(
+                    "Add Variable", "Choice Option Variable Add",
                     lambda: AddVariable(
                         parent=item,
                         variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
@@ -1396,23 +1410,26 @@ class SmartPropDocument(QMainWindow):
                         type="",
                         element_id_generator=self.element_id_generator
                     )
-                ))
+                )
 
         menu.addSection("")
-        move_up_action = menu.addAction("Move Up")
-        move_down_action = menu.addAction("Move Down")
-        move_up_action.triggered.connect(lambda: self._choices_op_with_undo(
-            "Move Up", lambda: self.move_tree_item(self.ui.choices_tree_widget, -1)
-        ))
-        move_down_action.triggered.connect(lambda: self._choices_op_with_undo(
-            "Move Down", lambda: self.move_tree_item(self.ui.choices_tree_widget, 1)
-        ))
+        add_menu_action("Move Up", "Move Up", lambda: self.move_tree_item(self.ui.choices_tree_widget, -1))
+        add_menu_action("Move Down", "Move Down", lambda: self.move_tree_item(self.ui.choices_tree_widget, 1))
+        
         menu.addSection("")
 
-        remove_action = menu.addAction("Remove")
-        remove_action.triggered.connect(lambda: self._choices_op_with_undo(
-            "Remove Choice", lambda: self.remove_tree_item(self.ui.choices_tree_widget)
-        ))
+        def get_remove_desc(item_desc):
+            if not item_desc: return "Choice Remove"
+            t = item_desc.text(2)
+            if t == "choice": return "Choice Remove"
+            elif t == "option": return "Choice Option remove"
+            elif t == "variable": return "Choice Option Variable Remove"
+            return "Choice Remove"
+
+        add_menu_action(
+            "Remove", get_remove_desc(item),
+            lambda: self.remove_tree_item(self.ui.choices_tree_widget)
+        )
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
 
@@ -1683,12 +1700,13 @@ class SmartPropDocument(QMainWindow):
         selected_items = [tree.itemFromIndex(index) for index in selected_indexes]
         for itm in selected_items:
             if itm:
-                if itm == itm.treeWidget().invisibleRootItem():
+                if itm == tree.invisibleRootItem():
                     pass
                 else:
-                    parent = itm.parent() or itm.treeWidget().invisibleRootItem()
+                    parent = itm.parent() or tree.invisibleRootItem()
                     idx = parent.indexOfChild(itm)
-                    parent.takeChild(idx)
+                    if idx != -1:
+                        parent.takeChild(idx)
         self._modified = True
         self._edited.emit()
 
@@ -2142,6 +2160,7 @@ class SmartPropDocument(QMainWindow):
         Called after every structural op and after _restore_choices so that
         ComboboxTreeChild and VariableWidget/Float/Bool edits are tracked.
         """
+        from functools import partial
         tree = self.ui.choices_tree_widget
         root = tree.invisibleRootItem()
         for ci in range(root.childCount()):
@@ -2152,13 +2171,24 @@ class SmartPropDocument(QMainWindow):
                     combo.currentTextChanged.disconnect()
                 except RuntimeError:
                     pass
-                combo.currentTextChanged.connect(
-                    lambda _, d="Edit Choice Default": self._on_choices_widget_changed(d)
-                )
+                handler = partial(self._on_choices_widget_changed, "Edit Choice Default")
+                combo._undo_handler = handler
+                combo.currentTextChanged.connect(handler)
+
             for oi in range(choice.childCount()):
                 option = choice.child(oi)
                 for vi in range(option.childCount()):
                     var_item = option.child(vi)
+                    var_widget = tree.itemWidget(var_item, 0)
+                    if hasattr(var_widget, 'combobox'):
+                        try:
+                            var_widget.combobox.changed.disconnect()
+                        except RuntimeError:
+                            pass
+                        handler = partial(self._on_choices_widget_type_changed, "Choice Option Variable type changed")
+                        var_widget._undo_handler_type = handler
+                        var_widget.combobox.changed.connect(handler)
+                        
                     val_widget = tree.itemWidget(var_item, 1)
                     if val_widget:
                         if hasattr(val_widget, 'editline'):
@@ -2166,17 +2196,30 @@ class SmartPropDocument(QMainWindow):
                                 val_widget.editline.textChanged.disconnect()
                             except RuntimeError:
                                 pass
-                            val_widget.editline.textChanged.connect(
-                                lambda _, d="Edit Choice Variable Value": self._on_choices_widget_changed(d)
-                            )
+                            handler = partial(self._on_choices_widget_changed, "Choice Option Variable Value Changed")
+                            val_widget._undo_handler_val = handler
+                            val_widget.editline.textChanged.connect(handler)
                         elif hasattr(val_widget, 'checkbox'):
                             try:
                                 val_widget.checkbox.checkStateChanged.disconnect()
                             except RuntimeError:
                                 pass
-                            val_widget.checkbox.checkStateChanged.connect(
-                                lambda _, d="Edit Choice Variable Value": self._on_choices_widget_changed(d)
-                            )
+                            handler = partial(self._on_choices_widget_changed, "Choice Option Variable Value Changed")
+                            val_widget._undo_handler_val = handler
+                            val_widget.checkbox.checkStateChanged.connect(handler)
+                        elif hasattr(val_widget, 'x_edit'):
+                            # Vector3D fallback coverage
+                            for ed in (val_widget.x_edit, val_widget.y_edit, val_widget.z_edit):
+                                try: ed.textChanged.disconnect()
+                                except RuntimeError: pass
+                                handler = partial(self._on_choices_widget_changed, "Choice Option Variable Value Changed")
+                                setattr(ed, "_undo_handler_val", handler)
+                                ed.textChanged.connect(handler)
+
+    def _on_choices_widget_type_changed(self, description, *args):
+        """When user changes var type, choices.py swaps widget instantly. We must reconnect."""
+        self._on_choices_widget_changed(description)
+        QTimer.singleShot(50, self._connect_choices_widget_signals)
 
     def _choices_op_with_undo(self, description, op_fn):
         """Helper: flush any pending choices widget edit, run op_fn, push ChoicesSnapshotCommand."""
@@ -2185,8 +2228,14 @@ class SmartPropDocument(QMainWindow):
         op_fn()
         new = self._snapshot_choices()
         self._connect_choices_widget_signals()
+        
+        print(f"DEBUG _choices_op_with_undo: desc='{description}' | old_len={len(old)} new_len={len(new)}")
         if new != old:
-            self.undo_stack.push(ChoicesSnapshotCommand(self, old, new, description))
+            print(f"DEBUG _choices_op_with_undo: PUSHING -> {description}")
+            cmd = ChoicesSnapshotCommand(self, old, new, description)
+            self.undo_stack.push(cmd)
+        else:
+            print("DEBUG _choices_op_with_undo: ABORTED (new == old)!")
 
     def _on_choices_item_about_to_edit(self, item, column):
         """Capture the 'before' snapshot when the user starts an inline rename."""
@@ -2205,7 +2254,7 @@ class SmartPropDocument(QMainWindow):
             )
             self._choices_rename_old_state = None
 
-    def _on_choices_widget_changed(self, description="Edit Choices"):
+    def _on_choices_widget_changed(self, description="Edit Choices", *args):
         """Debounce handler for ComboboxTreeChild / VariableWidget changes."""
         if self._choices_widget_old_state is None:
             self._choices_widget_old_state = self._snapshot_choices()
