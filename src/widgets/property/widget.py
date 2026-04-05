@@ -174,6 +174,14 @@ class PropertyWidget(QFrame):
         self._content_widget.setVisible(bool(state))
         self.updateSize()
 
+    def _extract_control_value(self, w):
+        """Helper to extract a value from known widget types or custom getValue() overrides."""
+        if hasattr(w, "getValue") and callable(w.getValue):
+            return w.getValue()
+        if isinstance(w, QLineEdit):
+            return w.text()
+        return None
+
     def getData(self):
         """Collect and return property data from all controls."""
         data = {
@@ -181,10 +189,20 @@ class PropertyWidget(QFrame):
             "controls": []
         }
         for i in range(self._content_layout.count()):
-            widget = self._content_layout.itemAt(i).widget()
-            if widget is not None:
-                if hasattr(widget, "getValue"):
-                    data["controls"].append(widget.getValue())
+            container_widget = self._content_layout.itemAt(i).widget()
+            if container_widget is not None:
+                # Try the container itself first
+                val = self._extract_control_value(container_widget)
+                # If wrapped, look for child widgets
+                if val is None:
+                    for child in container_widget.findChildren(QWidget):
+                        child_val = self._extract_control_value(child)
+                        if child_val is not None:
+                            val = child_val
+                            break # Found the main control in this wrapper
+                
+                if val is not None:
+                    data["controls"].append(val)
         return data
 
     def populateControls(self):

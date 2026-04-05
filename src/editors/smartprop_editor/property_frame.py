@@ -204,7 +204,7 @@ class PropertyFrame(QWidget):
         return cls._PROPERTY_WORKER_POOL
 
     # Keys that must be skipped (no widget created)
-    _SKIP_PROPS = frozenset({'m_sLabel', 'm_nElementID', 'm_sReferenceObjectID'})
+    _SKIP_PROPS = frozenset({'_class', 'm_sLabel', 'm_nElementID', 'm_sReferenceObjectID'})
 
     # Class-level copy for batch/prewarm workers (same keys as instance only_variable_properties).
     _ONLY_VARIABLE_PROPERTIES = (
@@ -386,7 +386,6 @@ class PropertyFrame(QWidget):
                 )
 
             self.name_prefix, self.name = value['_class'].split('_', 1)
-            del value['_class']
             self.value = {'m_bEnabled': True}
             self.value.update(value)
 
@@ -755,7 +754,6 @@ class PropertyFrame(QWidget):
 
         self.name_prefix, self.name = value["_class"].split("_", 1)
         value = dict(value)
-        del value["_class"]
 
         # Definition of the value variable before getting property data.
         self.value = {"m_bEnabled": True}
