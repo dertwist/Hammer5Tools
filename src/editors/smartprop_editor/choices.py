@@ -6,6 +6,8 @@ from src.settings.main import debug
 var_choice_identification_bool = ['boolean', 'bool']
 var_choice_identification_float = ['float']
 var_choice_identification_int = ['integer', 'int']
+var_choice_identification_string = ['string', 'csmartpropvariable_string']
+var_choice_identification_vector3d = ['vector3d', 'csmartpropvariable_vector3d', 'vector']
 class AddChoice():
     def __init__(self, tree=QTreeWidget, name=None, default=None, variables_scrollArea=None):
         super().__init__()
@@ -50,17 +52,27 @@ class AddVariable():
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         parent.addChild(item)
         # Combobox var
-        combobox = ComboboxVariablesWidget(variables_layout=variables_scrollArea, filter_types=['Float', 'MaterialGroup', 'Material', 'Bool', 'Int', 'ScaleMode', 'PickMode', 'Model'], element_id_generator=element_id_generator)
+        combobox = ComboboxVariablesWidget(variables_layout=variables_scrollArea, filter_types=['Float', 'MaterialGroup', 'Material', 'Bool', 'Int', 'ScaleMode', 'PickMode', 'Model', 'String', 'Vector3D'], element_id_generator=element_id_generator)
         combobox.combobox.setCurrentText(name)
         combobox.combobox.addItem(name)
 
-        combobox.combobox.changed.connect(lambda value_dict: self.variable_edit_line(value_dict, parent=item))
+        from functools import partial
+        combobox._type_change_handler = partial(self.variable_edit_line, parent=item)
+        combobox.combobox.changed.connect(combobox._type_change_handler)
+        
         value_dict = {'name': name, 'class': type, 'm_default': value}
         self.variable_edit_line(value_dict, parent=item)
         parent.treeWidget().setItemWidget(item, 0, combobox)
 
     def variable_edit_line(self, value_dict, parent):
         """Select widget basing on the variable type"""
+        old_widget = parent.treeWidget().itemWidget(parent, 1)
+        if old_widget:
+            old_widget.deleteLater()
+            
+        if not value_dict.get('class'):
+            return
+            
         type = value_dict['class'].lower()
         if type in var_choice_identification_bool:
             debug(f'Var choice type bool')
@@ -73,6 +85,14 @@ class AddVariable():
         elif type in var_choice_identification_int:
             debug(f'Var choice type int')
             widget = VariableFloat(value=value_dict['m_default'], type=value_dict['class'])
+            parent.treeWidget().setItemWidget(parent, 1, widget)
+        elif type in var_choice_identification_string:
+            debug(f'Var choice type string')
+            widget = VariableString(value=value_dict['m_default'], type=value_dict['class'])
+            parent.treeWidget().setItemWidget(parent, 1, widget)
+        elif type in var_choice_identification_vector3d:
+            debug(f'Var choice type vector3d')
+            widget = VariableVector3d(value=value_dict['m_default'], type=value_dict['class'])
             parent.treeWidget().setItemWidget(parent, 1, widget)
         else:
             debug(f'Var choice type is generic ({type})')
@@ -96,6 +116,63 @@ class VariableWidget(QWidget):
     def set_value(self):
         self.data.update({'m_Value': self.editline.text()})
 
+class VariableString(QWidget):
+    def __init__(self, value=None, type=None):
+        super().__init__()
+        if value is None:
+            value = ""
+        self.data = {'m_DataType': type, 'm_Value': value}
+        self.setupUI()
+
+    def setupUI(self):
+        self.layout = QHBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.editline = QLineEdit()
+        self.editline.setText(str(self.data['m_Value']))
+        self.editline.setFocusPolicy(Qt.StrongFocus)
+        self.editline.textChanged.connect(self.set_value)
+        self.layout.addWidget(self.editline)
+        self.setLayout(self.layout)
+
+    def set_value(self):
+        self.data['m_Value'] = self.editline.text()
+
+class VariableVector3d(QWidget):
+    def __init__(self, value=None, type=None):
+        super().__init__()
+        if value is None or not isinstance(value, list) or len(value) < 3:
+            value = [0.0, 0.0, 0.0]
+        self.data = {'m_DataType': type, 'm_Value': list(value)}
+        self.setupUI()
+
+    def setupUI(self):
+        self.layout = QHBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.x_edit = QLineEdit()
+        self.y_edit = QLineEdit()
+        self.z_edit = QLineEdit()
+        
+        for idx, edit in enumerate((self.x_edit, self.y_edit, self.z_edit)):
+            try:
+                edit.setText(str(self.data['m_Value'][idx]))
+            except:
+                edit.setText("0.0")
+            edit.setFocusPolicy(Qt.StrongFocus)
+            edit.textChanged.connect(self.set_value)
+            self.layout.addWidget(edit)
+            
+        self.setLayout(self.layout)
+
+    def set_value(self):
+        def _get_val(edit):
+            try: return float(edit.text())
+            except: return 0.0
+        self.data['m_Value'] = [
+            _get_val(self.x_edit),
+            _get_val(self.y_edit),
+            _get_val(self.z_edit)
+        ]
 
 class VariableFloat(QWidget):
     def __init__(self, value=None, type=None):
