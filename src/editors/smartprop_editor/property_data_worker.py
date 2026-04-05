@@ -35,7 +35,6 @@ def process_property_raw_value(
         value = dict(value)
 
     name_prefix, name = value["_class"].split("_", 1)
-    del value["_class"]
 
     normalized = {"m_bEnabled": True}
     normalized.update(value)
