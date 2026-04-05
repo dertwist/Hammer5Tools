@@ -34,12 +34,10 @@ class PropertyMethods:
 
         drag.setMimeData(mime_data)
 
-        # Capture drag ghost from the header frame
-        header = getattr(getattr(self, 'ui', None), 'frame', None)
-        if header is not None:
-            pixmap = header.grab()
-            drag.setPixmap(pixmap)
-            drag.setHotSpot(event.pos() - header.pos())
+        # Capture drag ghost from the entire frame, not just the header
+        pixmap = self.grab()
+        drag.setPixmap(pixmap)
+        drag.setHotSpot(event.pos())
 
         drag.exec()
 
