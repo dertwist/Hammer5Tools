@@ -175,7 +175,17 @@ class PropertyWidget(QFrame):
         self.updateSize()
 
     def getData(self):
-        pass
+        """Collect and return property data from all controls."""
+        data = {
+            "label": self.property_label.text(),
+            "controls": []
+        }
+        for i in range(self._content_layout.count()):
+            widget = self._content_layout.itemAt(i).widget()
+            if widget is not None:
+                if hasattr(widget, "getValue"):
+                    data["controls"].append(widget.getValue())
+        return data
 
     def populateControls(self):
         self._content_layout.addWidget(self.addControl())
