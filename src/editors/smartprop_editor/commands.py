@@ -240,7 +240,11 @@ class PropertySnapshotCommand(QUndoCommand):
             if v_old == v_new:
                 continue
             if isinstance(v_old, list) and isinstance(v_new, list):
+                old_ids = [item.get('m_nElementID') for item in v_old if isinstance(item, dict) and 'm_nElementID' in item]
+                new_ids = [item.get('m_nElementID') for item in v_new if isinstance(item, dict) and 'm_nElementID' in item]
                 if len(v_old) != len(v_new):
+                    result.add(k)
+                elif old_ids and new_ids and old_ids != new_ids:
                     result.add(k)
                 else:
                     for i in range(len(v_old)):
@@ -260,9 +264,55 @@ class PropertySnapshotCommand(QUndoCommand):
         return frozenset(result)
 
     @staticmethod
-    def _label_for_keys(keys):
+    def _label_for_keys(keys, old_data=None, new_data=None):
         """Build a human-readable history label from the set of change discriminators."""
         content = keys - {'_class', 'm_nElementID'}
+        
+        # Check if this is a modifier/criteria list change (add, remove, reorder)
+        list_keys = set()
+        for k in content:
+            base = k.split('[')[0]
+            if base in ('m_Modifiers', 'm_SelectionCriteria'):
+                list_keys.add(base)
+        
+        if len(list_keys) == 1 and all(k.startswith(list(list_keys)[0]) for k in content):
+            base = list(list_keys)[0]
+            friendly_base = "Modifier" if base == "m_Modifiers" else "Selection Criteria"
+            
+            old_list = (old_data or {}).get(base, [])
+            new_list = (new_data or {}).get(base, [])
+            
+            def get_specific_name(item):
+                if isinstance(item, dict) and '_class' in item:
+                    cls_name = item['_class']
+                    name = cls_name.split('_', 1)[-1]
+                    name = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', name)
+                    return name
+                return ""
+
+            if len(old_list) < len(new_list):
+                old_ids = {i.get('m_nElementID') for i in old_list if isinstance(i, dict)}
+                added = [i for i in new_list if isinstance(i, dict) and i.get('m_nElementID') not in old_ids]
+                spec = get_specific_name(added[0]) + " " if added else ""
+                return f"Add {spec}{friendly_base}"
+            elif len(old_list) > len(new_list):
+                new_ids = {i.get('m_nElementID') for i in new_list if isinstance(i, dict)}
+                removed = [i for i in old_list if isinstance(i, dict) and i.get('m_nElementID') not in new_ids]
+                spec = get_specific_name(removed[0]) + " " if removed else ""
+                return f"Delete {spec}{friendly_base}"
+            else:
+                # Same length but changed: could be reorder or edit of multiple items
+                if content == {base} or (len(content) >= 2 and all('.' not in k for k in content)):
+                    # try to find one that moved
+                    spec = ""
+                    for o, n in zip(old_list, new_list):
+                        if isinstance(o, dict) and isinstance(n, dict):
+                            if o.get('m_nElementID') != n.get('m_nElementID'):
+                                spec = get_specific_name(n) + " "
+                                break
+                    # Fallback to "Reorder Modifiers" if spec logic missed it or the user prefers
+                    return f"Reorder {spec}{friendly_base}"
+
         if len(content) == 1:
             key = next(iter(content))
             # For compound discriminators use the leaf key for a clean label
@@ -276,7 +326,7 @@ class PropertySnapshotCommand(QUndoCommand):
 
     def __init__(self, document, item, old_data, new_data):
         self._diff_keys = self._changed_keys(old_data, new_data)
-        super().__init__(self._label_for_keys(self._diff_keys))
+        super().__init__(self._label_for_keys(self._diff_keys, old_data, new_data))
         self.document = document
         self.item = item
         self.old_data = old_data
@@ -293,6 +343,11 @@ class PropertySnapshotCommand(QUndoCommand):
             return False
         # Different item → never merge
         if self._item_id != other._item_id:
+            return False
+        # Do not merge structural changes (Add, Delete, Reorder)
+        if any(self.text().startswith(prefix) for prefix in ("Add ", "Delete ", "Reorder ")):
+            return False
+        if any(other.text().startswith(prefix) for prefix in ("Add ", "Delete ", "Reorder ")):
             return False
         # Different property (or property set) → start a new history entry
         if self._diff_keys != other._diff_keys:

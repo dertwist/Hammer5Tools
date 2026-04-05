@@ -93,5 +93,9 @@ class PropertyMethods:
                         source_widget = self.widget_list.layout().takeAt(source_index).widget()
                         if source_widget:
                             self.widget_list.layout().insertWidget(target_index, source_widget)
+                            
+                            # Signal an edit action so undo stack correctly registers the structural rearrangement
+                            if hasattr(self, "edited"):
+                                self.edited.emit()
 
         event.accept()
