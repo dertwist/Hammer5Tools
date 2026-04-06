@@ -108,6 +108,7 @@ settings.cfg
 /tests/files/vmap/xxx_mapname_xxx.thumbnail.jpg
 /Hammer5Tools/hammer5tools_setup.exe
 /Hammer5Tools/Logs
+/dev/old
 /src/external/RemoteConsole/CS2RemoteConsole-client.log
 /Hammer5Tools/SoundEventEditor/soundevents_cache
 /dumps/*
