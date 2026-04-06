@@ -27,6 +27,7 @@ from src.editors.smartprop_editor.property.set_variable import PropertyVariableV
 from src.editors.smartprop_editor.property.comment import PropertyComment
 from src.editors.smartprop_editor.property.reference import PropertyReference
 from src.editors.smartprop_editor.property.warning import PropertyWarning
+from src.editors.smartprop_editor.property_tooltips import property_tooltips
 from PySide6.QtGui import QCursor
 from src.widgets import HierarchyItemModel
 import uuid
@@ -396,6 +397,13 @@ class PropertyFrame(QWidget):
                 # Pooled widgets return from acquire() hidden (never shown in
                 # acquire to avoid top-level flash); show after reparenting.
                 property_instance.show()
+                
+                # Apply tooltips if available for this property.
+                if hasattr(property_instance, 'ui') and hasattr(property_instance.ui, 'property_class'):
+                    tip = property_tooltips.get(value_class, "")
+                    if tip:
+                        property_instance.ui.property_class.setToolTip(tip)
+                
                 if hasattr(property_instance, 'slider_pressed'):
                     property_instance.slider_pressed.connect(self.slider_pressed)
                 if hasattr(property_instance, 'committed'):
