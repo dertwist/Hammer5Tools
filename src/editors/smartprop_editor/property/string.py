@@ -54,7 +54,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
                         """)
 
 
-        output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)
+        output = re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
 
         self.ui.property_class.setText(output)
@@ -276,7 +276,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
                 """)
 
             # Label text (mirrors __init__ logic).
-            output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)
+            output = re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_', '', self.value_class)
             output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
             self.ui.property_class.setText(output)
 
