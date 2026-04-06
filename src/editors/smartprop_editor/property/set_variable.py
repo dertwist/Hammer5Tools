@@ -17,7 +17,7 @@ from src.editors.smartprop_editor.widgets.expression_editor.main import Expressi
 # The SetVariable property should output m_Variable.
 # The widget must include a combobox to select the variable type,
 # and a specialized widget for each variable type.
-# Currently, the planned variable types are: bool, float, and string.
+# Currently, the planned variable types are: bool, float, string, and vector3d.
 
 # There is also a conflict with legacy SetVariableBool and SetVariableFloat which have also m_VariableValue key.
 # I planed to make only one universal property - SetVariable, all related properties SetVariableFloat and SetVariableBool
@@ -25,6 +25,8 @@ from src.editors.smartprop_editor.widgets.expression_editor.main import Expressi
 BOOL_COLOR = '(255, 189, 190)'
 FLOAT_COLOR = '(181, 255, 239)'
 STRING_COLOR = '(255, 209, 153)'
+VECTOR_COLOR = '(180, 220, 255)'
+
 
 class PropertyVariableValue(QWidget):
     edited = Signal()
@@ -41,9 +43,13 @@ class PropertyVariableValue(QWidget):
             self.m_DataType: str = None
             self.m_Value = None
             self.variables_scrollArea = variables_scrollArea
+            self.element_id_generator = element_id_generator
+
+            # Add Vector3D to the type combobox programmatically
+            self.ui.logic_switch.addItem('Vector3D')
 
             # Float widget setup
-            self.float_widget = FloatWidget(slider_range=[0,0], int_output=False, spacer_enable=False)
+            self.float_widget = FloatWidget(slider_range=[0, 0], int_output=False, spacer_enable=False)
             self.float_widget.edited.connect(self.on_changed)
             self.ui.layout_3.addWidget(self.float_widget)
 
@@ -56,6 +62,25 @@ class PropertyVariableValue(QWidget):
             self.bool_widget.edited.connect(self.on_changed)
             self.bool_widget.checkbox.setStyleSheet('border:None; font: 580 9pt "Segoe UI";')
             self.ui.layout_3.addWidget(self.bool_widget)
+
+            # Vector3D widget setup — use ComboboxVariablesWidget for variable-bound vectors
+            self.vector3d_variable = ComboboxVariablesWidget(
+                variables_layout=self.variables_scrollArea,
+                filter_types=['Vector3D'],
+                variable_name=f'{self.value_class}_vec3',
+                element_id_generator=element_id_generator
+            )
+            self.vector3d_variable.setMaximumHeight(24)
+            self.vector3d_variable.search_button.set_size(width=24, height=24)
+            vec3d_layout = QHBoxLayout()
+            vec3d_layout.setContentsMargins(0, 0, 0, 0)
+            vec3d_layout.addWidget(self.vector3d_variable)
+            vec3d_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+            self.vector3d_frame = QWidget()
+            self.vector3d_frame.setLayout(vec3d_layout)
+            self.vector3d_frame.setMinimumHeight(32)
+            self.vector3d_variable.combobox.changed.connect(self.on_changed)
+            self.ui.layout_3.addWidget(self.vector3d_frame)
 
             # EditLine setup
             self.text_line = CompletingPlainTextEdit()
@@ -91,10 +116,10 @@ class PropertyVariableValue(QWidget):
             self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
             self.ui.logic_switch_value.currentTextChanged.connect(self.on_changed)
 
-            # Variable setup
+            # Variable setup (target variable picker — filters dynamically by type)
             self.variable = ComboboxVariablesWidget(
                 variables_layout=self.variables_scrollArea,
-                filter_types=['Float', 'Int', 'Bool'],
+                filter_types=['Float', 'Int', 'Bool', 'Vector3D'],
                 variable_name=self.value_class,
                 element_id_generator=element_id_generator
             )
@@ -127,9 +152,7 @@ class PropertyVariableValue(QWidget):
         """Initialize widget values from the provided value dictionary"""
         try:
             if 'm_Value' in value:
-                print(value)
                 self.m_Value = value['m_Value']
-                print(self.m_Value)
                 if isinstance(self.m_Value, bool):
                     self.bool_widget.set_value(self.m_Value)
                 elif isinstance(self.m_Value, (float, int)):
@@ -137,15 +160,20 @@ class PropertyVariableValue(QWidget):
                 elif isinstance(self.m_Value, dict) and ('m_Expression' in self.m_Value):
                     self.text_line.setPlainText(str(self.m_Value['m_Expression']))
                     self.ui.logic_switch_value.setCurrentText('Expression')
+                elif isinstance(self.m_Value, str):
+                    # Vector3D stored as a variable name string
+                    self.vector3d_variable.combobox.set_variable(self.m_Value)
 
             if 'm_DataType' in value:
                 self.m_DataType = value['m_DataType']
                 if self.m_DataType == 'FLOAT':
                     self.ui.logic_switch.setCurrentText('Float')
-                elif self.m_DataType == 'BOOL':  # Fixed typo: 'BOOl' -> 'BOOL'
+                elif self.m_DataType == 'BOOL':
                     self.ui.logic_switch.setCurrentText('Bool')
                 elif self.m_DataType == 'INT':
                     self.ui.logic_switch.setCurrentText('Int')
+                elif self.m_DataType == 'VECTOR3D':
+                    self.ui.logic_switch.setCurrentText('Vector3D')
 
             if 'm_TargetName' in value:
                 self.m_TargetName = value['m_TargetName']
@@ -157,29 +185,36 @@ class PropertyVariableValue(QWidget):
     def logic_switch_value(self):
         """Handle switching between Value and Expression modes"""
         try:
+            current_type = self.ui.logic_switch.currentText()
             if self.ui.logic_switch_value.currentText() == 'Value':
                 self.text_line.hide()
                 self.expression_editor.hide()
                 self.value_spacer_item.show()
-                # Show appropriate widget based on current data type
-                current_type = self.ui.logic_switch.currentText()
                 if current_type == 'Bool':
                     self.float_widget.hide()
                     self.bool_widget.show()
+                    self.vector3d_frame.hide()
+                elif current_type == 'Vector3D':
+                    self.float_widget.hide()
+                    self.bool_widget.hide()
+                    self.vector3d_frame.show()
+                    self.value_spacer_item.hide()
                 else:  # Float or Int
                     self.float_widget.show()
                     self.bool_widget.hide()
+                    self.vector3d_frame.hide()
             elif self.ui.logic_switch_value.currentText() == 'Expression':
                 self.text_line.show()
                 self.expression_editor.show()
                 self.value_spacer_item.hide()
                 self.float_widget.hide()
                 self.bool_widget.hide()
+                self.vector3d_frame.hide()
         except Exception as e:
             print(f"Error in logic_switch_value: {e}")
 
     def logic_switch(self):
-        """Handle switching between data types (Bool, Float, Int)"""
+        """Handle switching between data types (Bool, Float, Int, Vector3D)"""
         try:
             current_type = self.ui.logic_switch.currentText()
 
@@ -187,19 +222,31 @@ class PropertyVariableValue(QWidget):
                 if self.ui.logic_switch_value.currentText() == 'Value':
                     self.float_widget.show()
                     self.bool_widget.hide()
+                    self.vector3d_frame.hide()
                     self.spacer.show()
                 self.ui.logic_switch_value.setStyleSheet(f"color: rgb{FLOAT_COLOR};")
                 self.ui.property_class_4.setStyleSheet(f"color: rgb{FLOAT_COLOR};")
-                self.variable.combobox.filter_types = ['Float', 'Int']  # Fixed capitalization
+                self.variable.combobox.filter_types = ['Float', 'Int']
 
             elif current_type == 'Bool':
                 if self.ui.logic_switch_value.currentText() == 'Value':
                     self.float_widget.hide()
                     self.bool_widget.show()
+                    self.vector3d_frame.hide()
                 self.spacer.show()
                 self.ui.logic_switch_value.setStyleSheet(f"color: rgb{BOOL_COLOR};")
                 self.ui.property_class_4.setStyleSheet(f"color: rgb{BOOL_COLOR};")
                 self.variable.combobox.filter_types = ['Bool']
+
+            elif current_type == 'Vector3D':
+                if self.ui.logic_switch_value.currentText() == 'Value':
+                    self.float_widget.hide()
+                    self.bool_widget.hide()
+                    self.vector3d_frame.show()
+                self.spacer.hide()
+                self.ui.logic_switch_value.setStyleSheet(f"color: rgb{VECTOR_COLOR};")
+                self.ui.property_class_4.setStyleSheet(f"color: rgb{VECTOR_COLOR};")
+                self.variable.combobox.filter_types = ['Vector3D']
 
             self.m_DataType = current_type.upper()
         except Exception as e:
@@ -210,16 +257,13 @@ class PropertyVariableValue(QWidget):
         try:
             self.logic_switch_value()
             self.logic_switch()
-            
-            # Setup type-aware completer for expression mode without filters
             if self.ui.logic_switch_value.currentText() == 'Expression':
                 CompletionUtils.setup_completer_for_widget(
                     self.text_line,
                     self.variables_scrollArea,
-                    filter_types=None,  # No filtering - show all variable types
+                    filter_types=None,
                     context='general'
                 )
-            
             self.change_value()
             self.edited.emit()
         except Exception as e:
@@ -239,6 +283,12 @@ class PropertyVariableValue(QWidget):
             elif current_type == 'Bool':
                 if current_mode == 'Value':
                     self.m_Value = self.bool_widget.get_value()
+                elif current_mode == 'Expression':
+                    self.m_Value = {'m_Expression': str(self.text_line.toPlainText())}
+            elif current_type == 'Vector3D':
+                if current_mode == 'Value':
+                    # Store as the variable name pointing to a Vector3D variable
+                    self.m_Value = self.vector3d_variable.combobox.get_variable()
                 elif current_mode == 'Expression':
                     self.m_Value = {'m_Expression': str(self.text_line.toPlainText())}
 

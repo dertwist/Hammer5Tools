@@ -27,6 +27,7 @@ from src.editors.smartprop_editor.property.set_variable import PropertyVariableV
 from src.editors.smartprop_editor.property.comment import PropertyComment
 from src.editors.smartprop_editor.property.reference import PropertyReference
 from src.editors.smartprop_editor.property.warning import PropertyWarning
+from src.editors.smartprop_editor.unverified_features import UNVERIFIED_CLASSES
 from src.editors.smartprop_editor.property_tooltips import property_tooltips
 from PySide6.QtGui import QCursor
 from src.widgets import HierarchyItemModel
@@ -133,20 +134,10 @@ class PropertyFrame(QWidget):
             cls._PROPERTY_WORKER_POOL = pool
         return cls._PROPERTY_WORKER_POOL
 
-    # Keys that must be skipped (no widget created)
     _SKIP_PROPS = frozenset({'_class', 'm_sLabel', 'm_nElementID', 'm_sReferenceObjectID'})
 
     # Class-level copy for batch/prewarm workers (same keys as instance only_variable_properties).
-    _ONLY_VARIABLE_PROPERTIES = (
-        'm_OutputVariableMaxZ',
-        'm_OutputVariableMinZ',
-        'm_OutputVariableMaxY',
-        'm_OutputVariableMinY',
-        'm_OutputVariableMaxX',
-        'm_OutputVariableMinX',
-        'm_OutputVariable',
-        'm_OutputChoiceVariableName',
-    )
+    _ONLY_VARIABLE_PROPERTIES = ()
 
     # Combobox fields: (substring in value_class, items, filter_types) — order matters.
     _COMBOBOX_SUBSTRING_RULES = (
@@ -175,6 +166,12 @@ class PropertyFrame(QWidget):
         ('m_PlaceAtPositions', ['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'], ['PathPositions']),
         ('m_Mode', ['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'], ['ApplyColorMode']),
         ('m_ApplyColorMode', ['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'], ['ApplyColorMode']),
+        ('m_OriginSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+        ('m_TargetSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+        ('m_UpSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+        ('m_TargetPointSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+        ('m_EndPointSpaceA', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+        ('m_EndPointSpaceB', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
     )
 
     # Populated lazily in _resolve_dispatch() — ordered prefix fallthrough.
@@ -217,9 +214,16 @@ class PropertyFrame(QWidget):
             'm_Expression':            (PropertyString,  {'expression_bool': True,  'placeholder': 'Expression example: var_bool ? var_sizer * var_multiply'}),
             'm_StateName':             (PropertyString,  {'expression_bool': False, 'only_string': True, 'placeholder': 'State name'}),
             'm_LocatorName':           (PropertyString,  {'expression_bool': False, 'placeholder': 'Locator name'}),
-            'm_VariableName':          (PropertyString,  {'expression_bool': False, 'only_string': False, 'only_variable': True,
-                                                           'force_variable': True, 'placeholder': 'Variable name',
-                                                           'filter_types': ['String','Int','Float','Bool']}),
+            'm_VariableName':          (PropertyVariableOutput,  {'filter_types': ['String', 'Int', 'Float', 'Bool', 'Vector3D', 'Color']}),
+            'm_OutputVariableName':    (PropertyVariableOutput,  {'filter_types': ['String', 'Int', 'Float', 'Bool', 'Vector3D']}),
+            'm_OutputVariableMaxZ':    (PropertyVariableOutput,  {}),
+            'm_OutputVariableMinZ':    (PropertyVariableOutput,  {}),
+            'm_OutputVariableMaxY':    (PropertyVariableOutput,  {}),
+            'm_OutputVariableMinY':    (PropertyVariableOutput,  {}),
+            'm_OutputVariableMaxX':    (PropertyVariableOutput,  {}),
+            'm_OutputVariableMinX':    (PropertyVariableOutput,  {}),
+            'm_OutputVariable':        (PropertyVariableOutput,  {}),
+            'm_OutputChoiceVariableName': (PropertyVariableOutput, {}),
             '_WARN_NOT_VERIFIED':      (PropertyWarning,              {}),
         }
 
@@ -228,6 +232,10 @@ class PropertyFrame(QWidget):
             ('m_fl', PropertyFloat, {}),
             ('m_f', PropertyFloat, {}),
             ('m_n', PropertyFloat, {'int_bool': True}),
+            ('m_InputVector', PropertyVector3D, {}),
+            ('m_Origin', PropertyVector3D, {}),
+            ('m_TargetPoint', PropertyVector3D, {}),
+            ('m_EndPoint', PropertyVector3D, {}),
             ('m_v', PropertyVector3D, {}),
             ('m_b', PropertyBool, {}),
             ('m_s', PropertyString, {'expression_bool': False, 'placeholder': 'String'}),
@@ -455,13 +463,41 @@ class PropertyFrame(QWidget):
             if value_class in ('m_sLabel', 'm_nElementID', 'm_sReferenceObjectID'):
                 return
 
-            if value_class in self.only_variable_properties:
-                property_instance = PropertyVariableOutput(
-                    value=val,
-                    value_class=value_class,
-                    variables_scrollArea=self.variables_scrollArea,
-                    element_id_generator=self.element_id_generator,
-                )
+            # Dispatch to appropriate widget based on property name or prefix.
+            PropertyFrame._resolve_dispatch()
+            dispatch = PropertyFrame._EXACT_PROP_DISPATCH
+            if dispatch is not None and value_class in dispatch:
+                widget_cls, extra_kwargs = dispatch[value_class]
+
+                # PropertyReference needs tree hierarchy to enable its "search" popup.
+                if widget_cls is PropertyReference:
+                    property_instance = widget_cls(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        element_id_generator=self.element_id_generator,
+                        tree_hierarchy=self.tree_hierarchy,
+                        **extra_kwargs
+                    )
+                else:
+                    # Prefer pooling if the widget supports it.
+                    if hasattr(widget_cls, "acquire") and callable(getattr(widget_cls, "acquire")):
+                        property_instance = widget_cls.acquire(
+                            value=val,
+                            value_class=value_class,
+                            variables_scrollArea=self.variables_scrollArea,
+                            element_id_generator=self.element_id_generator,
+                            **extra_kwargs,
+                        )
+                    else:
+                        property_instance = widget_cls(
+                            value=val,
+                            value_class=value_class,
+                            variables_scrollArea=self.variables_scrollArea,
+                            element_id_generator=self.element_id_generator,
+                            **extra_kwargs
+                        )
+
                 add_instance()
                 return
 
@@ -575,6 +611,10 @@ class PropertyFrame(QWidget):
             return
 
         try:
+            # Add warning for unverified features (Phase 1 or 2 as appropriate)
+            if self.name in UNVERIFIED_CLASSES and offset == 0:
+                adding_instances('_WARN_NOT_VERIFIED', None)
+
             # Prefer worker-prepared ordered pairs (Plan 5).
             if getattr(self, '_ordered_pairs', None) is not None:
                 ordered_pairs = self._ordered_pairs
