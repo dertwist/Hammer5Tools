@@ -9,7 +9,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 
 class PropertyVariableOutput(QWidget):
     edited = Signal()
-    def __init__(self, value_class, value, variables_scrollArea, element_id_generator, variable_type='Float', filter_types=None):
+    def __init__(self, value_class, value, variables_scrollArea, element_id_generator, variable_type='Float', filter_types=None, **kwargs):
         super().__init__()
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -17,6 +17,9 @@ class PropertyVariableOutput(QWidget):
         self.value_class = value_class
         self.value = value
         self.variables_scrollArea = variables_scrollArea
+
+        if filter_types is None:
+            filter_types = ['Float', 'Int']
 
         self.ui.logic_switch.wheelEvent = lambda event: None
 
@@ -32,17 +35,22 @@ class PropertyVariableOutput(QWidget):
         color: rgb(255, 209, 153);
                     """)
 
+
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
 
         self.ui.property_class.setText(output)
         self.ui.logic_switch.deleteLater()
 
-        if filter_types is None:
-            filter_types = ['Float', 'Int']
 
         # Variable
-        self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, variable_type=variable_type, filter_types=filter_types, variable_name=self.value_class, element_id_generator=element_id_generator)
+        self.variable = ComboboxVariablesWidget(
+            variables_layout=self.variables_scrollArea,
+            variable_type=variable_type,
+            filter_types=filter_types,
+            variable_name=self.value_class,
+            element_id_generator=element_id_generator
+        )
         # self.variable.setFixedWidth(256)
         self.variable.setMaximumHeight(24)
         self.variable.search_button.set_size(width=24, height=24)
@@ -56,11 +64,9 @@ class PropertyVariableOutput(QWidget):
         self.variable.combobox.changed.connect(self.on_changed)
         self.ui.layout.insertWidget(2, self.variable_frame)
 
-        self.load_value(value)
-
-    def load_value(self, value):
         if isinstance(value, dict):
             if 'm_SourceName' in value:
+                self.ui.logic_switch.setCurrentIndex(2)
                 self.var_value = value['m_SourceName']
                 self.variable.combobox.set_variable(value['m_SourceName'])
                 debug(f'Loaded value in variable widget: dict {value["m_SourceName"]}')
@@ -71,28 +77,7 @@ class PropertyVariableOutput(QWidget):
         else:
             self.variable.combobox.set_variable(str(value))
             debug(f'Loaded value in variable widget: None {value}')
-        
-        self.change_value()
-
-    def reconfigure(self, value_class, value, variables_scrollArea, element_id_generator, variable_type='Float', filter_types=None, **kwargs):
-        self.value_class = value_class
-        self.value = value
-        self.variables_scrollArea = variables_scrollArea
-
-        if filter_types is None:
-            filter_types = ['Float', 'Int']
-        
-        # Block signals to avoid recursive edited emission during undo
-        self.variable.combobox.blockSignals(True)
-        self.variable.reset(
-            variables_layout=variables_scrollArea,
-            variable_type=variable_type,
-            filter_types=filter_types,
-            variable_name=value_class,
-            element_id_generator=element_id_generator,
-        )
-        self.load_value(value)
-        self.variable.combobox.blockSignals(False)
+        self.on_changed()
     def on_changed(self):
         self.change_value()
         self.edited.emit()
