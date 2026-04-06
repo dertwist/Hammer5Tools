@@ -29,7 +29,7 @@ class PropertyCombobox(QWidget, PooledPropertyMixin):
 
         # Pre-calculate the output for property_class to reduce repeated compilations
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2',
-                  re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class))
+                  re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_', '', self.value_class))
         self.ui.property_class.setText(output)
 
         self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
@@ -215,7 +215,7 @@ class PropertyCombobox(QWidget, PooledPropertyMixin):
             output = re.sub(
                 r'([a-z0-9])([A-Z])',
                 r'\1 \2',
-                re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class),
+                re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_', '', self.value_class),
             )
             self.ui.property_class.setText(output)
             self.ui.logic_switch.setItemText(1, output)
