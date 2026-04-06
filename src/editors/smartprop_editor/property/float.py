@@ -67,7 +67,7 @@ class PropertyFloat(QWidget, PooledPropertyMixin):
             """)
 
         # Process value_class
-        output = re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class)
+        output = re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
         self.ui.property_class.setText(output)
         self.ui.logic_switch.currentTextChanged.connect(self.on_changed)
@@ -266,7 +266,7 @@ class PropertyFloat(QWidget, PooledPropertyMixin):
             self.text_line.setPlainText('0')
 
             # STEP 5: Update the label text (pure display, no signal path).
-            output = re.sub(r'm_fl|m_n|m_b|m_', '', self.value_class)
+            output = re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_', '', self.value_class)
             output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
             self.ui.property_class.setText(output)
 
