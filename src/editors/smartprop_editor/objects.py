@@ -243,14 +243,25 @@ operators_list = [
     {'SetOrientation': {'_class': 'CSmartPropOperation_SetOrientation', 'm_vForwardVector': None, 'm_ForwardDirectionSpace': 'WORLD', 'm_vUpVector': None, 'm_UpDirectionSpace': 'WORLD', 'm_bPrioritizeUp': False}},
     {'SetPosition': {'_class': 'CSmartPropOperation_SetPosition', 'm_vPosition': None, 'm_CoordinateSpace': 'WORLD'}},
     {'Trace': {'_class': 'CSmartPropOperation_Trace', 'm_Origin': None, 'm_OriginSpace': 'WORLD', 'm_flOriginOffset': 0.0, 'm_flSurfaceUpInfluence': 1.0, 'm_nNoHitResult': 'NOTHING', 'm_bIgnoreToolMaterials': False, 'm_bIgnoreSky': False, 'm_bIgnoreNoDraw': False, 'm_bIgnoreTranslucent': False, 'm_bIgnoreModels': False, 'm_bIgnoreEntities': False, 'm_bIgnoreCables': False}},
+    {'ComputeDotProduct3D': {'_class': 'CSmartPropOperation_ComputeDotProduct3D', 'm_InputVectorA': None, 'm_InputVectorB': None, 'm_OutputVariableName': ''}},
+    {'ComputeCrossProduct3D': {'_class': 'CSmartPropOperation_ComputeCrossProduct3D', 'm_InputVectorA': None, 'm_InputVectorB': None, 'm_OutputVariableName': ''}},
+    {'TraceToPoint': {
+        '_class': 'CSmartPropOperation_TraceToPoint',
+        'm_Origin': None, 'm_OriginSpace': 'WORLD', 'm_flOriginOffset': 0.0, 'm_flSurfaceUpInfluence': 1.0, 'm_nNoHitResult': 'NOTHING',
+        'm_bIgnoreToolMaterials': False, 'm_bIgnoreSky': False, 'm_bIgnoreNoDraw': False, 'm_bIgnoreTranslucent': False, 'm_bIgnoreModels': False, 'm_bIgnoreEntities': False, 'm_bIgnoreCables': False,
+        'm_TargetPoint': None, 'm_TargetPointSpace': 'WORLD', 'm_bTraceAway': False, 'm_flTraceLength': 1000.0
+    }},
+    {'TraceToLine': {
+        '_class': 'CSmartPropOperation_TraceToLine',
+        'm_Origin': None, 'm_OriginSpace': 'WORLD', 'm_flOriginOffset': 0.0, 'm_flSurfaceUpInfluence': 1.0, 'm_nNoHitResult': 'NOTHING',
+        'm_bIgnoreToolMaterials': False, 'm_bIgnoreSky': False, 'm_bIgnoreNoDraw': False, 'm_bIgnoreTranslucent': False, 'm_bIgnoreModels': False, 'm_bIgnoreEntities': False, 'm_bIgnoreCables': False,
+        'm_EndPointA': None, 'm_EndPointSpaceA': 'WORLD', 'm_EndPointB': None, 'm_EndPointSpaceB': 'WORLD',
+        'm_bTraceAway': False, 'm_flTraceLength': 1000.0
+    }},
     {'Comment': {'_class': 'Hammer5Tools_Comment', 'm_Comment': None}}
 ]
 
 operators_dict_todo = {
-    'TraceToPoint': {},
-    'TraceToLine': {},
-    'ComputeDotProduct3D': {},
-    'ComputeCrossProduct3D': {},
     'ComputeDistance3D': {},
     'ComputeVectorBetweenPoints3D': {},
     'ComputeNormalizedVector3D': {},
