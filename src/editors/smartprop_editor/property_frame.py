@@ -26,6 +26,7 @@ from src.editors.smartprop_editor.objects import surfaces_list
 from src.editors.smartprop_editor.property.set_variable import PropertyVariableValue
 from src.editors.smartprop_editor.property.comment import PropertyComment
 from src.editors.smartprop_editor.property.reference import PropertyReference
+from src.editors.smartprop_editor.property.warning import PropertyWarning
 from PySide6.QtGui import QCursor
 from src.widgets import HierarchyItemModel
 import uuid
@@ -71,7 +72,7 @@ class PropertyFrame(QWidget):
         'RandomOffset': ['m_bEnabled', 'm_vRandomPositionMin', 'm_vRandomPositionMax', 'm_vSnapIncrement'],
         'RandomScale': ['m_bEnabled', 'm_flRandomScaleMin', 'm_flRandomScaleMax', 'm_flSnapIncrement'],
         'RandomRotation': ['m_bEnabled', 'm_vRandomRotationMin', 'm_vRandomRotationMax', 'm_vSnapIncrement'],
-        'RandomColorTintColor': ['m_bEnabled', 'm_SelectionMode', 'm_ColorPosition', 'm_Mode'],
+        'RandomColorTintColor': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_SelectionMode', 'm_Color', 'm_ColorPosition', 'm_Mode'],
         'CreateSizer': ['m_bEnabled', 'm_Name', 'm_bDisplayModel'],
         'CreateRotator': ['m_bEnabled', 'm_Name', 'm_vOffset', 'm_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_DisplayColor', 'm_bApplyToCurrentTransform', 'm_flSnappingIncrement', 'm_flInitialAngle', 'm_bEnforceLimits', 'm_flMinAngle', 'm_flMaxAngle', 'm_OutputVariable'],
         'CreateLocator': ['m_bEnabled', 'm_LocatorName', 'm_vOffset', 'm_flDisplayScale', 'm_bConfigurable', 'm_bAllowTranslation', 'm_bAllowRotation', 'm_bAllowScale'],
@@ -79,19 +80,19 @@ class PropertyFrame(QWidget):
         'TraceInDirection': ['m_bEnabled', 'm_DirectionSpace', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_flOriginOffset', 'm_flTraceLength'],
         'SaveState': ['m_bEnabled', 'm_StateName'],
         'SetVariable': ['m_bEnabled', 'm_VariableValue'],
-        'RandomRotationSnapped': ['m_bEnabled', 'm_vMinAngles', 'm_vMaxAngles', 'm_flSnapIncrement', 'm_RotationAxes'],
+        'RandomRotationSnapped': ['_WARN_NOT_VERIFIED','m_bEnabled', 'm_vMinAngles', 'm_vMaxAngles', 'm_flSnapIncrement', 'm_RotationAxes'],
         'ResetRotation': ['m_bEnabled', 'm_bIgnoreObjectRotation', 'm_bResetPitch', 'm_bResetYaw', 'm_bResetRoll'],
         'ResetScale': ['m_bEnabled', 'm_bIgnoreObjectScale'],
         'RotateTowards': ['m_bEnabled', 'm_vOriginPos', 'm_vTargetPos', 'm_vUpPos', 'm_flWeight', 'm_OriginSpace', 'm_TargetSpace', 'm_UpSpace'],
-        'SaveColor': ['m_bEnabled', 'm_VariableName'],
-        'SaveDirection': ['m_bEnabled', 'm_DirectionVector', 'm_CoordinateSpace', 'm_VariableName'],
-        'SavePosition': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
+        'SaveColor': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_VariableName'],
+        'SaveDirection': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_DirectionVector', 'm_CoordinateSpace', 'm_VariableName'],
+        'SavePosition': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
         'SaveScale': ['m_bEnabled', 'm_VariableName'],
-        'SaveSurfaceNormal': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
-        'SetMateraialGroupChoice': ['m_bEnabled', 'm_VariableName', 'm_SelectionMode', 'm_ChoiceSelection', 'm_MaterialGroupChoices'],
+        'SaveSurfaceNormal': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
+        'SetMateraialGroupChoice': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_VariableName', 'm_SelectionMode', 'm_ChoiceSelection', 'm_MaterialGroupChoices'],
         'SetOrientation': ['m_bEnabled', 'm_vForwardVector', 'm_ForwardDirectionSpace', 'm_vUpVector', 'm_UpDirectionSpace', 'm_bPrioritizeUp'],
         'SetPosition': ['m_bEnabled', 'm_vPosition', 'm_CoordinateSpace'],
-        'Trace': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
+        'Trace': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
         'Comment': ['m_bEnabled', 'm_Comment'],
         'Expression': ['m_bEnabled', 'm_Expression'],
         'Probability': ['m_bEnabled', 'm_flProbability'],
@@ -195,6 +196,9 @@ class PropertyFrame(QWidget):
             'm_MaterialReplacements':  (PropertyMaterialReplacements, {}),
             'm_MaterialGroupChoices':  (PropertyMaterialGroupChoices, {}),
             'm_ChoiceSelection':       (PropertyFloat,   {'int_bool': True}),
+            'm_Color':                 (PropertyColor,                {}),
+            'm_ColorPosition':         (PropertyFloat,   {'slider_range': [0, 1]}),
+            'm_Material':              (PropertyString,  {'expression_bool': False, 'placeholder': 'Material name (.vmat)', 'filter_types': ['String']}),
             'm_flBendPoint':           (PropertyFloat,   {'slider_range': [0, 1]}),
             'm_flWidth':               (PropertyFloat,   {'slider_range': [0, 4096]}),
             'm_flLength':              (PropertyFloat,   {'slider_range': [0, 4096]}),
@@ -213,6 +217,7 @@ class PropertyFrame(QWidget):
             'm_VariableName':          (PropertyString,  {'expression_bool': False, 'only_string': False, 'only_variable': True,
                                                            'force_variable': True, 'placeholder': 'Variable name',
                                                            'filter_types': ['String','Int','Float','Bool']}),
+            '_WARN_NOT_VERIFIED':      (PropertyWarning,              {}),
         }
 
         # Most frequent first; first matching substring wins after exact + combobox miss.
@@ -223,6 +228,7 @@ class PropertyFrame(QWidget):
             ('m_v', PropertyVector3D, {}),
             ('m_b', PropertyBool, {}),
             ('m_s', PropertyString, {'expression_bool': False, 'placeholder': 'String'}),
+            ('m_', PropertyString, {'expression_bool': False, 'placeholder': 'String'}),
         ]
 
         cls._DISPATCH_RESOLVED = True
