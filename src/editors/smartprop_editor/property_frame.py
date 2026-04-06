@@ -501,39 +501,6 @@ class PropertyFrame(QWidget):
                 add_instance()
                 return
 
-            for sub, items, fts in PropertyFrame._COMBOBOX_SUBSTRING_RULES:
-                if sub in value_class:
-                    property_instance = PropertyCombobox.acquire(
-                        value=val,
-                        value_class=value_class,
-                        variables_scrollArea=self.variables_scrollArea,
-                        items=list(items),
-                        filter_types=list(fts),
-                        element_id_generator=self.element_id_generator,
-                    )
-                    add_instance()
-                    return
-
-            for prefix, widget_cls, extra_kw in PropertyFrame._PREFIX_DISPATCH:
-                if prefix in value_class:
-                    if hasattr(widget_cls, 'acquire') and callable(getattr(widget_cls, 'acquire')):
-                        property_instance = widget_cls.acquire(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kw,
-                        )
-                    else:
-                        property_instance = widget_cls(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kw
-                        )
-                    add_instance()
-                    return
 
             if 'm_VariableValue' in value_class:
                 if val is None:
@@ -594,6 +561,40 @@ class PropertyFrame(QWidget):
                 property_instance = PropertyComment(value=val, value_class=value_class)
                 add_instance()
                 return
+
+            for sub, items, fts in PropertyFrame._COMBOBOX_SUBSTRING_RULES:
+                if sub in value_class:
+                    property_instance = PropertyCombobox.acquire(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        items=list(items),
+                        filter_types=list(fts),
+                        element_id_generator=self.element_id_generator,
+                    )
+                    add_instance()
+                    return
+
+            for prefix, widget_cls, extra_kw in PropertyFrame._PREFIX_DISPATCH:
+                if prefix in value_class:
+                    if hasattr(widget_cls, 'acquire') and callable(getattr(widget_cls, 'acquire')):
+                        property_instance = widget_cls.acquire(
+                            value=val,
+                            value_class=value_class,
+                            variables_scrollArea=self.variables_scrollArea,
+                            element_id_generator=self.element_id_generator,
+                            **extra_kw,
+                        )
+                    else:
+                        property_instance = widget_cls(
+                            value=val,
+                            value_class=value_class,
+                            variables_scrollArea=self.variables_scrollArea,
+                            element_id_generator=self.element_id_generator,
+                            **extra_kw
+                        )
+                    add_instance()
+                    return
 
             property_instance = PropertyLegacy(
                 value=val,

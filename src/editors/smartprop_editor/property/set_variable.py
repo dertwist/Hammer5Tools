@@ -7,6 +7,40 @@ from src.widgets import FloatWidget, BoolWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 
+class Vector3DInlineWidget(QWidget):
+    edited = Signal()
+    def __init__(self, spacer_enable=False):
+        super().__init__()
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.widgets = []
+        for i in range(3):
+            w = FloatWidget(slider_range=[0,0], int_output=False, spacer_enable=False)
+            w.edited.connect(self.edited.emit)
+            layout.addWidget(w)
+            self.widgets.append(w)
+        if spacer_enable:
+            layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.setLayout(layout)
+
+    def get_value(self):
+        return [w.value for w in self.widgets]
+
+    def set_value(self, value):
+        if isinstance(value, list) and len(value) == 3:
+            for i in range(3):
+                self.widgets[i].set_value(value[i])
+        elif isinstance(value, str):
+            try:
+                import ast
+                parsed = ast.literal_eval(value)
+                if isinstance(parsed, list) and len(parsed) == 3:
+                    for i in range(3):
+                        self.widgets[i].set_value(parsed[i])
+            except:
+                pass
+
+
 # m_VariableValue =
 # {
 #       m_TargetName = "end_weight"
@@ -34,6 +68,7 @@ class PropertyVariableValue(QWidget):
         try:
             self.ui = Ui_Widget()
             self.ui.setupUi(self)
+            self.ui.logic_switch.addItem('Vector3D')
             self.setAcceptDrops(False)
             self.value_class = value_class
             self.value = None
@@ -63,6 +98,12 @@ class PropertyVariableValue(QWidget):
             self.text_line.OnlyFloat = False
             self.expression_editor = ExpressionEditor(self.text_line, self.variables_scrollArea)
             self.text_line.setPlaceholderText('Variable name, float or expression')
+            
+            # Vector widget setup
+            self.vector_widget = Vector3DInlineWidget(spacer_enable=False)
+            self.vector_widget.edited.connect(self.on_changed)
+            self.ui.layout_3.addWidget(self.vector_widget)
+            
             self.ui.layout_3.addWidget(self.expression_editor)
             self.ui.layout_3.addWidget(self.text_line)
             self.text_line.textChanged.connect(self.on_changed)
@@ -127,13 +168,13 @@ class PropertyVariableValue(QWidget):
         """Initialize widget values from the provided value dictionary"""
         try:
             if 'm_Value' in value:
-                print(value)
                 self.m_Value = value['m_Value']
-                print(self.m_Value)
                 if isinstance(self.m_Value, bool):
                     self.bool_widget.set_value(self.m_Value)
                 elif isinstance(self.m_Value, (float, int)):
                     self.float_widget.set_value(self.m_Value)
+                elif isinstance(self.m_Value, list) or (isinstance(self.m_Value, str) and ',' in self.m_Value):
+                    self.vector_widget.set_value(self.m_Value)
                 elif isinstance(self.m_Value, dict) and ('m_Expression' in self.m_Value):
                     self.text_line.setPlainText(str(self.m_Value['m_Expression']))
                     self.ui.logic_switch_value.setCurrentText('Expression')
@@ -142,10 +183,12 @@ class PropertyVariableValue(QWidget):
                 self.m_DataType = value['m_DataType']
                 if self.m_DataType == 'FLOAT':
                     self.ui.logic_switch.setCurrentText('Float')
-                elif self.m_DataType == 'BOOL':  # Fixed typo: 'BOOl' -> 'BOOL'
+                elif self.m_DataType == 'BOOL':
                     self.ui.logic_switch.setCurrentText('Bool')
                 elif self.m_DataType == 'INT':
                     self.ui.logic_switch.setCurrentText('Int')
+                elif self.m_DataType == 'VECTOR3D':
+                    self.ui.logic_switch.setCurrentText('Vector3D')
 
             if 'm_TargetName' in value:
                 self.m_TargetName = value['m_TargetName']
@@ -165,16 +208,23 @@ class PropertyVariableValue(QWidget):
                 current_type = self.ui.logic_switch.currentText()
                 if current_type == 'Bool':
                     self.float_widget.hide()
+                    self.vector_widget.hide()
                     self.bool_widget.show()
+                elif current_type == 'Vector3D':
+                    self.float_widget.hide()
+                    self.bool_widget.hide()
+                    self.vector_widget.show()
                 else:  # Float or Int
                     self.float_widget.show()
                     self.bool_widget.hide()
+                    self.vector_widget.hide()
             elif self.ui.logic_switch_value.currentText() == 'Expression':
                 self.text_line.show()
                 self.expression_editor.show()
                 self.value_spacer_item.hide()
                 self.float_widget.hide()
                 self.bool_widget.hide()
+                self.vector_widget.hide()
         except Exception as e:
             print(f"Error in logic_switch_value: {e}")
 
@@ -187,6 +237,7 @@ class PropertyVariableValue(QWidget):
                 if self.ui.logic_switch_value.currentText() == 'Value':
                     self.float_widget.show()
                     self.bool_widget.hide()
+                    self.vector_widget.hide()
                     self.spacer.show()
                 self.ui.logic_switch_value.setStyleSheet(f"color: rgb{FLOAT_COLOR};")
                 self.ui.property_class_4.setStyleSheet(f"color: rgb{FLOAT_COLOR};")
@@ -195,11 +246,20 @@ class PropertyVariableValue(QWidget):
             elif current_type == 'Bool':
                 if self.ui.logic_switch_value.currentText() == 'Value':
                     self.float_widget.hide()
+                    self.vector_widget.hide()
                     self.bool_widget.show()
                 self.spacer.show()
                 self.ui.logic_switch_value.setStyleSheet(f"color: rgb{BOOL_COLOR};")
                 self.ui.property_class_4.setStyleSheet(f"color: rgb{BOOL_COLOR};")
                 self.variable.combobox.filter_types = ['Bool']
+                
+            elif current_type == 'Vector3D':
+                if self.ui.logic_switch_value.currentText() == 'Value':
+                    self.float_widget.hide()
+                    self.bool_widget.hide()
+                    self.vector_widget.show()
+                    self.spacer.show()
+                self.variable.combobox.filter_types = ['Vector3D']
 
             self.m_DataType = current_type.upper()
         except Exception as e:
@@ -239,6 +299,11 @@ class PropertyVariableValue(QWidget):
             elif current_type == 'Bool':
                 if current_mode == 'Value':
                     self.m_Value = self.bool_widget.get_value()
+                elif current_mode == 'Expression':
+                    self.m_Value = {'m_Expression': str(self.text_line.toPlainText())}
+            elif current_type == 'Vector3D':
+                if current_mode == 'Value':
+                    self.m_Value = self.vector_widget.get_value()
                 elif current_mode == 'Expression':
                     self.m_Value = {'m_Expression': str(self.text_line.toPlainText())}
 

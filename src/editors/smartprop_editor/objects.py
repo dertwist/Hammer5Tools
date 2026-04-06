@@ -243,8 +243,12 @@ operators_list = [
     {'SetOrientation': {'_class': 'CSmartPropOperation_SetOrientation', 'm_vForwardVector': None, 'm_ForwardDirectionSpace': 'WORLD', 'm_vUpVector': None, 'm_UpDirectionSpace': 'WORLD', 'm_bPrioritizeUp': False}},
     {'SetPosition': {'_class': 'CSmartPropOperation_SetPosition', 'm_vPosition': None, 'm_CoordinateSpace': 'WORLD'}},
     {'Trace': {'_class': 'CSmartPropOperation_Trace', 'm_Origin': None, 'm_OriginSpace': 'WORLD', 'm_flOriginOffset': 0.0, 'm_flSurfaceUpInfluence': 1.0, 'm_nNoHitResult': 'NOTHING', 'm_bIgnoreToolMaterials': False, 'm_bIgnoreSky': False, 'm_bIgnoreNoDraw': False, 'm_bIgnoreTranslucent': False, 'm_bIgnoreModels': False, 'm_bIgnoreEntities': False, 'm_bIgnoreCables': False}},
-    {'ComputeDotProduct3D': {'_class': 'CSmartPropOperation_ComputeDotProduct3D', 'm_InputVectorA': None, 'm_InputVectorB': None, 'm_OutputVariableName': ''}},
-    {'ComputeCrossProduct3D': {'_class': 'CSmartPropOperation_ComputeCrossProduct3D', 'm_InputVectorA': None, 'm_InputVectorB': None, 'm_OutputVariableName': ''}},
+    {'ComputeDotProduct3D': {'_class': 'CSmartPropOperation_ComputeDotProduct3D', 'm_InputVectorA': None, 'm_InputVectorB': None, 'm_OutputVariableName': '', '_WARN_NOT_VERIFIED': True}},
+    {'ComputeCrossProduct3D': {'_class': 'CSmartPropOperation_ComputeCrossProduct3D', 'm_InputVectorA': None, 'm_InputVectorB': None, 'm_OutputVariableName': '', '_WARN_NOT_VERIFIED': True}},
+    {'ComputeDistance3D': {'_class': 'CSmartPropOperation_ComputeDistance3D', 'm_InputPositionA': None, 'm_CoordinateSpaceA': 'WORLD', 'm_InputPositionB': None, 'm_CoordinateSpaceB': 'WORLD', 'm_OutputCoordinateSpace': 'WORLD', 'm_OutputVariableName': '', '_WARN_NOT_VERIFIED': True}},
+    {'ComputeProjectVector3D': {'_class': 'CSmartPropOperation_ComputeProjectVector3D', 'm_InputVectorA': None, 'm_CoordinateSpaceA': 'WORLD', 'm_InputVectorB': None, 'm_CoordinateSpaceB': 'WORLD', 'm_bPlane': False, 'm_OutputCoordinateSpace': 'WORLD', 'm_OutputVariableName': '', '_WARN_NOT_VERIFIED': True}},
+    {'ComputeNormalizedVector3D': {'_class': 'CSmartPropOperation_ComputeNormalizedVector3D', 'm_InputVector': None, 'm_OutputVariableName': '', '_WARN_NOT_VERIFIED': True}},
+    {'ComputeVectorBetweenPoints3D': {'_class': 'CSmartPropOperation_ComputeVectorBetweenPoints3D', 'm_InputPositionA': None, 'm_CoordinateSpaceA': 'WORLD', 'm_InputPositionB': None, 'm_CoordinateSpaceB': 'WORLD', 'm_bNormalized': False, 'm_OutputCoordinateSpace': 'WORLD', 'm_OutputVariableName': '', '_WARN_NOT_VERIFIED': True}},
     {'TraceToPoint': {
         '_class': 'CSmartPropOperation_TraceToPoint',
         'm_Origin': None, 'm_OriginSpace': 'WORLD', 'm_flOriginOffset': 0.0, 'm_flSurfaceUpInfluence': 1.0, 'm_nNoHitResult': 'NOTHING',
@@ -260,13 +264,6 @@ operators_list = [
     }},
     {'Comment': {'_class': 'Hammer5Tools_Comment', 'm_Comment': None}}
 ]
-
-operators_dict_todo = {
-    'ComputeDistance3D': {},
-    'ComputeVectorBetweenPoints3D': {},
-    'ComputeNormalizedVector3D': {},
-    'ComputeProjectVector3D': {}
-}
 
 selection_criteria_prefix = "CSmartPropSelectionCriteria_"
 selection_criteria_list = [
