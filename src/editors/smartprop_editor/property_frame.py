@@ -455,6 +455,16 @@ class PropertyFrame(QWidget):
             if value_class in ('m_sLabel', 'm_nElementID', 'm_sReferenceObjectID'):
                 return
 
+            if value_class in self.only_variable_properties:
+                property_instance = PropertyVariableOutput(
+                    value=val,
+                    value_class=value_class,
+                    variables_scrollArea=self.variables_scrollArea,
+                    element_id_generator=self.element_id_generator,
+                )
+                add_instance()
+                return
+
             for sub, items, fts in PropertyFrame._COMBOBOX_SUBSTRING_RULES:
                 if sub in value_class:
                     property_instance = PropertyCombobox.acquire(
@@ -484,20 +494,10 @@ class PropertyFrame(QWidget):
                             value_class=value_class,
                             variables_scrollArea=self.variables_scrollArea,
                             element_id_generator=self.element_id_generator,
-                            **extra_kw,
+                            **extra_kw
                         )
                     add_instance()
                     return
-
-            if value_class in self.only_variable_properties:
-                property_instance = PropertyVariableOutput(
-                    value=val,
-                    value_class=value_class,
-                    variables_scrollArea=self.variables_scrollArea,
-                    element_id_generator=self.element_id_generator,
-                )
-                add_instance()
-                return
 
             if 'm_VariableValue' in value_class:
                 if val is None:
