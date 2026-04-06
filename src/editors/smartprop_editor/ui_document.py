@@ -17,8 +17,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QDockWidget, QFrame,
-    QHeaderView, QLabel, QLineEdit, QMainWindow,
-    QScrollArea, QSizePolicy, QSpacerItem, QTreeWidget,
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMainWindow,
+    QPushButton, QScrollArea, QSizePolicy, QSpacerItem, QTreeWidget,
     QTreeWidgetItem, QVBoxLayout, QWidget)
 import resources_rc
 
@@ -158,6 +158,29 @@ class Ui_MainWindow(object):
         self.verticalLayout_3 = QVBoxLayout(self.frame_2)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_toolbar = QHBoxLayout()
+        self.horizontalLayout_toolbar.setObjectName(u"horizontalLayout_toolbar")
+        self.btn_show_modifiers = QPushButton(self.frame_2)
+        self.btn_show_modifiers.setObjectName(u"btn_show_modifiers")
+        self.btn_show_modifiers.setMinimumSize(QSize(0, 24))
+        self.btn_show_modifiers.setCheckable(True)
+        self.btn_show_modifiers.setChecked(True)
+        self.btn_show_modifiers.setText("🔧 Modifiers")
+
+        self.horizontalLayout_toolbar.addWidget(self.btn_show_modifiers)
+
+        self.btn_show_selection_criteria = QPushButton(self.frame_2)
+        self.btn_show_selection_criteria.setObjectName(u"btn_show_selection_criteria")
+        self.btn_show_selection_criteria.setMinimumSize(QSize(0, 24))
+        self.btn_show_selection_criteria.setCheckable(True)
+        self.btn_show_selection_criteria.setChecked(True)
+        self.btn_show_selection_criteria.setText("🎯 Selection Criteria")
+
+        self.horizontalLayout_toolbar.addWidget(self.btn_show_selection_criteria)
+
+
+        self.verticalLayout_3.addLayout(self.horizontalLayout_toolbar)
+
         self.tree_hierarchy_search_bar_widget = QLineEdit(self.frame_2)
         self.tree_hierarchy_search_bar_widget.setObjectName(u"tree_hierarchy_search_bar_widget")
 

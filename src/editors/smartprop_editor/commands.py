@@ -266,7 +266,7 @@ class PropertySnapshotCommand(QUndoCommand):
     @staticmethod
     def _label_for_keys(keys, old_data=None, new_data=None):
         """Build a human-readable history label from the set of change discriminators."""
-        content = keys - {'_class', 'm_nElementID', '_WARN_NOT_VERIFIED'}
+        content = keys - {'_class', 'm_nElementID'}
         
         # Check if this is a modifier/criteria list change (add, remove, reorder)
         list_keys = set()
@@ -385,6 +385,7 @@ class PropertySnapshotCommand(QUndoCommand):
                 self.item.setData(0, Qt.UserRole, fast_deepcopy(self.new_data))
                 tree.setCurrentItem(self.item)
             tree.scrollToItem(self.item)
+            self.document._inject_virtual_children(self.item)
         except Exception as e:
             print(f"[SPE][PropertyEdit] redo: ERROR — {e}")
 
@@ -400,6 +401,7 @@ class PropertySnapshotCommand(QUndoCommand):
                 self.item.setData(0, Qt.UserRole, fast_deepcopy(self.old_data))
                 tree.setCurrentItem(self.item)
             tree.scrollToItem(self.item)
+            self.document._inject_virtual_children(self.item)
         except Exception as e:
             print(f"[SPE][PropertyEdit] undo: ERROR — {e}")
 

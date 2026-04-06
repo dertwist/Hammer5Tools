@@ -23,6 +23,7 @@ from src.widgets.element_id import (
 )
 from src.widgets import HierarchyItemModel, exception_handler
 from src.editors.smartprop_editor.objects import variable_prefix, element_prefix
+from src.editors.smartprop_editor.hierarchy_virtual_item import VIRTUAL_ROLE
 
 # =========================================================
 # [Reference handling / merging logic]
@@ -157,6 +158,8 @@ def serialization_hierarchy_items(item, data=None):
         if item.childCount() > 0:
             for index in range(item.childCount()):
                 child = item.child(index)
+                if child.data(0, VIRTUAL_ROLE):
+                    continue
 
                 # Create a temporary container for this child
                 child_container = {"m_Children": []}
@@ -439,6 +442,8 @@ class VsmartSave:
                         merged["m_sReferenceObjectID"] = s_ref_id
                         merged["m_nReferenceID"] = n_ref_id
                         child_data = merged
+            if child.data(0, VIRTUAL_ROLE):
+                continue
             if child.childCount() > 0:
                 child_data["m_Children"] = []
                 self.tree_to_vsmart(child, child_data)

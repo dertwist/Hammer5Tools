@@ -61,6 +61,7 @@ from src.editors.smartprop_editor.commands import (
 from src.forms.replace_dialog.main import FindAndReplaceDialog
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, error, exception_handler
 from src.widgets.element_id import ElementIDGenerator
+from src.editors.smartprop_editor.hierarchy_virtual_item import VirtualChildItem, VIRTUAL_ROLE
 from src.editors.smartprop_editor._common import (
     get_clean_class_name_value,
     get_clean_class_name,
@@ -175,6 +176,9 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.ui.tree_hierarchy_widget.customContextMenuRequested.connect(self.open_hierarchy_menu)
         self.ui.tree_hierarchy_widget.currentItemChanged.connect(self.on_tree_current_item_changed)
+        
+        self.ui.btn_show_modifiers.toggled.connect(self._on_toggle_modifier_rows)
+        self.ui.btn_show_selection_criteria.toggled.connect(self._on_toggle_criteria_rows)
         self.ui.tree_hierarchy_widget.itemClicked.connect(on_three_hierarchyitem_clicked)
         self.ui.tree_hierarchy_widget.itemExpanded.connect(self._prewarm_node_modifiers)
         self.ui.tree_hierarchy_widget.header().setSectionResizeMode(0, QHeaderView.ResizeToContents)
@@ -700,6 +704,11 @@ class SmartPropDocument(QMainWindow):
         if self._undo_redo_rebuilding:
             return
 
+        meta = current_item.data(0, VIRTUAL_ROLE) if current_item else None
+        if isinstance(meta, dict) and meta.get("virtual"):
+            self._load_virtual_item_in_panel(current_item, meta)
+            return
+
         # Raise the guard BEFORE creating any PropertyFrame so the guard decrement
         # is queued AFTER all _finish_init singleShot(0) callbacks.  The decrement
         # is scheduled at the very end of this function, after all frames are
@@ -726,40 +735,7 @@ class SmartPropDocument(QMainWindow):
         else:
             self.properties_groups_hide()
 
-        try:
-            # Remove any existing PropertyFrame widgets from their layouts immediately
-            # so that update_tree_item_value never sees both the old (pending deletion)
-            # and new frames at the same time.  removeWidget() detaches the widget from
-            # layout management right away; deleteLater() handles deferred memory cleanup.
-            for layout in (
-                self.ui.properties_layout,
-                self.modifiers_group_instance.layout,
-                self.selection_criteria_group_instance.layout,
-            ):
-                for i in reversed(range(layout.count())):
-                    widget = layout.itemAt(i).widget()
-                    if isinstance(widget, PropertyFrame):
-                        widget.cancel_worker()
-                        layout.removeWidget(widget)
-                        widget.hide()
-                        if layout is self.modifiers_group_instance.layout:
-                            from src.editors.smartprop_editor.property_widget_pool import (
-                                PropertyWidgetPool,
-                            )
-
-                            PropertyWidgetPool.instance().release(
-                                getattr(widget, "prop_class", None), widget
-                            )
-                        else:
-                            try:
-                                # Return pooled child widgets to their pools first.
-                                widget._clear_widgets()
-                            except Exception:
-                                pass
-                            widget.deleteLater()
-        except Exception as error:
-            print(error)
-
+        self._clear_property_panel()
         try:
             # No tree selection: panel was cleared above; do not touch item.data.
             if item is not None:
@@ -911,6 +887,7 @@ class SmartPropDocument(QMainWindow):
                 new_data = fast_deepcopy(output_value)
                 cmd = PropertySnapshotCommand(self, item, old_data, new_data)
                 self.undo_stack.push(cmd)
+                self._inject_virtual_children(item) # refresh label if class changed
 
     # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
@@ -1104,6 +1081,7 @@ class SmartPropDocument(QMainWindow):
             _id=self.element_id_generator.get_key(element_value)
         )
         self.ui.tree_hierarchy_widget.AddItem(new_element_item)
+        self._inject_virtual_children(new_element_item)
 
     # ======================================[Properties operator]========================================
     def new_operator(self, element_class, element_value):
@@ -1317,6 +1295,8 @@ class SmartPropDocument(QMainWindow):
             # _finish_init callbacks that were queued during file load fire first.
             QTimer.singleShot(0, self._dec_property_undo_guard)
             QTimer.singleShot(0, self.undo_stack.clear)
+            # Post-population loop
+            self._inject_all_virtual_rows_recursive(self.ui.tree_hierarchy_widget.invisibleRootItem())
 
     # ======================================[Save File]========================================
     def save_file(self, external=False, realtime_save=False):
@@ -1432,6 +1412,252 @@ class SmartPropDocument(QMainWindow):
         )
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
+
+    # ======================================[Virtual rows logic]========================================
+    def _on_toggle_modifier_rows(self, visible):
+        root = self.ui.tree_hierarchy_widget.invisibleRootItem()
+        self._toggle_virtual_rows_recursive(root, VirtualChildItem.MODIFIER, visible)
+
+    def _on_toggle_criteria_rows(self, visible):
+        root = self.ui.tree_hierarchy_widget.invisibleRootItem()
+        self._toggle_virtual_rows_recursive(root, VirtualChildItem.SELECTION_CRITERIA, visible)
+
+    def _toggle_virtual_rows_recursive(self, parent, virtual_type, visible):
+        for i in range(parent.childCount()):
+            child = parent.child(i)
+            meta = child.data(0, VIRTUAL_ROLE)
+            if isinstance(meta, dict) and meta.get("type") == virtual_type:
+                child.setHidden(not visible)
+            self._toggle_virtual_rows_recursive(child, virtual_type, visible)
+
+    def _inject_all_virtual_rows_recursive(self, parent):
+        for i in range(parent.childCount()):
+            child = parent.child(i)
+            meta = child.data(0, VIRTUAL_ROLE)
+            if not isinstance(meta, dict) or not meta.get("virtual"):
+                self._inject_virtual_children(child)
+                self._inject_all_virtual_rows_recursive(child)
+
+    def _inject_virtual_children(self, tree_item):
+        """
+        Read m_Modifiers and m_SelectionCriteria from tree_item's UserRole data
+        and insert VirtualChildItem rows as children.
+        Existing virtual children are cleared first (safe for re-inject on undo restore).
+        """
+        data = tree_item.data(0, Qt.UserRole)
+        if not isinstance(data, dict):
+            return
+
+        # Remove old virtual children (real children are untouched)
+        i = 0
+        while i < tree_item.childCount():
+            child = tree_item.child(i)
+            meta = child.data(0, VIRTUAL_ROLE)
+            if isinstance(meta, dict) and meta.get("virtual"):
+                tree_item.takeChild(i)
+            else:
+                i += 1
+
+        show_mod = self.ui.btn_show_modifiers.isChecked()
+        show_sc  = self.ui.btn_show_selection_criteria.isChecked()
+
+        # Inject virtual rows at the bottom
+        mods = data.get("m_Modifiers", []) or []
+        for idx, entry in enumerate(mods):
+            label = entry.get("_class", "").split("_")[-1] or "Modifier"
+            item = VirtualChildItem(f"[MOD] {label}", entry, idx, VirtualChildItem.MODIFIER)
+            item.setHidden(not show_mod)
+            tree_item.addChild(item)
+
+        criteria = data.get("m_SelectionCriteria", []) or []
+        for idx, entry in enumerate(criteria):
+            label = entry.get("_class", "").split("_")[-1] or "Criteria"
+            item = VirtualChildItem(f"[SC] {label}", entry, idx, VirtualChildItem.SELECTION_CRITERIA)
+            item.setHidden(not show_sc)
+            tree_item.addChild(item)
+
+    def _load_virtual_item_in_panel(self, virtual_item, meta):
+        """
+        Show this single modifier/criteria entry in the property editor panel.
+        No modifiers group / selection criteria group shown — just the one PropertyFrame
+        for the entry itself, plus the existing undo path via update_tree_item_value.
+        """
+        self._cancel_modifier_load()
+        self._clear_property_panel()
+
+        parent_item = virtual_item.parent()
+        if parent_item is None:
+            return
+
+        data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
+        list_key = "m_Modifiers" if meta["type"] == VirtualChildItem.MODIFIER else "m_SelectionCriteria"
+        entries = data.get(list_key, []) or []
+        idx = meta["index"]
+        if idx >= len(entries):
+            return
+
+        entry = entries[idx]
+        # Show it in the existing properties_layout (same panel, no groups)
+        self.properties_groups_hide()
+        frame = PropertyFrame(
+            widget_list=self.ui.properties_layout,
+            value=fast_deepcopy(entry),
+            variables_scrollArea=self.variable_viewport.ui.variables_scrollArea,
+            tree_hierarchy=self.ui.tree_hierarchy_widget,
+            element_id_generator=self.element_id_generator,
+            parent=self,
+        )
+        frame.edited.connect(
+            lambda: self._on_virtual_item_edited(parent_item, list_key, idx, frame)
+        )
+        self.ui.properties_layout.insertWidget(0, frame)
+        self.ui.properties_placeholder.hide()
+
+    def _on_virtual_item_edited(self, parent_item, list_key, idx, frame):
+        if self._property_undo_guard or self._slider_dragging:
+            return
+        old_data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
+        entries = old_data.get(list_key, []) or []
+        if idx >= len(entries):
+            return
+        new_data = fast_deepcopy(old_data)
+        new_data[list_key][idx] = frame.value
+        parent_item.setData(0, Qt.UserRole, new_data)
+        self._inject_virtual_children(parent_item)  # refresh label if class changed
+        cmd = PropertySnapshotCommand(self, parent_item, old_data, new_data)
+        self.undo_stack.push(cmd)
+        self._modified = True
+        self._edited.emit()
+
+    def _clear_property_panel(self):
+        """Clears all PropertyFrame widgets from properties, modifiers, and criteria layouts."""
+        try:
+            for layout in (
+                self.ui.properties_layout,
+                self.modifiers_group_instance.layout,
+                self.selection_criteria_group_instance.layout,
+            ):
+                for i in reversed(range(layout.count())):
+                    item = layout.itemAt(i)
+                    if not item: continue
+                    widget = item.widget()
+                    if isinstance(widget, PropertyFrame):
+                        widget.cancel_worker()
+                        layout.removeWidget(widget)
+                        widget.hide()
+                        if layout is self.modifiers_group_instance.layout:
+                            from src.editors.smartprop_editor.property_widget_pool import (
+                                PropertyWidgetPool,
+                            )
+                            PropertyWidgetPool.instance().release(
+                                getattr(widget, "prop_class", None), widget
+                            )
+                        else:
+                            try:
+                                widget._clear_widgets()
+                            except Exception:
+                                pass
+                            widget.deleteLater()
+        except Exception as error:
+            print(error)
+
+    def _open_virtual_item_menu(self, virtual_item, meta, position):
+        menu = QMenu()
+        parent_item = virtual_item.parent()
+        list_key = "m_Modifiers" if meta["type"] == VirtualChildItem.MODIFIER else "m_SelectionCriteria"
+        idx = meta["index"]
+
+        menu.addAction("Move Up",    lambda: self._virtual_item_move(parent_item, list_key, idx, -1))
+        menu.addAction("Move Down",  lambda: self._virtual_item_move(parent_item, list_key, idx, +1))
+        menu.addSeparator()
+        menu.addAction("Duplicate",  lambda: self._virtual_item_duplicate(parent_item, list_key, idx))
+        menu.addAction("Copy",       lambda: self._virtual_item_copy(parent_item, list_key, idx))
+        menu.addAction("Paste",      lambda: self._virtual_item_paste(parent_item, list_key, idx, meta["type"]))
+        menu.addSeparator()
+        menu.addAction("Delete",     lambda: self._virtual_item_delete(parent_item, list_key, idx))
+        menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
+
+    def _virtual_item_move(self, parent_item, list_key, idx, direction):
+        old_data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
+        new_data = fast_deepcopy(old_data)
+        entries = new_data.get(list_key, [])
+        new_idx = idx + direction
+        if new_idx < 0 or new_idx >= len(entries):
+            return
+        entries[idx], entries[new_idx] = entries[new_idx], entries[idx]
+        new_data[list_key] = entries
+        parent_item.setData(0, Qt.UserRole, new_data)
+        self._inject_virtual_children(parent_item)
+        self.undo_stack.push(PropertySnapshotCommand(self, parent_item, old_data, new_data))
+        self._modified = True
+        self._edited.emit()
+
+    def _virtual_item_duplicate(self, parent_item, list_key, idx):
+        old_data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
+        new_data = fast_deepcopy(old_data)
+        entries = new_data.get(list_key, [])
+        clone = fast_deepcopy(entries[idx])
+        clone = self.element_id_generator.update_value(clone, force=True)
+        entries.insert(idx + 1, clone)
+        new_data[list_key] = entries
+        parent_item.setData(0, Qt.UserRole, new_data)
+        self._inject_virtual_children(parent_item)
+        self.undo_stack.push(PropertySnapshotCommand(self, parent_item, old_data, new_data))
+        self._modified = True
+        self._edited.emit()
+
+    def _virtual_item_delete(self, parent_item, list_key, idx):
+        old_data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
+        new_data = fast_deepcopy(old_data)
+        entries = new_data.get(list_key, [])
+        if idx < len(entries):
+            entries.pop(idx)
+        new_data[list_key] = entries
+        parent_item.setData(0, Qt.UserRole, new_data)
+        self._inject_virtual_children(parent_item)
+        self.undo_stack.push(PropertySnapshotCommand(self, parent_item, old_data, new_data))
+        self._modified = True
+        self._edited.emit()
+
+    def _virtual_item_copy(self, parent_item, list_key, idx):
+        data = parent_item.data(0, Qt.UserRole)
+        entries = data.get(list_key, [])
+        entry = entries[idx]
+        group_type = "modifier" if list_key == "m_Modifiers" else "selection_criteria"
+        name = entry.get("_class", "").split("_")[-1]
+        clipboard = QApplication.clipboard()
+        clipboard.setText(f"hammer5tools:smartprop_editor_property;;{name};;{entry};;{group_type}")
+
+    def _virtual_item_paste(self, parent_item, list_key, idx, virtual_type):
+        clipboard = QApplication.clipboard()
+        clipboard_text = clipboard.text()
+        clipboard_data = clipboard_text.split(";;")
+
+        if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
+            try:
+                # Ensure we are pasting the correct type
+                source_type = clipboard_data[3]
+                if source_type != virtual_type:
+                    return
+                
+                old_data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
+                new_data = fast_deepcopy(old_data)
+                entries = new_data.get(list_key, [])
+                
+                pasted_val = ast.literal_eval(clipboard_data[2])
+                pasted_val = self.element_id_generator.update_value(pasted_val, force=True)
+                
+                # Insert after the current virtual item
+                entries.insert(idx + 1, pasted_val)
+                new_data[list_key] = entries
+                
+                parent_item.setData(0, Qt.UserRole, new_data)
+                self._inject_virtual_children(parent_item)
+                self.undo_stack.push(PropertySnapshotCommand(self, parent_item, old_data, new_data))
+                self._modified = True
+                self._edited.emit()
+            except Exception:
+                pass
 
     # ======================================[Variables Actions]========================================
     def add_variable(
@@ -1565,6 +1791,12 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Tree widget hierarchy context menu]========================================
     def open_hierarchy_menu(self, position):
+        item = self.ui.tree_hierarchy_widget.itemAt(position)
+        meta = item.data(0, VIRTUAL_ROLE) if item else None
+        if isinstance(meta, dict) and meta.get("virtual"):
+            self._open_virtual_item_menu(item, meta, position)
+            return
+
         menu = QMenu()
         add_new_action = menu.addAction("New element")
         add_new_action.triggered.connect(self.add_an_element)
