@@ -17,7 +17,7 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
     committed = Signal()
 
     # Precompile patterns for faster initialization
-    _pattern_phase1 = re.compile(r'm_fl|m_n|m_v|m_')
+    _pattern_phase1 = re.compile(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_')
     _pattern_phase2 = re.compile(r'([a-z0-9])([A-Z])')
 
 
