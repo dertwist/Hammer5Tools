@@ -216,7 +216,14 @@ operators_list = [
     {'RandomScale': {'_class': "CSmartPropOperation_RandomScale", "m_flRandomScaleMin": 1.0, "m_flRandomScaleMax": 1.0, "m_flSnapIncrement": 0.0}},
     {'RandomRotation': {'_class': "CSmartPropOperation_RandomRotation", "m_vRandomRotationMin": None, "m_vRandomRotationMax": None, "m_vSnapIncrement": None}},
     {'RandomColorTintColor': {'_class': "CSmartPropOperation_RandomColorTintColor", "m_SelectionMode": "RANDOM", "m_Color": [255, 255, 255], "m_ColorPosition": 0.0, "m_Mode": "MULTIPLY_OBJECT"}},
-    {'CreateSizer': {'_class': "CSmartPropOperation_CreateSizer", "m_Name": "", "m_bDisplayModel": False}},
+    {'CreateSizer': {
+        '_class': "CSmartPropOperation_CreateSizer",
+        "m_Name": "",
+        "m_bDisplayModel": False,
+        "m_flInitialMinX": 0.0, "m_flInitialMaxX": 0.0, "m_flConstraintMinX": 0.0, "m_flConstraintMaxX": 0.0, "m_OutputVariableMinX": "", "m_OutputVariableMaxX": "",
+        "m_flInitialMinY": 0.0, "m_flInitialMaxY": 0.0, "m_flConstraintMinY": 0.0, "m_flConstraintMaxY": 0.0, "m_OutputVariableMinY": "", "m_OutputVariableMaxY": "",
+        "m_flInitialMinZ": 0.0, "m_flInitialMaxZ": 0.0, "m_flConstraintMinZ": 0.0, "m_flConstraintMaxZ": 0.0, "m_OutputVariableMinZ": "", "m_OutputVariableMaxZ": ""
+    }},
     {'CreateRotator': {'_class': "CSmartPropOperation_CreateRotator", "m_Name": "", "m_vOffset": None, "m_vRotationAxis": None, "m_CoordinateSpace": "WORLD", "m_flDisplayRadius": 16.0, "m_DisplayColor": None, "m_bApplyToCurrentTransform": True, "m_flSnappingIncrement": 0.0, "m_flInitialAngle": 0.0, "m_bEnforceLimits": False, "m_flMinAngle": 0.0, "m_flMaxAngle": 0.0, "m_OutputVariable": ""}},
     {'CreateLocator': {'_class': "CSmartPropOperation_CreateLocator", "m_LocatorName": "", "m_vOffset": None, "m_flDisplayScale": 1.0, "m_bConfigurable": True, "m_bAllowTranslation": True, "m_bAllowRotation": True, "m_bAllowScale": True}},
     {'RestoreState': {'_class': "CSmartPropOperation_RestoreState", 'm_bDiscardIfUknown': True}},
