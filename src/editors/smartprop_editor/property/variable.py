@@ -18,9 +18,6 @@ class PropertyVariableOutput(QWidget):
         self.value = value
         self.variables_scrollArea = variables_scrollArea
 
-        if filter_types is None:
-            filter_types = ['Float', 'Int']
-
         self.ui.logic_switch.wheelEvent = lambda event: None
 
         self.spacer = Spacer()
@@ -45,10 +42,10 @@ class PropertyVariableOutput(QWidget):
 
         # Variable
         self.variable = ComboboxVariablesWidget(
-            variables_layout=self.variables_scrollArea,
-            variable_type=variable_type,
-            filter_types=filter_types,
-            variable_name=self.value_class,
+            variables_layout=self.variables_scrollArea, 
+            variable_type=variable_type, 
+            filter_types=filter_types if filter_types is not None else ['Float', 'Int'], 
+            variable_name=self.value_class, 
             element_id_generator=element_id_generator
         )
         # self.variable.setFixedWidth(256)
