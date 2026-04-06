@@ -266,6 +266,7 @@ operators_list = [
 ]
 
 selection_criteria_prefix = "CSmartPropSelectionCriteria_"
+COMMENT_CLASS = 'Hammer5Tools_Comment'
 selection_criteria_list = [
     {"EndCap": {'_class': 'CSmartPropSelectionCriteria_EndCap', 'm_bStart':False, 'm_bEnd': False}},
     {"ChoiceWeight": {'_class': 'CSmartPropSelectionCriteria_ChoiceWeight', 'm_flWeight': 0}},

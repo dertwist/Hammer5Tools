@@ -1,6 +1,6 @@
 import os.path
 import re
-import ast
+import json
 from src.common import fast_deepcopy
 from collections import deque
 
@@ -38,12 +38,11 @@ from keyvalues3 import kv3_to_json
 from src.editors.smartprop_editor.ui_document import Ui_MainWindow
 from src.settings.main import settings
 from src.editors.smartprop_editor.objects import (
-    variables_list,
-    variable_prefix,
-    elements_list,
-    operators_list,
-    selection_criteria_list,
-    filters_list
+    variables_list, variable_prefix, elements_list,
+    operators_list, selection_criteria_list, filters_list,
+    operator_prefix, filter_prefix,
+    selection_criteria_prefix,
+    COMMENT_CLASS,
 )
 from src.editors.smartprop_editor.vsmart import (
     VsmartOpen, VsmartSave, serialization_hierarchy_items, deserialize_hierarchy_item
@@ -57,6 +56,7 @@ from src.widgets.popup_menu.main import PopupMenu
 from src.editors.smartprop_editor.commands import (
     GroupElementsCommand, BulkModelImportCommand, NewFromPresetCommand, PasteItemsCommand,
     PropertySnapshotCommand, VariablesSnapshotCommand, ChoicesSnapshotCommand,
+    VirtualItemSnapshotCommand,
 )
 from src.forms.replace_dialog.main import FindAndReplaceDialog
 from src.widgets import ErrorInfo, on_three_hierarchyitem_clicked, HierarchyItemModel, error, exception_handler
@@ -171,6 +171,7 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.setHeaderLabels(["Label", "Data", "Class", "ID"])
 
         self.ui.tree_hierarchy_widget.installEventFilter(self)
+        self.ui.tree_hierarchy_widget.viewport().installEventFilter(self)
 
         self.ui.tree_hierarchy_widget.hideColumn(1)
         self.ui.tree_hierarchy_widget.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -891,8 +892,26 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Event Filter]========================================
     def eventFilter(self, source, event):
+        viewport = self.ui.tree_hierarchy_widget.viewport()
+
+        if source is viewport:
+            if event.type() == QEvent.Drop:
+                dragged = self.ui.tree_hierarchy_widget.currentItem()
+                if dragged is not None and dragged.data(0, Qt.UserRole + 1) is not None:
+                    return True  # block drag of virtual rows
+            if event.type() in (QEvent.DragMove, QEvent.DragEnter):
+                pos = event.pos()
+                target = self.ui.tree_hierarchy_widget.itemAt(pos)
+                if target is not None and target.data(0, Qt.UserRole + 1) is not None:
+                    return True  # block drop onto a virtual row
+
         if event.type() == QKeyEvent.KeyPress:
             if source == self.ui.tree_hierarchy_widget:
+                if event.key() == Qt.Key_F2:
+                    item = self.ui.tree_hierarchy_widget.currentItem()
+                    if item is not None and item.data(0, Qt.UserRole + 1) is not None:
+                        return True  # swallow F2 — virtual items are not renameable
+
                 if event.matches(QKeySequence.Copy):
                     self.copy_item(self.ui.tree_hierarchy_widget)
                     return True
@@ -1413,6 +1432,27 @@ class SmartPropDocument(QMainWindow):
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
 
+    # ======================================[Virtual rows logic helpers]========================================
+    _MODIFIER_VALID_PREFIXES  = (operator_prefix, filter_prefix, COMMENT_CLASS)
+    _CRITERIA_VALID_PREFIXES  = (selection_criteria_prefix, COMMENT_CLASS)
+
+    def _entry_valid_for_list(self, entry: dict, list_key: str) -> bool:
+        cls = entry.get("_class", "")
+        prefixes = self._MODIFIER_VALID_PREFIXES if list_key == "m_Modifiers" else self._CRITERIA_VALID_PREFIXES
+        return any(cls == COMMENT_CLASS or cls.startswith(p) for p in prefixes)
+
+    def _reselect_virtual_item(self, parent_item, list_key, idx):
+        vtype = ("modifier" if list_key == "m_Modifiers" else "selection_criteria")
+        for i in range(parent_item.childCount()):
+            child = parent_item.child(i)
+            # VirtualChildItem stores its meta here (VIRTUAL_ROLE = Qt.UserRole + 1)
+            meta = child.data(0, Qt.UserRole + 1)
+            if isinstance(meta, dict) and meta.get("type") == vtype and meta.get("index") == idx:
+                self.ui.tree_hierarchy_widget.setCurrentItem(child)
+                return
+        # idx no longer exists (e.g. deleted) — fall back to parent
+        self.ui.tree_hierarchy_widget.setCurrentItem(parent_item)
+
     # ======================================[Virtual rows logic]========================================
     def _on_toggle_modifier_rows(self, visible):
         root = self.ui.tree_hierarchy_widget.invisibleRootItem()
@@ -1592,7 +1632,14 @@ class SmartPropDocument(QMainWindow):
         new_data[list_key] = entries
         parent_item.setData(0, Qt.UserRole, new_data)
         self._inject_virtual_children(parent_item)
-        self.undo_stack.push(PropertySnapshotCommand(self, parent_item, old_data, new_data))
+        
+        direction_label = "Move Up" if direction == -1 else "Move Down"
+        entry_cls = entries[new_idx].get("_class", "entry")
+        friendly = entry_cls.split("_")[-1]
+        cmd = VirtualItemSnapshotCommand(self, parent_item, old_data, new_data, list_key, new_idx)
+        cmd.setText(f"{direction_label} {friendly}")
+        self.undo_stack.push(cmd)
+        
         self._modified = True
         self._edited.emit()
 
@@ -1600,13 +1647,22 @@ class SmartPropDocument(QMainWindow):
         old_data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
         new_data = fast_deepcopy(old_data)
         entries = new_data.get(list_key, [])
+        if idx >= len(entries):
+            return
         clone = fast_deepcopy(entries[idx])
         clone = self.element_id_generator.update_value(clone, force=True)
-        entries.insert(idx + 1, clone)
+        new_idx = idx + 1
+        entries.insert(new_idx, clone)
         new_data[list_key] = entries
         parent_item.setData(0, Qt.UserRole, new_data)
         self._inject_virtual_children(parent_item)
-        self.undo_stack.push(PropertySnapshotCommand(self, parent_item, old_data, new_data))
+        
+        entry_cls = clone.get("_class", "entry")
+        friendly = entry_cls.split("_")[-1]
+        cmd = VirtualItemSnapshotCommand(self, parent_item, old_data, new_data, list_key, new_idx)
+        cmd.setText(f"Duplicate {friendly}")
+        self.undo_stack.push(cmd)
+        
         self._modified = True
         self._edited.emit()
 
@@ -1614,54 +1670,74 @@ class SmartPropDocument(QMainWindow):
         old_data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
         new_data = fast_deepcopy(old_data)
         entries = new_data.get(list_key, [])
-        if idx < len(entries):
-            entries.pop(idx)
+        if idx >= len(entries):
+            return
+            
+        entry_cls = entries[idx].get("_class", "entry")
+        friendly = entry_cls.split("_")[-1]
+        entries.pop(idx)
+        
         new_data[list_key] = entries
         parent_item.setData(0, Qt.UserRole, new_data)
         self._inject_virtual_children(parent_item)
-        self.undo_stack.push(PropertySnapshotCommand(self, parent_item, old_data, new_data))
+        
+        # After delete, we select the parent or adjusted index, but for now parent is safest
+        cmd = VirtualItemSnapshotCommand(self, parent_item, old_data, new_data, list_key, max(0, idx - 1))
+        cmd.setText(f"Delete {friendly}")
+        self.undo_stack.push(cmd)
+        
         self._modified = True
         self._edited.emit()
 
     def _virtual_item_copy(self, parent_item, list_key, idx):
         data = parent_item.data(0, Qt.UserRole)
         entries = data.get(list_key, [])
-        entry = entries[idx]
-        group_type = "modifier" if list_key == "m_Modifiers" else "selection_criteria"
-        name = entry.get("_class", "").split("_")[-1]
-        clipboard = QApplication.clipboard()
-        clipboard.setText(f"hammer5tools:smartprop_editor_property;;{name};;{entry};;{group_type}")
+        if idx >= len(entries):
+            return
+        entry = fast_deepcopy(entries[idx])
+        payload = json.dumps({
+            "source": "hammer5tools:smartprop_editor_property",
+            "group_type": list_key,
+            "data": entry
+        })
+        QApplication.clipboard().setText(payload)
 
     def _virtual_item_paste(self, parent_item, list_key, idx, virtual_type):
-        clipboard = QApplication.clipboard()
-        clipboard_text = clipboard.text()
-        clipboard_data = clipboard_text.split(";;")
+        raw = QApplication.clipboard().text()
+        try:
+            payload = json.loads(raw)
+            if payload.get("source") != "hammer5tools:smartprop_editor_property":
+                return
+            if payload.get("group_type") != list_key:
+                return   # blocks cross-group paste (Modifier <-> SelectionCriteria)
+            entry = payload["data"]
+        except (json.JSONDecodeError, KeyError, TypeError):
+            return
+            
+        if not self._entry_valid_for_list(entry, list_key):
+            return
 
-        if clipboard_data[0] == "hammer5tools:smartprop_editor_property":
-            try:
-                # Ensure we are pasting the correct type
-                source_type = clipboard_data[3]
-                if source_type != virtual_type:
-                    return
-                
-                old_data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
-                new_data = fast_deepcopy(old_data)
-                entries = new_data.get(list_key, [])
-                
-                pasted_val = ast.literal_eval(clipboard_data[2])
-                pasted_val = self.element_id_generator.update_value(pasted_val, force=True)
-                
-                # Insert after the current virtual item
-                entries.insert(idx + 1, pasted_val)
-                new_data[list_key] = entries
-                
-                parent_item.setData(0, Qt.UserRole, new_data)
-                self._inject_virtual_children(parent_item)
-                self.undo_stack.push(PropertySnapshotCommand(self, parent_item, old_data, new_data))
-                self._modified = True
-                self._edited.emit()
-            except Exception:
-                pass
+        old_data = fast_deepcopy(parent_item.data(0, Qt.UserRole))
+        new_data = fast_deepcopy(old_data)
+        pasted_val = fast_deepcopy(entry)
+        pasted_val = self.element_id_generator.update_value(pasted_val, force=True)
+        
+        entries = new_data.get(list_key, [])
+        new_idx = idx + 1
+        entries.insert(new_idx, pasted_val)
+        new_data[list_key] = entries
+        
+        parent_item.setData(0, Qt.UserRole, new_data)
+        self._inject_virtual_children(parent_item)
+        
+        entry_cls = pasted_val.get("_class", "entry")
+        friendly = entry_cls.split("_")[-1]
+        cmd = VirtualItemSnapshotCommand(self, parent_item, old_data, new_data, list_key, new_idx)
+        cmd.setText(f"Paste {friendly}")
+        self.undo_stack.push(cmd)
+        
+        self._modified = True
+        self._edited.emit()
 
     # ======================================[Variables Actions]========================================
     def add_variable(

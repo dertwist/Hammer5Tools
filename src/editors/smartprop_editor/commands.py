@@ -358,10 +358,11 @@ class PropertySnapshotCommand(QUndoCommand):
         # Different item → never merge
         if self._item_id != other._item_id:
             return False
-        # Do not merge structural changes (Add, Delete, Reorder)
-        if any(self.text().startswith(prefix) for prefix in ("Add ", "Delete ", "Reorder ")):
+        # Do not merge structural changes (Add, Delete, Reorder, Move Up, Move Down)
+        _NO_MERGE = ("Add ", "Delete ", "Reorder ", "Move Up ", "Move Down ")
+        if any(self.text().startswith(p) for p in _NO_MERGE):
             return False
-        if any(other.text().startswith(prefix) for prefix in ("Add ", "Delete ", "Reorder ")):
+        if any(other.text().startswith(p) for p in _NO_MERGE):
             return False
         # Different property (or property set) → start a new history entry
         if self._diff_keys != other._diff_keys:
@@ -404,6 +405,29 @@ class PropertySnapshotCommand(QUndoCommand):
             self.document._inject_virtual_children(self.item)
         except Exception as e:
             print(f"[SPE][PropertyEdit] undo: ERROR — {e}")
+
+class VirtualItemSnapshotCommand(PropertySnapshotCommand):
+    """PropertySnapshotCommand that re-selects the virtual row after undo/redo."""
+
+    def __init__(self, document, item, old_data, new_data, list_key, virtual_idx):
+        super().__init__(document, item, old_data, new_data)
+        self._virtual_list_key = list_key
+        self._virtual_idx      = virtual_idx
+
+    def _reselect(self, target_idx):
+        self.document._reselect_virtual_item(
+            self.item, self._virtual_list_key, target_idx
+        )
+
+    def redo(self):
+        super().redo()
+        self._reselect(self._virtual_idx)
+
+    def undo(self):
+        # After undo, the index in the old_data is what matters.
+        # For a Delete the old idx is still valid; for Duplicate it's original idx.
+        super().undo()
+        self._reselect(self._virtual_idx)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
