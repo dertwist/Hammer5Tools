@@ -1512,6 +1512,10 @@ class SmartPropDocument(QMainWindow):
         )
         self.ui.properties_layout.insertWidget(0, frame)
         self.ui.properties_placeholder.hide()
+        
+        # Ensure the vertical spacer is at the bottom to push the frame to the top
+        self.ui.properties_spacer.show()
+        self.ui.properties_layout.addWidget(self.ui.properties_spacer)
 
     def _on_virtual_item_edited(self, parent_item, list_key, idx, frame):
         if self._property_undo_guard or self._slider_dragging:

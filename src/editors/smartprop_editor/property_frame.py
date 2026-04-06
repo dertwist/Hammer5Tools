@@ -394,7 +394,11 @@ class PropertyFrame(QWidget):
             if not shiboken.isValid(self):
                 return
             
-            self._add_properties_by_class(offset=4)
+            # Standard elements skip the first 4 metadata keys (already shown in header)
+            # Modifiers/Criteria rows don't have these metadata keys, so they should use offset 0
+            offset = 4 if self.element else 0
+            
+            self._add_properties_by_class(offset=offset)
             self._setup_layout2dgrid_suppression()
             self.on_edited()
         except (RuntimeError, ImportError):
