@@ -27,7 +27,6 @@ from src.editors.smartprop_editor.property.set_variable import PropertyVariableV
 from src.editors.smartprop_editor.property.comment import PropertyComment
 from src.editors.smartprop_editor.property.reference import PropertyReference
 from src.editors.smartprop_editor.property.warning import PropertyWarning
-from src.editors.smartprop_editor.unverified_features import UNVERIFIED_CLASSES
 from src.editors.smartprop_editor.property_tooltips import property_tooltips
 from PySide6.QtGui import QCursor
 from src.widgets import HierarchyItemModel
@@ -73,7 +72,7 @@ class PropertyFrame(QWidget):
         'MaterialTint': ['m_bEnabled', 'm_Material', 'm_SelectionMode', 'm_Color', 'm_ColorPosition'],
         'RandomOffset': ['m_bEnabled', 'm_vRandomPositionMin', 'm_vRandomPositionMax', 'm_vSnapIncrement'],
         'RandomScale': ['m_bEnabled', 'm_flRandomScaleMin', 'm_flRandomScaleMax', 'm_flSnapIncrement'],
-        'RandomColorTintColor': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_SelectionMode', 'm_Color', 'm_ColorPosition', 'm_Mode'],
+        'RandomColorTintColor': ['m_bEnabled', 'm_SelectionMode', 'm_Color', 'm_ColorPosition', 'm_Mode'],
         'CreateSizer': ['m_bEnabled', 'm_Name', 'm_bDisplayModel',
                         'm_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX', 'm_OutputVariableMinX', 'm_OutputVariableMaxX',
                         'm_flInitialMinY', 'm_flInitialMaxY', 'm_flConstraintMinY', 'm_flConstraintMaxY', 'm_OutputVariableMinY', 'm_OutputVariableMaxY',
@@ -84,19 +83,19 @@ class PropertyFrame(QWidget):
         'TraceInDirection': ['m_bEnabled', 'm_DirectionSpace', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_flOriginOffset', 'm_flTraceLength'],
         'SaveState': ['m_bEnabled', 'm_StateName'],
         'SetVariable': ['m_bEnabled', 'm_VariableValue'],
-        'RandomRotationSnapped': ['_WARN_NOT_VERIFIED','m_bEnabled', 'm_vMinAngles', 'm_vMaxAngles', 'm_flSnapIncrement', 'm_RotationAxes'],
+        'RandomRotationSnapped': ['m_bEnabled', 'm_vMinAngles', 'm_vMaxAngles', 'm_flSnapIncrement', 'm_RotationAxes'],
         'ResetRotation': ['m_bEnabled', 'm_bIgnoreObjectRotation', 'm_bResetPitch', 'm_bResetYaw', 'm_bResetRoll'],
         'ResetScale': ['m_bEnabled', 'm_bIgnoreObjectScale'],
         'RotateTowards': ['m_bEnabled', 'm_vOriginPos', 'm_vTargetPos', 'm_vUpPos', 'm_flWeight', 'm_OriginSpace', 'm_TargetSpace', 'm_UpSpace'],
-        'SaveColor': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_VariableName'],
-        'SaveDirection': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_DirectionVector', 'm_CoordinateSpace', 'm_VariableName'],
-        'SavePosition': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
+        'SaveColor': ['m_bEnabled', 'm_VariableName'],
+        'SaveDirection': ['m_bEnabled', 'm_DirectionVector', 'm_CoordinateSpace', 'm_VariableName'],
+        'SavePosition': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
         'SaveScale': ['m_bEnabled', 'm_VariableName'],
-        'SaveSurfaceNormal': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
-        'SetMateraialGroupChoice': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_VariableName', 'm_SelectionMode', 'm_ChoiceSelection', 'm_MaterialGroupChoices'],
+        'SaveSurfaceNormal': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
+        'SetMaterialGroupChoice': ['m_bEnabled', 'm_VariableName', 'm_SelectionMode', 'm_ChoiceSelection', 'm_MaterialGroupChoices'],
         'SetOrientation': ['m_bEnabled', 'm_vForwardVector', 'm_ForwardDirectionSpace', 'm_vUpVector', 'm_UpDirectionSpace', 'm_bPrioritizeUp'],
         'SetPosition': ['m_bEnabled', 'm_vPosition', 'm_CoordinateSpace'],
-        'Trace': ['_WARN_NOT_VERIFIED', 'm_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
+        'Trace': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
         'Comment': ['m_bEnabled', 'm_Comment'],
         'Expression': ['m_bEnabled', 'm_Expression'],
         'Probability': ['m_bEnabled', 'm_flProbability'],
@@ -107,7 +106,13 @@ class PropertyFrame(QWidget):
         'ChoiceWeight': ['m_bEnabled', 'm_flWeight'],
         'IsValid': ['m_bEnabled'],
         'LinearLength': ['m_bEnabled', 'm_flLength', 'm_bAllowScale', 'm_flMinLength', 'm_flMaxLength'],
-        'PathPosition': ['m_bEnabled', 'm_PlaceAtPositions', 'm_nPlaceEveryNthPosition', 'm_nNthPositionIndexOffset', 'm_bAllowAtStart', 'm_bAllowAtEnd']
+        'PathPosition': ['m_bEnabled', 'm_PlaceAtPositions', 'm_nPlaceEveryNthPosition', 'm_nNthPositionIndexOffset', 'm_bAllowAtStart', 'm_bAllowAtEnd'],
+        'ComputeDistance3D': ['m_bEnabled', 'm_OutputVariableName', 'm_OutputCoordinateSpace', 'm_InputPositionA', 'm_CoordinateSpaceA', 'm_InputPositionB', 'm_CoordinateSpaceB'],
+        'ComputeDotProduct3D': ['m_bEnabled', 'm_OutputVariableName', 'm_InputVectorA', 'm_InputVectorB'],
+        'ComputeCrossProduct3D': ['m_bEnabled', 'm_OutputVariableName', 'm_InputVectorA', 'm_InputVectorB'],
+        'ComputeNormalizedVector3D': ['m_bEnabled', 'm_OutputVariableName', 'm_InputVector'],
+        'ComputeProjectVector3D': ['m_bEnabled', 'm_OutputVariableName', 'm_OutputCoordinateSpace', 'm_InputVectorA', 'm_CoordinateSpaceA', 'm_InputVectorB', 'm_CoordinateSpaceB', 'm_bPlane'],
+        'ComputeVectorBetweenPoints3D': ['m_bEnabled', 'm_OutputVariableName', 'm_OutputCoordinateSpace', 'm_bNormalized', 'm_InputPositionA', 'm_CoordinateSpaceA', 'm_InputPositionB', 'm_CoordinateSpaceB'],
     }
 
     # Pre-built ordered_pairs skeletons: (key, None) per known class; worker fills values.
@@ -134,7 +139,7 @@ class PropertyFrame(QWidget):
             cls._PROPERTY_WORKER_POOL = pool
         return cls._PROPERTY_WORKER_POOL
 
-    _SKIP_PROPS = frozenset({'_class', 'm_sLabel', 'm_nElementID', 'm_sReferenceObjectID'})
+    _SKIP_PROPS = frozenset({'_class', 'm_sLabel', 'm_nElementID', 'm_sReferenceObjectID', '_WARN_NOT_VERIFIED'})
 
     # Class-level copy for batch/prewarm workers (same keys as instance only_variable_properties).
     _ONLY_VARIABLE_PROPERTIES = ()
@@ -391,218 +396,185 @@ class PropertyFrame(QWidget):
         on_edited() is called here for the first time — value dict is now complete.
         """
         self._add_properties_by_class(offset=4)
+        
+        # Add unverified warning at the VERY END of both phases so that 
+        # insertWidget(0,...) puts it at the absolute top of the layout.
+        if "_WARN_NOT_VERIFIED" in self.value:
+            self._add_widget_for_property('_WARN_NOT_VERIFIED', self.value.get("_WARN_NOT_VERIFIED"), force=True)
+
         self._setup_layout2dgrid_suppression()
         self.on_edited()
+
     @exception_handler
-    def _add_properties_by_class(self, limit=None, offset=0):
-        # This function adds property widgets when needed
-        def adding_instances(value_class, val):
-            def add_instance():
+    def _add_widget_for_property(self, value_class, val, force=False):
+        """Internal helper to create and initialize a property widget instance."""
+        def add_instance():
+            # PropertyWarning is a static label — do NOT connect its edited
+            # signal to on_edited, otherwise it triggers spurious undo actions.
+            if not isinstance(property_instance, PropertyWarning):
                 property_instance.edited.connect(self.on_edited)
-                property_instance.setAcceptDrops(False)
-                self.ui.layout.insertWidget(0, property_instance)
-                self._property_widgets.insert(0, property_instance)
-                # Pooled widgets return from acquire() hidden (never shown in
-                # acquire to avoid top-level flash); show after reparenting.
-                property_instance.show()
-                
-                # Apply tooltips if available for this property.
-                if hasattr(property_instance, 'ui') and hasattr(property_instance.ui, 'property_class'):
-                    tip = property_tooltips.get(value_class, "")
-                    if tip:
-                        property_instance.ui.property_class.setToolTip(tip)
-                
-                if hasattr(property_instance, 'slider_pressed'):
-                    property_instance.slider_pressed.connect(self.slider_pressed)
-                if hasattr(property_instance, 'committed'):
-                    property_instance.committed.connect(self.committed)
+            property_instance.setAcceptDrops(False)
+            self.ui.layout.insertWidget(0, property_instance)
+            self._property_widgets.insert(0, property_instance)
+            # Pooled widgets return from acquire() hidden (never shown in
+            # acquire to avoid top-level flash); show after reparenting.
+            property_instance.show()
 
-            # ---- FAST PATH: skip list ----
-            if value_class in PropertyFrame._SKIP_PROPS:
-                return
+            # Apply tooltips if available for this property.
+            if hasattr(property_instance, 'ui') and hasattr(property_instance.ui, 'property_class'):
+                tip = property_tooltips.get(value_class, "")
+                if tip:
+                    property_instance.ui.property_class.setToolTip(tip)
 
-            # ---- FAST PATH: exact dispatch ----
-            PropertyFrame._resolve_dispatch()
-            dispatch = PropertyFrame._EXACT_PROP_DISPATCH
-            if dispatch is not None and value_class in dispatch:
-                widget_cls, extra_kwargs = dispatch[value_class]
+            if hasattr(property_instance, 'slider_pressed'):
+                property_instance.slider_pressed.connect(self.slider_pressed)
+            if hasattr(property_instance, 'committed'):
+                property_instance.committed.connect(self.committed)
 
-                # PropertyReference needs tree hierarchy to enable its "search" popup.
-                if widget_cls is PropertyReference:
+        # ---- FAST PATH: skip list ----
+        if not force and value_class in PropertyFrame._SKIP_PROPS:
+            return
+
+        # ---- FAST PATH: exact dispatch ----
+        PropertyFrame._resolve_dispatch()
+        dispatch = PropertyFrame._EXACT_PROP_DISPATCH
+        if dispatch is not None and value_class in dispatch:
+            widget_cls, extra_kwargs = dispatch[value_class]
+
+            if widget_cls is PropertyReference:
+                property_instance = widget_cls(
+                    value=val,
+                    value_class=value_class,
+                    variables_scrollArea=self.variables_scrollArea,
+                    element_id_generator=self.element_id_generator,
+                    tree_hierarchy=self.tree_hierarchy,
+                    **extra_kwargs
+                )
+            else:
+                if hasattr(widget_cls, "acquire") and callable(getattr(widget_cls, "acquire")):
+                    property_instance = widget_cls.acquire(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        element_id_generator=self.element_id_generator,
+                        **extra_kwargs,
+                    )
+                else:
                     property_instance = widget_cls(
                         value=val,
                         value_class=value_class,
                         variables_scrollArea=self.variables_scrollArea,
                         element_id_generator=self.element_id_generator,
-                        tree_hierarchy=self.tree_hierarchy,
                         **extra_kwargs
                     )
-                else:
-                    # Prefer pooling if the widget supports it.
-                    if hasattr(widget_cls, "acquire") and callable(getattr(widget_cls, "acquire")):
-                        property_instance = widget_cls.acquire(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kwargs,
-                        )
-                    else:
-                        property_instance = widget_cls(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kwargs
-                        )
 
-                add_instance()
-                return
+            add_instance()
+            return
 
-            # Skip-only keys (handled elsewhere or intentionally empty)
-            if value_class in ('m_sLabel', 'm_nElementID', 'm_sReferenceObjectID'):
-                return
-
-            # Dispatch to appropriate widget based on property name or prefix.
-            PropertyFrame._resolve_dispatch()
-            dispatch = PropertyFrame._EXACT_PROP_DISPATCH
-            if dispatch is not None and value_class in dispatch:
-                widget_cls, extra_kwargs = dispatch[value_class]
-
-                # PropertyReference needs tree hierarchy to enable its "search" popup.
-                if widget_cls is PropertyReference:
-                    property_instance = widget_cls(
-                        value=val,
-                        value_class=value_class,
-                        variables_scrollArea=self.variables_scrollArea,
-                        element_id_generator=self.element_id_generator,
-                        tree_hierarchy=self.tree_hierarchy,
-                        **extra_kwargs
-                    )
-                else:
-                    # Prefer pooling if the widget supports it.
-                    if hasattr(widget_cls, "acquire") and callable(getattr(widget_cls, "acquire")):
-                        property_instance = widget_cls.acquire(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kwargs,
-                        )
-                    else:
-                        property_instance = widget_cls(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kwargs
-                        )
-
-                add_instance()
-                return
-
-
-            if 'm_VariableValue' in value_class:
-                if val is None:
-                    property_instance = PropertyVariableValue(
-                        value=val,
-                        value_class=value_class,
-                        variables_scrollArea=self.variables_scrollArea,
-                        element_id_generator=self.element_id_generator,
-                    )
-                elif 'm_TargetName' not in val:
-                    property_instance = PropertyString.acquire(
-                        value=val,
-                        value_class=value_class,
-                        variables_scrollArea=self.variables_scrollArea,
-                        expression_bool=True,
-                        element_id_generator=self.element_id_generator,
-                    )
-                else:
-                    property_instance = PropertyVariableValue(
-                        value=val,
-                        value_class=value_class,
-                        variables_scrollArea=self.variables_scrollArea,
-                        element_id_generator=self.element_id_generator,
-                    )
-                add_instance()
-                return
-
-            if 'm_VariableComparison' in value_class:
-                property_instance = PropertyComparison(
+        if 'm_VariableValue' in value_class:
+            if val is None:
+                property_instance = PropertyVariableValue(
                     value=val,
                     value_class=value_class,
                     variables_scrollArea=self.variables_scrollArea,
                     element_id_generator=self.element_id_generator,
                 )
-                self.ui.property_class.setText('Variable Comparison')
-                add_instance()
-                return
-
-            if 'm_AllowedSurfaceProperties' in value_class:
-                property_instance = PropertySurface(
+            elif 'm_TargetName' not in val:
+                property_instance = PropertyString.acquire(
                     value=val,
                     value_class=value_class,
                     variables_scrollArea=self.variables_scrollArea,
+                    expression_bool=True,
+                    element_id_generator=self.element_id_generator,
                 )
-                add_instance()
-                return
-
-            if 'm_DisallowedSurfaceProperties' in value_class:
-                property_instance = PropertySurface(
+            else:
+                property_instance = PropertyVariableValue(
                     value=val,
                     value_class=value_class,
                     variables_scrollArea=self.variables_scrollArea,
+                    element_id_generator=self.element_id_generator,
                 )
-                add_instance()
-                return
+            add_instance()
+            return
 
-            if 'm_Comment' in value_class:
-                property_instance = PropertyComment(value=val, value_class=value_class)
-                add_instance()
-                return
+        if 'm_VariableComparison' in value_class:
+            property_instance = PropertyComparison(
+                value=val,
+                value_class=value_class,
+                variables_scrollArea=self.variables_scrollArea,
+                element_id_generator=self.element_id_generator,
+            )
+            self.ui.property_class.setText('Variable Comparison')
+            add_instance()
+            return
 
-            for sub, items, fts in PropertyFrame._COMBOBOX_SUBSTRING_RULES:
-                if sub in value_class:
-                    property_instance = PropertyCombobox.acquire(
-                        value=val,
-                        value_class=value_class,
-                        variables_scrollArea=self.variables_scrollArea,
-                        items=list(items),
-                        filter_types=list(fts),
-                        element_id_generator=self.element_id_generator,
-                    )
-                    add_instance()
-                    return
-
-            for prefix, widget_cls, extra_kw in PropertyFrame._PREFIX_DISPATCH:
-                if prefix in value_class:
-                    if hasattr(widget_cls, 'acquire') and callable(getattr(widget_cls, 'acquire')):
-                        property_instance = widget_cls.acquire(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kw,
-                        )
-                    else:
-                        property_instance = widget_cls(
-                            value=val,
-                            value_class=value_class,
-                            variables_scrollArea=self.variables_scrollArea,
-                            element_id_generator=self.element_id_generator,
-                            **extra_kw
-                        )
-                    add_instance()
-                    return
-
-            property_instance = PropertyLegacy(
+        if 'm_AllowedSurfaceProperties' in value_class:
+            property_instance = PropertySurface(
                 value=val,
                 value_class=value_class,
                 variables_scrollArea=self.variables_scrollArea,
             )
             add_instance()
+            return
 
+        if 'm_DisallowedSurfaceProperties' in value_class:
+            property_instance = PropertySurface(
+                value=val,
+                value_class=value_class,
+                variables_scrollArea=self.variables_scrollArea,
+            )
+            add_instance()
+            return
+
+        if 'm_Comment' in value_class:
+            property_instance = PropertyComment(value=val, value_class=value_class)
+            add_instance()
+            return
+
+        for sub, items, fts in PropertyFrame._COMBOBOX_SUBSTRING_RULES:
+            if sub in value_class:
+                property_instance = PropertyCombobox.acquire(
+                    value=val,
+                    value_class=value_class,
+                    variables_scrollArea=self.variables_scrollArea,
+                    items=list(items),
+                    filter_types=list(fts),
+                    element_id_generator=self.element_id_generator,
+                )
+                add_instance()
+                return
+
+        for prefix, widget_cls, extra_kw in PropertyFrame._PREFIX_DISPATCH:
+            if prefix in value_class:
+                if hasattr(widget_cls, 'acquire') and callable(getattr(widget_cls, 'acquire')):
+                    property_instance = widget_cls.acquire(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        element_id_generator=self.element_id_generator,
+                        **extra_kw,
+                    )
+                else:
+                    property_instance = widget_cls(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        element_id_generator=self.element_id_generator,
+                        **extra_kw
+                    )
+                add_instance()
+                return
+
+        property_instance = PropertyLegacy(
+            value=val,
+            value_class=value_class,
+            variables_scrollArea=self.variables_scrollArea,
+        )
+        add_instance()
+
+    @exception_handler
+    def _add_properties_by_class(self, limit=None, offset=0):
+        # This function adds property widgets when needed
         try:
             parent_widget = self.ui.layout.parentWidget()
             if parent_widget is not None:
@@ -612,10 +584,6 @@ class PropertyFrame(QWidget):
             return
 
         try:
-            # Add warning for unverified features (Phase 1 or 2 as appropriate)
-            if self.name in UNVERIFIED_CLASSES and offset == 0:
-                adding_instances('_WARN_NOT_VERIFIED', None)
-
             # Prefer worker-prepared ordered pairs (Plan 5).
             if getattr(self, '_ordered_pairs', None) is not None:
                 ordered_pairs = self._ordered_pairs
@@ -631,7 +599,7 @@ class PropertyFrame(QWidget):
             end = (offset + limit) if limit is not None else None
             sliced = ordered_pairs[offset:end]
             for value_class, val_data in sliced:
-                adding_instances(value_class, val_data)
+                self._add_widget_for_property(value_class, val_data)
         finally:
             if parent_widget is not None:
                 parent_widget.setUpdatesEnabled(True)
