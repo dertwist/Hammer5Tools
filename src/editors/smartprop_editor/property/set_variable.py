@@ -157,12 +157,27 @@ class PropertyVariableValue(QWidget):
             # Initialize value
             self.initialize_values(value)
 
-            # Initial state update
-            self.on_changed()
+            # Initial state update - do not emit signal during initialization
+            self.on_changed(emit=False)
 
         except Exception as e:
             print(f"Error in PropertyVariableValue.__init__: {e}")
             raise
+
+    def reconfigure(self, value_class=None, value=None, variables_scrollArea=None, element_id_generator=None, **kwargs):
+        """Reconfigure the widget for undo/redo incremental updates."""
+        if value_class is not None:
+            self.value_class = value_class
+        if variables_scrollArea is not None:
+            self.variables_scrollArea = variables_scrollArea
+        if value is not None:
+            # Reset data state before re-initializing
+            self.m_Value = None
+            self.m_TargetName = None
+            self.m_DataType = None
+            self.initialize_values(value)
+            # Re-sync logic switches and update internal value, but do not emit edited.
+            self.on_changed(emit=False)
 
     def initialize_values(self, value):
         """Initialize widget values from the provided value dictionary"""
@@ -265,7 +280,7 @@ class PropertyVariableValue(QWidget):
         except Exception as e:
             print(f"Error in logic_switch: {e}")
 
-    def on_changed(self):
+    def on_changed(self, emit=True):
         """Handle any change in the widget state"""
         try:
             self.logic_switch_value()
@@ -281,7 +296,8 @@ class PropertyVariableValue(QWidget):
                 )
             
             self.change_value()
-            self.edited.emit()
+            if emit:
+                self.edited.emit()
         except Exception as e:
             print(f"Error in on_changed: {e}")
 

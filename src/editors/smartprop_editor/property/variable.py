@@ -74,10 +74,28 @@ class PropertyVariableOutput(QWidget):
         else:
             self.variable.combobox.set_variable(str(value))
             debug(f'Loaded value in variable widget: None {value}')
-        self.on_changed()
-    def on_changed(self):
+        self.on_changed(emit=False)
+    def on_changed(self, emit=True):
         self.change_value()
-        self.edited.emit()
+        if emit:
+            self.edited.emit()
+
     def change_value(self):
         self.value = {self.value_class: self.variable.combobox.get_variable()}
         debug(f'Changed value in variable widget {self.value}')
+
+    def reconfigure(self, value_class=None, value=None, variables_scrollArea=None, element_id_generator=None, **kwargs):
+        """Reconfigure the widget for undo/redo incremental updates."""
+        if value_class is not None:
+            self.value_class = value_class
+        if variables_scrollArea is not None:
+            self.variables_scrollArea = variables_scrollArea
+        # Re-load value into combobox
+        if isinstance(value, dict):
+            if 'm_SourceName' in value:
+                self.variable.combobox.set_variable(value['m_SourceName'])
+        elif isinstance(value, str):
+            self.variable.combobox.set_variable(value)
+        elif value is not None:
+            self.variable.combobox.set_variable(str(value))
+        self.on_changed(emit=False)
