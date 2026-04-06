@@ -20,7 +20,9 @@ from src.editors.smartprop_editor.property.comparison import PropertyComparison
 from src.editors.smartprop_editor.property.filtersurface import PropertySurface
 from src.editors.smartprop_editor.property.colormatch import PropertyColorMatch
 from src.editors.smartprop_editor.property.material_replacements import PropertyMaterialReplacements
+from src.editors.smartprop_editor.property.material_group_choices import PropertyMaterialGroupChoices
 from src.editors.smartprop_editor.property.variable import PropertyVariableOutput
+from src.editors.smartprop_editor.objects import surfaces_list
 from src.editors.smartprop_editor.property.set_variable import PropertyVariableValue
 from src.editors.smartprop_editor.property.comment import PropertyComment
 from src.editors.smartprop_editor.property.reference import PropertyReference
@@ -44,139 +46,63 @@ class PropertyFrame(QWidget):
 
     # A lookup dictionary to avoid multiple if/elif checks; cached at class level
     _prop_classes_map_cache = {
-        # Elements
-        'FitOnLine': [
-            'm_nReferenceID', 'm_bEnabled', 'm_vStart','m_vEnd', 'm_PointSpace', 'm_bOrientAlongLine', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_bPrioritizeUp', 'm_nScaleMode', 'm_nPickMode'
-        ],
-        'PickOne': [
-            'm_nReferenceID', 'm_bEnabled', 'm_SelectionMode', 'm_SpecificChildIndex', 'm_OutputChoiceVariableName', 'm_bConfigurable', 'm_vHandleOffset', 'm_HandleColor', 'm_HandleSize', 'm_HandleShape'
-        ],
-        'PlaceInSphere': [
-            'm_nReferenceID', 'm_bEnabled', 'm_nCountMin','m_nCountMax','m_flPositionRadiusInner','m_flPositionRadiusOuter', 'm_flRandomness', 'm_bAlignOrientation', 'm_PlacementMode', 'm_DistributionMode', 'm_vAlignDirection', 'm_vPlaneUpDirection'
-        ],
-        'PlaceOnPath': [
-            'm_nReferenceID', 'm_bEnabled', 'm_PathName','m_vPathOffset','m_flOffsetAlongPath','m_PathSpace', 'm_flSpacing', 'm_SpacingSpace', 'm_bContinuousSpline', 'm_DefaultPath', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_UpDirectionSpace', 'm_vUpDirection'
-        ],
-        'Model': [
-            'm_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_bForceStatic', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_DetailObjectFadeLevel'
-        ],
-        'SmartProp': [
-            'm_nReferenceID', 'm_bEnabled', 'm_sSmartProp','m_vModelScale'
-        ],
-        'PlaceMultiple': [
-            'm_nReferenceID', 'm_bEnabled', 'm_nCountMin', 'm_nCountMax', 'm_flSpacing', 'm_PlacementMode', 'm_bRandomizeOrder'
-        ],
-        'Group': [
-            'm_nReferenceID', 'm_bEnabled'
-        ],
-        'ModifyState': [
-            'm_nReferenceID', 'm_bEnabled'
-        ],
-        'BendDeformer': [
-            'm_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vSize', 'm_vOrigin', 'm_vAngles', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'
-        ],
-        'ModelEntity': [
-            'm_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_DetailObjectFadeLevel'
-        ],
-        'PropPhysics': [
-            'm_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_flMass', 'm_bStartAsleep', 'm_nHealth', 'm_bEnableMotion',
-        ],
-        'PropDynamic': [
-            'm_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_sAnimationSequence', 'm_sDefaultAnimation', 'm_vModelScale', 'm_MaterialGroupName'
-        ],
-        'MidpointDeformer': [
-            'm_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vStart', 'm_vEnd', 'm_fRadius', 'm_bContinuousSpline', 'm_vOffset', 'm_vAngles', 'm_vScale', 'm_fFalloff', 'm_OutputVariable'
-        ],
-        'Layout2DGrid': [
-            'm_nReferenceID', 'm_bEnabled', 'm_flWidth', 'm_flLength', 'm_bVerticalLength', 'm_GridArrangement', 'm_GridOriginMode', 'm_nCountW', 'm_nCountL', 'm_flSpacingWidth', 'm_flSpacingLength', 'm_bAlternateShift', 'm_flAlternateShiftWidth', 'm_flAlternateShiftLength'
-        ],
-        # Operators
-        'CreateSizer': [
-            'm_bEnabled', 'm_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX',
-            'm_OutputVariableMinX', 'm_OutputVariableMaxX', 'm_flInitialMinY', 'm_flInitialMaxY',
-            'm_flConstraintMinY', 'm_flConstraintMaxY', 'm_OutputVariableMinY', 'm_OutputVariableMaxY',
-            'm_flInitialMinZ', 'm_flInitialMaxZ', 'm_flConstraintMinZ', 'm_flConstraintMaxZ',
-            'm_OutputVariableMinZ', 'm_OutputVariableMaxZ'
-        ],
-        'CreateRotator': [
-            'm_bEnabled', 'm_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_bApplyToCurrentTransform',
-            'm_OutputVariable', 'm_flSnappingIncrement', 'm_bEnforceLimits', 'm_flMinAngle', 'm_flMaxAngle'
-        ],
-        'CreateLocator': [
-            'm_bEnabled', 'm_flDisplayScale', 'm_bAllowScale'
-        ],
-        'RestoreState': [
-            'm_bEnabled', 'm_StateName', 'm_bDiscardIfUknown'
-        ],
-        'RandomRotation': [
-            'm_bEnabled', 'm_vRandomRotationMin', 'm_vRandomRotationMax'
-        ],
-        'RandomOffset': [
-            'm_bEnabled', 'm_vRandomPositionMin', 'm_vRandomPositionMax'
-        ],
-        'RandomScale': [
-            'm_bEnabled', 'm_flRandomScaleMin', 'm_flRandomScaleMax'
-        ],
-        'Scale': [
-            'm_bEnabled', 'm_flScale'
-        ],
-        'SetTintColor': [
-            'm_bEnabled', 'm_Mode', 'm_ColorChoices', 'm_SelectionMode', 'm_ColorSelection'
-        ],
-        'MaterialOverride': [
-            'm_bEnabled', 'm_bClearCurrentOverrides', 'm_MaterialReplacements'
-        ],
-        'SetVariable': [
-            'm_bEnabled', 'm_VariableValue'
-        ],
-        # Filters
-        'SurfaceProperties': [
-            'm_bEnabled', 'm_DisallowedSurfaceProperties', 'm_AllowedSurfaceProperties'
-        ],
-        'VariableValue': [
-            'm_bEnabled', 'm_VariableComparison'
-        ],
-        'SurfaceAngle': [
-            'm_bEnabled', 'm_flSurfaceSlopeMin', 'm_flSurfaceSlopeMax'
-        ],
-        # Selection Criteria
-        'PathPosition': [
-            'm_bEnabled', 'm_PlaceAtPositions', 'm_nPlaceEveryNthPosition', 'm_nNthPositionIndexOffset', 'm_bAllowAtStart','m_bAllowAtEnd'
-        ],
-        'EndCap': [
-            'm_bEnabled', 'm_bStart', 'm_bEnd'
-        ],
-        'LinearLength': [
-            'm_bEnabled', 'm_bAllowScale', 'm_flLength', 'm_flMinLength', 'm_flMaxLength'
-        ],
-        'ChoiceWeight': [
-            'm_bEnabled', 'm_flWeight'
-        ],
-        'TraceInDirection': [
-            'm_bEnabled', 'm_DirectionSpace', 'm_nNoHitResult', 'm_flSurfaceUpInfluence', 'm_flOriginOffset', 'm_flTraceLength'
-        ],
-        'SaveState': [
-            'm_bEnabled', 'm_StateName'
-        ],
-        # Filters / operators used in large modifier stacks (ordered_pairs fast-path)
-        'Probability': [
-            'm_bEnabled', 'm_flProbability'
-        ],
-        'Expression': [
-            'm_bEnabled', 'm_Expression'
-        ],
-        'RandomRotationSnapped': [
-            'm_bEnabled', 'm_RotationAxes', 'm_flSnapIncrement'
-        ],
-        'Translate': [
-            'm_bEnabled', 'm_vPosition'
-        ],
-        'Rotate': [
-            'm_bEnabled', 'm_vRotation'
-        ],
-        'Comment': [
-            'm_bEnabled', 'm_Comment'
-        ],
+        'ModifyState': ['m_nReferenceID', 'm_bEnabled'],
+        'Group': ['m_nReferenceID', 'm_bEnabled'],
+        'SmartProp': ['m_nReferenceID', 'm_bEnabled', 'm_sSmartProp'],
+        'PlaceInSphere': ['m_nReferenceID', 'm_bEnabled', 'm_flRandomness', 'm_nCountMin', 'm_nCountMax', 'm_flPositionRadiusInner', 'm_flPositionRadiusOuter', 'm_bAlignOrientation', 'm_PlacementMode', 'm_DistributionMode', 'm_vAlignDirection', 'm_vPlaneUpDirection'],
+        'PlaceMultiple': ['m_nReferenceID', 'm_bEnabled', 'm_nCount'],
+        'PlaceOnPath': ['m_nReferenceID', 'm_bEnabled', 'm_PathName', 'm_vPathOffset', 'm_flOffsetAlongPath', 'm_PathSpace', 'm_flSpacing', 'm_SpacingSpace', 'm_bContinuousSpline', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_DefaultPath'],
+        'FitOnLine': ['m_nReferenceID', 'm_bEnabled', 'm_vStart', 'm_vEnd', 'm_PointSpace', 'm_bOrientAlongLine', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_bPrioritizeUp', 'm_nScaleMode', 'm_nPickMode'],
+        'PickOne': ['m_nReferenceID', 'm_bEnabled', 'm_SelectionMode', 'm_SpecificChildIndex', 'm_OutputChoiceVariableName', 'm_bConfigurable', 'm_vHandleOffset', 'm_HandleColor', 'm_HandleSize', 'm_HandleShape'],
+        'Model': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_bForceStatic', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_DetailObjectFadeLevel', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode', 'm_bCastShadows', 'm_flUniformModelScale', 'm_SurfacePropertyOverride'],
+        'ModelEntity': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_bCastShadows', 'm_bForceStatic', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode'],
+        'BendDeformer': ['m_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vOrigin', 'm_vAngles', 'm_vSize', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'],
+        'PropPhysics': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_flMass', 'm_bStartAsleep', 'm_nHealth', 'm_bEnableMotion', 'm_sPhysicsType'],
+        'PropDynamic': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_sAnimationSequence', 'm_sDefaultAnimation', 'm_vModelScale', 'm_MaterialGroupName'],
+        'MidpointDeformer': ['m_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vStart', 'm_vEnd', 'm_fRadius', 'm_bContinuousSpline', 'm_vOffset', 'm_vAngles', 'm_vScale', 'm_fFalloff', 'm_OutputVariable'],
+        'Layout2DGrid': ['m_nReferenceID', 'm_bEnabled', 'm_flWidth', 'm_flLength', 'm_bVerticalLength', 'm_GridArrangement', 'm_GridOriginMode', 'm_nCountW', 'm_nCountL', 'm_flSpacingWidth', 'm_flSpacingLength', 'm_bAlternateShift', 'm_flAlternateShiftWidth', 'm_flAlternateShiftLength'],
+        'Grid': ['m_nReferenceID', 'm_bEnabled', 'm_flWidth', 'm_flLength', 'm_bVerticalLength', 'm_GridArrangement', 'm_GridOriginMode', 'm_nCountW', 'm_nCountL', 'm_flSpacingWidth', 'm_flSpacingLength', 'm_bAlternateShift', 'm_flAlternateShiftWidth', 'm_flAlternateShiftLength'],
+        'Rotate': ['m_bEnabled', 'm_vRotation'],
+        'Scale': ['m_bEnabled', 'm_flScale'],
+        'Translate': ['m_bEnabled', 'm_vPosition'],
+        'SetTintColor': ['m_bEnabled', 'm_Mode', 'm_ColorChoices'],
+        'MaterialOverride': ['m_bEnabled', 'm_bClearCurrentOverrides', 'm_MaterialReplacements'],
+        'MaterialTint': ['m_bEnabled', 'm_Material', 'm_SelectionMode', 'm_Color', 'm_ColorPosition'],
+        'RandomOffset': ['m_bEnabled', 'm_vRandomPositionMin', 'm_vRandomPositionMax', 'm_vSnapIncrement'],
+        'RandomScale': ['m_bEnabled', 'm_flRandomScaleMin', 'm_flRandomScaleMax', 'm_flSnapIncrement'],
+        'RandomRotation': ['m_bEnabled', 'm_vRandomRotationMin', 'm_vRandomRotationMax', 'm_vSnapIncrement'],
+        'RandomColorTintColor': ['m_bEnabled', 'm_SelectionMode', 'm_ColorPosition', 'm_Mode'],
+        'CreateSizer': ['m_bEnabled', 'm_Name', 'm_bDisplayModel'],
+        'CreateRotator': ['m_bEnabled', 'm_Name', 'm_vOffset', 'm_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_DisplayColor', 'm_bApplyToCurrentTransform', 'm_flSnappingIncrement', 'm_flInitialAngle', 'm_bEnforceLimits', 'm_flMinAngle', 'm_flMaxAngle', 'm_OutputVariable'],
+        'CreateLocator': ['m_bEnabled', 'm_LocatorName', 'm_vOffset', 'm_flDisplayScale', 'm_bConfigurable', 'm_bAllowTranslation', 'm_bAllowRotation', 'm_bAllowScale'],
+        'RestoreState': ['m_bEnabled', 'm_bDiscardIfUknown'],
+        'TraceInDirection': ['m_bEnabled', 'm_DirectionSpace', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_flOriginOffset', 'm_flTraceLength'],
+        'SaveState': ['m_bEnabled', 'm_StateName'],
+        'SetVariable': ['m_bEnabled', 'm_VariableValue'],
+        'RandomRotationSnapped': ['m_bEnabled', 'm_vMinAngles', 'm_vMaxAngles', 'm_flSnapIncrement', 'm_RotationAxes'],
+        'ResetRotation': ['m_bEnabled', 'm_bIgnoreObjectRotation', 'm_bResetPitch', 'm_bResetYaw', 'm_bResetRoll'],
+        'ResetScale': ['m_bEnabled', 'm_bIgnoreObjectScale'],
+        'RotateTowards': ['m_bEnabled', 'm_vOriginPos', 'm_vTargetPos', 'm_vUpPos', 'm_flWeight', 'm_OriginSpace', 'm_TargetSpace', 'm_UpSpace'],
+        'SaveColor': ['m_bEnabled', 'm_VariableName'],
+        'SaveDirection': ['m_bEnabled', 'm_DirectionVector', 'm_CoordinateSpace', 'm_VariableName'],
+        'SavePosition': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
+        'SaveScale': ['m_bEnabled', 'm_VariableName'],
+        'SaveSurfaceNormal': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
+        'SetMateraialGroupChoice': ['m_bEnabled', 'm_VariableName', 'm_SelectionMode', 'm_ChoiceSelection', 'm_MaterialGroupChoices'],
+        'SetOrientation': ['m_bEnabled', 'm_vForwardVector', 'm_ForwardDirectionSpace', 'm_vUpVector', 'm_UpDirectionSpace', 'm_bPrioritizeUp'],
+        'SetPosition': ['m_bEnabled', 'm_vPosition', 'm_CoordinateSpace'],
+        'Trace': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
+        'Comment': ['m_bEnabled', 'm_Comment'],
+        'Expression': ['m_bEnabled', 'm_Expression'],
+        'Probability': ['m_bEnabled', 'm_flProbability'],
+        'SurfaceAngle': ['m_bEnabled', 'm_flSurfaceSlopeMin', 'm_flSurfaceSlopeMax'],
+        'SurfaceProperties': ['m_bEnabled', 'm_AllowedSurfaceProperties', 'm_DisallowedSurfaceProperties'],
+        'VariableValue': ['m_bEnabled', 'm_VariableComparison'],
+        'EndCap': ['m_bEnabled', 'm_bStart', 'm_bEnd'],
+        'ChoiceWeight': ['m_bEnabled', 'm_flWeight'],
+        'IsValid': ['m_bEnabled'],
+        'LinearLength': ['m_bEnabled', 'm_flLength', 'm_bAllowScale', 'm_flMinLength', 'm_flMaxLength'],
+        'PathPosition': ['m_bEnabled', 'm_PlaceAtPositions', 'm_nPlaceEveryNthPosition', 'm_nNthPositionIndexOffset', 'm_bAllowAtStart', 'm_bAllowAtEnd']
     }
 
     # Pre-built ordered_pairs skeletons: (key, None) per known class; worker fills values.
@@ -220,6 +146,7 @@ class PropertyFrame(QWidget):
 
     # Combobox fields: (substring in value_class, items, filter_types) — order matters.
     _COMBOBOX_SUBSTRING_RULES = (
+        ('m_SurfacePropertyOverride', [list(d.keys())[0] for d in surfaces_list], ['SurfaceProperty']),
         ('m_nPickMode', ['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'], ['PickMode']),
         ('m_nScaleMode', ['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'], ['ScaleMode']),
         ('m_CoordinateSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
@@ -228,16 +155,16 @@ class PropertyFrame(QWidget):
         ('m_GridArrangement', ['SEGMENT', 'FILL'], ['GridPlacementMode']),
         ('m_GridOriginMode', ['CENTER', 'CORNER'], ['GridOriginMode']),
         ('m_nNoHitResult', ['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'], ['TraceNoHit']),
-        ('m_SelectionMode', ['RANDOM', 'FIRST', 'SPECIFIC'], ['ChoiceSelectionMode']),
+        ('m_SelectionMode', ['RANDOM', 'FIRST', 'SPECIFIC', 'SPECIFIC_COLOR', 'GRADIENT_RANDOM', 'GRADIENT_RANDOM_STOP', 'GRADIENT_LOCATION'], ['ChoiceSelectionMode']),
         ('m_PlacementMode', ['SPHERE', 'CIRCLE', 'RING'], ['RadiusPlacementMode']),
         ('m_DistributionMode', ['RANDOM', 'UNIFORM'], ['DistributionMode']),
         ('m_SpacingSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
         ('m_sPhysicsType', ['normal', 'multiplayer'], ['String']),
-        ('m_DetailObjectFadeLevel', ['NEAR', 'MEDIUM', 'FAR', 'ALWAYS'], ['String']),
+        ('m_DetailObjectFadeLevel', ['NONE', 'MOST_AGGRESSIVE', 'MORE_AGGRESSIVE', 'NORMAL', 'LESS_AGGRESSIVE', 'LEAST_AGGRESSIVE'], ['String']),
         ('m_RotationAxes', ['X', 'Y', 'Z', 'XY', 'XZ', 'YZ', 'XYZ'], ['Axes']),
         ('m_HandleShape', ['SQUARE', 'DIAMOND', 'CIRCLE'], ['HandleShape']),
-        ('m_nDeformableAttachmentMode', ['DEFAULT', 'ATTACH'], ['SmartPropDeformableAttachMode_t']),
-        ('m_nDeformableOrientationMode', ['DEFAULT', 'FOLLOW', 'IGNORE'], ['SmartPropDeformableOrientMode_t']),
+        ('m_nDeformableAttachmentMode', ['RELATIVE', 'SNAP', 'STIFFEN'], ['SmartPropDeformableAttachMode_t']),
+        ('m_nDeformableOrientationMode', ['NONE', 'FORWARD_NORMAL', 'UP_NORMAL', 'BACKWARD_NORMAL', 'MAINTAIN_OFFSET'], ['SmartPropDeformableOrientMode_t']),
         ('m_PointSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
         ('m_PathSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
         ('m_UpDirectionSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
@@ -266,6 +193,8 @@ class PropertyFrame(QWidget):
             'm_HandleSize':            (PropertyFloat,                {}),
             'm_ColorChoices':          (PropertyColorMatch,           {}),
             'm_MaterialReplacements':  (PropertyMaterialReplacements, {}),
+            'm_MaterialGroupChoices':  (PropertyMaterialGroupChoices, {}),
+            'm_ChoiceSelection':       (PropertyFloat,   {'int_bool': True}),
             'm_flBendPoint':           (PropertyFloat,   {'slider_range': [0, 1]}),
             'm_flWidth':               (PropertyFloat,   {'slider_range': [0, 4096]}),
             'm_flLength':              (PropertyFloat,   {'slider_range': [0, 4096]}),
@@ -280,6 +209,7 @@ class PropertyFrame(QWidget):
             'm_MaterialGroupName':     (PropertyString,  {'expression_bool': False, 'placeholder': 'Material group name'}),
             'm_Expression':            (PropertyString,  {'expression_bool': True,  'placeholder': 'Expression example: var_bool ? var_sizer * var_multiply'}),
             'm_StateName':             (PropertyString,  {'expression_bool': False, 'only_string': True, 'placeholder': 'State name'}),
+            'm_LocatorName':           (PropertyString,  {'expression_bool': False, 'placeholder': 'Locator name'}),
             'm_VariableName':          (PropertyString,  {'expression_bool': False, 'only_string': False, 'only_variable': True,
                                                            'force_variable': True, 'placeholder': 'Variable name',
                                                            'filter_types': ['String','Int','Float','Bool']}),
@@ -620,11 +550,15 @@ class PropertyFrame(QWidget):
             )
             add_instance()
 
-        parent_widget = self.ui.layout.parentWidget()
         try:
+            parent_widget = self.ui.layout.parentWidget()
             if parent_widget is not None:
                 parent_widget.setUpdatesEnabled(False)
+        except RuntimeError:
+            # Widget or layout was destroyed before this scheduled update ran
+            return
 
+        try:
             # Prefer worker-prepared ordered pairs (Plan 5).
             if getattr(self, '_ordered_pairs', None) is not None:
                 ordered_pairs = self._ordered_pairs
