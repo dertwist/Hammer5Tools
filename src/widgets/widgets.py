@@ -11,9 +11,30 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
 )
-from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator
-from PySide6.QtCore import Qt, QRect, QEvent, Signal
+from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator, QKeyEvent
+from PySide6.QtCore import Qt, QRect, QEvent, Signal, QLocale
 import math
+
+
+def _make_double_validator(bottom, top, decimals, parent=None):
+    """Create a QDoubleValidator that always uses '.' as decimal separator
+    and never produces scientific notation, regardless of system locale."""
+    v = QDoubleValidator(bottom, top, decimals, parent)
+    v.setLocale(QLocale.c())
+    v.setNotation(QDoubleValidator.StandardNotation)
+    return v
+
+
+class _NumericLineEdit(QLineEdit):
+    """QLineEdit that converts comma keystrokes to dots for numeric input.
+    This ensures that the numpad comma (common on European keyboards) works
+    as a decimal separator regardless of system locale."""
+    def keyPressEvent(self, event):
+        if event.text() == ',':
+            dot_event = QKeyEvent(QEvent.KeyPress, Qt.Key_Period, event.modifiers(), '.')
+            super().keyPressEvent(dot_event)
+            return
+        super().keyPressEvent(event)
 
 
 #============================================================<  Generic widgets  >==========================================================
@@ -69,16 +90,16 @@ class FloatWidget(QWidget):
         self.slider_range = slider_range
 
         # Editline setup (replacing QDoubleSpinBox)
-        self.SpinBox = QLineEdit()
+        self.SpinBox = _NumericLineEdit()
         self.SpinBox.setMaximumWidth(64)
-        self.SpinBox.setValidator(QDoubleValidator(-99999999 if not self.only_positive else 0, 99999999, digits, self))
+        self.SpinBox.setValidator(_make_double_validator(-99999999 if not self.only_positive else 0, 99999999, digits, self))
         self.SpinBox.setText(str(value))
         self.SpinBox.editingFinished.connect(self.on_SpinBox_updated)
         self.SpinBox.textChanged.connect(self._on_spinbox_text_changed)
         self.SpinBox.setStyleSheet('padding: 2px;')
         # If lock_range is enabled and a valid slider_range is provided, enforce boundaries on the validator.
         if (self.slider_range[0] != 0 or self.slider_range[1] != 0) and self.lock_range:
-            self.SpinBox.setValidator(QDoubleValidator(self.slider_range[0], self.slider_range[1], digits, self))
+            self.SpinBox.setValidator(_make_double_validator(self.slider_range[0], self.slider_range[1], digits, self))
 
         # Slider setup
         self.Slider = _UndoAwareSlider()
@@ -236,9 +257,9 @@ class BoxSlider(QWidget):
         self.setMinimumSize(self.min_width, self.min_height)
 
         # Setup edit box
-        self.edit_box = QLineEdit(self)
+        self.edit_box = _NumericLineEdit(self)
         self.edit_box.hide()
-        self.edit_box.setValidator(QDoubleValidator(self.min_value, self.max_value, self.digits, self))
+        self.edit_box.setValidator(_make_double_validator(self.min_value, self.max_value, self.digits, self))
         self.edit_box.returnPressed.connect(self.finish_edit)
         self.edit_box.installEventFilter(self)
 
