@@ -87,7 +87,8 @@ class FloatWidget(QWidget):
         # Range setup: if slider_range is default (0,0) then use dynamic scaling.
         if self.slider_range[0] == 0 and self.slider_range[1] == 0:
             try:
-                value_current = float(self.SpinBox.text())
+                text_current = self.SpinBox.text().replace(',', '.')
+                value_current = float(text_current)
             except ValueError:
                 value_current = 0.0
             self.Slider.setMaximum(abs(value_current) * self.slider_scale * 100 + 1000)
@@ -139,7 +140,8 @@ class FloatWidget(QWidget):
     # Handler when the spinbox value is updated
     def on_SpinBox_updated(self):
         try:
-            value = float(self.SpinBox.text())
+            text = self.SpinBox.text().replace(',', '.')
+            value = float(text)
         except ValueError:
             value = 0.0
         if self.int_output:
