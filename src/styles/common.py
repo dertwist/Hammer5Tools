@@ -17,7 +17,9 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QGroupBox,
     QProgressBar,
-    QLineEdit
+    QLineEdit,
+    QTableView,
+    QHeaderView
 )
 import sys
 
@@ -511,6 +513,32 @@ QLineEdit:hover {
 }
 """
 
+qt_stylesheet_table = """
+QTableView {
+    color: #E3E3E3;
+    border: 2px solid #363639;
+    background-color: #1C1C1C;
+    alternate-background-color: #242424;
+    gridline-color: #363639;
+    selection-background-color: #414956;
+    selection-color: white;
+    font: 580 10pt "Segoe UI";
+}
+
+QHeaderView::section {
+    background-color: #2D2D30;
+    color: #E3E3E3;
+    padding: 4px;
+    border: 1px solid #363639;
+    font: 580 10pt "Segoe UI";
+}
+
+QTableView QTableCornerButton::section {
+    background-color: #2D2D30;
+    border: 1px solid #363639;
+}
+"""
+
 def apply_stylesheets(parent: QWidget) -> None:
     """
     Applies registered QT stylesheets to all child widgets of the given parent.
@@ -532,9 +560,11 @@ def apply_stylesheets(parent: QWidget) -> None:
         QGroupBox: qt_stylesheet_groupbox,
         QRadioButton: qt_stylesheet_radiobutton,
         QProgressBar: qt_stylesheet_progressbar,
-        QLineEdit: qt_stylesheet_lineedit
+        QLineEdit: qt_stylesheet_lineedit,
+        QTableView: qt_stylesheet_table
     }
     for widget_type, style in widget_styles.items():
+        if style is None: continue
         # Find all children of this widget type and apply the stylesheet.
         for child in parent.findChildren(widget_type):
             child.setStyleSheet(style)
