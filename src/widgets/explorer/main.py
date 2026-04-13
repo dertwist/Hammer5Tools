@@ -244,8 +244,8 @@ class Explorer(QMainWindow):
         self.top_layout.addWidget(self.filter_editline)
         self.goto_button = QToolButton(self)
         self.goto_button.setIcon(QIcon("://icons/folder_open.svg"))
-        self.goto_button.setToolTip("Go to a specific path")
-        self.goto_button.clicked.connect(self.open_goto_dialog)
+        self.goto_button.setToolTip("Go to path from clipboard")
+        self.goto_button.clicked.connect(self.goto_clipboard_path)
         self.goto_button.setMaximumHeight(26)
         self.goto_button.setMaximumWidth(26)
         self.goto_button.setStyleSheet(qt_stylesheet_toolbutton)
@@ -340,11 +340,26 @@ class Explorer(QMainWindow):
         set_settings_value(self.editor_name + '_favorites', self.addon, self.favorites)
 
     def select_tree_item(self, path):
-        self.add_recent_file(path)
-        source_index = self.model.index(path)
-        if not source_index.isValid():
-            debug("select_tree_item: invalid path - %s" % path)
+        if not path:
             return
+        
+        # Normalize and check if absolute path exists
+        target_path = os.path.normpath(path)
+        if not os.path.exists(target_path):
+            # Try relative to rootpath (addon folder)
+            rel_path = os.path.normpath(os.path.join(self.rootpath, path))
+            if os.path.exists(rel_path):
+                target_path = rel_path
+            else:
+                debug("select_tree_item: path does not exist - %s" % path)
+                return
+
+        self.add_recent_file(target_path)
+        source_index = self.model.index(target_path)
+        if not source_index.isValid():
+            debug("select_tree_item: invalid index for path - %s" % target_path)
+            return
+        
         proxy_index = self.filter_proxy_model.mapFromSource(source_index)
         selection_model = self.tree.selectionModel()
         selection_model.clear()
@@ -755,30 +770,11 @@ class Explorer(QMainWindow):
         self.tree.edit(self.filter_proxy_model.mapFromSource(new_folder_index))
         self.select_tree_item(new_folder_path)
 
-    def open_goto_dialog(self):
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Goto Path")
-        enable_dark_title_bar(dialog)
-        layout = QVBoxLayout(dialog)
-        path_edit = QLineEdit(dialog)
-        path_edit.setPlaceholderText("Enter full path to focus...")
-        layout.addWidget(path_edit)
-        button_layout = QHBoxLayout()
-        ok_button = QPushButton("OK", dialog)
-        ok_button.setStyleSheet(qt_stylesheet_button)
-        cancel_button = QPushButton("Cancel", dialog)
-        cancel_button.setStyleSheet(qt_stylesheet_button)
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-        layout.addLayout(button_layout)
-        def on_ok():
-            input_path = path_edit.text().strip()
-            if input_path and os.path.exists(input_path):
-                self.select_tree_item(input_path)
-            dialog.accept()
-        ok_button.clicked.connect(on_ok)
-        cancel_button.clicked.connect(dialog.reject)
-        dialog.exec_()
+    def goto_clipboard_path(self):
+        clipboard = QGuiApplication.clipboard()
+        input_path = clipboard.text().strip().replace('"', '')
+        if input_path:
+            self.select_tree_item(input_path)
 
     def open_recent_files_dialog(self):
         dialog = QDialog(self)

@@ -323,6 +323,7 @@ class _SearchReplaceBar(QFrame):
         super().__init__(parent)
         self._editor = editor
         self._last_search = ""
+        from src.styles.common import qt_stylesheet_button, qt_stylesheet_lineedit
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(6, 4, 6, 4)
@@ -334,17 +335,22 @@ class _SearchReplaceBar(QFrame):
         search_label = QLabel("Find:")
         self._search_input = QLineEdit()
         self._search_input.setPlaceholderText("Search…")
+        self._search_input.setStyleSheet(qt_stylesheet_lineedit)
         self._search_input.returnPressed.connect(self.find_next)
 
         self._case_cb = QCheckBox("Aa")
+        from src.styles.common import qt_stylesheet_checkbox
+        self._case_cb.setStyleSheet(qt_stylesheet_checkbox)
         self._case_cb.setToolTip("Case sensitive")
 
         self._find_prev_btn = QPushButton("▲")
+        self._find_prev_btn.setStyleSheet(qt_stylesheet_button)
         self._find_prev_btn.setFixedWidth(28)
         self._find_prev_btn.setToolTip("Find previous")
         self._find_prev_btn.clicked.connect(self.find_prev)
 
         self._find_next_btn = QPushButton("▼")
+        self._find_next_btn.setStyleSheet(qt_stylesheet_button)
         self._find_next_btn.setFixedWidth(28)
         self._find_next_btn.setToolTip("Find next")
         self._find_next_btn.clicked.connect(self.find_next)
@@ -352,6 +358,7 @@ class _SearchReplaceBar(QFrame):
         self._match_label = QLabel("")
 
         self._close_btn = QPushButton("✕")
+        self._close_btn.setStyleSheet(qt_stylesheet_button)
         self._close_btn.setFixedWidth(24)
         self._close_btn.setToolTip("Close  (Esc)")
         self._close_btn.clicked.connect(self.hide)
@@ -367,12 +374,19 @@ class _SearchReplaceBar(QFrame):
         replace_label = QLabel("Replace:")
         self._replace_input = QLineEdit()
         self._replace_input.setPlaceholderText("Replace…")
+        self._replace_input.setStyleSheet(qt_stylesheet_lineedit)
 
         self._replace_btn = QPushButton("Replace")
+        self._replace_btn.setStyleSheet(qt_stylesheet_button)
         self._replace_btn.clicked.connect(self._replace_one)
 
         self._replace_all_btn = QPushButton("Replace All")
+        self._replace_all_btn.setStyleSheet(qt_stylesheet_button)
         self._replace_all_btn.clicked.connect(self._replace_all)
+        
+        # Style labels
+        for w in (search_label, replace_label, self._match_label):
+            w.setStyleSheet("color: #E3E3E3;")
 
         for w in (replace_label, self._replace_input, self._replace_btn, self._replace_all_btn):
             replace_row.addWidget(w)
@@ -525,18 +539,6 @@ class ManualEditor(QWidget):
 
         tb_layout.addStretch()
 
-        # Search button
-        self._search_btn = QPushButton("Find")
-        self._search_btn.setToolTip("Find  (Ctrl+F)")
-        self._search_btn.clicked.connect(self._open_find)
-        tb_layout.addWidget(self._search_btn)
-
-        # Replace button
-        self._replace_btn = QPushButton("Replace")
-        self._replace_btn.setToolTip("Replace  (Ctrl+H)")
-        self._replace_btn.clicked.connect(self._open_replace)
-        tb_layout.addWidget(self._replace_btn)
-
         tb_layout.addStretch()
 
         # Refresh button
@@ -566,9 +568,34 @@ class ManualEditor(QWidget):
         # ── Code editor ──────────────────────────────────────────────────
         root.addWidget(self._editor)
 
-        # ── Statistics bar ────────────────────────────────────────────────
+        # ── Statistics & Search Bar ───────────────────────────────────────────
+        bottom_toolbar = QFrame()
+        bottom_layout = QHBoxLayout(bottom_toolbar)
+        bottom_layout.setContentsMargins(6, 4, 6, 4)
+        bottom_layout.setSpacing(6)
+
+        # Search toggle buttons at the bottom
+        from src.styles.common import qt_stylesheet_button
+        self._search_btn = QPushButton("Find")
+        self._search_btn.setToolTip("Find  (Ctrl+F)")
+        self._search_btn.setStyleSheet(qt_stylesheet_button)
+        self._search_btn.clicked.connect(self._open_find)
+        bottom_layout.addWidget(self._search_btn)
+
+        self._replace_btn = QPushButton("Replace")
+        self._replace_btn.setToolTip("Replace  (Ctrl+H)")
+        self._replace_btn.setStyleSheet(qt_stylesheet_button)
+        self._replace_btn.clicked.connect(self._open_replace)
+        bottom_layout.addWidget(self._replace_btn)
+
+        bottom_layout.addStretch()
+
         self._stats_label = QLabel("")
-        root.addWidget(self._stats_label)
+        self._stats_label.setStyleSheet("color: #9D9D9D; font: 9pt 'Segoe UI';")
+        bottom_layout.addWidget(self._stats_label)
+
+        root.addWidget(bottom_toolbar)
+
         self._editor.textChanged.connect(self._update_stats)
         self._editor.cursorPositionChanged.connect(self._update_stats)
         self._update_stats()

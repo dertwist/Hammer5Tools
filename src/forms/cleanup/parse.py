@@ -354,6 +354,8 @@ def get_vmap_references(addon_dir=None, vmap=None):
 
     # Helper to push a reference into the correct queue if it's new
     def enqueue(path: str):
+        if path is None or not isinstance(path, str):
+            return
         ext = os.path.splitext(path)[1].lower()
         if ext == '.vmap':
             queue_vmap.append(path)
