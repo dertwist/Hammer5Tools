@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QHeaderView, QPushButton, QSizePolicy,
-    QSplitter, QTextEdit, QTreeView, QVBoxLayout,
-    QWidget)
+    QSplitter, QTextEdit, QTreeView, QVBoxLayout, QHBoxLayout,
+    QWidget, QLabel)
 
 class Ui_AssetManagerWidget(object):
     def setupUi(self, AssetManagerWidget):
@@ -36,27 +36,42 @@ class Ui_AssetManagerWidget(object):
         self.dest_tree.setObjectName(u"dest_tree")
         self.splitter.addWidget(self.dest_tree)
 
+        self.log_output = QTextEdit(self.splitter)
+        self.log_output.setObjectName(u"log_output")
+        self.splitter.addWidget(self.log_output)
+
         self.verticalLayout.addWidget(self.splitter)
+
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
 
         self.btn_preview = QPushButton(AssetManagerWidget)
         self.btn_preview.setObjectName(u"btn_preview")
 
-        self.verticalLayout.addWidget(self.btn_preview)
+        self.horizontalLayout.addWidget(self.btn_preview)
 
         self.btn_apply = QPushButton(AssetManagerWidget)
         self.btn_apply.setObjectName(u"btn_apply")
 
-        self.verticalLayout.addWidget(self.btn_apply)
+        self.horizontalLayout.addWidget(self.btn_apply)
 
         self.btn_undo = QPushButton(AssetManagerWidget)
         self.btn_undo.setObjectName(u"btn_undo")
 
-        self.verticalLayout.addWidget(self.btn_undo)
+        self.horizontalLayout.addWidget(self.btn_undo)
 
-        self.log_output = QTextEdit(AssetManagerWidget)
-        self.log_output.setObjectName(u"log_output")
+        self.verticalLayout.addLayout(self.horizontalLayout)
 
-        self.verticalLayout.addWidget(self.log_output)
+        self.warning_label = QLabel(AssetManagerWidget)
+        self.warning_label.setObjectName(u"warning_label")
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        self.warning_label.setSizePolicy(sizePolicy)
+        self.warning_label.setStyleSheet("color: #ffaa00; font-style: italic; font-size: 11px; margin-top: 5px;")
+        self.warning_label.setAlignment(Qt.AlignCenter)
+        self.warning_label.setWordWrap(True)
+        self.verticalLayout.addWidget(self.warning_label)
 
 
         self.retranslateUi(AssetManagerWidget)
@@ -69,5 +84,6 @@ class Ui_AssetManagerWidget(object):
         self.btn_preview.setText(QCoreApplication.translate("AssetManagerWidget", u"Preview Move", None))
         self.btn_apply.setText(QCoreApplication.translate("AssetManagerWidget", u"Apply", None))
         self.btn_undo.setText(QCoreApplication.translate("AssetManagerWidget", u"Undo Last Move", None))
+        self.warning_label.setText(QCoreApplication.translate("AssetManagerWidget", u"Note: This tool might not work perfectly. Backup your project or use git (recommended) before proceeding.", None))
     # retranslateUi
 

@@ -7,6 +7,7 @@ from .move_worker import MoveWorker
 from src.settings.main import get_addon_name, get_cs2_path, app_dir
 from src.common import enable_dark_title_bar
 from src.styles.common import apply_stylesheets
+from src.widgets.explorer.main import Explorer
 
 class AssetManagerWidget(QWidget):
     def __init__(self, parent=None):
@@ -17,37 +18,33 @@ class AssetManagerWidget(QWidget):
         enable_dark_title_bar(self)
         apply_stylesheets(self)
         
+        # Explicitly set console dark theme since global stylesheet strips it out
+        self.ui.log_output.setStyleSheet("QTextEdit { background-color: #1e1e1e; color: #ffffff; border: 1px solid #333333; }")
+        
         self.cs2_path = get_cs2_path()
         if not self.cs2_path:
             return
 
         self.addon_name = get_addon_name()
         self.addon_content_path = os.path.join(self.cs2_path, 'content', 'csgo_addons', self.addon_name)
+        
+        self.sources_to_move = []
 
         self.setWindowFlags(Qt.Window)
         self.setWindowTitle("Move Assets")
         self.ui.source_tree.hide()
-        self.sources_to_move = []
+        self.ui.source_tree.deleteLater()
+        self.ui.dest_tree.hide()
+        self.ui.dest_tree.deleteLater()
 
-        self.source_model = QFileSystemModel()
-        self.source_model.setRootPath(self.addon_content_path)
-        self.source_model.setNameFilters(['*.vmdl', '*.vsmart', '*.vmat', '*.vpcf', '*.vsndevts', '*.vsnd', '*.vtex'])
-        self.source_model.setNameFilterDisables(False)
-
-        self.ui.source_tree.setModel(self.source_model)
-        self.ui.source_tree.setRootIndex(self.source_model.index(self.addon_content_path))
-        self.ui.source_tree.setColumnWidth(0, 250)
-        self.ui.source_tree.setSelectionMode(self.ui.source_tree.SelectionMode.ExtendedSelection)
-        self.ui.source_tree.setDragEnabled(True)
-
-        self.dest_model = QFileSystemModel()
-        self.dest_model.setRootPath(self.addon_content_path)
-        self.dest_model.setFilter(self.dest_model.filter() | QDir.Dirs | QDir.NoDotAndDotDot)
-
-        self.ui.dest_tree.setModel(self.dest_model)
-        self.ui.dest_tree.setRootIndex(self.dest_model.index(self.addon_content_path))
-        self.ui.dest_tree.setColumnWidth(0, 250)
-        self.ui.dest_tree.setAcceptDrops(True)
+        self.explorer = Explorer(
+            tree_directory=self.addon_content_path,
+            addon=self.addon_name,
+            editor_name="AssetManager",
+            use_internal_player=False,
+            parent=self
+        )
+        self.ui.splitter.insertWidget(0, self.explorer.frame)
 
         self.ui.btn_preview.clicked.connect(self.preview_move)
         self.ui.btn_apply.clicked.connect(self.apply_move)
@@ -65,11 +62,12 @@ class AssetManagerWidget(QWidget):
         return self.sources_to_move
 
     def get_selected_dest_dir(self):
-        indexes = self.ui.dest_tree.selectionModel().selectedIndexes()
+        indexes = self.explorer.tree.selectionModel().selectedIndexes()
         if indexes:
             for idx in indexes:
                 if idx.column() == 0:
-                    path = self.dest_model.filePath(idx)
+                    src_idx = self.explorer.filter_proxy_model.mapToSource(idx)
+                    path = self.explorer.model.filePath(src_idx)
                     if os.path.isdir(path):
                         return path
                     return os.path.dirname(path)
