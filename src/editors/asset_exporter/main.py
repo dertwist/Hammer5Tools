@@ -6,7 +6,6 @@ from .ui_main import Ui_AssetExporterWidget
 from .dependency_resolver import DependencyResolver
 from .exporter import ExportWorker
 from src.settings.main import get_addon_name, get_cs2_path
-from PySide6.QtWidgets import QLineEdit
 from src.common import enable_dark_title_bar
 from src.styles.common import apply_stylesheets, qt_stylesheet_widgetlist2
 
@@ -19,28 +18,6 @@ class AssetExporterWidget(QWidget):
         enable_dark_title_bar(self)
         apply_stylesheets(self)
         
-        qt_stylesheet_lineedit = """
-        QLineEdit {
-            font: 580 10pt "Segoe UI";
-            border: 2px solid black;
-            border-radius: 2px;
-            border-color: rgba(80, 80, 80, 255);
-            height:22px;
-            padding-top: 2px;
-            padding-bottom:2px;
-            padding-left: 4px;
-            padding-right: 4px;
-            color: #E3E3E3;
-            background-color: #1C1C1C;
-        }
-        QLineEdit:hover {
-            background-color: #414956;
-            color: white;
-        }
-        """
-        for line_edit in self.findChildren(QLineEdit):
-            line_edit.setStyleSheet(qt_stylesheet_lineedit)
-            
         self.ui.deps_list.setStyleSheet(qt_stylesheet_widgetlist2)
 
         self.cs2_path = get_cs2_path()
@@ -75,6 +52,11 @@ class AssetExporterWidget(QWidget):
         self.ui.radio_preserve.toggled.connect(self.toggle_thirdparty_fields)
 
         self.toggle_thirdparty_fields()
+        
+        from PySide6.QtWidgets import QCheckBox
+        self.ui.checkbox_zip = QCheckBox("Export to ZIP Archive (name based on selected asset)")
+        self.ui.checkbox_zip.setChecked(True)
+        self.ui.verticalLayout.insertWidget(6, self.ui.checkbox_zip)
         
         self.deps_model = QStandardItemModel()
         self.ui.deps_list.setModel(self.deps_model)
@@ -155,13 +137,21 @@ class AssetExporterWidget(QWidget):
 
         layout = 'thirdparty' if is_thirdparty else 'preserve'
 
+        export_to_zip = self.ui.checkbox_zip.isChecked()
+        zip_name = "Export"
+        if self.sources_to_export:
+            first_src = os.path.basename(self.sources_to_export[0])
+            zip_name = os.path.splitext(first_src)[0]
+
         self.worker = ExportWorker(
             files_to_export,
             self.addon_content_path,
             output_dir,
             layout,
             addon_name,
-            asset_stem
+            asset_stem,
+            export_to_zip,
+            zip_name
         )
         self.worker.progress.connect(self.ui.progress_bar.setValue)
         self.worker.finished_export.connect(self.on_export_finished)
