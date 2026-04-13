@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
 )
 from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator, QKeyEvent
-from PySide6.QtCore import Qt, QRect, QEvent, Signal, QLocale
+from PySide6.QtCore import Qt, QRect, QEvent, Signal, QLocale, QTimer
 import math
 
 
@@ -88,13 +88,21 @@ class FloatWidget(QWidget):
         self.slider_scale = slider_scale
         self.lock_range = lock_range
         self.slider_range = slider_range
+        self._programmatic_set = False  # flag to suppress deferred commit during set_value
+
+        # Deferred commit timer — waits for a pause in typing before emitting edited.
+        # This prevents emitting partial values like "1" when the user is typing "1.4".
+        self._commit_timer = QTimer(self)
+        self._commit_timer.setSingleShot(True)
+        self._commit_timer.setInterval(600)
+        self._commit_timer.timeout.connect(self._deferred_commit)
 
         # Editline setup (replacing QDoubleSpinBox)
         self.SpinBox = _NumericLineEdit()
         self.SpinBox.setMaximumWidth(64)
         self.SpinBox.setValidator(_make_double_validator(-99999999 if not self.only_positive else 0, 99999999, digits, self))
         self.SpinBox.setText(str(value))
-        self.SpinBox.editingFinished.connect(self.on_SpinBox_updated)
+        self.SpinBox.editingFinished.connect(self._on_editing_finished)
         self.SpinBox.textChanged.connect(self._on_spinbox_text_changed)
         self.SpinBox.setStyleSheet('padding: 2px;')
         # If lock_range is enabled and a valid slider_range is provided, enforce boundaries on the validator.
@@ -140,7 +148,8 @@ class FloatWidget(QWidget):
         self.setLayout(layout)
         if vertical:
             self.setFixedWidth(96)
-        self.on_SpinBox_updated()
+        # Initial sync (programmatic, no need to emit to parent)
+        self._sync_value_from_spinbox()
 
     # Method to change text color if needed
     def set_color(self, color):
@@ -155,11 +164,31 @@ class FloatWidget(QWidget):
         self.committed.emit()
 
     def _on_spinbox_text_changed(self):
+        """Called on every keystroke. Silently syncs value + slider without emitting edited,
+        then starts/restarts the deferred commit timer so the value is committed
+        after a brief typing pause."""
         if self.SpinBox.hasAcceptableInput():
-            self.on_SpinBox_updated()
+            self._sync_value_from_spinbox()
+            # Restart the deferred commit timer only during real user typing,
+            # not during programmatic set_value calls.
+            if not self._programmatic_set:
+                self._commit_timer.start()
 
-    # Handler when the spinbox value is updated
-    def on_SpinBox_updated(self):
+    def _on_editing_finished(self):
+        """Called when user presses Enter or the SpinBox loses focus.
+        Immediately commits the current value."""
+        self._commit_timer.stop()
+        self._sync_value_from_spinbox()
+        self.edited.emit(self.value)
+
+    def _deferred_commit(self):
+        """Called by the commit timer after a typing pause. Emits the edited signal
+        so the parent can see the final typed value."""
+        self.edited.emit(self.value)
+
+    def _sync_value_from_spinbox(self):
+        """Parse the spinbox text, update self.value and sync the slider position.
+        Does NOT emit the edited signal — callers decide when to emit."""
         try:
             text = self.SpinBox.text().replace(',', '.')
             value = float(text)
@@ -180,7 +209,13 @@ class FloatWidget(QWidget):
         self.Slider.setValue(value * 100)
         self.Slider.blockSignals(False)
         self.value = value
-        self.edited.emit(value)
+
+    # Legacy alias kept for any external callers.
+    def on_SpinBox_updated(self):
+        """Sync value from spinbox and emit edited. Called from editingFinished and
+        as a compatibility shim for callers that relied on the old all-in-one method."""
+        self._sync_value_from_spinbox()
+        self.edited.emit(self.value)
 
     # Handler when the slider is updated
     def on_Slider_updated(self):
@@ -196,10 +231,13 @@ class FloatWidget(QWidget):
 
     # Programmatically set the value without emitting edited
     def set_value(self, value):
-        self.blockSignals(True)
+        self._programmatic_set = True
+        self._commit_timer.stop()
+        self.SpinBox.blockSignals(True)
         self.SpinBox.setText(str(value))
-        self.on_SpinBox_updated()
-        self.blockSignals(False)
+        self.SpinBox.blockSignals(False)
+        self._sync_value_from_spinbox()
+        self._programmatic_set = False
 
 
 class BoxSlider(QWidget):
