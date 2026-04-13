@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QF
 from PySide6.QtCore import Qt, QSortFilterProxyModel
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction
 import os
-from src.styles.common import qt_stylesheet_combobox, qt_stylesheet_checkbox, qt_stylesheet_button
+from src.styles.common import qt_stylesheet_combobox, qt_stylesheet_checkbox, qt_stylesheet_button, qt_stylesheet_table
 
 from src.settings.main import get_addon_name, get_addon_dir
 from src.widgets import qt_stylesheet_button, enable_dark_title_bar
@@ -105,6 +105,7 @@ class CleanupDialog(QDialog):
         self.table_view.horizontalHeader().setMinimumSectionSize(50)
         self.table_view.horizontalHeader().setStretchLastSection(True)
         self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.table_view.setStyleSheet(qt_stylesheet_table)
         main_layout.addWidget(self.table_view)
 
         # Context menu for checkbox toggling
@@ -172,6 +173,10 @@ class CleanupDialog(QDialog):
         self.filter_combo.currentTextChanged.connect(self.proxy_model.setFileType)
         self.model.itemChanged.connect(self.update_statistics)
         self.proxy_model.layoutChanged.connect(self.update_statistics)
+
+        # Style labels for dark mode
+        for label in self.findChildren(QLabel):
+            label.setStyleSheet("color: #E3E3E3; background-color: transparent;")
 
         self.update_statistics()
 

@@ -7,7 +7,7 @@ from typing import List, Dict, Optional, Set
 
 # Local imports
 from src.forms.cleanup.parse import get_vmap_references
-from src.styles.common import qt_stylesheet_combobox, qt_stylesheet_checkbox, qt_stylesheet_button
+from src.styles.common import qt_stylesheet_combobox, qt_stylesheet_checkbox, qt_stylesheet_button, qt_stylesheet_table, qt_stylesheet_lineedit
 from src.settings.main import get_cs2_path, get_addon_name, get_settings_value, get_addon_dir
 from src.common import enable_dark_title_bar
 
@@ -60,6 +60,7 @@ class ExportAndImportAddonDialog(QDialog):
         self.proxy_model.setSourceModel(self.file_model)
         self.proxy_model.setSortRole(Qt.UserRole)
         self.table_view.setModel(self.proxy_model)
+        self.table_view.setStyleSheet(qt_stylesheet_table)
         self.layout.addWidget(self.table_view)
 
         btn_layout = QHBoxLayout()
@@ -76,6 +77,10 @@ class ExportAndImportAddonDialog(QDialog):
 
         self._connect_signals()
         self.update_export_preview()
+
+        # Style labels for dark mode
+        for label in self.findChildren(QLabel):
+            label.setStyleSheet("color: #E3E3E3; background-color: transparent;")
 
     def _create_simple_tab(self):
         self.simple_tab = QWidget()
@@ -120,6 +125,7 @@ class ExportAndImportAddonDialog(QDialog):
         self.vmap_table_view.setSelectionBehavior(QTableView.SelectRows)
         self.vmap_table_view.setSelectionMode(QTableView.ExtendedSelection)
         self.vmap_table_view.setMaximumHeight(120)
+        self.vmap_table_view.setStyleSheet(qt_stylesheet_table)
 
         self.add_vmap_button = QPushButton("Add VMap File...")
         self.add_vmap_button.setStyleSheet(qt_stylesheet_button)
@@ -135,6 +141,8 @@ class ExportAndImportAddonDialog(QDialog):
         self.compression_combo.setStyleSheet(qt_stylesheet_combobox)
         self.compression_combo.addItems(["Fastest", "Normal", "Ultra (Slow)"])
         self.compression_combo.setCurrentText("Normal")
+        self.ignore_edit.setStyleSheet(qt_stylesheet_lineedit)
+
         advanced_layout.addWidget(self.compression_combo, 0, Qt.AlignTop)
         self.tabs.addTab(self.advanced_tab, "Advanced")
 
