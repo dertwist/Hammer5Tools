@@ -7,29 +7,79 @@
     <a href="https://github.com/dertwist/Hammer5Tools/releases/latest">
         <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/download.svg" height="45" alt="Download">
     </a>
-    <a href="https://discord.gg/5yzvEQnazG">
+    <a href="https://discord.com/invite/DvCXEyhssd">
         <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/discord.svg" height="45" alt="Discord">
     </a>
-    <a href="https://twist-1.gitbook.io/hammer5tools">
+    <a href="https://hammer5tools.github.io/docs.html">
         <img src="https://gist.githubusercontent.com/cxmeel/0dbc95191f239b631c3874f4ccf114e2/raw/docs.svg" height="45" alt="Docs">
     </a>
 </p>
 
 # Essential Tools for Counter-Strike 2 Mapping
 
-| ![image](https://i.imgur.com/7znAlv4.jpeg) Loading Editor | ![image](https://i.imgur.com/HMmbQgR.png) SoundEvent Editor | ![image](https://i.imgur.com/kFjGhI7.png) SmartProp Editor |
-| --------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------- |
-| ![image](https://i.imgur.com/D9v7e6w.png) Hotkey Editor   | ![image](https://i.imgur.com/cRFsq49.png) AssetGroup Maker  |
+A powerful toolkit for Counter-Strike 2 Workshop Tools. Edit sound events, create smart props, build maps, manage keybindings, and customize loading screens.
 
-### Tools Overview
+[**Visit Official Website**](https://hammer5tools.github.io/)
 
-|       Tool       | Description                                                               |
-|:----------------:| :------------------------------------------------------------------------ |
-|  Loading Editor  | Add images, descriptions, and icons to loading screens.                   |
-|SoundEvent Editor | Edit in-game sounds easily.                                               |
-|  Hotkey Editor   | Customize, edit, and manage new keyboard shortcuts.                       |
-| AssetGroup Maker | Edit multiple files at once, ideal for large modular sets.                |
-| SmartProp Editor | Simplifies creating smart props.      
+<p align="center">
+  <video src="https://hammer5tools.github.io/videos/hero.mp4" controls="controls" width="100%" muted="true" loop="true" autoplay="true"></video>
+</p>
+
+## Tools
+
+### SmartProp Editor
+Edit .vsmart files using an intuitive interface. The tool supports all essential properties while maintaining compatibility with older formats. Modify properties in real-time to precisely adjust the position, rotation, and scaling of your models. Utilize presets to rapidly construct repetitive elements.
+
+![SmartProp Editor](https://hammer5tools.github.io/static/smartprop_editor.png)
+
+---
+
+### SoundEvent Editor
+Manage in-game sounds seamlessly. The editor works directly with Counter-Strike 2 sounds (.vsnd files) and allows you to explore, preview, and configure sound events. Use presets to quickly set up sound events or define your own custom configurations. Edits the `soundevents_addon.vsndevts` file directly.
+
+![SoundEvent Editor](https://hammer5tools.github.io/static/soundevent_editor.png)
+
+---
+
+### Map Builder
+Streamline the map compilation process with a dedicated and powerful interface. Access fast, full, or custom compile options such as building geometry, visibility, or baking lighting. Configure settings like lightmap resolution and quality while monitoring CPU, RAM, and GPU usage during the build in real-time.
+
+![Map Builder](https://hammer5tools.github.io/static/map_builder.png)
+
+---
+
+### Cleanup Tool
+Effortlessly remove unused and redundant files from your addon's content folder. By scanning your project's .vmap file, the tool identifies and keeps only the actively referenced assets, freeing up valuable storage space and simplifying project management.
+
+![Cleanup Tool](https://hammer5tools.github.io/static/cleanup_tool.png)
+
+---
+
+### Export / Import Addon
+Simplify the distribution of your projects by exporting and importing entire addons seamlessly. Filter out unnecessary folders or VCS files, and include compiled maps, materials, or models effortlessly. Ideal for packaging your map for release or collaborating with other developers.
+
+![Export / Import Addon](https://hammer5tools.github.io/static/export_import_addon.png)
+
+---
+
+### AssetGroup Maker
+Batch-create assets for Source 2 effortlessly. By utilizing a straightforward configuration file and a folder scan, you can automatically generate files for massive asset sets. This ensures consistency across all your assets and drastically minimizes time spent on manual edits.
+
+![AssetGroup Maker](https://hammer5tools.github.io/static/assetgroup_maker.png)
+
+---
+
+### Hotkey Editor
+Configure and manage custom keyboard shortcuts for a wide variety of tasks. Streamline your workflow by keeping essential functions right at your fingertips. Store multiple hotkey presets tailored to different projects and switch between them seamlessly.
+
+![Hotkey Editor](https://hammer5tools.github.io/static/hotkeyeditor.png)
+
+---
+
+### Loading Editor
+Customize your map's loading experience by managing screenshots, map icons, and descriptions. Capture high-quality screenshots and history snapshots directly from CS2, process them into multiple resolutions, and configure rich-text descriptions for the community workshop.
+
+![Loading Editor](https://hammer5tools.github.io/static/loading_editor.png)
 
 
 # Development Guide
