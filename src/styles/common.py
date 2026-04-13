@@ -13,7 +13,11 @@ from PySide6.QtWidgets import (
     QTabBar,
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout
+    QGridLayout,
+    QRadioButton,
+    QGroupBox,
+    QProgressBar,
+    QLineEdit
 )
 import sys
 
@@ -434,8 +438,78 @@ QTabBar::tab:selected {
 }
 """
 
+qt_stylesheet_groupbox = """
+QGroupBox {
+    color: #E3E3E3;
+    font: 580 10pt "Segoe UI";
+    border: 1px solid rgba(80, 80, 80, 255);
+    border-radius: 2px;
+    margin-top: 10px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 3px;
+    color: #E3E3E3;
+}
+"""
 
+qt_stylesheet_radiobutton = """
+QRadioButton {
+    color: #E3E3E3;
+    font: 580 10pt "Segoe UI";
+}
+QRadioButton::indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+}
+QRadioButton::indicator::unchecked {
+    border: 2px solid rgba(80, 80, 80, 255);
+    background-color: #1C1C1C;
+}
+QRadioButton::indicator:unchecked:hover {
+    background-color: #414956;
+}
+QRadioButton::indicator::checked {
+    border: 2px solid #3d88bd;
+    background-color: #3d88bd;
+}
+"""
 
+qt_stylesheet_progressbar = """
+QProgressBar {
+    border: 2px solid rgba(80, 80, 80, 255);
+    border-radius: 2px;
+    text-align: center;
+    color: #E3E3E3;
+    font: 700 10pt "Segoe UI";
+    background-color: #1C1C1C;
+}
+QProgressBar::chunk {
+    background-color: #414956;
+}
+"""
+
+qt_stylesheet_lineedit = """
+QLineEdit {
+    font: 580 10pt "Segoe UI";
+    border: 2px solid black;
+    border-radius: 2px;
+    border-color: rgba(80, 80, 80, 255);
+    height:22px;
+    padding-top: 2px;
+    padding-bottom:2px;
+    padding-left: 4px;
+    padding-right: 4px;
+    color: #E3E3E3;
+    background-color: #1C1C1C;
+}
+QLineEdit:hover {
+    background-color: #414956;
+    color: white;
+}
+"""
 
 def apply_stylesheets(parent: QWidget) -> None:
     """
@@ -454,7 +528,11 @@ def apply_stylesheets(parent: QWidget) -> None:
         QPlainTextEdit: qt_stylesheet_plain_text_batch_inline,
         QListWidget: qt_stylesheet_widgetlist,
         QListView: qt_stylesheet_widgetlist,
-        QTabBar: qt_stylesheet_tabbar
+        QTabBar: qt_stylesheet_tabbar,
+        QGroupBox: qt_stylesheet_groupbox,
+        QRadioButton: qt_stylesheet_radiobutton,
+        QProgressBar: qt_stylesheet_progressbar,
+        QLineEdit: qt_stylesheet_lineedit
     }
     for widget_type, style in widget_styles.items():
         # Find all children of this widget type and apply the stylesheet.

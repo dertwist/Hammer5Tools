@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt, QDir
 from .ui_main import Ui_AssetManagerWidget
 from .move_worker import MoveWorker
 from src.settings.main import get_addon_name, get_cs2_path, app_dir
-from PySide6.QtWidgets import QLineEdit
 from src.common import enable_dark_title_bar
 from src.styles.common import apply_stylesheets
 
@@ -18,28 +17,6 @@ class AssetManagerWidget(QWidget):
         enable_dark_title_bar(self)
         apply_stylesheets(self)
         
-        qt_stylesheet_lineedit = """
-        QLineEdit {
-            font: 580 10pt "Segoe UI";
-            border: 2px solid black;
-            border-radius: 2px;
-            border-color: rgba(80, 80, 80, 255);
-            height:22px;
-            padding-top: 2px;
-            padding-bottom:2px;
-            padding-left: 4px;
-            padding-right: 4px;
-            color: #E3E3E3;
-            background-color: #1C1C1C;
-        }
-        QLineEdit:hover {
-            background-color: #414956;
-            color: white;
-        }
-        """
-        for line_edit in self.findChildren(QLineEdit):
-            line_edit.setStyleSheet(qt_stylesheet_lineedit)
-
         self.cs2_path = get_cs2_path()
         if not self.cs2_path:
             return
@@ -48,7 +25,7 @@ class AssetManagerWidget(QWidget):
         self.addon_content_path = os.path.join(self.cs2_path, 'content', 'csgo_addons', self.addon_name)
 
         self.setWindowFlags(Qt.Window)
-        self.setWindowTitle("Asset Manager")
+        self.setWindowTitle("Move Assets")
         self.ui.source_tree.hide()
         self.sources_to_move = []
 
