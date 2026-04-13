@@ -425,9 +425,28 @@ class Explorer(QMainWindow):
         paste_action.triggered.connect(lambda: self.paste_file(index))
         menu.addAction(paste_action)
 
+        menu.addSeparator()
+        asset_manager_action = QAction("Asset Manager", self)
+        asset_manager_action.setIcon(QIcon(":/icons/folder_open.svg"))
+        asset_manager_action.triggered.connect(lambda: self.open_asset_manager(index))
+        menu.addAction(asset_manager_action)
+
     def add_file_actions(self, menu, index):
         file_path = self.model.filePath(index)
         file_extension = os.path.splitext(file_path)[1]
+        
+        # Asset operations
+        menu.addSeparator()
+        asset_manager_action = QAction("Asset Manager", self)
+        asset_manager_action.setIcon(QIcon(":/icons/folder_open.svg"))
+        asset_manager_action.triggered.connect(lambda: self.open_asset_manager(index))
+        menu.addAction(asset_manager_action)
+        
+        export_action = QAction("Export Asset", self)
+        export_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        export_action.triggered.connect(lambda: self.open_asset_exporter(index))
+        menu.addAction(export_action)
+        menu.addSeparator()
         file_path = self.model.filePath(index)
         file_extension = file_path.split('.')[-1].lower()
         image_extensions = ["png", "tga", "jpg", "jpeg", "tif", "tiff"]
@@ -615,6 +634,42 @@ class Explorer(QMainWindow):
             except Exception as e:
                 error_dialog = ErrorInfo(text="Deletion Error", details=str(e))
                 error_dialog.exec_()
+
+    def open_asset_manager(self, index):
+        indexes = self.tree.selectionModel().selectedIndexes()
+        selected_paths = []
+        for idx in indexes:
+            if idx.column() == CustomFileSystemModel.NAME_COLUMN:
+                src_idx = self.filter_proxy_model.mapToSource(idx)
+                selected_paths.append(self.model.filePath(src_idx))
+        
+        # fallback if nothing selected
+        if not selected_paths and index.isValid():
+            src_idx = self.filter_proxy_model.mapToSource(index)
+            selected_paths.append(self.model.filePath(src_idx))
+
+        from src.editors.asset_manager.main import AssetManagerWidget
+        self.asset_manager_window = AssetManagerWidget()
+        self.asset_manager_window.set_files_to_move(selected_paths)
+        self.asset_manager_window.show()
+
+    def open_asset_exporter(self, index):
+        indexes = self.tree.selectionModel().selectedIndexes()
+        selected_paths = []
+        for idx in indexes:
+            if idx.column() == CustomFileSystemModel.NAME_COLUMN:
+                src_idx = self.filter_proxy_model.mapToSource(idx)
+                selected_paths.append(self.model.filePath(src_idx))
+        
+        # fallback if nothing selected
+        if not selected_paths and index.isValid():
+            src_idx = self.filter_proxy_model.mapToSource(index)
+            selected_paths.append(self.model.filePath(src_idx))
+
+        from src.editors.asset_exporter.main import AssetExporterWidget
+        self.asset_exporter_window = AssetExporterWidget()
+        self.asset_exporter_window.select_file(selected_paths)
+        self.asset_exporter_window.show()
 
     def copy_audio_path(self, index, to_clipboard):
         file_path = self.model.filePath(index)
