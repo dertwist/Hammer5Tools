@@ -1,16 +1,6 @@
 import os
-from src.common import Kv3ToJson
 
 class DependencyResolver:
-    ASSET_DEPENDENCY_KEYS = [
-        # vmdl / vsmart
-        'm_refMeshes', 'm_refPhysicsData', 'model',
-        # vmat
-        'TextureColor', 'TextureNormal', 'TextureRoughness',
-        'TextureMetalness', 'g_tColor', 'g_tNormal',
-        # generic
-        'material', 'mesh', 'texture', 'm_strPsd'
-    ]
 
     def __init__(self, addon_content_path: str):
         self.addon_content_path = addon_content_path
@@ -33,27 +23,17 @@ class DependencyResolver:
             self._parse_kv3_deps(path)
 
     def _parse_kv3_deps(self, path: str):
+        import re
         try:
             with open(path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
-            # If it's pure binary or random data, kv3 parsing will fail, which is fine
-            # We catch exceptions
-            data = Kv3ToJson(content)
-            if data:
-                self._find_deps_in_dict(data)
+            
+            pattern = r'"([^"]+\.(?:vmdl|vsmart|vmat|vpcf|vsndevts|vtex|vsnd|txt|kv3|vmap|vpost)(?:_c)?)"'
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            for m in matches:
+                self._add_dep(m)
         except Exception as e:
             print(f"DependencyResolver: Error parsing {path}: {e}")
-
-    def _find_deps_in_dict(self, data):
-        if isinstance(data, dict):
-            for k, v in data.items():
-                if k in self.ASSET_DEPENDENCY_KEYS and isinstance(v, str):
-                    self._add_dep(v)
-                else:
-                    self._find_deps_in_dict(v)
-        elif isinstance(data, list):
-            for item in data:
-                self._find_deps_in_dict(item)
 
     def _add_dep(self, rel_path: str):
         if not rel_path:
