@@ -703,12 +703,10 @@ class ManualEditor(QWidget):
             self._status_label.setText(f"Apply failed: {e}")
             self._status_label.show()
 
-    def _apply_hierarchy(self, text):
+    def _apply_hierarchy_internal(self, item, text):
         from src.common import Kv3ToJson
         from src.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
-        item = self._document.ui.tree_hierarchy_widget.currentItem()
-        if item is None:
-            raise ValueError("No hierarchy element selected")
+        from src.common import fast_deepcopy
 
         text = self._fix_format(text)
         obj = Kv3ToJson(text)
@@ -717,40 +715,57 @@ class ManualEditor(QWidget):
             raise ValueError("No element data found in text")
 
         element_data = children[0]
-        # Extract child hierarchy data vs element properties
         child_data_list = element_data.pop("m_Children", None)
 
-        # Capture old state for undo
-        old_data = fast_deepcopy(item.data(0, Qt.UserRole))
-
-        # Update the element label
         label = element_data.get("m_sLabel", item.text(0))
         item.setText(0, label)
         element_data.pop("m_sLabel", None)
 
-        # Update tree item data
         item.setData(0, Qt.UserRole, element_data)
 
-        # Rebuild children if child data was provided
         if child_data_list is not None:
-            # Remove existing children
             while item.childCount() > 0:
                 item.takeChild(0)
-            # Rebuild from parsed data
             for child_dict in child_data_list:
                 child_item = deserialize_hierarchy_item(
                     child_dict, self._document.element_id_generator
                 )
                 item.addChild(child_item)
 
-        # Push undo command
-        new_data = fast_deepcopy(item.data(0, Qt.UserRole))
-        from src.editors.smartprop_editor.commands import PropertySnapshotCommand
-        cmd = PropertySnapshotCommand(self._document, item, old_data, new_data)
-        self._document.undo_stack.push(cmd)
-
-        # Refresh the properties panel for the new data
         self._document.on_tree_current_item_changed(item, None)
+
+    def _apply_hierarchy(self, text):
+        item = self._document.ui.tree_hierarchy_widget.currentItem()
+        if item is None:
+            raise ValueError("No hierarchy element selected")
+
+        old_text = self._serialise_hierarchy()
+        self._apply_hierarchy_internal(item, text)
+
+        from PySide6.QtGui import QUndoCommand
+        class ManualHierarchyEditCommand(QUndoCommand):
+            def __init__(self, doc, tr_item, o_text, n_text):
+                super().__init__("Manual Edit Hierarchy")
+                self.document = doc
+                self.item = tr_item
+                self.old_text = o_text
+                self.new_text = n_text
+                self._first_redo = True
+
+            def redo(self):
+                if self._first_redo:
+                    self._first_redo = False
+                    return
+                # Verify item still exists in tree
+                if self.item.treeWidget() is not None:
+                    self.document._manual_editor._apply_hierarchy_internal(self.item, self.new_text)
+
+            def undo(self):
+                if self.item.treeWidget() is not None:
+                    self.document._manual_editor._apply_hierarchy_internal(self.item, self.old_text)
+
+        cmd = ManualHierarchyEditCommand(self._document, item, old_text, text)
+        self._document.undo_stack.push(cmd)
 
     def _apply_variables(self, text):
         from src.common import Kv3ToJson
@@ -782,7 +797,13 @@ class ManualEditor(QWidget):
                 'var_display_name': v.get('m_ParameterName'),
                 'expanded': False,
             })
+            
+        old_state = self._document._snapshot_variables()
         self._document._restore_variables(state)
+        
+        from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
+        cmd = VariablesSnapshotCommand(self._document, old_state, state, "Manual Edit Variables")
+        self._document.undo_stack.push(cmd)
 
     def _apply_choices(self, text):
         from src.common import Kv3ToJson
@@ -812,7 +833,13 @@ class ManualEditor(QWidget):
                 'expanded': False,
                 'options': options,
             })
+            
+        old_state = self._document._snapshot_choices()
         self._document._restore_choices(state)
+        
+        from src.editors.smartprop_editor.commands import ChoicesSnapshotCommand
+        cmd = ChoicesSnapshotCommand(self._document, old_state, state, "Manual Edit Choices")
+        self._document.undo_stack.push(cmd)
 
     # ── Internal ──────────────────────────────────────────────────────────
 
