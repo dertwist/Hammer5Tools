@@ -612,14 +612,32 @@ class PropertyFrame(QWidget):
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
     def on_edited(self):
+        old_value = getattr(self, 'value', {}).copy()
+        
         self.value = {
             '_class': f'{self.name_prefix}_{self.name}',
             'm_nElementID': self.element_id,
         }
+        
+        widget_output = {}
+        widget_managed_keys = set()
+        
         for w in self._property_widgets:
             v = getattr(w, 'value', None)
             if v:
-                self.value.update(v)
+                widget_output.update(v)
+                widget_managed_keys.update(v.keys())
+            vc = getattr(w, 'value_class', None)
+            if vc:
+                widget_managed_keys.add(vc)
+                
+        # Bring over unmanaged properties (custom manual edits)
+        for k, v in old_value.items():
+            if k not in widget_managed_keys and k not in ('_class', 'm_nElementID'):
+                self.value[k] = v
+                
+        self.value.update(widget_output)
+        
         self.edited.emit()
 
     def update_self(self):
