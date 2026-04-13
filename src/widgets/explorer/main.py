@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate
     QLineEdit, QToolButton, QDialog, QListWidgetItem, QTreeView, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QFrame
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel
+from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer
 
 from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, debug
 from src.widgets.common import ErrorInfo
@@ -361,11 +361,21 @@ class Explorer(QMainWindow):
             return
         
         proxy_index = self.filter_proxy_model.mapFromSource(source_index)
+        
+        # Ensure all parents are expanded
+        parent_index = proxy_index.parent()
+        while parent_index.isValid():
+            self.tree.expand(parent_index)
+            parent_index = parent_index.parent()
+
         selection_model = self.tree.selectionModel()
         selection_model.clear()
         selection_model.select(proxy_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
         self.tree.setCurrentIndex(proxy_index)
-        self.tree.scrollTo(proxy_index)
+        
+        # Use singleShot to allow the UI to process expansion before scrolling
+        QTimer.singleShot(50, lambda: self.tree.scrollTo(proxy_index, QTreeView.PositionAtCenter))
+        self.tree.setFocus()
 
     def select_last_opened_path(self):
         try:
