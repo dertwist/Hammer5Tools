@@ -133,30 +133,47 @@ def get_default_application(file_extension):
         if file_extension.startswith('.'):
             file_extension = file_extension[1:]
         
-        # Get the file type from the extension
-        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, f".{file_extension}") as key:
-            file_type = winreg.QueryValue(key, "")
+        file_type = None
+        
+        # 1. Try getting from UserChoice first (Windows 8+)
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.{file_extension}\\UserChoice") as key:
+                file_type, _ = winreg.QueryValueEx(key, "ProgId")
+        except (FileNotFoundError, OSError, winreg.error):
+            pass
+            
+        # 2. Fallback to HKEY_CLASSES_ROOT
+        if not file_type:
+            try:
+                with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, f".{file_extension}") as key:
+                    file_type, _ = winreg.QueryValueEx(key, "")
+            except (FileNotFoundError, OSError, winreg.error):
+                return None
         
         if not file_type:
             return None
             
-        # Get the command associated with the file type
+        command = None
+        # 3. Get the command associated with the file type
         try:
             with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, f"{file_type}\\shell\\open\\command") as key:
-                command = winreg.QueryValue(key, "")
-        except FileNotFoundError:
+                command, _ = winreg.QueryValueEx(key, "")
+        except (FileNotFoundError, OSError, winreg.error):
             # Try alternative path
-            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, f"{file_type}\\shell\\edit\\command") as key:
-                command = winreg.QueryValue(key, "")
+            try:
+                with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, f"{file_type}\\shell\\edit\\command") as key:
+                    command, _ = winreg.QueryValueEx(key, "")
+            except (FileNotFoundError, OSError, winreg.error):
+                pass
         
         if command:
             # Extract the executable path from the command
             # Commands often contain quotes and parameters like: "C:\Program Files\App\app.exe" "%1"
             import shlex
             try:
-                parts = shlex.split(command)
+                parts = shlex.split(command, posix=False)
                 if parts:
-                    exe_path = parts[0]
+                    exe_path = parts[0].strip('"')
                     app_name = os.path.basename(exe_path)
                     return app_name, exe_path
             except ValueError:
@@ -426,7 +443,7 @@ class Explorer(QMainWindow):
         menu.addAction(paste_action)
 
         menu.addSeparator()
-        asset_manager_action = QAction("Asset Manager", self)
+        asset_manager_action = QAction("Move Assets", self)
         asset_manager_action.setIcon(QIcon(":/icons/folder_open.svg"))
         asset_manager_action.triggered.connect(lambda: self.open_asset_manager(index))
         menu.addAction(asset_manager_action)
@@ -437,7 +454,7 @@ class Explorer(QMainWindow):
         
         # Asset operations
         menu.addSeparator()
-        asset_manager_action = QAction("Asset Manager", self)
+        asset_manager_action = QAction("Move Assets", self)
         asset_manager_action.setIcon(QIcon(":/icons/folder_open.svg"))
         asset_manager_action.triggered.connect(lambda: self.open_asset_manager(index))
         menu.addAction(asset_manager_action)
@@ -473,6 +490,13 @@ class Explorer(QMainWindow):
         open_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         open_action.triggered.connect(lambda: self.open_file(index))
         menu.addAction(open_action)
+
+        if default_app and 'hammer5tools' in default_app[0].lower():
+            import subprocess
+            open_notepad_action = QAction("Open with Notepad", self)
+            open_notepad_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            open_notepad_action.triggered.connect(lambda checked=False, p=file_path: subprocess.Popen(['notepad.exe', p]))
+            menu.addAction(open_notepad_action)
 
         if file_extension == "vmdl":
             menu.addSeparator()
