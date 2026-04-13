@@ -192,7 +192,7 @@ class Ui_documentation_dialog(object):
         documentation_dialog.setWindowTitle(QCoreApplication.translate("documentation_dialog", u"About", None))
         self.label.setText("")
         self.version.setText(QCoreApplication.translate("documentation_dialog", u"Version: 1.0.0", None))
-        self.label_3.setText(QCoreApplication.translate("documentation_dialog", u"Use tooltips to understand the program: \n"
+        self.label_3.setText(QCoreApplication.translate("documentation_dialog", u"Use tooltips to understand the program:\n"
 "For almost all buttons, an explanation appears when you hover your cursor over a button.", None))
         self.label_4.setText("")
         self.open_documentation_button.setText(QCoreApplication.translate("documentation_dialog", u"Documentation", None))
