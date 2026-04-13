@@ -179,8 +179,21 @@ class VariableFrame(QWidget):
         self._setup_hide_expression_completer()
 
     def set_class(self, var_class):
-        widget = self.ui.layout.itemAt(1).widget()
-        widget.deleteLater()
+        # Emit pre_change BEFORE modifying any state so the undo snapshot
+        # captures the correct "before" values.
+        self.pre_change.emit()
+
+        # Remove the old var_int_instance widget from the layout.
+        # It lives at index 2 in self.ui.layout (after frame_3 and
+        # hide_expression_frame), so we locate it by reference instead of
+        # hard-coding an index to be robust.
+        old_widget = self.var_int_instance
+        for i in range(self.ui.layout.count()):
+            if self.ui.layout.itemAt(i).widget() is old_widget:
+                self.ui.layout.takeAt(i)
+                break
+        old_widget.deleteLater()
+
         self.var_class = var_class
         self.var_value = {
             'default': None,
@@ -201,9 +214,9 @@ class VariableFrame(QWidget):
 
         # Connect the edited signal directly to on_changed
         self.var_int_instance.edited.connect(self.on_changed)
-        self.ui.layout.insertWidget(1, self.var_int_instance)
-        # on_changed will emit content_changed
-        self.on_changed()
+        self.ui.layout.insertWidget(2, self.var_int_instance)
+        # Emit content_changed directly (pre_change was already emitted above)
+        self.content_changed.emit()
 
     def get_classes(self):
         return [{item: item} for item in variables_list]
