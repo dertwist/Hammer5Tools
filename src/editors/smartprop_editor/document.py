@@ -1441,9 +1441,10 @@ class SmartPropDocument(QMainWindow):
             var_value,
             var_visible_in_editor,
             var_display_name,
-            index: int = None
+            index: int = None,
+            expanded: bool = False
     ):
-        self.variable_viewport.add_variable(name, var_class, var_value, var_visible_in_editor, var_display_name, index)
+        self.variable_viewport.add_variable(name, var_class, var_value, var_visible_in_editor, var_display_name, index, expanded)
         if not self._restoring_state:
             self._modified = True
             self._edited.emit()
@@ -2052,6 +2053,7 @@ class SmartPropDocument(QMainWindow):
                     'var_value': fast_deepcopy(widget.var_value),
                     'var_visible_in_editor': widget.var_visible_in_editor,
                     'var_display_name': widget.var_display_name,
+                    'expanded': widget.ui.show_child.isChecked(),
                 })
         return state
 
@@ -2072,6 +2074,7 @@ class SmartPropDocument(QMainWindow):
                     var_value=var_data['var_value'],
                     var_visible_in_editor=var_data['var_visible_in_editor'],
                     var_display_name=var_data['var_display_name'],
+                    expanded=var_data.get('expanded', False),
                 )
         finally:
             self._restoring_state = False
@@ -2094,11 +2097,12 @@ class SmartPropDocument(QMainWindow):
             choice_data = {
                 'name': choice.text(0),
                 'default': combo.currentText() if combo else '',
+                'expanded': choice.isExpanded(),
                 'options': [],
             }
             for oi in range(choice.childCount()):
                 option = choice.child(oi)
-                option_data = {'name': option.text(0), 'variables': []}
+                option_data = {'name': option.text(0), 'expanded': option.isExpanded(), 'variables': []}
                 for vi in range(option.childCount()):
                     var_item = option.child(vi)
                     val_widget = tree.itemWidget(var_item, 1)
@@ -2148,6 +2152,8 @@ class SmartPropDocument(QMainWindow):
                             value=var_data['value'],
                             type=var_data['type'],
                         )
+                    option_item.setExpanded(option_data.get('expanded', False))
+                choice_item.setExpanded(choice_data.get('expanded', False))
         finally:
             self.ui.choices_tree_widget.blockSignals(False)
         self._connect_choices_widget_signals()
