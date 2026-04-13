@@ -61,7 +61,8 @@ class SmartPropEditorVariableViewport(QWidget):
             var_value,
             var_visible_in_editor,
             var_display_name,
-            index: int = None
+            index: int = None,
+            expanded: bool = False
     ):
         variable = VariableFrame(
             name=name,
@@ -81,6 +82,10 @@ class SmartPropEditorVariableViewport(QWidget):
         else:
             index = index + 1
         self.ui.variables_scrollArea.insertWidget(index, variable)
+        # Restore expanded/collapsed state
+        if expanded:
+            variable.ui.show_child.setChecked(True)
+            variable.show_child()
         CompletionUtils.invalidate_cache(self.ui.variables_scrollArea)
 
     def duplicate_variable(self, __data, __index):
@@ -247,6 +252,7 @@ class SmartPropEditorVariableViewport(QWidget):
                     'var_value': fast_deepcopy(widget.var_value),
                     'var_visible_in_editor': widget.var_visible_in_editor,
                     'var_display_name': widget.var_display_name,
+                    'expanded': widget.ui.show_child.isChecked(),
                 })
         return state
 
