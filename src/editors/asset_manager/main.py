@@ -48,10 +48,9 @@ class AssetManagerWidget(QWidget):
 
         self.ui.btn_preview.clicked.connect(self.preview_move)
         self.ui.btn_apply.clicked.connect(self.apply_move)
-        self.ui.btn_undo.clicked.connect(self.undo_last_move)
+        self.ui.btn_undo.hide()
 
         self.pending_moves = []
-        self.log_file_path = os.path.join(app_dir, 'move_log.json')
 
     def set_files_to_move(self, files):
         self.sources_to_move = files
@@ -93,16 +92,10 @@ class AssetManagerWidget(QWidget):
                 rel_dst = os.path.relpath(dst, self.addon_content_path)
                 self.ui.log_output.append(f"Ready to move:\n {rel_src} \n  -> {rel_dst}\n")
 
-    def apply_move(self, is_undo=False):
+    def apply_move(self):
         if not self.pending_moves:
             QMessageBox.warning(self, "Warning", "No moves pending. Click preview first.")
             return
-
-        # Save inverse moves for undo
-        if not is_undo:
-            inverse_moves = [(dst, src) for src, dst in self.pending_moves]
-            with open(self.log_file_path, 'w', encoding='utf-8') as f:
-                json.dump(inverse_moves, f)
 
         self.worker = MoveWorker(self.pending_moves, self.addon_content_path)
         self.worker.log.connect(self.log_message)
@@ -110,7 +103,6 @@ class AssetManagerWidget(QWidget):
         
         self.ui.btn_apply.setEnabled(False)
         self.ui.btn_preview.setEnabled(False)
-        self.ui.btn_undo.setEnabled(False)
         self.worker.start()
 
     def log_message(self, msg):
@@ -119,24 +111,7 @@ class AssetManagerWidget(QWidget):
     def on_move_finished(self):
         self.ui.btn_apply.setEnabled(True)
         self.ui.btn_preview.setEnabled(True)
-        self.ui.btn_undo.setEnabled(True)
         self.pending_moves.clear()
         QMessageBox.information(self, "Success", "Move operation finished.")
 
-    def undo_last_move(self):
-        if not os.path.exists(self.log_file_path):
-            QMessageBox.warning(self, "Warning", "No undo history found.")
-            return
-            
-        with open(self.log_file_path, 'r', encoding='utf-8') as f:
-            inverse_moves = json.load(f)
 
-        if not inverse_moves:
-            QMessageBox.warning(self, "Warning", "Undo history is empty.")
-            return
-
-        self.pending_moves = inverse_moves
-        self.ui.log_output.clear()
-        self.ui.log_output.append("--- UNDOING PREVIOUS MOVES ---")
-        self.apply_move(is_undo=True)
-        os.remove(self.log_file_path)
