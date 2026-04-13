@@ -111,7 +111,7 @@ class Ui_AssetExporterWidget(object):
         self.btn_resolve.setText(QCoreApplication.translate("AssetExporterWidget", u"Resolve Dependencies", None))
         self.groupBox.setTitle(QCoreApplication.translate("AssetExporterWidget", u"Export Options", None))
         self.radio_preserve.setText(QCoreApplication.translate("AssetExporterWidget", u"Preserve Addon Structure", None))
-        self.radio_thirdparty.setText(QCoreApplication.translate("AssetExporterWidget", u"Third-Party Package Layout (folder_thirdparty/...)", None))
+        self.radio_thirdparty.setText(QCoreApplication.translate("AssetExporterWidget", u"Third-Party Package Layout (models/thirdparty/...)", None))
         self.edit_addon_name.setPlaceholderText(QCoreApplication.translate("AssetExporterWidget", u"Addon Name", None))
         self.edit_asset_stem.setPlaceholderText(QCoreApplication.translate("AssetExporterWidget", u"Asset Stem", None))
         self.edit_output_dir.setPlaceholderText(QCoreApplication.translate("AssetExporterWidget", u"Output Directory", None))
