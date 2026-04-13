@@ -422,7 +422,19 @@ class Widget(QMainWindow):
         self.ui.documentation_button.clicked.connect(self.open_about)
         self.ui.mapbuilder.clicked.connect(self.open_mapbuilder_dialog)
         self.ui.cleanup_button.clicked.connect(lambda: CleanupDialog(self).show())
+        
+
         self.updateLaunchAddonButton()
+
+    def open_asset_exporter(self):
+        from src.editors.asset_exporter.main import AssetExporterWidget
+        self.asset_exporter_window = AssetExporterWidget()
+        self.asset_exporter_window.show()
+
+    def open_asset_manager(self):
+        from src.editors.asset_manager.main import AssetManagerWidget
+        self.asset_manager_window = AssetManagerWidget()
+        self.asset_manager_window.show()
 
     def updateLaunchAddonButton(self):
         commands = get_settings_value("LAUNCH", "commands", default_commands)

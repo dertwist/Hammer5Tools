@@ -27,6 +27,7 @@ from src.editors.smartprop_editor.property.set_variable import PropertyVariableV
 from src.editors.smartprop_editor.property.comment import PropertyComment
 from src.editors.smartprop_editor.property.reference import PropertyReference
 from src.editors.smartprop_editor.property.warning import PropertyWarning
+from src.editors.smartprop_editor.property.path_editor import PropertyPathEditor
 from src.editors.smartprop_editor.property_tooltips import property_tooltips
 from PySide6.QtGui import QCursor
 from src.widgets import HierarchyItemModel
@@ -72,7 +73,6 @@ class PropertyFrame(QWidget):
         'MaterialTint': ['m_bEnabled', 'm_Material', 'm_SelectionMode', 'm_Color', 'm_ColorPosition'],
         'RandomOffset': ['m_bEnabled', 'm_vRandomPositionMin', 'm_vRandomPositionMax', 'm_vSnapIncrement'],
         'RandomScale': ['m_bEnabled', 'm_flRandomScaleMin', 'm_flRandomScaleMax', 'm_flSnapIncrement'],
-        'RandomColorTintColor': ['m_bEnabled', 'm_SelectionMode', 'm_Color', 'm_ColorPosition', 'm_Mode'],
         'CreateSizer': ['m_bEnabled', 'm_Name', 'm_bDisplayModel',
                         'm_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX', 'm_OutputVariableMinX', 'm_OutputVariableMaxX',
                         'm_flInitialMinY', 'm_flInitialMaxY', 'm_flConstraintMinY', 'm_flConstraintMaxY', 'm_OutputVariableMinY', 'm_OutputVariableMaxY',
@@ -155,7 +155,7 @@ class PropertyFrame(QWidget):
         ('m_GridArrangement', ['SEGMENT', 'FILL'], ['GridPlacementMode']),
         ('m_GridOriginMode', ['CENTER', 'CORNER'], ['GridOriginMode']),
         ('m_nNoHitResult', ['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'], ['TraceNoHit']),
-        ('m_SelectionMode', ['RANDOM', 'FIRST', 'SPECIFIC', 'SPECIFIC_COLOR', 'GRADIENT_RANDOM', 'GRADIENT_RANDOM_STOP', 'GRADIENT_LOCATION'], ['ChoiceSelectionMode']),
+        ('m_SelectionMode', ['RANDOM', 'FIRST', 'SPECIFIC'], ['ChoiceSelectionMode']),
         ('m_PlacementMode', ['SPHERE', 'CIRCLE', 'RING'], ['RadiusPlacementMode']),
         ('m_DistributionMode', ['RANDOM', 'UNIFORM'], ['DistributionMode']),
         ('m_SpacingSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
@@ -229,6 +229,7 @@ class PropertyFrame(QWidget):
             'm_OutputVariableMinX':    (PropertyVariableOutput,  {}),
             'm_OutputVariable':        (PropertyVariableOutput,  {}),
             'm_OutputChoiceVariableName': (PropertyVariableOutput, {}),
+            'm_DefaultPath':           (PropertyPathEditor,           {}),
             '_WARN_NOT_VERIFIED':      (PropertyWarning,              {}),
         }
 
@@ -958,11 +959,39 @@ class PropertyFrame(QWidget):
         delete_action = QAction("Delete", context_menu)
         copy_action = QAction("Copy", context_menu)
         context_menu.addActions([delete_action, copy_action])
+        
+        asset_action = None
+        asset_path = None
+        if isinstance(self.value, dict):
+            for k, v in self.value.items():
+                if isinstance(v, str) and v.endswith(('.vmdl', '.vmat', '.vtex', '.vpcf', '.vsnd', '.vsmart')):
+                    asset_path = v
+                    break
+        elif isinstance(self.value, str) and self.value.endswith(('.vmdl', '.vmat', '.vtex', '.vpcf', '.vsnd', '.vsmart')):
+            asset_path = self.value
+            
+        if asset_path:
+            import os
+            from src.settings.main import get_addon_name, get_cs2_path
+            cs2_path = get_cs2_path()
+            addon = get_addon_name()
+            if cs2_path and addon:
+                full_asset_path = os.path.normpath(os.path.join(cs2_path, 'content', 'csgo_addons', addon, asset_path.replace('//', '/').replace('\\', '/')))
+                if os.path.exists(full_asset_path):
+                    context_menu.addSeparator()
+                    asset_action = context_menu.addAction(f"Export {os.path.basename(asset_path)}...")
+
         action = context_menu.exec(QCursor.pos())
         if action == delete_action:
             self.delete_action()
         elif action == copy_action:
             self.copy_action()
+        elif asset_action and action == asset_action:
+            main_window = self.window()
+            if hasattr(main_window, 'open_asset_exporter'):
+                main_window.open_asset_exporter()
+                if hasattr(main_window, 'asset_exporter_window'):
+                    main_window.asset_exporter_window.select_file(full_asset_path)
 
     def copy_action(self):
         clipboard = QApplication.clipboard()
