@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QDockWidget,
     QUndoView,
     QScrollArea,
+    QTabWidget,
 )
 from PySide6.QtGui import (
     QAction,
@@ -77,6 +78,7 @@ from src.common import (
 )
 from src.widgets.tree import HierarchyTreeWidget
 from src.editors.smartprop_editor.variables_viewport import SmartPropEditorVariableViewport
+from src.editors.smartprop_editor.manual_editor import ManualEditor
 
 cs2_path = get_cs2_path()
 
@@ -234,12 +236,38 @@ class SmartPropDocument(QMainWindow):
 
         set_qdock_tab_style(self.findChildren)
 
+        # ── Central tab widget: Property Editor + Manual Editor ──────────
+        self._center_tabs = QTabWidget()
+        self._center_tabs.setDocumentMode(True)
+
+        # Move the existing PropertiesFrame into the first tab
+        self.ui.PropertiesFrame.setParent(None)
+        self._center_tabs.addTab(self.ui.PropertiesFrame, "Property Editor")
+
+        # Create the Manual Editor tab
+        self._manual_editor = ManualEditor(document=self)
+        self._center_tabs.addTab(self._manual_editor, "Manual Editor")
+
+        # Replace central widget content
+        self.ui.centralwidget.layout().addWidget(self._center_tabs)
+
+        # Auto-refresh manual editor when switching to it
+        self._center_tabs.currentChanged.connect(self._on_center_tab_changed)
+
+        # Re-apply tab styles to include the new center tab bar
+        set_qdock_tab_style(self.findChildren)
+
         # Pre-warm pooled property widgets after first paint.
         # This pays widget setup cost at startup rather than on first node selection.
         QTimer.singleShot(500, self._prewarm_property_pools)
 
     def is_modified(self):
         return self._modified
+
+    def _on_center_tab_changed(self, index):
+        """Refresh the manual editor whenever the user switches to it."""
+        if self._center_tabs.widget(index) is self._manual_editor:
+            self._manual_editor.refresh()
 
     def _prewarm_property_pools(self):
         """
@@ -699,6 +727,11 @@ class SmartPropDocument(QMainWindow):
         # handles that itself via _rebuild_properties_panel.
         if self._undo_redo_rebuilding:
             return
+
+        # Refresh the manual editor if it is the active tab
+        if (hasattr(self, '_center_tabs') and hasattr(self, '_manual_editor')
+                and self._center_tabs.currentWidget() is self._manual_editor):
+            self._manual_editor.refresh()
 
         # Raise the guard BEFORE creating any PropertyFrame so the guard decrement
         # is queued AFTER all _finish_init singleShot(0) callbacks.  The decrement
