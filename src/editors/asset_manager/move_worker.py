@@ -20,9 +20,10 @@ class MoveWorker(QThread):
             try:
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
                 shutil.move(src, dst)
-                self.log.emit(f'Moved: {old_rel} → {new_rel}')
-                for m in updater.update_references(old_rel, new_rel):
-                    self.log.emit(f'  Updated ref in: {m}')
+                self.log.emit(f"Moved:\n    {old_rel}\n    -> {new_rel}")
+                modified = updater.update_references(old_rel, new_rel)
+                if modified:
+                    self.log.emit(f"    Updated references in {len(modified)} files")
             except Exception as e:
                 self.log.emit(f"Error moving {old_rel}: {e}")
         self.finished_move.emit()
