@@ -1,7 +1,7 @@
 import os
 
 class ReferenceUpdater:
-    SCANNABLE_EXTS = {'.vmdl', '.vsmart', '.vmat', '.vpcf', '.vsndevts', '.vsnd', '.vmap'}
+    SCANNABLE_EXTS = {'.vmdl', '.vsmart', '.vmat', '.vpcf', '.vsndevts', '.vsnd', '.vmap', '.vpost', '.vanim', '.vseq', '.vphys'}
 
     def __init__(self, addon_content_path: str):
         self.addon_content_path = addon_content_path

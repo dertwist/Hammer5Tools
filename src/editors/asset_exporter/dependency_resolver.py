@@ -19,7 +19,7 @@ class DependencyResolver:
             return
         self._visited.add(path)
         ext = os.path.splitext(path)[1].lower()
-        if ext in ('.vmdl', '.vsmart', '.vmat', '.vpcf', '.vsndevts', '.vtex', '.vsnd'):
+        if ext in ('.vmdl', '.vsmart', '.vmat', '.vpcf', '.vsndevts', '.vtex', '.vsnd', '.vmap', '.vpost', '.vanim', '.vseq', '.vphys'):
             self._parse_kv3_deps(path)
 
     def _parse_kv3_deps(self, path: str):
@@ -28,7 +28,8 @@ class DependencyResolver:
             with open(path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
             
-            pattern = r'"([^"]+\.(?:vmdl|vsmart|vmat|vpcf|vsndevts|vtex|vsnd|txt|kv3|vmap|vpost)(?:_c)?)"'
+            # Broaden the regex to capture more file extensions used in Source 2, including raw source files like .tga
+            pattern = r'"(?:resource:)?([^"]+\.(?:vmdl|vsmart|vmat|vpcf|vsndevts|vtex|vsnd|txt|kv3|vmap|vpost|tga|png|jpg|jpeg|psd|wav|mp3|fbx|obj|vfx|vcs|vjs|vcss|vanim|vseq|vphys)(?:_c)?)"'
             matches = re.findall(pattern, content, re.IGNORECASE)
             for m in matches:
                 self._add_dep(m)
@@ -39,6 +40,10 @@ class DependencyResolver:
         if not rel_path:
             return
             
+        # Strip resource prefixes common in KV3 files
+        for prefix in ["resource:", "panorama:", "file:"]:
+            if rel_path.lower().startswith(prefix):
+                rel_path = rel_path[len(prefix):]
         # Handle compiled asset path mapping
         if rel_path.endswith('_c'):
             rel_path = rel_path[:-2]
