@@ -148,6 +148,10 @@ class SmartPropDocument(QMainWindow):
         # Choices rename undo state: captured on itemDoubleClicked, consumed by itemChanged.
         self._choices_rename_old_state = None
 
+        # Hierarchy item rename undo state: captured on itemDoubleClicked, consumed by itemChanged.
+        self._hierarchy_rename_old_label = None
+        self._hierarchy_rename_item = None
+
         # Choices widget-edit debounce (ComboboxTreeChild, VariableWidget, etc.)
         self._choices_widget_old_state = None
         self._choices_widget_debounce_desc = "Edit Choices"
@@ -187,6 +191,8 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.setAcceptDrops(True)
         self.ui.tree_hierarchy_widget.setDropIndicatorShown(True)
         self.ui.tree_hierarchy_widget.setDragDropMode(QTreeWidget.InternalMove)
+        self.ui.tree_hierarchy_widget.itemDoubleClicked.connect(self._on_hierarchy_item_about_to_edit)
+        self.ui.tree_hierarchy_widget.itemChanged.connect(self._on_hierarchy_item_changed)
 
         # Content version
         self.content_version_spinbox = QSpinBox()
@@ -2320,6 +2326,28 @@ class SmartPropDocument(QMainWindow):
         if self._choices_widget_debounce.isActive():
             self._choices_widget_debounce.stop()
             self._push_choices_widget_edit()
+
+    def _on_hierarchy_item_about_to_edit(self, item, column):
+        """Capture the 'before' label when the user starts an inline rename in the hierarchy tree."""
+        if column == 0:
+            self._hierarchy_rename_old_label = item.text(0)
+            self._hierarchy_rename_item = item
+
+    def _on_hierarchy_item_changed(self, item, column):
+        """Push rename undo command once the inline edit is committed in the hierarchy tree."""
+        if (
+            column == 0
+            and self._hierarchy_rename_item is item
+            and self._hierarchy_rename_old_label is not None
+        ):
+            new_label = item.text(0)
+            if new_label != self._hierarchy_rename_old_label:
+                from src.editors.smartprop_editor.commands import HierarchyItemRenameCommand
+                self.undo_stack.push(
+                    HierarchyItemRenameCommand(item, self._hierarchy_rename_old_label, new_label)
+                )
+            self._hierarchy_rename_old_label = None
+            self._hierarchy_rename_item = None
 
     def _setup_history_dock(self):
         self._history_dock = QDockWidget("History", self)

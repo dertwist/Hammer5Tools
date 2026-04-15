@@ -521,3 +521,26 @@ class ChoicesSnapshotCommand(QUndoCommand):
             self.document._restore_choices(self.old_state)
         except Exception as e:
             print(f"[SPE][Choices] undo: ERROR — {e}")
+
+
+class HierarchyItemRenameCommand(QUndoCommand):
+    """Undo/redo support for renaming hierarchy tree items (m_sLabel)."""
+    def __init__(self, item, old_label, new_label):
+        super().__init__("Rename")
+        self.item = item
+        self.old_label = old_label
+        self.new_label = new_label
+
+    def redo(self):
+        if self.item is not None:
+            self.item.setText(0, self.new_label)
+            # Update the underlying data if it exists
+            if hasattr(self.item, 'data') and isinstance(self.item.data, dict):
+                self.item.data['m_sLabel'] = self.new_label
+
+    def undo(self):
+        if self.item is not None:
+            self.item.setText(0, self.old_label)
+            # Update the underlying data if it exists
+            if hasattr(self.item, 'data') and isinstance(self.item.data, dict):
+                self.item.data['m_sLabel'] = self.old_label

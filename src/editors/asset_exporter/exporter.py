@@ -21,7 +21,7 @@ class ExportWorker(QThread):
     def run(self):
         import tempfile
         import zipfile
-        SCANNABLE_EXTS = {'.vmdl', '.vsmart', '.vmat', '.vpcf', '.vsndevts', '.vsnd'}
+        SCANNABLE_EXTS = {'.vmdl', '.vsmart', '.vmat', '.vpcf', '.vsndevts', '.vsnd', '.vtex', '.vmap', '.vpost', '.vanim', '.vseq', '.vphys'}
         
         path_mapping = {}
         for src in self.files:
