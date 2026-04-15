@@ -52,6 +52,9 @@ class AssetExporterWidget(QWidget):
         self.ui.radio_preserve.toggled.connect(self.toggle_thirdparty_fields)
 
         self.toggle_thirdparty_fields()
+
+        desktop_dir = os.path.join(os.path.expanduser("~"), "Desktop")
+        self.ui.edit_output_dir.setText(os.path.normpath(desktop_dir))
         
         from PySide6.QtWidgets import QCheckBox
         self.ui.checkbox_zip = QCheckBox("Export to ZIP Archive (name based on selected asset)")
@@ -107,7 +110,8 @@ class AssetExporterWidget(QWidget):
             )
 
     def browse_output_dir(self):
-        d = QFileDialog.getExistingDirectory(self, "Select Output Directory")
+        start_dir = self.ui.edit_output_dir.text() or os.path.join(os.path.expanduser("~"), "Desktop")
+        d = QFileDialog.getExistingDirectory(self, "Select Output Directory", start_dir)
         if d:
             self.ui.edit_output_dir.setText(os.path.normpath(d))
 
