@@ -23,8 +23,6 @@ class Ui_Widget(object):
         if not Widget.objectName():
             Widget.setObjectName(u"Widget")
         Widget.resize(830, 157)
-        Widget.setMinimumSize(QSize(0, 128))
-        Widget.setMaximumSize(QSize(16777215, 256))
         Widget.setStyleSheet(u".QWidget {\n"
 "    font: 580 10pt \"Segoe UI\";\n"
 "    border: 2px solid black;\n"
