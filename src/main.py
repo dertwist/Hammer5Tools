@@ -55,6 +55,7 @@ from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
+from src.editors.ue2source_materials.main import UE2SourceMaterialsWidget
 from src.forms.launch_options.main import LaunchOptionsDialog
 from src.styles.qt_global_stylesheet import QT_Stylesheet_global
 from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
@@ -421,7 +422,7 @@ class Widget(QMainWindow):
         self.ui.discord.clicked.connect(self.open_discord)
         self.ui.documentation_button.clicked.connect(self.open_about)
         self.ui.mapbuilder.clicked.connect(self.open_mapbuilder_dialog)
-        self.ui.cleanup_button.clicked.connect(lambda: CleanupDialog(self).show())
+        self.ui.open_dialog_button.clicked.connect(self.open_selected_dialog)
         
 
         self.updateLaunchAddonButton()
@@ -526,6 +527,15 @@ class Widget(QMainWindow):
         else:
             QMessageBox.warning(self, "Folder Not Found", 
                               f"The addon folder does not exist:\n{full_path}")
+
+    @exception_handler
+    def open_selected_dialog(self):
+        selection = self.ui.dialog_selection_combobox.currentText()
+        if selection == "Cleanup":
+            CleanupDialog(self).show()
+        elif selection == "Material Importer":
+            self.material_importer_dialog = UE2SourceMaterialsWidget(parent=self)
+            self.material_importer_dialog.show()
 
     @exception_handler
     def open_mapbuilder_dialog(self):
