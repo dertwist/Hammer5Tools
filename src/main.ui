@@ -588,33 +588,40 @@ font: 700 10pt &quot;Segoe UI&quot;;</string>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="cleanup_button">
-        <property name="minimumSize">
-         <size>
-          <width>92</width>
-          <height>0</height>
-         </size>
-        </property>
+       <widget class="QToolButton" name="open_dialog_button">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:700;&quot;&gt;Cleanup&lt;/span&gt;&lt;/p&gt;&lt;p&gt;...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">padding: 5px;
-font: 580 10pt &quot;Segoe UI&quot;;</string>
+         <string>Open selected tool</string>
         </property>
         <property name="text">
-         <string>Cleanup</string>
+         <string>...</string>
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
-          <normaloff>:/valve_common/icons/tools/common/find.png</normaloff>:/valve_common/icons/tools/common/find.png</iconset>
+          <normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
         </property>
-        <property name="iconSize">
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="dialog_selection_combobox">
+        <property name="minimumSize">
          <size>
-          <width>20</width>
-          <height>20</height>
+          <width>120</width>
+          <height>0</height>
          </size>
         </property>
+        <property name="styleSheet">
+         <string notr="true">font: 580 10pt "Segoe UI";</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>Cleanup</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Material Importer</string>
+         </property>
+        </item>
        </widget>
       </item>
      </layout>

@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGroupBox,
-    QHBoxLayout, QLabel, QMainWindow, QPlainTextEdit, QPushButton,
-    QSizePolicy, QSplitter, QTabWidget, QVBoxLayout,
-    QWidget)
+    QHBoxLayout, QLabel, QMainWindow, QPlainTextEdit,
+    QPushButton, QSizePolicy, QSplitter, QTabWidget,
+    QVBoxLayout, QWidget)
 import resources_rc
 
 class Ui_Loading_editorMainWindow(object):
@@ -165,8 +165,10 @@ class Ui_Loading_editorMainWindow(object):
 
         self.horizontalLayout_4 = QHBoxLayout()
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-
-        _btn_style = (u"\n"
+        self.take_history_shots = QPushButton(self.screenshots)
+        self.take_history_shots.setObjectName(u"take_history_shots")
+        self.take_history_shots.setMinimumSize(QSize(0, 32))
+        self.take_history_shots.setStyleSheet(u"\n"
 "    /* QPushButton default and hover styles */\n"
 "    QPushButton {\n"
 "\n"
@@ -195,14 +197,9 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-
-        self.take_history_shots = QPushButton(self.screenshots)
-        self.take_history_shots.setObjectName(u"take_history_shots")
-        self.take_history_shots.setMinimumSize(QSize(0, 32))
-        self.take_history_shots.setStyleSheet(_btn_style)
-        icon3 = QIcon()
-        icon3.addFile(u":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.take_history_shots.setIcon(icon3)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.take_history_shots.setIcon(icon2)
         self.take_history_shots.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.take_history_shots)
@@ -210,10 +207,38 @@ class Ui_Loading_editorMainWindow(object):
         self.take_loading_screen_shots = QPushButton(self.screenshots)
         self.take_loading_screen_shots.setObjectName(u"take_loading_screen_shots")
         self.take_loading_screen_shots.setMinimumSize(QSize(0, 32))
-        self.take_loading_screen_shots.setStyleSheet(_btn_style)
-        icon4 = QIcon()
-        icon4.addFile(u":/icons/data_object_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.take_loading_screen_shots.setIcon(icon4)
+        self.take_loading_screen_shots.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QPushButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"	\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QPushButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QPushButton:pressed {\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/data_object_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.take_loading_screen_shots.setIcon(icon3)
         self.take_loading_screen_shots.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_4.addWidget(self.take_loading_screen_shots)
@@ -251,9 +276,9 @@ class Ui_Loading_editorMainWindow(object):
 "    QCheckBox:pressed {\n"
 "\n"
 "    }")
-        icon5 = QIcon()
-        icon5.addFile(u":/icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.delete_existings.setIcon(icon5)
+        icon4 = QIcon()
+        icon4.addFile(u":/icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.delete_existings.setIcon(icon4)
         self.delete_existings.setIconSize(QSize(20, 20))
         self.delete_existings.setChecked(True)
 
@@ -285,9 +310,9 @@ class Ui_Loading_editorMainWindow(object):
 "    QCheckBox:pressed {\n"
 "\n"
 "    }")
-        icon6 = QIcon()
-        icon6.addFile(u":/icons/colors_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.camera_name_mode.setIcon(icon6)
+        icon5 = QIcon()
+        icon5.addFile(u":/icons/colors_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.camera_name_mode.setIcon(icon5)
         self.camera_name_mode.setIconSize(QSize(20, 20))
         self.camera_name_mode.setChecked(True)
 
@@ -326,9 +351,9 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon7 = QIcon()
-        icon7.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.apply_screenshots_button.setIcon(icon7)
+        icon6 = QIcon()
+        icon6.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.apply_screenshots_button.setIcon(icon6)
         self.apply_screenshots_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.apply_screenshots_button)
@@ -393,8 +418,8 @@ class Ui_Loading_editorMainWindow(object):
 
         self.svg_tips_label = QLabel(self.groupBox_2)
         self.svg_tips_label.setObjectName(u"svg_tips_label")
-        self.svg_tips_label.setWordWrap(True)
         self.svg_tips_label.setStyleSheet(u"font: 9pt \"Segoe UI\"; color: #888888; border: none; padding: 2px 4px;")
+        self.svg_tips_label.setWordWrap(True)
 
         self.verticalLayout_4.addWidget(self.svg_tips_label)
 
@@ -461,7 +486,7 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.apply_icon_button.setIcon(icon7)
+        self.apply_icon_button.setIcon(icon6)
         self.apply_icon_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_4.addWidget(self.apply_icon_button)
@@ -553,7 +578,7 @@ class Ui_Loading_editorMainWindow(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        self.apply_description_button.setIcon(icon7)
+        self.apply_description_button.setIcon(icon6)
         self.apply_description_button.setIconSize(QSize(20, 20))
 
         self.verticalLayout_2.addWidget(self.apply_description_button)
