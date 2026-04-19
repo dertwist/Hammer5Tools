@@ -56,6 +56,7 @@ class PreferencesDialog(QDialog):
         self.create_smartprop_tab()
         self.create_assetgroupmaker_tab()
         self.create_sound_event_editor_tab()
+        self.create_ue2source_tab()
         self.create_bottom_panel()
         self.populate_preferences()
         self.connect_signals()
@@ -347,6 +348,30 @@ class PreferencesDialog(QDialog):
         sound_editor_scroll = self.wrap_in_scroll_area(sound_editor_content)
         self.tabWidget.addTab(sound_editor_scroll, "SoundEventEditor")
 
+    def create_ue2source_tab(self):
+        ue2source_content = QWidget()
+        layout = QVBoxLayout(ue2source_content)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        label_header = QLabel("Material Importer (UE -> Source 2)", ue2source_content)
+        layout.addWidget(label_header)
+        
+        frame = QFrame(ue2source_content)
+        layout_frame = QHBoxLayout(frame)
+        
+        label_subfolder = QLabel("Default materials subfolder (inside materials/):", ue2source_content)
+        label_subfolder.setMinimumWidth(200)
+        layout_frame.addWidget(label_subfolder)
+        
+        self.ue2source_subfolder_edit = QLineEdit(frame)
+        layout_frame.addWidget(self.ue2source_subfolder_edit)
+        
+        layout.addWidget(frame)
+        layout.addStretch()
+        
+        ue2source_scroll = self.wrap_in_scroll_area(ue2source_content)
+        self.tabWidget.addTab(ue2source_scroll, "Material Importer")
+
     def create_bottom_panel(self):
         # Use the new ActionButtonsPanel for the bottom buttons
         self.action_buttons_panel = ActionButtonsPanel(self)
@@ -408,6 +433,8 @@ class PreferencesDialog(QDialog):
         except ValueError:
             trans_win = 50
         self.spe_transparency_window.set_value(trans_win)
+        # Populate UE2Source preferences
+        self.ue2source_subfolder_edit.setText(get_settings_value('UE2Source', 'default_subfolder') or get_addon_name())
 
     def update_default_file_setting(self):
         # Collect current settings from Default File subcategory fields (removed folder options)
@@ -479,6 +506,9 @@ class PreferencesDialog(QDialog):
         )
         self.spe_transparency_window.edited.connect(
             lambda val: set_settings_value('SmartPropEditor', 'transparency_window', str(val))
+        )
+        self.ue2source_subfolder_edit.textChanged.connect(
+            lambda: set_settings_value('UE2Source', 'default_subfolder', self.ue2source_subfolder_edit.text())
         )
 
     def browse_archive(self):

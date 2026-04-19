@@ -294,17 +294,22 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.open_addons_folder_downlist)
 
-        self.cleanup_button = QPushButton(self.centralwidget)
-        self.cleanup_button.setObjectName(u"cleanup_button")
-        self.cleanup_button.setMinimumSize(QSize(92, 0))
-        self.cleanup_button.setStyleSheet(u"padding: 5px;\n"
-"font: 580 10pt \"Segoe UI\";")
+        self.open_dialog_button = QToolButton(self.centralwidget)
+        self.open_dialog_button.setObjectName(u"open_dialog_button")
         icon17 = QIcon()
-        icon17.addFile(u":/valve_common/icons/tools/common/find.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.cleanup_button.setIcon(icon17)
-        self.cleanup_button.setIconSize(QSize(20, 20))
+        icon17.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.open_dialog_button.setIcon(icon17)
 
-        self.horizontalLayout_2.addWidget(self.cleanup_button)
+        self.horizontalLayout_2.addWidget(self.open_dialog_button)
+
+        self.dialog_selection_combobox = QComboBox(self.centralwidget)
+        self.dialog_selection_combobox.addItem("")
+        self.dialog_selection_combobox.addItem("")
+        self.dialog_selection_combobox.setObjectName(u"dialog_selection_combobox")
+        self.dialog_selection_combobox.setMinimumSize(QSize(120, 0))
+        self.dialog_selection_combobox.setStyleSheet(u"font: 580 10pt \"Segoe UI\";")
+
+        self.horizontalLayout_2.addWidget(self.dialog_selection_combobox)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
@@ -383,8 +388,11 @@ class Ui_MainWindow(object):
         self.open_addons_folder_downlist.setCurrentText("")
         self.open_addons_folder_downlist.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Open Folder", None))
 #if QT_CONFIG(tooltip)
-        self.cleanup_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Cleanup</span></p><p>...</p></body></html>", None))
+        self.open_dialog_button.setToolTip(QCoreApplication.translate("MainWindow", u"Open selected tool", None))
 #endif // QT_CONFIG(tooltip)
-        self.cleanup_button.setText(QCoreApplication.translate("MainWindow", u"Cleanup", None))
+        self.open_dialog_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
+        self.dialog_selection_combobox.setItemText(0, QCoreApplication.translate("MainWindow", u"Cleanup", None))
+        self.dialog_selection_combobox.setItemText(1, QCoreApplication.translate("MainWindow", u"Material Importer", None))
+
     # retranslateUi
 
