@@ -13,11 +13,12 @@ from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 
 
-class VariableFrame(QWidget):
+class VariableFrame(PropertyMethods, QWidget):
     duplicate = Signal(list, int)
     delete_requested = Signal()
     pre_change = Signal()    # fires BEFORE var_value/name/etc. are updated
     content_changed = Signal()
+    edited = Signal()
 
     def __init__(self, name, var_class, var_value, var_visible_in_editor, var_display_name, widget_list,
                  element_id_generator):
@@ -58,9 +59,9 @@ class VariableFrame(QWidget):
 
         # UI Setup
         # Instead of connecting textChanged signal to update_self, we install an event filter
-        self.ui.variable_name.setText(name)
-        self.ui.varialbe_display_name.setText(var_display_name)
-        self.ui.variable_class.setText(var_class)
+        self.ui.variable_name.setText(name if name is not None else "")
+        self.ui.varialbe_display_name.setText(var_display_name if var_display_name is not None else "")
+        self.ui.variable_class.setText(var_class if var_class is not None else "")
         self.ui.visible_in_editor.setChecked(self.var_visible_in_editor)
         self.ui.visible_in_editor.clicked.connect(self.update_self)
         self.ui.varialbe_display_name.textChanged.connect(self.update_self)
@@ -280,6 +281,11 @@ class VariableFrame(QWidget):
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
+    def set_indent(self, level):
+        """Set left margin based on indentation level (5px per level)."""
+        if hasattr(self, 'ui') and hasattr(self.ui, 'verticalLayout'):
+            self.ui.verticalLayout.setContentsMargins(level * 5, 0, 0, 0)
+
     def on_changed(self, var_default=None, var_min=None, var_max=None, var_model=None):
         # Signal listeners (variables_viewport) to snapshot state BEFORE we modify it.
         self.pre_change.emit()
@@ -366,6 +372,8 @@ class VariableFrame(QWidget):
     mousePressEvent = PropertyMethods.mousePressEvent
     mouseMoveEvent = PropertyMethods.mouseMoveEvent
     dragEnterEvent = PropertyMethods.dragEnterEvent
+    dragMoveEvent = PropertyMethods.dragMoveEvent
+    dragLeaveEvent = PropertyMethods.dragLeaveEvent
 
     def dropEvent(self, event):
         self.pre_change.emit()
@@ -399,6 +407,21 @@ class VariableFrame(QWidget):
                 m_variable.update({'m_sModelName': self.var_model})
             if self.hide_expression is not None:
                 m_variable.update({'m_HideExpression': self.hide_expression})
+                
+            import re
+            is_category = False
+            is_start = False
+            if self.name:
+                if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", self.name) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", self.name):
+                    is_category = True
+                    is_start = self.name.endswith('_start')
+                    
+            if is_category:
+                if is_start:
+                    m_variable.update({'m_Hammer5ToolsCategoryName': getattr(self, 'category_name', 'Category name')})
+                else:
+                    m_variable.update({'m_Hammer5ToolsCategoryName': 'New category'})
+                    
             m_data = {'m_Variables': []}
             m_data['m_Variables'].append(m_variable)
             clipboard.setText(JsonToKv3(m_data))
@@ -406,3 +429,144 @@ class VariableFrame(QWidget):
             __data = [self.name, self.var_class, self.var_value, self.var_visible_in_editor, self.var_display_name]
             __index = self.widget_list.indexOf(self)
             self.duplicate.emit(__data, __index)
+
+    def set_indent(self, level):
+        self.ui.verticalLayout.setContentsMargins(level * 5, 0, 0, 0)
+
+
+class CategoryFrame(VariableFrame):
+    visibility_toggled = Signal()
+    def __init__(self, name, var_visible_in_editor, var_display_name, widget_list, element_id_generator):
+        # Detect if it's start or end before super().__init__ because it calls update_colors
+        self.is_start = name.endswith('_start')
+        self.is_end = name.endswith('_end')
+
+        # Category is always a Bool class internally for Valve to be happy, but we treat it specially
+        super().__init__(name=name, var_class='Bool', var_value={'default': None},
+                         var_visible_in_editor=var_visible_in_editor,
+                         var_display_name=var_display_name, widget_list=widget_list,
+                         element_id_generator=element_id_generator)
+
+        # Base name and hash extraction
+        import re
+        # Try new format first: hammer5tools_category_{hash}_{start/end}
+        match = re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", name)
+        if match:
+            self.category_hash = match.group(1)
+        else:
+            # Fallback to old format just in case
+            match_old = re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", name)
+            if match_old:
+                self.category_hash = match_old.group(2)
+            else:
+                self.category_hash = name
+
+        self._setup_category_ui()
+
+    def _setup_category_ui(self):
+        # Hide irrelevant widgets
+        self.ui.variable_class.hide()
+        self.ui.change_class.hide()
+        if hasattr(self.ui, 'id_display'): self.ui.id_display.hide()
+        if hasattr(self.ui, 'id_display_label'): self.ui.id_display_label.hide()
+
+        # Categories don't have frame_layout values
+        self.ui.frame_layout.hide()
+        if hasattr(self, 'var_int_instance'):
+            self.var_int_instance.hide()
+
+        # Update labels/placeholders
+        if self.is_start:
+            self.category_name = self._extract_display_name(self.var_display_name)
+            self.ui.variable_name.setPlaceholderText("Category Name")
+            self.ui.variable_name.setText(self.category_name)
+            self.ui.frame_3.hide()
+            
+            # Start categories can expand/collapse children
+            self.ui.show_child.show()
+            self.ui.show_child.setChecked(True)
+        else:
+            # End widget is very minimal
+            self.ui.variable_name.hide()
+            self.ui.visible_in_editor.hide()
+            self.ui.frame_3.hide()
+            self.ui.show_child.hide()
+            self.ui.hide_expression_frame.hide()
+            self.ui.label.setStyleSheet(self.ui.label.styleSheet() + "image: none;")
+            self.setFixedHeight(12) # Small line for end
+            self.ui.label.setText("      ") # Just some space
+
+        self.update_colors()
+
+    def show_child(self):
+        # Override show_child to trigger visibility updates instead of expanding self.ui.frame_layout
+        if self.is_start:
+            self.visibility_toggled.emit()
+
+    def _extract_display_name(self, full_display_name):
+        # Extract "Name" from " ----====Name====----"
+        if full_display_name:
+            import re
+            match = re.search(r"----====(.*)===----", full_display_name)
+            if match:
+                return match.group(1).strip()
+            return full_display_name
+        return "Category Name"
+
+    def _format_display_name(self, base_display_name):
+        if self.is_start:
+            return f" ----===={base_display_name}===------"
+        else:
+            return "                                             "
+
+    def update_self(self):
+        self.pre_change.emit()
+        self.var_visible_in_editor = self.ui.visible_in_editor.isChecked()
+
+        if self.is_start:
+            self.category_name = self.ui.variable_name.text()
+            self.var_display_name = self._format_display_name(self.category_name)
+            # DO NOT change self.name (m_VariableName)
+
+            # Sync with end widget if found
+            self._sync_with_end_widget()
+
+        self.content_changed.emit()
+
+    def _sync_with_end_widget(self):
+        """Find the corresponding end widget and update its name/visibility."""
+        layout = self.widget_list
+        if not layout: return
+
+        found_start = False
+        for i in range(layout.count()):
+            w = layout.itemAt(i).widget()
+            if w == self:
+                found_start = True
+                continue
+            if found_start and isinstance(w, CategoryFrame) and w.is_end and w.category_hash == self.category_hash:
+                w.pre_change.emit()
+                w.name = f"hammer5tools_category_{self.category_hash}_end"
+                w.var_visible_in_editor = self.var_visible_in_editor
+                w.content_changed.emit()
+                break
+
+    def update_colors(self):
+        # Categories have a distinct color
+        target_color = '#2C3E50' if self.is_start else '#1C1C1C'
+        style = self.ui.label.styleSheet()
+        import re
+        if 'background-color:' in style:
+            style = re.sub(r'background-color:\s*[^;]+;', f'background-color: {target_color};', style)
+        else:
+            style += f'\nbackground-color: {target_color};'
+        self.ui.label.setStyleSheet(style)
+
+    def eventFilter(self, obj, event):
+        if obj == self.ui.variable_name and event.type() == QEvent.FocusOut:
+            if self.is_start:
+                new_cat_name = self.ui.variable_name.text()
+                self.category_name = new_cat_name
+                self.update_self()
+            return True
+        return super(CategoryFrame, self).eventFilter(obj, event)
