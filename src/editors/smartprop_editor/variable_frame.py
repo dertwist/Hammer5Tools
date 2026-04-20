@@ -103,6 +103,7 @@ class VariableFrame(QWidget):
         self.ui.show_child.clicked.connect(self.show_child)
 
         self.init_ui()
+        self.update_colors()
 
     def _initialize_var_instance(self, var_class):
         if var_class == 'Int':
@@ -137,7 +138,7 @@ class VariableFrame(QWidget):
             )
         elif var_class in ['CoordinateSpace', 'GridPlacementMode', 'GridOriginMode', 'PickMode', 'ScaleMode',
                            'TraceNoHit', 'ApplyColorMode', 'ChoiceSelectionMode', 'RadiusPlacementMode',
-                           'DistributionMode', 'PathPositions']:
+                           'DistributionMode', 'PathPositions', 'Direction']:
             from src.editors.smartprop_editor.variables.combobox import Var_class_combobox
             elements = self._get_combobox_elements(var_class)
             self.var_int_instance = Var_class_combobox(
@@ -160,6 +161,40 @@ class VariableFrame(QWidget):
 
     def _get_combobox_elements(self, var_class):
         return CompletionUtils.get_combobox_elements(var_class)
+
+    def update_colors(self):
+        color_map = {
+            'String': '#E67E22',
+            'Model': '#E67E22',
+            'Material': '#E67E22',
+            'MaterialGroup': '#E67E22',
+            'Bool': '#C0392B',
+            'Float': '#2980B9',
+            'Int': '#2471A3',
+            'Vector2D': '#8E44AD',
+            'Vector3D': '#8E44AD',
+            'Vector4D': '#8E44AD',
+            'Angles': '#8E44AD',
+            'Color': '#1B5E20',
+        }
+
+        enum_types = [
+            'Direction', 'CoordinateSpace', 'GridPlacementMode', 'GridOriginMode',
+            'PickMode', 'ScaleMode', 'TraceNoHit', 'ApplyColorMode',
+            'ChoiceSelectionMode', 'RadiusPlacementMode', 'DistributionMode', 'PathPositions'
+        ]
+
+        target_color = color_map.get(self.var_class, '#242424')
+        if self.var_class in enum_types:
+            target_color = '#1D8348'
+
+        style = self.ui.label.styleSheet()
+        import re
+        if 'background-color:' in style:
+            style = re.sub(r'background-color:\s*[^;]+;', f'background-color: {target_color};', style)
+        else:
+            style += f'\nbackground-color: {target_color};'
+        self.ui.label.setStyleSheet(style)
 
     def _setup_hide_expression_completer(self):
         """Setup completer for hide expression input with filtered type-aware completions."""
@@ -216,6 +251,7 @@ class VariableFrame(QWidget):
         self.var_int_instance.edited.connect(self.on_changed)
         self.ui.layout.insertWidget(2, self.var_int_instance)
         # Emit content_changed directly (pre_change was already emitted above)
+        self.update_colors()
         self.content_changed.emit()
 
     def get_classes(self):
