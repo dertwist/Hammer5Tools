@@ -61,6 +61,7 @@ class CompletionUtils:
             'RadiusPlacementMode': ['SPHERE', 'CIRCLE'],
             'DistributionMode': ['RANDOM', 'REGULAR'],
             'PathPositions': ['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'],
+            'Direction': ['RANDOM', 'REGULAR'],
         }
         return elements_dict.get(var_type, [])
 
@@ -208,7 +209,7 @@ class CompletionUtils:
         # Enum-type variable completions (combobox types)
         elif var_type in ['CoordinateSpace', 'GridPlacementMode', 'GridOriginMode', 'PickMode', 
                          'ScaleMode', 'TraceNoHit', 'ApplyColorMode', 'ChoiceSelectionMode', 
-                         'RadiusPlacementMode', 'DistributionMode', 'PathPositions']:
+                         'RadiusPlacementMode', 'DistributionMode', 'PathPositions', 'Direction']:
             # Get the possible values for this enum type
             enum_values = CompletionUtils.get_combobox_elements(var_type)
             for enum_value in enum_values:
