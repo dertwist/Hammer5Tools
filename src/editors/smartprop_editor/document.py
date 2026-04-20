@@ -231,14 +231,14 @@ class SmartPropDocument(QMainWindow):
             lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem())
         )
 
-        self._restore_user_prefs()
-
         # Hierarchy lives on the left; History / Variables / Choices stack on the right.
         self.addDockWidget(Qt.LeftDockWidgetArea, self.ui.HierarchyDock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.ui.VariablesDock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.ui.ChoicesDock)
 
         self._setup_history_dock()
+
+        QTimer.singleShot(0, self._restore_user_prefs)
 
         set_qdock_tab_style(self.findChildren)
 
@@ -1752,11 +1752,12 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Window State]========================================
     def _restore_user_prefs(self):
-        geo = self.settings.value("SmartPropEditorMainWindow/geometry")
-        if geo:
-            self.restoreGeometry(geo)
-
-        state = self.settings.value("SmartPropEditorMainWindow/windowState_v2")
+        # First try to load the explicit default layout
+        state = self.settings.value("SmartPropEditorMainWindow/default_windowState")
+        if not state:
+            # Fallback to the last closed tab's layout
+            state = self.settings.value("SmartPropEditorMainWindow/windowState_v2")
+        
         if state:
             self.restoreState(state)
 
@@ -1765,9 +1766,16 @@ class SmartPropDocument(QMainWindow):
             self.variable_viewport.ui.add_new_variable_combobox.setCurrentIndex(int(saved_index))
 
     def _save_user_prefs(self):
-        current_index = self.ui.add_new_variable_combobox.currentIndex()
+        current_index = self.variable_viewport.ui.add_new_variable_combobox.currentIndex()
         self.settings.setValue("SmartPropEditorMainWindow/currentComboBoxIndex", current_index)
-        self.settings.setValue("SmartPropEditorMainWindow/geometry", self.saveGeometry())
+        # We don't auto-save geometry for tabs, and we save state to the 'last closed' key
+        self.settings.setValue("SmartPropEditorMainWindow/windowState_v2", self.saveState())
+
+    def save_layout_as_default(self):
+        """Saves the current dock widget layout as the default for new documents."""
+        # We explicitly save to a 'default' key that takes precedence in _restore_user_prefs
+        self.settings.setValue("SmartPropEditorMainWindow/default_windowState", self.saveState())
+        # Also save to the regular key so it's consistent
         self.settings.setValue("SmartPropEditorMainWindow/windowState_v2", self.saveState())
 
     # ======================================[Properties Panel Undo]========================================
