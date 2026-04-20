@@ -151,9 +151,10 @@ class SmartPropEditorVariableViewport(QWidget):
             unique_hash = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
             if name.endswith('_start'):
                 name = f"hammer5tools_category_{unique_hash}_start"
+                self.add_category(name, __data[3], __data[4], __index)
             elif name.endswith('_end'):
                 name = f"hammer5tools_category_{unique_hash}_end"
-            self.add_category(name, __data[3], __data[4], __index)
+                self.add_category(name, False, __data[4], __index)
         else:
             # For regular variables, unique name generation is handled on focus out, 
             # but let's make it unique initially to avoid collision.
@@ -210,6 +211,8 @@ class SmartPropEditorVariableViewport(QWidget):
         self._sync_committed_state()
 
     def add_category(self, name, var_visible_in_editor, var_display_name, index=None, expanded=True):
+        if name.endswith('_end'):
+            var_visible_in_editor = False
         category = CategoryFrame(
             name=name,
             var_visible_in_editor=var_visible_in_editor,
@@ -253,7 +256,7 @@ class SmartPropEditorVariableViewport(QWidget):
         self.add_category(start_name, var_visible, f" ----===={display_name}===------")
         # Add End
         end_name = f"hammer5tools_category_{unique_hash}_end"
-        self.add_category(end_name, var_visible, "                                             ")
+        self.add_category(end_name, False, "                                             ")
 
         new_state = self._snapshot()
         from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
