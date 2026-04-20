@@ -1088,9 +1088,26 @@ class SmartPropDocument(QMainWindow):
             for item in data:
                 var_class = (item.get("_class", "")).replace(variable_prefix, "")
                 var_name = item.get("m_VariableName", None)
-                var_display_name = item.get("m_DisplayName", None)
-                if var_display_name is None:
-                    var_display_name = item.get("m_ParameterName", None)
+                
+                cat_name = item.get("m_Hammer5ToolsCategoryName")
+                import re
+                is_category = False
+                is_start = False
+                if var_name:
+                    if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", var_name) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", var_name):
+                        is_category = True
+                        is_start = var_name.endswith('_start')
+                
+                if is_category and cat_name is not None:
+                    if is_start:
+                        var_display_name = f" ----===={cat_name}===------"
+                    else:
+                        var_display_name = "                                             "
+                else:
+                    var_display_name = item.get("m_DisplayName", None)
+                    if var_display_name is None:
+                        var_display_name = item.get("m_ParameterName", None)
+                        
                 var_visible_in_editor = bool(item.get("m_bExposeAsParameter", None))
                 var_value = {
                     "default": item.get("m_DefaultValue", None),
@@ -1120,13 +1137,20 @@ class SmartPropDocument(QMainWindow):
                         break
 
                 if not variable_exists:
-                    self.add_variable(
-                        name=var_name,
-                        var_value=var_value,
-                        var_visible_in_editor=var_visible_in_editor,
-                        var_class=var_class,
-                        var_display_name=var_display_name
-                    )
+                    if is_category:
+                        self.add_category(
+                            name=var_name,
+                            var_visible_in_editor=var_visible_in_editor,
+                            var_display_name=var_display_name
+                        )
+                    else:
+                        self.add_variable(
+                            name=var_name,
+                            var_value=var_value,
+                            var_visible_in_editor=var_visible_in_editor,
+                            var_class=var_class,
+                            var_display_name=var_display_name
+                        )
 
     def add_an_element(self):
         self.popup_menu = PopupMenu(elements_list, add_once=False, window_name="SPE_elements")
@@ -1310,44 +1334,75 @@ class SmartPropDocument(QMainWindow):
 
             # Rebuild variables
             if isinstance(variables, list):
+                import re
                 for item in variables:
                     var_class = (item["_class"]).replace(variable_prefix, "")
                     var_name = item.get("m_VariableName", None)
-                    var_display_name = item.get("m_DisplayName", None)
-                    if var_display_name is None:
-                        var_display_name = item.get("m_ParameterName", None)
                     var_visible_in_editor = bool(item.get("m_bExposeAsParameter", None))
 
-                    var_value = {
-                        "default": item.get("m_DefaultValue", None),
-                        "model": item.get("m_sModelName", None),
-                        "m_nElementID": item.get("m_nElementID", None),
-                        'm_HideExpression': item.get("m_HideExpression", None)
-                    }
-                    element_id = var_value['m_nElementID']
-                    if element_id is not None:
-                        self.element_id_generator.add_id(element_id)
+                    # Detect category markers
+                    is_category = False
+                    is_start = False
+                    if var_name:
+                        if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", var_name) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", var_name):
+                            is_category = True
+                            is_start = var_name.endswith('_start')
+
+                    if is_category:
+                        cat_name = item.get("m_Hammer5ToolsCategoryName")
+                        if cat_name is not None:
+                            if is_start:
+                                var_display_name = f" ----===={cat_name}===------"
+                            else:
+                                var_display_name = "                                             "
+                        else:
+                            var_display_name = item.get("m_ParameterName", None)
+
+                        # Still register element ID
+                        element_id = item.get("m_nElementID", None)
+                        if element_id is not None:
+                            self.element_id_generator.add_id(element_id)
+
+                        self.add_category(
+                            name=var_name,
+                            var_visible_in_editor=var_visible_in_editor,
+                            var_display_name=var_display_name
+                        )
                     else:
-                        var_value = self.element_id_generator.update_value(var_value)
-                    if var_class == "Float":
-                        var_value.update({
-                            "min": item.get("m_flParamaterMinValue", None),
-                            "max": item.get("m_flParamaterMaxValue", None)
-                        })
-                    elif var_class == "Int":
-                        var_value.update({
-                            "min": item.get("m_nParamaterMinValue", None),
-                            "max": item.get("m_nParamaterMaxValue", None)
-                        })
-                    else:
-                        var_value.update({"min": None, "max": None})
-                    self.add_variable(
-                        name=var_name,
-                        var_value=var_value,
-                        var_visible_in_editor=var_visible_in_editor,
-                        var_class=var_class,
-                        var_display_name=var_display_name
-                    )
+                        var_display_name = item.get("m_DisplayName", None)
+                        if var_display_name is None:
+                            var_display_name = item.get("m_ParameterName", None)
+
+                        var_value = {
+                            "default": item.get("m_DefaultValue", None),
+                            "model": item.get("m_sModelName", None),
+                            "m_nElementID": item.get("m_nElementID", None),
+                            'm_HideExpression': item.get("m_HideExpression", None)
+                        }
+                        element_id = var_value['m_nElementID']
+                        if element_id is not None:
+                            self.element_id_generator.add_id(element_id)
+                        else:
+                            var_value = self.element_id_generator.update_value(var_value)
+                        if var_class == "Float":
+                            var_value.update({
+                                "min": item.get("m_flParamaterMinValue", None),
+                                "max": item.get("m_flParamaterMaxValue", None)
+                            })
+                        elif var_class == "Int":
+                            var_value.update({
+                                "min": item.get("m_nParamaterMinValue", None),
+                                "max": item.get("m_nParamaterMaxValue", None)
+                            })
+                        else:
+                            var_value.update({"min": None, "max": None})
+                        self.add_variable(
+                            name=var_name,
+                            var_value=var_value,
+                            var_visible_in_editor=var_visible_in_editor,
+                            var_class=var_class,
+                            var_display_name=var_display_name
+                        )
 
             self._modified = False
         finally:
@@ -1484,6 +1539,12 @@ class SmartPropDocument(QMainWindow):
             expanded: bool = False
     ):
         self.variable_viewport.add_variable(name, var_class, var_value, var_visible_in_editor, var_display_name, index, expanded)
+        if not self._restoring_state:
+            self._modified = True
+            self._edited.emit()
+
+    def add_category(self, name, var_visible_in_editor, var_display_name, index: int = None, expanded: bool = True):
+        self.variable_viewport.add_category(name, var_visible_in_editor, var_display_name, index, expanded)
         if not self._restoring_state:
             self._modified = True
             self._edited.emit()
@@ -2115,14 +2176,29 @@ class SmartPropDocument(QMainWindow):
         self._restoring_state = True
         try:
             for var_data in state:
-                self.add_variable(
-                    name=var_data['name'],
-                    var_class=var_data['var_class'],
-                    var_value=var_data['var_value'],
-                    var_visible_in_editor=var_data['var_visible_in_editor'],
-                    var_display_name=var_data['var_display_name'],
-                    expanded=var_data.get('expanded', False),
-                )
+                name = var_data['name']
+                import re
+                is_category = False
+                if name:
+                    if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", name) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", name):
+                        is_category = True
+                        
+                if is_category:
+                    self.add_category(
+                        name=name,
+                        var_visible_in_editor=var_data['var_visible_in_editor'],
+                        var_display_name=var_data['var_display_name'],
+                        expanded=var_data.get('expanded', True)
+                    )
+                else:
+                    self.add_variable(
+                        name=name,
+                        var_class=var_data['var_class'],
+                        var_value=var_data['var_value'],
+                        var_visible_in_editor=var_data['var_visible_in_editor'],
+                        var_display_name=var_data['var_display_name'],
+                        expanded=var_data.get('expanded', False),
+                    )
         finally:
             self._restoring_state = False
         self._modified = True
