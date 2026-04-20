@@ -372,6 +372,23 @@ class VsmartSave:
                 var_dict.pop("m_ParameterName", None)
             else:
                 var_dict.update({"m_ParameterName": var_key_value[4]})
+                
+            import re
+            is_category = False
+            is_start = False
+            if var_key_value[0]:
+                if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", var_key_value[0]) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", var_key_value[0]):
+                    is_category = True
+                    is_start = var_key_value[0].endswith('_start')
+                    
+            if is_category:
+                if is_start:
+                    match = re.search(r"----====(.*)===------?", var_key_value[4] if var_key_value[4] else "")
+                    cat_name = match.group(1).strip() if match else "Category name"
+                    var_dict["m_Hammer5ToolsCategoryName"] = cat_name
+                else:
+                    var_dict["m_Hammer5ToolsCategoryName"] = "New category"
+
             if var_min is not None:
                 if var_class == "Float":
                     var_dict.update({"m_flParamaterMinValue": var_min})
