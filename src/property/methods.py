@@ -83,17 +83,20 @@ class PropertyMethods:
 
         mime_data = event.mimeData()
         if mime_data.hasText():
-
             if event.source() != self:
-                source_index = self.widget_list.layout().indexOf(event.source())
-                target_index = self.widget_list.layout().indexOf(self)
+                layout = self.widget_list if hasattr(self.widget_list, 'count') else getattr(self.widget_list, 'layout', lambda: None)()
+                if layout is None:
+                    return
+
+                source_index = layout.indexOf(event.source())
+                target_index = layout.indexOf(self)
 
                 if source_index != -1 and target_index != -1:
-                    if source_index < self.widget_list.layout().count():
-                        source_widget = self.widget_list.layout().takeAt(source_index).widget()
+                    if source_index < layout.count():
+                        source_widget = layout.takeAt(source_index).widget()
                         if source_widget:
-                            self.widget_list.layout().insertWidget(target_index, source_widget)
-                            
+                            layout.insertWidget(target_index, source_widget)
+
                             # Signal an edit action so undo stack correctly registers the structural rearrangement
                             if hasattr(self, "edited"):
                                 self.edited.emit()

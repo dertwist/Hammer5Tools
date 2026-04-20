@@ -107,6 +107,46 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.paste_variable_button)
 
+        self.add_new_category_button = QToolButton(self.frame)
+        self.add_new_category_button.setObjectName(u"add_new_category_button")
+        self.add_new_category_button.setMaximumSize(QSize(28, 28))
+        self.add_new_category_button.setStyleSheet(u"\n"
+"    /* QPushButton default and hover styles */\n"
+"    QToolButton {\n"
+"\n"
+"        font: 580 9pt \"Segoe UI\";\n"
+"\n"
+"\n"
+"        border: 2px solid black;\n"
+"        border-radius: 2px;\n"
+"        border-color: rgba(80, 80, 80, 255);\n"
+"        height:22px;\n"
+"        padding-top: 2px;\n"
+"        padding-bottom:2px;\n"
+"        padding-left: 4px;\n"
+"        padding-right: 4px;\n"
+"        color: #E3E3E3;\n"
+"        background-color: #1C1C1C;\n"
+"    }\n"
+"    QToolButton:hover {\n"
+"        background-color: #414956;\n"
+"        color: white;\n"
+"    }\n"
+"    QToolButton:pressed {\n"
+"        background-color: red;\n"
+"        background-color: #1C1C1C;\n"
+"        margin: 1 px;\n"
+"        margin-left: 2px;\n"
+"        margin-right: 2px;\n"
+"\n"
+"    }")
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/create_new_folder_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.add_new_category_button.setIcon(icon1)
+        self.add_new_category_button.setIconSize(QSize(20, 20))
+
+        self.horizontalLayout.addWidget(self.add_new_category_button)
+
         self.add_new_variable_button = QToolButton(self.frame)
         self.add_new_variable_button.setObjectName(u"add_new_variable_button")
         self.add_new_variable_button.setMaximumSize(QSize(28, 28))
@@ -140,9 +180,9 @@ class Ui_Form(object):
 "        margin-right: 2px;\n"
 "\n"
 "    }")
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.add_new_variable_button.setIcon(icon1)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.add_new_variable_button.setIcon(icon2)
         self.add_new_variable_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout.addWidget(self.add_new_variable_button)
@@ -329,6 +369,10 @@ class Ui_Form(object):
         self.paste_variable_button.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Paste variable</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.paste_variable_button.setText(QCoreApplication.translate("Form", u"...", None))
+#if QT_CONFIG(tooltip)
+        self.add_new_category_button.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Create category</p></body></html>", None))
+#endif // QT_CONFIG(tooltip)
+        self.add_new_category_button.setText(QCoreApplication.translate("Form", u"...", None))
 #if QT_CONFIG(tooltip)
         self.add_new_variable_button.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Create variable</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
