@@ -547,7 +547,7 @@ class CategoryFrame(VariableFrame):
             if found_start and isinstance(w, CategoryFrame) and w.is_end and w.category_hash == self.category_hash:
                 w.pre_change.emit()
                 w.name = f"hammer5tools_category_{self.category_hash}_end"
-                w.var_visible_in_editor = self.var_visible_in_editor
+                w.var_visible_in_editor = False
                 w.content_changed.emit()
                 break
 
