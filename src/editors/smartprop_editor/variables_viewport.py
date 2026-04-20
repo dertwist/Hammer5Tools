@@ -19,7 +19,7 @@ from PySide6.QtGui import (
 
 
 from keyvalues3 import kv3_to_json
-from src.editors.smartprop_editor.variable_frame import VariableFrame
+from src.editors.smartprop_editor.variable_frame import VariableFrame, CategoryFrame
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.objects import (
     variables_list,
@@ -38,6 +38,7 @@ class SmartPropEditorVariableViewport(QWidget):
         self.ui.add_new_variable_button.clicked.connect(self.add_new_variable)
         self.ui.variables_scroll_area_searchbar.textChanged.connect(self.search_variables)
         self.ui.paste_variable_button.clicked.connect(self.paste_variable)
+        self.ui.add_new_category_button.clicked.connect(self.add_new_category)
 
         # Add variable classes to combobox
         for item in variables_list:
@@ -51,6 +52,31 @@ class SmartPropEditorVariableViewport(QWidget):
         # update _var_committed_state; VariablesSnapshotCommand.mergeWith() collapses
         # rapid same-field edits (e.g. holding down a spinbox arrow) into one entry.
         self._var_committed_state = None
+        self._drop_indicator = None
+        self._drop_index = -1
+
+    def _show_drop_indicator(self, index):
+        """Show a visual line indicating where the variable will be dropped."""
+        if self._drop_indicator is None:
+            from PySide6.QtWidgets import QFrame
+            self._drop_indicator = QFrame(self)
+            self._drop_indicator.setFrameShape(QFrame.HLine)
+            self._drop_indicator.setFrameShadow(QFrame.Plain)
+            self._drop_indicator.setLineWidth(2)
+            self._drop_indicator.setStyleSheet("color: #3498DB; background-color: #3498DB;")
+            self._drop_indicator.setFixedHeight(2)
+
+        if index != self._drop_index:
+            self.ui.variables_scrollArea.insertWidget(index, self._drop_indicator)
+            self._drop_indicator.show()
+            self._drop_index = index
+
+    def _hide_drop_indicator(self):
+        """Hide and remove the drop indicator."""
+        if self._drop_indicator:
+            self.ui.variables_scrollArea.removeWidget(self._drop_indicator)
+            self._drop_indicator.hide()
+            self._drop_index = -1
 
 
     # ======================================[Variables Actions]========================================
@@ -77,22 +103,68 @@ class SmartPropEditorVariableViewport(QWidget):
         variable.delete_requested.connect(lambda vf=variable: self._on_delete_requested(vf))
         variable.pre_change.connect(self._on_pre_change)
         variable.content_changed.connect(self._on_content_changed)
+        variable.content_changed.connect(self.update_indentation)
+        variable.edited.connect(self._on_content_changed)
+        variable.edited.connect(self.update_indentation)
         if index is None:
             index = (self.ui.variables_scrollArea.count()) - 1
         else:
             index = index + 1
         self.ui.variables_scrollArea.insertWidget(index, variable)
-        # Restore expanded/collapsed state
         if expanded:
             variable.ui.show_child.setChecked(True)
             variable.show_child()
+        
+        # Ensure vertical spacer is at the end
+        self._ensure_spacer_at_end()
+        
+        self.update_indentation()
         CompletionUtils.invalidate_cache(self.ui.variables_scrollArea)
+
+    def _ensure_spacer_at_end(self):
+        """Make sure the vertical spacer is always the last item in the layout."""
+        layout = self.ui.variables_scrollArea
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item.spacerItem():
+                spacer = layout.takeAt(i)
+                layout.addItem(spacer)
+                break
 
     def duplicate_variable(self, __data, __index):
         self._flush_var_edit_if_pending()
         old_state = self._snapshot()
         __data[2] = self.element_id_generator.update_value(__data[2], force=True)
-        self.add_variable(__data[0], __data[1], __data[2], __data[3], __data[4], __index)
+        
+        name = __data[0]
+        import re
+        is_category = False
+        is_start = False
+        if name:
+            if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", name) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", name):
+                is_category = True
+                is_start = name.endswith('_start')
+                
+        # Make the name unique for duplicates
+        if is_category:
+            import random, string
+            unique_hash = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
+            if name.endswith('_start'):
+                name = f"hammer5tools_category_{unique_hash}_start"
+            elif name.endswith('_end'):
+                name = f"hammer5tools_category_{unique_hash}_end"
+            self.add_category(name, __data[3], __data[4], __index)
+        else:
+            # For regular variables, unique name generation is handled on focus out, 
+            # but let's make it unique initially to avoid collision.
+            existing = [v[0] for k, v in self.get_variables(self.ui.variables_scrollArea, only_names=True).items()]
+            base_name = name
+            suffix = 1
+            while name in existing:
+                name = f"{base_name}_{suffix}"
+                suffix += 1
+            self.add_variable(name, __data[1], __data[2], __data[3], __data[4], __index)
+            
         new_state = self._snapshot()
         from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
         self._document.undo_stack.push(
@@ -137,15 +209,106 @@ class SmartPropEditorVariableViewport(QWidget):
         )
         self._sync_committed_state()
 
+    def add_category(self, name, var_visible_in_editor, var_display_name, index=None, expanded=True):
+        category = CategoryFrame(
+            name=name,
+            var_visible_in_editor=var_visible_in_editor,
+            var_display_name=var_display_name,
+            widget_list=self.ui.variables_scrollArea,
+            element_id_generator=self.element_id_generator
+        )
+        category.ui.show_child.setChecked(expanded)
+        category.duplicate.connect(self.duplicate_variable)
+        category.delete_requested.connect(lambda vf=category: self._on_delete_requested(vf))
+        category.pre_change.connect(self._on_pre_change)
+        category.content_changed.connect(self._on_content_changed)
+        category.content_changed.connect(self.update_indentation)
+        category.edited.connect(self._on_content_changed)
+        category.edited.connect(self.update_indentation)
+        category.visibility_toggled.connect(self.update_indentation)
+
+        if index is None:
+            index = (self.ui.variables_scrollArea.count()) - 1
+        else:
+            index = index + 1
+        self.ui.variables_scrollArea.insertWidget(index, category)
+        self.update_indentation()
+        CompletionUtils.invalidate_cache(self.ui.variables_scrollArea)
+
+    def add_new_category(self):
+        self._flush_var_edit_if_pending()
+        old_state = self._snapshot()
+
+        import random
+        import string
+        unique_hash = ''.join(random.choices(string.ascii_lowercase + string.digits, k=3))
+        
+        # Ensure unique name for the start variable
+        start_name = f"hammer5tools_category_{unique_hash}_start"
+        
+        display_name = "New Category"
+        var_visible = True
+        
+        # Add Start
+        self.add_category(start_name, var_visible, f" ----===={display_name}===------")
+        # Add End
+        end_name = f"hammer5tools_category_{unique_hash}_end"
+        self.add_category(end_name, var_visible, "                                             ")
+
+        new_state = self._snapshot()
+        from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
+        self._document.undo_stack.push(
+            VariablesSnapshotCommand(self._document, old_state, new_state, "Add Category")
+        )
+        self._sync_committed_state()
+
+    def update_indentation(self):
+        """Update indentation and visibility based on category boundaries and search."""
+        layout = self.ui.variables_scrollArea.layout()
+        if not layout: return
+        
+        indent_level = 0
+        hide_children = False
+        search_term = self.ui.variables_scroll_area_searchbar.text().lower()
+        
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if not item: continue
+            widget = item.widget()
+            if not widget: continue
+            
+            # Visibility logic
+            should_show = True
+            if search_term and hasattr(widget, 'name'):
+                name_match = search_term in widget.name.lower()
+                display_match = hasattr(widget, 'var_display_name') and widget.var_display_name and search_term in widget.var_display_name.lower()
+                cat_match = hasattr(widget, 'category_name') and widget.category_name and search_term in widget.category_name.lower()
+                if not (name_match or display_match or cat_match):
+                    should_show = False
+            
+            if hasattr(widget, 'is_start'): # Check if it's a CategoryFrame
+                if widget.is_start:
+                    widget.set_indent(0)
+                    indent_level = 1
+                    widget.setVisible(should_show)
+                    if not widget.ui.show_child.isChecked() and not search_term:
+                        hide_children = True
+                    else:
+                        hide_children = False
+                elif widget.is_end:
+                    indent_level = 0
+                    widget.setVisible(should_show if not hide_children else False)
+                    hide_children = False
+            elif hasattr(widget, 'set_indent'): # It's a VariableFrame
+                widget.set_indent(indent_level)
+                if hide_children and not search_term:
+                    widget.setVisible(False)
+                else:
+                    widget.setVisible(should_show)
+
     # ======================================[Variables Other]========================================
     def search_variables(self, search_term=None):
-        for i in range(self.ui.variables_scrollArea.layout().count()):
-            widget = self.ui.variables_scrollArea.layout().itemAt(i).widget()
-            if widget:
-                if search_term.lower() in widget.name.lower():
-                    widget.show()
-                else:
-                    widget.hide()
+        self.update_indentation()
 
     def get_variables(self, layout, only_names=False):
         if only_names:
@@ -217,13 +380,37 @@ class SmartPropEditorVariableViewport(QWidget):
 
                 self.element_id_generator.update_value(var_value, force=True)
 
-                self.add_variable(
-                    name=var_name,
-                    var_class=var_class,
-                    var_value=var_value,
-                    var_visible_in_editor=var_visible,
-                    var_display_name=variable.get('m_ParameterName')
-                )
+                import re
+                is_category = False
+                is_start = False
+                if var_name:
+                    if re.match(r"hammer5tools_category_([a-z0-9]+)_(start|end)", var_name) or re.match(r"hammer5tools_category_(.*)_category_(.*)_(start|end)", var_name):
+                        is_category = True
+                        is_start = var_name.endswith('_start')
+                        
+                if is_category:
+                    cat_name = variable.get('m_Hammer5ToolsCategoryName')
+                    if cat_name is not None:
+                        if is_start:
+                            display_name = f" ----===={cat_name}===------"
+                        else:
+                            display_name = "                                             "
+                    else:
+                        display_name = variable.get('m_ParameterName')
+                        
+                    self.add_category(
+                        name=var_name,
+                        var_visible_in_editor=var_visible,
+                        var_display_name=display_name
+                    )
+                else:
+                    self.add_variable(
+                        name=var_name,
+                        var_class=var_class,
+                        var_value=var_value,
+                        var_visible_in_editor=var_visible,
+                        var_display_name=variable.get('m_ParameterName')
+                    )
                 pasted_any = True
 
         except Exception as e:
@@ -317,6 +504,7 @@ class SmartPropEditorVariableViewport(QWidget):
             item = layout.takeAt(idx)
             if item and item.widget():
                 item.widget().deleteLater()
+        self.update_indentation()
         new_state = self._snapshot()
         from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
         self._document.undo_stack.push(
