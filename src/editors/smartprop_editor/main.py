@@ -4,10 +4,11 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QFileDialog,
     QApplication,
-    QMessageBox
+    QMessageBox,
+    QMenu
 )
-from PySide6.QtGui import QUndoStack
-from PySide6.QtCore import QTimer
+from PySide6.QtGui import QUndoStack, QAction
+from PySide6.QtCore import QTimer, Qt
 from src.settings.main import get_settings_value, get_settings_bool
 from src.editors.smartprop_editor.ui_main import Ui_MainWindow
 from src.settings.main import get_addon_name, settings
@@ -38,6 +39,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         # Make the tab widget closable and connect to our close_document method
         self.ui.DocumentTabWidget.setTabsClosable(True)
         self.ui.DocumentTabWidget.tabCloseRequested.connect(self.close_document)
+        self.ui.DocumentTabWidget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.DocumentTabWidget.customContextMenuRequested.connect(self.show_tab_context_menu)
 
         # Initialize file explorer
         self.init_explorer()
@@ -254,6 +257,22 @@ class SmartPropEditorMainWindow(QMainWindow):
         if removed_widget is not None:
             removed_widget.deleteLater()
         self.update_placeholder_visibility()
+
+    def show_tab_context_menu(self, position):
+        index = self.ui.DocumentTabWidget.tabBar().tabAt(position)
+        if index < 0:
+            return
+
+        menu = QMenu(self)
+        save_layout_action = menu.addAction("Save Current Layout as Default")
+        save_layout_action.triggered.connect(lambda: self.save_current_layout_as_default(index))
+
+        menu.exec(self.ui.DocumentTabWidget.mapToGlobal(position))
+
+    def save_current_layout_as_default(self, index):
+        doc = self.ui.DocumentTabWidget.widget(index)
+        if isinstance(doc, SmartPropDocument):
+            doc.save_layout_as_default()
 
     def closeEvent(self, event):
         """
