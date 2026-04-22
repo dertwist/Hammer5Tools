@@ -47,8 +47,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.init_connections()
             self.init_header()
 
-            # Update data
-            self.on_property_updated()
+            # Silent init — populate value without emitting
+            self.value = self.serialize_properties()
 
     def init_connections(self):
         """Adding connections to the buttons"""
