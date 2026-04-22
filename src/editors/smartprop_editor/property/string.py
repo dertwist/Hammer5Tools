@@ -180,10 +180,12 @@ class PropertyString(QWidget, PooledPropertyMixin):
         # Expression
         elif self.ui.logic_switch.currentIndex() == 3:
             value = self.text_line.toPlainText()
-            if not self.expression_bool:
-                self.value = {self.value_class: {'m_Expression': str(value)}}
-            else:
+            # Some fields like m_Expression and m_HideExpression are stored as raw strings in KV3.
+            # Most other scalar/boolean fields must be wrapped in an object when they are expressions.
+            if self.value_class in ('m_Expression', 'm_HideExpression'):
                 self.value = {self.value_class: str(value)}
+            else:
+                self.value = {self.value_class: {'m_Expression': str(value)}}
 
     def get_variables(self, search_term=None):
         return CompletionUtils.get_available_variable_names(self.variables_scrollArea)
