@@ -127,6 +127,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self._slider_dragging = False          # True while a slider is being dragged
         self._pre_commit_snapshot = None       # value snapshot taken at sliderPressed
         self._restoring_from_undo = False      # True while undo/redo is restoring state
+        self._populating = False               # True while populating properties
         self._next_undo_desc = None            # optional label for the next undo push
 
         # Init variables
@@ -390,6 +391,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
     def _restore_state(self, state: dict):
         """Rebuild the properties UI from a full state snapshot."""
         self._undo_enabled = False       # don't push a new command while restoring
+        self._populating = True
         self.properties_clear()
         self.properties_groups_show()
         self.populate_properties(state)
@@ -410,6 +412,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             pass
 
         self.update_value()
+        self._populating = False
         self._undo_enabled = True
         self.edited.emit()
 
@@ -432,6 +435,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         return element_key, element_name
 
     def on_update(self):
+        if self._populating:
+            return
         """Updating dict value and send signal.
         For slider drags this is called on every tick — only real-time save, NO undo push.
         Undo is pushed once in on_commit() when the slider is released.
@@ -569,6 +574,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             return
         # Ensure any UI-changing logic we perform does not push undo entries
         self._undo_enabled = False
+        self._populating = True        # ← block on_update mid-populate
 
         if item is None:
             self.properties_clear()
@@ -601,6 +607,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                 pass
 
         # Re-enable undo pushes and notify listeners
+        self._populating = False       # ← clear BEFORE re-enabling undo
         self._undo_enabled = True
         self.edited.emit()
 
