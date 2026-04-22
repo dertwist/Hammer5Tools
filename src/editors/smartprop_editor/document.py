@@ -2465,3 +2465,57 @@ class SmartPropDocument(QMainWindow):
         modified_content = re.sub(pattern, "= ", file_content)
         modified_content = modified_content.replace("null,", "")
         return modified_content
+
+    # ======================================[Global Rename]========================================
+    def rename_variable_references(self, old_name, new_name):
+        """Find and replace all references to old_name with new_name throughout the document."""
+        import re
+        pattern = re.compile(rf'\b{re.escape(old_name)}\b')
+
+        def replace_in_val(val):
+            if isinstance(val, str):
+                return pattern.sub(new_name, val)
+            if isinstance(val, list):
+                return [replace_in_val(v) for v in val]
+            if isinstance(val, dict):
+                return {k: replace_in_val(v) for k, v in val.items()}
+            return val
+
+        # 1. Hierarchy items
+        self._rename_in_hierarchy_recursive(self.ui.tree_hierarchy_widget.invisibleRootItem(), replace_in_val)
+
+        # 2. Choices
+        old_choices = self._snapshot_choices()
+        new_choices_state = replace_in_val(old_choices)
+        if new_choices_state != old_choices:
+            # We don't push a separate command here because we expect to be inside a macro
+            # or we want it to be part of the rename operation.
+            self.undo_stack.push(ChoicesSnapshotCommand(self, old_choices, new_choices_state, "Rename variable in choices"))
+            self._restore_choices(new_choices_state)
+
+        # 3. Other Variables (hide expressions)
+        old_vars = self._snapshot_variables()
+        # Filter out the variable that was just renamed from the snapshot comparison 
+        # to avoid conflicts with the command that triggered this.
+        # Actually, new_vars will have the new name for the renamed var too, which is fine.
+        new_vars_state = replace_in_val(old_vars)
+        if new_vars_state != old_vars:
+            self.undo_stack.push(VariablesSnapshotCommand(self, old_vars, new_vars_state, "Rename variable in expressions"))
+            self._restore_variables(new_vars_state)
+
+    def _rename_in_hierarchy_recursive(self, item, replace_fn):
+        """Recursively update hierarchy item data with renamed variable references."""
+        old_data = item.data(0, Qt.UserRole)
+        if isinstance(old_data, dict):
+            new_data = replace_fn(old_data)
+            if new_data != old_data:
+                # Push command for this item
+                self.undo_stack.push(PropertySnapshotCommand(self, item, old_data, new_data))
+                # Apply the change
+                item.setData(0, Qt.UserRole, new_data)
+                # If this item is currently selected, refresh the properties panel
+                if self.ui.tree_hierarchy_widget.currentItem() is item:
+                    self._rebuild_properties_panel(item)
+
+        for i in range(item.childCount()):
+            self._rename_in_hierarchy_recursive(item.child(i), replace_fn)

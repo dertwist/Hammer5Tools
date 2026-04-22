@@ -83,6 +83,9 @@ class PropertyFrame(QWidget):
         'TraceInDirection': ['m_bEnabled', 'm_DirectionSpace', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_flOriginOffset', 'm_flTraceLength'],
         'SaveState': ['m_bEnabled', 'm_StateName'],
         'SetVariable': ['m_bEnabled', 'm_VariableValue'],
+        'SetVariableBool': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
+        'SetVariableFloat': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
+        'SetVariableInt': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
         'RandomRotationSnapped': ['m_bEnabled', 'm_vMinAngles', 'm_vMaxAngles', 'm_flSnapIncrement', 'm_RotationAxes'],
         'ResetRotation': ['m_bEnabled', 'm_bIgnoreObjectRotation', 'm_bResetPitch', 'm_bResetYaw', 'm_bResetRoll'],
         'ResetScale': ['m_bEnabled', 'm_bIgnoreObjectScale'],
@@ -473,28 +476,40 @@ class PropertyFrame(QWidget):
             return
 
         if 'm_VariableValue' in value_class:
-            if val is None:
+            # Handle the universal SetVariable operation (outputs a complex object)
+            if (isinstance(val, dict) and ('m_TargetName' in val or 'm_DataType' in val)) or (val is None and self.prop_class == 'SetVariable'):
                 property_instance = PropertyVariableValue(
                     value=val,
                     value_class=value_class,
                     variables_scrollArea=self.variables_scrollArea,
-                    element_id_generator=self.element_id_generator,
-                )
-            elif 'm_TargetName' not in val:
-                property_instance = PropertyString.acquire(
-                    value=val,
-                    value_class=value_class,
-                    variables_scrollArea=self.variables_scrollArea,
-                    expression_bool=True,
                     element_id_generator=self.element_id_generator,
                 )
             else:
-                property_instance = PropertyVariableValue(
-                    value=val,
-                    value_class=value_class,
-                    variables_scrollArea=self.variables_scrollArea,
-                    element_id_generator=self.element_id_generator,
-                )
+                # Type-specific SetVariableBool/Float/Int operation (outputs a simple value or expression)
+                if isinstance(val, bool) or self.prop_class.endswith('Bool'):
+                    property_instance = PropertyBool(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        element_id_generator=self.element_id_generator,
+                    )
+                elif isinstance(val, (int, float)) or self.prop_class.endswith('Float') or self.prop_class.endswith('Int'):
+                    property_instance = PropertyFloat(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        element_id_generator=self.element_id_generator,
+                        int_bool=self.prop_class.endswith('Int')
+                    )
+                else:
+                    # Fallback to string/expression
+                    property_instance = PropertyString.acquire(
+                        value=val,
+                        value_class=value_class,
+                        variables_scrollArea=self.variables_scrollArea,
+                        expression_bool=True,
+                        element_id_generator=self.element_id_generator,
+                    )
             add_instance()
             return
 
