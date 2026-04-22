@@ -282,6 +282,7 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
                     if index < len(self.float_widget_instances):
                         widget_instance: FloatWidget = self.float_widget_instances[index]
                         widget_instance.set_value(value)
+        self.on_property_update()
 
     def on_property_update(self):
         """Send signal that user changed the property"""
