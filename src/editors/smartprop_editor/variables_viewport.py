@@ -484,12 +484,30 @@ class SmartPropEditorVariableViewport(QWidget):
 
         new_state = self._snapshot()
         if new_state != self._var_committed_state:
+            # Detect if this was a rename operation
+            old_name = None
+            new_name = None
+            if len(new_state) == len(self._var_committed_state):
+                for old_var, new_var in zip(self._var_committed_state, new_state):
+                    if old_var['name'] != new_var['name']:
+                        old_name = old_var['name']
+                        new_name = new_var['name']
+                        break
+            
+            if old_name and new_name:
+                self._document.undo_stack.beginMacro(f"Rename Variable '{old_name}'")
+
             from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
             self._document.undo_stack.push(
                 VariablesSnapshotCommand(
                     self._document, self._var_committed_state, new_state, "Edit Variable"
                 )
             )
+
+            if old_name and new_name:
+                self._document.rename_variable_references(old_name, new_name)
+                self._document.undo_stack.endMacro()
+
             self._var_committed_state = new_state
             CompletionUtils.invalidate_cache(self.ui.variables_scrollArea)
 
