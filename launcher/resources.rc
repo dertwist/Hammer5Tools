@@ -1,2 +1,4 @@
 IDI_ICON1 ICON "../src/appicon.ico"
 IDI_ICON2 ICON "../src/icons/smartprop.ico"
+IDI_ICON3 ICON "../src/icons/tools/vconsole/appicon.ico"
+IDI_ICON4 ICON "../src/icons/tools/appicon_tools.ico"
