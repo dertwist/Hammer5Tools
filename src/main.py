@@ -43,7 +43,8 @@ from src.settings.main import (
     get_settings_value,
     set_settings_value,
     settings,
-    debug
+    debug,
+    get_addon_dir
 )
 from src.editors.loading_editor.main import Loading_editorMainWindow
 from src.editors.hotkey_editor.main import HotkeyEditorMainWindow
@@ -58,7 +59,7 @@ from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
 from src.editors.ue2source_materials.main import UE2SourceMaterialsWidget
 from src.forms.launch_options.main import LaunchOptionsDialog
 from src.styles.qt_global_stylesheet import QT_Stylesheet_global
-from src.common import enable_dark_title_bar, app_version, default_commands, app_dir
+from src.common import enable_dark_title_bar, app_version, default_commands, app_dir, JsonToKv3, compile as run_compile
 from src.dotnet import check_dotnet_runtime
 from src.other.addon_validation import validate_addon_structure
 from src.forms.cleanup.main import CleanupDialog
@@ -303,6 +304,113 @@ class Widget(QMainWindow):
         dialog.show()
         dialog.raise_()
         dialog.activateWindow()
+
+    def check_addon_mismatch(self, addon_hint):
+        """
+        Check if the action is intended for a different addon.
+        If so, ask the user to switch.
+        """
+        if not addon_hint:
+            return True
+        current_addon = get_addon_name()
+        if addon_hint.lower() == current_addon.lower():
+            return True
+        
+        # Mismatch!
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setWindowTitle("Addon Mismatch")
+        msg_box.setText(f"This file belongs to addon '{addon_hint}', but Hammer5Tools is currently using '{current_addon}'.")
+        msg_box.setInformativeText("Would you like to switch to the correct addon before proceeding?")
+        
+        switch_button = msg_box.addButton("Switch Addon", QMessageBox.AcceptRole)
+        keep_button = msg_box.addButton("Keep Current", QMessageBox.RejectRole)
+        cancel_button = msg_box.addButton(QMessageBox.Cancel)
+        
+        msg_box.setDefaultButton(switch_button)
+        msg_box.exec()
+        
+        if msg_box.clickedButton() == switch_button:
+            self.ui.ComboBoxSelectAddon.setCurrentText(addon_hint)
+            # setCurrentText will trigger selected_addon_name if it changed
+            return True
+        elif msg_box.clickedButton() == keep_button:
+            return True
+        else:
+            return False
+
+    def handle_quick_vmdl(self, path):
+        """Create a VMDL file next to a mesh or in a folder."""
+        if os.path.isfile(path):
+            folder = os.path.dirname(path)
+            basename = os.path.splitext(os.path.basename(path))[0]
+            vmdl_path = os.path.join(folder, f"{basename}.vmdl")
+            
+            # Extract relative path for mesh reference
+            addon_dir = get_addon_dir()
+            try:
+                rel_mesh = os.path.relpath(path, addon_dir).replace('\\', '/')
+            except (ValueError, Exception):
+                rel_mesh = ""
+            
+            from src.editors.assetgroup_maker.objects import DEFAULT_VMDL
+            from src.common import fast_deepcopy
+            
+            vmdl_content = fast_deepcopy(DEFAULT_VMDL)
+            
+            # Populate the template with the mesh path
+            for child in vmdl_content.get('rootNode', {}).get('children', []):
+                if child.get('_class') == 'RenderMeshList':
+                    for mesh_file in child.get('children', []):
+                        if mesh_file.get('_class') == 'RenderMeshFile':
+                            mesh_file['filename'] = rel_mesh
+                if child.get('_class') == 'PhysicsShapeList':
+                    for phys_file in child.get('children', []):
+                        if phys_file.get('_class') == 'PhysicsHullFile':
+                            phys_file['filename'] = rel_mesh
+                            phys_file['name'] = basename
+
+            kv3_content = JsonToKv3(vmdl_content, format='vmdl')
+            try:
+                with open(vmdl_path, 'w') as f:
+                    f.write(kv3_content)
+                self.update_title(text=f"Created VMDL: {os.path.basename(vmdl_path)}")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to create VMDL: {e}")
+        else:
+            # Create blank VMDL in folder
+            self.open_quick_create_dialog(path, "vmdl")
+
+    def handle_quick_batch(self, path):
+        """Create a .bat stub for ResourceCompiler in the folder."""
+        if os.path.isdir(path):
+            cs2_path = get_cs2_path()
+            if not cs2_path:
+                QMessageBox.warning(self, "CS2 Not Found", "CS2 installation path not set.")
+                return
+            rc_exe = os.path.join(cs2_path, "game", "bin", "win64", "resourcecompiler.exe")
+            
+            bat_content = f'@echo off\n"{rc_exe}" -i "*.vmdl" "*.vmat"\npause'
+            bat_path = os.path.join(path, "compile_assets.bat")
+            try:
+                with open(bat_path, 'w') as f:
+                    f.write(bat_content)
+                self.update_title(text=f"Created Batch: {os.path.basename(bat_path)}")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to create Batch file: {e}")
+
+    def handle_quick_process(self, path):
+        """Run a compile job on the folder."""
+        if os.path.isdir(path):
+            self.update_title(text=f"Processing folder: {os.path.basename(path)}...")
+            run_compile(os.path.join(path, "*.vmdl"))
+            run_compile(os.path.join(path, "*.vmat"))
+
+    def handle_quick_process_file(self, path):
+        """Trigger a compile on a specific asset file."""
+        if os.path.isfile(path):
+            self.update_title(text=f"Processing file: {os.path.basename(path)}...")
+            run_compile(path)
 
     def setup_tabs(self):
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
@@ -706,6 +814,34 @@ def handle_new_connection(server, widget):
                 folder_path = message.get("file_path")
                 widget.show_from_tray()
                 widget.open_quick_create_dialog(folder_path, "vmat")
+
+            elif command == IPCCommand.QUICK_VMDL.value:
+                file_path = message.get("file_path")
+                addon_hint = message.get("addon_hint")
+                widget.show_from_tray()
+                if widget.check_addon_mismatch(addon_hint):
+                    widget.handle_quick_vmdl(file_path)
+
+            elif command == IPCCommand.QUICK_BATCH.value:
+                file_path = message.get("file_path")
+                addon_hint = message.get("addon_hint")
+                widget.show_from_tray()
+                if widget.check_addon_mismatch(addon_hint):
+                    widget.handle_quick_batch(file_path)
+
+            elif command == IPCCommand.QUICK_PROCESS.value:
+                file_path = message.get("file_path")
+                addon_hint = message.get("addon_hint")
+                widget.show_from_tray()
+                if widget.check_addon_mismatch(addon_hint):
+                    widget.handle_quick_process(file_path)
+            
+            elif command == IPCCommand.QUICK_PROCESS_FILE.value:
+                file_path = message.get("file_path")
+                addon_hint = message.get("addon_hint")
+                widget.show_from_tray()
+                if widget.check_addon_mismatch(addon_hint):
+                    widget.handle_quick_process_file(file_path)
         
         client_connection.disconnectFromServer()
 

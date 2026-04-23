@@ -10,7 +10,7 @@ if(MINGW)
 endif()
 add_executable(Hammer5ToolsLauncher WIN32 main.cpp resources.rc)
 
-target_link_libraries(Hammer5ToolsLauncher PRIVATE kernel32 user32 shell32)
+target_link_libraries(Hammer5ToolsLauncher PRIVATE kernel32 user32 shell32 advapi32)
 
 set_target_properties(Hammer5ToolsLauncher PROPERTIES 
     OUTPUT_NAME "Hammer5Tools"
