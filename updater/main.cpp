@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <shellapi.h>
 #include <commctrl.h>
 #include <string>
 #include <thread>
@@ -70,6 +71,7 @@ void UpdateThread(HWND hwnd) {
     })) {
         SetWindowText(hStatusLabel, L"Extracting...");
         UpdateLogic::KillProcess(L"h5t.exe"); // New name for app
+        UpdateLogic::KillProcess(L"Hammer5Tools.exe"); // Kill the launcher too
         
         // Extraction path should be root
         wchar_t buffer[MAX_PATH];
@@ -81,7 +83,10 @@ void UpdateThread(HWND hwnd) {
             SetWindowText(hStatusLabel, L"Update complete! Restarting...");
             DeleteFileA(temp_zip.c_str());
             Sleep(1000);
-            // Optional: Restart app?
+            
+            // Restart the launcher
+            std::wstring launcher_path = root + L"\\Hammer5Tools.exe";
+            ShellExecuteW(NULL, L"open", launcher_path.c_str(), NULL, NULL, SW_SHOWNORMAL);
         } else {
             SetWindowText(hStatusLabel, L"Extraction failed.");
         }
