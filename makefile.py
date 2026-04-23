@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 import os
 import zipfile
 import subprocess
@@ -134,7 +135,7 @@ def build_cpp(project: str, src_dir: str, output_name: str) -> None:
         print(f"Error building C++ project {project}: {e}")
         raise
 
-def build_hammer5_tools(fast=False) -> None:
+def build_hammer5_tools(fast=False, channel='stable') -> None:
     if fast:
         optimization_level = 0
     else:
@@ -219,11 +220,12 @@ def build_hammer5_tools(fast=False) -> None:
         os.rename(app_bundle_path, target_app_path)
         print(f"Renamed {app_bundle_path} to {target_app_path}")
 
-    # Phase 3: Write version.txt into the bundle
+    # Phase 3: Write version.txt into the bundle (3-line format: version, channel, build date)
     version_file_path = os.path.join(target_app_path, 'version.txt')
+    build_date = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     with open(version_file_path, 'w') as f:
-        f.write(app_version)
-    print(f"Wrote version.txt to {version_file_path}")
+        f.write(f"{app_version}\n{channel}\n{build_date}")
+    print(f"Wrote version.txt to {version_file_path} (channel={channel}, date={build_date})")
 
 def archive_files(
     folder_path: str,
@@ -275,6 +277,8 @@ def main() -> None:
     parser.add_argument('--build-app', action='store_true', help="Build only Hammer 5 Tools.")
     parser.add_argument('--archive', action='store_true', help="Archive the build outputs.")
     parser.add_argument('--fast', action='store_true', help="User 0 level optimization.")
+    parser.add_argument('--channel', choices=['stable', 'dev'], default='stable',
+                        help="Release channel to embed in version.txt (default: stable).")
     args = parser.parse_args()
 
     overall_start_time = time.time()
@@ -290,7 +294,7 @@ def main() -> None:
     try:
         if args.build_all or args.build_app:
             stage_start_time = time.time()
-            build_hammer5_tools(fast=args.fast)
+            build_hammer5_tools(fast=args.fast, channel=args.channel)
             elapsed_time = time.time() - stage_start_time
             results.append(["Hammer 5 Tools Build (Python)", f"{elapsed_time:.2f} seconds"])
 
