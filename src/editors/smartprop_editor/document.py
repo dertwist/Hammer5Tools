@@ -32,7 +32,7 @@ import uuid
 import traceback, ctypes
 from PySide6.QtCore import Qt, QTimer, Signal, QEvent
 
-from src.settings.common import get_addon_dir
+from src.settings.common import get_addon_dir, get_cs2_path
 from src.settings.main import get_settings_value, get_settings_bool
 
 from keyvalues3 import kv3_to_json
@@ -72,7 +72,6 @@ from src.common import (
     enable_dark_title_bar,
     Kv3ToJson,
     JsonToKv3,
-    get_cs2_path,
     SmartPropEditor_Preset_Path,
     set_qdock_tab_style
 )
