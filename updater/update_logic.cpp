@@ -1,10 +1,11 @@
-#include "update_logic.h"
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winhttp.h>
 #include <tlhelp32.h>
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include "update_logic.h"
 #include "third_party/miniz.h"
 
 #pragma comment(lib, "winhttp.lib")
