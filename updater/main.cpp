@@ -12,26 +12,44 @@
 HWND hWndMain;
 HWND hProgressBar;
 HWND hStatusLabel;
+HWND hChangelogEdit;
 HWND hUpdateButton;
+HWND hCancelButton;
 
-const wchar_t* CURRENT_VERSION = L"5.0.0"; // Should be synced with common.py somehow or passed in
+const wchar_t* CURRENT_VERSION = L"5.0.0"; 
+
+std::atomic<bool> g_startUpdate(false);
+bool g_isSilent = false;
+bool g_isInteractive = false;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
         case WM_CREATE: {
             hStatusLabel = CreateWindowEx(0, L"STATIC", L"Checking for updates...", WS_CHILD | WS_VISIBLE | SS_CENTER,
-                10, 20, 280, 20, hwnd, NULL, NULL, NULL);
+                10, 10, 360, 20, hwnd, NULL, NULL, NULL);
+            
+            hChangelogEdit = CreateWindowEx(WS_EX_CLIENTEDGE, L"EDIT", L"", 
+                WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY,
+                10, 40, 360, 300, hwnd, NULL, NULL, NULL);
+
             hProgressBar = CreateWindowEx(0, PROGRESS_CLASS, NULL, WS_CHILD | WS_VISIBLE | PBS_SMOOTH,
-                10, 50, 280, 25, hwnd, NULL, NULL, NULL);
+                10, 350, 360, 25, hwnd, NULL, NULL, NULL);
+
             hUpdateButton = CreateWindowEx(0, L"BUTTON", L"Update Now", WS_CHILD | WS_VISIBLE | WS_DISABLED,
-                100, 90, 100, 30, hwnd, (HMENU)1, NULL, NULL);
+                60, 390, 120, 30, hwnd, (HMENU)1, NULL, NULL);
+            
+            hCancelButton = CreateWindowEx(0, L"BUTTON", L"Cancel", WS_CHILD | WS_VISIBLE,
+                200, 390, 120, 30, hwnd, (HMENU)2, NULL, NULL);
+
             return 0;
         }
         case WM_COMMAND:
             if (LOWORD(wParam) == 1) { // Update button
                 EnableWindow(hUpdateButton, FALSE);
-                // Start update thread...
-                return 0;
+                EnableWindow(hCancelButton, FALSE);
+                g_startUpdate = true;
+            } else if (LOWORD(wParam) == 2) { // Cancel button
+                PostQuitMessage(0);
             }
             break;
         case WM_DESTROY:
@@ -43,64 +61,76 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
 void UpdateThread(HWND hwnd) {
     // 1. Check version
-    ReleaseInfo info = UpdateLogic::CheckForUpdates("5.0.0"); // TODO: Load from version.json
+    ReleaseInfo info = UpdateLogic::CheckForUpdates("5.0.0");
+    
     if (!info.found) {
-        SetWindowText(hStatusLabel, L"Application is up to date.");
-        Sleep(2000);
+        if (g_isInteractive) {
+            SetWindowText(hStatusLabel, L"Application is up to date.");
+            Sleep(2000);
+        }
         PostMessage(hwnd, WM_CLOSE, 0, 0);
         return;
     }
 
-    SetWindowText(hStatusLabel, L"New update available!");
+    // Found update
+    if (g_isSilent) {
+        ShowWindow(hwnd, SW_SHOWNORMAL);
+        SetForegroundWindow(hwnd);
+    }
+
+    std::wstring status = L"New version available: " + std::wstring(info.version.begin(), info.version.end());
+    SetWindowText(hStatusLabel, status.c_str());
+    
+    std::wstring changelog = std::wstring(info.changelog.begin(), info.changelog.end());
+    SetWindowText(hChangelogEdit, changelog.c_str());
+    
     EnableWindow(hUpdateButton, TRUE);
 
-    // For now, let's auto-update if hidden or just wait for button?
-    // The user's original C# code seemed to have a form that might have been hidden?
-    // "if (fs::exists(updater)) spawn(updater, L"", true);" -> hidden
-    
-    // If hidden, we might want to just do it in the background if it's non-interactive
-    // But usually an updater should show what it's doing.
-    
-    // Wait for button or just start? The C# code auto-started if I recall correctly.
-    // Let's just start for now to keep it simple.
-    
+    // Wait for user confirmation
+    while (!g_startUpdate) {
+        Sleep(100);
+        // Check if window was closed
+        if (!IsWindow(hwnd)) return;
+    }
+
+    // Proceed with update
     std::string temp_zip = "update.zip";
     SetWindowText(hStatusLabel, L"Downloading update...");
     if (UpdateLogic::DownloadFile(info.download_url, temp_zip, [](float p) {
         SendMessage(hProgressBar, PBM_SETPOS, (WPARAM)(p * 100), 0);
     })) {
         SetWindowText(hStatusLabel, L"Extracting...");
-        UpdateLogic::KillProcess(L"h5t.exe"); // New name for app
-        UpdateLogic::KillProcess(L"Hammer5Tools.exe"); // Kill the launcher too
+        UpdateLogic::KillProcess(L"h5t.exe"); 
+        UpdateLogic::KillProcess(L"Hammer5Tools.exe"); 
         
-        // Extraction path should be root
         wchar_t buffer[MAX_PATH];
         GetModuleFileNameW(NULL, buffer, MAX_PATH);
         std::wstring root = std::filesystem::path(buffer).parent_path().wstring();
-        std::string a_root(root.begin(), root.end()); // Simple conversion
+        std::string a_root(root.begin(), root.end()); 
 
         if (UpdateLogic::ExtractZip(temp_zip, a_root)) {
             SetWindowText(hStatusLabel, L"Update complete! Restarting...");
             DeleteFileA(temp_zip.c_str());
             Sleep(1000);
             
-            // Restart the launcher
             std::wstring launcher_path = root + L"\\Hammer5Tools.exe";
             ShellExecuteW(NULL, L"open", launcher_path.c_str(), NULL, NULL, SW_SHOWNORMAL);
         } else {
             SetWindowText(hStatusLabel, L"Extraction failed.");
+            Sleep(2000);
         }
     } else {
         SetWindowText(hStatusLabel, L"Download failed.");
+        Sleep(2000);
     }
     
-    Sleep(2000);
     PostMessage(hwnd, WM_CLOSE, 0, 0);
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
-    // Check if hidden
-    bool hidden = (nCmdShow == SW_HIDE);
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow) {
+    std::string cmdLine = lpCmdLine;
+    if (cmdLine.find("--silent") != std::string::npos) g_isSilent = true;
+    if (cmdLine.find("--interactive") != std::string::npos) g_isInteractive = true;
 
     INITCOMMONCONTROLSEX icex;
     icex.dwSize = sizeof(icex);
@@ -118,12 +148,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
 
     hWndMain = CreateWindowEx(0, CLASS_NAME, L"Hammer 5 Tools - Updater",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
-        CW_USEDEFAULT, CW_USEDEFAULT, 320, 180,
+        CW_USEDEFAULT, CW_USEDEFAULT, 400, 480,
         NULL, NULL, hInstance, NULL);
 
     if (hWndMain == NULL) return 0;
 
-    if (!hidden) {
+    if (!g_isSilent || g_isInteractive) {
         ShowWindow(hWndMain, nCmdShow);
     }
 
