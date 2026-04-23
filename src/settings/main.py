@@ -8,8 +8,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QFrame, QScrollArea, QFileDialog, QComboBox
 )
 from src.settings.common import *
-from src.common import enable_dark_title_bar, Presets_Path
-from src.updater.check import check_updates
+from src.common import enable_dark_title_bar, Presets_Path, app_dir
 from src.widgets.common import Button  # Using the internal Button class
 from src.styles.common import qt_stylesheet_checkbox, qt_stylesheet_combobox
 from src.widgets import FloatWidget  # Using the internal FloatWidget for float properties
@@ -160,6 +159,9 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.setStyleSheet(qt_stylesheet_checkbox)
         row_app.addWidget(self.checkBox_close_to_tray)
         layout_other.addLayout(row_app)
+        self.checkBox_dev_builds = QCheckBox("Receive Developer Updates", self.frame_other)
+        self.checkBox_dev_builds.setStyleSheet(qt_stylesheet_checkbox)
+        layout_other.addWidget(self.checkBox_dev_builds)
         layout.addWidget(self.frame_other)
         layout.addStretch()
         # Wrap the general tab content in a scroll area
@@ -396,6 +398,7 @@ class PreferencesDialog(QDialog):
         self.launch_addon_after_nosteamlogon_fix.setChecked(get_settings_bool('OTHER', 'launch_addon_after_nosteamlogon_fix'))
         self.checkBox_start_with_system.setChecked(get_settings_bool('APP', 'start_with_system'))
         self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', True))
+        self.checkBox_dev_builds.setChecked(get_settings_bool('APP', 'dev_builds', False))
         self.spe_display_id_with_variable_class.setChecked(get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', False))
         self.spe_export_properties.setChecked(get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True))
         self.action_buttons_panel.version_label.setText(f"Version: {self.app_version}")
@@ -472,6 +475,9 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.toggled.connect(
             lambda: set_settings_bool('APP', 'minimize_to_tray', self.checkBox_close_to_tray.isChecked())
         )
+        self.checkBox_dev_builds.toggled.connect(
+            lambda: set_settings_bool('APP', 'dev_builds', self.checkBox_dev_builds.isChecked())
+        )
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
         )
@@ -546,7 +552,12 @@ class PreferencesDialog(QDialog):
         os.startfile(Presets_Path)
 
     def check_update(self):
-        check_updates("https://github.com/dertwist/Hammer5Tools", self.app_version, False)
+        updater_path = os.path.join(app_dir, "Hammer5ToolsUpdater.exe")
+        if os.path.exists(updater_path):
+            subprocess.Popen([updater_path, "--interactive"])
+        else:
+            from PySide6.QtWidgets import QMessageBox
+            QMessageBox.critical(self, "Updater Not Found", f"Could not find Hammer5ToolsUpdater.exe at {updater_path}")
 
     def start_with_system(self):
         path_to_exe = os.path.join(os.getcwd(), 'hammer5tools.exe')
