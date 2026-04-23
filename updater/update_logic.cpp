@@ -10,13 +10,23 @@
 
 ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
     ReleaseInfo info;
+    
+    // Get dev_builds setting from user/settings.ini
+    wchar_t exePath[MAX_PATH];
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    std::filesystem::path root = std::filesystem::path(exePath).parent_path();
+    std::wstring iniPath = (root / L"user" / L"settings.ini").wstring();
+    
+    bool devBuilds = GetPrivateProfileIntW(L"APP", L"dev_builds", 0, iniPath.c_str()) != 0;
+
     HINTERNET hSession = WinHttpOpen(L"Hammer5ToolsUpdater/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if (!hSession) return info;
 
     HINTERNET hConnect = WinHttpConnect(hSession, L"api.github.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
     if (!hConnect) { WinHttpCloseHandle(hSession); return info; }
 
-    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/repos/dertwist/Hammer5Tools/releases/latest", NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+    // Use /releases instead of /releases/latest to see pre-releases
+    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/repos/dertwist/Hammer5Tools/releases", NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
     if (!hRequest) { WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession); return info; }
 
     if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
@@ -35,21 +45,67 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
                 delete[] pszOutBuffer;
             } while (dwSize > 0);
 
-            // Manual JSON parsing for "tag_name": "v..." and "browser_download_url": "..."
-            size_t tag_pos = response.find("\"tag_name\":");
-            if (tag_pos != std::string::npos) {
-                size_t start = response.find("\"", tag_pos + 11) + 1;
-                size_t end = response.find("\"", start);
-                info.version = response.substr(start, end - start);
+            // Manual JSON array parsing
+            size_t pos = 0;
+            while (true) {
+                size_t start = response.find("{", pos);
+                if (start == std::string::npos) break;
                 
-                if (info.version != current_version) {
-                    size_t asset_pos = response.find("\"browser_download_url\":");
-                    if (asset_pos != std::string::npos) {
-                        size_t d_start = response.find("\"", asset_pos + 23) + 1;
-                        size_t d_end = response.find("\"", d_start);
-                        info.download_url = response.substr(d_start, d_end - d_start);
+                // Find end of this release object
+                size_t end = response.find("},", start);
+                if (end == std::string::npos) end = response.find("}]", start);
+                if (end == std::string::npos) break;
+                
+                std::string releaseJson = response.substr(start, end - start + 1);
+                pos = end + 1;
+                
+                auto getField = [&](const std::string& key) -> std::string {
+                    size_t kPos = releaseJson.find("\"" + key + "\":");
+                    if (kPos == std::string::npos) return "";
+                    size_t vStart = releaseJson.find("\"", kPos + key.length() + 3);
+                    if (vStart == std::string::npos) return "";
+                    size_t vEnd = releaseJson.find("\"", vStart + 1);
+                    if (vEnd == std::string::npos) return "";
+                    return releaseJson.substr(vStart + 1, vEnd - vStart - 1);
+                };
+                
+                bool isPrerelease = releaseJson.find("\"prerelease\":true") != std::string::npos;
+                bool isDraft = releaseJson.find("\"draft\":true") != std::string::npos;
+                
+                if (isDraft) continue;
+                if (isPrerelease && !devBuilds) continue;
+                
+                std::string tag = getField("tag_name");
+                std::string body = getField("body");
+                
+                size_t assetPos = releaseJson.find("\"browser_download_url\":");
+                std::string downloadUrl;
+                if (assetPos != std::string::npos) {
+                    size_t dStart = releaseJson.find("\"", assetPos + 23) + 1;
+                    size_t dEnd = releaseJson.find("\"", dStart);
+                    downloadUrl = releaseJson.substr(dStart, dEnd - dStart);
+                }
+                
+                if (!tag.empty() && !downloadUrl.empty()) {
+                    std::string cleanTag = tag;
+                    if (cleanTag[0] == 'v') cleanTag = cleanTag.substr(1);
+                    std::string cleanCurrent = current_version;
+                    if (cleanCurrent[0] == 'v') cleanCurrent = cleanCurrent.substr(1);
+                    
+                    if (cleanTag != cleanCurrent) {
+                        info.version = tag;
+                        info.download_url = downloadUrl;
+                        
+                        // Simple unescape for \r\n
+                        std::string unescapedBody = body;
+                        size_t rPos;
+                        while ((rPos = unescapedBody.find("\\r\\n")) != std::string::npos) unescapedBody.replace(rPos, 4, "\r\n");
+                        while ((rPos = unescapedBody.find("\\n")) != std::string::npos) unescapedBody.replace(rPos, 2, "\n");
+                        
+                        info.changelog = unescapedBody;
                         info.found = true;
                     }
+                    break;
                 }
             }
         }

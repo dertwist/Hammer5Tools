@@ -50,7 +50,7 @@ from src.editors.hotkey_editor.main import HotkeyEditorMainWindow
 from src.forms.create_addon.main import Create_addon_Dialog
 from src.other.steam_restart import SteamNoLogoFixThreadClass
 from src.other.addon_functions import delete_addon, launch_addon
-from src.updater.check import check_updates
+# from src.updater.check import check_updates
 from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
@@ -184,7 +184,7 @@ class Widget(QMainWindow):
             self.dev_widget = DevWidget(self)
             self.ui.centralwidget.layout().addWidget(self.dev_widget)
 
-        QTimer.singleShot(100, self.deferred_update_check)
+        # QTimer.singleShot(100, self.deferred_update_check)
         self._restore_user_prefs()
         if get_settings_bool('APP', 'first_launch'):
             self.open_about()
@@ -205,11 +205,11 @@ class Widget(QMainWindow):
                 dock.show()
         validate_addon_structure()
 
-    def deferred_update_check(self):
-        try:
-            check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
-        except Exception as e:
-            print(f"Error checking updates: {e}")
+    # def deferred_update_check(self):
+    #     try:
+    #         check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
+    #     except Exception as e:
+    #         print(f"Error checking updates: {e}")
 
     @exception_handler
     def update_title(self, status=None, file_path=None, text=None):

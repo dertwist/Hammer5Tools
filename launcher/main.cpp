@@ -146,7 +146,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     fs::path updater = base / "Hammer5ToolsUpdater.exe";
     if (fs::exists(updater)) {
-        spawn(updater, L"", true); // Run updater hidden
+        spawn(updater, L"--silent", true); // Run updater hidden
     }
 
     LocalFree(argv);
