@@ -7,6 +7,7 @@ struct ReleaseInfo {
     bool found = false;
     std::string version;
     std::string download_url;
+    std::string changelog;
 };
 
 class UpdateLogic {
