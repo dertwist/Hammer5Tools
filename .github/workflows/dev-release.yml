@@ -46,7 +46,7 @@ jobs:
           cmake --build build/updater
 
       - name: Build Python App
-        run: python makefile.py --build-app
+        run: python makefile.py --build-app --channel dev
 
       - name: Copy launcher and updater into dist folder
         run: |
@@ -70,4 +70,6 @@ jobs:
           body: |
             Automated dev build from commit ${{ github.sha }} on branch `${{ github.ref_name }}`.
           prerelease: true
-          files: dist/hammer5tools.zip
+          files: |
+            dist/hammer5tools.zip
+            dist/version.txt
