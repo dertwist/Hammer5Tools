@@ -558,13 +558,6 @@ class Explorer(QMainWindow):
             menu.addAction(quick_config_action)
             menu.addSeparator()
 
-        if file_extension in model_extensions:
-            menu.addSeparator()
-            quick_vmdl_action = QAction("Quick VMDL File", self)
-            quick_vmdl_action.setIcon(QIcon(":/icons/edit_note_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-            quick_vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
-            menu.addAction(quick_vmdl_action)
-            menu.addSeparator()
         if file_extension == "hbat":
             menu.addSeparator()
             quick_process_action = QAction("Quick Process", self)

@@ -39,38 +39,78 @@ void SetRegistryKey(HKEY hKeyRoot, const std::wstring& subKey, const std::wstrin
     }
 }
 
+void UnregisterAssociations() {
+    // Clean up old/stale registry entries
+    RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMAT");
+    RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMAT");
+    RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMDL");
+    RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMDL");
+}
+
 void RegisterAssociations(const std::wstring& exePath) {
+    UnregisterAssociations();
+
     std::wstring openCmd = L"\"" + exePath + L"\" \"%1\"";
-    std::wstring iconCmd = L"\"" + exePath + L"\",0";
-    std::wstring smartPropIconCmd = L"\"" + exePath + L"\",1";
+    std::wstring iconPath = exePath;
+    
+    // Icon indices (0-based) matching resources.rc
+    std::wstring appIcon = iconPath + L",0";
+    std::wstring vmdlIcon = iconPath + L",1";
+    std::wstring batchIcon = iconPath + L",2";
+    std::wstring processIcon = iconPath + L",3";
 
     // .vsmart
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\.vsmart", L"", L"Hammer5Tools.SmartProp");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp", L"", L"SmartProp File");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\DefaultIcon", L"", smartPropIconCmd);
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\DefaultIcon", L"", vmdlIcon);
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\shell\\open\\command", L"", openCmd);
 
     // .vsndevts
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\.vsndevts", L"", L"Hammer5Tools.SoundEvent");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent", L"", L"SoundEvent File");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent\\DefaultIcon", L"", iconCmd);
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent\\DefaultIcon", L"", appIcon);
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent\\shell\\open\\command", L"", openCmd);
 
-    // Directory context menu (right click on folder)
-    std::wstring vmdlCmd = L"\"" + exePath + L"\" --create-vmdl \"%V\"";
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMDL", L"", L"Create VMDL");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMDL\\command", L"", vmdlCmd);
+    // Directory context menu entries
+    std::wstring vmdlDirCmd = L"\"" + exePath + L"\" --quick-vmdl-dir \"%V\"";
+    std::wstring batchCmd = L"\"" + exePath + L"\" --quick-batch \"%V\"";
+    std::wstring processDirCmd = L"\"" + exePath + L"\" --quick-process \"%V\"";
 
-    std::wstring vmatCmd = L"\"" + exePath + L"\" --create-vmat \"%V\"";
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMAT", L"", L"Create VMAT");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMAT\\command", L"", vmatCmd);
+    auto registerFolderAction = [&](const std::wstring& root) {
+        // Quick Create VMDL
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\Hammer5Tools_QuickVMDL", L"", L"Quick Create VMDL");
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\Hammer5Tools_QuickVMDL", L"Icon", vmdlIcon);
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\Hammer5Tools_QuickVMDL\\command", L"", vmdlDirCmd);
 
-    // Directory background context menu (right click inside folder)
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMDL", L"", L"Create VMDL");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMDL\\command", L"", vmdlCmd);
+        // Quick Create Batch
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\Hammer5Tools_QuickBatch", L"", L"Quick Create Batch");
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\Hammer5Tools_QuickBatch", L"Icon", batchIcon);
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\Hammer5Tools_QuickBatch\\command", L"", batchCmd);
 
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMAT", L"", L"Create VMAT");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMAT\\command", L"", vmatCmd);
+        // Quick Process
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\Hammer5Tools_QuickProcess", L"", L"Quick Process (compile)");
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\Hammer5Tools_QuickProcess", L"Icon", processIcon);
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\Hammer5Tools_QuickProcess\\command", L"", processDirCmd);
+    };
+
+    registerFolderAction(L"Software\\Classes\\Directory\\shell");
+    registerFolderAction(L"Software\\Classes\\Directory\\Background\\shell");
+
+    // File context menu entries (specific extensions for VMDL)
+    std::wstring quickVmdlCmd = L"\"" + exePath + L"\" --quick-vmdl \"%1\"";
+    std::vector<std::wstring> meshExts = { L".fbx", L".obj", L".glb", L".gltf" };
+    for (const auto& ext : meshExts) {
+        std::wstring root = L"Software\\Classes\\SystemFileAssociations\\" + ext + L"\\shell\\Hammer5Tools_QuickVMDL";
+        SetRegistryKey(HKEY_CURRENT_USER, root, L"", L"Quick Create VMDL");
+        SetRegistryKey(HKEY_CURRENT_USER, root, L"Icon", vmdlIcon);
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\command", L"", quickVmdlCmd);
+    }
+
+    // Quick Process file (any file)
+    std::wstring processFileCmd = L"\"" + exePath + L"\" --quick-process-file \"%1\"";
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\*\\shell\\Hammer5Tools_QuickProcess", L"", L"Quick Process file");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\*\\shell\\Hammer5Tools_QuickProcess", L"Icon", processIcon);
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\*\\shell\\Hammer5Tools_QuickProcess\\command", L"", processFileCmd);
 
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 }
@@ -98,8 +138,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         if (arg1 == L"--create-vmdl" && argc > 2) {
             cmd = "create_vmdl";
             file_path = utf8_encode(argv[2]);
-        } else if (arg1 == L"--create-vmat" && argc > 2) {
-            cmd = "create_vmat";
+        } else if (arg1 == L"--quick-vmdl" && argc > 2) {
+            cmd = "quick_vmdl";
+            file_path = utf8_encode(argv[2]);
+        } else if (arg1 == L"--quick-vmdl-dir" && argc > 2) {
+            cmd = "quick_vmdl";
+            file_path = utf8_encode(argv[2]);
+        } else if (arg1 == L"--quick-batch" && argc > 2) {
+            cmd = "quick_batch";
+            file_path = utf8_encode(argv[2]);
+        } else if (arg1 == L"--quick-process" && argc > 2) {
+            cmd = "quick_process";
+            file_path = utf8_encode(argv[2]);
+        } else if (arg1 == L"--quick-process-file" && argc > 2) {
+            cmd = "quick_process_file";
             file_path = utf8_encode(argv[2]);
         } else if (arg1[0] != L'-') {
             cmd = "open_file";
@@ -111,8 +163,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
     }
 
+    // Extract addon name from path like: ...\csgo_addons\<addon_name>\...
+    std::string addon_hint;
+    std::string marker = "csgo_addons\\\\"; // Escaped backslash for UTF-8 comparison if needed, but file_path uses \\ from utf8_encode(wstring)
+    // Wait, utf8_encode just converts wstring to string. On Windows, wstring uses \.
+    std::string marker_alt = "csgo_addons\\";
+    auto pos = file_path.find(marker_alt);
+    if (pos != std::string::npos) {
+        auto start = pos + marker_alt.size();
+        auto end = file_path.find('\\', start);
+        if (end != std::string::npos)
+            addon_hint = file_path.substr(start, end - start);
+    }
+
     // Build JSON manually
     std::string msg = "{\"command\":\"" + cmd + "\"";
+    if (!addon_hint.empty()) {
+        msg += ",\"addon_hint\":\"" + addon_hint + "\"";
+    }
     if (!file_path.empty()) {
         // Simple JSON escaping for backslashes
         std::string escaped_path;
