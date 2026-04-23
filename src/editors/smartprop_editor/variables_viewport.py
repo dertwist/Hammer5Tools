@@ -267,7 +267,7 @@ class SmartPropEditorVariableViewport(QWidget):
 
     def update_indentation(self):
         """Update indentation and visibility based on category boundaries and search."""
-        layout = self.ui.variables_scrollArea.layout()
+        layout = self.ui.variables_scrollArea
         if not layout: return
         
         indent_level = 0
