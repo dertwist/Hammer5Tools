@@ -46,7 +46,7 @@ jobs:
           cmake --build build/updater
 
       - name: Build Python App
-        run: python makefile.py --build-app --channel dev
+        run: python makefile.py --build-app --dev
 
       - name: Copy launcher and updater into dist folder
         run: |
