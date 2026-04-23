@@ -1,12 +1,16 @@
-#include "update_logic.h"
-#include <commctrl.h>
-#include <filesystem>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <shellapi.h>
+#include <commctrl.h>
 #include <string>
 #include <thread>
-#include <windows.h>
+#include <filesystem>
+#include <fstream>
+#include <atomic>
+#include "update_logic.h"
 
 #pragma comment(lib, "comctl32.lib")
+#pragma comment(lib, "shell32.lib")
 
 // Window controls
 HWND hWndMain;
