@@ -477,57 +477,69 @@ class Explorer(QMainWindow):
         menu.exec_(self.tree.viewport().mapToGlobal(position))
 
     def add_folder_actions(self, menu, index):
-        open_folder_action = QAction("Open Folder in Explorer", self)
+        from src.forms.quick_create.main import QuickCreateDialog
+        from src.common import compile as run_compile
+        folder_path = self.model.filePath(index)
+
+        # --- Navigation ---
+        menu.addSection("Folder")
+        open_folder_action = QAction("Open in Explorer", self)
         open_folder_action.setIcon(QIcon(":/icons/folder_open.svg"))
         open_folder_action.triggered.connect(lambda: self.open_folder_in_explorer(index))
         menu.addAction(open_folder_action)
-        delete_folder_action = QAction("Delete Folder", self)
-        delete_folder_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-        delete_folder_action.triggered.connect(lambda: self.delete_item(index))
-        menu.addAction(delete_folder_action)
+
+        # --- Create ---
+        menu.addSection("Create")
         new_folder_action = QAction("New Folder", self)
         new_folder_action.setIcon(QIcon(":/icons/create_new_folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         new_folder_action.triggered.connect(lambda: self.create_folder(index))
         menu.addAction(new_folder_action)
+
+        quick_batch_action = QAction("Quick AssetGroup file", self)
+        quick_batch_action.setIcon(QIcon(":/icons/assettypes/vcompmat_sm.png"))
+        quick_batch_action.triggered.connect(lambda: QuickCreateDialog(folder_path, "hbat", self).exec_())
+        menu.addAction(quick_batch_action)
+
+        # --- Process ---
+        menu.addSection("Process")
+        quick_process_action = QAction("Quick Process AssetGroup folder", self)
+        quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        quick_process_action.triggered.connect(lambda: (run_compile(os.path.join(folder_path, "*.vmdl")), run_compile(os.path.join(folder_path, "*.vmat"))))
+        menu.addAction(quick_process_action)
+
+        # --- Organize ---
+        menu.addSection("Organize")
         paste_action = QAction("Paste File", self)
         paste_action.setIcon(QIcon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         paste_action.triggered.connect(lambda: self.paste_file(index))
         menu.addAction(paste_action)
 
-        menu.addSeparator()
         asset_manager_action = QAction("Move Assets", self)
         asset_manager_action.setIcon(QIcon(":/icons/folder_open.svg"))
         asset_manager_action.triggered.connect(lambda: self.open_asset_manager(index))
         menu.addAction(asset_manager_action)
 
+        delete_folder_action = QAction("Delete Folder", self)
+        delete_folder_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        delete_folder_action.triggered.connect(lambda: self.delete_item(index))
+        menu.addAction(delete_folder_action)
+
     def add_file_actions(self, menu, index):
-        file_path = self.model.filePath(index)
-        file_extension = os.path.splitext(file_path)[1]
-        
-        # Asset operations
-        menu.addSeparator()
-        asset_manager_action = QAction("Move Assets", self)
-        asset_manager_action.setIcon(QIcon(":/icons/folder_open.svg"))
-        asset_manager_action.triggered.connect(lambda: self.open_asset_manager(index))
-        menu.addAction(asset_manager_action)
-        
-        export_action = QAction("Export Asset", self)
-        export_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-        export_action.triggered.connect(lambda: self.open_asset_exporter(index))
-        menu.addAction(export_action)
-        menu.addSeparator()
+        from src.common import compile as run_compile
         file_path = self.model.filePath(index)
         file_extension = file_path.split('.')[-1].lower()
         image_extensions = ["png", "tga", "jpg", "jpeg", "tif", "tiff"]
 
+        # --- Open ---
+        menu.addSection("Open")
         if file_extension == "hbat":
-            open_config_action = QAction("Open Config", self)
+            open_config_action = QAction("Open AssetGroup Config", self)
             open_config_action.setIcon(QIcon(file_icons['.hbat']))
             open_config_action.triggered.connect(lambda: self.open_config(file_path))
             menu.addAction(open_config_action)
 
         if file_extension == "vsmart":
-            open_vsmart_action = QAction("Open Vsmart", self)
+            open_vsmart_action = QAction("Open SmartProp", self)
             open_vsmart_action.setIcon(QIcon(file_icons['.vsmart']))
             open_vsmart_action.triggered.connect(lambda: self.open_vsmart(file_path))
             menu.addAction(open_vsmart_action)
@@ -538,7 +550,6 @@ class Explorer(QMainWindow):
             open_action = QAction(f"Open with {app_name.replace('.exe', '')}", self)
         else:
             open_action = QAction("Open File", self)
-
         open_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         open_action.triggered.connect(lambda: self.open_file(index))
         menu.addAction(open_action)
@@ -550,53 +561,92 @@ class Explorer(QMainWindow):
             open_notepad_action.triggered.connect(lambda checked=False, p=file_path: subprocess.Popen(['notepad.exe', p]))
             menu.addAction(open_notepad_action)
 
-        if file_extension == "vmdl":
-            menu.addSeparator()
-            quick_config_action = QAction("Quick Batch File", self)
-            quick_config_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-            quick_config_action.triggered.connect(lambda: QuickConfigFile(file_path))
-            menu.addAction(quick_config_action)
-            menu.addSeparator()
-
-        if file_extension == "hbat":
-            menu.addSeparator()
-            quick_process_action = QAction("Quick Process", self)
-            quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-            quick_process_action.triggered.connect(lambda: QuickProcess(filepath=file_path).process())
-            menu.addAction(quick_process_action)
-            menu.addSeparator()
-
-        # Fix PBR Range for images
-        if file_extension in image_extensions:
-            fix_pbr_action = QAction("Fix PBR Range", self)
-            fix_pbr_action.setIcon(QIcon(":/icons/contrast_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png"))
-            fix_pbr_action.triggered.connect(lambda: FixPBRRange(file_path))
-            menu.addAction(fix_pbr_action)
-            menu.addSeparator()
-
         open_path_action = QAction("Open File Folder", self)
         open_path_action.setIcon(QIcon(":/icons/folder_open.svg"))
         open_path_action.triggered.connect(lambda: self.open_path_file(index))
         menu.addAction(open_path_action)
-        menu.addSeparator()
-        delete_action = QAction("Delete File", self)
-        delete_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-        delete_action.triggered.connect(lambda: self.delete_item(index))
-        menu.addAction(delete_action)
+
+        # --- Quick Actions (type-specific, Source 2 compiled assets only) ---
+        has_quick = (
+            file_extension in model_extensions or
+            file_extension in ("vmdl", "vmat", "hbat") or
+            file_extension in smartprop_extensions or
+            file_extension == "vsndevts"
+        )
+        if has_quick:
+            menu.addSection("Quick Actions")
+
+            if file_extension in model_extensions:
+                # Mesh files: only useful action is generating a .vmdl stub
+                quick_vmdl_action = QAction("Quick create vmdl", self)
+                quick_vmdl_action.setIcon(QIcon(":/icons/assettypes/model_sm.png"))
+                quick_vmdl_action.triggered.connect(lambda: QuickVmdlFile(file_path))
+                menu.addAction(quick_vmdl_action)
+
+            if file_extension == "vmdl":
+                quick_config_action = QAction("Quick AssetGroup file", self)
+                quick_config_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                quick_config_action.triggered.connect(lambda: QuickConfigFile(file_path))
+                menu.addAction(quick_config_action)
+
+            if file_extension in ("vmdl", "vmat") or file_extension in smartprop_extensions or file_extension == "vsndevts":
+                quick_process_action = QAction("Quick Process file", self)
+                quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                quick_process_action.triggered.connect(lambda: run_compile(file_path))
+                menu.addAction(quick_process_action)
+
+            if file_extension == "hbat":
+                quick_process_action = QAction("Quick Process AssetGroup", self)
+                quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                quick_process_action.triggered.connect(lambda: QuickProcess(filepath=file_path).process())
+                menu.addAction(quick_process_action)
+
+        # Fix PBR Range for images (standalone utility, not a compile action)
+        if file_extension in image_extensions:
+            menu.addSection("Image Tools")
+            fix_pbr_action = QAction("Fix PBR Range", self)
+            fix_pbr_action.setIcon(QIcon(":/icons/contrast_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png"))
+            fix_pbr_action.triggered.connect(lambda: FixPBRRange(file_path))
+            menu.addAction(fix_pbr_action)
+
+        # --- Organize ---
+        menu.addSection("Organize")
+        asset_manager_action = QAction("Move Assets", self)
+        asset_manager_action.setIcon(QIcon(":/icons/folder_open.svg"))
+        asset_manager_action.triggered.connect(lambda: self.open_asset_manager(index))
+        menu.addAction(asset_manager_action)
+
+        export_action = QAction("Export Asset", self)
+        export_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        export_action.triggered.connect(lambda: self.open_asset_exporter(index))
+        menu.addAction(export_action)
+
         duplicate_action = QAction("Duplicate File", self)
         duplicate_action.setIcon(QIcon(":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         duplicate_action.triggered.connect(lambda: self.duplicate_file(index))
         menu.addAction(duplicate_action)
+
         copy_action = QAction("Copy File", self)
         copy_action.setIcon(QIcon(":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         copy_action.triggered.connect(lambda: self.copy_file(index))
         menu.addAction(copy_action)
+
+        paste_action = QAction("Paste File", self)
+        paste_action.setIcon(QIcon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        paste_action.triggered.connect(lambda: self.paste_file(self.model.index(os.path.dirname(file_path))))
+        menu.addAction(paste_action)
+
+        delete_action = QAction("Delete File", self)
+        delete_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        delete_action.triggered.connect(lambda: self.delete_item(index))
+        menu.addAction(delete_action)
+
+        # --- Paths ---
+        menu.addSection("Path")
         copy_relative_path_action = QAction("Copy Relative Path", self)
         copy_relative_path_action.setIcon(QIcon(":/icons/attachment.png"))
         copy_relative_path_action.triggered.connect(lambda: self.copy_path(index, True))
         menu.addAction(copy_relative_path_action)
-
-        menu.addSeparator()
 
         copy_path_action = QAction("Copy Path", self)
         copy_path_action.setIcon(QIcon(":/icons/attachment.png"))
