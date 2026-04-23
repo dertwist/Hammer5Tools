@@ -16,7 +16,7 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
     wchar_t exePath[MAX_PATH];
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
     std::filesystem::path root = std::filesystem::path(exePath).parent_path();
-    std::wstring iniPath = (root / L"user" / L"settings.ini").wstring();
+    std::wstring iniPath = (root / L"settings.ini").wstring();
     
     bool devBuilds = GetPrivateProfileIntW(L"APP", L"dev_builds", 0, iniPath.c_str()) != 0;
 
