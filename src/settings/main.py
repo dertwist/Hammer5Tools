@@ -55,7 +55,6 @@ class PreferencesDialog(QDialog):
         self.create_smartprop_tab()
         self.create_assetgroupmaker_tab()
         self.create_sound_event_editor_tab()
-        self.create_ue2source_tab()
         self.create_bottom_panel()
         self.populate_preferences()
         self.connect_signals()
@@ -120,41 +119,12 @@ class PreferencesDialog(QDialog):
         layout.addWidget(self.frame_cs2_path)
         # Add divider after Paths Subcategory
         layout.addWidget(self.create_divider(general_tab_content))
-        # ------------- Discord Status Subcategory -------------
-        label_discord_header = QLabel("Discord Status", general_tab_content)
-        layout.addWidget(label_discord_header)
-        self.frame_discord = QFrame(general_tab_content)
-        layout_discord = QVBoxLayout(self.frame_discord)
-        row_status = QHBoxLayout()
-        self.checkBox_show_in_hammer_discord_status = QCheckBox("Show status", self.frame_discord)
-        self.checkBox_show_in_hammer_discord_status.setStyleSheet(qt_stylesheet_checkbox)
-        row_status.addWidget(self.checkBox_show_in_hammer_discord_status)
-        self.checkBox_hide_project_name_discord_status = QCheckBox("Hide project name", self.frame_discord)
-        self.checkBox_hide_project_name_discord_status.setStyleSheet(qt_stylesheet_checkbox)
-        row_status.addWidget(self.checkBox_hide_project_name_discord_status)
-        layout_discord.addLayout(row_status)
-        row_custom = QHBoxLayout()
-        custom_label = QLabel("Custom status:", self.frame_discord)
-        custom_label.setMinimumWidth(130)
-        row_custom.addWidget(custom_label)
-        self.editline_custom_discord_status = QLineEdit(self.frame_discord)
-        row_custom.addWidget(self.editline_custom_discord_status)
-        layout_discord.addLayout(row_custom)
-        layout.addWidget(self.frame_discord)
-        # Add divider after Discord Status Subcategory
-        layout.addWidget(self.create_divider(general_tab_content))
         # ------------- Other Subcategory -------------
         label_other_header = QLabel("Other", general_tab_content)
         layout.addWidget(label_other_header)
         self.frame_other = QFrame(general_tab_content)
         layout_other = QVBoxLayout(self.frame_other)
-        self.launch_addon_after_nosteamlogon_fix = QCheckBox("Start Hammer editor after Steam restarting", self.frame_other)
-        self.launch_addon_after_nosteamlogon_fix.setStyleSheet(qt_stylesheet_checkbox)
-        layout_other.addWidget(self.launch_addon_after_nosteamlogon_fix)
         row_app = QHBoxLayout()
-        self.checkBox_start_with_system = QCheckBox("Start with system", self.frame_other)
-        self.checkBox_start_with_system.setStyleSheet(qt_stylesheet_checkbox)
-        row_app.addWidget(self.checkBox_start_with_system)
         self.checkBox_close_to_tray = QCheckBox("Minimize on Close", self.frame_other)
         self.checkBox_close_to_tray.setStyleSheet(qt_stylesheet_checkbox)
         row_app.addWidget(self.checkBox_close_to_tray)
@@ -350,29 +320,6 @@ class PreferencesDialog(QDialog):
         sound_editor_scroll = self.wrap_in_scroll_area(sound_editor_content)
         self.tabWidget.addTab(sound_editor_scroll, "SoundEventEditor")
 
-    def create_ue2source_tab(self):
-        ue2source_content = QWidget()
-        layout = QVBoxLayout(ue2source_content)
-        layout.setContentsMargins(10, 10, 10, 10)
-        
-        label_header = QLabel("Material Importer (UE -> Source 2)", ue2source_content)
-        layout.addWidget(label_header)
-        
-        frame = QFrame(ue2source_content)
-        layout_frame = QHBoxLayout(frame)
-        
-        label_subfolder = QLabel("Default materials subfolder (inside materials/):", ue2source_content)
-        label_subfolder.setMinimumWidth(200)
-        layout_frame.addWidget(label_subfolder)
-        
-        self.ue2source_subfolder_edit = QLineEdit(frame)
-        layout_frame.addWidget(self.ue2source_subfolder_edit)
-        
-        layout.addWidget(frame)
-        layout.addStretch()
-        
-        ue2source_scroll = self.wrap_in_scroll_area(ue2source_content)
-        self.tabWidget.addTab(ue2source_scroll, "Material Importer")
 
     def create_bottom_panel(self):
         # Use the new ActionButtonsPanel for the bottom buttons
@@ -392,12 +339,7 @@ class PreferencesDialog(QDialog):
                 self.preferences_lineedit_cs2_path.setPlaceholderText(f"Auto-detected: {current_cs2_path}")
             else:
                 self.preferences_lineedit_cs2_path.setPlaceholderText("CS2 not found - set manually")
-        self.checkBox_show_in_hammer_discord_status.setChecked(get_settings_bool('DISCORD_STATUS', 'show_status'))
-        self.checkBox_hide_project_name_discord_status.setChecked(get_settings_bool('DISCORD_STATUS', 'show_project_name'))
-        self.editline_custom_discord_status.setText(get_settings_value('DISCORD_STATUS', 'custom_status'))
-        self.launch_addon_after_nosteamlogon_fix.setChecked(get_settings_bool('OTHER', 'launch_addon_after_nosteamlogon_fix'))
-        self.checkBox_start_with_system.setChecked(get_settings_bool('APP', 'start_with_system'))
-        self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', True))
+        self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', False))
         self.checkBox_dev_builds.setChecked(get_settings_bool('APP', 'dev_builds', False))
         self.spe_display_id_with_variable_class.setChecked(get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', False))
         self.spe_export_properties.setChecked(get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True))
@@ -436,8 +378,6 @@ class PreferencesDialog(QDialog):
         except ValueError:
             trans_win = 50
         self.spe_transparency_window.set_value(trans_win)
-        # Populate UE2Source preferences
-        self.ue2source_subfolder_edit.setText(get_settings_value('UE2Source', 'default_subfolder') or get_addon_name())
 
     def update_default_file_setting(self):
         # Collect current settings from Default File subcategory fields (removed folder options)
@@ -459,19 +399,6 @@ class PreferencesDialog(QDialog):
             lambda: set_manual_cs2_path(self.preferences_lineedit_cs2_path.text())
         )
         self.browse_cs2_button.clicked.connect(self.browse_cs2_path)
-        self.checkBox_show_in_hammer_discord_status.toggled.connect(
-            lambda: set_settings_bool('DISCORD_STATUS', 'show_status', self.checkBox_show_in_hammer_discord_status.isChecked())
-        )
-        self.checkBox_hide_project_name_discord_status.toggled.connect(
-            lambda: set_settings_bool('DISCORD_STATUS', 'show_project_name', self.checkBox_hide_project_name_discord_status.isChecked())
-        )
-        self.editline_custom_discord_status.textChanged.connect(
-            lambda: set_settings_value('DISCORD_STATUS', 'custom_status', self.editline_custom_discord_status.text())
-        )
-        self.launch_addon_after_nosteamlogon_fix.toggled.connect(
-            lambda: set_settings_bool('OTHER', 'launch_addon_after_nosteamlogon_fix', self.launch_addon_after_nosteamlogon_fix.isChecked())
-        )
-        self.checkBox_start_with_system.toggled.connect(self.start_with_system)
         self.checkBox_close_to_tray.toggled.connect(
             lambda: set_settings_bool('APP', 'minimize_to_tray', self.checkBox_close_to_tray.isChecked())
         )
@@ -512,9 +439,6 @@ class PreferencesDialog(QDialog):
         )
         self.spe_transparency_window.edited.connect(
             lambda val: set_settings_value('SmartPropEditor', 'transparency_window', str(val))
-        )
-        self.ue2source_subfolder_edit.textChanged.connect(
-            lambda: set_settings_value('UE2Source', 'default_subfolder', self.ue2source_subfolder_edit.text())
         )
 
     def browse_archive(self):
@@ -558,32 +482,6 @@ class PreferencesDialog(QDialog):
         else:
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Updater Not Found", f"Could not find Hammer5ToolsUpdater.exe at {updater_path}")
-
-    def start_with_system(self):
-        path_to_exe = os.path.join(os.getcwd(), 'hammer5tools.exe')
-        key = r"Software\Microsoft\Windows\CurrentVersion\Run"
-        app_name = "Hammer5Tools"
-        if self.checkBox_start_with_system.isChecked():
-            if os.path.exists(path_to_exe):
-                try:
-                    import winreg as reg
-                    with reg.OpenKey(reg.HKEY_CURRENT_USER, key, 0, reg.KEY_SET_VALUE) as reg_key:
-                        reg.SetValueEx(reg_key, app_name, 0, reg.REG_SZ, path_to_exe)
-                    print(f"Successfully added {path_to_exe} to startup")
-                except Exception as e:
-                    print(f"Failed to add {path_to_exe} to startup: {e}")
-            else:
-                print("Executable not found at the specified path")
-        else:
-            try:
-                import winreg as reg
-                with reg.OpenKey(reg.HKEY_CURRENT_USER, key, 0, reg.KEY_SET_VALUE | reg.KEY_WRITE) as reg_key:
-                    reg.DeleteValue(reg_key, app_name)
-                print(f"Successfully removed {app_name} from startup")
-            except FileNotFoundError:
-                print(f"{app_name} not found in startup")
-            except Exception as e:
-                print(f"Failed to remove {app_name} from startup: {e}")
 
 
 if __name__ == "__main__":

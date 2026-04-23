@@ -33,13 +33,5 @@ class SteamNoLogoFixThreadClass(QThread):
         while not self.is_steam_running():
             time.sleep(1)  # Sleep for a short period before checking again
 
-        # Launch the addon
-        try:
-            launch_addon_after_nosteamlogon_fix = get_settings_bool('OTHER', 'launch_addon_after_nosteamlogon_fix')
-            print(launch_addon_after_nosteamlogon_fix)
-            if launch_addon_after_nosteamlogon_fix:
-                launch_addon()
-        except:
-            pass
     def stop(self):
         self.is_running = False
