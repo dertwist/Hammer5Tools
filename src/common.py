@@ -255,3 +255,7 @@ except ImportError:
     def fast_deepcopy(obj):
         """Fallback deep-copy when orjson is not installed."""
         return copy.deepcopy(obj)
+
+def get_cs2_path():
+    from src.settings.common import get_cs2_path as _get_cs2_path
+    return _get_cs2_path()
