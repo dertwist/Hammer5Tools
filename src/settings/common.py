@@ -49,17 +49,13 @@ def default_settings():
     if not os.path.exists(settings.fileName()):
         desktop_user_path = os.path.join(os.path.expanduser("~"), "Desktop")
         set_settings_value('PATHS', 'archive', desktop_user_path)
-        set_settings_value('DISCORD_STATUS', 'custom_status', 'Doing stuff')
-        set_settings_value('DISCORD_STATUS', 'show_status', True)
-        set_settings_value('DISCORD_STATUS', 'show_project_name', False)
         set_settings_value('LAUNCH', 'ncm_mode', False)
         set_settings_value('AssetGroupMaker', 'monitor_folders', 'models, materials, smartprops')
         set_settings_bool('SoundEventEditor', 'play_on_click', True)
         set_settings_bool('LAUNCH', 'ncm_mode_setup', False)
         set_settings_bool('APP', 'minimize_message_shown', True)
-        set_settings_bool('APP', 'start_with_system', False)
         set_settings_bool('APP', 'first_launch', True)
-        set_settings_bool('APP', 'minimize_to_tray', True)
+        set_settings_bool('APP', 'minimize_to_tray', False)
         settings.sync()
 
 default_settings()
