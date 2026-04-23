@@ -851,6 +851,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
     parser.add_argument('--console', action='store_true', help='Enable console output for debug purposes')
+    parser.add_argument('--create-vmdl', help='Create VMDL in folder')
+    parser.add_argument('--quick-vmdl', help='Quick create VMDL from mesh')
+    parser.add_argument('--quick-vmdl-dir', help='Quick create VMDL in folder')
+    parser.add_argument('--quick-batch', help='Quick create batch in folder')
+    parser.add_argument('--quick-process', help='Quick process folder')
+    parser.add_argument('--quick-process-file', help='Quick process specific file')
     parser.add_argument('file', nargs='?', help='File to open (.vsmart, .vdata, etc.)')
     args, unknown = parser.parse_known_args()
 
@@ -863,7 +869,23 @@ if __name__ == "__main__":
     existing_socket.connectToServer(INSTANCE_KEY)
     if existing_socket.waitForConnected(500):
         # Another instance is already running
-        if args.file:
+        if args.create_vmdl:
+            message = IPCMessage.create_quick_action(IPCCommand.CREATE_VMDL, os.path.abspath(args.create_vmdl))
+            existing_socket.write(message.encode('utf-8'))
+        elif args.quick_vmdl or args.quick_vmdl_dir:
+            path = args.quick_vmdl or args.quick_vmdl_dir
+            message = IPCMessage.create_quick_action(IPCCommand.QUICK_VMDL, os.path.abspath(path))
+            existing_socket.write(message.encode('utf-8'))
+        elif args.quick_batch:
+            message = IPCMessage.create_quick_action(IPCCommand.QUICK_BATCH, os.path.abspath(args.quick_batch))
+            existing_socket.write(message.encode('utf-8'))
+        elif args.quick_process:
+            message = IPCMessage.create_quick_action(IPCCommand.QUICK_PROCESS, os.path.abspath(args.quick_process))
+            existing_socket.write(message.encode('utf-8'))
+        elif args.quick_process_file:
+            message = IPCMessage.create_quick_action(IPCCommand.QUICK_PROCESS_FILE, os.path.abspath(args.quick_process_file))
+            existing_socket.write(message.encode('utf-8'))
+        elif args.file:
             # Send file open command
             file_path = os.path.abspath(args.file)
             message = IPCMessage.create_open_file(file_path)
@@ -886,13 +908,26 @@ if __name__ == "__main__":
     widget.show()
     instance_server = start_instance_server(widget)
 
-    # Handle initial file argument for first instance
-    if args.file:
-        file_path = os.path.abspath(args.file)
-        extension = os.path.splitext(file_path)[1].lower()
-        
-        if extension in ('.vsmart', '.vdata'):
-            # Small delay to ensure widget is fully initialized
-            QTimer.singleShot(200, lambda: widget.open_file_in_smartprop(file_path))
+    # Handle initial arguments for first instance
+    def handle_initial_args():
+        if args.create_vmdl:
+            widget.open_quick_create_dialog(os.path.abspath(args.create_vmdl), "vmdl")
+        elif args.quick_vmdl or args.quick_vmdl_dir:
+            path = args.quick_vmdl or args.quick_vmdl_dir
+            widget.handle_quick_vmdl(os.path.abspath(path))
+        elif args.quick_batch:
+            widget.handle_quick_batch(os.path.abspath(args.quick_batch))
+        elif args.quick_process:
+            widget.handle_quick_process(os.path.abspath(args.quick_process))
+        elif args.quick_process_file:
+            widget.handle_quick_process_file(os.path.abspath(args.quick_process_file))
+        elif args.file:
+            file_path = os.path.abspath(args.file)
+            extension = os.path.splitext(file_path)[1].lower()
+            if extension in ('.vsmart', '.vdata'):
+                widget.open_file_in_smartprop(file_path)
+
+    # Small delay to ensure widget is fully initialized
+    QTimer.singleShot(200, handle_initial_args)
 
     sys.exit(app.exec())
