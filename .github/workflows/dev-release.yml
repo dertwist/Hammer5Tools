@@ -25,6 +25,16 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
+      - name: Cache PyInstaller build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/
+            ~\AppData\Roaming\pyinstaller
+          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('**/*.py', 'requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pyinstaller-
+
       - name: Set up MinGW
         uses: egor-tensin/setup-mingw@v2
         with:
