@@ -15,13 +15,27 @@ except Exception as _e:
 
 class QuickVmdlFile():
     def __init__(self, filepath):
-        model_path = os.path.relpath(filepath, get_addon_dir())
-        model_path = model_path.replace(os.path.sep, '/')
+        try:
+            rel_mesh = os.path.relpath(filepath, get_addon_dir()).replace(os.path.sep, '/')
+        except (ValueError, Exception):
+            rel_mesh = ""
+        
+        basename = os.path.splitext(os.path.basename(filepath))[0]
         vmdl_content = fast_deepcopy(DEFAULT_VMDL)
-        vmdl_content['rootNode']['children'][1]['children'][0]['filename'] = model_path
-        vmdl_content['rootNode']['children'][2]['children'][0]['filename'] = model_path
-        vmdl_file, _ = os.path.splitext(filepath)
-        vmdl_file = f"{vmdl_file}.vmdl"
+        
+        # Populate the template with the mesh path
+        for child in vmdl_content.get('rootNode', {}).get('children', []):
+            if child.get('_class') == 'RenderMeshList':
+                for mesh_file in child.get('children', []):
+                    if mesh_file.get('_class') == 'RenderMeshFile':
+                        mesh_file['filename'] = rel_mesh
+            if child.get('_class') == 'PhysicsShapeList':
+                for phys_file in child.get('children', []):
+                    if phys_file.get('_class') == 'PhysicsHullFile':
+                        phys_file['filename'] = rel_mesh
+                        phys_file['name'] = basename
+
+        vmdl_file = f"{os.path.splitext(filepath)[0]}.vmdl"
         with open(vmdl_file, 'w') as file:
             file.write(JsonToKv3(vmdl_content, format='vmdl'))
 
