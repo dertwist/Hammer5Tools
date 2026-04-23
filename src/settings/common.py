@@ -7,7 +7,7 @@ from src.other.get_cs2_path import get_counter_strike_path_from_registry, get_st
 from src.common import get_portable_root
 
 app_dir = get_portable_root()
-user_data_dir = os.path.join(app_dir, "user")
+user_data_dir = app_dir
 settings_file = os.path.join(user_data_dir, 'settings.ini')
 
 # Initialize settings to use settings.ini in the program folder
