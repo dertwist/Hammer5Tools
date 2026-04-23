@@ -14,6 +14,7 @@ struct BuildInfo {
     std::string version;       // line 1 of version.txt
     std::string channel;       // line 2: "stable" or "dev"
     std::string build_date;    // line 3: ISO 8601 UTC
+    std::string commit_sha;    // line 4: git commit SHA
 };
 
 struct ReleaseInfo {
