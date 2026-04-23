@@ -324,7 +324,11 @@ def main() -> None:
             'settings.ini',
             'Hammer5ToolsInstaller.exe'
         }
-        excluded_paths = ['SoundEventEditor\\sounds', 'user']
+        excluded_paths = [
+            'SoundEventEditor\\sounds', 
+            'SmartPropEditor\\UserPresets',
+            'SoundEventEditor\\UserPresets'
+        ]
         archive_files('hammer5tools', zip_output_path, excluded_files, excluded_paths)
         elapsed_time = time.time() - stage_start_time
         results.append(["Archiving files", f"{elapsed_time:.2f} seconds"])
