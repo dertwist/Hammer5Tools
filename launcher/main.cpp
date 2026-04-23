@@ -48,6 +48,7 @@ void UnregisterAssociations() {
     RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_QuickProcess");
     RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_QuickProcess");
     RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\*\\shell\\Hammer5Tools_QuickProcess");
+    RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\shell\\editwith");
 }
 
 void RegisterAssociations(const std::wstring& exePath) {
@@ -57,10 +58,10 @@ void RegisterAssociations(const std::wstring& exePath) {
     std::wstring iconPath = exePath;
     
     // Icon indices (0-based) matching resources.rc
-    std::wstring appIcon = iconPath + L",0";
-    std::wstring vmdlIcon = iconPath + L",1";
-    std::wstring batchIcon = iconPath + L",2";
-    std::wstring processIcon = iconPath + L",3";
+    std::wstring appIcon = iconPath + L",0";      // appicon.ico
+    std::wstring vsmartIcon = iconPath + L",1";   // smartprop.ico
+    std::wstring consoleIcon = iconPath + L",2";  // vconsole/appicon.ico
+    std::wstring toolsIcon = iconPath + L",3";    // appicon_tools.ico
 
     // Helper to set extension if empty or already set to us
     auto setIfEmptyOrUs = [&](const std::wstring& ext, const std::wstring& progID) {
@@ -86,8 +87,12 @@ void RegisterAssociations(const std::wstring& exePath) {
     // .vsmart
     setIfEmptyOrUs(L".vsmart", L"Hammer5Tools.SmartProp");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp", L"", L"SmartProp File");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\DefaultIcon", L"", vmdlIcon);
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\DefaultIcon", L"", vsmartIcon);
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\shell\\open\\command", L"", openCmd);
+    // "Edit With Hammer5Tools" context menu entry for .vsmart
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\shell\\editwith", L"", L"Edit With Hammer5Tools");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\shell\\editwith", L"Icon", vsmartIcon);
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\shell\\editwith\\command", L"", openCmd);
 
     // .vsndevts
     setIfEmptyOrUs(L".vsndevts", L"Hammer5Tools.SoundEvent");
@@ -98,7 +103,7 @@ void RegisterAssociations(const std::wstring& exePath) {
     // .hbat (Hammer Batch)
     setIfEmptyOrUs(L".hbat", L"Hammer5Tools.Batch");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch", L"", L"Hammer Batch File");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch\\DefaultIcon", L"", batchIcon);
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch\\DefaultIcon", L"", consoleIcon);
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch\\shell\\open\\command", L"", openCmd);
 
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
