@@ -1,1 +1,2 @@
 IDI_ICON1 ICON "../src/appicon.ico"
+IDI_ICON2 ICON "../src/icons/smartprop.ico"
