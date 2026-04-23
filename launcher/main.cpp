@@ -4,6 +4,7 @@
 #include <string>
 #include <filesystem>
 #include <vector>
+#include <shlobj.h>
 
 namespace fs = std::filesystem;
 
@@ -24,6 +25,53 @@ static bool try_ipc(const std::string& json_msg) {
     WriteFile(pipe, json_msg.c_str(), (DWORD)json_msg.size(), &written, NULL);
     CloseHandle(pipe);
     return true;
+}
+
+void SetRegistryKey(HKEY hKeyRoot, const std::wstring& subKey, const std::wstring& valueName, const std::wstring& data) {
+    HKEY hKey;
+    if (RegCreateKeyExW(hKeyRoot, subKey.c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) == ERROR_SUCCESS) {
+        if (valueName.empty()) {
+            RegSetValueExW(hKey, NULL, 0, REG_SZ, (const BYTE*)data.c_str(), (data.size() + 1) * sizeof(wchar_t));
+        } else {
+            RegSetValueExW(hKey, valueName.c_str(), 0, REG_SZ, (const BYTE*)data.c_str(), (data.size() + 1) * sizeof(wchar_t));
+        }
+        RegCloseKey(hKey);
+    }
+}
+
+void RegisterAssociations(const std::wstring& exePath) {
+    std::wstring openCmd = L"\"" + exePath + L"\" \"%1\"";
+    std::wstring iconCmd = L"\"" + exePath + L"\",0";
+
+    // .vsmart
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\.vsmart", L"", L"Hammer5Tools.SmartProp");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp", L"", L"SmartProp File");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\DefaultIcon", L"", iconCmd);
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\shell\\open\\command", L"", openCmd);
+
+    // .vsndevts
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\.vsndevts", L"", L"Hammer5Tools.SoundEvent");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent", L"", L"SoundEvent File");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent\\DefaultIcon", L"", iconCmd);
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent\\shell\\open\\command", L"", openCmd);
+
+    // Directory context menu (right click on folder)
+    std::wstring vmdlCmd = L"\"" + exePath + L"\" --create-vmdl \"%V\"";
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMDL", L"", L"Create VMDL");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMDL\\command", L"", vmdlCmd);
+
+    std::wstring vmatCmd = L"\"" + exePath + L"\" --create-vmat \"%V\"";
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMAT", L"", L"Create VMAT");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\shell\\Hammer5Tools_VMAT\\command", L"", vmatCmd);
+
+    // Directory background context menu (right click inside folder)
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMDL", L"", L"Create VMDL");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMDL\\command", L"", vmdlCmd);
+
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMAT", L"", L"Create VMAT");
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_VMAT\\command", L"", vmatCmd);
+
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 }
 
 static void spawn(const fs::path& exe, const std::wstring& args = L"", bool hidden = false) {
@@ -84,6 +132,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     wchar_t buffer[MAX_PATH];
     GetModuleFileNameW(NULL, buffer, MAX_PATH);
     fs::path base = fs::path(buffer).parent_path();
+    
+    // Register file associations and context menu
+    RegisterAssociations(buffer);
     
     // Launcher sets HAMMER5TOOLS_ROOT for the python app
     SetEnvironmentVariableW(L"HAMMER5TOOLS_ROOT", base.c_str());
