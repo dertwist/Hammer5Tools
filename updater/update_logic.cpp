@@ -95,7 +95,7 @@ static std::string NormaliseDate(const std::string &s) {
 // WinHTTP follows the redirect to objects.githubusercontent.com automatically.
 // Returns a default BuildInfo (empty fields) on any failure or HTTP != 200.
 // ---------------------------------------------------------------------------
-static BuildInfo FetchRemoteVersionTxt(const std::string &tag) {
+BuildInfo UpdateLogic::FetchRemoteVersionTxt(const std::string &tag) {
   BuildInfo remote;
   remote.channel = "stable";
 
