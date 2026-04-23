@@ -35,5 +35,6 @@ public:
 
 private:
     static ReleaseInfo FetchRelease(const std::string& api_path);
-    static bool SemverGreater(const std::string& a, const std::string& b);
+    static BuildInfo   FetchRemoteVersionTxt(const std::string& tag);
+    static bool        SemverGreater(const std::string& a, const std::string& b);
 };
