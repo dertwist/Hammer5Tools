@@ -75,8 +75,8 @@ class VariableFrame(PropertyMethods, QWidget):
         # Initialize variable instance based on var_class
         self._initialize_var_instance(var_class)
 
-        # Connect the edited signal directly to on_changed
-        self.var_int_instance.edited.connect(self.on_changed)
+        # Connect the edited signal directly to the dedicated instance slot
+        self.var_int_instance.edited.connect(self._on_instance_changed)
         self.ui.layout.insertWidget(2, self.var_int_instance)
 
         # Setup the CompletingPlainTextEdit for Hide Expression logic
@@ -248,8 +248,8 @@ class VariableFrame(PropertyMethods, QWidget):
 
         self._initialize_var_instance(var_class)
 
-        # Connect the edited signal directly to on_changed
-        self.var_int_instance.edited.connect(self.on_changed)
+        # Connect the edited signal directly to the dedicated instance slot
+        self.var_int_instance.edited.connect(self._on_instance_changed)
         self.ui.layout.insertWidget(2, self.var_int_instance)
         # Emit content_changed directly (pre_change was already emitted above)
         self.update_colors()
@@ -286,19 +286,29 @@ class VariableFrame(PropertyMethods, QWidget):
         if hasattr(self, 'ui') and hasattr(self.ui, 'verticalLayout'):
             self.ui.verticalLayout.setContentsMargins(level * 5, 0, 0, 0)
 
-    def on_changed(self, var_default=None, var_min=None, var_max=None, var_model=None):
-        # Signal listeners (variables_viewport) to snapshot state BEFORE we modify it.
+    def _on_instance_changed(self, var_default=None, var_min=None, var_max=None, var_model=None):
+        """Called when the variable widget (Int/Float/Bool/etc.) emits its edited signal.
+        Updates var_default/min/max/model from the widget values, then rebuilds var_value."""
         self.pre_change.emit()
-        # Update instance variables with the new values
         self.var_default = var_default
         self.var_min = var_min
         self.var_max = var_max
         self.var_model = var_model
+        self._rebuild_var_value()
+        self.content_changed.emit()
 
-        # Update var_value dictionary
+    def on_changed(self):
+        """Called when a non-instance field changes (e.g. hide expression).
+        Preserves the current var_default/min/max/model — only rebuilds var_value."""
+        self.pre_change.emit()
+        self._rebuild_var_value()
+        self.content_changed.emit()
+
+    def _rebuild_var_value(self):
+        """Rebuilds self.var_value from current self.var_* and self.hide_expression."""
         if self.var_class == 'Bool':
             self.var_value = {
-                'default': var_default if var_default is not None else False,
+                'default': self.var_default if self.var_default is not None else False,
                 'min': None,
                 'max': None,
                 'model': None,
@@ -307,14 +317,14 @@ class VariableFrame(PropertyMethods, QWidget):
             }
         else:
             self.var_value = {
-                'default': var_default if var_default is not None else None,
-                'min': var_min if var_min is not None else None,
-                'max': var_max if var_max is not None else None,
-                'model': var_model if var_model is not None else None,
+                'default': self.var_default,
+                'min': self.var_min,
+                'max': self.var_max,
+                'model': self.var_model,
                 'm_nElementID': self.element_id,
                 'm_HideExpression': self.hide_expression if self.hide_expression is not None else None
             }
-        self.content_changed.emit()
+
 
     def update_self(self):
         self.pre_change.emit()
