@@ -20,7 +20,7 @@ HWND hChangelogEdit;
 HWND hUpdateButton;
 HWND hCancelButton;
 
-const wchar_t *CURRENT_VERSION = L"5.0.0";
+// Version is now read from app/version.txt at runtime
 
 std::atomic<bool> g_startUpdate(false);
 bool g_isSilent = false;
@@ -70,9 +70,26 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
   return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
+std::string GetCurrentVersion() {
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileNameW(NULL, buffer, MAX_PATH);
+    std::filesystem::path root = std::filesystem::path(buffer).parent_path();
+    std::filesystem::path version_file = root / "app" / "version.txt";
+    
+    std::ifstream file(version_file);
+    if (file.is_open()) {
+        std::string version;
+        file >> version;
+        if (!version.empty()) return version;
+    }
+    return "5.0.0"; // Fallback
+}
+
 void UpdateThread(HWND hwnd) {
+  std::string current_version = GetCurrentVersion();
+  
   // 1. Check version
-  ReleaseInfo info = UpdateLogic::CheckForUpdates("5.0.0");
+  ReleaseInfo info = UpdateLogic::CheckForUpdates(current_version);
 
   if (!info.found) {
     if (g_isInteractive) {

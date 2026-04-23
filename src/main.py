@@ -628,16 +628,8 @@ class Widget(QMainWindow):
                 2000
             )
             set_settings_bool('APP', 'minimize_message_shown', False)
-
+    
     def exit_application(self):
-        try:
-            from other.discord_status import discord_status_clear
-            discord_status_clear()
-        except Exception:
-            pass
-        stop_discord_thread.set()
-        if hasattr(self, 'discord_thread') and self.discord_thread.is_alive():
-            self.discord_thread.join()
         self.tray_icon.hide()
         self.tray_icon.deleteLater()
         self._save_user_prefs()
@@ -665,11 +657,6 @@ class Widget(QMainWindow):
         self.settings.setValue("MainWindow/geometry", self.saveGeometry())
         self.settings.setValue("MainWindow/windowState", self.saveState())
 
-def DiscordStatusMain_do():
-    from other.discord_status import update_discord_status
-    while not stop_discord_thread.is_set():
-        update_discord_status()
-        time.sleep(1)
 
 def start_instance_server(widget):
     """
@@ -770,10 +757,4 @@ if __name__ == "__main__":
             # Small delay to ensure widget is fully initialized
             QTimer.singleShot(200, lambda: widget.open_file_in_smartprop(file_path))
 
-    if get_settings_bool('DISCORD_STATUS', 'show_status'):
-        from other.discord_status import discord_status_clear, update_discord_status
-        widget.discord_thread = threading.Thread(target=DiscordStatusMain_do)
-        widget.discord_thread.start()
-    else:
-        debug('Discord status updates are disabled.')
     sys.exit(app.exec())
