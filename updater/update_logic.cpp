@@ -169,13 +169,6 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
     return info;
 }
 
-
-    WinHttpCloseHandle(hRequest);
-    WinHttpCloseHandle(hConnect);
-    WinHttpCloseHandle(hSession);
-    return info;
-}
-
 bool UpdateLogic::DownloadFile(const std::string& url, const std::string& destination, std::function<void(float)> progress_callback) {
     // Basic redirect support would be needed for GitHub assets
     // For simplicity, we'll assume the URL is direct or use WinHTTP's automatic redirect
