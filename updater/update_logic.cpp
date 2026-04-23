@@ -122,7 +122,7 @@ bool UpdateLogic::ExtractZip(const std::string& zip_path, const std::string& ext
     mz_uint num_files = mz_zip_reader_get_num_files(&zip_archive);
     for (mz_uint i = 0; i < num_files; i++) {
         mz_zip_archive_file_stat file_stat;
-        if (!mz_zip_reader_get_stat(&zip_archive, i, &file_stat)) continue;
+        if (!mz_zip_reader_file_stat(&zip_archive, i, &file_stat)) continue;
 
         std::string dest_file = extract_path + "\\" + file_stat.m_filename;
         
