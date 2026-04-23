@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <tlhelp32.h>
 #include <winhttp.h>
 
@@ -69,6 +70,104 @@ static std::string HttpGetGitHub(const std::string &api_path) {
   WinHttpCloseHandle(hConnect);
   WinHttpCloseHandle(hSession);
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Helper: fetch version.txt from a GitHub release asset by tag name.
+// URL: https://github.com/dertwist/Hammer5Tools/releases/download/<tag>/version.txt
+// WinHTTP follows the redirect to objects.githubusercontent.com automatically.
+// Returns a default BuildInfo (empty fields) on any failure or HTTP != 200.
+// ---------------------------------------------------------------------------
+static BuildInfo FetchRemoteVersionTxt(const std::string &tag) {
+  BuildInfo remote;
+  remote.channel = "stable";
+
+  std::wstring wtag(tag.begin(), tag.end());
+  std::wstring path =
+      L"/dertwist/Hammer5Tools/releases/download/" + wtag + L"/version.txt";
+
+  HINTERNET hSession =
+      WinHttpOpen(L"Hammer5ToolsUpdater/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                  WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+  if (!hSession)
+    return remote;
+
+  HINTERNET hConnect =
+      WinHttpConnect(hSession, L"github.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
+  if (!hConnect) {
+    WinHttpCloseHandle(hSession);
+    return remote;
+  }
+
+  HINTERNET hRequest = WinHttpOpenRequest(
+      hConnect, L"GET", path.c_str(), NULL, WINHTTP_NO_REFERER,
+      WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+  if (!hRequest) {
+    WinHttpCloseHandle(hConnect);
+    WinHttpCloseHandle(hSession);
+    return remote;
+  }
+
+  // Follow redirects automatically (github.com → objects.githubusercontent.com)
+  DWORD policy = WINHTTP_OPTION_REDIRECT_POLICY_ALWAYS;
+  WinHttpSetOption(hRequest, WINHTTP_OPTION_REDIRECT_POLICY, &policy,
+                   sizeof(policy));
+
+  std::string body;
+  if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+                         WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
+    if (WinHttpReceiveResponse(hRequest, NULL)) {
+      // Only read body on HTTP 200 — 404 means asset not yet uploaded
+      DWORD statusCode = 0;
+      DWORD statusSize = sizeof(statusCode);
+      WinHttpQueryHeaders(
+          hRequest,
+          WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL,
+          &statusCode, &statusSize, NULL);
+      if (statusCode == 200) {
+        DWORD dwSize = 0;
+        do {
+          if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
+            break;
+          if (dwSize == 0)
+            break;
+          char *buf = new char[dwSize + 1];
+          DWORD dwRead = 0;
+          if (WinHttpReadData(hRequest, (LPVOID)buf, dwSize, &dwRead)) {
+            buf[dwRead] = 0;
+            body += buf;
+          }
+          delete[] buf;
+        } while (dwSize > 0);
+      }
+    }
+  }
+
+  WinHttpCloseHandle(hRequest);
+  WinHttpCloseHandle(hConnect);
+  WinHttpCloseHandle(hSession);
+
+  if (body.empty())
+    return remote;
+
+  // Parse 3-line version.txt: version / channel / build_date
+  std::istringstream ss(body);
+  std::string line;
+  if (std::getline(ss, line)) {
+    while (!line.empty() && (line.back() == '\r' || line.back() == '\n'))
+      line.pop_back();
+    remote.version = line;
+  }
+  if (std::getline(ss, line)) {
+    while (!line.empty() && (line.back() == '\r' || line.back() == '\n'))
+      line.pop_back();
+    if (!line.empty())
+      remote.channel = line;
+  }
+  if (std::getline(ss, line)) {
+    remote.build_date = NormaliseDate(line);
+  }
+  return remote;
 }
 
 // ---------------------------------------------------------------------------
@@ -282,14 +381,19 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const BuildInfo &local) {
       stable.notify_type = NOTIFY_STABLE_FROM_DEV;
       return stable;
     }
-    // Priority 2: the rolling "dev" tag has a newer build date.
-    // Normalise both timestamps before comparing so format differences
-    // ("Z" vs "+00:00") don't cause silent mismatches.
-    ReleaseInfo dev =
-        FetchRelease("/repos/dertwist/Hammer5Tools/releases/tags/dev");
-    if (dev.found && !local.build_date.empty() && !dev.publish_date.empty() &&
-        NormaliseDate(dev.publish_date) > local.build_date) {
+    // Priority 2: the rolling "dev" tag has a newer build.
+    // Fetch the remote version.txt asset — it carries the authoritative build
+    // date written by makefile.py, not GitHub's release publication timestamp.
+    BuildInfo remoteDevInfo = FetchRemoteVersionTxt("dev");
+    if (!remoteDevInfo.build_date.empty() && !local.build_date.empty() &&
+        remoteDevInfo.build_date > local.build_date) {
+      // Second call to get html_url for the "View on GitHub" button.
+      // Only executed when an update is actually available.
+      ReleaseInfo dev =
+          FetchRelease("/repos/dertwist/Hammer5Tools/releases/tags/dev");
       dev.notify_type = NOTIFY_DEV_UPDATE;
+      // Override publish_date with the authoritative value from version.txt
+      dev.publish_date = remoteDevInfo.build_date;
       return dev;
     }
   }

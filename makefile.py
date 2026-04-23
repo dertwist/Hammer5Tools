@@ -227,6 +227,14 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
         f.write(f"{app_version}\n{channel}\n{build_date}")
     print(f"Wrote version.txt to {version_file_path} (channel={channel}, date={build_date})")
 
+    # Copy to dist/ root so CI can upload it as a standalone release asset
+    import shutil as _shutil
+    dist_version_path = os.path.join(cur_dir, 'dist', 'version.txt')
+    os.makedirs(os.path.dirname(dist_version_path), exist_ok=True)
+    _shutil.copy(version_file_path, dist_version_path)
+    print(f"Copied version.txt to {dist_version_path}")
+
+
 def archive_files(
     folder_path: str,
     output_path: str,
