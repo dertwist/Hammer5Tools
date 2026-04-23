@@ -484,23 +484,37 @@ class SmartPropEditorVariableViewport(QWidget):
 
         new_state = self._snapshot()
         if new_state != self._var_committed_state:
-            # Detect if this was a rename operation
+            # Detect if this was a rename operation vs a reorder/structural change.
+            # A rename preserves the sequence of element IDs but changes exactly one 'name'.
             old_name = None
             new_name = None
-            if len(new_state) == len(self._var_committed_state):
+
+            old_ids = [v['var_value'].get('m_nElementID') for v in self._var_committed_state]
+            new_ids = [v['var_value'].get('m_nElementID') for v in new_state]
+
+            is_reorder = old_ids != new_ids
+            description = "Edit Variable"
+
+            if is_reorder:
+                description = "Reorder Variables"
+            elif len(new_state) == len(self._var_committed_state):
+                # Check for single-variable rename
+                diffs = []
                 for old_var, new_var in zip(self._var_committed_state, new_state):
                     if old_var['name'] != new_var['name']:
-                        old_name = old_var['name']
-                        new_name = new_var['name']
-                        break
-            
+                        diffs.append((old_var['name'], new_var['name']))
+
+                if len(diffs) == 1:
+                    old_name, new_name = diffs[0]
+                    description = f"Rename Variable '{old_name}'"
+
             if old_name and new_name:
-                self._document.undo_stack.beginMacro(f"Rename Variable '{old_name}'")
+                self._document.undo_stack.beginMacro(description)
 
             from src.editors.smartprop_editor.commands import VariablesSnapshotCommand
             self._document.undo_stack.push(
                 VariablesSnapshotCommand(
-                    self._document, self._var_committed_state, new_state, "Edit Variable"
+                    self._document, self._var_committed_state, new_state, description
                 )
             )
 
