@@ -225,7 +225,7 @@ operators_list = [
     }},
     {'CreateRotator': {'_class': "CSmartPropOperation_CreateRotator", "m_Name": "", "m_vOffset": None, "m_vRotationAxis": None, "m_CoordinateSpace": "WORLD", "m_flDisplayRadius": 16.0, "m_DisplayColor": None, "m_bApplyToCurrentTransform": True, "m_flSnappingIncrement": 0.0, "m_flInitialAngle": 0.0, "m_bEnforceLimits": False, "m_flMinAngle": 0.0, "m_flMaxAngle": 0.0, "m_OutputVariable": ""}},
     {'CreateLocator': {'_class': "CSmartPropOperation_CreateLocator", "m_LocatorName": "", "m_vOffset": None, "m_flDisplayScale": 1.0, "m_bConfigurable": True, "m_bAllowTranslation": True, "m_bAllowRotation": True, "m_bAllowScale": True}},
-    {'RestoreState': {'_class': "CSmartPropOperation_RestoreState", 'm_bDiscardIfUknown': True}},
+    {'RestoreState': {'_class': "CSmartPropOperation_RestoreState", 'm_StateName': 'State', 'm_bDiscardIfUknown': True}},
     {'TraceInDirection': {'_class': "CSmartPropOperation_TraceInDirection", 'm_DirectionSpace': 'WORLD', 'm_flSurfaceUpInfluence': 1, 'm_nNoHitResult': 'NOTHING', 'm_flOriginOffset': -500, 'm_flTraceLength': 500}},
     {'SaveState': {'_class': 'CSmartPropOperation_SaveState', 'm_StateName': 'State'}},
     {'SetVariable': {'_class': 'CSmartPropOperation_SetVariable', 'm_VariableValue': {'m_TargetName': None, 'm_DataType': None, 'm_Value':None}}},
