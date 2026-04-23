@@ -177,7 +177,6 @@ def build_hammer5_tools(fast=False) -> None:
         '--collect-submodules=clr_loader',
         # '--strip',  # Removed to avoid errors with .NET DLLs
         '--optimize=0',
-        '--clean',
         '--icon=src/appicon.ico',
         '--add-data=src/appicon.ico;.',
         '--add-data=src/images;images/',
@@ -242,7 +241,7 @@ def archive_files(
                 return True
         return False
 
-    with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+    with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
         for root, _, files in os.walk(folder_path):
             for file in files:
                 file_path = os.path.join(root, file)
