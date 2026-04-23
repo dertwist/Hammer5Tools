@@ -77,7 +77,10 @@ def get_portable_root() -> str:
     if getattr(sys, 'frozen', False):
         # app/Hammer5Tools.exe → go up one level to root
         return os.path.dirname(os.path.dirname(sys.executable))
-    return os.getcwd()  # dev mode
+    
+    # Dev mode: use the location of this file (src/common.py)
+    # Two levels up from src/common.py is the root
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Paths
 app_dir = get_portable_root()
