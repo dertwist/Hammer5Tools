@@ -35,12 +35,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pyinstaller-
 
-      - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@v2
-        with:
-          platform: x64
-          static: 1
-
       - name: Build Launcher (C++)
         run: |
           cmake -S launcher -B build/launcher -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
