@@ -79,6 +79,16 @@ void UpdateThread(HWND hwnd) {
     }
 
     std::wstring status = L"New version available: " + std::wstring(info.version.begin(), info.version.end());
+    if (info.is_prerelease) {
+        if (!info.publish_date.empty()) {
+            std::string date = info.publish_date;
+            if (date.length() >= 10) date = date.substr(0, 10); // YYYY-MM-DD
+            status += L" (" + std::wstring(date.begin(), date.end()) + L")";
+        }
+        if (!info.commit_sha.empty()) {
+            status += L" [" + std::wstring(info.commit_sha.begin(), info.commit_sha.end()) + L"]";
+        }
+    }
     SetWindowText(hStatusLabel, status.c_str());
     
     std::wstring changelog = std::wstring(info.changelog.begin(), info.changelog.end());

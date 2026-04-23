@@ -77,6 +77,8 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
                 
                 std::string tag = getField("tag_name");
                 std::string body = getField("body");
+                std::string date = getField("published_at");
+                std::string commit = getField("target_commitish");
                 
                 size_t assetPos = releaseJson.find("\"browser_download_url\":");
                 std::string downloadUrl;
@@ -95,6 +97,9 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
                     if (cleanTag != cleanCurrent) {
                         info.version = tag;
                         info.download_url = downloadUrl;
+                        info.publish_date = date;
+                        info.commit_sha = commit;
+                        info.is_prerelease = isPrerelease;
                         
                         // Simple unescape for \r\n
                         std::string unescapedBody = body;
