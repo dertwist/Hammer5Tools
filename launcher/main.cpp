@@ -159,12 +159,14 @@ void RegisterAssociations(const std::wstring& exePath) {
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 }
 
-static void spawn(const fs::path& exe, const std::wstring& args = L"", bool hidden = false) {
+static void spawn(const fs::path& exe, const std::wstring& args = L"", const fs::path& workingDir = L"", bool hidden = false) {
     SHELLEXECUTEINFOW sei = { sizeof(sei) };
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
     sei.lpFile = exe.c_str();
     sei.lpParameters = args.empty() ? NULL : args.c_str();
+    sei.lpDirectory = workingDir.empty() ? NULL : workingDir.c_str();
     sei.nShow = hidden ? SW_HIDE : SW_SHOW;
+    sei.lpVerb = L"open";
     ShellExecuteExW(&sei);
 }
 
@@ -266,11 +268,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     // Python app is now app/h5t.exe
     fs::path app_exe = base / "app" / "h5t.exe";
-    spawn(app_exe, GetCommandLineW());
+    spawn(app_exe, GetCommandLineW(), base);
 
     fs::path updater = base / "Hammer5ToolsUpdater.exe";
     if (fs::exists(updater)) {
-        spawn(updater, L"--silent", true); // Run updater hidden
+        spawn(updater, L"--silent", base, true); // Run updater hidden
     }
 
     LocalFree(argv);
