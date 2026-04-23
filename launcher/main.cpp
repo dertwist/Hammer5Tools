@@ -62,40 +62,78 @@ void RegisterAssociations(const std::wstring& exePath) {
     std::wstring batchIcon = iconPath + L",2";
     std::wstring processIcon = iconPath + L",3";
 
+    // Helper to set extension if empty or already set to us
+    auto setIfEmptyOrUs = [&](const std::wstring& ext, const std::wstring& progID) {
+        wchar_t current[256] = {0};
+        DWORD size = sizeof(current);
+        std::wstring key = L"Software\\Classes\\" + ext;
+        HKEY hKey;
+        bool shouldSet = true;
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, key.c_str(), 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+            if (RegQueryValueExW(hKey, NULL, NULL, NULL, (BYTE*)current, &size) == ERROR_SUCCESS) {
+                std::wstring val(current);
+                if (!val.empty() && val != progID) {
+                    shouldSet = false; // Already set to something else
+                }
+            }
+            RegCloseKey(hKey);
+        }
+        if (shouldSet) {
+            SetRegistryKey(HKEY_CURRENT_USER, key, L"", progID);
+        }
+    };
+
     // .vsmart
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\.vsmart", L"", L"Hammer5Tools.SmartProp");
+    setIfEmptyOrUs(L".vsmart", L"Hammer5Tools.SmartProp");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp", L"", L"SmartProp File");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\DefaultIcon", L"", vmdlIcon);
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\shell\\open\\command", L"", openCmd);
 
     // .vsndevts
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\.vsndevts", L"", L"Hammer5Tools.SoundEvent");
+    setIfEmptyOrUs(L".vsndevts", L"Hammer5Tools.SoundEvent");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent", L"", L"SoundEvent File");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent\\DefaultIcon", L"", appIcon);
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SoundEvent\\shell\\open\\command", L"", openCmd);
 
     // .hbat (Hammer Batch)
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\.hbat", L"", L"Hammer5Tools.Batch");
+    setIfEmptyOrUs(L".hbat", L"Hammer5Tools.Batch");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch", L"", L"Hammer Batch File");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch\\DefaultIcon", L"", batchIcon);
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch\\shell\\open\\command", L"", openCmd);
+
+    // Folder context menu entries
+    std::wstring quickVmdlDirCmd = L"\"" + exePath + L"\" --quick-vmdl-dir \"%1\"";
+    std::wstring batchDirCmd = L"\"" + exePath + L"\" --quick-batch \"%1\"";
+    std::wstring processDirCmd = L"\"" + exePath + L"\" --quick-process \"%1\"";
+
+    auto addContextEntry = [&](const std::wstring& root, const std::wstring& title, const std::wstring& icon, const std::wstring& cmd) {
+        SetRegistryKey(HKEY_CURRENT_USER, root, L"", title);
+        SetRegistryKey(HKEY_CURRENT_USER, root, L"Icon", icon);
+        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\command", L"", cmd);
+    };
+
+    // Directory
+    addContextEntry(L"Software\\Classes\\Directory\\shell\\Hammer5Tools_QuickVMDL", L"Quick Create VMDL", vmdlIcon, quickVmdlDirCmd);
+    addContextEntry(L"Software\\Classes\\Directory\\shell\\Hammer5Tools_QuickBatch", L"Quick Create Batch", batchIcon, batchDirCmd);
+    addContextEntry(L"Software\\Classes\\Directory\\shell\\Hammer5Tools_QuickProcess", L"Quick Process folder", processIcon, processDirCmd);
+
+    // Directory Background (right click inside folder)
+    addContextEntry(L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_QuickVMDL", L"Quick Create VMDL", vmdlIcon, L"\"" + exePath + L"\" --quick-vmdl-dir \"%V\"");
+    addContextEntry(L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_QuickBatch", L"Quick Create Batch", batchIcon, L"\"" + exePath + L"\" --quick-batch \"%V\"");
+    addContextEntry(L"Software\\Classes\\Directory\\Background\\shell\\Hammer5Tools_QuickProcess", L"Quick Process folder", processIcon, L"\"" + exePath + L"\" --quick-process \"%V\"");
 
     // Quick Create VMDL (Specific to .fbx and .obj)
     std::wstring quickVmdlCmd = L"\"" + exePath + L"\" --quick-vmdl \"%1\"";
     std::vector<std::wstring> meshExts = { L".fbx", L".obj" };
     for (const auto& ext : meshExts) {
         std::wstring root = L"Software\\Classes\\SystemFileAssociations\\" + ext + L"\\shell\\Hammer5Tools_QuickVMDL";
-        SetRegistryKey(HKEY_CURRENT_USER, root, L"", L"Quick Create VMDL");
-        SetRegistryKey(HKEY_CURRENT_USER, root, L"Icon", vmdlIcon);
-        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\command", L"", quickVmdlCmd);
+        addContextEntry(root, L"Quick Create VMDL", vmdlIcon, quickVmdlCmd);
     }
 
     // Quick Create Batch (Specific to .vmdl)
     std::wstring batchCmd = L"\"" + exePath + L"\" --quick-batch \"%1\"";
     std::wstring vmdlBatchRoot = L"Software\\Classes\\SystemFileAssociations\\.vmdl\\shell\\Hammer5Tools_QuickBatch";
-    SetRegistryKey(HKEY_CURRENT_USER, vmdlBatchRoot, L"", L"Quick Create Batch");
-    SetRegistryKey(HKEY_CURRENT_USER, vmdlBatchRoot, L"Icon", batchIcon);
-    SetRegistryKey(HKEY_CURRENT_USER, vmdlBatchRoot + L"\\command", L"", batchCmd);
+    addContextEntry(vmdlBatchRoot, L"Quick Create Batch", batchIcon, batchCmd);
 
     // Quick Process File
     std::wstring processFileCmd = L"\"" + exePath + L"\" --quick-process-file \"%1\"";
@@ -104,25 +142,19 @@ void RegisterAssociations(const std::wstring& exePath) {
     std::vector<std::wstring> processExts = { L".vmdl", L".vmat" };
     for (const auto& ext : processExts) {
         std::wstring root = L"Software\\Classes\\SystemFileAssociations\\" + ext + L"\\shell\\Hammer5Tools_QuickProcess";
-        SetRegistryKey(HKEY_CURRENT_USER, root, L"", L"Quick Process file");
-        SetRegistryKey(HKEY_CURRENT_USER, root, L"Icon", processIcon);
-        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\command", L"", processFileCmd);
+        addContextEntry(root, L"Quick Process file", processIcon, processFileCmd);
     }
 
     // Add "Quick Process file" to our own ProgIDs
     auto addProcessToProgID = [&](const std::wstring& progID) {
         std::wstring root = L"Software\\Classes\\" + progID + L"\\shell\\Hammer5Tools_QuickProcess";
-        SetRegistryKey(HKEY_CURRENT_USER, root, L"", L"Quick Process file");
-        SetRegistryKey(HKEY_CURRENT_USER, root, L"Icon", processIcon);
-        SetRegistryKey(HKEY_CURRENT_USER, root + L"\\command", L"", processFileCmd);
+        addContextEntry(root, L"Quick Process file", processIcon, processFileCmd);
     };
     addProcessToProgID(L"Hammer5Tools.SmartProp");
     addProcessToProgID(L"Hammer5Tools.SoundEvent");
 
     // Add "Process batch file" specifically for .hbat
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch\\shell\\Hammer5Tools_ProcessBatch", L"", L"Process batch file");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch\\shell\\Hammer5Tools_ProcessBatch", L"Icon", processIcon);
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.Batch\\shell\\Hammer5Tools_ProcessBatch\\command", L"", processFileCmd);
+    addContextEntry(L"Software\\Classes\\Hammer5Tools.Batch\\shell\\Hammer5Tools_ProcessBatch", L"Process batch file", processIcon, processFileCmd);
 
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 }
