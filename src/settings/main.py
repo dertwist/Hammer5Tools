@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QFrame, QScrollArea, QFileDialog, QComboBox
 )
 from src.settings.common import *
-from src.common import enable_dark_title_bar, Presets_Path, app_dir
+from src.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel
 from src.widgets.common import Button  # Using the internal Button class
 from src.styles.common import qt_stylesheet_checkbox, qt_stylesheet_combobox
 from src.widgets import FloatWidget  # Using the internal FloatWidget for float properties
@@ -129,9 +129,6 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.setStyleSheet(qt_stylesheet_checkbox)
         row_app.addWidget(self.checkBox_close_to_tray)
         layout_other.addLayout(row_app)
-        self.checkBox_dev_builds = QCheckBox("Receive Developer Updates", self.frame_other)
-        self.checkBox_dev_builds.setStyleSheet(qt_stylesheet_checkbox)
-        layout_other.addWidget(self.checkBox_dev_builds)
         layout.addWidget(self.frame_other)
         layout.addStretch()
         # Wrap the general tab content in a scroll area
@@ -340,10 +337,14 @@ class PreferencesDialog(QDialog):
             else:
                 self.preferences_lineedit_cs2_path.setPlaceholderText("CS2 not found - set manually")
         self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', False))
-        self.checkBox_dev_builds.setChecked(get_settings_bool('APP', 'dev_builds', False))
-        self.spe_display_id_with_variable_class.setChecked(get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', False))
+        # Read channel for the version label (shows "(dev)" suffix on dev builds)
+        channel = get_channel()
+        version_text = f"Version: {self.app_version}"
+        if channel == 'dev':
+            version_text += " (dev)"
+        self.action_buttons_panel.version_label.setText(version_text)
         self.spe_export_properties.setChecked(get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True))
-        self.action_buttons_panel.version_label.setText(f"Version: {self.app_version}")
+        self.spe_display_id_with_variable_class.setChecked(get_settings_bool('SmartPropEditor', 'display_id_with_variable_class', False))
         # Populate the monitor editline; default to provided value if not set
         self.assetgroupmaker_lineedit_monitor.setText(get_settings_value('AssetGroupMaker', 'monitor_folders') or "models, materials, smartprops")
         # Populate Default File Subcategory fields
@@ -401,9 +402,6 @@ class PreferencesDialog(QDialog):
         self.browse_cs2_button.clicked.connect(self.browse_cs2_path)
         self.checkBox_close_to_tray.toggled.connect(
             lambda: set_settings_bool('APP', 'minimize_to_tray', self.checkBox_close_to_tray.isChecked())
-        )
-        self.checkBox_dev_builds.toggled.connect(
-            lambda: set_settings_bool('APP', 'dev_builds', self.checkBox_dev_builds.isChecked())
         )
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
