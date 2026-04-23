@@ -22,6 +22,10 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.PropertiesWindow = SoundEventEditorPropertiesWindow()
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
 
+        # Initialize tree_directory to User path
+        from src.common import SoundEventEditor_User_Preset_Path
+        self.tree_directory = SoundEventEditor_User_Preset_Path
+
         # Connections
         self.ui.open_folder_button.clicked.connect(self.open_folder)
         self.ui.new_button.clicked.connect(self.create_new_preset)
@@ -62,8 +66,10 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         unique_digit = 1
 
         # Generate a unique file name by checking existing files
+        # New presets always go to the User path
+        from src.common import SoundEventEditor_User_Preset_Path
         while True:
-            filepath = os.path.join(self.tree_directory, f"{new_name}_{unique_digit}.kv3")
+            filepath = os.path.join(SoundEventEditor_User_Preset_Path, f"{new_name}_{unique_digit}.kv3")
             if not os.path.exists(filepath):
                 break
             unique_digit += 1
@@ -74,7 +80,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
 
     def open_folder(self):
         """Opening preset folder path"""
-        os.startfile(self.tree_directory)
+        os.startfile(self.mini_explorer.tree_directory)
     def open_preset(self):
         """Loads a preset into the Window Properties"""
         index = self.mini_explorer.tree.selectionModel().selectedIndexes()[0]

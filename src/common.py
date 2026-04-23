@@ -74,8 +74,9 @@ SmartPropEditor_User_Preset_Path = os.path.join(user_data_dir, "SmartPropEditor"
 
 # Internal presets — shipped with the app, overwritten on update
 if getattr(sys, 'frozen', False):
-    # In frozen mode, internal presets are in the app/ subfolder
-    internal_base = os.path.join(app_dir, "app")
+    # In frozen mode, internal presets are in the app/defaults subfolder
+    # We use sys._MEIPASS to get the bundle path
+    internal_base = os.path.join(sys._MEIPASS, "defaults")
 else:
     # In dev mode, they are in the repo root
     internal_base = app_dir
