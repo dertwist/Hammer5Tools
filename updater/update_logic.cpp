@@ -73,6 +73,23 @@ static std::string HttpGetGitHub(const std::string &api_path) {
 }
 
 // ---------------------------------------------------------------------------
+// NormaliseDate: strips trailing whitespace/CR and normalises the timezone
+// suffix so both GitHub's "...Z" and makefile's "...Z" (or "+00:00") compare
+// correctly with a plain lexicographic compare.
+// ---------------------------------------------------------------------------
+static std::string NormaliseDate(const std::string &s) {
+  std::string r = s;
+  // Trim trailing CR / LF / spaces
+  while (!r.empty() &&
+         (r.back() == '\r' || r.back() == '\n' || r.back() == ' '))
+    r.pop_back();
+  // Normalise "+00:00" → "Z" so both formats sort identically
+  if (r.size() >= 6 && r.substr(r.size() - 6) == "+00:00")
+    r = r.substr(0, r.size() - 6) + "Z";
+  return r;
+}
+
+// ---------------------------------------------------------------------------
 // Helper: fetch version.txt from a GitHub release asset by tag name.
 // URL: https://github.com/dertwist/Hammer5Tools/releases/download/<tag>/version.txt
 // WinHTTP follows the redirect to objects.githubusercontent.com automatically.
@@ -150,7 +167,7 @@ static BuildInfo FetchRemoteVersionTxt(const std::string &tag) {
   if (body.empty())
     return remote;
 
-  // Parse 3-line version.txt: version / channel / build_date
+  // Parse 4-line version.txt: version / channel / build_date / commit_sha
   std::istringstream ss(body);
   std::string line;
   if (std::getline(ss, line)) {
@@ -166,6 +183,12 @@ static BuildInfo FetchRemoteVersionTxt(const std::string &tag) {
   }
   if (std::getline(ss, line)) {
     remote.build_date = NormaliseDate(line);
+  }
+  if (std::getline(ss, line)) {
+    while (!line.empty() && (line.back() == '\r' || line.back() == '\n'))
+      line.pop_back();
+    if (!line.empty())
+      remote.commit_sha = line;
   }
   return remote;
 }
@@ -290,22 +313,7 @@ ReleaseInfo UpdateLogic::FetchRelease(const std::string &api_path) {
   return info;
 }
 
-// ---------------------------------------------------------------------------
-// NormaliseDate: strips trailing whitespace/CR and normalises the timezone
-// suffix so both GitHub's "...Z" and makefile's "...Z" (or "+00:00") compare
-// correctly with a plain lexicographic compare.
-// ---------------------------------------------------------------------------
-static std::string NormaliseDate(const std::string &s) {
-  std::string r = s;
-  // Trim trailing CR / LF / spaces
-  while (!r.empty() &&
-         (r.back() == '\r' || r.back() == '\n' || r.back() == ' '))
-    r.pop_back();
-  // Normalise "+00:00" → "Z" so both formats sort identically
-  if (r.size() >= 6 && r.substr(r.size() - 6) == "+00:00")
-    r = r.substr(0, r.size() - 6) + "Z";
-  return r;
-}
+// (NormaliseDate moved above FetchRemoteVersionTxt — see top of file)
 
 // ---------------------------------------------------------------------------
 // GetBuildInfo: reads version.txt next to the updater exe (3-line format).
@@ -352,6 +360,13 @@ BuildInfo UpdateLogic::GetBuildInfo() {
     // Line 3: build date (optional)
     if (std::getline(vf, line)) {
       info.build_date = NormaliseDate(line);
+    }
+    // Line 4: commit SHA (optional — old installs only have 3 lines)
+    if (std::getline(vf, line)) {
+      while (!line.empty() && (line.back() == '\r' || line.back() == '\n'))
+        line.pop_back();
+      if (!line.empty())
+        info.commit_sha = line;
     }
   }
   return info;
