@@ -16,6 +16,26 @@ from typing import Dict, List, Optional
 # Versions
 app_version = '5.0.0'
 
+def get_channel() -> str:
+    """
+    Returns the build channel ('stable' or 'dev') by reading line 2 of
+    app/version.txt at runtime.  In a frozen (PyInstaller) build version.txt
+    is written by makefile.py next to h5t.exe inside the 'app' subfolder.
+    In dev mode the file doesn't exist, so we return 'stable' as a safe default.
+    """
+    try:
+        if getattr(sys, 'frozen', False):
+            # sys.executable is <root>/app/h5t.exe — version.txt is in the same dir
+            vtxt = os.path.join(os.path.dirname(sys.executable), 'version.txt')
+        else:
+            # Dev mode: no frozen build, no version.txt — treat as stable
+            return 'stable'
+        with open(vtxt, 'r', encoding='utf-8') as f:
+            lines = f.read().splitlines()
+        return lines[1].strip() if len(lines) >= 2 and lines[1].strip() else 'stable'
+    except Exception:
+        return 'stable'
+
 #======================================================<  Copied from preferences.py file  >===================================================
 
 
