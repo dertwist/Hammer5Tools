@@ -5,9 +5,12 @@
 
 struct ReleaseInfo {
     bool found = false;
+    bool is_prerelease = false;
     std::string version;
     std::string download_url;
     std::string changelog;
+    std::string publish_date;
+    std::string commit_sha;
 };
 
 class UpdateLogic {
