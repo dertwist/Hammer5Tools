@@ -20,7 +20,7 @@ set(SOURCES
 add_executable(Hammer5ToolsUpdater WIN32 ${SOURCES})
 
 target_link_libraries(Hammer5ToolsUpdater PRIVATE kernel32 user32 shell32 winhttp comctl32)
-target_compile_definitions(Hammer5ToolsUpdater PRIVATE UNICODE _UNICODE)
+target_compile_definitions(Hammer5ToolsUpdater PRIVATE UNICODE _UNICODE _WIN32_WINNT=0x0600)
 
 set_target_properties(Hammer5ToolsUpdater PROPERTIES 
     OUTPUT_NAME "Hammer5ToolsUpdater"
