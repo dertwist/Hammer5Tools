@@ -4,6 +4,7 @@
 #include <tlhelp32.h>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include "third_party/miniz.h"
 
 #pragma comment(lib, "winhttp.lib")
