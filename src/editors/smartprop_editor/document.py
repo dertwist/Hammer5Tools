@@ -1189,7 +1189,7 @@ class SmartPropDocument(QMainWindow):
         operators_and_filters = operators_list + filters_list
         elements_in_popupmenu = []
         exists_classes = []
-        force_items_names = ["SetVariable", "SaveState", 'Comment']
+        force_items_names = ["SetVariable", "SaveState", 'Comment', 'Translate', 'Rotate']
         force_items = []
         for item in operators_and_filters:
             for key in item.keys():
@@ -1246,15 +1246,39 @@ class SmartPropDocument(QMainWindow):
     def add_a_selection_criteria(self):
         elements_in_popupmenu = []
         exists_classes = []
+        force_items_names = ['Comment']
+        force_items = []
+        
+        for item in selection_criteria_list:
+            for key in item.keys():
+                if key in force_items_names:
+                    force_items.append(item)
+                    
         for i in range(self.selection_criteria_group_instance.layout.count()):
             widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
             if isinstance(widget, PropertyFrame):
                 exists_classes.append(widget.name)
+                
+        for class_name in force_items_names:
+            if class_name in exists_classes:
+                exists_classes.remove(class_name)
+                
         for item in selection_criteria_list:
             for key, value in item.items():
                 if key not in exists_classes:
-                    elements_in_popupmenu.append(item)
-        self.popup_menu = PopupMenu(elements_in_popupmenu, add_once=True, window_name="SPE_selection_criteria")
+                    if item not in elements_in_popupmenu:
+                        elements_in_popupmenu.append(item)
+                        
+        for item in force_items:
+            if item not in elements_in_popupmenu:
+                elements_in_popupmenu.append(item)
+                
+        self.popup_menu = PopupMenu(
+            elements_in_popupmenu,
+            add_once=True,
+            window_name="SPE_selection_criteria",
+            ignore_list=force_items_names
+        )
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_selection_criteria(name, value))
         self.popup_menu.show()
 
