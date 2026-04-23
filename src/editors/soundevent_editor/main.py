@@ -407,10 +407,8 @@ class SoundEventEditorMainWindow(QMainWindow):
 
     def call_soundevent_preset_menu(self):
         """Calls sound events preset menu"""
-        presets = list()
-        for root, dirs, files in os.walk(SoundEventEditor_Preset_Path):
-            for file in files:
-                presets.append({file: os.path.join(root, file)})
+        from src.common import get_all_presets, SoundEventEditor_Internal_Preset_Path, SoundEventEditor_User_Preset_Path
+        presets = get_all_presets(SoundEventEditor_Internal_Preset_Path, SoundEventEditor_User_Preset_Path)
 
         self.soundevent_preset_menu = PopupMenu(properties=list(presets), window_name='soundevent_preset_menu')
         self.soundevent_preset_menu.add_property_signal.connect(lambda name, value: self.new_soundevent_preset(name, value))
