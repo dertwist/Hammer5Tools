@@ -100,9 +100,9 @@ class PropertyItemWidget(QWidget):
 
     def _on_label_clicked(self, event):
         """Called when the user clicks the property label."""
-        if self.add_once and (self.key, str(self.value)) in self.ignore_items:
-            return
-        remove_item = self.add_once and (self.key, str(self.value)) not in self.ignore_items
+        is_ignored = self.key in self.ignore_items or (self.key, str(self.value)) in self.ignore_items
+        remove_item = self.add_once and not is_ignored
+        
         self.property_clicked.emit(self.key, str(self.value), remove_item, self.label)
 
     def _on_help_clicked(self):
@@ -202,12 +202,12 @@ class PopupMenu(QDialog):
         self._is_closing = False
 
     def _convert_ignore_list(self, ignore_list):
-        """Convert ignore_list to a consistent set of (key, value) pairs if needed."""
+        """Convert ignore_list to a consistent set of keys or (key, value) pairs."""
         ignore = set()
         if ignore_list:
             for item in ignore_list:
                 if isinstance(item, str):
-                    ignore.add((item, item))
+                    ignore.add(item)
                 else:
                     k, v = item
                     ignore.add((k, str(v)))
