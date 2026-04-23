@@ -22,11 +22,31 @@ jobs:
           python-version: "3.11"
           cache: pip
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+
       - name: Install dependencies
+          # We need to install requirements for makefile.py to run (e.g. tabulate)
         run: pip install -r requirements.txt
 
-      - name: Build exe and create zip
-        run: python makefile.py --build-app --archive
+      - name: Build Launcher
+        run: dotnet publish launcher/Hammer5ToolsLauncher.csproj -c Release -o launcher/publish
+
+      - name: Build Updater
+        run: dotnet publish updater/Hammer5ToolsUpdater.csproj -c Release -o updater/publish
+
+      - name: Build Python App
+        run: python makefile.py --build-app
+
+      - name: Copy launcher and updater into dist folder
+        run: |
+          copy launcher\publish\Hammer5ToolsLauncher.exe hammer5tools\Hammer5ToolsLauncher.exe
+          copy updater\publish\Hammer5ToolsUpdater.exe hammer5tools\Hammer5ToolsUpdater.exe
+
+      - name: Create Zip Archive
+        run: python makefile.py --archive
 
       - name: Read app version
         id: version
@@ -41,7 +61,7 @@ jobs:
           name: "Dev Build v${{ steps.version.outputs.app_version }} (${{ github.sha }})"
           body: |
             Automated dev build from commit ${{ github.sha }} on branch `${{ github.ref_name }}`.
+            
+            This build includes the new .NET Launcher and Updater.
           prerelease: true
-          files: |
-            hammer5tools/Hammer5Tools.exe
-            dist/hammer5tools.zip
+          files: dist/hammer5tools.zip

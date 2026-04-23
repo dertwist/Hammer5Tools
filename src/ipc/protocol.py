@@ -14,6 +14,8 @@ class IPCCommand(Enum):
     SHOW_WINDOW = "show"
     OPEN_FILE = "open_file"
     FOCUS_FILE = "focus_file"
+    CREATE_VMDL = "create_vmdl"
+    CREATE_VMAT = "create_vmat"
 
 
 class IPCMessage:

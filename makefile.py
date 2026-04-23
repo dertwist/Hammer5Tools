@@ -27,26 +27,8 @@ dotnet_dlls = [
     ("TinyEXR.NET.dll", "src\\external")
 ]
 
-# Runtime hook to fix pycparser/pythonnet issues in PyInstaller onefile
-runtime_hook_path = os.path.join(cur_dir, "pyi_runtime_hook_pythonnet.py")
-with open(runtime_hook_path, "w") as f:
-    f.write(
-        """import sys, os, tempfile, shutil
-# Copy pre-bundled pycparser parser tables to a writable tempdir so pycparser
-# can import them. Only runs when the app is frozen by PyInstaller.
-if hasattr(sys, '_MEIPASS'):
-    tempdir = tempfile.gettempdir()
-    for tabfile in ['lextab.py', 'yacctab.py']:
-        src = os.path.join(sys._MEIPASS, 'pycparser', tabfile)
-        dst = os.path.join(tempdir, tabfile)
-        if os.path.exists(src) and not os.path.exists(dst):
-            try:
-                shutil.copy2(src, dst)
-            except OSError:
-                pass
-    sys.path.insert(0, tempdir)
-"""
-    )
+
+# Path to your .NET DLLs
 
 
 def print_elapsed_time(stage_name: str, start_time: float) -> None:
@@ -150,7 +132,7 @@ def build_hammer5_tools(fast=False) -> None:
         '--noupx',
         '--distpath=hammer5tools',
         '--noconfirm',
-        '--onefile',
+        '--onedir',
         '--windowed',
         # Add the project root to PyInstaller's analysis sys.path so that
         # local packages (src, keyvalues3) are discoverable as packages.
@@ -188,8 +170,6 @@ def build_hammer5_tools(fast=False) -> None:
         external,
         # Bundle all .NET DLLs
         *[f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls],
-        # Runtime hook for pycparser/pythonnet
-        f'--runtime-hook={runtime_hook_path}',
         'src/main.py'
     ]
 
@@ -205,6 +185,25 @@ def build_hammer5_tools(fast=False) -> None:
         print("pycparser tables not found; runtime hook will generate them on first launch.")
 
     subprocess.run(pyinstaller_cmd, check=True)
+
+    # Rename output folder to 'app' for the new layout
+    dist_root = 'hammer5tools'
+    app_bundle_path = os.path.join(dist_root, 'Hammer5Tools')
+    target_app_path = os.path.join(dist_root, 'app')
+    
+    if os.path.exists(target_app_path):
+        import shutil
+        shutil.rmtree(target_app_path)
+    
+    if os.path.exists(app_bundle_path):
+        os.rename(app_bundle_path, target_app_path)
+        print(f"Renamed {app_bundle_path} to {target_app_path}")
+
+    # Phase 3: Write version.txt into the bundle
+    version_file_path = os.path.join(target_app_path, 'version.txt')
+    with open(version_file_path, 'w') as f:
+        f.write(app_version)
+    print(f"Wrote version.txt to {version_file_path}")
 
 def archive_files(
     folder_path: str,
@@ -291,7 +290,7 @@ def main() -> None:
             'Hammer5ToolsInstaller.exe'
         }
         excluded_paths = ['SoundEventEditor\\sounds']
-        archive_files('Hammer5Tools', zip_output_path, excluded_files, excluded_paths)
+        archive_files('hammer5tools', zip_output_path, excluded_files, excluded_paths)
         elapsed_time = time.time() - stage_start_time
         results.append(["Archiving files", f"{elapsed_time:.2f} seconds"])
 
