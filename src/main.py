@@ -382,8 +382,10 @@ class Widget(QMainWindow):
             self.open_quick_create_dialog(path, "vmdl")
 
     def handle_quick_batch(self, path):
-        """Create a .bat stub for ResourceCompiler in the folder."""
-        if os.path.isdir(path):
+        """Create a .bat stub for ResourceCompiler in the folder (or file's folder)."""
+        target_dir = path if os.path.isdir(path) else os.path.dirname(path)
+        
+        if os.path.isdir(target_dir):
             cs2_path = get_cs2_path()
             if not cs2_path:
                 QMessageBox.warning(self, "CS2 Not Found", "CS2 installation path not set.")
@@ -391,7 +393,7 @@ class Widget(QMainWindow):
             rc_exe = os.path.join(cs2_path, "game", "bin", "win64", "resourcecompiler.exe")
             
             bat_content = f'@echo off\n"{rc_exe}" -i "*.vmdl" "*.vmat"\npause'
-            bat_path = os.path.join(path, "compile_assets.bat")
+            bat_path = os.path.join(target_dir, "compile_assets.bat")
             try:
                 with open(bat_path, 'w') as f:
                     f.write(bat_content)
