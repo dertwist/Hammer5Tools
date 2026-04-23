@@ -220,12 +220,18 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
         os.rename(app_bundle_path, target_app_path)
         print(f"Renamed {app_bundle_path} to {target_app_path}")
 
-    # Phase 3: Write version.txt into the bundle (3-line format: version, channel, build date)
+    # Phase 3: Write version.txt into the bundle (4-line format: version, channel, build_date, commit_sha)
     version_file_path = os.path.join(target_app_path, 'version.txt')
     build_date = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    with open(version_file_path, 'w') as f:
-        f.write(f"{app_version}\n{channel}\n{build_date}")
-    print(f"Wrote version.txt to {version_file_path} (channel={channel}, date={build_date})")
+    try:
+        commit_sha = subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'], text=True, cwd=cur_dir
+        ).strip()
+    except Exception:
+        commit_sha = 'unknown'
+    with open(version_file_path, 'w', encoding='utf-8') as f:
+        f.write(f"{app_version}\n{channel}\n{build_date}\n{commit_sha}\n")
+    print(f"Wrote version.txt to {version_file_path} (channel={channel}, date={build_date}, sha={commit_sha[:7]})")
 
     # Copy to dist/ root so CI can upload it as a standalone release asset
     import shutil as _shutil
@@ -284,10 +290,12 @@ def main() -> None:
     parser.add_argument('--build-all', action='store_true', help="Build Hammer 5 Tools.")
     parser.add_argument('--build-app', action='store_true', help="Build only Hammer 5 Tools.")
     parser.add_argument('--archive', action='store_true', help="Archive the build outputs.")
-    parser.add_argument('--fast', action='store_true', help="User 0 level optimization.")
-    parser.add_argument('--channel', choices=['stable', 'dev'], default='stable',
-                        help="Release channel to embed in version.txt (default: stable).")
+    parser.add_argument('--fast', action='store_true', help="Use 0 level optimization.")
+    channel_group = parser.add_mutually_exclusive_group()
+    channel_group.add_argument('--stable', action='store_true', help="Build stable release (default).")
+    channel_group.add_argument('--dev', action='store_true', help="Build dev release.")
     args = parser.parse_args()
+    channel = 'dev' if args.dev else 'stable'
 
     overall_start_time = time.time()
 
@@ -302,7 +310,7 @@ def main() -> None:
     try:
         if args.build_all or args.build_app:
             stage_start_time = time.time()
-            build_hammer5_tools(fast=args.fast, channel=args.channel)
+            build_hammer5_tools(fast=args.fast, channel=channel)
             elapsed_time = time.time() - stage_start_time
             results.append(["Hammer 5 Tools Build (Python)", f"{elapsed_time:.2f} seconds"])
 
