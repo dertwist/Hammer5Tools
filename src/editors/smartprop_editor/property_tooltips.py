@@ -99,4 +99,5 @@ property_tooltips = {
     "m_OutputVariable": "Maps operation results explicitly to a configured output Float variable.",
     "m_LocatorName": "Unique identifier string for the locator.",
     "m_flDisplayScale": "Visual bounding size for the generated locator model.",
+    "m_StateName": "The name of the state to save or restore. This allows for returning to a previously saved state at a later point in the evaluation.",
 }
