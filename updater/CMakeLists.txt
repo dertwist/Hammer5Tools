@@ -12,14 +12,12 @@ set(SOURCES
     main.cpp 
     update_logic.cpp 
     update_logic.h
-    third_party/miniz.c
-    third_party/miniz.h
     resources.rc
 )
 
 add_executable(Hammer5ToolsUpdater WIN32 ${SOURCES})
 
-target_link_libraries(Hammer5ToolsUpdater PRIVATE kernel32 user32 shell32 winhttp comctl32)
+target_link_libraries(Hammer5ToolsUpdater PRIVATE kernel32 user32 shell32 winhttp)
 target_compile_definitions(Hammer5ToolsUpdater PRIVATE UNICODE _UNICODE _WIN32_WINNT=0x0600)
 
 set_target_properties(Hammer5ToolsUpdater PROPERTIES 
