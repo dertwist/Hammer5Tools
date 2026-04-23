@@ -31,6 +31,9 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
     HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/repos/dertwist/Hammer5Tools/releases", NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
     if (!hRequest) { WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession); return info; }
 
+    // Add User-Agent header (required by GitHub API)
+    WinHttpAddRequestHeaders(hRequest, L"User-Agent: Hammer5ToolsUpdater/1.0\r\n", (ULONG)-1L, WINHTTP_ADDREQ_FLAG_ADD);
+
     if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
         if (WinHttpReceiveResponse(hRequest, NULL)) {
             std::string response;
@@ -47,15 +50,23 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
                 delete[] pszOutBuffer;
             } while (dwSize > 0);
 
-            // Manual JSON array parsing
+            // Manual JSON array parsing with better object detection
             size_t pos = 0;
             while (true) {
                 size_t start = response.find("{", pos);
                 if (start == std::string::npos) break;
                 
-                // Find end of this release object
-                size_t end = response.find("},", start);
-                if (end == std::string::npos) end = response.find("}]", start);
+                // Find matching closing brace to avoid truncating at nested objects
+                size_t end = std::string::npos;
+                int braceCount = 0;
+                for (size_t i = start; i < response.length(); ++i) {
+                    if (response[i] == '{') braceCount++;
+                    else if (response[i] == '}') braceCount--;
+                    if (braceCount == 0) {
+                        end = i;
+                        break;
+                    }
+                }
                 if (end == std::string::npos) break;
                 
                 std::string releaseJson = response.substr(start, end - start + 1);
@@ -64,15 +75,23 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
                 auto getField = [&](const std::string& key) -> std::string {
                     size_t kPos = releaseJson.find("\"" + key + "\":");
                     if (kPos == std::string::npos) return "";
-                    size_t vStart = releaseJson.find("\"", kPos + key.length() + 3);
+                    size_t vStart = releaseJson.find("\"", kPos + key.length() + 2);
                     if (vStart == std::string::npos) return "";
                     size_t vEnd = releaseJson.find("\"", vStart + 1);
                     if (vEnd == std::string::npos) return "";
                     return releaseJson.substr(vStart + 1, vEnd - vStart - 1);
                 };
                 
-                bool isPrerelease = releaseJson.find("\"prerelease\":true") != std::string::npos;
-                bool isDraft = releaseJson.find("\"draft\":true") != std::string::npos;
+                auto getBoolField = [&](const std::string& key) -> bool {
+                    size_t kPos = releaseJson.find("\"" + key + "\":");
+                    if (kPos == std::string::npos) return false;
+                    size_t vStart = kPos + key.length() + 2;
+                    while (vStart < releaseJson.length() && (releaseJson[vStart] == ' ' || releaseJson[vStart] == ':')) vStart++;
+                    return releaseJson.compare(vStart, 4, "true") == 0;
+                };
+                
+                bool isPrerelease = getBoolField("prerelease");
+                bool isDraft = getBoolField("draft");
                 
                 if (isDraft) continue;
                 if (isPrerelease && !devBuilds) continue;
@@ -82,12 +101,28 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
                 std::string date = getField("published_at");
                 std::string commit = getField("target_commitish");
                 
-                size_t assetPos = releaseJson.find("\"browser_download_url\":");
+                // Find download URL for hammer5tools.zip
+                size_t assetPos = 0;
                 std::string downloadUrl;
-                if (assetPos != std::string::npos) {
+                while ((assetPos = releaseJson.find("\"browser_download_url\":", assetPos)) != std::string::npos) {
                     size_t dStart = releaseJson.find("\"", assetPos + 23) + 1;
                     size_t dEnd = releaseJson.find("\"", dStart);
-                    downloadUrl = releaseJson.substr(dStart, dEnd - dStart);
+                    std::string url = releaseJson.substr(dStart, dEnd - dStart);
+                    if (url.find("hammer5tools.zip") != std::string::npos) {
+                        downloadUrl = url;
+                        break;
+                    }
+                    assetPos = dEnd;
+                }
+                
+                // Fallback to first asset if hammer5tools.zip not found
+                if (downloadUrl.empty()) {
+                    assetPos = releaseJson.find("\"browser_download_url\":");
+                    if (assetPos != std::string::npos) {
+                        size_t dStart = releaseJson.find("\"", assetPos + 23) + 1;
+                        size_t dEnd = releaseJson.find("\"", dStart);
+                        downloadUrl = releaseJson.substr(dStart, dEnd - dStart);
+                    }
                 }
                 
                 if (!tag.empty() && !downloadUrl.empty()) {
@@ -96,6 +131,8 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
                     std::string cleanCurrent = current_version;
                     if (cleanCurrent[0] == 'v') cleanCurrent = cleanCurrent.substr(1);
                     
+                    // Special case: if on dev version, we always check if the published date is newer?
+                    // For now, just allow updating if tag is different.
                     if (cleanTag != cleanCurrent) {
                         info.version = tag;
                         info.download_url = downloadUrl;
@@ -111,12 +148,27 @@ ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
                         
                         info.changelog = unescapedBody;
                         info.found = true;
+                        break; // Found a valid update, stop searching
+                    } else if (cleanTag == "dev") {
+                        // If we are on dev and the latest is also dev, we might still want to update 
+                        // if the user explicitly checks. But we need a way to know if it's NEWER.
+                        // For now, if the tag is 'dev', we'll only offer it if the current version is NOT 'dev'.
+                        // To support dev-to-dev updates, we'd need to store the commit SHA locally.
                     }
-                    break;
+                    
+                    // If this release is the same as current, stop searching older releases
+                    if (cleanTag == cleanCurrent) break;
                 }
             }
         }
     }
+
+    WinHttpCloseHandle(hRequest);
+    WinHttpCloseHandle(hConnect);
+    WinHttpCloseHandle(hSession);
+    return info;
+}
+
 
     WinHttpCloseHandle(hRequest);
     WinHttpCloseHandle(hConnect);
