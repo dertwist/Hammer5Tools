@@ -1,10 +1,10 @@
 #define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include "update_logic.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <tlhelp32.h>
-#include <windows.h>
 #include <winhttp.h>
 
 #pragma comment(lib, "winhttp.lib")
