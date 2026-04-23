@@ -539,7 +539,8 @@ class PreferencesDialog(QDialog):
                                   "Please select the root CS2 installation directory.")
 
     def open_settings_folder(self):
-        subprocess.Popen(f'explorer "{os.getcwd()}"')
+        from src.common import user_data_dir
+        os.startfile(user_data_dir)
 
     def open_presets_folder(self):
         os.startfile(Presets_Path)

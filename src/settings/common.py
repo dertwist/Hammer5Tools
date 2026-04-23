@@ -4,16 +4,11 @@ from PySide6.QtCore import QSettings
 
 from src.other.get_cs2_path import get_counter_strike_path_from_registry, get_steam_install_path
 
-# Define the application directory
-# Use the directory where the executable/script is located, not the current working directory
-if getattr(sys, 'frozen', False):
-    # If running as PyInstaller bundle
-    app_dir = os.path.dirname(sys.executable)
-else:
-    # If running as script, go up to project root
-    app_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.common import get_portable_root
 
-settings_file = os.path.join(app_dir, 'settings.ini')
+app_dir = get_portable_root()
+user_data_dir = os.path.join(app_dir, "user")
+settings_file = os.path.join(user_data_dir, 'settings.ini')
 
 # Initialize settings to use settings.ini in the program folder
 settings = QSettings(settings_file, QSettings.IniFormat)

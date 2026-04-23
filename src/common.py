@@ -1,6 +1,7 @@
 # from src.preferences import get_cs2_path
 from src.other.get_cs2_path import get_counter_strike_path_from_registry, get_steam_install_path
 from src.styles.common import qt_stylesheet_tabbar
+import sys
 import os
 import subprocess
 from PySide6.QtWidgets import QTabBar, QDockWidget
@@ -17,7 +18,7 @@ app_version = '5.0.0'
 
 #======================================================<  Copied from preferences.py file  >===================================================
 
-from src.settings.common import get_cs2_path
+
 
 #=================================================================<  Title  >===============================================================
 def enable_dark_title_bar(window):
@@ -45,14 +46,96 @@ editor_info = {
     }
     }
 
+def get_portable_root() -> str:
+    """
+    Returns the portable root (folder containing Launcher).
+    Launcher sets HAMMER5TOOLS_ROOT env var before starting app.
+    Falls back to two levels up from the frozen exe (app/ → root).
+    """
+    if "HAMMER5TOOLS_ROOT" in os.environ:
+        return os.environ["HAMMER5TOOLS_ROOT"]
+    if getattr(sys, 'frozen', False):
+        # app/Hammer5Tools.exe → go up one level to root
+        return os.path.dirname(os.path.dirname(sys.executable))
+    return os.getcwd()  # dev mode
+
 # Paths
-app_dir = os.getcwd()
-SoundEventEditor_Preset_Path = os.path.join(app_dir, "SoundEventEditor", "Presets")
-SmartPropEditor_Preset_Path = os.path.join(app_dir, "SmartPropEditor", "Presets")
-Presets_Path = os.path.join(app_dir, "presets")
-SoundEventEditor_sounds_path = os.path.join(app_dir, "SoundEventEditor", 'sounds')
-SoundEventEditor_soundevents_path = os.path.join(app_dir, "SoundEventEditor", 'soundevents')
-SoundEventEditor_path = os.path.join(app_dir, "SoundEventEditor")
+app_dir = get_portable_root()
+user_data_dir = os.path.join(app_dir, "user")
+os.makedirs(user_data_dir, exist_ok=True)
+
+SoundEventEditor_Preset_Path = os.path.join(user_data_dir, "SoundEventEditor", "Presets")
+SmartPropEditor_Preset_Path = os.path.join(user_data_dir, "SmartPropEditor", "Presets")
+Presets_Path = os.path.join(user_data_dir, "Presets")
+
+# User presets — never touched by updates, user manages manually
+SoundEventEditor_User_Preset_Path = os.path.join(user_data_dir, "SoundEventEditor", "UserPresets")
+SmartPropEditor_User_Preset_Path = os.path.join(user_data_dir, "SmartPropEditor", "UserPresets")
+
+# Internal presets — shipped with the app, overwritten on update
+if getattr(sys, 'frozen', False):
+    # In frozen mode, internal presets are in the app/ subfolder
+    internal_base = os.path.join(app_dir, "app")
+else:
+    # In dev mode, they are in the repo root
+    internal_base = app_dir
+
+SoundEventEditor_Internal_Preset_Path = os.path.join(internal_base, "SoundEventEditor", "Presets")
+SmartPropEditor_Internal_Preset_Path = os.path.join(internal_base, "SmartPropEditor", "Presets")
+
+# SoundEventEditor data paths
+SoundEventEditor_sounds_path = os.path.join(user_data_dir, "SoundEventEditor", 'sounds')
+SoundEventEditor_soundevents_path = os.path.join(user_data_dir, "SoundEventEditor", 'soundevents')
+SoundEventEditor_path = os.path.join(user_data_dir, "SoundEventEditor")
+
+# Create subdirs if they don't exist
+for p in [SoundEventEditor_Preset_Path, SmartPropEditor_Preset_Path, Presets_Path, 
+          SoundEventEditor_User_Preset_Path, SmartPropEditor_User_Preset_Path,
+          SoundEventEditor_sounds_path, SoundEventEditor_soundevents_path]:
+    os.makedirs(p, exist_ok=True)
+
+def get_all_presets(internal_path: str, user_path: str) -> list[dict]:
+    """
+    Returns a list of presets from both internal and user paths.
+    Format: [{filename: absolute_path}, ...]
+    """
+    presets = []
+    for path in (internal_path, user_path):
+        if os.path.isdir(path):
+            for root, _, files in os.walk(path):
+                for file in files:
+                    # In Hammer5Tools, presets are often .kv3 or .vdata
+                    if file.endswith((".kv3", ".vdata", ".vsmart")):
+                        presets.append({file: os.path.join(root, file)})
+    return presets
+
+def seed_user_data():
+    """Seeds the user directory from bundled defaults on first launch."""
+    if getattr(sys, 'frozen', False):
+        # In PyInstaller _internal is where _MEIPASS points
+        base_path = sys._MEIPASS
+    else:
+        # Dev mode root
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
+    defaults_path = os.path.join(base_path, "defaults")
+    if os.path.exists(defaults_path):
+        import shutil
+        for item in os.listdir(defaults_path):
+            s = os.path.join(defaults_path, item)
+            d = os.path.join(user_data_dir, item)
+            if not os.path.exists(d):
+                try:
+                    if os.path.isdir(s):
+                        shutil.copytree(s, d)
+                    else:
+                        shutil.copy2(s, d)
+                    print(f"Seeded {item} from defaults")
+                except Exception as e:
+                    print(f"Failed to seed {item}: {e}")
+
+# Run seeding
+seed_user_data()
 
 # web
 discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
@@ -96,6 +179,7 @@ def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=Fa
     """
 
     def compile(input_file):
+        from src.settings.common import get_cs2_path
         resourcecompiler = os.path.join(get_cs2_path(), 'game', 'bin', 'win64', 'resourcecompiler.exe')
         arguments = ''
         if fshallow2:
