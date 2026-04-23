@@ -430,8 +430,7 @@ class VariableFrame(PropertyMethods, QWidget):
             __index = self.widget_list.indexOf(self)
             self.duplicate.emit(__data, __index)
 
-    def set_indent(self, level):
-        self.ui.verticalLayout.setContentsMargins(level * 5, 0, 0, 0)
+
 
 
 class CategoryFrame(VariableFrame):
@@ -507,7 +506,7 @@ class CategoryFrame(VariableFrame):
         # Extract "Name" from " ----====Name====----"
         if full_display_name:
             import re
-            match = re.search(r"----====(.*)===----", full_display_name)
+            match = re.search(r" ----====(.*)===------", full_display_name)
             if match:
                 return match.group(1).strip()
             return full_display_name
