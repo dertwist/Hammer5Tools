@@ -53,7 +53,7 @@ DEFAULT_VMDL = {
                 'children': [
                     {
                         '_class': 'RenderMeshFile',
-                        'filename': 'models/modular/trim_roof/var_01/trim_roof_01_64_a.fbx',
+                        'filename': '',
                         'import_scale': 1.0,
                         'import_filter': {
                             'exclude_by_default': False,
@@ -67,7 +67,6 @@ DEFAULT_VMDL = {
                 'children': [
                     {
                         '_class': 'PhysicsHullFile',
-                        'name': 'trim_roof_01_128_a',
                         'parent_bone': '',
                         'surface_prop': 'default',
                         'collision_prop': 'default',
@@ -75,7 +74,7 @@ DEFAULT_VMDL = {
                         'recenter_on_parent_bone': False,
                         'offset_origin': [0.0, 0.0, 0.0],
                         'offset_angles': [0.0, 0.0, 0.0],
-                        'filename': 'models/modular/trim_roof/var_01/trim_roof_01_64_a.fbx',
+                        'filename': '',
                         'import_scale': 1.0,
                         'faceMergeAngle': 5.0,
                         'maxHullVertices': 24,
