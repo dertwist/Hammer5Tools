@@ -42,11 +42,12 @@ void SetRegistryKey(HKEY hKeyRoot, const std::wstring& subKey, const std::wstrin
 void RegisterAssociations(const std::wstring& exePath) {
     std::wstring openCmd = L"\"" + exePath + L"\" \"%1\"";
     std::wstring iconCmd = L"\"" + exePath + L"\",0";
+    std::wstring smartPropIconCmd = L"\"" + exePath + L"\",1";
 
     // .vsmart
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\.vsmart", L"", L"Hammer5Tools.SmartProp");
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp", L"", L"SmartProp File");
-    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\DefaultIcon", L"", iconCmd);
+    SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\DefaultIcon", L"", smartPropIconCmd);
     SetRegistryKey(HKEY_CURRENT_USER, L"Software\\Classes\\Hammer5Tools.SmartProp\\shell\\open\\command", L"", openCmd);
 
     // .vsndevts
