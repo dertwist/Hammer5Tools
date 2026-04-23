@@ -990,10 +990,8 @@ class SmartPropDocument(QMainWindow):
 
     # ======================================[Tree Widget Hierarchy New Element]========================================
     def add_preset(self):
-        presets = []
-        for root, dirs, files in os.walk(SmartPropEditor_Preset_Path):
-            for file in files:
-                presets.append({file: os.path.join(root, file)})
+        from src.common import get_all_presets, SmartPropEditor_Internal_Preset_Path, SmartPropEditor_User_Preset_Path
+        presets = get_all_presets(SmartPropEditor_Internal_Preset_Path, SmartPropEditor_User_Preset_Path)
         self.popup_menu = PopupMenu(presets, add_once=False, window_name="SPE_elements_presets")
         self.popup_menu.add_property_signal.connect(lambda name, value: self.load_preset(name, value))
         self.popup_menu.show()

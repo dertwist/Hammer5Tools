@@ -114,6 +114,26 @@ def _generate_pycparser_tables():
         print(f"Warning: could not pre-generate pycparser tables: {e}")
 
 
+def build_cpp(project: str, src_dir: str, output_name: str) -> None:
+    """Builds a C++ project using CMake."""
+    build_dir = os.path.join(cur_dir, f"build_cpp_{project}")
+    os.makedirs(build_dir, exist_ok=True)
+    try:
+        subprocess.run(["cmake", "-S", src_dir, "-B", build_dir, "-G", "MinGW Makefiles",
+                        "-DCMAKE_BUILD_TYPE=Release"], check=True)
+        subprocess.run(["cmake", "--build", build_dir, "--config", "Release"], check=True)
+        
+        # Copy exe to hammer5tools/
+        src_exe = os.path.join(build_dir, f"{output_name}.exe")
+        dst_exe = os.path.join(cur_dir, "hammer5tools", f"{output_name}.exe")
+        os.makedirs(os.path.dirname(dst_exe), exist_ok=True)
+        import shutil
+        shutil.copy2(src_exe, dst_exe)
+        print(f"Successfully built and copied {output_name}.exe")
+    except subprocess.CalledProcessError as e:
+        print(f"Error building C++ project {project}: {e}")
+        raise
+
 def build_hammer5_tools(fast=False) -> None:
     if fast:
         optimization_level = 0
@@ -128,7 +148,7 @@ def build_hammer5_tools(fast=False) -> None:
 
     pyinstaller_cmd = [
         'pyinstaller',
-        '--name=Hammer5Tools',
+        '--name=h5t',
         '--noupx',
         '--distpath=hammer5tools',
         '--noconfirm',
@@ -162,6 +182,7 @@ def build_hammer5_tools(fast=False) -> None:
         '--add-data=src/appicon.ico;.',
         '--add-data=src/images;images/',
         '--add-data=src/styles;styles/',
+        '--add-data=Hammer5Tools;defaults/',
         '--exclude-module=PyQt5',
         '--exclude-module=numba',
         '--exclude-module=scipy',
@@ -188,7 +209,7 @@ def build_hammer5_tools(fast=False) -> None:
 
     # Rename output folder to 'app' for the new layout
     dist_root = 'hammer5tools'
-    app_bundle_path = os.path.join(dist_root, 'Hammer5Tools')
+    app_bundle_path = os.path.join(dist_root, 'h5t')
     target_app_path = os.path.join(dist_root, 'app')
     
     if os.path.exists(target_app_path):
@@ -260,8 +281,10 @@ def main() -> None:
     overall_start_time = time.time()
 
     stage_start_time = time.time()
-    kill_process("Hammer5Tools.exe")
-    print_elapsed_time("Kill process", stage_start_time)
+    # Kill both old and new process names to be safe during transition
+    for p in ["Hammer5Tools.exe", "h5t.exe", "Hammer5ToolsLauncher.exe"]:
+        kill_process(p)
+    print_elapsed_time("Kill processes", stage_start_time)
 
     results = []
 
@@ -270,7 +293,20 @@ def main() -> None:
             stage_start_time = time.time()
             build_hammer5_tools(fast=args.fast)
             elapsed_time = time.time() - stage_start_time
-            results.append(["Hammer 5 Tools Build", f"{elapsed_time:.2f} seconds"])
+            results.append(["Hammer 5 Tools Build (Python)", f"{elapsed_time:.2f} seconds"])
+
+        if args.build_all:
+            # Build C++ Launcher
+            stage_start_time = time.time()
+            build_cpp("Hammer5ToolsLauncher", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
+            elapsed_time = time.time() - stage_start_time
+            results.append(["C++ Launcher Build", f"{elapsed_time:.2f} seconds"])
+
+            # Build C++ Updater
+            stage_start_time = time.time()
+            build_cpp("Hammer5ToolsUpdater", os.path.join(cur_dir, "updater"), "Hammer5ToolsUpdater")
+            elapsed_time = time.time() - stage_start_time
+            results.append(["C++ Updater Build", f"{elapsed_time:.2f} seconds"])
     except subprocess.CalledProcessError as e:
         print(f"Error during build: {e}")
         return
@@ -289,7 +325,7 @@ def main() -> None:
             'settings.ini',
             'Hammer5ToolsInstaller.exe'
         }
-        excluded_paths = ['SoundEventEditor\\sounds']
+        excluded_paths = ['SoundEventEditor\\sounds', 'user']
         archive_files('hammer5tools', zip_output_path, excluded_files, excluded_paths)
         elapsed_time = time.time() - stage_start_time
         results.append(["Archiving files", f"{elapsed_time:.2f} seconds"])

@@ -29,17 +29,18 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.save_button.clicked.connect(self.save_preset)
 
     #==============================================================<  Explorer  >===========================================================
-        self.tree_directory = SoundEventEditor_Preset_Path
-        if os.path.exists(self.tree_directory):
-            pass
-        else:
-            def make_dir():
-                os.makedirs(self.tree_directory)
-
-            make_dir()
-        if self.tree_directory == '':
-            ErrorInfo('Could not create presets directory')
-        self.mini_explorer = Explorer(tree_directory=self.tree_directory, addon=get_addon_name(), editor_name='SoundEvent_Editor_PresetManager', parent=self.parent)
+        from src.common import SoundEventEditor_Internal_Preset_Path, SoundEventEditor_User_Preset_Path
+        base_dirs = {
+            "Internal": SoundEventEditor_Internal_Preset_Path,
+            "User": SoundEventEditor_User_Preset_Path
+        }
+        self.mini_explorer = Explorer(
+            tree_directory=self.tree_directory, 
+            addon=get_addon_name(), 
+            editor_name='SoundEvent_Editor_PresetManager', 
+            parent=self.parent,
+            base_directories=base_dirs
+        )
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
     #=======================================================<  Preset Manager Actions  >====================================================

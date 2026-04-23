@@ -3,7 +3,7 @@ import re
 import shutil
 import winreg
 from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QMessageBox, \
-    QLineEdit, QToolButton, QDialog, QListWidgetItem, QTreeView, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QFrame
+    QLineEdit, QToolButton, QDialog, QListWidgetItem, QTreeView, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QFrame, QComboBox
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer
@@ -200,12 +200,13 @@ def get_default_application(file_extension):
 class Explorer(QMainWindow):
     play_sound = Signal(str)
 
-    def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None, use_internal_player: bool = True):
+    def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None, use_internal_player: bool = True, base_directories: dict = None):
         super().__init__(parent)
         self.tree_directory = tree_directory
         self.addon = addon
         self.editor_name = editor_name
         self.use_internal_player = use_internal_player
+        self.base_directories = base_directories or {}
         self.model = CustomFileSystemModel(self)
         self.model.setRootPath(tree_directory)
         try:
@@ -242,6 +243,22 @@ class Explorer(QMainWindow):
         self.filter_editline.setPlaceholderText("Filter files...")
         self.filter_editline.textChanged.connect(self.update_filter)
         self.top_layout.addWidget(self.filter_editline)
+
+        if self.base_directories:
+            self.root_selector = QComboBox(self)
+            for label in self.base_directories:
+                self.root_selector.addItem(label)
+            
+            # Set initial selection to User if available, otherwise Internal
+            if "User" in self.base_directories:
+                self.root_selector.setCurrentText("User")
+                self.tree_directory = self.base_directories["User"]
+            elif "Internal" in self.base_directories:
+                self.root_selector.setCurrentText("Internal")
+                self.tree_directory = self.base_directories["Internal"]
+
+            self.root_selector.currentIndexChanged.connect(self.on_root_changed)
+            self.top_layout.addWidget(self.root_selector)
         self.goto_button = QToolButton(self)
         self.goto_button.setIcon(QIcon("://icons/folder_open.svg"))
         self.goto_button.setToolTip("Go to path from clipboard")
@@ -284,6 +301,16 @@ class Explorer(QMainWindow):
         self.select_last_opened_path()
         self.frame = QFrame(self)
         self.frame.setLayout(self.layout)
+
+    def on_root_changed(self, index):
+        label = self.root_selector.itemText(index)
+        new_path = self.base_directories.get(label)
+        if new_path and os.path.exists(new_path):
+            self.tree_directory = new_path
+            self.model.setRootPath(new_path)
+            source_index = self.model.index(new_path)
+            self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(source_index))
+            debug(f"Explorer root changed to: {new_path}")
 
     def update_filter(self, text):
         self.filter_proxy_model.setFilterFixedString(text)
