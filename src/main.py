@@ -62,6 +62,7 @@ from src.common import enable_dark_title_bar, app_version, default_commands, app
 from src.dotnet import check_dotnet_runtime
 from src.other.addon_validation import validate_addon_structure
 from src.forms.cleanup.main import CleanupDialog
+from src.forms.quick_create.main import QuickCreateDialog
 
 from src.widgets import *
 # Global paths
@@ -69,7 +70,7 @@ steam_path = get_steam_path()
 cs2_path = get_cs2_path()
 print(f'Cs2: {get_cs2_path()}')
 stop_discord_thread = threading.Event()
-INSTANCE_KEY = "Hammer5ToolsInstance"
+INSTANCE_KEY = "Hammer5ToolsIPC"
 
 def activate_existing_window(hwnd):
     """
@@ -289,6 +290,19 @@ class Widget(QMainWindow):
         
         # Open the file (will focus if already open)
         self.SmartPropEditorMainWindow.open_file(filename=file_path)
+
+    def open_quick_create_dialog(self, folder_path, file_type):
+        """
+        Open the quick create dialog for VMDL/VMAT.
+        
+        Args:
+            folder_path: Directory where to create the file
+            file_type: 'vmdl' or 'vmat'
+        """
+        dialog = QuickCreateDialog(folder_path, file_type, self)
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
 
     def setup_tabs(self):
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
@@ -695,6 +709,16 @@ def handle_new_connection(server, widget):
                 if editor_type == "smartprop":
                     widget.open_file_in_smartprop(file_path)
                 # Add other editor types as needed
+            
+            elif command == IPCCommand.CREATE_VMDL.value:
+                folder_path = message.get("file_path")
+                widget.show_from_tray()
+                widget.open_quick_create_dialog(folder_path, "vmdl")
+            
+            elif command == IPCCommand.CREATE_VMAT.value:
+                folder_path = message.get("file_path")
+                widget.show_from_tray()
+                widget.open_quick_create_dialog(folder_path, "vmat")
         
         client_connection.disconnectFromServer()
 

@@ -15,14 +15,12 @@ Compression=lzma
 SolidCompression=yes
 
 [Files]
-Source: "Hammer5Tools\Hammer5Tools.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Hammer5Tools\hotkeys\*"; DestDir: "{app}\hotkeys"; Flags: recursesubdirs ignoreversion
-Source: "Hammer5Tools\presets\*"; DestDir: "{app}\presets"; Flags: recursesubdirs ignoreversion
-Source: "Hammer5Tools\SmartPropEditor\*"; DestDir: "{app}\SmartPropEditor"; Flags: recursesubdirs ignoreversion
-Source: "Hammer5Tools\SoundEventEditor\Presets\*"; DestDir: "{app}\SoundEventEditor\Presets"; Flags: recursesubdirs ignoreversion
+Source: "hammer5tools\Hammer5ToolsLauncher.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "hammer5tools\Hammer5ToolsUpdater.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "hammer5tools\app\*"; DestDir: "{app}\app"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{commondesktop}\Hammer5Tools"; Filename: "{app}\Hammer5Tools.exe"; Tasks: desktopicon
+Name: "{commondesktop}\Hammer5Tools"; Filename: "{app}\Hammer5ToolsLauncher.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional icons:"
