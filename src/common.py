@@ -61,7 +61,7 @@ def get_portable_root() -> str:
 
 # Paths
 app_dir = get_portable_root()
-user_data_dir = os.path.join(app_dir, "user")
+user_data_dir = app_dir # Data is now stored in the root directory
 os.makedirs(user_data_dir, exist_ok=True)
 
 SoundEventEditor_Preset_Path = os.path.join(user_data_dir, "SoundEventEditor", "Presets")
