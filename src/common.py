@@ -199,23 +199,36 @@ def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=Fa
            -crc <abspath>: Diagnostic - report the CRC of the specified file and quit
     """
 
-    def compile(input_file):
+    def run_rc(input_file):
         from src.settings.common import get_cs2_path
-        resourcecompiler = os.path.join(get_cs2_path(), 'game', 'bin', 'win64', 'resourcecompiler.exe')
-        arguments = ''
+        rc_path = get_cs2_path()
+        if not rc_path:
+            return
+            
+        resourcecompiler = os.path.join(rc_path, 'game', 'bin', 'win64', 'resourcecompiler.exe')
+        if not os.path.exists(resourcecompiler):
+            return
+
+        cmd_args = [resourcecompiler]
+        if fshallow:
+            cmd_args.append('-fshallow')
         if fshallow2:
-            arguments += ' -fshallow'
-        if fshallow2:
-            arguments += ' -fshallow2'
+            cmd_args.append('-fshallow2')
         if force:
-            arguments += ' -f'
-        if force:
-            arguments += ' -v'
-        process = subprocess.Popen([resourcecompiler, arguments,'-i', input_file, ], shell=True)
-        process.wait()
+            cmd_args.append('-f')
+        if verbose:
+            cmd_args.append('-v')
+        
+        cmd_args.extend(['-i', input_file])
+        
+        try:
+            process = subprocess.Popen(cmd_args)
+            process.wait()
+        except Exception as e:
+            print(f"Error running ResourceCompiler: {e}")
 
     # Create a new thread for the compile function
-    thread = threading.Thread(target=compile, args=(input_file,))
+    thread = threading.Thread(target=run_rc, args=(input_file,))
     thread.start()
 
 
