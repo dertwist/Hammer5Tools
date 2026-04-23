@@ -125,6 +125,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     msg += ",\"editor_type\":\"" + editor_type + "\"}";
 
     if (try_ipc(msg)) {
+        // Force the existing window to the front. 
+        // We retry a few times to give the app time to process the IPC message and show the window.
+        HWND hwnd = NULL;
+        for (int i = 0; i < 20; i++) {
+            hwnd = FindWindowW(NULL, L"Hammer 5 Tools");
+            if (hwnd && IsWindowVisible(hwnd)) {
+                if (IsIconic(hwnd)) ShowWindow(hwnd, SW_RESTORE);
+                SetForegroundWindow(hwnd);
+                break;
+            }
+            Sleep(50);
+        }
         LocalFree(argv);
         return 0;
     }
