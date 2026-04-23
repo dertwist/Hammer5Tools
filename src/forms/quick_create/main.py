@@ -40,12 +40,32 @@ class QuickCreateDialog(QDialog):
             data = {"m_sMDLFilename": ""}
         elif self.file_type == 'vmat':
             data = {"shader": "create_version_2.vfx"}
+        elif self.file_type == 'hbat':
+            data = {
+                "process": {
+                    "extension": "vmdl",
+                    "reference": "",
+                    "ignore_list": "",
+                    "custom_files": [],
+                    "custom_output": "relative_path",
+                    "algorithm": 0,
+                    "load_from_the_folder": True,
+                    "output_to_the_folder": True,
+                    "ignore_extensions": "mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr"
+                },
+                "replacements": {},
+                "file": {"content": ""}
+            }
             
-        kv3_content = JsonToKv3(data, format=self.file_type)
+        if self.file_type == 'hbat':
+            import json
+            content = json.dumps(data, indent=4)
+        else:
+            content = JsonToKv3(data, format=self.file_type)
         
         try:
             with open(full_path, 'w') as f:
-                f.write(kv3_content)
+                f.write(content)
         except Exception as e:
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Error", f"Failed to create file: {e}")
