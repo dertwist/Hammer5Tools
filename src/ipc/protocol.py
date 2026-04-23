@@ -15,7 +15,10 @@ class IPCCommand(Enum):
     OPEN_FILE = "open_file"
     FOCUS_FILE = "focus_file"
     CREATE_VMDL = "create_vmdl"
-    CREATE_VMAT = "create_vmat"
+    QUICK_VMDL = "quick_vmdl"
+    QUICK_BATCH = "quick_batch"
+    QUICK_PROCESS = "quick_process"
+    QUICK_PROCESS_FILE = "quick_process_file"
 
 
 class IPCMessage:
@@ -53,6 +56,23 @@ class IPCMessage:
             "file_path": file_path,
             "editor_type": editor_type
         })
+
+    @staticmethod
+    def create_quick_action(command, file_path, addon_hint=None):
+        """Create a message for a quick action (VMDL, Batch, Process).
+        
+        Args:
+            command: The IPCCommand to execute
+            file_path: Target file or directory
+            addon_hint: Optional addon name hint extracted from path
+        """
+        msg = {
+            "command": command.value,
+            "file_path": file_path
+        }
+        if addon_hint:
+            msg["addon_hint"] = addon_hint
+        return json.dumps(msg)
     
     @staticmethod
     def parse(message_bytes):
