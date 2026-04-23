@@ -6,249 +6,273 @@
 #include <fstream>
 #include <filesystem>
 #include "update_logic.h"
-#include "third_party/miniz.h"
 
 #pragma comment(lib, "winhttp.lib")
 
-ReleaseInfo UpdateLogic::CheckForUpdates(const std::string& current_version) {
-    ReleaseInfo info;
-    
-    // Get dev_builds setting from user/settings.ini
-    wchar_t exePath[MAX_PATH];
-    GetModuleFileNameW(NULL, exePath, MAX_PATH);
-    std::filesystem::path root = std::filesystem::path(exePath).parent_path();
-    std::wstring iniPath = (root / L"settings.ini").wstring();
-    
-    bool devBuilds = GetPrivateProfileIntW(L"APP", L"dev_builds", 0, iniPath.c_str()) != 0;
+namespace fs = std::filesystem;
 
-    HINTERNET hSession = WinHttpOpen(L"Hammer5ToolsUpdater/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-    if (!hSession) return info;
+// ---------------------------------------------------------------------------
+// Helper: perform a single GET request to api.github.com and return the body.
+// ---------------------------------------------------------------------------
+static std::string HttpGetGitHub(const std::string& api_path) {
+    std::string result;
 
-    HINTERNET hConnect = WinHttpConnect(hSession, L"api.github.com", INTERNET_DEFAULT_HTTPS_PORT, 0);
-    if (!hConnect) { WinHttpCloseHandle(hSession); return info; }
+    HINTERNET hSession = WinHttpOpen(L"Hammer5ToolsUpdater/1.0",
+        WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+        WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    if (!hSession) return result;
 
-    // Use /releases instead of /releases/latest to see pre-releases
-    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", L"/repos/dertwist/Hammer5Tools/releases", NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
-    if (!hRequest) { WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession); return info; }
+    HINTERNET hConnect = WinHttpConnect(hSession, L"api.github.com",
+        INTERNET_DEFAULT_HTTPS_PORT, 0);
+    if (!hConnect) { WinHttpCloseHandle(hSession); return result; }
 
-    // Add User-Agent header (required by GitHub API)
-    WinHttpAddRequestHeaders(hRequest, L"User-Agent: Hammer5ToolsUpdater/1.0\r\n", (ULONG)-1L, WINHTTP_ADDREQ_FLAG_ADD);
+    std::wstring wpath(api_path.begin(), api_path.end());
+    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", wpath.c_str(),
+        NULL, WINHTTP_NO_REFERER,
+        WINHTTP_DEFAULT_ACCEPT_TYPES,
+        WINHTTP_FLAG_SECURE);
+    if (!hRequest) {
+        WinHttpCloseHandle(hConnect);
+        WinHttpCloseHandle(hSession);
+        return result;
+    }
 
-    if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
+    WinHttpAddRequestHeaders(hRequest,
+        L"User-Agent: Hammer5ToolsUpdater/1.0\r\n",
+        (ULONG)-1L, WINHTTP_ADDREQ_FLAG_ADD);
+    WinHttpAddRequestHeaders(hRequest,
+        L"Accept: application/vnd.github+json\r\n",
+        (ULONG)-1L, WINHTTP_ADDREQ_FLAG_ADD);
+
+    if (WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+                           WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
         if (WinHttpReceiveResponse(hRequest, NULL)) {
-            std::string response;
             DWORD dwSize = 0;
             do {
                 if (!WinHttpQueryDataAvailable(hRequest, &dwSize)) break;
                 if (dwSize == 0) break;
-                char* pszOutBuffer = new char[dwSize + 1];
-                DWORD dwDownloaded = 0;
-                if (WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded)) {
-                    pszOutBuffer[dwDownloaded] = 0;
-                    response += pszOutBuffer;
+                char* buf = new char[dwSize + 1];
+                DWORD dwRead = 0;
+                if (WinHttpReadData(hRequest, (LPVOID)buf, dwSize, &dwRead)) {
+                    buf[dwRead] = 0;
+                    result += buf;
                 }
-                delete[] pszOutBuffer;
+                delete[] buf;
             } while (dwSize > 0);
-
-            // Manual JSON array parsing with better object detection
-            size_t pos = 0;
-            while (true) {
-                size_t start = response.find("{", pos);
-                if (start == std::string::npos) break;
-                
-                // Find matching closing brace to avoid truncating at nested objects
-                size_t end = std::string::npos;
-                int braceCount = 0;
-                for (size_t i = start; i < response.length(); ++i) {
-                    if (response[i] == '{') braceCount++;
-                    else if (response[i] == '}') braceCount--;
-                    if (braceCount == 0) {
-                        end = i;
-                        break;
-                    }
-                }
-                if (end == std::string::npos) break;
-                
-                std::string releaseJson = response.substr(start, end - start + 1);
-                pos = end + 1;
-                
-                auto getField = [&](const std::string& key) -> std::string {
-                    size_t kPos = releaseJson.find("\"" + key + "\":");
-                    if (kPos == std::string::npos) return "";
-                    size_t vStart = releaseJson.find("\"", kPos + key.length() + 2);
-                    if (vStart == std::string::npos) return "";
-                    size_t vEnd = releaseJson.find("\"", vStart + 1);
-                    if (vEnd == std::string::npos) return "";
-                    return releaseJson.substr(vStart + 1, vEnd - vStart - 1);
-                };
-                
-                auto getBoolField = [&](const std::string& key) -> bool {
-                    size_t kPos = releaseJson.find("\"" + key + "\":");
-                    if (kPos == std::string::npos) return false;
-                    size_t vStart = kPos + key.length() + 2;
-                    while (vStart < releaseJson.length() && (releaseJson[vStart] == ' ' || releaseJson[vStart] == ':')) vStart++;
-                    return releaseJson.compare(vStart, 4, "true") == 0;
-                };
-                
-                bool isPrerelease = getBoolField("prerelease");
-                bool isDraft = getBoolField("draft");
-                
-                if (isDraft) continue;
-                if (isPrerelease && !devBuilds) continue;
-                
-                std::string tag = getField("tag_name");
-                std::string body = getField("body");
-                std::string date = getField("published_at");
-                std::string commit = getField("target_commitish");
-                
-                // Find download URL for hammer5tools.zip
-                size_t assetPos = 0;
-                std::string downloadUrl;
-                while ((assetPos = releaseJson.find("\"browser_download_url\":", assetPos)) != std::string::npos) {
-                    size_t dStart = releaseJson.find("\"", assetPos + 23) + 1;
-                    size_t dEnd = releaseJson.find("\"", dStart);
-                    std::string url = releaseJson.substr(dStart, dEnd - dStart);
-                    if (url.find("hammer5tools.zip") != std::string::npos) {
-                        downloadUrl = url;
-                        break;
-                    }
-                    assetPos = dEnd;
-                }
-                
-                // Fallback to first asset if hammer5tools.zip not found
-                if (downloadUrl.empty()) {
-                    assetPos = releaseJson.find("\"browser_download_url\":");
-                    if (assetPos != std::string::npos) {
-                        size_t dStart = releaseJson.find("\"", assetPos + 23) + 1;
-                        size_t dEnd = releaseJson.find("\"", dStart);
-                        downloadUrl = releaseJson.substr(dStart, dEnd - dStart);
-                    }
-                }
-                
-                if (!tag.empty() && !downloadUrl.empty()) {
-                    std::string cleanTag = tag;
-                    if (cleanTag[0] == 'v') cleanTag = cleanTag.substr(1);
-                    std::string cleanCurrent = current_version;
-                    if (cleanCurrent[0] == 'v') cleanCurrent = cleanCurrent.substr(1);
-                    
-                    // Special case: if on dev version, we always check if the published date is newer?
-                    // For now, just allow updating if tag is different.
-                    if (cleanTag != cleanCurrent) {
-                        info.version = tag;
-                        info.download_url = downloadUrl;
-                        info.publish_date = date;
-                        info.commit_sha = commit;
-                        info.is_prerelease = isPrerelease;
-                        
-                        // Simple unescape for \r\n
-                        std::string unescapedBody = body;
-                        size_t rPos;
-                        while ((rPos = unescapedBody.find("\\r\\n")) != std::string::npos) unescapedBody.replace(rPos, 4, "\r\n");
-                        while ((rPos = unescapedBody.find("\\n")) != std::string::npos) unescapedBody.replace(rPos, 2, "\n");
-                        
-                        info.changelog = unescapedBody;
-                        info.found = true;
-                        break; // Found a valid update, stop searching
-                    } else if (cleanTag == "dev") {
-                        // If we are on dev and the latest is also dev, we might still want to update 
-                        // if the user explicitly checks. But we need a way to know if it's NEWER.
-                        // For now, if the tag is 'dev', we'll only offer it if the current version is NOT 'dev'.
-                        // To support dev-to-dev updates, we'd need to store the commit SHA locally.
-                    }
-                    
-                    // If this release is the same as current, stop searching older releases
-                    if (cleanTag == cleanCurrent) break;
-                }
-            }
         }
     }
 
     WinHttpCloseHandle(hRequest);
     WinHttpCloseHandle(hConnect);
     WinHttpCloseHandle(hSession);
+    return result;
+}
+
+// ---------------------------------------------------------------------------
+// Helper: extract a JSON string field value from a flat object.
+// ---------------------------------------------------------------------------
+static std::string JsonString(const std::string& json, const std::string& key) {
+    size_t kPos = json.find("\"" + key + "\":");
+    if (kPos == std::string::npos) return "";
+    size_t vStart = json.find("\"", kPos + key.length() + 2);
+    if (vStart == std::string::npos) return "";
+    size_t vEnd = json.find("\"", vStart + 1);
+    if (vEnd == std::string::npos) return "";
+    return json.substr(vStart + 1, vEnd - vStart - 1);
+}
+
+// ---------------------------------------------------------------------------
+// Helper: extract a JSON bool field value from a flat object.
+// ---------------------------------------------------------------------------
+static bool JsonBool(const std::string& json, const std::string& key) {
+    size_t kPos = json.find("\"" + key + "\":");
+    if (kPos == std::string::npos) return false;
+    size_t vStart = kPos + key.length() + 2;
+    while (vStart < json.length() &&
+           (json[vStart] == ' ' || json[vStart] == ':')) vStart++;
+    return json.compare(vStart, 4, "true") == 0;
+}
+
+// ---------------------------------------------------------------------------
+// SemverGreater: returns true if version string a > b (major.minor.patch).
+// Strips a leading 'v' and any pre-release suffix (e.g. "-beta") before
+// parsing, so "5.0.0-beta" is treated as "5.0.0". Non-numeric versions
+// return false rather than crashing.
+// ---------------------------------------------------------------------------
+bool UpdateLogic::SemverGreater(const std::string& a, const std::string& b) {
+    auto parse = [](const std::string& v, int& maj, int& min, int& pat) -> bool {
+        std::string s = v;
+        // Strip leading 'v'
+        if (!s.empty() && s[0] == 'v') s = s.substr(1);
+        // Truncate at first non-numeric-dot character (pre-release suffix)
+        auto dash = s.find('-');
+        if (dash != std::string::npos) s = s.substr(0, dash);
+        int r = sscanf(s.c_str(), "%d.%d.%d", &maj, &min, &pat);
+        return r == 3;
+    };
+    int aMaj = 0, aMin = 0, aPat = 0;
+    int bMaj = 0, bMin = 0, bPat = 0;
+    if (!parse(a, aMaj, aMin, aPat)) return false;
+    if (!parse(b, bMaj, bMin, bPat)) return false;
+    if (aMaj != bMaj) return aMaj > bMaj;
+    if (aMin != bMin) return aMin > bMin;
+    return aPat > bPat;
+}
+
+// ---------------------------------------------------------------------------
+// FetchRelease: hits a single GitHub releases endpoint and populates
+// a ReleaseInfo from the top-level JSON object.
+// ---------------------------------------------------------------------------
+ReleaseInfo UpdateLogic::FetchRelease(const std::string& api_path) {
+    ReleaseInfo info;
+    std::string body = HttpGetGitHub(api_path);
+    if (body.empty()) return info;
+
+    // Find the outermost JSON object
+    size_t start = body.find('{');
+    if (start == std::string::npos) return info;
+
+    // Grab just the top-level object (balanced braces)
+    size_t end = std::string::npos;
+    int depth = 0;
+    for (size_t i = start; i < body.length(); ++i) {
+        if (body[i] == '{') depth++;
+        else if (body[i] == '}') depth--;
+        if (depth == 0) { end = i; break; }
+    }
+    if (end == std::string::npos) return info;
+    std::string obj = body.substr(start, end - start + 1);
+
+    bool isDraft      = JsonBool(obj, "draft");
+    bool isPrerelease = JsonBool(obj, "prerelease");
+    if (isDraft) return info;
+
+    std::string tag      = JsonString(obj, "tag_name");
+    std::string htmlUrl  = JsonString(obj, "html_url");
+    std::string pubDate  = JsonString(obj, "published_at");
+    std::string commit   = JsonString(obj, "target_commitish");
+
+    if (tag.empty()) return info;
+
+    // Strip leading 'v' for the version field
+    std::string ver = tag;
+    if (!ver.empty() && ver[0] == 'v') ver = ver.substr(1);
+
+    info.found        = true;
+    info.version      = ver;
+    info.release_url  = htmlUrl;
+    info.publish_date = pubDate;
+    info.commit_sha   = commit;
+    info.is_prerelease = isPrerelease;
     return info;
 }
 
-bool UpdateLogic::DownloadFile(const std::string& url, const std::string& destination, std::function<void(float)> progress_callback) {
-    // Basic redirect support would be needed for GitHub assets
-    // For simplicity, we'll assume the URL is direct or use WinHTTP's automatic redirect
-    
-    std::wstring wurl(url.begin(), url.end()); // Simple conversion for ASCII URLs
-    
-    URL_COMPONENTS urlComp = { sizeof(urlComp) };
-    urlComp.dwHostNameLength = (DWORD)-1;
-    urlComp.dwUrlPathLength = (DWORD)-1;
-    urlComp.dwExtraInfoLength = (DWORD)-1;
-
-    if (!WinHttpCrackUrl(wurl.c_str(), 0, 0, &urlComp)) return false;
-
-    std::wstring host(urlComp.lpszHostName, urlComp.dwHostNameLength);
-    std::wstring path(urlComp.lpszUrlPath, urlComp.dwUrlPathLength + urlComp.dwExtraInfoLength);
-
-    HINTERNET hSession = WinHttpOpen(L"Hammer5ToolsUpdater/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-    HINTERNET hConnect = WinHttpConnect(hSession, host.c_str(), urlComp.nPort, 0);
-    
-    DWORD dwOpenFlags = (urlComp.nPort == INTERNET_DEFAULT_HTTPS_PORT) ? WINHTTP_FLAG_SECURE : 0;
-    HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", path.c_str(), NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, dwOpenFlags);
-
-    if (!WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) return false;
-    if (!WinHttpReceiveResponse(hRequest, NULL)) return false;
-
-    DWORD dwContentLength = 0;
-    DWORD dwSize = sizeof(dwContentLength);
-    WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &dwContentLength, &dwSize, WINHTTP_NO_HEADER_INDEX);
-
-    std::ofstream file(destination, std::ios::binary);
-    if (!file.is_open()) return false;
-
-    DWORD dwDownloaded = 0;
-    DWORD dwTotalDownloaded = 0;
-    char buffer[8192];
-    do {
-        if (!WinHttpReadData(hRequest, (LPVOID)buffer, sizeof(buffer), &dwDownloaded)) break;
-        if (dwDownloaded == 0) break;
-        file.write(buffer, dwDownloaded);
-        dwTotalDownloaded += dwDownloaded;
-        if (dwContentLength > 0) {
-            progress_callback((float)dwTotalDownloaded / dwContentLength);
-        }
-    } while (dwDownloaded > 0);
-
-    file.close();
-    WinHttpCloseHandle(hRequest);
-    WinHttpCloseHandle(hConnect);
-    WinHttpCloseHandle(hSession);
-    return true;
+// ---------------------------------------------------------------------------
+// NormaliseDate: strips trailing whitespace/CR and normalises the timezone
+// suffix so both GitHub's "...Z" and makefile's "...Z" (or "+00:00") compare
+// correctly with a plain lexicographic compare.
+// ---------------------------------------------------------------------------
+static std::string NormaliseDate(const std::string& s) {
+    std::string r = s;
+    // Trim trailing CR / LF / spaces
+    while (!r.empty() && (r.back() == '\r' || r.back() == '\n' || r.back() == ' '))
+        r.pop_back();
+    // Normalise "+00:00" → "Z" so both formats sort identically
+    if (r.size() >= 6 && r.substr(r.size() - 6) == "+00:00")
+        r = r.substr(0, r.size() - 6) + "Z";
+    return r;
 }
 
-bool UpdateLogic::ExtractZip(const std::string& zip_path, const std::string& extract_path) {
-    mz_zip_archive zip_archive;
-    memset(&zip_archive, 0, sizeof(zip_archive));
+// ---------------------------------------------------------------------------
+// GetBuildInfo: reads version.txt next to the updater exe (3-line format).
+// The updater lives at <root>/Hammer5ToolsUpdater.exe; version.txt is at
+// <root>/app/version.txt  — wait, actually the *updater* is at <root>/ and
+// version.txt is written into <root>/app/ by makefile.py.  So we try
+// root/"app"/version.txt first, then root/"version.txt" as fallback for
+// portable/dev layouts.
+// Falls back gracefully for old single-line installs and missing lines.
+// ---------------------------------------------------------------------------
+BuildInfo UpdateLogic::GetBuildInfo() {
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileNameW(NULL, buffer, MAX_PATH);
+    fs::path exeDir = fs::path(buffer).parent_path();
 
-    if (!mz_zip_reader_init_file(&zip_archive, zip_path.c_str(), 0)) return false;
+    BuildInfo info;
+    info.channel = "stable"; // safe default
 
-    mz_uint num_files = mz_zip_reader_get_num_files(&zip_archive);
-    for (mz_uint i = 0; i < num_files; i++) {
-        mz_zip_archive_file_stat file_stat;
-        if (!mz_zip_reader_file_stat(&zip_archive, i, &file_stat)) continue;
+    // The updater exe is at <root>\Hammer5ToolsUpdater.exe
+    // version.txt is written into <root>\app\version.txt by makefile.py
+    fs::path vfPath = exeDir / "app" / "version.txt";
+    if (!fs::exists(vfPath)) {
+        // Fallback: same folder as the updater (dev / portable layout)
+        vfPath = exeDir / "version.txt";
+    }
 
-        std::string dest_file = extract_path + "\\" + file_stat.m_filename;
-        
-        // Ensure directory exists
-        std::string dir = dest_file.substr(0, dest_file.find_last_of("\\/"));
-        CreateDirectoryA(dir.c_str(), NULL); // Simple non-recursive CreateDirectory
+    std::ifstream vf(vfPath);
+    if (vf.is_open()) {
+        // Line 1: version
+        std::string line;
+        if (std::getline(vf, line)) {
+            // Trim CR/LF
+            while (!line.empty() && (line.back() == '\r' || line.back() == '\n'))
+                line.pop_back();
+            info.version = line;
+        }
+        // Line 2: channel (optional — old installs only have 1 line)
+        if (std::getline(vf, line)) {
+            while (!line.empty() && (line.back() == '\r' || line.back() == '\n'))
+                line.pop_back();
+            if (!line.empty()) info.channel = line;
+        }
+        // Line 3: build date (optional)
+        if (std::getline(vf, line)) {
+            info.build_date = NormaliseDate(line);
+        }
+    }
+    return info;
+}
 
-        if (mz_zip_reader_is_file_a_directory(&zip_archive, i)) {
-            CreateDirectoryA(dest_file.c_str(), NULL);
-        } else {
-            mz_zip_reader_extract_to_file(&zip_archive, i, dest_file.c_str(), 0);
+// ---------------------------------------------------------------------------
+// CheckForUpdates: channel-aware update check.
+//   stable → compare semver against latest stable release.
+//   dev    → first check if a new stable is out (higher priority),
+//            then compare build date against the rolling "dev" tag.
+// ---------------------------------------------------------------------------
+ReleaseInfo UpdateLogic::CheckForUpdates(const BuildInfo& local) {
+    // Always fetch the latest stable release
+    ReleaseInfo stable = FetchRelease("/repos/dertwist/Hammer5Tools/releases/latest");
+
+    if (local.channel != "dev") {
+        // --- Stable channel ---
+        if (stable.found && SemverGreater(stable.version, local.version)) {
+            stable.notify_type = NOTIFY_STABLE_AVAILABLE;
+            return stable;
+        }
+    } else {
+        // --- Dev channel ---
+        // Priority 1: a new stable release is out that supersedes the dev build
+        if (stable.found && SemverGreater(stable.version, local.version)) {
+            stable.notify_type = NOTIFY_STABLE_FROM_DEV;
+            return stable;
+        }
+        // Priority 2: the rolling "dev" tag has a newer build date.
+        // Normalise both timestamps before comparing so format differences
+        // ("Z" vs "+00:00") don't cause silent mismatches.
+        ReleaseInfo dev = FetchRelease("/repos/dertwist/Hammer5Tools/releases/tags/dev");
+        if (dev.found && !local.build_date.empty() &&
+            !dev.publish_date.empty() &&
+            NormaliseDate(dev.publish_date) > local.build_date) {
+            dev.notify_type = NOTIFY_DEV_UPDATE;
+            return dev;
         }
     }
 
-    mz_zip_reader_end(&zip_archive);
-    return true;
+    return {}; // nothing found, ReleaseInfo.found == false
 }
 
+// ---------------------------------------------------------------------------
+// Process helpers (retained — used by launcher / other callers)
+// ---------------------------------------------------------------------------
 void UpdateLogic::KillProcess(const std::wstring& process_name) {
     HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnap == INVALID_HANDLE_VALUE) return;
