@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <AssemblyName>Hammer5ToolsLauncher</AssemblyName>
+    <Nullable>enable</Nullable>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+</Project>

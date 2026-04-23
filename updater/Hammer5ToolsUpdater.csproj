@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <AssemblyName>Hammer5ToolsUpdater</AssemblyName>
+    <UseWindowsForms>true</UseWindowsForms>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+</Project>
