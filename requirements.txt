@@ -31,7 +31,9 @@ clr_loader
 cffi
 vdf
 pycparser
+ply
 Pillow
+
 matplotlib
 pynvml
 GPUtil

@@ -40,7 +40,9 @@ jobs:
         id: version
         run: |
           $ver = python -c "from src.common import app_version; print(app_version)"
+          $ver = "$ver-dev.${{ github.run_number }}"
           echo "app_version=$ver" >> $env:GITHUB_OUTPUT
+
 
       - name: Velopack Pack
         run: |
@@ -48,6 +50,13 @@ jobs:
 
 
 
+      - name: Delete old dev release
+        run: gh release delete dev --yes --cleanup-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
       - name: Velopack Upload
+
         run: |
           & "$HOME\.dotnet\tools\vpk.exe" upload github --repoUrl https://github.com/dertwist/Hammer5Tools --publish --token ${{ secrets.GITHUB_TOKEN }} --channel dev --tag dev
