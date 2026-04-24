@@ -30,7 +30,9 @@ pythonnet
 clr_loader
 cffi
 vdf
+vpk
 pycparser
+
 ply
 Pillow
 
