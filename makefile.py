@@ -8,7 +8,9 @@ from typing import List, Set
 from tabulate import tabulate
 from src.common import app_version
 import re
+import sys
 cur_dir = os.path.abspath(os.path.dirname(__file__))
+
 external = f"--add-data={os.path.join(cur_dir, 'src', 'external')};src\\external"
 print(f"External path: {external}")
 
@@ -134,7 +136,8 @@ def build_cpp(project: str, src_dir: str, output_name: str) -> None:
         if not os.path.exists(src_exe):
             raise FileNotFoundError(f"Could not find built executable at {src_exe}")
 
-        dst_exe = os.path.join(cur_dir, "hammer5tools", f"{output_name}.exe")
+        dst_exe = os.path.join(cur_dir, "out_hammer5tools", f"{output_name}.exe")
+
         os.makedirs(os.path.dirname(dst_exe), exist_ok=True)
         import shutil
         shutil.copy2(src_exe, dst_exe)
@@ -144,26 +147,8 @@ def build_cpp(project: str, src_dir: str, output_name: str) -> None:
         raise
 
 
-def build_hammer5_tools(fast=False, channel='stable') -> None:
-    # Phase 0: Clean up the Hammer5Tools template folder to avoid recursive bundling
-    template_dir = os.path.join(cur_dir, 'Hammer5Tools')
-    if os.path.exists(template_dir):
-        import shutil
-        for item in ['app', 'Hammer5Tools.exe', 'Hammer5ToolsUpdater.exe', 'version.txt']:
-            path = os.path.join(template_dir, item)
-            if os.path.exists(path):
-                if os.path.isdir(path):
-                    shutil.rmtree(path)
-                else:
-                    os.remove(path)
-        print(f"Cleaned up template directory: {template_dir}")
-
-    if fast:
-
-        optimization_level = 0
-    else:
-        optimization_level = 2
-
+def build_app_pyinstaller(fast=False) -> None:
+    """Builds the Python application using PyInstaller."""
     # Try to locate pre-generated pycparser tables; generate them if absent.
     tables = find_pycparser_tables()
     if tables is None:
@@ -171,35 +156,28 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
         tables = find_pycparser_tables()
 
     pyinstaller_cmd = [
-        'pyinstaller',
+        sys.executable, '-m', 'PyInstaller',
         '--name=h5t',
+
         '--noupx',
-        '--distpath=hammer5tools',
+        '--distpath=out_hammer5tools',
+
         '--noconfirm',
         '--onedir',
         '--windowed',
-        # Add the project root to PyInstaller's analysis sys.path so that
-        # local packages (src, keyvalues3) are discoverable as packages.
         '--paths=.',
         '--hidden-import=resources_rc',
         '--hidden-import=widgets',
-        # Collect ALL submodules of local packages so nothing is missed
-        # regardless of whether static analysis can trace the imports.
         '--collect-all=src',
         '--collect-all=keyvalues3',
-        # Collect all pycparser submodules (incl. pycparser.ply) so the
-        # frozen runtime hook can find them in sys._MEIPASS.
         '--collect-submodules=pycparser',
-        # Qt modules that are loaded dynamically and not auto-detected
         '--hidden-import=PySide6.QtNetwork',
         '--hidden-import=PySide6.QtMultimedia',
         '--hidden-import=PySide6.QtMultimediaWidgets',
-        # cffi backend required by clr_loader (pythonnet) and cairocffi
         '--hidden-import=cffi',
         '--collect-submodules=cffi',
         '--hidden-import=clr_loader',
         '--collect-submodules=clr_loader',
-        # '--strip',  # Removed to avoid errors with .NET DLLs
         '--optimize=0',
         '--icon=src/appicon.ico',
         '--add-data=src/appicon.ico;.',
@@ -212,27 +190,107 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
         '--exclude-module=pandas',
         '--exclude-module=tabulate',
         external,
-        # Bundle all .NET DLLs
         *[f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls],
         'src/main.py'
     ]
 
-    # Bundle pre-generated parser tables if we found/generated them
     if tables:
         lextab_path, yacctab_path = tables
         pyinstaller_cmd += [
             f'--add-data={lextab_path};pycparser',
             f'--add-data={yacctab_path};pycparser',
         ]
-        print(f"Bundling pycparser tables: {lextab_path}, {yacctab_path}")
-    else:
-        print("pycparser tables not found; runtime hook will generate them on first launch.")
-
+    
     subprocess.run(pyinstaller_cmd, check=True)
 
+
+def build_app_nuitka() -> None:
+    """Builds the Python application using Nuitka."""
+    nuitka_cmd = [
+        sys.executable, "-m", "nuitka",
+        "--standalone",
+        "--plugin-enable=pyside6",
+        "--windows-console-mode=disable",
+
+        f"--output-dir={os.path.join(cur_dir, 'out_hammer5tools')}",
+        "--output-filename=h5t.exe",
+        "--remove-output",
+        "--no-pyi-file",
+        "--include-package=keyvalues3",
+
+        "--include-package=pycparser",
+        "--include-package=cffi",
+        "--include-package=clr_loader",
+        f"--include-data-file={os.path.join(cur_dir, 'src', 'appicon.ico')}=appicon.ico",
+        f"--include-data-dir={os.path.join(cur_dir, 'src', 'images')}=images",
+        f"--include-data-dir={os.path.join(cur_dir, 'src', 'styles')}=styles",
+        f"--include-data-dir={os.path.join(cur_dir, 'Hammer5Tools')}=defaults",
+        f"--include-data-dir={os.path.join(cur_dir, 'src', 'external')}=src/external",
+        f"--windows-icon-from-ico={os.path.join(cur_dir, 'src', 'appicon.ico')}",
+    ]
+
+    # Add .NET DLLs as binaries
+    for dll, _ in dotnet_dlls:
+        dll_path = os.path.join(cur_dir, "src", "external", dll)
+        nuitka_cmd.append(f"--include-data-file={dll_path}=external/{dll}")
+
+    # Add pycparser tables if found
+    tables = find_pycparser_tables()
+    if tables:
+        lextab_path, yacctab_path = tables
+        nuitka_cmd.append(f"--include-data-file={lextab_path}=pycparser/lextab.py")
+        nuitka_cmd.append(f"--include-data-file={yacctab_path}=pycparser/yacctab.py")
+
+    nuitka_cmd.append(os.path.join(cur_dir, "src", "main.py"))
+
+    
+    subprocess.run(nuitka_cmd, check=True)
+
+    # Nuitka creates h5t.dist folder, we need to rename it to app
+    dist_root = 'out_hammer5tools'
+    nuitka_dist_path = os.path.join(dist_root, 'main.dist')
+
+    target_app_path = os.path.join(dist_root, 'app')
+    
+    if os.path.exists(nuitka_dist_path):
+        import shutil
+        if os.path.exists(target_app_path):
+            shutil.rmtree(target_app_path)
+        os.rename(nuitka_dist_path, target_app_path)
+        # Rename main.exe to h5t.exe if Nuitka named it main.exe
+        main_exe = os.path.join(target_app_path, "main.exe")
+        h5t_exe = os.path.join(target_app_path, "h5t.exe")
+        if os.path.exists(main_exe):
+            os.rename(main_exe, h5t_exe)
+
+
+def build_hammer5_tools(fast=False, channel='stable', method='pyinstaller') -> None:
+    # Phase 0: Clean up the Hammer5Tools template folder to avoid recursive bundling
+
+    # (We clean internal files but keep the source folder itself)
+    template_dir = os.path.join(cur_dir, 'Hammer5Tools')
+    if os.path.exists(template_dir):
+        import shutil
+        for item in ['app', 'Hammer5Tools.exe', 'Hammer5ToolsUpdater.exe', 'version.txt']:
+            path = os.path.join(template_dir, item)
+            if os.path.exists(path):
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    os.remove(path)
+        print(f"Cleaned up template directory: {template_dir}")
+
+
+    if method == 'nuitka':
+        build_app_nuitka()
+    else:
+        build_app_pyinstaller(fast=fast)
+
+
     # Rename output folder to 'app' for the new layout
-    dist_root = 'hammer5tools'
+    dist_root = 'out_hammer5tools'
     app_bundle_path = os.path.join(dist_root, 'h5t')
+
     target_app_path = os.path.join(dist_root, 'app')
     
     import shutil
@@ -259,9 +317,12 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
                 if i == retries - 1: raise
                 time.sleep(1)
 
-    if os.path.exists(app_bundle_path):
-        safe_rename(app_bundle_path, target_app_path)
-        print(f"Renamed {app_bundle_path} to {target_app_path}")
+    if method == 'pyinstaller':
+        # Rename output folder to 'app' for the new layout
+        if os.path.exists(app_bundle_path):
+            safe_rename(app_bundle_path, target_app_path)
+            print(f"Renamed {app_bundle_path} to {target_app_path}")
+
 
 
     # Phase 3: Write version.txt into the bundle (4-line format: version, channel, build_date, commit_sha)
@@ -338,8 +399,11 @@ def main() -> None:
     channel_group = parser.add_mutually_exclusive_group()
     channel_group.add_argument('--stable', action='store_true', help="Build stable release (default).")
     channel_group.add_argument('--dev', action='store_true', help="Build dev release.")
+    parser.add_argument('--nuitka', action='store_true', help="Use Nuitka instead of PyInstaller.")
     args = parser.parse_args()
     channel = 'dev' if args.dev else 'stable'
+    build_method = 'nuitka' if args.nuitka else 'pyinstaller'
+
 
     overall_start_time = time.time()
 
@@ -355,7 +419,8 @@ def main() -> None:
     try:
         if args.build_all or args.build_app:
             stage_start_time = time.time()
-            build_hammer5_tools(fast=args.fast, channel=channel)
+            build_hammer5_tools(fast=args.fast, channel=channel, method=build_method)
+
             elapsed_time = time.time() - stage_start_time
             results.append(["Hammer 5 Tools Build (Python)", f"{elapsed_time:.2f} seconds"])
 
@@ -365,7 +430,16 @@ def main() -> None:
             elapsed_time = time.time() - stage_start_time
             results.append(["Unified C++ Executable Build", f"{elapsed_time:.2f} seconds"])
 
+            # Rename out_hammer5tools back to hammer5tools for final output
+            # (We used out_hammer5tools to avoid case-insensitive rm -r collision with Hammer5Tools source)
+            final_root = os.path.join(cur_dir, 'hammer5tools')
+            if os.path.exists(final_root):
+                import shutil
+                shutil.rmtree(final_root)
+            os.rename(os.path.join(cur_dir, 'out_hammer5tools'), final_root)
+
     except subprocess.CalledProcessError as e:
+
         print(f"Error during build: {e}")
         return
 

@@ -195,7 +195,25 @@ class DuplicateItemsCommand(QUndoCommand):
     def __init__(self, tree: QTreeWidget, items, ElementIDGenerator=None):
         super().__init__("Duplicate Item(s)")
         self.tree = tree
-        self.items = items if isinstance(items, (list, tuple)) else [items]
+        
+        # Accept a list of items
+        raw_items = items if isinstance(items, (list, tuple)) else [items]
+        
+        # Filter items: if a parent and its child are both selected, only duplicate the parent
+        # to avoid the child being duplicated twice (once as part of parent, once individually).
+        self.items = []
+        for item in raw_items:
+            is_descendant_of_selected = False
+            parent = item.parent()
+            while parent:
+                if parent in raw_items:
+                    is_descendant_of_selected = True
+                    break
+                parent = parent.parent()
+            
+            if not is_descendant_of_selected:
+                self.items.append(item)
+                
         self.duplicates = []  # List of (parent, index, new_item)
         self.id_generator = ElementIDGenerator
 
