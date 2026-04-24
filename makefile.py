@@ -157,11 +157,9 @@ def build_app_pyinstaller(fast=False) -> None:
 
     pyinstaller_cmd = [
         sys.executable, '-m', 'PyInstaller',
-        '--name=h5t',
-
+        '--name=Hammer5Tools',
         '--noupx',
-        '--distpath=out_hammer5tools',
-
+        '--distpath=hammer5tools',
         '--noconfirm',
         '--onedir',
         '--windowed',
@@ -204,68 +202,9 @@ def build_app_pyinstaller(fast=False) -> None:
     subprocess.run(pyinstaller_cmd, check=True)
 
 
-def build_app_nuitka() -> None:
-    """Builds the Python application using Nuitka."""
-    nuitka_cmd = [
-        sys.executable, "-m", "nuitka",
-        "--standalone",
-        "--plugin-enable=pyside6",
-        "--windows-console-mode=disable",
-
-        f"--output-dir={os.path.join(cur_dir, 'out_hammer5tools')}",
-        "--output-filename=h5t.exe",
-        "--remove-output",
-        "--no-pyi-file",
-        "--include-package=keyvalues3",
-
-        "--include-package=pycparser",
-        "--include-package=cffi",
-        "--include-package=clr_loader",
-        f"--include-data-file={os.path.join(cur_dir, 'src', 'appicon.ico')}=appicon.ico",
-        f"--include-data-dir={os.path.join(cur_dir, 'src', 'images')}=images",
-        f"--include-data-dir={os.path.join(cur_dir, 'src', 'styles')}=styles",
-        f"--include-data-dir={os.path.join(cur_dir, 'Hammer5Tools')}=defaults",
-        f"--include-data-dir={os.path.join(cur_dir, 'src', 'external')}=src/external",
-        f"--windows-icon-from-ico={os.path.join(cur_dir, 'src', 'appicon.ico')}",
-    ]
-
-    # Add .NET DLLs as binaries
-    for dll, _ in dotnet_dlls:
-        dll_path = os.path.join(cur_dir, "src", "external", dll)
-        nuitka_cmd.append(f"--include-data-file={dll_path}=external/{dll}")
-
-    # Add pycparser tables if found
-    tables = find_pycparser_tables()
-    if tables:
-        lextab_path, yacctab_path = tables
-        nuitka_cmd.append(f"--include-data-file={lextab_path}=pycparser/lextab.py")
-        nuitka_cmd.append(f"--include-data-file={yacctab_path}=pycparser/yacctab.py")
-
-    nuitka_cmd.append(os.path.join(cur_dir, "src", "main.py"))
-
-    
-    subprocess.run(nuitka_cmd, check=True)
-
-    # Nuitka creates h5t.dist folder, we need to rename it to app
-    dist_root = 'out_hammer5tools'
-    nuitka_dist_path = os.path.join(dist_root, 'main.dist')
-
-    target_app_path = os.path.join(dist_root, 'app')
-    
-    if os.path.exists(nuitka_dist_path):
-        import shutil
-        if os.path.exists(target_app_path):
-            shutil.rmtree(target_app_path)
-        os.rename(nuitka_dist_path, target_app_path)
-        # Rename main.exe to h5t.exe if Nuitka named it main.exe
-        main_exe = os.path.join(target_app_path, "main.exe")
-        h5t_exe = os.path.join(target_app_path, "h5t.exe")
-        if os.path.exists(main_exe):
-            os.rename(main_exe, h5t_exe)
-
-
-def build_hammer5_tools(fast=False, channel='stable', method='pyinstaller') -> None:
+def build_hammer5_tools(fast=False, channel='stable') -> None:
     # Phase 0: Clean up the Hammer5Tools template folder to avoid recursive bundling
+
 
     # (We clean internal files but keep the source folder itself)
     template_dir = os.path.join(cur_dir, 'Hammer5Tools')
@@ -281,52 +220,12 @@ def build_hammer5_tools(fast=False, channel='stable', method='pyinstaller') -> N
         print(f"Cleaned up template directory: {template_dir}")
 
 
-    if method == 'nuitka':
-        build_app_nuitka()
-    else:
-        build_app_pyinstaller(fast=fast)
-
-
-    # Rename output folder to 'app' for the new layout
-    dist_root = 'out_hammer5tools'
-    app_bundle_path = os.path.join(dist_root, 'h5t')
-
-    target_app_path = os.path.join(dist_root, 'app')
-    
-    import shutil
-    import time
-
-    def safe_rmtree(path, retries=5):
-        for i in range(retries):
-            try:
-                if os.path.exists(path):
-                    shutil.rmtree(path)
-                return
-            except Exception:
-                if i == retries - 1: raise
-                time.sleep(1)
-
-    def safe_rename(src, dst, retries=5):
-        for i in range(retries):
-            try:
-                if os.path.exists(dst):
-                    safe_rmtree(dst)
-                os.rename(src, dst)
-                return
-            except Exception:
-                if i == retries - 1: raise
-                time.sleep(1)
-
-    if method == 'pyinstaller':
-        # Rename output folder to 'app' for the new layout
-        if os.path.exists(app_bundle_path):
-            safe_rename(app_bundle_path, target_app_path)
-            print(f"Renamed {app_bundle_path} to {target_app_path}")
-
+    build_app_pyinstaller(fast=fast)
 
 
     # Phase 3: Write version.txt into the bundle (4-line format: version, channel, build_date, commit_sha)
-    version_file_path = os.path.join(target_app_path, 'version.txt')
+    version_file_path = os.path.join(cur_dir, 'hammer5tools', 'Hammer5Tools', 'version.txt')
+    os.makedirs(os.path.dirname(version_file_path), exist_ok=True)
     build_date = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     try:
         commit_sha = subprocess.check_output(
@@ -399,18 +298,17 @@ def main() -> None:
     channel_group = parser.add_mutually_exclusive_group()
     channel_group.add_argument('--stable', action='store_true', help="Build stable release (default).")
     channel_group.add_argument('--dev', action='store_true', help="Build dev release.")
-    parser.add_argument('--nuitka', action='store_true', help="Use Nuitka instead of PyInstaller.")
     args = parser.parse_args()
     channel = 'dev' if args.dev else 'stable'
-    build_method = 'nuitka' if args.nuitka else 'pyinstaller'
 
 
     overall_start_time = time.time()
 
     stage_start_time = time.time()
     # Kill processes
-    for p in ["Hammer5Tools.exe", "h5t.exe", "h5t_replacer.exe"]:
+    for p in ["Hammer5Tools.exe", "Hammer5ToolsHandler.exe"]:
         kill_process(p)
+
 
     print_elapsed_time("Kill processes", stage_start_time)
 
@@ -419,24 +317,24 @@ def main() -> None:
     try:
         if args.build_all or args.build_app:
             stage_start_time = time.time()
-            build_hammer5_tools(fast=args.fast, channel=channel, method=build_method)
+            build_hammer5_tools(fast=args.fast, channel=channel)
 
             elapsed_time = time.time() - stage_start_time
             results.append(["Hammer 5 Tools Build (Python)", f"{elapsed_time:.2f} seconds"])
 
-            # Build C++ Unified Launcher/Updater
+            # Build C++ Helper (Handler)
             stage_start_time = time.time()
-            build_cpp("Hammer5Tools", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
-            elapsed_time = time.time() - stage_start_time
-            results.append(["Unified C++ Executable Build", f"{elapsed_time:.2f} seconds"])
-
-            # Rename out_hammer5tools back to hammer5tools for final output
-            # (We used out_hammer5tools to avoid case-insensitive rm -r collision with Hammer5Tools source)
-            final_root = os.path.join(cur_dir, 'hammer5tools')
-            if os.path.exists(final_root):
+            build_cpp("Hammer5ToolsHandler", os.path.join(cur_dir, "launcher"), "Hammer5ToolsHandler")
+            # Move handler to the app folder so it's alongside Hammer5Tools.exe
+            handler_src = os.path.join(cur_dir, "hammer5tools", "Hammer5ToolsHandler.exe")
+            handler_dst = os.path.join(cur_dir, "hammer5tools", "Hammer5Tools", "Hammer5ToolsHandler.exe")
+            if os.path.exists(handler_src):
                 import shutil
-                shutil.rmtree(final_root)
-            os.rename(os.path.join(cur_dir, 'out_hammer5tools'), final_root)
+                shutil.move(handler_src, handler_dst)
+            elapsed_time = time.time() - stage_start_time
+            results.append(["C++ Handler Build", f"{elapsed_time:.2f} seconds"])
+
+
 
     except subprocess.CalledProcessError as e:
 
@@ -466,38 +364,8 @@ def main() -> None:
         elapsed_time = time.time() - stage_start_time
         results.append(["Archiving files", f"{elapsed_time:.2f} seconds"])
 
-        # Modify installer.iss by copying to a temporary file, updating version, compiling, then deleting tmp file
-        import shutil
-        tmp_iss_path = os.path.join(cur_dir, 'installer_tmp.iss')
-        iss_path = os.path.join(cur_dir, 'installer.iss')
-        # Copy original to tmp
-        shutil.copyfile(iss_path, tmp_iss_path)
-        # Read tmp file content
-        with open(tmp_iss_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        # Replace the AppVersion line in the [Setup] section
-        content = re.sub(r'^(AppVersion\s*=\s*).*$',
-                         rf'\g<1>{app_version}',
-                         content,
-                         flags=re.MULTILINE)
-        # Write back the modified content to tmp file
-        with open(tmp_iss_path, 'w', encoding='utf-8') as f:
-            f.write(content)
-        # Build installer using Inno Setup Compiler (ISCC) with tmp file
-        try:
-            build_installer_start = time.time()
-            subprocess.run(['C:\Program Files (x86)\Inno Setup 6\ISCC.exe', tmp_iss_path], check=True)
-            build_installer_elapsed = time.time() - build_installer_start
-            results.append(["Build installer", f"{build_installer_elapsed:.2f} seconds"])
-        except Exception as e:
-            print(f"Error building installer: {e}")
-            results.append(["Build installer", f"Failed: {e}"])
-        finally:
-            # Delete the temporary file
-            try:
-                os.remove(tmp_iss_path)
-            except Exception as e:
-                print(f"Warning: Could not delete temporary installer file: {e}")
+        # Inno Setup build removed
+        pass
 
     overall_elapsed_time = time.time() - overall_start_time
     results.append(["Overall process", f"{overall_elapsed_time:.2f} seconds"])
