@@ -167,7 +167,9 @@ def build_app_pyinstaller(fast=False) -> None:
         '--noupx',
         '--distpath=out_hammer5tools',
 
+        '--hidden-import=vpk',
         '--collect-all=velopack',
+
         '--noconfirm',
 
         '--onedir',
