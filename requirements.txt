@@ -7,8 +7,8 @@ portalocker
 setuptools
 psutil
 py3nvml
-vpk
 tqdm
+
 colorama
 pygetwindow
 watchdog

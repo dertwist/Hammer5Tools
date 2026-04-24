@@ -118,3 +118,8 @@ SoundEventEditor/soundevents_cache
 /Hammer5Tools/Hammer5ToolsUpdater.exe
 build_cpp_Hammer5Tools
 build_test
+build_cpp_Hammer5ToolsHandler
+out_hammer5tools
+build_cpp_fileedit
+dist_hammer5tools
+*.exe
