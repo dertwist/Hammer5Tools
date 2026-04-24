@@ -20,8 +20,6 @@ class PropertyComparison(QWidget):
 
 
         print(value_class)
-        self.ui.comparison.currentTextChanged.connect(self.on_changed)
-
         # Variable setup
         self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, variable_name=self.value_class, element_id_generator=element_id_generator)
         layout = QHBoxLayout()
@@ -34,19 +32,13 @@ class PropertyComparison(QWidget):
         self.variable.setMaximumHeight(24)
         self.variable.search_button.set_size(width=24, height=24)
         self.variable_frame.setMinimumHeight(32)
-        self.variable.combobox.changed.connect(self.on_changed)
         self.ui.layout_2.insertWidget(1, self.variable_frame)
-
-
 
         # Name
         self.m_value = CompletingPlainTextEdit()
         self.m_value.completion_tail = ''
         self.m_value.setPlaceholderText('Value')
         self.ui.layout_2.insertWidget(4, self.m_value)
-        self.m_value.textChanged.connect(self.on_changed)
-
-
 
         if isinstance(value, dict):
             if 'm_Name' in value:
@@ -54,7 +46,12 @@ class PropertyComparison(QWidget):
                 self.variable.combobox.set_variable(str(name_value))
             if 'm_Value' in value:
                 self.m_value.setPlainText(str(value['m_Value']))
+            if 'm_Comparison' in value:
+                self.ui.comparison.setCurrentText(str(value['m_Comparison']))
 
+        self.ui.comparison.currentTextChanged.connect(self.on_changed)
+        self.variable.combobox.changed.connect(self.on_changed)
+        self.m_value.textChanged.connect(self.on_changed)
 
         self.on_changed()
 
