@@ -64,6 +64,8 @@ from src.dotnet import check_dotnet_runtime
 from src.other.addon_validation import validate_addon_structure
 from src.forms.cleanup.main import CleanupDialog
 from src.forms.quick_create.main import QuickCreateDialog
+from velopack import VelopackApp, UpdateManager
+
 
 from src.widgets import *
 # Global paths
@@ -205,6 +207,21 @@ class Widget(QMainWindow):
             for dock in child.findChildren(QDockWidget):
                 dock.show()
         validate_addon_structure()
+        self.start_velopack_update_check()
+
+    def start_velopack_update_check(self):
+        def check_updates():
+            try:
+                mgr = UpdateManager("https://github.com/dertwist/Hammer5Tools")
+                update = mgr.check_for_updates()
+                if update:
+                    # For now we'll just log it, we can add a UI notification later
+                    print(f"Update available: {update.TargetFullRelease.Version}")
+            except Exception as e:
+                print(f"Velopack update check failed: {e}")
+
+        threading.Thread(target=check_updates, daemon=True).start()
+
 
     # def deferred_update_check(self):
     #     try:
@@ -848,7 +865,9 @@ def handle_new_connection(server, widget):
         client_connection.disconnectFromServer()
 
 if __name__ == "__main__":
+    VelopackApp.build().run()
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
+
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
     parser.add_argument('--console', action='store_true', help='Enable console output for debug purposes')
     parser.add_argument('--create-vmdl', help='Create VMDL in folder')
