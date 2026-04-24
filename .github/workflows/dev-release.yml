@@ -35,26 +35,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pyinstaller-
 
-      - name: Build Launcher (C++)
-        run: |
-          cmake -S launcher -B build/launcher -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-          cmake --build build/launcher
-
-      - name: Build Updater (C++)
-        run: |
-          cmake -S updater -B build/updater -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-          cmake --build build/updater
-
-      - name: Build Python App
-        run: python makefile.py --build-app --dev
-
-      - name: Copy launcher and updater into dist folder
-        run: |
-          copy build\launcher\Hammer5Tools.exe hammer5tools\Hammer5Tools.exe
-          copy build\updater\Hammer5ToolsUpdater.exe hammer5tools\Hammer5ToolsUpdater.exe
-
-      - name: Create Zip Archive
-        run: python makefile.py --archive
+      - name: Build All (Python + C++ Launcher)
+        run: python makefile.py --build-all --dev --archive
 
       - name: Read app version
         id: version
