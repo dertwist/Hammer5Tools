@@ -64,7 +64,8 @@ from src.dotnet import check_dotnet_runtime
 from src.other.addon_validation import validate_addon_structure
 from src.forms.cleanup.main import CleanupDialog
 from src.forms.quick_create.main import QuickCreateDialog
-from velopack import VelopackApp, UpdateManager
+from velopack import App, UpdateManager
+
 
 
 from src.widgets import *
@@ -865,7 +866,8 @@ def handle_new_connection(server, widget):
         client_connection.disconnectFromServer()
 
 if __name__ == "__main__":
-    VelopackApp.build().run()
+    App().run()
+
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
 
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
