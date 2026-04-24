@@ -116,3 +116,5 @@ SoundEventEditor/soundevents_cache
 /dumps/*
 .claude/settings.local.json
 /Hammer5Tools/Hammer5ToolsUpdater.exe
+build_cpp_Hammer5Tools
+build_test

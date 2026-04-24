@@ -8,11 +8,29 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(MINGW)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
 endif()
-add_executable(Hammer5ToolsLauncher WIN32 main.cpp resources.rc)
 
-target_link_libraries(Hammer5ToolsLauncher PRIVATE kernel32 user32 shell32 advapi32)
+add_executable(Hammer5ToolsLauncher WIN32 
+    main.cpp 
+    update_manager.cpp 
+    third_party/miniz.c 
+    resources.rc
+)
+
+target_include_directories(Hammer5ToolsLauncher PRIVATE . third_party)
+
+target_link_libraries(Hammer5ToolsLauncher PRIVATE 
+    kernel32 
+    user32 
+    shell32 
+    advapi32 
+    winhttp 
+    bcrypt 
+    crypt32 
+    shlwapi
+)
 
 set_target_properties(Hammer5ToolsLauncher PROPERTIES 
     OUTPUT_NAME "Hammer5Tools"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
+
