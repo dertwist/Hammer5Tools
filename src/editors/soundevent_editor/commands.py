@@ -35,7 +35,25 @@ class DuplicateSoundEventsCommand(QUndoCommand):
         super().__init__("Duplicate Event(s)")
         self.window = window
         self.tree = tree
-        self.items = list(selected_items) if selected_items else []
+        
+        # Accept a list of items
+        raw_items = list(selected_items) if selected_items else []
+        
+        # Filter items: if a parent and its child are both selected, only duplicate the parent
+        # to avoid the child being duplicated twice (once as part of parent, once individually).
+        self.items = []
+        for item in raw_items:
+            is_descendant_of_selected = False
+            parent = item.parent()
+            while parent:
+                if parent in raw_items:
+                    is_descendant_of_selected = True
+                    break
+                parent = parent.parent()
+            
+            if not is_descendant_of_selected:
+                self.items.append(item)
+                
         self.added = []  # list of (original_item, new_item) for redo-after-undo
 
     def redo(self):
