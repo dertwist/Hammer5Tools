@@ -89,9 +89,12 @@ def _generate_pycparser_tables():
     predictable regardless of whether the package dir is writable.
     """
     try:
-        import pycparser
-        import pycparser.ply.lex as lex
-        import pycparser.ply.yacc as yacc
+        try:
+            import pycparser.ply.lex as lex
+            import pycparser.ply.yacc as yacc
+        except ImportError:
+            import ply.lex as lex
+            import ply.yacc as yacc
         # Monkey-patch outputdir so tables land in cur_dir
         _orig_lex = lex.lex
         _orig_yacc = yacc.yacc
