@@ -120,12 +120,20 @@ def build_cpp(project: str, src_dir: str, output_name: str) -> None:
     build_dir = os.path.join(cur_dir, f"build_cpp_{project}")
     os.makedirs(build_dir, exist_ok=True)
     try:
-        subprocess.run(["cmake", "-S", src_dir, "-B", build_dir, "-G", "MinGW Makefiles",
+        # Let CMake choose the best generator for the system
+        subprocess.run(["cmake", "-S", src_dir, "-B", build_dir,
                         "-DCMAKE_BUILD_TYPE=Release"], check=True)
         subprocess.run(["cmake", "--build", build_dir, "--config", "Release"], check=True)
         
         # Copy exe to hammer5tools/
+        # CMake might put the exe in build_dir or build_dir/Release (for MSVC)
         src_exe = os.path.join(build_dir, f"{output_name}.exe")
+        if not os.path.exists(src_exe):
+            src_exe = os.path.join(build_dir, "Release", f"{output_name}.exe")
+            
+        if not os.path.exists(src_exe):
+            raise FileNotFoundError(f"Could not find built executable at {src_exe}")
+
         dst_exe = os.path.join(cur_dir, "hammer5tools", f"{output_name}.exe")
         os.makedirs(os.path.dirname(dst_exe), exist_ok=True)
         import shutil
@@ -135,8 +143,23 @@ def build_cpp(project: str, src_dir: str, output_name: str) -> None:
         print(f"Error building C++ project {project}: {e}")
         raise
 
+
 def build_hammer5_tools(fast=False, channel='stable') -> None:
+    # Phase 0: Clean up the Hammer5Tools template folder to avoid recursive bundling
+    template_dir = os.path.join(cur_dir, 'Hammer5Tools')
+    if os.path.exists(template_dir):
+        import shutil
+        for item in ['app', 'Hammer5Tools.exe', 'Hammer5ToolsUpdater.exe', 'version.txt']:
+            path = os.path.join(template_dir, item)
+            if os.path.exists(path):
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    os.remove(path)
+        print(f"Cleaned up template directory: {template_dir}")
+
     if fast:
+
         optimization_level = 0
     else:
         optimization_level = 2
@@ -212,13 +235,34 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     app_bundle_path = os.path.join(dist_root, 'h5t')
     target_app_path = os.path.join(dist_root, 'app')
     
-    if os.path.exists(target_app_path):
-        import shutil
-        shutil.rmtree(target_app_path)
-    
+    import shutil
+    import time
+
+    def safe_rmtree(path, retries=5):
+        for i in range(retries):
+            try:
+                if os.path.exists(path):
+                    shutil.rmtree(path)
+                return
+            except Exception:
+                if i == retries - 1: raise
+                time.sleep(1)
+
+    def safe_rename(src, dst, retries=5):
+        for i in range(retries):
+            try:
+                if os.path.exists(dst):
+                    safe_rmtree(dst)
+                os.rename(src, dst)
+                return
+            except Exception:
+                if i == retries - 1: raise
+                time.sleep(1)
+
     if os.path.exists(app_bundle_path):
-        os.rename(app_bundle_path, target_app_path)
+        safe_rename(app_bundle_path, target_app_path)
         print(f"Renamed {app_bundle_path} to {target_app_path}")
+
 
     # Phase 3: Write version.txt into the bundle (4-line format: version, channel, build_date, commit_sha)
     version_file_path = os.path.join(target_app_path, 'version.txt')
@@ -300,9 +344,10 @@ def main() -> None:
     overall_start_time = time.time()
 
     stage_start_time = time.time()
-    # Kill both old and new process names to be safe during transition
-    for p in ["Hammer5Tools.exe", "h5t.exe", "Hammer5ToolsLauncher.exe"]:
+    # Kill processes
+    for p in ["Hammer5Tools.exe", "h5t.exe", "h5t_replacer.exe"]:
         kill_process(p)
+
     print_elapsed_time("Kill processes", stage_start_time)
 
     results = []
@@ -314,18 +359,12 @@ def main() -> None:
             elapsed_time = time.time() - stage_start_time
             results.append(["Hammer 5 Tools Build (Python)", f"{elapsed_time:.2f} seconds"])
 
-        if args.build_all:
-            # Build C++ Launcher
+            # Build C++ Unified Launcher/Updater
             stage_start_time = time.time()
-            build_cpp("Hammer5ToolsLauncher", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
+            build_cpp("Hammer5Tools", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
             elapsed_time = time.time() - stage_start_time
-            results.append(["C++ Launcher Build", f"{elapsed_time:.2f} seconds"])
+            results.append(["Unified C++ Executable Build", f"{elapsed_time:.2f} seconds"])
 
-            # Build C++ Updater
-            stage_start_time = time.time()
-            build_cpp("Hammer5ToolsUpdater", os.path.join(cur_dir, "updater"), "Hammer5ToolsUpdater")
-            elapsed_time = time.time() - stage_start_time
-            results.append(["C++ Updater Build", f"{elapsed_time:.2f} seconds"])
     except subprocess.CalledProcessError as e:
         print(f"Error during build: {e}")
         return
