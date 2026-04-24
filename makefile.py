@@ -117,6 +117,7 @@ def _generate_pycparser_tables():
         print(f"Warning: could not pre-generate pycparser tables: {e}")
 
 
+
 def build_cpp(project: str, src_dir: str, output_name: str) -> None:
     """Builds a C++ project using CMake."""
     build_dir = os.path.join(cur_dir, f"build_cpp_{project}")
@@ -136,7 +137,8 @@ def build_cpp(project: str, src_dir: str, output_name: str) -> None:
         if not os.path.exists(src_exe):
             raise FileNotFoundError(f"Could not find built executable at {src_exe}")
 
-        dst_exe = os.path.join(cur_dir, "out_hammer5tools", f"{output_name}.exe")
+        dst_exe = os.path.join(cur_dir, "Hammer5Tools", f"{output_name}.exe")
+
 
         os.makedirs(os.path.dirname(dst_exe), exist_ok=True)
         import shutil
@@ -158,11 +160,16 @@ def build_app_pyinstaller(fast=False) -> None:
     pyinstaller_cmd = [
         sys.executable, '-m', 'PyInstaller',
         '--name=Hammer5Tools',
+        '--contents-directory=app',
         '--noupx',
-        '--distpath=hammer5tools',
+        '--distpath=out_hammer5tools',
+
+        '--collect-all=velopack',
         '--noconfirm',
+
         '--onedir',
         '--windowed',
+
         '--paths=.',
         '--hidden-import=resources_rc',
         '--hidden-import=widgets',
@@ -210,7 +217,8 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     template_dir = os.path.join(cur_dir, 'Hammer5Tools')
     if os.path.exists(template_dir):
         import shutil
-        for item in ['app', 'Hammer5Tools.exe', 'Hammer5ToolsUpdater.exe', 'version.txt']:
+        for item in ['app', 'Hammer5Tools.exe', 'Hammer5ToolsUpdater.exe']:
+
             path = os.path.join(template_dir, item)
             if os.path.exists(path):
                 if os.path.isdir(path):
@@ -222,27 +230,48 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
 
     build_app_pyinstaller(fast=fast)
 
+    # Final distribution folder
+    bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
+    # Safe cleanup: only remove build artifacts, keep data folders
+    for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal', 'Hammer5Tools']:
+        path = os.path.join(bundle_root, item)
+        if os.path.exists(path):
+            if os.path.isdir(path): shutil.rmtree(path)
+            else: os.remove(path)
+    if not os.path.exists(bundle_root):
+        os.makedirs(bundle_root)
 
-    # Phase 3: Write version.txt into the bundle (4-line format: version, channel, build_date, commit_sha)
-    version_file_path = os.path.join(cur_dir, 'hammer5tools', 'Hammer5Tools', 'version.txt')
-    os.makedirs(os.path.dirname(version_file_path), exist_ok=True)
-    build_date = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    try:
-        commit_sha = subprocess.check_output(
-            ['git', 'rev-parse', 'HEAD'], text=True, cwd=cur_dir
-        ).strip()
-    except Exception:
-        commit_sha = 'unknown'
-    with open(version_file_path, 'w', encoding='utf-8') as f:
-        f.write(f"{app_version}\n{channel}\n{build_date}\n{commit_sha}\n")
-    print(f"Wrote version.txt to {version_file_path} (channel={channel}, date={build_date}, sha={commit_sha[:7]})")
 
-    # Copy to dist/ root so CI can upload it as a standalone release asset
-    import shutil as _shutil
-    dist_version_path = os.path.join(cur_dir, 'dist', 'version.txt')
-    os.makedirs(os.path.dirname(dist_version_path), exist_ok=True)
-    _shutil.copy(version_file_path, dist_version_path)
-    print(f"Copied version.txt to {dist_version_path}")
+
+    # Flatten the PyInstaller output: move contents from out_hammer5tools/Hammer5Tools/ up to Hammer5Tools/
+    pyi_output = os.path.join(cur_dir, 'out_hammer5tools', 'Hammer5Tools')
+    if os.path.exists(pyi_output):
+        import shutil
+        for item in os.listdir(pyi_output):
+            src = os.path.join(pyi_output, item)
+            dst = os.path.join(bundle_root, item)
+            # Remove old versions if they exist
+            if os.path.exists(dst):
+                if os.path.isdir(dst): shutil.rmtree(dst)
+                else: os.remove(dst)
+            shutil.move(src, dst)
+        shutil.rmtree(os.path.join(cur_dir, 'out_hammer5tools'))
+
+    # Ensure data folders are present in bundle_root (they should be if it's the source folder)
+    template_dir = os.path.join(cur_dir, 'Hammer5Tools')
+    data_folders = ['Hotkeys', 'Presets', 'SmartPropEditor', 'SoundEventEditor']
+    for folder in data_folders:
+        src = os.path.join(template_dir, folder)
+        dst = os.path.join(bundle_root, folder)
+        if os.path.exists(src) and src != dst:
+            if os.path.exists(dst): shutil.rmtree(dst)
+            shutil.copytree(src, dst)
+            print(f"Copied data folder {folder} to bundle root")
+        elif not os.path.exists(src):
+            print(f"Warning: data folder {folder} missing from template")
+
+
+
 
 
 def archive_files(
@@ -306,8 +335,9 @@ def main() -> None:
 
     stage_start_time = time.time()
     # Kill processes
-    for p in ["Hammer5Tools.exe", "Hammer5ToolsHandler.exe"]:
+    for p in ["Hammer5Tools.exe", "fileedit.exe"]:
         kill_process(p)
+
 
 
     print_elapsed_time("Kill processes", stage_start_time)
@@ -324,13 +354,15 @@ def main() -> None:
 
             # Build C++ Helper (Handler)
             stage_start_time = time.time()
-            build_cpp("Hammer5ToolsHandler", os.path.join(cur_dir, "launcher"), "Hammer5ToolsHandler")
-            # Move handler to the app folder so it's alongside Hammer5Tools.exe
-            handler_src = os.path.join(cur_dir, "hammer5tools", "Hammer5ToolsHandler.exe")
-            handler_dst = os.path.join(cur_dir, "hammer5tools", "Hammer5Tools", "Hammer5ToolsHandler.exe")
-            if os.path.exists(handler_src):
+            build_cpp("fileedit", os.path.join(cur_dir, "launcher"), "fileedit")
+            # Move handler to the bundle root
+            handler_src = os.path.join(cur_dir, "Hammer5Tools", "fileedit.exe")
+            handler_dst = os.path.join(cur_dir, "Hammer5Tools", "fileedit.exe")
+
+            if os.path.exists(handler_src) and handler_src != handler_dst:
                 import shutil
                 shutil.move(handler_src, handler_dst)
+
             elapsed_time = time.time() - stage_start_time
             results.append(["C++ Handler Build", f"{elapsed_time:.2f} seconds"])
 
