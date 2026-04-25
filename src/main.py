@@ -6,6 +6,89 @@ import webbrowser
 import time
 import argparse
 
+# ==========================================================================================
+# VELOPACK / SQUIRREL HOOKS
+# This MUST run before any other imports (especially Qt) to prevent the GUI from opening
+# during installation, uninstallation, or updates.
+# ==========================================================================================
+def _get_dir_size(path):
+    from pathlib import Path
+    try:
+        return sum(f.stat().st_size for f in Path(path).rglob('*') if f.is_file())
+    except Exception:
+        return 0
+
+def _handle_velopack_hook(argv):
+    import shutil
+    from pathlib import Path
+
+    uninstall_hooks = {
+        '--velopack-uninstall', '--velopack-obsolete', '--velopack-obsoleted',
+        '--squirrel-uninstall', '--squirrel-obsolete', '--squirrel-obsoleted',
+    }
+    install_hooks = {
+        '--velopack-install', '--velopack-updated',
+        '--squirrel-install', '--squirrel-updated',
+    }
+
+    active = set(argv) & (uninstall_hooks | install_hooks)
+    if not active:
+        return
+
+    try:
+        exe_path = Path(sys.executable).resolve()
+        current_dir = exe_path.parent
+        install_root = current_dir.parent
+        userdata_path = install_root / "userdata"
+
+        local_appdata = Path(os.environ.get('LOCALAPPDATA') or (Path.home() / 'AppData' / 'Local'))
+        backup_root = local_appdata / "Hammer5Tools.Backup"
+        backup_userdata = backup_root / "userdata"
+        backup_sentinel = backup_root / "USERDATA_BACKUP_VALID"
+
+        def _log(msg):
+            try:
+                backup_root.mkdir(parents=True, exist_ok=True)
+                with open(backup_root / "hook.log", "a", encoding="utf-8") as fh:
+                    timestamp = time.strftime('%Y-%m-%dT%H:%M:%S')
+                    fh.write(f"{timestamp} {' '.join(argv[1:])} :: {msg}\n")
+            except Exception:
+                pass
+
+        if active & uninstall_hooks:
+            _log(f"Starting backup from {userdata_path}")
+            if userdata_path.is_dir():
+                try:
+                    if backup_userdata.exists():
+                        shutil.rmtree(backup_userdata, ignore_errors=True)
+                    backup_root.mkdir(parents=True, exist_ok=True)
+                    shutil.copytree(userdata_path, backup_userdata)
+                    if backup_userdata.exists() and any(backup_userdata.iterdir()):
+                        backup_sentinel.write_text("valid", encoding="utf-8")
+                except Exception as e:
+                    _log(f"BACKUP FAILED: {e}")
+
+        if active & install_hooks:
+            if backup_userdata.is_dir() and backup_sentinel.exists():
+                try:
+                    if userdata_path.exists():
+                        shutil.rmtree(userdata_path, ignore_errors=True)
+                    userdata_path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copytree(backup_userdata, userdata_path)
+                    if userdata_path.exists() and any(userdata_path.iterdir()):
+                        shutil.rmtree(backup_userdata, ignore_errors=True)
+                        backup_sentinel.unlink(missing_ok=True)
+                except Exception as e:
+                    _log(f"RESTORE FAILED: {e}")
+    except Exception:
+        pass
+    
+    # ALWAYS exit after handling hooks to prevent main window from showing
+    sys.exit(0)
+
+# Check for hooks IMMEDIATELY
+_handle_velopack_hook(sys.argv)
+
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -1032,34 +1115,7 @@ def _handle_velopack_hook(argv):
             pass
 
 
-def _get_dir_size(path):
-    """
-    Calculate total size of a directory in bytes.
-    Used for logging/debugging purposes.
-    """
-    from pathlib import Path
-    try:
-        return sum(f.stat().st_size for f in Path(path).rglob('*') if f.is_file())
-    except Exception:
-        return 0
-
-
 if __name__ == "__main__":
-    # Handle Velopack/Squirrel hooks by preserving userdata and exiting.
-    # The installer calls us with these flags; we must finish quickly and
-    # must not spin up the Qt UI.
-    installer_flags = [
-        '--velopack-install', '--velopack-updated', '--velopack-uninstall',
-        '--velopack-obsolete', '--velopack-obsoleted',
-        '--squirrel-install', '--squirrel-updated', '--squirrel-uninstall',
-        '--squirrel-obsolete', '--squirrel-obsoleted'
-    ]
-
-    if any(arg in sys.argv for arg in installer_flags):
-        _handle_velopack_hook(sys.argv)
-        sys.exit(0)
-
-    parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
 
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
     parser.add_argument('--console', action='store_true', help='Enable console output for debug purposes')
