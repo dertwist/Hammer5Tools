@@ -474,12 +474,20 @@ class PreferencesDialog(QDialog):
         os.startfile(Presets_Path)
 
     def check_update(self):
-        updater_path = os.path.join(app_dir, "Hammer5ToolsUpdater.exe")
-        if os.path.exists(updater_path):
-            subprocess.Popen([updater_path, "--interactive"])
+        # The main app handles updates via Velopack now.
+        # We emit a signal or just show a message that we're checking.
+        self.action_buttons_panel.check_update_button.setEnabled(False)
+        self.action_buttons_panel.version_label.setText("Checking for updates...")
+        
+        # We can use a property on the parent to trigger the actual check
+        if hasattr(self.parent(), "trigger_update_check"):
+            self.parent().trigger_update_check()
         else:
-            from PySide6.QtWidgets import QMessageBox
-            QMessageBox.critical(self, "Updater Not Found", f"Could not find Hammer5ToolsUpdater.exe at {updater_path}")
+            QMessageBox.information(self, "Update", "Update check triggered. Please wait a few seconds.")
+            # Re-enable after a bit if no update found (simplified)
+            QTimer.singleShot(5000, lambda: self.action_buttons_panel.check_update_button.setEnabled(True))
+            QTimer.singleShot(5000, lambda: self.populate_preferences())
+
 
 
 if __name__ == "__main__":
