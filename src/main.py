@@ -878,9 +878,132 @@ def handle_new_connection(server, widget):
         
         client_connection.disconnectFromServer()
 
+def _handle_velopack_hook(argv):
+    """
+    Back up / restore the ``userdata`` folder around Velopack (un)install hooks.
+
+    Background
+    ----------
+    Velopack installs the app to ``%LocalAppData%\\Hammer5Tools\\`` with the
+    following layout::
+
+        <install_root>/
+            current/Hammer5Tools.exe
+            packages/...
+            Update.exe
+            userdata/                 <-- our persistent user data
+
+    When the user runs ``Setup.exe`` on top of an existing install, Velopack
+    invokes ``Update.exe --uninstall`` first, which calls our exe with
+    ``--velopack-uninstall`` and then **deletes the entire install root** --
+    including ``userdata/``.  After the new version is laid down, our exe is
+    called again with ``--velopack-install`` / ``--velopack-updated``.
+
+    To keep ``userdata`` persistent across Setup runs we:
+      * on any *uninstall* / *obsolete* hook: copy ``<install_root>/userdata``
+        to a location **outside** the Velopack-managed tree
+        (``%LocalAppData%\\Hammer5Tools.Backup\\userdata``).
+      * on any *install* / *updated* hook: if the backup exists and the
+        current ``userdata`` is missing or empty, restore it and then remove
+        the backup.
+
+    The hook must be fast and must not require any GUI / Qt imports, so this
+    runs before the rest of ``main`` is touched.
+    """
+    import shutil
+    from pathlib import Path
+
+    uninstall_hooks = {
+        '--velopack-uninstall', '--velopack-obsolete', '--velopack-obsoleted',
+        '--squirrel-uninstall', '--squirrel-obsolete', '--squirrel-obsoleted',
+    }
+    install_hooks = {
+        '--velopack-install', '--velopack-updated',
+        '--squirrel-install', '--squirrel-updated',
+    }
+
+    active = set(argv) & (uninstall_hooks | install_hooks)
+    if not active:
+        return
+
+    try:
+        # sys.executable points at <install_root>/current/Hammer5Tools.exe
+        exe_path = Path(sys.executable).resolve()
+        current_dir = exe_path.parent                      # <install_root>/current
+        install_root = current_dir.parent                  # <install_root>
+        userdata_path = install_root / "userdata"
+
+        # Backup location: a sibling of the install root that Velopack never
+        # manages, so it survives uninstall/reinstall cycles.
+        local_appdata = Path(
+            os.environ.get('LOCALAPPDATA') or (Path.home() / 'AppData' / 'Local')
+        )
+        backup_root = local_appdata / "Hammer5Tools.Backup"
+        backup_userdata = backup_root / "userdata"
+
+        def _log(msg):
+            # Hooks run without a console; try to leave a breadcrumb in the
+            # backup root in case we need to debug a failed migration.
+            try:
+                backup_root.mkdir(parents=True, exist_ok=True)
+                with open(backup_root / "hook.log", "a", encoding="utf-8") as fh:
+                    fh.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')} "
+                             f"{' '.join(argv[1:])} :: {msg}\n")
+            except Exception:
+                pass
+
+        if active & uninstall_hooks:
+            if userdata_path.is_dir():
+                try:
+                    if backup_userdata.exists():
+                        shutil.rmtree(backup_userdata, ignore_errors=True)
+                    backup_root.mkdir(parents=True, exist_ok=True)
+                    shutil.copytree(userdata_path, backup_userdata)
+                    _log(f"backed up {userdata_path} -> {backup_userdata}")
+                except Exception as e:
+                    _log(f"backup FAILED: {e}")
+            else:
+                _log(f"no userdata at {userdata_path}, nothing to back up")
+
+        if active & install_hooks:
+            if backup_userdata.is_dir():
+                try:
+                    # Only restore if the current userdata is missing or empty,
+                    # so we never clobber a userdata the new version may have
+                    # seeded while the install hook was delayed.
+                    needs_restore = (
+                        not userdata_path.exists()
+                        or (userdata_path.is_dir() and not any(userdata_path.iterdir()))
+                    )
+                    if needs_restore:
+                        if userdata_path.exists():
+                            shutil.rmtree(userdata_path, ignore_errors=True)
+                        userdata_path.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copytree(backup_userdata, userdata_path)
+                        _log(f"restored {backup_userdata} -> {userdata_path}")
+
+                        # Backup is consumed on successful restore.
+                        shutil.rmtree(backup_userdata, ignore_errors=True)
+                        try:
+                            backup_root.rmdir()  # only succeeds if empty
+                        except OSError:
+                            pass
+                    else:
+                        _log("existing userdata is non-empty, skipping restore")
+                except Exception as e:
+                    _log(f"restore FAILED: {e}")
+    except Exception as e:
+        # Never let a hook error break the installer.
+        try:
+            print(f"[Hammer5Tools hook] {e}", file=sys.stderr)
+        except Exception:
+            pass
+
+
 if __name__ == "__main__":
-    # Handle Velopack/Squirrel hooks by exiting immediately.
-    # This prevents the installer from hanging or showing an error.
+    # Handle Velopack/Squirrel hooks by preserving userdata and exiting.
+    # The installer calls us with these flags; we must finish quickly and
+    # must not spin up the Qt UI.
     installer_flags = [
         '--velopack-install', '--velopack-updated', '--velopack-uninstall',
         '--velopack-obsolete', '--velopack-obsoleted',
@@ -889,20 +1012,7 @@ if __name__ == "__main__":
     ]
 
     if any(arg in sys.argv for arg in installer_flags):
-        # We don't want Velopack to touch the userdata folder ever.
-        # It's managed by the app itself and contains user settings/presets.
-        import shutil
-        from pathlib import Path
-        
-        # When Velopack runs hooks, it's usually in the context of the 'app' or 'current' folder
-        # We want to make sure 'userdata' in the root doesn't get messed with by Velopack's
-        # file operations. Since we can't easily tell Velopack to ignore it via flags,
-        # we ensures it stays persistent. 
-        # (Actually, Velopack shouldn't delete folders it didn't create, but
-        # if it's placed inside the versioned folder it might. 
-        # Hammer5Tools puts it in the root, so it should be safe, 
-        # but this hook is where we'd handle any migration if needed.)
-        
+        _handle_velopack_hook(sys.argv)
         sys.exit(0)
 
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
