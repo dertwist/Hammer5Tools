@@ -228,10 +228,15 @@ def handle_installation(update, mgr):
         
         def run_update():
             try:
+                # Disable IPC server so new instances (restarted by updater) 
+                # don't tell us to show the window.
+                try:
+                    from src.ipc.server_utils import stop_ipc_server
+                    stop_ipc_server()
+                except Exception as e:
+                    print(f"Failed to stop IPC server: {e}")
+
                 mgr.download_updates(update)
-                # Before applying and restarting, we should close our own app properly
-                # to avoid multiple instances or conflicts.
-                QTimer.singleShot(0, QApplication.quit)
                 mgr.apply_updates_and_restart(update)
             except Exception as e:
                 # Use QTimer to show error on main thread
