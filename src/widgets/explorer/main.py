@@ -200,13 +200,14 @@ def get_default_application(file_extension):
 class Explorer(QMainWindow):
     play_sound = Signal(str)
 
-    def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None, use_internal_player: bool = True, base_directories: dict = None):
+    def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None, use_internal_player: bool = True, base_directories: dict = None, show_root_selector: bool = True):
         super().__init__(parent)
         self.tree_directory = tree_directory
         self.addon = addon
         self.editor_name = editor_name
         self.use_internal_player = use_internal_player
         self.base_directories = base_directories or {}
+        self.show_root_selector = show_root_selector
         self.model = CustomFileSystemModel(self)
         self.model.setRootPath(tree_directory)
         try:
@@ -258,7 +259,8 @@ class Explorer(QMainWindow):
                 self.tree_directory = self.base_directories["Internal"]
 
             self.root_selector.currentIndexChanged.connect(self.on_root_changed)
-            self.top_layout.addWidget(self.root_selector)
+            if self.show_root_selector:
+                self.top_layout.addWidget(self.root_selector)
         self.goto_button = QToolButton(self)
         self.goto_button.setIcon(QIcon("://icons/folder_open.svg"))
         self.goto_button.setToolTip("Go to path from clipboard")
