@@ -140,6 +140,9 @@ Hotkeys_Path = user_data_dir / "Hotkeys"
 
 SoundEventEditor_Preset_Path = SoundEventEditor_Path / "Presets"
 SmartPropEditor_Preset_Path = SmartPropEditor_Path / "Presets"
+# Aliases for compatibility with various editor versions
+SoundEventEditor_User_Preset_Path = SoundEventEditor_Preset_Path
+SmartPropEditor_User_Preset_Path = SmartPropEditor_Preset_Path
 
 # Bundled presets (read-only, updated with app)
 if getattr(sys, 'frozen', False):
@@ -164,11 +167,24 @@ for p in [Presets_Path, Hotkeys_Path, SoundEventEditor_Preset_Path, SmartPropEdi
 def get_all_presets(internal_path: Path, user_path: Path) -> list[dict]:
     """Returns a list of presets from both internal and user paths."""
     presets = []
-    for path in (internal_path, user_path):
-        if path.is_dir():
-            for file in path.rglob("*"):
-                if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
-                    presets.append({file.name: str(file.absolute())})
+    
+    # Internal presets (Software) - these will be updated with the app
+    if internal_path.is_dir():
+        for file in internal_path.rglob("*"):
+            if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
+                # Relative path from internal_path to keep structure
+                rel_path = file.relative_to(internal_path)
+                display_name = f"[Software] {rel_path}"
+                presets.append({display_name: str(file.absolute())})
+                
+    # User presets - these are persistent in ~/Hammer5Tools
+    if user_path.is_dir():
+        for file in user_path.rglob("*"):
+            if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
+                rel_path = file.relative_to(user_path)
+                display_name = f"{rel_path}"
+                presets.append({display_name: str(file.absolute())})
+                
     return presets
 
 def seed_user_data():
@@ -189,6 +205,12 @@ def seed_user_data():
             # Skip internal app folders
             if src.name.lower() in ('app', '_internal'):
                 return
+            
+            # Skip Presets folders - they should stay internal for updates
+            # unless the user wants to copy them manually.
+            if src.name.lower() == 'presets':
+                return
+                
             dest.mkdir(parents=True, exist_ok=True)
             for item in src.iterdir():
                 copy_if_not_exists(item, dest / item.name)
