@@ -13,6 +13,7 @@ from src.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel
 from src.widgets.common import Button  # Using the internal Button class
 from src.styles.common import qt_stylesheet_checkbox, qt_stylesheet_combobox
 from src.widgets import FloatWidget  # Using the internal FloatWidget for float properties
+from src.other.file_association import setup_all_associations
 
 
 class ActionButtonsPanel(QFrame):
@@ -127,6 +128,12 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.setStyleSheet(qt_stylesheet_checkbox)
         row_app.addWidget(self.checkBox_close_to_tray)
         layout_other.addLayout(row_app)
+        
+        # File association button in General -> Other
+        self.btn_force_association = Button(text=" Force Associate File Extensions (.vsmart, .vsndevts, .hbat)")
+        self.btn_force_association.set_icon_sync()
+        layout_other.addWidget(self.btn_force_association)
+        
         layout.addWidget(self.frame_other)
         layout.addStretch()
         # Wrap the general tab content in a scroll area
@@ -185,7 +192,6 @@ class PreferencesDialog(QDialog):
                                                    value=70)
         row_transparency.addWidget(self.spe_transparency_window)
         layout_rt_saving.addLayout(row_transparency)
-        layout.addWidget(frame_rt_saving)
         # Relative Saving Delay row
         row_rt_delay = QHBoxLayout()
         label_rt_delay = QLabel("Realtime Saving Delay (milliseconds):", frame_rt_saving)
@@ -203,6 +209,8 @@ class PreferencesDialog(QDialog):
                                                      )
         row_rt_delay.addWidget(self.spe_realtime_saving_delay)
         layout_rt_saving.addLayout(row_rt_delay)
+        layout.addWidget(frame_rt_saving)
+
 
         layout.addStretch()
         smartprop_scroll = self.wrap_in_scroll_area(smartprop_content)
@@ -435,6 +443,7 @@ class PreferencesDialog(QDialog):
         self.spe_transparency_window.edited.connect(
             lambda val: set_settings_value('SmartPropEditor', 'transparency_window', str(val))
         )
+        self.btn_force_association.clicked.connect(self.force_file_associations)
 
     def browse_archive(self):
         selected_dir = QFileDialog.getExistingDirectory(self, "Select Archive Path", os.getcwd())
@@ -478,6 +487,10 @@ class PreferencesDialog(QDialog):
         # Re-enable after check
         self.action_buttons_panel.check_update_button.setEnabled(True)
         self.populate_preferences()
+
+    def force_file_associations(self):
+        setup_all_associations(force=True, parent_window=self)
+        QMessageBox.information(self, "File Associations", "File associations have been successfully updated.")
 
 
 
