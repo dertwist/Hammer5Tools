@@ -16,10 +16,14 @@ class VelopackManager:
     def _update_thread(self, interactive):
         try:
             channel = get_channel()
-            mgr = UpdateManager(self.update_url)
+            import velopack
+            opts = velopack.UpdateOptions(AllowVersionDowngrade=False, 
+                                        MaximumDeltasBeforeFallback=0, 
+                                        ExplicitChannel=channel)
+            mgr = UpdateManager(self.update_url, options=opts)
             
-            # Check for updates (passing prerelease=True for dev channel)
-            update = mgr.check_for_updates(prerelease=(channel == 'dev'))
+            # Check for updates
+            update = mgr.check_for_updates()
             
             if update:
                 QTimer.singleShot(0, lambda: self._prompt_for_update(mgr, update))
