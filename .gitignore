@@ -106,3 +106,6 @@ __pycache__/
 hotkeys
 debug.kv3
 settings.cfg
+dev/old
+userdata_dev
+*.exe
