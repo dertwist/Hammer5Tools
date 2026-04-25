@@ -33,21 +33,16 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.save_button.clicked.connect(self.save_preset)
 
     #==============================================================<  Explorer  >===========================================================
-        from src.common import SoundEventEditor_Internal_Preset_Path, SoundEventEditor_Preset_Path
-        base_dirs = {
-            "Internal": SoundEventEditor_Internal_Preset_Path,
-            "User": SoundEventEditor_Preset_Path
-        }
         self.mini_explorer = Explorer(
             tree_directory=self.tree_directory, 
             addon=get_addon_name(), 
             editor_name='SoundEvent_Editor_PresetManager', 
             parent=self.parent,
-            base_directories=base_dirs,
             show_root_selector=False
         )
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
-        self.ui.horizontalLayout_2.insertWidget(0, self.mini_explorer.root_selector)
+        if hasattr(self.mini_explorer, 'root_selector'):
+            self.ui.horizontalLayout_2.insertWidget(0, self.mini_explorer.root_selector)
 
     #=======================================================<  Preset Manager Actions  >====================================================
     def explorer_status(self):
