@@ -51,7 +51,7 @@ from src.editors.hotkey_editor.main import HotkeyEditorMainWindow
 from src.forms.create_addon.main import Create_addon_Dialog
 from src.other.steam_restart import SteamNoLogoFixThreadClass
 from src.other.addon_functions import delete_addon, launch_addon
-# from src.updater.check import check_updates
+from src.updater.check import check_updates
 from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
@@ -64,7 +64,7 @@ from src.dotnet import check_dotnet_runtime
 from src.other.addon_validation import validate_addon_structure
 from src.forms.cleanup.main import CleanupDialog
 from src.forms.quick_create.main import QuickCreateDialog
-from src.updater.velopack_manager import VelopackManager
+# from src.updater.velopack_manager import VelopackManager
 
 
 
@@ -188,7 +188,7 @@ class Widget(QMainWindow):
             self.dev_widget = DevWidget(self)
             self.ui.centralwidget.layout().addWidget(self.dev_widget)
 
-        # QTimer.singleShot(100, self.deferred_update_check)
+        QTimer.singleShot(100, self.deferred_update_check)
         self._restore_user_prefs()
         if get_settings_bool('APP', 'first_launch'):
             self.open_about()
@@ -208,20 +208,20 @@ class Widget(QMainWindow):
             for dock in child.findChildren(QDockWidget):
                 dock.show()
         validate_addon_structure()
-        self.velopack_manager = VelopackManager(self)
-        self.velopack_manager.check_for_updates(interactive=False)
+        # self.velopack_manager = VelopackManager(self)
+        # self.velopack_manager.check_for_updates(interactive=False)
 
     def trigger_update_check(self):
         """Called from settings dialog to manually trigger a check."""
-        self.velopack_manager.check_for_updates(interactive=True)
+        check_updates("https://github.com/dertwist/Hammer5Tools", app_version, False)
 
 
 
-    # def deferred_update_check(self):
-    #     try:
-    #         check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
-    #     except Exception as e:
-    #         print(f"Error checking updates: {e}")
+    def deferred_update_check(self):
+        try:
+            check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
+        except Exception as e:
+            print(f"Error checking updates: {e}")
 
     @exception_handler
     def update_title(self, status=None, file_path=None, text=None):
@@ -859,8 +859,6 @@ def handle_new_connection(server, widget):
         client_connection.disconnectFromServer()
 
 if __name__ == "__main__":
-    App().run()
-
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
 
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
