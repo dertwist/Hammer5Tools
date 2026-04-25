@@ -3,7 +3,7 @@ from src.other.ncm_setup import NCM_mode_setup
 from src.other.assettypes import ensure_vsmart_configured
 from src.settings.main import get_addon_name, get_cs2_path, get_settings_bool, set_settings_bool, get_settings_value, \
     set_settings_value
-import shutil, psutil
+import shutil, psutil, os, subprocess
 from src.common import *
 from src.widgets import exception_handler
 
