@@ -202,20 +202,22 @@ class Explorer(QMainWindow):
 
     def __init__(self, parent=None, tree_directory=None, addon=None, editor_name=None, use_internal_player: bool = True, base_directories: dict = None, show_root_selector: bool = True):
         super().__init__(parent)
-        self.tree_directory = tree_directory
+        self.tree_directory = self._normalize_path(tree_directory)
+        if not self.tree_directory:
+            self.tree_directory = os.getcwd()
         self.addon = addon
         self.editor_name = editor_name
         self.use_internal_player = use_internal_player
-        self.base_directories = base_directories or {}
+        self.base_directories = {label: self._normalize_path(path) for label, path in (base_directories or {}).items()}
         self.show_root_selector = show_root_selector
         self.model = CustomFileSystemModel(self)
-        self.model.setRootPath(tree_directory)
+        self.model.setRootPath(self.tree_directory)
         try:
             self.rootpath = os.path.join(get_cs2_path(), "content", "csgo_addons", get_addon_name())
         except Exception:
-            self.rootpath = tree_directory
-        if not os.path.exists(tree_directory):
-            os.makedirs(tree_directory)
+            self.rootpath = self.tree_directory
+        if not os.path.exists(self.tree_directory):
+            os.makedirs(self.tree_directory)
         if not self.use_internal_player:
             self.audio_player = None
         self.filter_proxy_model = QSortFilterProxyModel(self)
@@ -225,7 +227,7 @@ class Explorer(QMainWindow):
         self.filter_proxy_model.setRecursiveFilteringEnabled(True)
         self.tree = QTreeView(self)
         self.tree.setModel(self.filter_proxy_model)
-        self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(self.model.index(tree_directory)))
+        self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(self.model.index(self.tree_directory)))
         self.tree.setSortingEnabled(True)
         for column in range(self.model.columnCount()):
             if column not in (CustomFileSystemModel.NAME_COLUMN, CustomFileSystemModel.SIZE_COLUMN):
@@ -303,6 +305,14 @@ class Explorer(QMainWindow):
         self.select_last_opened_path()
         self.frame = QFrame(self)
         self.frame.setLayout(self.layout)
+
+    def _normalize_path(self, path):
+        if path is None:
+            return None
+        try:
+            return os.fspath(path)
+        except (TypeError, ValueError):
+            return None
 
     def on_root_changed(self, index):
         label = self.root_selector.itemText(index)
