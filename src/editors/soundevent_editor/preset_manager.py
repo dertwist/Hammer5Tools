@@ -5,7 +5,7 @@ from src.widgets.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QApplication
 from src.settings.main import settings
 from src.editors.soundevent_editor.properties_window import SoundEventEditorPropertiesWindow
-from src.common import Kv3ToJson, JsonToKv3, SoundEventEditor_Preset_Path, enable_dark_title_bar
+from src.common import Kv3ToJson, JsonToKv3, SoundEventEditor_Preset_Path, SoundEventEditor_Internal_Preset_Path, enable_dark_title_bar
 from src.widgets import ErrorInfo
 
 
@@ -38,7 +38,11 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
             addon=get_addon_name(), 
             editor_name='SoundEvent_Editor_PresetManager', 
             parent=self.parent,
-            show_root_selector=False
+            show_root_selector=True,
+            base_directories={
+                "User": SoundEventEditor_Preset_Path,
+                "Internal": SoundEventEditor_Internal_Preset_Path
+            }
         )
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
         if hasattr(self.mini_explorer, 'root_selector'):
