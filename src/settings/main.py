@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import ast
+import os
 
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
@@ -464,7 +465,7 @@ class PreferencesDialog(QDialog):
 
     def open_userdata_folder(self):
         from src.common import user_data_dir
-        os.startfile(user_data_dir)
+        os.startfile(str(user_data_dir))
 
     def check_update(self):
         self.action_buttons_panel.check_update_button.setEnabled(False)
