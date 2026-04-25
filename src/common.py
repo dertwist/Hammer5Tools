@@ -123,12 +123,10 @@ SoundEventEditor_Path = user_data_dir / "SoundEventEditor"
 SoundEventEditor_path = SoundEventEditor_Path
 SmartPropEditor_Path = user_data_dir / "SmartPropEditor"
 Presets_Path = user_data_dir / "Presets"
+Hotkeys_Path = user_data_dir / "Hotkeys"
+
 SoundEventEditor_Preset_Path = SoundEventEditor_Path / "Presets"
 SmartPropEditor_Preset_Path = SmartPropEditor_Path / "Presets"
-
-# User-managed presets (persistent)
-SoundEventEditor_User_Preset_Path = SoundEventEditor_Path / "UserPresets"
-SmartPropEditor_User_Preset_Path = SmartPropEditor_Path / "UserPresets"
 
 # Bundled presets (read-only, updated with app)
 if getattr(sys, 'frozen', False):
@@ -145,9 +143,8 @@ SmartPropEditor_Internal_Preset_Path = internal_base / "SmartPropEditor" / "Pres
 SoundEventEditor_sounds_path = SoundEventEditor_Path / 'sounds'
 SoundEventEditor_soundevents_path = SoundEventEditor_Path / 'soundevents'
 
-# Ensure directories exist
-for p in [Presets_Path, SoundEventEditor_Preset_Path, SmartPropEditor_Preset_Path,
-          SoundEventEditor_User_Preset_Path, SmartPropEditor_User_Preset_Path,
+# Ensure critical directories exist even if not seeded
+for p in [Presets_Path, Hotkeys_Path, SoundEventEditor_Preset_Path, SmartPropEditor_Preset_Path,
           SoundEventEditor_sounds_path, SoundEventEditor_soundevents_path]:
     p.mkdir(parents=True, exist_ok=True)
 
@@ -162,33 +159,42 @@ def get_all_presets(internal_path: Path, user_path: Path) -> list[dict]:
     return presets
 
 def seed_user_data():
-    """Seeds the user directory from bundled defaults on first launch."""
+    """Seeds the user directory from bundled defaults on first launch or if files are missing."""
     if getattr(sys, 'frozen', False):
         defaults_path = Path(sys._MEIPASS) / "defaults"
     else:
+        # Dev mode: defaults are in the 'Hammer5Tools' subfolder of the repo root
         defaults_path = Path(__file__).resolve().parent.parent / "Hammer5Tools"
         
-    if defaults_path.exists():
-        import shutil
-        for item in defaults_path.iterdir():
-            # Skip executables and internal pyinstaller folders
-            if item.name.lower() in ('app', '_internal') or item.suffix == '.exe':
-                continue
-                
-            dest = user_data_dir / item.name
+    if not defaults_path.exists():
+        return
+
+    import shutil
+    
+    def copy_if_not_exists(src: Path, dest: Path):
+        if src.is_dir():
+            # Skip internal app folders
+            if src.name.lower() in ('app', '_internal'):
+                return
+            dest.mkdir(parents=True, exist_ok=True)
+            for item in src.iterdir():
+                copy_if_not_exists(item, dest / item.name)
+        else:
+            # Skip executables
+            if src.suffix == '.exe':
+                return
             if not dest.exists():
                 try:
-                    if item.is_dir():
-                        shutil.copytree(item, dest)
-                    else:
-                        shutil.copy2(item, dest)
-                    print(f"Seeded {item.name} from defaults")
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(src, dest)
+                    print(f"Seeded {dest.relative_to(user_data_dir)} from defaults")
                 except Exception as e:
-                    print(f"Failed to seed {item.name}: {e}")
+                    print(f"Failed to seed {dest}: {e}")
+
+    copy_if_not_exists(defaults_path, user_data_dir)
 
 # Run seeding
 seed_user_data()
-
 
 # web
 discord_feedback_channel = "https://discord.gg/5yzvEQnazG"

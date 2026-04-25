@@ -10,7 +10,7 @@ from src.widgets.explorer.main import Explorer
 import os
 import datetime
 import keyvalues3 as kv3
-from src.common import editor_info, app_dir
+from src.common import editor_info, app_dir, Hotkeys_Path, user_data_dir
 
 class KeyButton(QPushButton):
     DEFAULT_COLOR = "#ababab"
@@ -128,7 +128,7 @@ class HotkeyEditorMainWindow(QMainWindow):
         editor = editor.lower()
         self.editor = editor.replace(' ', '_')
 
-        self.hotkeys_path = os.path.join(app_dir, 'hotkeys', editor)
+        self.hotkeys_path = os.path.join(Hotkeys_Path, editor)
     def editor_switch(self):
         try:
             self.ui.explorer_layout.itemAt(0).widget().deleteLater()
