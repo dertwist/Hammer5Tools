@@ -51,6 +51,8 @@ from src.editors.hotkey_editor.main import HotkeyEditorMainWindow
 from src.forms.create_addon.main import Create_addon_Dialog
 from src.other.steam_restart import SteamNoLogoFixThreadClass
 from src.other.addon_functions import delete_addon, launch_addon
+from src.forms.file_association_prompt.main import FileAssociationPromptDialog
+from src.other.file_association import check_association
 from src.updater.check import check_updates
 from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
@@ -193,6 +195,9 @@ class Widget(QMainWindow):
         if get_settings_bool('APP', 'first_launch'):
             self.open_about()
             set_settings_bool('APP', 'first_launch', False)
+        
+        # Check for file associations after a short delay
+        QTimer.singleShot(2000, self.check_file_associations)
 
         # Setup filesystem watcher for addon folder.
         self.addon_watcher = QFileSystemWatcher(self)
@@ -222,6 +227,21 @@ class Widget(QMainWindow):
             check_updates("https://github.com/dertwist/Hammer5Tools", app_version, True)
         except Exception as e:
             print(f"Error checking updates: {e}")
+
+    def check_file_associations(self):
+        """Checks if .vsmart files are associated with the app and prompts if not."""
+        if not get_settings_bool('APP', 'check_associations', True):
+            return
+            
+        _, is_us = check_association('.vsmart')
+        if not is_us:
+            dialog = FileAssociationPromptDialog(self)
+            if dialog.exec() == QDialog.Accepted:
+                # Associations registered inside dialog
+                pass
+            
+            if dialog.dont_ask_again:
+                set_settings_bool('APP', 'check_associations', False)
 
     @exception_handler
     def update_title(self, status=None, file_path=None, text=None):
