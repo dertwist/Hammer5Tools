@@ -3,94 +3,129 @@ import json
 import webbrowser
 import markdown2
 import threading
+import urllib.request
 from velopack import UpdateManager
 from src.common import get_channel
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
     QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame, QMessageBox
 )
-from PySide6.QtCore import Qt, QUrl, QEventLoop, QTimer
+from PySide6.QtCore import Qt, QUrl, QTimer, QObject, Signal
 from PySide6.QtGui import QIcon
-from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
 DIALOG_WIDTH = 600
 DIALOG_HEIGHT = 700
 
-def qt_get(url):
-    """
-    Performs a synchronous HTTP GET request using QNetworkAccessManager.
-    Returns a tuple (data, error_string). Data is returned as bytes if successful.
-    """
-    manager = QNetworkAccessManager()
-    request = QNetworkRequest(QUrl(url))
-    reply = manager.get(request)
+class UpdateWorker(QObject):
+    """Worker object to handle update checks and communicate with the main thread via signals."""
+    finished = Signal(object, list, str, str, object)  # update, releases, owner, repo, mgr
+    error = Signal(str)
+    no_update = Signal(list, str, str, object)  # releases, owner, repo, mgr
 
-    # Create a local event loop to wait for reply to finish
-    loop = QEventLoop()
-    reply.finished.connect(loop.quit)
-    loop.exec()
+    def __init__(self, repo_url, current_version, silent):
+        super().__init__()
+        self.repo_url = repo_url
+        self.current_version = current_version
+        self.silent = silent
 
-    if reply.error() != QNetworkReply.NetworkError.NoError:
-        error_str = reply.errorString()
-        reply.deleteLater()
-        return None, error_str
-
-    data = reply.readAll().data()  # bytes data
-    reply.deleteLater()
-    return data, None
-
-def check_updates(repo_url, current_version, silent):
-    """
-    Checks for updates using Velopack and shows the release notes window if found.
-    """
-    threading.Thread(target=_check_thread, args=(repo_url, current_version, silent), daemon=True).start()
-
-def _check_thread(repo_url, current_version, silent):
-    try:
-        is_frozen = getattr(sys, 'frozen', False)
-        mgr = None
-        update = None
-        
-        if is_frozen:
-            channel = get_channel()
-            mgr = UpdateManager("https://github.com/dertwist/Hammer5Tools")
-            # Check for updates via Velopack
-            update = mgr.check_for_updates(prerelease=(channel == 'dev'))
-        
-        if update or not is_frozen:
-            # Fetch release notes from GitHub
-            parts = repo_url.rstrip('/').split('/')
+    def run(self):
+        try:
+            print("Update thread started...")
+            is_frozen = getattr(sys, 'frozen', False)
+            mgr = None
+            update = None
+            
+            # 1. Velopack check (only if frozen)
+            if is_frozen:
+                try:
+                    channel = get_channel()
+                    print(f"Checking Velopack updates on channel: {channel}")
+                    mgr = UpdateManager("https://github.com/dertwist/Hammer5Tools")
+                    update = mgr.check_for_updates(prerelease=(channel == 'dev'))
+                except Exception as ve:
+                    print(f"Velopack check failed: {ve}")
+            
+            # 2. GitHub Releases check (for changelog)
+            parts = self.repo_url.rstrip('/').split('/')
             owner = parts[-2]
             repo = parts[-1]
             api_url = f"https://api.github.com/repos/{owner}/{repo}/releases"
             
-            data, error = qt_get(api_url)
+            print(f"Fetching changelog from: {api_url}")
+            data, fetch_error = self.fetch_data(api_url)
             releases = []
-            if not error:
+            if not fetch_error:
                 try:
-                    releases = json.loads(data.decode('utf-8'))[:10]
-                except Exception:
-                    pass
+                    all_releases = json.loads(data.decode('utf-8'))
+                    # Filter out pre-releases
+                    releases = [r for r in all_releases if not r.get('prerelease')][:10]
+                except Exception as je:
+                    print(f"Failed to parse releases JSON: {je}")
             
-            # Show the notification window on the main thread
-            if update or not silent:
-                QTimer.singleShot(0, lambda: show_update_notification(update, releases, owner, repo, mgr))
-        elif not silent:
-            # If no update and not silent, show info dialog
-            QTimer.singleShot(0, lambda: QMessageBox.information(
-                None, "No Updates", 
-                f"You are already using the latest version ({current_version})."
-            ))
-            
-    except Exception as e:
-        print(f"Update check failed: {e}")
-        if not silent:
-            QTimer.singleShot(0, lambda: QMessageBox.critical(
-                None, "Update Error", 
-                f"Failed to check for updates:\n{str(e)}"
-            ))
+            # 3. Emit results
+            if update:
+                print("Update found via Velopack.")
+                self.finished.emit(update, releases, owner, repo, mgr)
+            elif not is_frozen:
+                print("Running in dev mode, showing changelog if not silent.")
+                if not self.silent:
+                    self.no_update.emit(releases, owner, repo, mgr)
+            else:
+                print("No update found.")
+                if not self.silent:
+                    self.no_update.emit(releases, owner, repo, mgr)
+                    
+        except Exception as e:
+            print(f"General update check error: {e}")
+            if not self.silent:
+                self.error.emit(str(e))
+
+    def fetch_data(self, url):
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Hammer5Tools-Updater'})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                return response.read(), None
+        except Exception as e:
+            return None, str(e)
+
+# Global reference to prevent GC
+_worker_thread = None
+_worker = None
+
+def check_updates(repo_url, current_version, silent):
+    """
+    Entry point for checking updates. 
+    Creates a worker and a thread to avoid blocking the UI.
+    """
+    global _worker, _worker_thread
+    
+    _worker = UpdateWorker(repo_url, current_version, silent)
+    
+    # Connect signals to UI functions
+    _worker.finished.connect(lambda u, r, o, re, m: show_update_notification(u, r, o, re, m))
+    _worker.no_update.connect(lambda r, o, re, m: show_latest_version_info(current_version, r, o, re, m))
+    _worker.error.connect(lambda e: QMessageBox.critical(None, "Update Error", f"Failed to check for updates:\n{e}"))
+    
+    # Run in a thread
+    _worker_thread = threading.Thread(target=_worker.run, daemon=True)
+    _worker_thread.start()
+
+def show_latest_version_info(current_version, releases, owner, repo, mgr):
+    print("Showing Latest Version dialog...")
+    msg = QMessageBox()
+    msg.setWindowTitle("Latest Version")
+    msg.setText(f"You are already using the latest version ({current_version}).")
+    msg.setIcon(QMessageBox.Information)
+    show_changelog_btn = msg.addButton("Show Changelog", QMessageBox.ActionRole)
+    msg.addButton(QMessageBox.Ok)
+    msg.setWindowIcon(QIcon.fromTheme(":/icons/appicon.ico"))
+    msg.exec()
+    
+    if msg.clickedButton() == show_changelog_btn:
+        show_update_notification(None, releases, owner, repo, mgr)
 
 def show_update_notification(update, releases, owner, repo, mgr):
+    print("Showing Update Notification window...")
     dialog = QDialog()
     dialog.setWindowIcon(QIcon.fromTheme(":/icons/appicon.ico"))
     dialog.setWindowTitle("Updater")
@@ -100,7 +135,7 @@ def show_update_notification(update, releases, owner, repo, mgr):
         latest_version = update.TargetFullRelease.Version
         header = QLabel(f"<h2>New version available: {latest_version}</h2>")
     else:
-        header = QLabel(f"<h2>Release Notes (Dev Mode)</h2>")
+        header = QLabel(f"<h2>Changelog</h2>")
     
     header.setTextFormat(Qt.RichText)
     layout.addWidget(header)
@@ -112,26 +147,29 @@ def show_update_notification(update, releases, owner, repo, mgr):
     content_layout.setContentsMargins(10, 10, 10, 10)
     content_layout.setSpacing(10)
 
-    for idx, release in enumerate(releases):
-        rel_version = release['tag_name'].lstrip('v')
-        rel_notes = release.get('body', '')
-        formatted_notes = markdown2.markdown(
-            rel_notes,
-            extras=["fenced-code-blocks", "tables", "images", "strike", "target-blank-links"]
-        )
-        note_label = QLabel(f"<h3>Version: {rel_version}</h3><div>{formatted_notes}</div>")
-        note_label.setTextFormat(Qt.RichText)
-        note_label.setWordWrap(True)
-        note_label.setStyleSheet("padding: 5px;")
-        content_layout.addWidget(note_label)
-        if idx < len(releases) - 1:
-            divider = QFrame()
-            divider.setFrameShape(QFrame.HLine)
-            divider.setFrameShadow(QFrame.Plain)
-            divider.setLineWidth(2)
-            divider.setFixedHeight(2)
-            divider.setStyleSheet("background-color: #323232; border: none;")
-            content_layout.addWidget(divider)
+    if releases:
+        for idx, release in enumerate(releases):
+            rel_version = release.get('tag_name', 'unknown').lstrip('v')
+            rel_notes = release.get('body') or ""
+            formatted_notes = markdown2.markdown(
+                rel_notes,
+                extras=["fenced-code-blocks", "tables", "images", "strike", "target-blank-links"]
+            )
+            note_label = QLabel(f"<h3>Version: {rel_version}</h3><div>{formatted_notes}</div>")
+            note_label.setTextFormat(Qt.RichText)
+            note_label.setWordWrap(True)
+            note_label.setStyleSheet("padding: 5px;")
+            content_layout.addWidget(note_label)
+            if idx < len(releases) - 1:
+                divider = QFrame()
+                divider.setFrameShape(QFrame.HLine)
+                divider.setFrameShadow(QFrame.Plain)
+                divider.setLineWidth(2)
+                divider.setFixedHeight(2)
+                divider.setStyleSheet("background-color: #323232; border: none;")
+                content_layout.addWidget(divider)
+    else:
+        content_layout.addWidget(QLabel("No release notes found."))
 
     scroll.setWidget(content_widget)
     layout.addWidget(scroll)
@@ -144,7 +182,7 @@ def show_update_notification(update, releases, owner, repo, mgr):
         download_button.clicked.connect(lambda: show_install_dialog(update, mgr))
     else:
         download_button.setEnabled(False)
-        download_button.setToolTip("Updating is disabled in development mode.")
+        download_button.setToolTip("No update available.")
     button_layout.addWidget(download_button)
 
     change_log_button = QPushButton("ReleaseNotes")
@@ -182,6 +220,7 @@ def handle_installation(update, mgr):
                 mgr.download_updates(update)
                 mgr.apply_updates_and_restart(update)
             except Exception as e:
+                # Use QTimer to show error on main thread
                 QTimer.singleShot(0, lambda: QMessageBox.critical(None, "Update Error", f"Failed to apply update: {e}"))
                 
         threading.Thread(target=run_update, daemon=True).start()
