@@ -23,9 +23,11 @@ static void log_hook(const fs::path& log_dir, const std::wstring& msg) {
     try {
         fs::create_directories(log_dir);
         std::ofstream log_file(log_dir / "hook.log", std::ios::app);
-        auto now = std::chrono::system_clock::to_time_point(std::chrono::system_clock::now());
+        auto now = std::chrono::system_clock::now();
         auto time = std::chrono::system_clock::to_time_t(now);
-        log_file << std::ctime(&time) << " [Launcher] " << utf8_encode(msg) << "\n";
+        char time_str[26];
+        ctime_s(time_str, sizeof(time_str), &time);
+        log_file << time_str << " [Launcher] " << utf8_encode(msg) << "\n";
     } catch (...) {}
 }
 
