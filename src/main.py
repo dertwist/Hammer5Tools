@@ -626,7 +626,7 @@ class Widget(QMainWindow):
             self.ui.Launch_Addon_Button.setText("Launch Tools")
 
     def closeEvent(self, event):
-        if settings.value("APP/minimize_to_tray", type=bool, defaultValue=True):
+        if get_settings_bool("APP", "minimize_to_tray", False):
             event.ignore()
             self.hide()
 
@@ -635,10 +635,10 @@ class Widget(QMainWindow):
             for child in self.findChildren(QMainWindow):
                 for dock in child.findChildren(QDockWidget):
                     dock.hide()
-            settings.setValue("APP/minimize_to_tray", True)
             self.show_minimize_message_once()
         else:
             self.exit_application()
+
 
     @exception_handler
     def selected_addon_name(self, text=None):
