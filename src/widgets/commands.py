@@ -1,6 +1,8 @@
 import uuid
 from PySide6.QtCore import Qt
+from src.common import generate_unique_name
 from src.widgets import HierarchyItemModel
+
 from PySide6.QtWidgets import (
     QTreeWidget, QTreeWidgetItem
 )
@@ -232,21 +234,37 @@ class DuplicateItemsCommand(QUndoCommand):
         else:
             return data
 
-    def _deep_copy_item(self, item):
+    def _deep_copy_item(self, item, is_root=False):
         new_item = HierarchyItemModel()
         for col in range(item.columnCount()):
-            if col != 3:
+            if col == 0 and is_root:
+                # Rename only the root of the duplication to be unique among siblings
+                parent = item.parent() or self.tree.invisibleRootItem()
+                sibling_names = {parent.child(i).text(0) for i in range(parent.childCount())}
+                # Also include names from items already duplicated in this command session
+                for p, idx, dup_item in self.duplicates:
+                    if p == parent:
+                        sibling_names.add(dup_item.text(0))
+                
+                new_name = generate_unique_name(item.text(0), sibling_names)
+                new_item.setText(0, new_name)
+            elif col != 3:
                 new_item.setText(col, item.text(col))
+
             data = item.data(col, Qt.UserRole)
             if self.id_generator and isinstance(data, dict):
                 data = self._update_ids_recursively(data)
+                if col == 0 and is_root:
+                    # Sync the new label into the dictionary data as well
+                    data["m_sLabel"] = new_item.text(0)
                 new_item.setText(3, str(data.get("m_nElementID", "")))
+
             elif data is not None:
                 data = str(uuid.uuid4())
             new_item.setData(col, Qt.UserRole, data)
             new_item.update_icon()
         for i in range(item.childCount()):
-            child_copy = self._deep_copy_item(item.child(i))
+            child_copy = self._deep_copy_item(item.child(i), is_root=False)
             new_item.addChild(child_copy)
         return new_item
 
@@ -256,7 +274,7 @@ class DuplicateItemsCommand(QUndoCommand):
             for item in self.items:
                 parent = item.parent() or self.tree.invisibleRootItem()
                 index = parent.indexOfChild(item)
-                new_item = self._deep_copy_item(item)
+                new_item = self._deep_copy_item(item, is_root=True)
                 parent.insertChild(index + 1, new_item)
                 self.duplicates.append((parent, index + 1, new_item))
                 parent.setExpanded(True)
