@@ -43,32 +43,28 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
 
 
 
+from pathlib import Path
+
 # Versions
 app_version = '5.0.0'
 
 def get_channel() -> str:
     """
-    Returns the build channel ('stable' or 'dev') by reading line 2 of
-    app/version.txt at runtime.  In a frozen (PyInstaller) build version.txt
-    is written by makefile.py next to h5t.exe inside the 'app' subfolder.
-    In dev mode the file doesn't exist, so we return 'stable' as a safe default.
+    Returns the build channel ('stable' or 'dev') by reading line 2 of version.txt.
+    In frozen builds, version.txt is next to the executable.
     """
     try:
         if getattr(sys, 'frozen', False):
-            # sys.executable is <root>/app/h5t.exe — version.txt is in the same dir
-            vtxt = os.path.join(os.path.dirname(sys.executable), 'version.txt')
+            vtxt = Path(sys.executable).parent / 'version.txt'
         else:
-            # Dev mode: no frozen build, no version.txt — treat as stable
             return 'stable'
-        with open(vtxt, 'r', encoding='utf-8') as f:
-            lines = f.read().splitlines()
-        return lines[1].strip() if len(lines) >= 2 and lines[1].strip() else 'stable'
+        
+        if vtxt.exists():
+            lines = vtxt.read_text(encoding='utf-8').splitlines()
+            return lines[1].strip() if len(lines) >= 2 else 'stable'
     except Exception:
-        return 'stable'
-
-#======================================================<  Copied from preferences.py file  >===================================================
-
-
+        pass
+    return 'stable'
 
 #=================================================================<  Title  >===============================================================
 def enable_dark_title_bar(window):
@@ -85,126 +81,110 @@ def enable_dark_title_bar(window):
     except Exception as e:
         print(f"Failed to set dark mode title bar: {e}")
 
-
 #===============================================================<  Variables  >=============================================================
 
 editor_info = {
     'editor_info':
     {
-    'name': 'Hammer 5 Tools',
-    'version' : f'{app_version}'
+        'name': 'Hammer 5 Tools',
+        'version': f'{app_version}'
     }
-    }
-
-def get_app_paths() -> tuple[str, str]:
+}
+def get_app_paths() -> tuple[Path, Path]:
     """
     Returns (app_dir, user_data_dir).
-    app_dir: The folder containing the executable (overwritten by Velopack on update).
-    user_data_dir: The persistent folder for user settings, presets, and logs.
+    app_dir: The folder containing the executable.
+    user_data_dir: Persistent folder for user data (survives updates).
     """
     if getattr(sys, 'frozen', False):
-        # Hammer5Tools.exe is usually in <root>/current/Hammer5Tools.exe or <root>/current/app/Hammer5Tools.exe
-        current_dir = os.path.dirname(sys.executable)
+        exe_path = Path(sys.executable)
+        current_dir = exe_path.parent
         
-        # Check if we are running in a Velopack 'current' directory
-        parent_dir = os.path.dirname(current_dir)
-        if os.path.basename(current_dir).lower() in ('app', 'current'):
-            root_dir = parent_dir
+        # Velopack structure: <root>/current/Hammer5Tools.exe
+        # We want userdata in <root>/userdata
+        if current_dir.name.lower() in ('app', 'current'):
+            root_dir = current_dir.parent
         else:
-            # If not in 'app' or 'current', assume we are in 'current' directly
-            root_dir = parent_dir
+            # Fallback if structure is different
+            root_dir = current_dir.parent
             
-        u_data = os.path.join(root_dir, "userdata")
-        return current_dir, u_data
+        return current_dir, root_dir / "userdata"
     
-    # Dev mode: use the repo root for both
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return root, root
+    # Dev mode: repo root
+    root = Path(__file__).resolve().parent.parent
+    return root, root / "userdata_dev"
 
-def get_portable_root() -> str:
-    """Deprecated alias for backward compatibility during Velopack migration."""
-    _, u_data = get_app_paths()
-    return u_data
-
-
-# Paths
+# Initialize Paths
 app_dir, user_data_dir = get_app_paths()
-os.makedirs(user_data_dir, exist_ok=True)
+user_data_dir.mkdir(parents=True, exist_ok=True)
 
+# Preset Paths
+SoundEventEditor_Path = user_data_dir / "SoundEventEditor"
+SmartPropEditor_Path = user_data_dir / "SmartPropEditor"
 
-SoundEventEditor_Preset_Path = os.path.join(user_data_dir, "SoundEventEditor", "Presets")
-SmartPropEditor_Preset_Path = os.path.join(user_data_dir, "SmartPropEditor", "Presets")
-Presets_Path = os.path.join(user_data_dir, "Presets")
+# User-managed presets (persistent)
+SoundEventEditor_User_Preset_Path = SoundEventEditor_Path / "UserPresets"
+SmartPropEditor_User_Preset_Path = SmartPropEditor_Path / "UserPresets"
 
-# User presets — never touched by updates, user manages manually
-SoundEventEditor_User_Preset_Path = os.path.join(user_data_dir, "SoundEventEditor", "UserPresets")
-SmartPropEditor_User_Preset_Path = os.path.join(user_data_dir, "SmartPropEditor", "UserPresets")
-
-# Internal presets — shipped with the app, overwritten on update
+# Bundled presets (read-only, updated with app)
 if getattr(sys, 'frozen', False):
-    # In frozen mode, internal presets are in the app/defaults subfolder
-    # We use sys._MEIPASS to get the bundle path
-    internal_base = os.path.join(sys._MEIPASS, "defaults")
+    # PyInstaller bundles defaults into sys._MEIPASS/defaults
+    internal_base = Path(sys._MEIPASS) / "defaults"
 else:
-    # In dev mode, they are in the repo root
+    # Dev mode: defaults are in the repo root
     internal_base = app_dir
 
-SoundEventEditor_Internal_Preset_Path = os.path.join(internal_base, "SoundEventEditor", "Presets")
-SmartPropEditor_Internal_Preset_Path = os.path.join(internal_base, "SmartPropEditor", "Presets")
+SoundEventEditor_Internal_Preset_Path = internal_base / "SoundEventEditor" / "Presets"
+SmartPropEditor_Internal_Preset_Path = internal_base / "SmartPropEditor" / "Presets"
 
-# SoundEventEditor data paths
-SoundEventEditor_sounds_path = os.path.join(user_data_dir, "SoundEventEditor", 'sounds')
-SoundEventEditor_soundevents_path = os.path.join(user_data_dir, "SoundEventEditor", 'soundevents')
-SoundEventEditor_path = os.path.join(user_data_dir, "SoundEventEditor")
+# Data paths for SoundEventEditor
+SoundEventEditor_sounds_path = SoundEventEditor_Path / 'sounds'
+SoundEventEditor_soundevents_path = SoundEventEditor_Path / 'soundevents'
 
-# Create subdirs if they don't exist
-for p in [SoundEventEditor_Preset_Path, SmartPropEditor_Preset_Path, Presets_Path, 
+# Ensure directories exist
+for p in [user_data_dir / "Presets", 
           SoundEventEditor_User_Preset_Path, SmartPropEditor_User_Preset_Path,
           SoundEventEditor_sounds_path, SoundEventEditor_soundevents_path]:
-    os.makedirs(p, exist_ok=True)
+    p.mkdir(parents=True, exist_ok=True)
 
-def get_all_presets(internal_path: str, user_path: str) -> list[dict]:
-    """
-    Returns a list of presets from both internal and user paths.
-    Format: [{filename: absolute_path}, ...]
-    """
+def get_all_presets(internal_path: Path, user_path: Path) -> list[dict]:
+    """Returns a list of presets from both internal and user paths."""
     presets = []
     for path in (internal_path, user_path):
-        if os.path.isdir(path):
-            for root, _, files in os.walk(path):
-                for file in files:
-                    # In Hammer5Tools, presets are often .kv3 or .vdata
-                    if file.endswith((".kv3", ".vdata", ".vsmart")):
-                        presets.append({file: os.path.join(root, file)})
+        if path.is_dir():
+            for file in path.rglob("*"):
+                if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
+                    presets.append({file.name: str(file.absolute())})
     return presets
 
 def seed_user_data():
     """Seeds the user directory from bundled defaults on first launch."""
     if getattr(sys, 'frozen', False):
-        # In PyInstaller _internal is where _MEIPASS points
-        base_path = sys._MEIPASS
+        defaults_path = Path(sys._MEIPASS) / "defaults"
     else:
-        # Dev mode root
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        defaults_path = Path(__file__).resolve().parent.parent / "Hammer5Tools"
         
-    defaults_path = os.path.join(base_path, "defaults")
-    if os.path.exists(defaults_path):
+    if defaults_path.exists():
         import shutil
-        for item in os.listdir(defaults_path):
-            s = os.path.join(defaults_path, item)
-            d = os.path.join(user_data_dir, item)
-            if not os.path.exists(d):
+        for item in defaults_path.iterdir():
+            # Skip executables and internal pyinstaller folders
+            if item.name.lower() in ('app', '_internal') or item.suffix == '.exe':
+                continue
+                
+            dest = user_data_dir / item.name
+            if not dest.exists():
                 try:
-                    if os.path.isdir(s):
-                        shutil.copytree(s, d)
+                    if item.is_dir():
+                        shutil.copytree(item, dest)
                     else:
-                        shutil.copy2(s, d)
-                    print(f"Seeded {item} from defaults")
+                        shutil.copy2(item, dest)
+                    print(f"Seeded {item.name} from defaults")
                 except Exception as e:
-                    print(f"Failed to seed {item}: {e}")
+                    print(f"Failed to seed {item.name}: {e}")
 
 # Run seeding
 seed_user_data()
+
 
 # web
 discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
@@ -279,6 +259,16 @@ def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=Fa
     thread = threading.Thread(target=run_rc, args=(input_file,))
     thread.start()
 
+# web
+discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
+
+# other
+default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0 -netconport 2121"
+
+#------------<  QT functions  >----------
+def set_qdock_tab_style(findChildren):
+    for tab_bar in findChildren(QTabBar):
+        tab_bar.setStyleSheet(qt_stylesheet_tabbar)
 
 def convert_snake_case(name: str = None):
     """
