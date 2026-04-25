@@ -17,7 +17,7 @@ from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtCore import Qt
 
 from src.settings.main import get_settings_bool, set_settings_bool, get_cs2_path
-from src.file_associations.icon_converter import get_vsmart_icon_path, extract_cs2_icon
+from src.other.file_association import setup_all_associations, get_smartprop_icon_path
 
 
 class FileAssociationPromptDialog(QDialog):
@@ -112,18 +112,11 @@ class FileAssociationPromptDialog(QDialog):
         
         # Try to get CS2 smart_prop icon
         cs2_path = get_cs2_path()
-        icon_label = QLabel()
-        icon_label.setAlignment(Qt.AlignCenter)
-        
-        # Try to load the PNG icon for preview
-        icon_path = None
-        if cs2_path:
-            png_path = extract_cs2_icon(cs2_path)
-            if png_path and os.path.exists(png_path):
-                icon_path = png_path
+        # Try to load the smartprop icon
+        icon_path = get_smartprop_icon_path()
         
         # Load and display icon
-        if icon_path:
+        if icon_path and os.path.exists(icon_path):
             pixmap = QPixmap(icon_path)
             if not pixmap.isNull():
                 # Scale to reasonable size for display
@@ -150,6 +143,7 @@ class FileAssociationPromptDialog(QDialog):
     def _on_register(self):
         """Handle register button click."""
         self.dont_ask_again = self.dont_ask_checkbox.isChecked()
+        setup_all_associations(force=False, parent_window=self)
         self.accept()
     
     def _on_not_now(self):
