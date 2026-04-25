@@ -1,4 +1,4 @@
-import os.path
+import os
 import re, shutil
 
 def NCM_mode_setup(cs2_path):

@@ -1,4 +1,4 @@
-import ast, shutil
+import ast, shutil, os
 
 from src.settings.main import get_addon_name, get_cs2_path, debug, get_settings_bool, get_settings_value, settings, get_addon_dir
 from src.editors.soundevent_editor.ui_main import Ui_MainWindow
