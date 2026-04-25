@@ -1,4 +1,4 @@
-import sys
+:import sys
 import os
 import ctypes
 import threading
@@ -881,10 +881,14 @@ def handle_new_connection(server, widget):
 if __name__ == "__main__":
     # Handle Velopack/Squirrel hooks by exiting immediately.
     # This prevents the installer from hanging or showing an error.
-    if any(arg in sys.argv for arg in [
-        '--velopack-install', '--velopack-updated', '--velopack-obsolete', '--velopack-uninstall',
-        '--squirrel-install', '--squirrel-updated', '--squirrel-obsolete', '--squirrel-uninstall'
-    ]):
+    installer_flags = [
+        '--velopack-install', '--velopack-updated', '--velopack-uninstall',
+        '--velopack-obsolete', '--velopack-obsoleted',
+        '--squirrel-install', '--squirrel-updated', '--squirrel-uninstall',
+        '--squirrel-obsolete', '--squirrel-obsoleted'
+    ]
+
+    if any(arg in sys.argv for arg in installer_flags):
         sys.exit(0)
 
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
