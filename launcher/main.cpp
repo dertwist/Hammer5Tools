@@ -49,20 +49,52 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     std::string command = "show";
     std::string editor_type = "smartprop";
 
-    for (int i = 1; i < argc; i++) {
-        // Handle Velopack hooks by exiting immediately. 
-        // Logic moved to main application.
-        if (wcscmp(argv[i], L"--squirrel-install") == 0 || 
-            wcscmp(argv[i], L"--squirrel-updated") == 0 ||
-            wcscmp(argv[i], L"--squirrel-uninstall") == 0 || 
-            wcscmp(argv[i], L"--squirrel-obsoleted") == 0 ||
-            wcscmp(argv[i], L"--velopack-install") == 0 || 
-            wcscmp(argv[i], L"--velopack-updated") == 0 ||
-            wcscmp(argv[i], L"--velopack-uninstall") == 0 || 
-            wcscmp(argv[i], L"--velopack-obsoleted") == 0) {
-            LocalFree(argv);
-            return 0;
+    // Check if this is a Velopack hook that needs to be forwarded to main app
+    const wchar_t* HOOKS[] = {
+        L"--velopack-install", L"--velopack-updated",
+        L"--velopack-uninstall", L"--velopack-obsoleted", L"--velopack-obsolete",
+        L"--squirrel-install", L"--squirrel-updated",
+        L"--squirrel-uninstall", L"--squirrel-obsoleted", L"--squirrel-obsolete",
+        nullptr
+    };
+
+    bool is_hook = false;
+    for (int i = 1; i < argc && !is_hook; i++) {
+        for (int j = 0; HOOKS[j]; j++) {
+            if (wcscmp(argv[i], HOOKS[j]) == 0) {
+                is_hook = true;
+                break;
+            }
         }
+    }
+
+    // If this is a hook, forward it to Hammer5Tools.exe and wait for completion
+    if (is_hook) {
+        wchar_t buf[MAX_PATH];
+        GetModuleFileNameW(NULL, buf, MAX_PATH);
+        fs::path app_exe = fs::path(buf).parent_path() / L"Hammer5Tools.exe";
+        
+        if (fs::exists(app_exe)) {
+            STARTUPINFOW si = { sizeof(si) };
+            PROCESS_INFORMATION pi = {};
+            std::wstring cmd = L"\"" + app_exe.wstring() + L"\" " + GetCommandLineW();
+            std::vector<wchar_t> cmdBuf(cmd.begin(), cmd.end());
+            cmdBuf.push_back(0);
+            
+            if (CreateProcessW(NULL, cmdBuf.data(), NULL, NULL, FALSE,
+                               CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+                // Wait up to 30 seconds for the process to complete (backup/hook handling)
+                WaitForSingleObject(pi.hProcess, 30000);
+                CloseHandle(pi.hProcess);
+                CloseHandle(pi.hThread);
+            }
+        }
+        
+        LocalFree(argv);
+        return 0;
+    }
+
+    for (int i = 1; i < argc; i++) {
 
         if (wcscmp(argv[i], L"--create-vmdl") == 0 && i + 1 < argc) {
             command = "create_vmdl";
