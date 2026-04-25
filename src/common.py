@@ -96,26 +96,35 @@ editor_info = {
     }
     }
 
-def get_portable_root() -> str:
+def get_app_paths() -> tuple[str, str]:
     """
-    Returns the portable root (folder containing Launcher).
-    Launcher sets HAMMER5TOOLS_ROOT env var before starting app.
-    Falls back to two levels up from the frozen exe (app/ → root).
+    Returns (app_dir, user_data_dir).
+    app_dir: The folder containing the executable (overwritten by Velopack on update).
+    user_data_dir: The persistent folder for user settings, presets, and logs.
     """
-    if "HAMMER5TOOLS_ROOT" in os.environ:
-        return os.environ["HAMMER5TOOLS_ROOT"]
     if getattr(sys, 'frozen', False):
-        # app/Hammer5Tools.exe → go up one level to root
-        return os.path.dirname(os.path.dirname(sys.executable))
+        # Hammer5Tools.exe is usually in <root>/current/Hammer5Tools.exe or <root>/current/app/Hammer5Tools.exe
+        current_dir = os.path.dirname(sys.executable)
+        
+        # Check if we are running in a Velopack 'current' directory
+        parent_dir = os.path.dirname(current_dir)
+        if os.path.basename(current_dir).lower() in ('app', 'current'):
+            root_dir = parent_dir
+        else:
+            # If not in 'app' or 'current', assume we are in 'current' directly
+            root_dir = parent_dir
+            
+        u_data = os.path.join(root_dir, "userdata")
+        return current_dir, u_data
     
-    # Dev mode: use the location of this file (src/common.py)
-    # Two levels up from src/common.py is the root
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Dev mode: use the repo root for both
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return root, root
 
 # Paths
-app_dir = get_portable_root()
-user_data_dir = app_dir # Data is now stored in the root directory
+app_dir, user_data_dir = get_app_paths()
 os.makedirs(user_data_dir, exist_ok=True)
+
 
 SoundEventEditor_Preset_Path = os.path.join(user_data_dir, "SoundEventEditor", "Presets")
 SmartPropEditor_Preset_Path = os.path.join(user_data_dir, "SmartPropEditor", "Presets")
