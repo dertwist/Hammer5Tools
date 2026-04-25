@@ -40,8 +40,16 @@ jobs:
         shell: pwsh
         run: |
           Push-Location Hammer5Tools
-          & .\Hammer5Tools.exe --velopack-install
-          & .\Hammer5Tools.exe --squirrel-install
+          if (Test-Path .\Hammer5Tools.exe) {
+            & .\Hammer5Tools.exe --velopack-install
+            & .\Hammer5Tools.exe --squirrel-install
+          } elseif (Test-Path .\app\Hammer5Tools.exe) {
+            & .\app\Hammer5Tools.exe --velopack-install
+            & .\app\Hammer5Tools.exe --squirrel-install
+          } else {
+            Write-Host 'Hammer5Tools.exe not found; unable to test hooks.'
+            exit 1
+          }
           Pop-Location
 
       - name: Read app version
@@ -75,6 +83,7 @@ jobs:
 
         run: |
           & "$HOME\.dotnet\tools\vpk.exe" upload github --repoUrl https://github.com/dertwist/Hammer5Tools --publish --token ${{ secrets.GITHUB_TOKEN }} --channel dev --tag dev --pre
+
 
 
 
