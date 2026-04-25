@@ -23,8 +23,8 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.frame.layout().addWidget(self.PropertiesWindow)
 
         # Initialize tree_directory to User path
-        from src.common import SoundEventEditor_User_Preset_Path
-        self.tree_directory = SoundEventEditor_User_Preset_Path
+        from src.common import SoundEventEditor_Preset_Path
+        self.tree_directory = SoundEventEditor_Preset_Path
 
         # Connections
         self.ui.open_folder_button.clicked.connect(self.open_folder)
@@ -33,19 +33,21 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.save_button.clicked.connect(self.save_preset)
 
     #==============================================================<  Explorer  >===========================================================
-        from src.common import SoundEventEditor_Internal_Preset_Path, SoundEventEditor_User_Preset_Path
+        from src.common import SoundEventEditor_Internal_Preset_Path, SoundEventEditor_Preset_Path
         base_dirs = {
             "Internal": SoundEventEditor_Internal_Preset_Path,
-            "User": SoundEventEditor_User_Preset_Path
+            "User": SoundEventEditor_Preset_Path
         }
         self.mini_explorer = Explorer(
             tree_directory=self.tree_directory, 
             addon=get_addon_name(), 
             editor_name='SoundEvent_Editor_PresetManager', 
             parent=self.parent,
-            base_directories=base_dirs
+            base_directories=base_dirs,
+            show_root_selector=False
         )
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
+        self.ui.horizontalLayout_2.insertWidget(0, self.mini_explorer.root_selector)
 
     #=======================================================<  Preset Manager Actions  >====================================================
     def explorer_status(self):
@@ -67,9 +69,9 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
 
         # Generate a unique file name by checking existing files
         # New presets always go to the User path
-        from src.common import SoundEventEditor_User_Preset_Path
+        from src.common import SoundEventEditor_Preset_Path
         while True:
-            filepath = os.path.join(SoundEventEditor_User_Preset_Path, f"{new_name}_{unique_digit}.kv3")
+            filepath = os.path.join(SoundEventEditor_Preset_Path, f"{new_name}_{unique_digit}.kv3")
             if not os.path.exists(filepath):
                 break
             unique_digit += 1
