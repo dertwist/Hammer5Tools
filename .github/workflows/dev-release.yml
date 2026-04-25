@@ -69,7 +69,7 @@ jobs:
 
       - name: Velopack Pack
         run: |
-          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon src/appicon.ico --channel dev --noPortable --releaseNotes release_notes.md --no-launch
+          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon src/appicon.ico --channel dev --noPortable --releaseNotes release_notes.md
 
 
 
