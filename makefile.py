@@ -220,7 +220,7 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     template_dir = os.path.join(cur_dir, 'Hammer5Tools')
     if os.path.exists(template_dir):
         import shutil
-        for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal']:
+        for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal', 'userdata']:
             path = os.path.join(template_dir, item)
             if os.path.exists(path):
                 if os.path.isdir(path): shutil.rmtree(path)
@@ -232,7 +232,7 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     # Final distribution folder
     bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
     # Safe cleanup: only remove build artifacts, keep data folders
-    for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal']:
+    for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal', 'userdata']:
         path = os.path.join(bundle_root, item)
         if os.path.exists(path):
             if os.path.isdir(path): shutil.rmtree(path)
