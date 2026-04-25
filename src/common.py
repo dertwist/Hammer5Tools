@@ -100,15 +100,28 @@ def get_app_paths() -> tuple[Path, Path]:
         exe_path = Path(sys.executable)
         current_dir = exe_path.parent
         
-        # Velopack structure: <root>/current/Hammer5Tools.exe
-        # We want userdata in <root>/userdata
-        if current_dir.name.lower() in ('app', 'current'):
-            root_dir = current_dir.parent
-        else:
-            # Fallback if structure is different
-            root_dir = current_dir.parent
+        # Persistent folder for user data (survives updates and uninstalls).
+        # We store it in the user's home directory to keep it 'outside of appdata'
+        # as requested, avoiding any Velopack cleanup logic.
+        user_data = Path.home() / "Hammer5Tools"
+        
+        # Migration: If old userdata exists in the root_dir, move it to the new home location
+        try:
+            if current_dir.name.lower() in ('app', 'current'):
+                old_root = current_dir.parent
+            else:
+                old_root = current_dir.parent
             
-        return current_dir, root_dir / "userdata"
+            old_user_data = old_root / "userdata"
+            if old_user_data.exists() and old_user_data.is_dir() and not user_data.exists():
+                print(f"Migrating userdata from {old_user_data} to {user_data}")
+                import shutil
+                user_data.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(old_user_data), str(user_data))
+        except Exception as me:
+            print(f"Migration failed: {me}")
+            
+        return current_dir, user_data
     
     # Dev mode: repo root
     root = Path(__file__).resolve().parent.parent
