@@ -55,7 +55,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         if (wcscmp(argv[i], L"--squirrel-install") == 0 || 
             wcscmp(argv[i], L"--squirrel-updated") == 0 ||
             wcscmp(argv[i], L"--squirrel-uninstall") == 0 || 
-            wcscmp(argv[i], L"--squirrel-obsoleted") == 0) {
+            wcscmp(argv[i], L"--squirrel-obsoleted") == 0 ||
+            wcscmp(argv[i], L"--velopack-install") == 0 || 
+            wcscmp(argv[i], L"--velopack-updated") == 0 ||
+            wcscmp(argv[i], L"--velopack-uninstall") == 0 || 
+            wcscmp(argv[i], L"--velopack-obsoleted") == 0) {
             LocalFree(argv);
             return 0;
         }
