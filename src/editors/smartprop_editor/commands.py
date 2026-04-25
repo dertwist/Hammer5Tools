@@ -166,23 +166,39 @@ class BulkModelImportCommand(QUndoCommand):
 
 
 class NewFromPresetCommand(QUndoCommand):
-    def __init__(self, tree, parent, items):
+    def __init__(self, document, parent, items, old_variables, new_variables, old_choices, new_choices):
         super().__init__("New From Preset")
-        self.tree = tree
+        self.document = document
+        self.tree = document.ui.tree_hierarchy_widget
         self.parent = parent
         self.items = items
         self.added = []
+        self.old_variables = old_variables
+        self.new_variables = new_variables
+        self.old_choices = old_choices
+        self.new_choices = new_choices
+        self._first_redo = True
 
     def redo(self):
-        print(f"[SPE][NewFromPreset] redo: adding {len(self.items)} preset item(s)")
+        if self._first_redo:
+            self._first_redo = False
+            # During the first redo (push), items are already added in load_preset
+            for item in self.items:
+                self.added.append(item)
+            return
+
+        print(f"[SPE][NewFromPreset] redo: adding {len(self.items)} preset item(s) and restoring state")
         try:
             if self.parent is None or self.tree is None:
-                print("[SPE][NewFromPreset] redo: SKIP — parent or tree is None")
                 return
             for item in self.items:
                 self.parent.addChild(item)
                 self.parent.setExpanded(True)
                 self.added.append(item)
+            
+            self.document._restore_variables(self.new_variables)
+            self.document._restore_choices(self.new_choices)
+
             if self.items:
                 self.tree.clearSelection()
                 self.items[0].setSelected(True)
@@ -191,17 +207,17 @@ class NewFromPresetCommand(QUndoCommand):
             print(f"[SPE][NewFromPreset] redo: ERROR — {e}")
 
     def undo(self):
-        print(f"[SPE][NewFromPreset] undo: removing {len(self.added)} preset item(s)")
+        print(f"[SPE][NewFromPreset] undo: removing {len(self.added)} preset item(s) and restoring old state")
         try:
             if self.parent is None:
-                print("[SPE][NewFromPreset] undo: SKIP — parent is None")
                 return
             for item in list(self.added):
                 if self.parent.indexOfChild(item) != -1:
                     self.parent.removeChild(item)
-                else:
-                    print(f"[SPE][NewFromPreset] undo: WARN — item '{item.text(0)}' not found in parent, skipping")
             self.added.clear()
+
+            self.document._restore_variables(self.old_variables)
+            self.document._restore_choices(self.old_choices)
         except Exception as e:
             print(f"[SPE][NewFromPreset] undo: ERROR — {e}")
 
