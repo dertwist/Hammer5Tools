@@ -214,39 +214,31 @@ def build_app_pyinstaller(fast=False) -> None:
     subprocess.run(pyinstaller_cmd, check=True)
 
 
+
 def build_hammer5_tools(fast=False, channel='stable') -> None:
     # Phase 0: Clean up the Hammer5Tools template folder to avoid recursive bundling
-
-
-    # (We clean internal files but keep the source folder itself)
     template_dir = os.path.join(cur_dir, 'Hammer5Tools')
     if os.path.exists(template_dir):
         import shutil
-        for item in ['app', 'Hammer5Tools.exe', 'Hammer5ToolsUpdater.exe']:
-
+        for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal']:
             path = os.path.join(template_dir, item)
             if os.path.exists(path):
-                if os.path.isdir(path):
-                    shutil.rmtree(path)
-                else:
-                    os.remove(path)
+                if os.path.isdir(path): shutil.rmtree(path)
+                else: os.remove(path)
         print(f"Cleaned up template directory: {template_dir}")
-
 
     build_app_pyinstaller(fast=fast)
 
     # Final distribution folder
     bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
     # Safe cleanup: only remove build artifacts, keep data folders
-    for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal', 'Hammer5Tools']:
+    for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal']:
         path = os.path.join(bundle_root, item)
         if os.path.exists(path):
             if os.path.isdir(path): shutil.rmtree(path)
             else: os.remove(path)
     if not os.path.exists(bundle_root):
         os.makedirs(bundle_root)
-
-
 
     # Flatten the PyInstaller output: move contents from out_hammer5tools/Hammer5Tools/ up to Hammer5Tools/
     pyi_output = os.path.join(cur_dir, 'out_hammer5tools', 'Hammer5Tools')
@@ -279,55 +271,14 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
 
 
 
-def archive_files(
-    folder_path: str,
-    output_path: str,
-    excluded_files: Set[str],
-    excluded_paths: List[str]
-) -> None:
-    """Archives files from a folder into a zip file with maximum compression, excluding specified files and paths."""
 
-    def should_exclude(file_name: str, file_path: str) -> bool:
-        if file_name in excluded_files:
-            return True
-        for excluded_path in excluded_paths:
-            if excluded_path in os.path.normpath(file_path):
-                return True
-        return False
-
-    with zipfile.ZipFile(output_path, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
-        for root, _, files in os.walk(folder_path):
-            for file in files:
-                file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(file_path, folder_path)
-                if should_exclude(file, rel_path):
-                    continue
-                try:
-                    archive.write(file_path, rel_path)
-                except OSError as e:
-                    print(f"Warning: Could not add file {file_path}: {e}")
-
-    original_size = sum(
-        os.path.getsize(os.path.join(root, file))
-        for root, _, files in os.walk(folder_path)
-        for file in files
-        if not should_exclude(file, os.path.join(root, file))
-    )
-    compressed_size = os.path.getsize(output_path)
-    compression_ratio = (1 - compressed_size / original_size) * 100 if original_size > 0 else 0
-
-    print(f"Archived files to {output_path}")
-    print(f"Original size: {original_size / 1024 / 1024:.2f} MB")
-    print(f"Compressed size: {compressed_size / 1024 / 1024:.2f} MB")
-    print(f"Compression ratio: {compression_ratio:.1f}%")
 
 
 def main() -> None:
     """Main function to parse arguments and execute build and packaging tasks."""
-    parser = argparse.ArgumentParser(description="Build and archive Hammer 5 Tools.")
+    parser = argparse.ArgumentParser(description="Build Hammer 5 Tools for Velopack.")
     parser.add_argument('--build-all', action='store_true', help="Build Hammer 5 Tools.")
     parser.add_argument('--build-app', action='store_true', help="Build only Hammer 5 Tools.")
-    parser.add_argument('--archive', action='store_true', help="Archive the build outputs.")
     parser.add_argument('--fast', action='store_true', help="Use 0 level optimization.")
     channel_group = parser.add_mutually_exclusive_group()
     channel_group.add_argument('--stable', action='store_true', help="Build stable release (default).")
@@ -359,50 +310,10 @@ def main() -> None:
 
             # Build C++ Helper (Handler)
             stage_start_time = time.time()
-            build_cpp("fileedit", os.path.join(cur_dir, "launcher"), "fileedit")
-            # Move handler to the bundle root
-            handler_src = os.path.join(cur_dir, "Hammer5Tools", "fileedit.exe")
-            handler_dst = os.path.join(cur_dir, "Hammer5Tools", "fileedit.exe")
-
-            if os.path.exists(handler_src) and handler_src != handler_dst:
-                import shutil
-                shutil.move(handler_src, handler_dst)
-
+            build_cpp("fileedit", os.path.join(cur_dir, "src", "fileedit"), "fileedit")
+            
             elapsed_time = time.time() - stage_start_time
             results.append(["C++ Handler Build", f"{elapsed_time:.2f} seconds"])
-
-
-
-    except subprocess.CalledProcessError as e:
-
-        print(f"Error during build: {e}")
-        return
-
-    output_folder = 'dist'
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-    zip_output_path = os.path.join(output_folder, 'hammer5tools.zip')
-
-    if args.archive:
-        stage_start_time = time.time()
-        excluded_files = {
-            'hammer5tools.7z',
-            'hammer5tools_setup.exe',
-            'hammer5tools.zip',
-            'settings.ini',
-            'Hammer5ToolsInstaller.exe'
-        }
-        excluded_paths = [
-            'SoundEventEditor\\sounds', 
-            'SmartPropEditor\\UserPresets',
-            'SoundEventEditor\\UserPresets'
-        ]
-        archive_files('hammer5tools', zip_output_path, excluded_files, excluded_paths)
-        elapsed_time = time.time() - stage_start_time
-        results.append(["Archiving files", f"{elapsed_time:.2f} seconds"])
-
-        # Inno Setup build removed
-        pass
 
     overall_elapsed_time = time.time() - overall_start_time
     results.append(["Overall process", f"{overall_elapsed_time:.2f} seconds"])

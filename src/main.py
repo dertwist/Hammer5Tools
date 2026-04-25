@@ -210,18 +210,57 @@ class Widget(QMainWindow):
         validate_addon_structure()
         self.start_velopack_update_check()
 
-    def start_velopack_update_check(self):
+    def start_velopack_update_check(self, interactive=False):
+        """Checks for updates using Velopack. If interactive is True, shows progress/result dialogs."""
         def check_updates():
             try:
+                from src.common import get_channel
+                channel = get_channel()
+                
+                # In a real scenario, we might have different release URLs for channels,
+                # but Velopack can also handle pre-releases on the same source.
                 mgr = UpdateManager("https://github.com/dertwist/Hammer5Tools")
-                update = mgr.check_for_updates()
+                
+                # Check for updates (passing prerelease=True for dev channel)
+                update = mgr.check_for_updates(prerelease=(channel == 'dev'))
+                
                 if update:
-                    # For now we'll just log it, we can add a UI notification later
-                    print(f"Update available: {update.TargetFullRelease.Version}")
+                    if interactive:
+                        from PySide6.QtWidgets import QMessageBox
+                        # We are in a thread, so use QMetaObject or just a timer to show dialog on main thread
+                        # For simplicity in this script, we'll assume we can emit or just use a timer
+                        QTimer.singleShot(0, lambda: self.prompt_for_update(mgr, update))
+                    else:
+                        print(f"Background update available: {update.TargetFullRelease.Version}")
+                elif interactive:
+                    QTimer.singleShot(0, lambda: QMessageBox.information(self, "No Updates", "You are already using the latest version."))
             except Exception as e:
                 print(f"Velopack update check failed: {e}")
+                if interactive:
+                    QTimer.singleShot(0, lambda: QMessageBox.critical(self, "Update Error", f"Failed to check for updates:\n{str(e)}"))
 
         threading.Thread(target=check_updates, daemon=True).start()
+
+    def prompt_for_update(self, mgr, update):
+        reply = QMessageBox.question(self, "Update Available", 
+                                   f"A new version ({update.TargetFullRelease.Version}) is available.\n"
+                                   "Would you like to download and install it now?",
+                                   QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            # Download and apply update
+            def do_update():
+                try:
+                    mgr.download_updates(update)
+                    mgr.apply_updates_and_restart(update)
+                except Exception as e:
+                    QTimer.singleShot(0, lambda: QMessageBox.critical(self, "Update Error", f"Failed to apply update:\n{str(e)}"))
+            
+            threading.Thread(target=do_update, daemon=True).start()
+
+    def trigger_update_check(self):
+        """Called from settings dialog to manually trigger a check."""
+        self.start_velopack_update_check(interactive=True)
+
 
 
     # def deferred_update_check(self):
