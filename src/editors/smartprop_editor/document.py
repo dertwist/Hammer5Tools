@@ -1038,21 +1038,48 @@ class SmartPropDocument(QMainWindow):
             __data = file.read()
         __data = Kv3ToJson(self.fix_format(__data))
 
+        # Snapshot old state
+        old_variables = self._snapshot_variables()
+        old_choices = self._snapshot_choices()
+
         parent = (
             self.ui.tree_hierarchy_widget.currentItem()
             or self.ui.tree_hierarchy_widget.invisibleRootItem()
         )
+        
+        # 1. Create items
         items = [
             deserialize_hierarchy_item(child, self.element_id_generator)
             for child in __data.get("m_Children", [])
         ]
-        if items:
-            self.undo_stack.push(NewFromPresetCommand(self.ui.tree_hierarchy_widget, parent, items))
+        
+        # 2. Add items to tree (Manually, so we can capture full new state before pushing command)
+        for item in items:
+            parent.addChild(item)
+            parent.setExpanded(True)
+            
+        # 3. Add variables and choices
+        self._populate_choices(__data.get("m_Choices", None))
+        self._populate_variables(__data.get("m_Variables"))
+        
+        # Snapshot new state
+        new_variables = self._snapshot_variables()
+        new_choices = self._snapshot_choices()
+
+        if items or new_variables != old_variables or new_choices != old_choices:
+            from src.editors.smartprop_editor.commands import NewFromPresetCommand
+            self.undo_stack.push(NewFromPresetCommand(
+                self, parent, items, 
+                old_variables, new_variables, 
+                old_choices, new_choices
+            ))
             self._modified = True
             self._edited.emit()
             
-        self._populate_choices(__data.get("m_Choices", None))
-        self._populate_variables(__data.get("m_Variables"))
+            if items:
+                self.ui.tree_hierarchy_widget.clearSelection()
+                items[0].setSelected(True)
+                self.ui.tree_hierarchy_widget.scrollToItem(items[0])
 
     def _populate_choices(self, data):
         if data is None:
