@@ -9,9 +9,39 @@ import threading
 import keyvalues3 as kv3
 from keyvalues3.textwriter import KV3EncoderOptions
 import ctypes
-import re, unicodedata, random, string
-import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
+import re
+
+def generate_unique_name(base_name: str, existing_names: Set[str], separator: str = "_") -> str:
+    """
+    Generates a unique name by appending or incrementing a numeric suffix (_01, _02, etc.).
+    If base_name already ends in [separator]NN, it increments that number.
+    It skips any names already present in existing_names.
+    """
+    # Strip whitespace to avoid regex match failures
+    base_name = base_name.strip()
+    
+    # Escape separator for regex
+    sep_esc = re.escape(separator)
+    
+    # Regex to match a suffix like [separator]01, [separator]02, etc. at the end of the string.
+    match = re.search(f'{sep_esc}(\\d+)$', base_name)
+    
+    if match:
+        prefix = base_name[:match.start()]
+        counter = int(match.group(1)) + 1
+    else:
+        prefix = base_name
+        counter = 1
+        
+    while True:
+        new_name = f"{prefix}{separator}{counter:02d}"
+        if new_name not in existing_names:
+            return new_name
+        counter += 1
+
+
+
 
 # Versions
 app_version = '5.0.0'

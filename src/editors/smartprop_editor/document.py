@@ -65,9 +65,9 @@ from src.widgets.element_id import ElementIDGenerator
 from src.editors.smartprop_editor._common import (
     get_clean_class_name_value,
     get_clean_class_name,
-    get_label_id_from_value,
-    unique_counter_name
+    get_label_id_from_value
 )
+
 from src.common import (
     enable_dark_title_bar,
     Kv3ToJson,
