@@ -310,7 +310,7 @@ def main() -> None:
 
             # Build C++ Helper (Handler)
             stage_start_time = time.time()
-            build_cpp("fileedit", os.path.join(cur_dir, "src", "fileedit"), "fileedit")
+            build_cpp("fileedit", os.path.join(cur_dir, "launcher"), "fileedit")
             
             elapsed_time = time.time() - stage_start_time
             results.append(["C++ Handler Build", f"{elapsed_time:.2f} seconds"])
