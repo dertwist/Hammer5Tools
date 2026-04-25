@@ -42,9 +42,17 @@ jobs:
           $ver = python -c "from src.common import app_version; print(app_version)"
           echo "app_version=$ver" >> $env:GITHUB_OUTPUT
 
+      - name: Get Release Notes
+        run: |
+          # Try to get the tag message (annotated tag)
+          $msg = git tag -l --format='%(contents)' ${{ github.ref_name }}
+          # Fallback to a simple message if no tag message exists
+          if (-not $msg) { $msg = "Hammer 5 Tools Release ${{ github.ref_name }}" }
+          $msg | Out-File -FilePath release_notes.md -Encoding utf8
+
       - name: Velopack Pack
         run: |
-          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon src/appicon.ico --channel stable --noPortable
+          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon src/appicon.ico --channel stable --noPortable --releaseNotes release_notes.md
 
 
 
