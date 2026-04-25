@@ -121,6 +121,12 @@ def get_app_paths() -> tuple[str, str]:
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return root, root
 
+def get_portable_root() -> str:
+    """Deprecated alias for backward compatibility during Velopack migration."""
+    _, u_data = get_app_paths()
+    return u_data
+
+
 # Paths
 app_dir, user_data_dir = get_app_paths()
 os.makedirs(user_data_dir, exist_ok=True)
