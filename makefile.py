@@ -294,7 +294,7 @@ def main() -> None:
         if args.build_all:
             stage_start_time = time.time()
             
-            # Phase 0: Thread-safe cleanup BEFORE starting parallel builds
+            # Phase 0: Cleanup
             bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
             if os.path.exists(bundle_root):
                 import shutil
@@ -303,28 +303,21 @@ def main() -> None:
                     if os.path.exists(path):
                         if os.path.isdir(path): shutil.rmtree(path)
                         else: os.remove(path)
-                print(f"Cleaned up distribution directory: {bundle_root}")
 
-            # Start parallel threads for Python and C++ builds
-            import threading
+            # 1. Build Python Core
+            build_hammer5_tools(fast=args.fast, channel=channel)
             
-            def build_python_task():
-                build_hammer5_tools(fast=args.fast, channel=channel)
+            # 2. Build C++ Launcher
+            build_cpp("Hammer5Tools", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
             
-            def build_cpp_task():
-                build_cpp("Hammer5Tools", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
-            
-            t1 = threading.Thread(target=build_python_task)
-            t2 = threading.Thread(target=build_cpp_task)
-            
-            t1.start()
-            t2.start()
-            
-            t1.join()
-            t2.join()
+            # Verify Launcher exists
+            launcher_path = os.path.join(bundle_root, "Hammer5Tools.exe")
+            if not os.path.exists(launcher_path):
+                print(f"FATAL ERROR: Launcher was not found at {launcher_path}")
+                sys.exit(1)
             
             elapsed_time = time.time() - stage_start_time
-            results.append(["Parallel Build (Python + C++)", f"{elapsed_time:.2f} seconds"])
+            results.append(["Sequential Build (Core + Launcher)", f"{elapsed_time:.2f} seconds"])
             
         elif args.build_app:
             stage_start_time = time.time()
