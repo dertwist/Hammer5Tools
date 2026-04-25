@@ -120,7 +120,11 @@ user_data_dir.mkdir(parents=True, exist_ok=True)
 
 # Preset Paths
 SoundEventEditor_Path = user_data_dir / "SoundEventEditor"
+SoundEventEditor_path = SoundEventEditor_Path
 SmartPropEditor_Path = user_data_dir / "SmartPropEditor"
+Presets_Path = user_data_dir / "Presets"
+SoundEventEditor_Preset_Path = SoundEventEditor_Path / "Presets"
+SmartPropEditor_Preset_Path = SmartPropEditor_Path / "Presets"
 
 # User-managed presets (persistent)
 SoundEventEditor_User_Preset_Path = SoundEventEditor_Path / "UserPresets"
@@ -142,7 +146,7 @@ SoundEventEditor_sounds_path = SoundEventEditor_Path / 'sounds'
 SoundEventEditor_soundevents_path = SoundEventEditor_Path / 'soundevents'
 
 # Ensure directories exist
-for p in [user_data_dir / "Presets", 
+for p in [Presets_Path, SoundEventEditor_Preset_Path, SmartPropEditor_Preset_Path,
           SoundEventEditor_User_Preset_Path, SmartPropEditor_User_Preset_Path,
           SoundEventEditor_sounds_path, SoundEventEditor_soundevents_path]:
     p.mkdir(parents=True, exist_ok=True)
