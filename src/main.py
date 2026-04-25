@@ -1116,7 +1116,7 @@ def _handle_velopack_hook(argv):
 
 
 if __name__ == "__main__":
-
+    parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
     parser.add_argument('--console', action='store_true', help='Enable console output for debug purposes')
     parser.add_argument('--create-vmdl', help='Create VMDL in folder')
