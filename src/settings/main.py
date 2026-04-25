@@ -23,12 +23,9 @@ class ActionButtonsPanel(QFrame):
         h_layout_bottom = QHBoxLayout(self)
         h_layout_bottom.setContentsMargins(9, 9, 9, 9)
         # Create buttons using the internal Button class
-        self.open_settings_folder_button = Button(text=" Settings")
-        self.open_settings_folder_button.set_icon_folder_open()
-        h_layout_bottom.addWidget(self.open_settings_folder_button)
-        self.open_presets_folder_button = Button(text=" Presets")
-        self.open_presets_folder_button.set_icon_folder_open()
-        h_layout_bottom.addWidget(self.open_presets_folder_button)
+        self.open_userdata_folder_button = Button(text=" Open UserData")
+        self.open_userdata_folder_button.set_icon_folder_open()
+        h_layout_bottom.addWidget(self.open_userdata_folder_button)
         h_layout_bottom.addStretch()
         self.version_label = QLabel("", self)
         h_layout_bottom.addWidget(self.version_label)
@@ -417,8 +414,7 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_edit_ignore_list.textChanged.connect(self.update_default_file_setting)
         self.assetgroupmaker_combo_algorithm.currentIndexChanged.connect(self.update_default_file_setting)
         self.assetgroupmaker_edit_ignore_ext.textChanged.connect(self.update_default_file_setting)
-        self.action_buttons_panel.open_settings_folder_button.clicked.connect(self.open_settings_folder)
-        self.action_buttons_panel.open_presets_folder_button.clicked.connect(self.open_presets_folder)
+        self.action_buttons_panel.open_userdata_folder_button.clicked.connect(self.open_userdata_folder)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
         self.browse_archive_button.clicked.connect(self.browse_archive)
         self.checkBox_play_on_click.toggled.connect(
@@ -466,12 +462,9 @@ class PreferencesDialog(QDialog):
                                   f"Expected to find: {cs2_exe_path}\n\n"
                                   "Please select the root CS2 installation directory.")
 
-    def open_settings_folder(self):
+    def open_userdata_folder(self):
         from src.common import user_data_dir
         os.startfile(user_data_dir)
-
-    def open_presets_folder(self):
-        os.startfile(Presets_Path)
 
     def check_update(self):
         self.action_buttons_panel.check_update_button.setEnabled(False)
