@@ -187,9 +187,8 @@ def seed_user_data():
                 try:
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(src, dest)
-                    print(f"Seeded {dest.relative_to(user_data_dir)} from defaults")
-                except Exception as e:
-                    print(f"Failed to seed {dest}: {e}")
+                except Exception:
+                    pass
 
     copy_if_not_exists(defaults_path, user_data_dir)
 

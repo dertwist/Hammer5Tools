@@ -47,7 +47,8 @@ jobs:
             & .\app\Hammer5Tools.exe --velopack-install
             & .\app\Hammer5Tools.exe --squirrel-install
           } else {
-            Write-Host 'Hammer5Tools.exe not found; unable to test hooks.'
+            Write-Host 'Hammer5Tools.exe not found; unable to test hooks. Directory content:'
+            Get-ChildItem -Recurse
             exit 1
           }
           Pop-Location
