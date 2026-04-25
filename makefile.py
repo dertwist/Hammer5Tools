@@ -315,10 +315,15 @@ def main() -> None:
             elapsed_time = time.time() - stage_start_time
             results.append(["C++ Handler Build", f"{elapsed_time:.2f} seconds"])
 
+    except subprocess.CalledProcessError as e:
+        print(f"Error during build: {e}")
+        return
+
     overall_elapsed_time = time.time() - overall_start_time
     results.append(["Overall process", f"{overall_elapsed_time:.2f} seconds"])
 
     print(tabulate(results, headers=["Stage", "Elapsed Time"], tablefmt="grid"))
+
 
 
 if __name__ == "__main__":
