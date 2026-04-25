@@ -5,14 +5,17 @@ from pathlib import Path
 from PySide6.QtWidgets import QMessageBox
 
 def get_fileedit_path():
-    """Returns the absolute path to fileedit.exe next to the main executable."""
+    """Returns the absolute path to the main Hammer5Tools.exe launcher."""
     if getattr(sys, 'frozen', False):
+        # We are running as Hammer5Tools_Core.exe, the launcher is next to us
         base_dir = Path(sys.executable).parent
+        launcher = base_dir / "Hammer5Tools.exe"
     else:
+        # Dev mode fallback
         base_dir = Path(__file__).parent.parent.parent
+        launcher = base_dir / "Hammer5Tools.exe"
     
-    fileedit = base_dir / "fileedit.exe"
-    return str(fileedit)
+    return str(launcher)
 
 def get_smartprop_icon_path():
     """Returns the absolute path to smartprop.ico."""
