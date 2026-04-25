@@ -879,6 +879,14 @@ def handle_new_connection(server, widget):
         client_connection.disconnectFromServer()
 
 if __name__ == "__main__":
+    # Handle Velopack/Squirrel hooks by exiting immediately.
+    # This prevents the installer from hanging or showing an error.
+    if any(arg in sys.argv for arg in [
+        '--velopack-install', '--velopack-updated', '--velopack-obsolete', '--velopack-uninstall',
+        '--squirrel-install', '--squirrel-updated', '--squirrel-obsolete', '--squirrel-uninstall'
+    ]):
+        sys.exit(0)
+
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
 
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
