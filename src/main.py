@@ -1117,6 +1117,12 @@ if __name__ == "__main__":
     # Check hooks BEFORE anything else in main
     _handle_velopack_hook(sys.argv)
 
+    # Broad check: if any argument contains 'velopack' or 'squirrel', 
+    # and it wasn't handled by the hook above, we still want to exit 
+    # to prevent the GUI or IPC popups during installation/updates.
+    if any('velopack' in arg.lower() or 'squirrel' in arg.lower() for arg in sys.argv):
+        sys.exit(0)
+
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
     parser.add_argument('--console', action='store_true', help='Enable console output for debug purposes')
