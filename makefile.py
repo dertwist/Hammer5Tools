@@ -216,23 +216,13 @@ def build_app_pyinstaller(fast=False) -> None:
 
 
 def build_hammer5_tools(fast=False, channel='stable') -> None:
-    # Phase 0: Clean up the Hammer5Tools template folder to avoid recursive bundling
-    template_dir = os.path.join(cur_dir, 'Hammer5Tools')
-    if os.path.exists(template_dir):
-        import shutil
-        for item in ['app', 'Hammer5Tools.exe', 'Hammer5Tools_Core.exe', 'fileedit.exe', '_internal', 'userdata']:
-            path = os.path.join(template_dir, item)
-            if os.path.exists(path):
-                if os.path.isdir(path): shutil.rmtree(path)
-                else: os.remove(path)
-        print(f"Cleaned up template directory: {template_dir}")
-
+    # Phase 0: cleanup moved to main() for thread safety
     build_app_pyinstaller(fast=fast)
 
     # Final distribution folder
     bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
     # Safe cleanup: only remove build artifacts, keep data folders
-    for item in ['app', 'Hammer5Tools.exe', 'Hammer5Tools_Core.exe', 'fileedit.exe', '_internal', 'userdata']:
+    for item in ['app', '_internal']:
         path = os.path.join(bundle_root, item)
         if os.path.exists(path):
             if os.path.isdir(path): shutil.rmtree(path)
@@ -301,19 +291,46 @@ def main() -> None:
     results = []
 
     try:
-        if args.build_all or args.build_app:
+        if args.build_all:
             stage_start_time = time.time()
-            build_hammer5_tools(fast=args.fast, channel=channel)
+            
+            # Phase 0: Thread-safe cleanup BEFORE starting parallel builds
+            bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
+            if os.path.exists(bundle_root):
+                import shutil
+                for item in ['app', 'Hammer5Tools.exe', 'Hammer5Tools_Core.exe', 'fileedit.exe', '_internal']:
+                    path = os.path.join(bundle_root, item)
+                    if os.path.exists(path):
+                        if os.path.isdir(path): shutil.rmtree(path)
+                        else: os.remove(path)
+                print(f"Cleaned up distribution directory: {bundle_root}")
 
-            elapsed_time = time.time() - stage_start_time
-            results.append(["Hammer 5 Tools Build (Python)", f"{elapsed_time:.2f} seconds"])
-
-            # Build C++ Helper (Handler)
-            stage_start_time = time.time()
-            build_cpp("Hammer5Tools", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
+            # Start parallel threads for Python and C++ builds
+            import threading
+            
+            def build_python_task():
+                build_hammer5_tools(fast=args.fast, channel=channel)
+            
+            def build_cpp_task():
+                build_cpp("Hammer5Tools", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
+            
+            t1 = threading.Thread(target=build_python_task)
+            t2 = threading.Thread(target=build_cpp_task)
+            
+            t1.start()
+            t2.start()
+            
+            t1.join()
+            t2.join()
             
             elapsed_time = time.time() - stage_start_time
-            results.append(["C++ Handler Build", f"{elapsed_time:.2f} seconds"])
+            results.append(["Parallel Build (Python + C++)", f"{elapsed_time:.2f} seconds"])
+            
+        elif args.build_app:
+            stage_start_time = time.time()
+            build_hammer5_tools(fast=args.fast, channel=channel)
+            elapsed_time = time.time() - stage_start_time
+            results.append(["Hammer 5 Tools Build (Python)", f"{elapsed_time:.2f} seconds"])
 
     except subprocess.CalledProcessError as e:
         print(f"Error during build: {e}")
