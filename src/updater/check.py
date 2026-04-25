@@ -4,7 +4,8 @@ import webbrowser
 import markdown2
 import threading
 import urllib.request
-from velopack import UpdateManager
+import velopack
+from velopack import UpdateManager, UpdateOptions
 from src.common import get_channel
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
@@ -40,8 +41,13 @@ class UpdateWorker(QObject):
                 try:
                     channel = get_channel()
                     print(f"Checking Velopack updates on channel: {channel}")
-                    mgr = UpdateManager("https://github.com/dertwist/Hammer5Tools")
-                    update = mgr.check_for_updates(prerelease=(channel == 'dev'))
+                    
+                    # Use UpdateOptions to specify the channel
+                    opts = UpdateOptions(AllowVersionDowngrade=False, 
+                                       MaximumDeltasBeforeFallback=0, 
+                                       ExplicitChannel=channel)
+                    mgr = UpdateManager("https://github.com/dertwist/Hammer5Tools", options=opts)
+                    update = mgr.check_for_updates()
                 except Exception as ve:
                     print(f"Velopack check failed: {ve}")
             
@@ -57,8 +63,13 @@ class UpdateWorker(QObject):
             if not fetch_error:
                 try:
                     all_releases = json.loads(data.decode('utf-8'))
-                    # Filter out pre-releases
-                    releases = [r for r in all_releases if not r.get('prerelease')][:10]
+                    channel = get_channel()
+                    if channel == 'dev':
+                        # In dev channel, show all releases including pre-releases
+                        releases = all_releases[:10]
+                    else:
+                        # Filter out pre-releases for stable channel
+                        releases = [r for r in all_releases if not r.get('prerelease')][:10]
                 except Exception as je:
                     print(f"Failed to parse releases JSON: {je}")
             
@@ -101,10 +112,10 @@ def check_updates(repo_url, current_version, silent):
     
     _worker = UpdateWorker(repo_url, current_version, silent)
     
-    # Connect signals to UI functions
-    _worker.finished.connect(lambda u, r, o, re, m: show_update_notification(u, r, o, re, m))
-    _worker.no_update.connect(lambda r, o, re, m: show_latest_version_info(current_version, r, o, re, m))
-    _worker.error.connect(lambda e: QMessageBox.critical(None, "Update Error", f"Failed to check for updates:\n{e}"))
+    # Connect signals to UI functions with QueuedConnection to ensure they run on the main thread
+    _worker.finished.connect(show_update_notification, Qt.QueuedConnection)
+    _worker.no_update.connect(lambda r, o, re, m: show_latest_version_info(current_version, r, o, re, m), Qt.QueuedConnection)
+    _worker.error.connect(lambda e: QMessageBox.critical(None, "Update Error", f"Failed to check for updates:\n{e}"), Qt.QueuedConnection)
     
     # Run in a thread
     _worker_thread = threading.Thread(target=_worker.run, daemon=True)
