@@ -372,7 +372,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         tree.setCurrentItem(_soundevent)
 
     def unique_soundevent_int(self, _name: str = None):
-        """Creating Unique name for new hierarchy element"""
+        """Creating Unique name for new hierarchy element using dots as separators."""
         if _name is None:
             _name = "SoundEvent"
 
@@ -383,14 +383,9 @@ class SoundEventEditorMainWindow(QMainWindow):
             item = root.child(i)
             existing_names.add(item.text(0))
 
-        # Find a unique name with a numerical suffix
-        index = 0
-        unique_name = f"{_name}.{index:02d}"
-        while unique_name in existing_names:
-            index += 1
-            unique_name = f"{_name}.{index:02d}"
+        # Use the global utility with a dot separator
+        return generate_unique_name(_name, existing_names, separator=".")
 
-        return unique_name
 
     def new_soundevent_blank(self):
         """Create empty soundevent using """
@@ -667,19 +662,16 @@ class SoundEventEditorMainWindow(QMainWindow):
             tree_item = root.child(i)
             names.add(tree_item.text(0))
 
-        name_counters = {}
         for key, value in data.items():
-            base_name = key
-            counter = name_counters.get(base_name, 0)
-            candidate = base_name if counter == 0 else f"{base_name}_{counter:02d}"
-            while candidate in names:
-                counter += 1
-                candidate = f"{base_name}_{counter:02d}"
-            name_counters[base_name] = counter + 1
+            # Use the robust global utility for generating a unique name
+            candidate = generate_unique_name(key, names)
+            
             tree_item = HierarchyItemModel(_data=value, _name=candidate, _class='Event')
             tree_items.append(tree_item)
+            # Add to the local names set so multiple pasted items don't clash
             names.add(candidate)
         return tree_items
+
 
     #===========================================================<  Preset Manager  >========================================================
     def OpenPresetManager(self):
