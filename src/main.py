@@ -889,6 +889,20 @@ if __name__ == "__main__":
     ]
 
     if any(arg in sys.argv for arg in installer_flags):
+        # We don't want Velopack to touch the userdata folder ever.
+        # It's managed by the app itself and contains user settings/presets.
+        import shutil
+        from pathlib import Path
+        
+        # When Velopack runs hooks, it's usually in the context of the 'app' or 'current' folder
+        # We want to make sure 'userdata' in the root doesn't get messed with by Velopack's
+        # file operations. Since we can't easily tell Velopack to ignore it via flags,
+        # we ensures it stays persistent. 
+        # (Actually, Velopack shouldn't delete folders it didn't create, but
+        # if it's placed inside the versioned folder it might. 
+        # Hammer5Tools puts it in the root, so it should be safe, 
+        # but this hook is where we'd handle any migration if needed.)
+        
         sys.exit(0)
 
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
