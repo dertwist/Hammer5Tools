@@ -36,6 +36,14 @@ jobs:
 
         run: python makefile.py --build-all --stable
 
+      - name: Validate Velopack hooks
+        shell: pwsh
+        run: |
+          Push-Location Hammer5Tools
+          & .\Hammer5Tools.exe --velopack-install
+          & .\Hammer5Tools.exe --squirrel-install
+          Pop-Location
+
       - name: Read app version
         id: version
         run: |
