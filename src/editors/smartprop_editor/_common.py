@@ -29,22 +29,4 @@ def get_label_id_from_value(value):
         print(f'Cant get value from _class key from value: \n {value}')
     return f"{prefix}_%02d" % (int(suffix))
 
-
-def unique_counter_name(item, tree):
-    parent = tree.invisibleRootItem()
-    existing_names = {parent.child(i).text(0) for i in range(parent.childCount())}
-
-    base_text = item.text(0)
-    counter = 0
-    new_text = base_text
-
-    if base_text[-1].isdigit():
-        base_text, last_digit = base_text.rsplit('_', 1)
-        counter = int(last_digit) + 1
-        new_text = f"{base_text}_{counter:02}"
-    else:
-        while new_text in existing_names:
-            counter += 1
-            new_text = f"{base_text}_{counter:02}"
-
-    return new_text
+
