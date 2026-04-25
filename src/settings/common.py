@@ -4,11 +4,10 @@ from PySide6.QtCore import QSettings
 
 from src.other.get_cs2_path import get_counter_strike_path_from_registry, get_steam_install_path
 
-from src.common import get_portable_root
+from src.common import user_data_dir, app_dir
 
-app_dir = get_portable_root()
-user_data_dir = app_dir
 settings_file = os.path.join(user_data_dir, 'settings.ini')
+
 
 # Initialize settings to use settings.ini in the program folder
 settings = QSettings(settings_file, QSettings.IniFormat)
