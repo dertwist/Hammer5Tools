@@ -162,7 +162,7 @@ def build_app_pyinstaller(fast=False) -> None:
 
     pyinstaller_cmd = [
         sys.executable, '-m', 'PyInstaller',
-        '--name=Hammer5Tools',
+        '--name=Hammer5Tools_Core',
         '--contents-directory=app',
         '--noupx',
         '--distpath=out_hammer5tools',
@@ -220,7 +220,7 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     template_dir = os.path.join(cur_dir, 'Hammer5Tools')
     if os.path.exists(template_dir):
         import shutil
-        for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal', 'userdata']:
+        for item in ['app', 'Hammer5Tools.exe', 'Hammer5Tools_Core.exe', 'fileedit.exe', '_internal', 'userdata']:
             path = os.path.join(template_dir, item)
             if os.path.exists(path):
                 if os.path.isdir(path): shutil.rmtree(path)
@@ -232,7 +232,7 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     # Final distribution folder
     bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
     # Safe cleanup: only remove build artifacts, keep data folders
-    for item in ['app', 'Hammer5Tools.exe', 'fileedit.exe', '_internal', 'userdata']:
+    for item in ['app', 'Hammer5Tools.exe', 'Hammer5Tools_Core.exe', 'fileedit.exe', '_internal', 'userdata']:
         path = os.path.join(bundle_root, item)
         if os.path.exists(path):
             if os.path.isdir(path): shutil.rmtree(path)
@@ -240,8 +240,8 @@ def build_hammer5_tools(fast=False, channel='stable') -> None:
     if not os.path.exists(bundle_root):
         os.makedirs(bundle_root)
 
-    # Flatten the PyInstaller output: move contents from out_hammer5tools/Hammer5Tools/ up to Hammer5Tools/
-    pyi_output = os.path.join(cur_dir, 'out_hammer5tools', 'Hammer5Tools')
+    # Flatten the PyInstaller output: move contents from out_hammer5tools/Hammer5Tools_Core/ up to Hammer5Tools/
+    pyi_output = os.path.join(cur_dir, 'out_hammer5tools', 'Hammer5Tools_Core')
     if os.path.exists(pyi_output):
         import shutil
         for item in os.listdir(pyi_output):
@@ -310,7 +310,7 @@ def main() -> None:
 
             # Build C++ Helper (Handler)
             stage_start_time = time.time()
-            build_cpp("fileedit", os.path.join(cur_dir, "launcher"), "fileedit")
+            build_cpp("Hammer5Tools", os.path.join(cur_dir, "launcher"), "Hammer5Tools")
             
             elapsed_time = time.time() - stage_start_time
             results.append(["C++ Handler Build", f"{elapsed_time:.2f} seconds"])
