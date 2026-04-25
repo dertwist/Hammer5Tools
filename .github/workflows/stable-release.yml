@@ -67,9 +67,9 @@ jobs:
           if (-not $msg) { $msg = "Hammer 5 Tools Release ${{ github.ref_name }}" }
           $msg | Out-File -FilePath release_notes.md -Encoding utf8
 
-      - name: Velopack Pack
-        run: |
-          & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon src/appicon.ico --channel stable --noPortable --releaseNotes release_notes.md
+       - name: Velopack Pack
+         run: |
+           & "$HOME\.dotnet\tools\vpk.exe" pack --packId Hammer5Tools --packVersion ${{ steps.version.outputs.app_version }} --packDir Hammer5Tools --mainExe Hammer5Tools.exe --icon src/appicon.ico --channel stable --noPortable --releaseNotes release_notes.md --noLaunch
 
 
 
