@@ -887,11 +887,11 @@ def _handle_velopack_hook(argv):
     Velopack installs the app to ``%LocalAppData%\\Hammer5Tools\\`` with the
     following layout::
 
-        <install_root>/
-            current/Hammer5Tools.exe
-            packages/...
-            Update.exe
-            userdata/                 <-- our persistent user data
+         <install_root>/
+             current/Hammer5Tools.exe
+             packages/...
+             Update.exe
+             userdata/                 <-- our persistent user data
 
     When the user runs ``Setup.exe`` on top of an existing install, Velopack
     invokes ``Update.exe --uninstall`` first, which calls our exe with
@@ -903,9 +903,8 @@ def _handle_velopack_hook(argv):
       * on any *uninstall* / *obsolete* hook: copy ``<install_root>/userdata``
         to a location **outside** the Velopack-managed tree
         (``%LocalAppData%\\Hammer5Tools.Backup\\userdata``).
-      * on any *install* / *updated* hook: if the backup exists and the
-        current ``userdata`` is missing or empty, restore it and then remove
-        the backup.
+      * on any *install* / *updated* hook: if the backup exists, restore it
+        and then remove the backup.
 
     The hook must be fast and must not require any GUI / Qt imports, so this
     runs before the rest of ``main`` is touched.
@@ -940,6 +939,7 @@ def _handle_velopack_hook(argv):
         )
         backup_root = local_appdata / "Hammer5Tools.Backup"
         backup_userdata = backup_root / "userdata"
+        backup_sentinel = backup_root / "USERDATA_BACKUP_VALID"
 
         def _log(msg):
             # Hooks run without a console; try to leave a breadcrumb in the
@@ -947,57 +947,101 @@ def _handle_velopack_hook(argv):
             try:
                 backup_root.mkdir(parents=True, exist_ok=True)
                 with open(backup_root / "hook.log", "a", encoding="utf-8") as fh:
-                    fh.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')} "
-                             f"{' '.join(argv[1:])} :: {msg}\n")
+                    timestamp = time.strftime('%Y-%m-%dT%H:%M:%S')
+                    fh.write(f"{timestamp} {' '.join(argv[1:])} :: {msg}\n")
             except Exception:
                 pass
 
         if active & uninstall_hooks:
+            _log(f"Starting backup from {userdata_path}")
             if userdata_path.is_dir():
                 try:
+                    # Remove old backup if it exists
                     if backup_userdata.exists():
                         shutil.rmtree(backup_userdata, ignore_errors=True)
+                    
+                    # Create backup directory
                     backup_root.mkdir(parents=True, exist_ok=True)
+                    
+                    # Perform the backup
                     shutil.copytree(userdata_path, backup_userdata)
-                    _log(f"backed up {userdata_path} -> {backup_userdata}")
+                    _log(f"BACKUP SUCCESS: copied {userdata_path} ({_get_dir_size(userdata_path)} bytes) -> {backup_userdata}")
+                    
+                    # Verify backup completed successfully
+                    if backup_userdata.exists() and any(backup_userdata.iterdir()):
+                        # Write sentinel file to mark successful backup
+                        backup_sentinel.write_text("valid", encoding="utf-8")
+                        _log("BACKUP VERIFIED: sentinel file written")
+                    else:
+                        _log("BACKUP VERIFICATION FAILED: backup directory is empty or missing")
                 except Exception as e:
-                    _log(f"backup FAILED: {e}")
+                    _log(f"BACKUP FAILED: {type(e).__name__}: {e}")
             else:
-                _log(f"no userdata at {userdata_path}, nothing to back up")
+                _log(f"NO USERDATA FOUND at {userdata_path}, nothing to back up")
 
         if active & install_hooks:
-            if backup_userdata.is_dir():
+            _log(f"Starting restore to {userdata_path}")
+            if backup_userdata.is_dir() and backup_sentinel.exists():
                 try:
-                    # Only restore if the current userdata is missing or empty,
-                    # so we never clobber a userdata the new version may have
-                    # seeded while the install hook was delayed.
-                    needs_restore = (
-                        not userdata_path.exists()
-                        or (userdata_path.is_dir() and not any(userdata_path.iterdir()))
-                    )
-                    if needs_restore:
-                        if userdata_path.exists():
-                            shutil.rmtree(userdata_path, ignore_errors=True)
-                        userdata_path.parent.mkdir(parents=True, exist_ok=True)
-                        shutil.copytree(backup_userdata, userdata_path)
-                        _log(f"restored {backup_userdata} -> {userdata_path}")
-
-                        # Backup is consumed on successful restore.
-                        shutil.rmtree(backup_userdata, ignore_errors=True)
+                    # Check if backup is valid
+                    if not any(backup_userdata.iterdir()):
+                        _log("RESTORE SKIPPED: backup directory is empty")
+                        return
+                    
+                    # Remove current userdata if it exists (always restore from backup)
+                    if userdata_path.exists():
+                        _log(f"Removing existing userdata at {userdata_path}")
+                        shutil.rmtree(userdata_path, ignore_errors=True)
+                    
+                    # Ensure parent directory exists
+                    userdata_path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    # Perform the restore
+                    shutil.copytree(backup_userdata, userdata_path)
+                    backup_size = _get_dir_size(backup_userdata)
+                    _log(f"RESTORE SUCCESS: copied {backup_userdata} ({backup_size} bytes) -> {userdata_path}")
+                    
+                    # Verify restore completed
+                    if userdata_path.exists() and any(userdata_path.iterdir()):
+                        _log("RESTORE VERIFIED: userdata directory populated successfully")
+                        
+                        # Clean up backup after successful restore
                         try:
-                            backup_root.rmdir()  # only succeeds if empty
-                        except OSError:
-                            pass
+                            shutil.rmtree(backup_userdata, ignore_errors=True)
+                            backup_sentinel.unlink(missing_ok=True)
+                            try:
+                                backup_root.rmdir()  # only succeeds if empty
+                            except OSError:
+                                pass
+                            _log("Backup cleanup completed")
+                        except Exception as e:
+                            _log(f"Warning: failed to clean up backup: {e}")
                     else:
-                        _log("existing userdata is non-empty, skipping restore")
+                        _log("RESTORE VERIFICATION FAILED: userdata still missing or empty after restore")
                 except Exception as e:
-                    _log(f"restore FAILED: {e}")
+                    _log(f"RESTORE FAILED: {type(e).__name__}: {e}")
+            elif backup_userdata.is_dir():
+                _log("RESTORE SKIPPED: backup exists but sentinel file missing (possible incomplete backup)")
+            else:
+                _log(f"NO BACKUP FOUND at {backup_userdata}, nothing to restore")
     except Exception as e:
         # Never let a hook error break the installer.
         try:
-            print(f"[Hammer5Tools hook] {e}", file=sys.stderr)
+            print(f"[Hammer5Tools hook] CRITICAL ERROR: {e}", file=sys.stderr)
         except Exception:
             pass
+
+
+def _get_dir_size(path):
+    """
+    Calculate total size of a directory in bytes.
+    Used for logging/debugging purposes.
+    """
+    from pathlib import Path
+    try:
+        return sum(f.stat().st_size for f in Path(path).rglob('*') if f.is_file())
+    except Exception:
+        return 0
 
 
 if __name__ == "__main__":
