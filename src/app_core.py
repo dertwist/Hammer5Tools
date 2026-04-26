@@ -1,30 +1,17 @@
-import sys
 import os
-import ctypes
-import threading
 import time
 from PySide6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
     QSystemTrayIcon,
     QMenu,
-    QMessageBox,
-    QLabel,
-    QCheckBox,
-    QDockWidget,
-    QDialog
+    QDockWidget
 )
-from PySide6.QtGui import QIcon, QAction
+from PySide6.QtGui import QAction
 from PySide6.QtCore import (
-    Qt,
-    QTimer,
     QPropertyAnimation,
     QPoint,
     QFileSystemWatcher,
 )
-from PySide6.QtNetwork import QLocalServer, QLocalSocket
+from PySide6.QtNetwork import QLocalServer
 
 from src.ipc.protocol import IPCMessage, IPCCommand
 from src.forms.about.main import AboutDialog
@@ -40,7 +27,6 @@ from src.settings.main import (
     get_settings_value,
     set_settings_value,
     settings,
-    debug,
     get_addon_dir
 )
 from src.editors.loading_editor.main import Loading_editorMainWindow
@@ -55,15 +41,14 @@ from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
-from src.editors.ue2source_materials.main import UE2SourceMaterialsWidget
+from src.forms.ue2source_materials.main import UE2SourceMaterialsWidget
 from src.forms.launch_options.main import LaunchOptionsDialog
+from src.common import app_version, default_commands, JsonToKv3, compile as run_compile
 from src.styles.qt_global_stylesheet import QT_Stylesheet_global
-from src.common import enable_dark_title_bar, app_version, default_commands, app_dir, JsonToKv3, compile as run_compile
 from src.dotnet import check_dotnet_runtime
 from src.other.addon_validation import validate_addon_structure
 from src.forms.cleanup.main import CleanupDialog
 from src.forms.quick_create.main import QuickCreateDialog
-from src.widgets.common import exception_handler
 from src.widgets import *
 
 # Global paths
@@ -534,7 +519,6 @@ class Widget(QMainWindow):
     def delete_addon(self):
         addon = get_addon_name()
         if not addon: return
-        from src.forms.cleanup.main import CleanupDialog
         msg = QMessageBox.question(self, "Delete Addon", f"Are you sure you want to delete addon '{addon}'?\nThis will delete BOTH content and game folders!", QMessageBox.Yes | QMessageBox.No)
         if msg == QMessageBox.Yes:
             delete_addon(addon)
