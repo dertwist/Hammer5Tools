@@ -91,6 +91,18 @@ def allocate_console():
         sys.stderr = open("CONOUT$", "w")
 
 if __name__ == "__main__":
+    # Add the 'src' directory to sys.path so that 'import resources_rc' and other
+    # top-level imports within the 'src' package work correctly.
+    # This handles both running from 'src/main.py' and from a frozen 'main.py' at the root.
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    if os.path.basename(current_dir) == 'src':
+        if current_dir not in sys.path:
+            sys.path.insert(0, current_dir)
+    else:
+        src_dir = os.path.join(current_dir, 'src')
+        if os.path.isdir(src_dir) and src_dir not in sys.path:
+            sys.path.insert(0, src_dir)
+
     # 1. Handle installer hooks IMMEDIATELY (no Qt loaded yet)
     _handle_velopack_hook(sys.argv)
 

@@ -175,7 +175,7 @@ def build_app_pyinstaller(fast=False) -> None:
         '--onedir',
         '--windowed',
 
-        '--paths=.',
+        '--paths=.;src',
         '--hidden-import=resources_rc',
         '--hidden-import=widgets',
         '--collect-all=src',
