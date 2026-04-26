@@ -525,7 +525,7 @@ class Widget(QMainWindow):
         self.update_title(text="Applying Steam No-Logon Fix...")
 
     def open_about(self):
-        AboutDialog(self).exec()
+        AboutDialog(app_version, self).exec()
 
     def open_create_addon_dialog(self):
         dialog = Create_addon_Dialog(self)
