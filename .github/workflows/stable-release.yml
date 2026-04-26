@@ -63,10 +63,10 @@ jobs:
         id: release_notes
         shell: pwsh
         run: |
-          # Fetch the tag message (requires an annotated tag)
-          $msg = git tag -l --format='%(contents)' ${{ github.ref_name }}
+          # Fetch the commit message body
+          $msg = git log -1 --pretty=format:"%B"
           
-          # Fallback if no tag message exists
+          # Fallback if no message exists
           if (-not $msg.Trim()) { 
             $msg = "## Hammer 5 Tools Release ${{ github.ref_name }}`nInitial release for version ${{ github.ref_name }}."
           }
