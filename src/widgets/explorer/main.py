@@ -2,8 +2,8 @@ import os
 import re
 import shutil
 import winreg
-from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QHeaderView, QMenu, QMessageBox, \
-    QLineEdit, QToolButton, QDialog, QListWidgetItem, QTreeView, QVBoxLayout, QHBoxLayout, QPushButton, QListWidget, QFrame, QComboBox
+from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QMenu, QMessageBox, \
+    QToolButton, QDialog, QListWidgetItem
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer
@@ -779,7 +779,7 @@ class Explorer(QMainWindow):
             src_idx = self.filter_proxy_model.mapToSource(index)
             selected_paths.append(self.model.filePath(src_idx))
 
-        from src.editors.asset_manager.main import AssetManagerWidget
+        from src.forms.asset_manager.main import AssetManagerWidget
         self.asset_manager_window = AssetManagerWidget()
         self.asset_manager_window.set_files_to_move(selected_paths)
         self.asset_manager_window.show()
@@ -797,7 +797,7 @@ class Explorer(QMainWindow):
             src_idx = self.filter_proxy_model.mapToSource(index)
             selected_paths.append(self.model.filePath(src_idx))
 
-        from src.editors.asset_exporter.main import AssetExporterWidget
+        from src.forms.asset_exporter.main import AssetExporterWidget
         self.asset_exporter_window = AssetExporterWidget()
         self.asset_exporter_window.select_file(selected_paths)
         self.asset_exporter_window.show()

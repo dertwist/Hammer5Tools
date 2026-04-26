@@ -4,8 +4,8 @@ from PySide6.QtWidgets import QWidget, QFileSystemModel, QFileDialog, QMessageBo
 from PySide6.QtCore import Qt, QDir
 from .ui_main import Ui_AssetManagerWidget
 from .move_worker import MoveWorker
-from src.settings.main import get_addon_name, get_cs2_path, app_dir
-from src.common import enable_dark_title_bar
+from src.settings.main import get_addon_name, get_cs2_path
+from src.common import enable_dark_title_bar, app_dir
 from src.styles.common import apply_stylesheets
 from src.widgets.explorer.main import Explorer
 
