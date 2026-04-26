@@ -16,4 +16,4 @@ class AboutDialog(QDialog):
     def open_request_a_new_feature(self):
         QDesktopServices.openUrl(QUrl(discord_feedback_channel))
     def open_documentation(self):
-        QDesktopServices.openUrl(QUrl("https://twist-1.gitbook.io/hammer5tools"))
+        QDesktopServices.openUrl(QUrl("https://hammer5tools.github.io/docs.html"))
