@@ -1,9 +1,11 @@
 import os
-from PySide6.QtWidgets import QDialog, QFileDialog, QListWidgetItem, QMessageBox
+from PySide6.QtWidgets import QDialog, QFileDialog, QListWidgetItem, QMessageBox, QPushButton, QLineEdit
 from PySide6.QtCore import Qt, Slot
 from .ui_main import Ui_UE2SourceMaterialsWidget
 from .converter import scan_and_group, UE2SourceWorker
 from src.settings.main import get_addon_dir, get_addon_name
+from src.common import enable_dark_title_bar
+from src.styles.common import qt_stylesheet_button, qt_stylesheet_lineedit, qt_stylesheet_progressbar, qt_stylesheet_widgetlist2, qt_stylesheet_groupbox
 
 class UE2SourceMaterialsWidget(QDialog):
     def __init__(self, parent=None):
@@ -11,6 +13,27 @@ class UE2SourceMaterialsWidget(QDialog):
         self.ui = Ui_UE2SourceMaterialsWidget()
         self.ui.setupUi(self)
         self.setWindowTitle("Material Importer (UE -> Source 2)")
+        enable_dark_title_bar(self)
+        
+        # Apply common stylesheets
+        self.setStyleSheet("background-color: #151515;")
+        self.ui.groupBox.setStyleSheet(qt_stylesheet_groupbox)
+        for btn in self.findChildren(QPushButton):
+            btn.setStyleSheet(qt_stylesheet_button)
+        for edit in self.findChildren(QLineEdit):
+            edit.setStyleSheet(qt_stylesheet_lineedit)
+        self.ui.progress_bar.setStyleSheet(qt_stylesheet_progressbar)
+        self.ui.group_list.setStyleSheet(qt_stylesheet_widgetlist2)
+        self.ui.log_edit.setStyleSheet(qt_stylesheet_lineedit.replace("height:22px;", ""))
+        
+        # Remove empty space (vertical spacer in Paths group box)
+        self.ui.gridLayout.removeItem(self.ui.verticalSpacer_paths)
+        
+        # Tighten layouts
+        self.ui.verticalLayout.setSpacing(4)
+        self.ui.verticalLayout.setContentsMargins(6, 6, 6, 6)
+        self.ui.gridLayout.setVerticalSpacing(4)
+        self.ui.horizontalLayout.setSpacing(4)
         
         # Set layout stretches: GroupBox=0, Buttons=0, Splitter=1, Progress=0
         self.ui.verticalLayout.setStretch(0, 0)
