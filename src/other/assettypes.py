@@ -21,16 +21,21 @@ VSMART_BLOCK = {
 
 
 def get_assettypes_path():
-    return os.path.join(get_cs2_path(), 'game', 'bin', ASSETTYPES_FILENAME)
+    path = get_cs2_path()
+    if path is None:
+        return None
+    return os.path.join(path, 'game', 'bin', ASSETTYPES_FILENAME)
 
 
 def read_assettypes():
     file_path = get_assettypes_path()
+    if file_path is None:
+        return None, None
     try:
         data = keyvalues3.read(file_path).value
         return file_path, data
     except Exception as e:
-        raise ValueError(f"Failed to read assettypes: {e}")
+        raise ValueError(f"Failed to read assettypes from {file_path}: {e}")
 
 
 def is_editor_info_processed(data):
@@ -50,6 +55,8 @@ def write_assettypes(data, file_path):
 
 def ensure_vsmart_configured():
     file_path, data = read_assettypes()
+    if file_path is None or data is None:
+        return
     if not is_editor_info_processed(data):
         updated_data = add_vsmart_block(data)
         merged_data = {**editor_info, **updated_data}
@@ -70,6 +77,8 @@ def show_vsmart_warning():
 
 
 def check_vsmart_configuration():
-    _, data = read_assettypes()
+    file_path, data = read_assettypes()
+    if data is None:
+        return
     if not is_editor_info_processed(data):
         show_vsmart_warning()
