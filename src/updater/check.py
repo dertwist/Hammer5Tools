@@ -9,7 +9,8 @@ from velopack import UpdateManager, UpdateOptions
 from src.common import get_channel
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
-    QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame, QMessageBox
+    QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame, QMessageBox,
+    QProgressDialog, QApplication
 )
 from PySide6.QtCore import Qt, QUrl, QTimer, QObject, Signal
 from PySide6.QtGui import QIcon
@@ -110,6 +111,9 @@ def check_updates(repo_url, current_version, silent):
     """
     global _worker, _worker_thread
     
+    if _worker_thread and _worker_thread.is_alive():
+        return
+    
     _worker = UpdateWorker(repo_url, current_version, silent)
     
     # Connect signals to UI functions with QueuedConnection to ensure they run on the main thread
@@ -190,7 +194,7 @@ def show_update_notification(update, releases, owner, repo, mgr):
 
     download_button = QPushButton("Update")
     if update:
-        download_button.clicked.connect(lambda: show_install_dialog(update, mgr))
+        download_button.clicked.connect(lambda: show_install_dialog(update, mgr, dialog))
     else:
         download_button.setEnabled(False)
         download_button.setToolTip("No update available.")
@@ -209,38 +213,50 @@ def show_update_notification(update, releases, owner, repo, mgr):
     dialog.resize(DIALOG_WIDTH, DIALOG_HEIGHT)
     dialog.exec()
 
-def show_install_dialog(update, mgr):
+def show_install_dialog(update, mgr, parent_dialog):
     reply = QMessageBox.question(None, "Installation Confirmation",
                                  "During update installation, Hammer5Tools will be closed.\n"
                                  "Do you wish to continue?",
                                  QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
     if reply == QMessageBox.Yes:
-        handle_installation(update, mgr)
+        handle_installation(update, mgr, parent_dialog)
 
-def handle_installation(update, mgr):
+def handle_installation(update, mgr, parent_dialog=None):
     try:
-        # Show a simple progress message
-        msg = QMessageBox()
-        msg.setWindowTitle("Updating")
-        msg.setText("Downloading and applying update... The application will restart automatically.")
-        msg.setStandardButtons(QMessageBox.NoButton)
-        msg.show()
+        # Create a progress dialog
+        progress = QProgressDialog("Downloading update...", None, 0, 100)
+        progress.setWindowTitle("Updating")
+        progress.setWindowModality(Qt.ApplicationModal)
+        progress.setCancelButton(None)
+        progress.setMinimumDuration(0)
+        progress.show()
         
+        # Close the changelog dialog if it exists
+        if parent_dialog:
+            parent_dialog.accept()
+            
+        def on_progress(percent: int):
+            # Velopack calls this from a native thread, must dispatch to main thread
+            QTimer.singleShot(0, lambda p=percent: progress.setValue(p))
+            
         def run_update():
             try:
-                # Disable IPC server so new instances (restarted by updater) 
-                # don't tell us to show the window.
+                # Disable IPC server
                 try:
                     from src.ipc.server_utils import stop_ipc_server
                     stop_ipc_server()
                 except Exception as e:
                     print(f"Failed to stop IPC server: {e}")
 
-                mgr.download_updates(update)
+                mgr.download_updates(update, on_progress)
                 mgr.apply_updates_and_restart(update)
             except Exception as e:
-                # Use QTimer to show error on main thread
-                QTimer.singleShot(0, lambda: QMessageBox.critical(None, "Update Error", f"Failed to apply update: {e}"))
+                # Close progress dialog and show error on main thread
+                error_msg = str(e)
+                QTimer.singleShot(0, lambda err=error_msg: (
+                    progress.close(),
+                    QMessageBox.critical(None, "Update Error", f"Failed to apply update: {err}")
+                ))
                 
         threading.Thread(target=run_update, daemon=True).start()
     except Exception as e:
