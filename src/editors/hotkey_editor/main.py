@@ -101,7 +101,11 @@ class HotkeyEditorMainWindow(QMainWindow):
         key = self.FilterInputInstanceButton.key
         self.filter_input(key, self.ui.keybindings_tree.invisibleRootItem())
     def set_current(self, explorer_path=True):
-        path_keybindings = os.path.join(get_cs2_path(), 'game', 'core', 'tools', 'keybindings')
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+            QMessageBox.warning(self, "CS2 Path Not Set", "CS2 installation path is not set. Please set it in Settings.")
+            return
+        path_keybindings = os.path.join(cs2_path, 'game', 'core', 'tools', 'keybindings')
         if explorer_path:
             source = self.explorer_instance.get_current_path()
         else:
