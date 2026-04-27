@@ -18,6 +18,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch tags
+        run: git fetch --tags --force
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -64,16 +67,19 @@ jobs:
         shell: pwsh
         run: |
           $tagName = "${{ github.ref_name }}"
-          
-          # Read annotated tag message (not commit message)
-          $msg = git tag -l --format='%(contents)' $tagName
-          
+    
+          # Ensure tag object is locally available
+          git fetch origin "refs/tags/$($tagName):refs/tags/$($tagName)" --force 2>$null
+    
+          # git for-each-ref reliably reads annotated tag message body
+          $msg = git for-each-ref "refs/tags/$tagName" --format="%(contents)"
+    
           # Fallback for lightweight tags or empty message
           if (-not $msg -or -not $msg.Trim()) {
             $msg = "## Hammer5Tools $tagName`nRelease $tagName."
           }
-          
-          $msg | Out-File -FilePath release_notes.md -Encoding utf8 -NoNewline:$false
+    
+          $msg | Out-File -FilePath release_notes.md -Encoding utf8
 
       - name: Velopack Pack
         run: |
