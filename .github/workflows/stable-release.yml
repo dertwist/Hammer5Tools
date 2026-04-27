@@ -63,16 +63,17 @@ jobs:
         id: release_notes
         shell: pwsh
         run: |
-          # Fetch the commit message body
-          $msg = git log -1 --pretty=format:"%B"
+          $tagName = "${{ github.ref_name }}"
           
-          # Fallback if no message exists
-          if (-not $msg.Trim()) { 
-            $msg = "## Hammer 5 Tools Release ${{ github.ref_name }}`nInitial release for version ${{ github.ref_name }}."
+          # Read annotated tag message (not commit message)
+          $msg = git tag -l --format='%(contents)' $tagName
+          
+          # Fallback for lightweight tags or empty message
+          if (-not $msg -or -not $msg.Trim()) {
+            $msg = "## Hammer5Tools $tagName`nRelease $tagName."
           }
           
-          # Save to file for Velopack
-          $msg | Out-File -FilePath release_notes.md -Encoding utf8
+          $msg | Out-File -FilePath release_notes.md -Encoding utf8 -NoNewline:$false
 
       - name: Velopack Pack
         run: |
