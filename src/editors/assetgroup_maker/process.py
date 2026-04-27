@@ -115,7 +115,11 @@ def perform_batch_processing(file_path: str, process: Dict, preview: bool, repla
     :param content_template: Optional content template for file creation.
     :return: List of created file paths.
     """
-    base_directory = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name())
+    cs2_path = get_cs2_path()
+    if not cs2_path:
+        debug("CS2 path not found. Aborting processing.")
+        return []
+    base_directory = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name())
     if not os.path.isdir(base_directory):
         debug(f"Base directory does not exist: {base_directory}")
         return []
