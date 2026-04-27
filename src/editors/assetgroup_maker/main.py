@@ -65,7 +65,10 @@ class BatchCreatorMainWindow(QMainWindow):
 
         self.addon_name = get_addon_name()
         self.cs2_path = get_cs2_path()
-        self.explorer_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
+        if self.cs2_path:
+            self.explorer_directory = os.path.join(self.cs2_path, "content", "csgo_addons", self.addon_name)
+        else:
+            self.explorer_directory = ""
         self.replace_reference_editline()
 
         self.explorer = Explorer(

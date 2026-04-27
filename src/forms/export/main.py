@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
     QTabWidget, QWidget, QLineEdit, QComboBox, QSizePolicy, QMenu
 )
 
-cs2_path = get_cs2_path()
+
 
 
 class ExportAndImportAddonDialog(QDialog):
@@ -28,6 +28,7 @@ class ExportAndImportAddonDialog(QDialog):
         super().__init__(parent)
         enable_dark_title_bar(self)
         self.setWindowTitle("Export and Import Addon")
+        self.cs2_path = get_cs2_path()
         self.setMinimumSize(750, 650)
         try:
             self.setWindowIcon(self.style().standardIcon(QStyle.SP_DialogSaveButton))
@@ -286,7 +287,10 @@ class ExportAndImportAddonDialog(QDialog):
             item_include.setCheckState(Qt.Checked)
             item_filename = QStandardItem(os.path.basename(path))
             item_filename.setData(path, Qt.UserRole)
-            item_path = QStandardItem(os.path.relpath(os.path.dirname(path), cs2_path))
+            if self.cs2_path:
+                item_path = QStandardItem(os.path.relpath(os.path.dirname(path), self.cs2_path))
+            else:
+                item_path = QStandardItem(os.path.dirname(path))
             item_size = QStandardItem(self.convert_size(size))
             item_size.setData(size, Qt.UserRole)
             for item in [item_filename, item_path, item_size, item_include]:
@@ -385,17 +389,17 @@ class ExportAndImportAddonDialog(QDialog):
 
     def _get_content_addon_files(self) -> Dict[str, int]:
         current_addon_name = get_addon_name()
-        if not current_addon_name: return {}
+        if not current_addon_name or not self.cs2_path: return {}
         _, include_content_folders = self.get_folder_filters()
-        content_folder = os.path.join(cs2_path, 'content', 'csgo_addons', current_addon_name)
+        content_folder = os.path.join(self.cs2_path, 'content', 'csgo_addons', current_addon_name)
         ignored_extensions = [ext.strip().lower() for ext in self.ignore_edit.text().split(',') if ext.strip()]
         return self._collect_files(content_folder, ignored_extensions, include_subs=include_content_folders)
 
     def _get_game_addon_files(self) -> Dict[str, int]:
         current_addon_name = get_addon_name()
-        if not current_addon_name:
+        if not current_addon_name or not self.cs2_path:
             return {}
-        game_folder = os.path.join(cs2_path, 'game', 'csgo_addons', current_addon_name)
+        game_folder = os.path.join(self.cs2_path, 'game', 'csgo_addons', current_addon_name)
         ignored_extensions = [ext.strip().lower() for ext in self.ignore_edit.text().split(',') if ext.strip()]
         include_game_folders = ['']
         if self.compiled_maps_checkbox.isChecked(): include_game_folders.append('maps')
@@ -431,9 +435,10 @@ class ExportAndImportAddonDialog(QDialog):
     def do_import_addon(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Addon Archive", "", "Zip files (*.zip)")
         if not file_path: return
+        if not self.cs2_path: return QMessageBox.warning(self, "Error", "CS2 path not found.")
         addon_name = os.path.splitext(os.path.basename(file_path))[0]
-        target_content_path = os.path.join(cs2_path, "content", "csgo_addons", addon_name)
-        target_game_path = os.path.join(cs2_path, "game", "csgo_addons", addon_name)
+        target_content_path = os.path.join(self.cs2_path, "content", "csgo_addons", addon_name)
+        target_game_path = os.path.join(self.cs2_path, "game", "csgo_addons", addon_name)
         if os.path.exists(target_content_path) or os.path.exists(target_game_path):
             reply = QMessageBox.question(self, 'Addon Exists', f"The addon '{addon_name}' already exists. Overwrite?",
                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -450,7 +455,7 @@ class ExportAndImportAddonDialog(QDialog):
                 progress.setWindowModality(Qt.WindowModal);
                 progress.setMinimumDuration(0)
                 for i, member in enumerate(file_list):
-                    zip_ref.extract(member, cs2_path)
+                    zip_ref.extract(member, self.cs2_path)
                     progress.setValue(i + 1)
                     if progress.wasCanceled(): raise InterruptedError("Import canceled.")
                 progress.setValue(len(file_list))
@@ -482,7 +487,7 @@ class ExportAndImportAddonDialog(QDialog):
                 for i, file_path in enumerate(files_to_archive):
                     progress.setValue(i);
                     if progress.wasCanceled(): raise InterruptedError("Archiving canceled.")
-                    zipf.write(file_path, os.path.relpath(file_path, cs2_path))
+                    zipf.write(file_path, os.path.relpath(file_path, self.cs2_path))
                 progress.setValue(len(files_to_archive))
             self.show_archive_completion_dialog(destination_zip_path)
         except Exception as e:
