@@ -289,7 +289,11 @@ class Widget(QMainWindow):
             basename = os.path.splitext(os.path.basename(path))[0]
             vmdl_path = os.path.join(folder, f"{basename}.vmdl")
             addon_dir = get_addon_dir()
-            try: rel_mesh = os.path.relpath(path, addon_dir).replace('\\', '/')
+            try:
+                if addon_dir:
+                    rel_mesh = os.path.relpath(path, addon_dir).replace('\\', '/')
+                else:
+                    rel_mesh = os.path.basename(path)
             except (ValueError, Exception): rel_mesh = ""
             from src.editors.assetgroup_maker.objects import DEFAULT_VMDL
             from src.common import fast_deepcopy
