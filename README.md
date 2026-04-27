@@ -23,11 +23,11 @@
 
 # Level Up Your Mapping Workflow
 
-Welcome to **Hammer 5 Tools**. If you've ever felt that the standard CS2 Workshop Tools are missing a few essential features, you're in the right place. This toolkit is built by a mapper, for mappers, to bridge the gaps and streamline your workflow.
+Welcome to **Hammer 5 Tools**. This toolkit is designed to bridge the gaps and streamline the level design workflow in Counter-Strike 2.
 
-Whether you're wrestling with sound events, trying to make sense of Smart Props, or just want a faster way to compile your project, we've got you covered.
+Whether it's managing sound events, working with Smart Props, or compiling projects, the toolkit provides the necessary solutions.
 
-[**Check out the Official Website**](https://hammer5tools.github.io/)
+[**Check out Website**](https://hammer5tools.github.io/)
 
 <p align="center">
   <video src="https://hammer5tools.github.io/videos/hero.mp4" controls="controls" width="100%" muted="true" loop="true" autoplay="true"></video>
@@ -36,12 +36,12 @@ Whether you're wrestling with sound events, trying to make sense of Smart Props,
 ## What's Inside?
 
 ### SmartProp Editor
-Stop editing `.vsmart` files in notepad. Our editor gives you a visual way to manage position, rotation, and scaling in real-time. It's fully compatible with Valve's formats and includes presets to help you build complex scenes in seconds.
+Editing `.vsmart` files manually is no longer necessary. The editor provides a visual way to manage position, rotation, and scaling in real-time. It is fully compatible with Valve's formats and includes presets to help build complex scenes efficiently.
 
 ![SmartProp Editor](https://hammer5tools.github.io/static/smartprop_editor.png)
 
 ### SoundEvent Editor
-Managing sounds shouldn't be a chore. Explore, preview, and configure your `.vsnd` files directly. We edit your `soundevents_addon.vsndevts` file safely, so you can focus on the atmosphere, not the syntax.
+Managing sounds is simplified. Explore, preview, and configure `.vsnd` files directly. The tool modifies the `soundevents_addon.vsndevts` file safely, allowing focus on the atmosphere rather than the syntax.
 
 ![SoundEvent Editor](https://hammer5tools.github.io/static/soundevent_editor.png)
 
@@ -77,7 +77,7 @@ The app is modular. Each editor lives in its own folder under `src/` and can run
 ### Getting Started
 1.  **Environment**: Requires Python 3.11+. Install dependencies via `pip install -r requirements.txt`.
 2.  **Running**: Launch `src/main.py`. Ensure your working directory is set to the project root.
-3.  **Building**: We use a custom `makefile.py` to handle the build process:
+3.  **Building**: A custom `makefile.py` handles the build process:
     ```powershell
     # Build a stable release
     python makefile.py --build-all --stable
@@ -87,12 +87,12 @@ The app is modular. Each editor lives in its own folder under `src/` and can run
     ```
 
 ### Distribution & Updates
-We use **Velopack** for delta-based updates. The GitHub Actions pipeline handles packaging automatically whenever a new tag (e.g., `v5.0.0`) is pushed to the repository.
+The project utilizes **Velopack** for delta-based updates. The GitHub Actions pipeline handles packaging automatically whenever a new tag (e.g., `v5.0.0`) is pushed to the repository.
 
 ---
 
 ## Join the Community
-Have questions? Found a bug? Or just want to show off what you've built? Join our **[Discord Server](https://discord.com/invite/DvCXEyhssd)**. We're a friendly group of mappers and developers always looking to help out.
+Have questions? Found a bug? Or just want to show off what you've built? Join the **[Discord Server](https://discord.com/invite/DvCXEyhssd)**. A community of mappers and developers is available to help out.
 
 ---
-*Created with ❤️ by dertwist and the community.*
+*Created with ❤️ by [Twist](https://github.com/dertwist) and the community.*
