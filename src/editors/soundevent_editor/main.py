@@ -25,11 +25,15 @@ class CopyDefaultSoundFolders:
         """Coping  soundevents file and sounds from sounds folder from addon_template to the current addon"""
         super().__init__()
         # Source
-        self.soundevents_source_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', 'addon_template', 'soundevents', 'soundevents_addon.vsndevts')
-        self.sounds_source_path = os.path.join(get_cs2_path(), 'content', 'csgo_addons', 'addon_template', 'sounds')
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+             raise ValueError("CS2 path not found")
+             
+        self.soundevents_source_path = os.path.join(cs2_path, 'content', 'csgo_addons', 'addon_template', 'soundevents', 'soundevents_addon.vsndevts')
+        self.sounds_source_path = os.path.join(cs2_path, 'content', 'csgo_addons', 'addon_template', 'sounds')
         # Destination
-        self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts')
-        self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'sounds')
+        self.filepath_vsndevts = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'soundevents', 'soundevents_addon.vsndevts')
+        self.filepath_sounds = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'sounds')
         self.copy_with_overwrite()
 
     def copy_with_overwrite(self):
@@ -94,8 +98,13 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.realtime_save_timer.timeout.connect(self.realtime_save_all)
 
         # Variables
-        self.filepath_vsndevts = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
-        self.filepath_sounds = os.path.join(get_cs2_path(), 'content', 'csgo_addons', get_addon_name(), 'sounds')
+        cs2_path = get_cs2_path()
+        if cs2_path:
+            self.filepath_vsndevts = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'soundevents','soundevents_addon.vsndevts')
+            self.filepath_sounds = os.path.join(cs2_path, 'content', 'csgo_addons', get_addon_name(), 'sounds')
+        else:
+            self.filepath_vsndevts = ""
+            self.filepath_sounds = ""
 
         # Variables debug
         debug(f"self.filepath_vsndevts : {self.filepath_vsndevts}")

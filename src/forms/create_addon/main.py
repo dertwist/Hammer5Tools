@@ -10,6 +10,7 @@ from src.common import Presets_Path
 from src.common import enable_dark_title_bar
 from src.dotnet import extract_vmap_thumbnail
 from PySide6.QtGui import QPixmap
+from src.common import Presets_Path, app_dir
 import binascii
 
 # noinspection PyTypeChecker
@@ -24,14 +25,24 @@ class Create_addon_Dialog(QDialog):
         self.ui.lineEdit_addon_name.textChanged.connect(self.validate_addon_name_input)
         self._invalid_input_shown = False
 
-        presets_path = Presets_Path
-        if os.path.exists(presets_path) and os.path.isdir(presets_path):
-            for folder_name in os.listdir(presets_path):
-                folder_path = os.path.join(presets_path, folder_name)
-                if os.path.isdir(folder_path):
-                    self.ui.presets_comobox.addItem(folder_name)
+        # Search for presets in both user data and internal app directory
+        self.presets_roots = [Presets_Path, app_dir / "Presets"]
+        seen_presets = set()
+        
+        for presets_path in self.presets_roots:
+            if os.path.exists(presets_path) and os.path.isdir(presets_path):
+                for folder_name in os.listdir(presets_path):
+                    if folder_name in seen_presets:
+                        continue
+                    folder_path = os.path.join(presets_path, folder_name)
+                    if os.path.isdir(folder_path):
+                        self.ui.presets_comobox.addItem(folder_name)
+                        seen_presets.add(folder_name)
+                        
+        if self.ui.presets_comobox.count() > 0:
             if not get_settings_value('PRESETS', 'preset_name'):
                 set_settings_value('PRESETS', 'preset_name', self.ui.presets_comobox.itemText(0))
+        
         self.ui.presets_comobox.setCurrentText(get_settings_value('PRESETS', 'preset_name'))
         self.ui.presets_comobox.currentIndexChanged.connect(self.set_preset_name_on_change)
 
@@ -50,14 +61,36 @@ class Create_addon_Dialog(QDialog):
     @exception_handler
     def update_thumbnail(self):
         preset = get_settings_value('PRESETS', 'preset_name')
-        vmap_path = os.path.join(Presets_Path, preset, 'content', 'maps', 'xxx_mapname_xxx.vmap')
+        if not preset:
+            return
+
+        vmap_path = None
+        for root in self.presets_roots:
+            path = os.path.join(root, preset, 'content', 'maps', 'xxx_mapname_xxx.vmap')
+            if os.path.exists(path):
+                vmap_path = path
+                break
+        
+        if not vmap_path:
+            debug(f'Vmap not found for preset: {preset}')
+            return
+
         debug(f'Extracting thumbnail from {vmap_path}')
 
         thumbnail_hex, fxt = extract_vmap_thumbnail(vmap_path)
+        
+        if thumbnail_hex is None:
+            debug(f'Failed to extract thumbnail: thumbnail_hex is None')
+            return
+
         debug(f'Thumbnail extracted: {fxt}, size: {len(thumbnail_hex)} bytes')
 
         # Convert hex to raw image bytes
-        image_bytes = binascii.unhexlify(thumbnail_hex)
+        try:
+            image_bytes = binascii.unhexlify(thumbnail_hex)
+        except Exception as e:
+            debug(f"Failed to unhexlify thumbnail: {e}")
+            return
 
         # Load image into QPixmap
         pixmap = QPixmap()
@@ -77,8 +110,14 @@ class Create_addon_Dialog(QDialog):
     @exception_handler
     def create_addon(self):
         preset = get_settings_value('PRESETS', 'preset_name')
-        presets_path = Presets_Path
+        if not preset:
+            QMessageBox.warning(self, "Selection Error", "Please select a preset.")
+            return
+
         cs2_path = get_cs2_path()
+        if not cs2_path:
+            QMessageBox.warning(self, "CS2 Path Not Set", "CS2 installation path is not set. Please set it in Settings.")
+            return
         new_addon_name = self.ui.lineEdit_addon_name.text()
 
         if not new_addon_name:
@@ -89,7 +128,18 @@ class Create_addon_Dialog(QDialog):
             QMessageBox.warning(self, "Input Error", "Please enter a valid addon name (lowercase letters, numbers, underscores).")
             return
 
-        preset_src = os.path.join(presets_path, preset, 'content')
+        # Find the preset source path
+        preset_root = None
+        for root in self.presets_roots:
+            if os.path.exists(os.path.join(root, preset)):
+                preset_root = root
+                break
+        
+        if not preset_root:
+            QMessageBox.critical(self, "Error", f"Could not find source for preset: {preset}")
+            return
+
+        preset_src = os.path.join(preset_root, preset, 'content')
         preset_dist = os.path.join(cs2_path, 'content', 'csgo_addons', new_addon_name)
 
         try:
@@ -100,7 +150,7 @@ class Create_addon_Dialog(QDialog):
             QMessageBox.critical(self, "Copy Error", f"An error occurred while copying content: {str(e)}")
             return
 
-        preset_src = os.path.join(presets_path, preset, 'game')
+        preset_src = os.path.join(preset_root, preset, 'game')
         preset_dist = os.path.join(cs2_path, 'game', 'csgo_addons', new_addon_name)
         if os.path.exists(preset_src):
             try:
