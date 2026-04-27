@@ -63,11 +63,22 @@ jobs:
       - name: Get Release Notes
         shell: pwsh
         run: |
-          if (Test-Path "RELEASE_NOTES.md") {
-            Copy-Item "RELEASE_NOTES.md" "release_notes.md"
+          # Try to get release notes from the annotated tag message first
+          $tagNotes = git tag -l --format='%(contents)' ${{ github.ref_name }}
+          if ($tagNotes -and $tagNotes.Trim() -ne "") {
+            $tagNotes.Trim() | Out-File release_notes.md -Encoding utf8
+            Write-Host "Using release notes from git tag."
+          } elseif (Test-Path "RELEASE_NOTES.md") {
+            # On Windows, Copy-Item fails if names differ only by case.
+            # We'll normalize to lowercase using Rename-Item if needed.
+            if ((Get-Item "RELEASE_NOTES.md").Name -cne "release_notes.md") {
+              Rename-Item "RELEASE_NOTES.md" "release_notes.md" -ErrorAction SilentlyContinue
+            }
+            Write-Host "Using existing RELEASE_NOTES.md file."
           } else {
             "## Hammer5Tools ${{ github.ref_name }}`nRelease ${{ github.ref_name }}." |
               Out-File release_notes.md -Encoding utf8
+            Write-Host "Using default release notes."
           }
 
       - name: Velopack Pack
