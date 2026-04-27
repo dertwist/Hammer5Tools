@@ -18,8 +18,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch tags
-        run: git fetch --tags --force
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -63,23 +61,14 @@ jobs:
           echo "app_version=$ver" >> $env:GITHUB_OUTPUT
 
       - name: Get Release Notes
-        id: release_notes
         shell: pwsh
         run: |
-          $tagName = "${{ github.ref_name }}"
-    
-          # Ensure tag object is locally available
-          git fetch origin "refs/tags/$($tagName):refs/tags/$($tagName)" --force 2>$null
-    
-          # git for-each-ref reliably reads annotated tag message body
-          $msg = git for-each-ref "refs/tags/$tagName" --format="%(contents)"
-    
-          # Fallback for lightweight tags or empty message
-          if (-not $msg -or -not $msg.Trim()) {
-            $msg = "## Hammer5Tools $tagName`nRelease $tagName."
+          if (Test-Path "RELEASE_NOTES.md") {
+            Copy-Item "RELEASE_NOTES.md" "release_notes.md"
+          } else {
+            "## Hammer5Tools ${{ github.ref_name }}`nRelease ${{ github.ref_name }}." |
+              Out-File release_notes.md -Encoding utf8
           }
-    
-          $msg | Out-File -FilePath release_notes.md -Encoding utf8
 
       - name: Velopack Pack
         run: |
