@@ -152,7 +152,7 @@ def build_cpp(project: str, src_dir: str, output_name: str) -> None:
         raise
 
 
-def build_app_pyinstaller(fast=False) -> None:
+def build_app_pyinstaller(fast=False, channel='stable') -> None:
     """Builds the Python application using PyInstaller."""
     # Try to locate pre-generated pycparser tables; generate them if absent.
     tables = find_pycparser_tables()
@@ -200,7 +200,7 @@ def build_app_pyinstaller(fast=False) -> None:
         '--exclude-module=pandas',
         '--exclude-module=tabulate',
         external,
-        *[f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls],
+        *( [f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls] if channel == 'stable' else [] ),
         'src/main.py'
     ]
 
@@ -217,7 +217,7 @@ def build_app_pyinstaller(fast=False) -> None:
 
 def build_hammer5_tools(fast=False, channel='stable') -> None:
     # Phase 0: cleanup moved to main() for thread safety
-    build_app_pyinstaller(fast=fast)
+    build_app_pyinstaller(fast=fast, channel=channel)
 
     # Final distribution folder
     bundle_root = os.path.join(cur_dir, 'Hammer5Tools')
