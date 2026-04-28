@@ -220,3 +220,86 @@ def FixPBRRange(filepath: str, low: float = 0.25, high: float = 0.99) -> bool:
     except Exception as e:
         debug(f"FixPBRRange error for '{filepath}': {e}")
         return False
+
+
+class QuickVsmart:
+    def __init__(self, filepaths):
+        if not filepaths:
+            return
+
+        addon_dir = get_addon_dir()
+        first_file = filepaths[0]
+        dir_path = os.path.dirname(first_file)
+
+        # Determine new vsmart filename
+        if len(filepaths) == 1:
+            base_name = os.path.splitext(os.path.basename(first_file))[0]
+            vsmart_name = f"{base_name}.vsmart"
+        else:
+            base_name = os.path.basename(dir_path)
+            vsmart_name = f"{base_name}.vsmart"
+
+        # Handle collision using generate_unique_name if available, otherwise manual check
+        from src.common import generate_unique_name
+        existing_files = {f for f in os.listdir(dir_path) if f.endswith('.vsmart')}
+        vsmart_name = generate_unique_name(os.path.splitext(vsmart_name)[0], existing_files, separator="_") + ".vsmart"
+        vsmart_path = os.path.join(dir_path, vsmart_name)
+
+        children = []
+        element_id = 1
+
+        for path in filepaths:
+            ext = os.path.splitext(path)[1].lower()
+            try:
+                rel_path = os.path.relpath(path, addon_dir).replace(os.path.sep, '/')
+            except Exception:
+                rel_path = path
+
+            if ext == '.vsmart':
+                # Reference
+                element = {
+                    '_class': 'CSmartPropElement_SmartProp',
+                    'm_sSmartProp': rel_path,
+                    'm_Modifiers': [],
+                    'm_SelectionCriteria': [],
+                    'm_nElementID': element_id
+                }
+            else:
+                # Model
+                element = {
+                    '_class': 'CSmartPropElement_Model',
+                    'm_sModelName': rel_path,
+                    'm_Modifiers': [],
+                    'm_SelectionCriteria': [],
+                    'm_nElementID': element_id
+                }
+            children.append(element)
+            element_id += 1
+
+        # Put all this to root group
+        root_group = {
+            '_class': 'CSmartPropElement_Group',
+            'm_sLabel': 'Root Group',
+            'm_Children': children,
+            'm_Modifiers': [],
+            'm_SelectionCriteria': [],
+            'm_nElementID': element_id
+        }
+        element_id += 1
+
+        from src.common import editor_info
+        vsmart_content = {
+            'generic_data_type': 'CSmartPropRoot',
+            'm_nContentVersion': 1,
+            'm_Children': [root_group],
+            'm_Variables': [],
+            'm_Choices': []
+        }
+        # Add editor info
+        vsmart_content.update(fast_deepcopy(editor_info))
+        if 'editor_info' in vsmart_content:
+            vsmart_content['editor_info']['m_nElementID'] = element_id
+
+        with open(vsmart_path, 'w') as f:
+            f.write(JsonToKv3(vsmart_content))
+        debug(f"Created Quick VSmart: {vsmart_path}")
