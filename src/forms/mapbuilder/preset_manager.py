@@ -57,6 +57,9 @@ class BuildSettings:
 
     # === Load Map In Engine ===
     load_in_engine_after_build: bool = True
+    
+    # === Logging ===
+    save_build_logs: bool = False
 
     # === Cubemaps ===
     build_cubemaps: bool = False

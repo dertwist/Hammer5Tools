@@ -28,6 +28,37 @@ from src.other.addon_functions import launch_addon
 from src.other.cs2_netcon import CS2Netcon
 
 
+class BuildHistoryCache:
+    def __init__(self):
+        from src.common import user_data_dir
+        self.cache_file = user_data_dir / "MapBuilder" / "build_history.json"
+        self.cache = self._load()
+
+    def _load(self):
+        try:
+            if self.cache_file.exists():
+                with open(self.cache_file, 'r', encoding='utf-8') as f:
+                    return __import__('json').load(f)
+        except Exception:
+            pass
+        return {}
+
+    def _save(self):
+        try:
+            self.cache_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.cache_file, 'w', encoding='utf-8') as f:
+                __import__('json').dump(self.cache, f, indent=4)
+        except Exception as e:
+            print(f"Error saving build history: {e}")
+
+    def get_estimated_time(self, signature: str) -> float:
+        return self.cache.get(signature, -1.0)
+
+    def record_time(self, signature: str, elapsed: float):
+        self.cache[signature] = elapsed
+        self._save()
+
+
 class BuildCubemapsThread(QThread):
     """Thread that launches CS2 once, then builds cubemaps for every map in
     the queue sequentially – without relaunching the game between maps.
@@ -65,12 +96,11 @@ class BuildCubemapsThread(QThread):
     RECONNECT_TIMEOUT = 60           # seconds – wait for netcon after cubemap disconnect
 
     def __init__(self, cs2_exe: str, launch_args: str,
-                 map_names: list[str], addon_name: str):
+                 map_data: list[tuple[str, str]]):
         super().__init__()
         self.cs2_exe = cs2_exe
         self.launch_args = launch_args
-        self.map_names = list(map_names)
-        self.addon_name = addon_name
+        self.map_data = list(map_data)  # [(addon, map_name), ...]
         self._stop_event = __import__('threading').Event()
 
     # -----------------------------------------------------------------
@@ -170,13 +200,13 @@ class BuildCubemapsThread(QThread):
 
         # --- 5. Build cubemaps for each map ---
         all_ok = True
-        for map_name in self.map_names:
+        for addon_name, map_name in self.map_data:
             if self._stop_event.is_set():
                 self.outputReceived.emit("Cubemap build aborted by user")
                 all_ok = False
                 break
 
-            ok = self._build_one_map(map_name)
+            ok = self._build_one_map(addon_name, map_name)
             self.mapFinished.emit(map_name, ok)
             if not ok:
                 all_ok = False
@@ -203,15 +233,15 @@ class BuildCubemapsThread(QThread):
         self.finished.emit(all_ok)
 
     # -----------------------------------------------------------------
-    def _build_one_map(self, map_name: str) -> bool:
+    def _build_one_map(self, addon_name: str, map_name: str) -> bool:
         """Load *map_name* in CS2 and run buildcubemaps.  Returns True on
         success."""
         import time as _time
 
-        self.outputReceived.emit(f"Loading map '{map_name}' via netcon...")
+        self.outputReceived.emit(f"Loading map '{map_name}' from addon '{addon_name}' via netcon...")
 
         # Send map_workshop to load the map
-        map_cmd = f"map_workshop {self.addon_name} {map_name}"
+        map_cmd = f"map_workshop {addon_name} {map_name}"
         map_loaded = self._listen_for(
             map_cmd, self.MAP_LOADED_SENTINEL, self.MAP_LOAD_TIMEOUT)
 
@@ -463,6 +493,26 @@ class MapBuilderDialog(QMainWindow):
             except Exception:
                 pass
 
+        from PySide6.QtWidgets import QProgressBar
+        self.progress_bar = QProgressBar(self.ui.layoutWidget1)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setFormat("Idle")
+        self.progress_bar.setFixedHeight(14)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #505050;
+                border-radius: 2px;
+                text-align: center;
+                color: white;
+                font-size: 10px;
+                background-color: #1C1C1C;
+            }
+            QProgressBar::chunk {
+                background-color: #2a82da;
+            }
+        """)
+        self.ui.verticalLayout_3.addWidget(self.progress_bar)
+
         self.setup_settings_panel()
         self.setup_preset_buttons()
         self.setup_system_monitor()
@@ -479,6 +529,9 @@ class MapBuilderDialog(QMainWindow):
         self.build_stats = []
         self.current_map_stats = {}
         self.build_start_time = None
+        self.build_history = BuildHistoryCache()
+        self.current_build_sig = ""
+        self.current_est_time = -1.0
 
         # Cubemap queue state
         self.cubemap_queue = []
@@ -489,6 +542,44 @@ class MapBuilderDialog(QMainWindow):
         self.log_phase('<b>Skybox Map Rules:</b>')
         self.log_info('  • Compiled without -nav, -vis, and -audio flags')
         self.log_info('  • Lightmap resolution limited to 2048')
+
+    def _get_build_signature(self, mappath: str, settings: BuildSettings) -> str:
+        sig = f"{mappath}"
+        if settings.bake_lighting:
+            sig += f"_L{settings.lightmap_max_resolution}_Q{settings.lightmap_quality}"
+        else:
+            sig += "_NoLight"
+        if settings.build_vis: sig += "_Vis"
+        if settings.build_nav: sig += "_Nav"
+        if settings.build_reverb: sig += "_Reverb"
+        return sig
+
+    def _parse_map_path(self, absolute_path: str) -> tuple[str, str, str]:
+        """Returns (addon_name, addon_dir, map_name_relative_to_maps)"""
+        try:
+            p = Path(absolute_path)
+            parts = p.parts
+            addon_name = get_addon_name()
+            addon_dir = get_addon_dir()
+
+            if 'csgo_addons' in parts:
+                idx = parts.index('csgo_addons')
+                if idx + 1 < len(parts):
+                    addon_name = parts[idx + 1]
+                    addon_dir = str(Path(*parts[:idx + 2]))
+
+            # Get map name relative to maps/
+            map_name = p.stem
+            try:
+                if 'maps' in parts:
+                    m_idx = parts.index('maps')
+                    map_name = Path(*parts[m_idx + 1:]).with_suffix('').as_posix()
+            except Exception:
+                pass
+
+            return addon_name, addon_dir, map_name
+        except Exception:
+            return get_addon_name(), get_addon_dir(), Path(absolute_path).stem
 
     def setup_settings_panel(self):
         self.settings_panel = SettingsPanel()
@@ -690,6 +781,12 @@ class MapBuilderDialog(QMainWindow):
             time_with_dots = self.elapsed_tracker.format_with_dots(elapsed, self.dot_cycle)
             self.ui.last_build_stats_label.setText(f"Compiling: [{time_with_dots}]")
             self.dot_cycle += 1
+            
+            if self.current_est_time > 0:
+                self.progress_bar.setValue(min(int(elapsed), int(self.current_est_time)))
+            else:
+                # Add a small continuous movement if indeterminate
+                self.progress_bar.setValue((self.progress_bar.value() + 1) % 100)
 
     def abort_compilation(self):
         self.build_was_aborted = True
@@ -731,6 +828,10 @@ class MapBuilderDialog(QMainWindow):
             print(f"Failed to save LastBuildTime: {e}")
 
         if exit_code == 0:
+            self.build_history.record_time(self.current_build_sig, elapsed_time)
+            if self.settings_panel.get_settings().save_build_logs:
+                self._save_auto_log(Path(self.map_queue[self.current_map_index - 1]).stem)
+            
             self.current_map_stats = self.current_map_stats or {}
             self.current_map_stats['Total'] = self.format_time(elapsed_time)
             self.build_stats.append(self.current_map_stats)
@@ -755,13 +856,26 @@ class MapBuilderDialog(QMainWindow):
                 return
 
             rel = self.map_queue[self.current_map_index]
-            mappath_abs = os.path.join(get_addon_dir(), rel)
+            mappath_abs = os.path.abspath(rel)
 
             if not os.path.exists(mappath_abs):
                 self.log_error(f'Map file not found: {mappath_abs}')
                 self.current_map_index += 1
                 self.process_next_map()
                 return
+
+            # Extract addon_dir from absolute path
+            # Assuming path contains 'csgo_addons'
+            addon_dir = get_addon_dir()
+            try:
+                p = Path(mappath_abs)
+                parts = p.parts
+                if 'csgo_addons' in parts:
+                    idx = parts.index('csgo_addons')
+                    if idx + 1 < len(parts):
+                        addon_dir = str(Path(*parts[:idx + 2]))
+            except Exception:
+                pass
 
             self.current_map_index += 1
             self.current_map_stats = {"Map": Path(rel).stem}
@@ -776,9 +890,9 @@ class MapBuilderDialog(QMainWindow):
                 single_settings.lightmap_max_resolution = 2048
                 self.log_phase(f'Skybox map detected: {Path(rel).stem} - disabling nav/vis, setting lightmap to 2048')
 
-            command = single_settings.to_command_line(get_addon_dir(), self.cs2_path)
+            command = single_settings.to_command_line(addon_dir, self.cs2_path)
 
-            self.compilation_thread = CompilationThread(command, get_addon_dir())
+            self.compilation_thread = CompilationThread(command, addon_dir)
             self.compilation_thread.outputReceived.connect(self.on_output_received)
             self.compilation_thread.finished.connect(self.on_compilation_finished)
 
@@ -790,18 +904,46 @@ class MapBuilderDialog(QMainWindow):
             self.dot_cycle = 0
             self.elapsed_timer.start(500)
 
+            self.current_build_sig = self._get_build_signature(mappath_abs, single_settings)
+            self.current_est_time = self.build_history.get_estimated_time(self.current_build_sig)
+            
+            addon_prefix = Path(addon_dir).name
+            map_base = Path(rel).stem
+            if self.current_est_time > 0:
+                self.progress_bar.setRange(0, int(self.current_est_time))
+                self.progress_bar.setValue(0)
+                self.progress_bar.setFormat(f"[{addon_prefix}] {map_base} | Est: {self.format_time(self.current_est_time)}")
+            else:
+                self.progress_bar.setRange(0, 100)
+                self.progress_bar.setValue(0)
+                self.progress_bar.setFormat(f"[{addon_prefix}] {map_base} | Est: Unknown")
+
             if len(self.map_queue) > 1:
                 self.log_phase(f'Compiling ({self.current_map_index}/{len(self.map_queue)}): {rel}')
             else:
                 self.log_phase(f'Starting compilation: {rel}')
 
             self.log_info(f'Map file: {mappath_abs}')
+            self.log_info(f'Addon directory: {addon_dir}')
             self.log_info(f'Command: {command}')
             self.compilation_thread.start()
 
         except Exception as e:
             self.log_error(f'Compilation error: {e}')
             self.finish_build()
+
+    def _save_auto_log(self, map_name: str):
+        try:
+            from src.common import user_data_dir
+            log_dir = user_data_dir / "MapBuilder" / "build_logs"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            log_file = log_dir / f"{map_name}_{timestamp}.txt"
+            
+            text = self.ui.output_list_widget.toPlainText()
+            log_file.write_text(text, encoding="utf-8")
+        except Exception as e:
+            print(f"Error saving auto log: {e}")
 
     def launch_map_after_build(self, map_list: list):
         if self.build_was_aborted:
@@ -815,10 +957,9 @@ class MapBuilderDialog(QMainWindow):
             return
 
         map_to_launch = filtered_maps[-1]
-        map_name = Path(map_to_launch).stem
+        addon_name, addon_dir, map_name = self._parse_map_path(os.path.abspath(map_to_launch))
 
         try:
-            addon_name = get_addon_name()
             cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
 
             commands = get_settings_value("LAUNCH", "commands")
@@ -933,19 +1074,15 @@ class MapBuilderDialog(QMainWindow):
         # send map_workshop via netcon after CS2 reaches the main menu.
         commands = re.sub(r'\+map_workshop\s+\S+(?:\s+\S+)?', '', commands).strip()
 
-        # Extract map names preserving subdirectory structure under maps/.
-        # e.g. "maps\test\1.vmap" → "test/1"  or  "maps\de_helm.vmap" → "de_helm"
-        map_names = []
+        # Extract map data (addon, map_name)
+        map_data = []
         for rel in self.cubemap_queue:
-            p = Path(rel).with_suffix('')          # drop .vmap
-            try:
-                p = p.relative_to('maps')          # drop leading maps/
-            except ValueError:
-                pass
-            map_names.append(p.as_posix())
+            abs_path = os.path.abspath(rel)
+            addon, _, map_name = self._parse_map_path(abs_path)
+            map_data.append((addon, map_name))
 
         self.cubemap_thread = BuildCubemapsThread(
-            cs2_exe, commands, map_names, addon_name)
+            cs2_exe, commands, map_data)
         self.cubemap_thread.outputReceived.connect(self.on_cubemap_output)
         self.cubemap_thread.mapFinished.connect(self.on_cubemap_map_finished)
         self.cubemap_thread.finished.connect(self.on_cubemap_queue_finished)
@@ -982,14 +1119,9 @@ class MapBuilderDialog(QMainWindow):
 
         # Preserve subdirectory structure: "maps\test\1.vmap" → "test/1"
         _first_map = str(settings.mappath).split(';')[0] if ';' in str(settings.mappath) else str(settings.mappath)
-        _p = Path(_first_map).with_suffix('')
-        try:
-            _p = _p.relative_to('maps')
-        except ValueError:
-            pass
-        map_name = _p.as_posix()
+        addon_name, addon_dir, map_name = self._parse_map_path(os.path.abspath(_first_map))
+
         cs2_exe = Path(self.cs2_path) / "game" / "bin" / "win64" / "cs2.exe"
-        addon_name = get_addon_name()
         commands = get_settings_value("LAUNCH", "commands")
 
         if not commands:
