@@ -160,8 +160,10 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyleSheet(QT_Stylesheet_global)
     
-    # Check .NET runtime
-    check_dotnet_runtime()
+    # Check .NET runtime if libraries are present
+    from src.dotnet import DotNetPaths
+    if DotNetPaths().vrf.exists():
+        check_dotnet_runtime()
     
     # Create main window
     widget = Widget(dev_mode=args.dev)
