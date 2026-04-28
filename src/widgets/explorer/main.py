@@ -10,7 +10,7 @@ from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, 
 
 from src.settings.main import get_settings_value, set_settings_value, get_cs2_path, get_addon_name, debug
 from src.widgets.common import ErrorInfo
-from src.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange
+from src.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange, QuickVsmart
 from src.styles.common import *
 from src.common import enable_dark_title_bar
 
@@ -306,6 +306,15 @@ class Explorer(QMainWindow):
         self.select_last_opened_path()
         self.frame = QFrame(self)
         self.frame.setLayout(self.layout)
+
+    def get_selected_files(self):
+        indexes = self.tree.selectionModel().selectedIndexes()
+        selected_paths = []
+        for idx in indexes:
+            if idx.column() == CustomFileSystemModel.NAME_COLUMN:
+                src_idx = self.filter_proxy_model.mapToSource(idx)
+                selected_paths.append(self.model.filePath(src_idx))
+        return selected_paths
 
     def _normalize_path(self, path):
         if path is None:
@@ -607,6 +616,11 @@ class Explorer(QMainWindow):
                 quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
                 quick_process_action.triggered.connect(lambda: run_compile(file_path))
                 menu.addAction(quick_process_action)
+
+            quick_vsmart_action = QAction("Quick VSmart", self)
+            quick_vsmart_action.setIcon(QIcon(file_icons['.vsmart']))
+            quick_vsmart_action.triggered.connect(lambda: QuickVsmart(self.get_selected_files()))
+            menu.addAction(quick_vsmart_action)
 
             if file_extension == "hbat":
                 quick_process_action = QAction("Quick Process AssetGroup", self)
