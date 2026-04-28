@@ -51,11 +51,108 @@ class BuildHistoryCache:
         except Exception as e:
             print(f"Error saving build history: {e}")
 
-    def get_estimated_time(self, signature: str) -> float:
-        return self.cache.get(signature, -1.0)
+    def get_estimated_time(self, map_path: str, settings) -> float:
+        data = self.cache.get(map_path)
+        if not data:
+            return -1.0
+            
+        total = 0.0
+        
+        world = data.get("world", {}).get("average", -1.0)
+        if world < 0: return -1.0
+        total += world
+        
+        if settings.build_vis:
+            vis = data.get("vis", {}).get("average", -1.0)
+            if vis < 0: return -1.0
+            total += vis
+            
+        if settings.build_nav:
+            nav = data.get("nav", {}).get("average", -1.0)
+            if nav < 0: return -1.0
+            total += nav
+            
+        if settings.build_reverb:
+            audio = data.get("audio", {}).get("average", -1.0)
+            if audio < 0: audio = 0  # Reverb takes minimal time, fallback safely
+            total += audio
+            
+        if settings.bake_lighting:
+            if settings.no_light_calculations:
+                total += 0.1
+            else:
+                light_key = f"light_Q{settings.lightmap_quality}_{settings.lightmap_max_resolution}_F{int(settings.lightmap_filtering)}_LB{int(settings.vrad3_large_block_size)}"
+                light = data.get(light_key, {}).get("average", -1.0)
+                
+                if light < 0:
+                    best_match = None
+                    best_score = -1
+                    for key, val in data.items():
+                        if key.startswith("light_Q"):
+                            try:
+                                parts = key.replace("light_Q", "").split("_")
+                                q = int(parts[0])
+                                res = int(parts[1])
+                                
+                                known_f = True
+                                known_lb = False
+                                for p in parts[2:]:
+                                    if p.startswith("F"): known_f = bool(int(p[1:]))
+                                    if p.startswith("LB"): known_lb = bool(int(p[2:]))
+                                    
+                                avg = val.get("average", -1.0)
+                                if avg > 0:
+                                    score = 0
+                                    if res == settings.lightmap_max_resolution:
+                                        score += 10000
+                                    else:
+                                        score += res
+                                        
+                                    if q == settings.lightmap_quality:
+                                        score += 1000
+                                        
+                                    if score > best_score:
+                                        best_score = score
+                                        best_match = (q, res, known_f, known_lb, avg)
+                            except Exception:
+                                pass
+                                
+                    if best_match:
+                        known_q, known_res, known_f, known_lb, known_avg = best_match
+                        res_ratio = settings.lightmap_max_resolution / float(known_res)
+                        if res_ratio >= 1.0:
+                            res_factor = res_ratio ** 1.65
+                        else:
+                            res_factor = res_ratio ** 1.65
+                        
+                        q_weights = {0: 1.0, 1: 1.43, 2: 3.57, 3: 7.0}
+                        q_target = q_weights.get(settings.lightmap_quality, 3.57)
+                        q_known = q_weights.get(known_q, 3.57)
+                        q_factor = q_target / q_known
+                        
+                        light = known_avg * res_factor * q_factor
+                        
+                        if settings.lightmap_filtering and not known_f:
+                            light *= 1.25
+                        elif not settings.lightmap_filtering and known_f:
+                            light *= 0.80
+                            
+                if light < 0: return -1.0
+                total += light
+            
+        return total
 
-    def record_time(self, signature: str, elapsed: float):
-        self.cache[signature] = elapsed
+    def record_phase_time(self, map_path: str, phase_name: str, elapsed: float):
+        if elapsed <= 0: return
+        data = self.cache.get(map_path, {})
+        phase_data = data.get(phase_name, {"average": elapsed, "history": []})
+        
+        phase_data["history"].append(elapsed)
+        phase_data["history"] = phase_data["history"][-5:]
+        phase_data["average"] = sum(phase_data["history"]) / len(phase_data["history"])
+        
+        data[phase_name] = phase_data
+        self.cache[map_path] = data
         self._save()
 
 
@@ -142,93 +239,129 @@ class BuildCubemapsThread(QThread):
         import subprocess as _subprocess
         import time as _time
 
-        # --- 1. Launch CS2 (no map – just tools mode) ---
-        launch_cmd = f'"{self.cs2_exe}" {self.launch_args}'
-        self.outputReceived.emit(f"Launching CS2: {launch_cmd}")
-        try:
-            _subprocess.Popen(launch_cmd, shell=True)
-        except Exception as e:
-            self.outputReceived.emit(f"Failed to launch CS2: {e}")
-            self.finished.emit(False)
-            return
-
-        # --- 2. Wait for the netcon port ---
-        self.outputReceived.emit("Waiting for CS2 to accept netcon connections...")
-        if not self._wait_for_netcon(self.CONNECT_TIMEOUT):
-            self.outputReceived.emit(
-                "Timed out waiting for CS2 netcon – is the game running?")
-            self.finished.emit(False)
-            return
-
-        self.outputReceived.emit(
-            "CS2 netcon connected. Waiting for the main menu to fully load...")
-
-        # --- 3. Wait for CS2 to reach main menu ---
-        init_ok = self._listen_for(
-            "echo h5t_waiting_for_init", self.INIT_DONE_SENTINEL,
-            self.INIT_TIMEOUT,
-        )
-        if not init_ok:
-            if self._stop_event.is_set():
-                self.outputReceived.emit("Cubemap build aborted during CS2 init")
-            else:
-                self.outputReceived.emit(
-                    "Timed out waiting for CS2 to reach the main menu")
-            self.finished.emit(False)
-            return
-
-        self.outputReceived.emit("CS2 main menu loaded. Preparing for cubemap builds...")
-
-        # Give the main menu a moment to fully settle (configs, GC, etc.).
-        _time.sleep(5)
-
-        # --- 4. Save user's r_always_render_all_windows and force it to true ---
-        original_render_all = CS2Netcon.query("r_always_render_all_windows")
-        if original_render_all is None:
-            # Retry once after a short delay if the first query failed
-            _time.sleep(2)
-            original_render_all = CS2Netcon.query("r_always_render_all_windows")
-        if original_render_all is None:
-            original_render_all = "false"
-            self.outputReceived.emit(
-                "Could not query r_always_render_all_windows, "
-                "assuming default 'false'")
-        self.outputReceived.emit(
-            f"Saved r_always_render_all_windows = {original_render_all}")
-        CS2Netcon.send("r_always_render_all_windows true")
-        self.outputReceived.emit("Set r_always_render_all_windows = true (for cubemap baking)")
-
-        # --- 5. Build cubemaps for each map ---
-        all_ok = True
+        # Group maps by addon
+        addon_groups = {}
         for addon_name, map_name in self.map_data:
+            if addon_name not in addon_groups:
+                addon_groups[addon_name] = []
+            addon_groups[addon_name].append(map_name)
+
+        all_ok = True
+        addons_list = list(addon_groups.keys())
+
+        for idx, addon_name in enumerate(addons_list):
             if self._stop_event.is_set():
                 self.outputReceived.emit("Cubemap build aborted by user")
                 all_ok = False
                 break
 
-            ok = self._build_one_map(addon_name, map_name)
-            self.mapFinished.emit(map_name, ok)
-            if not ok:
-                all_ok = False
-                if self._stop_event.is_set():
-                    break
-                # Continue with next map even if one fails
+            maps = addon_groups[addon_name]
+            
+            # --- 1. Launch CS2 for this addon ---
+            commands = self.launch_args.replace('addon_name', addon_name)
+            launch_cmd = f'"{self.cs2_exe}" {commands}'
+            self.outputReceived.emit(f"Closing existing CS2 instances...")
+            _subprocess.run(['taskkill', '/F', '/IM', 'cs2.exe'], capture_output=True, check=False)
+            _time.sleep(1)
+            self.outputReceived.emit(f"Launching CS2 for addon '{addon_name}': {launch_cmd}")
+            
+            process = None
+            try:
+                process = _subprocess.Popen(launch_cmd, shell=True)
+            except Exception as e:
+                self.outputReceived.emit(f"Failed to launch CS2: {e}")
+                self.finished.emit(False)
+                return
 
-        # --- 6. Restore r_always_render_all_windows ---
-        restore_ok = CS2Netcon.send(f"r_always_render_all_windows {original_render_all}")
-        if not restore_ok:
-            # Retry: wait for netcon to be available and try again
-            _time.sleep(2)
-            if self._wait_for_netcon(10):
-                restore_ok = CS2Netcon.send(
-                    f"r_always_render_all_windows {original_render_all}")
-        if restore_ok:
+            # --- 2. Wait for the netcon port ---
+            self.outputReceived.emit("Waiting for CS2 to accept netcon connections...")
+            if not self._wait_for_netcon(self.CONNECT_TIMEOUT):
+                self.outputReceived.emit(
+                    "Timed out waiting for CS2 netcon – is the game running?")
+                all_ok = False
+                continue
+
             self.outputReceived.emit(
-                f"Restored r_always_render_all_windows = {original_render_all}")
-        else:
+                "CS2 netcon connected. Waiting for the main menu to fully load...")
+
+            # --- 3. Wait for CS2 to reach main menu ---
+            init_ok = self._listen_for(
+                "echo h5t_waiting_for_init", self.INIT_DONE_SENTINEL,
+                self.INIT_TIMEOUT,
+            )
+            if not init_ok:
+                if self._stop_event.is_set():
+                    self.outputReceived.emit("Cubemap build aborted during CS2 init")
+                else:
+                    self.outputReceived.emit(
+                        "Timed out waiting for CS2 to reach the main menu")
+                all_ok = False
+                continue
+
+            self.outputReceived.emit(f"CS2 main menu loaded for '{addon_name}'. Preparing for cubemap builds...")
+
+            # Give the main menu a moment to fully settle (configs, GC, etc.).
+            _time.sleep(5)
+
+            # --- 4. Save user's r_always_render_all_windows and force it to true ---
+            original_render_all = CS2Netcon.query("r_always_render_all_windows")
+            if original_render_all is None:
+                # Retry once after a short delay if the first query failed
+                _time.sleep(2)
+                original_render_all = CS2Netcon.query("r_always_render_all_windows")
+            if original_render_all is None:
+                original_render_all = "false"
+                self.outputReceived.emit(
+                    "Could not query r_always_render_all_windows, "
+                    "assuming default 'false'")
             self.outputReceived.emit(
-                f"WARNING: Could not restore r_always_render_all_windows to "
-                f"'{original_render_all}' – CS2 may be unreachable")
+                f"Saved r_always_render_all_windows = {original_render_all}")
+            CS2Netcon.send("r_always_render_all_windows true")
+            self.outputReceived.emit("Set r_always_render_all_windows = true (for cubemap baking)")
+
+            # --- 5. Build cubemaps for each map in this addon ---
+            for map_name in maps:
+                if self._stop_event.is_set():
+                    self.outputReceived.emit("Cubemap build aborted by user")
+                    all_ok = False
+                    break
+
+                ok = self._build_one_map(addon_name, map_name)
+                self.mapFinished.emit(map_name, ok)
+                if not ok:
+                    all_ok = False
+                    if self._stop_event.is_set():
+                        break
+
+            # --- 6. Restore r_always_render_all_windows ---
+            restore_ok = CS2Netcon.send(f"r_always_render_all_windows {original_render_all}")
+            if not restore_ok:
+                # Retry: wait for netcon to be available and try again
+                _time.sleep(2)
+                if self._wait_for_netcon(10):
+                    restore_ok = CS2Netcon.send(
+                        f"r_always_render_all_windows {original_render_all}")
+            if restore_ok:
+                self.outputReceived.emit(
+                    f"Restored r_always_render_all_windows = {original_render_all}")
+            else:
+                self.outputReceived.emit(
+                    f"WARNING: Could not restore r_always_render_all_windows to "
+                    f"'{original_render_all}' – CS2 may be unreachable")
+
+            # --- 7. Close CS2 if there are more addons to process ---
+            if idx < len(addons_list) - 1:
+                self.outputReceived.emit(f"Closing CS2 for addon '{addon_name}' to switch to next addon...")
+                CS2Netcon.send("quit")
+                _time.sleep(5)
+                # Ensure process is dead
+                if process:
+                    try:
+                        process.terminate()
+                    except:
+                        pass
+                # wait a bit for port to free up
+                _time.sleep(2)
 
         self.finished.emit(all_ok)
 
@@ -486,12 +619,8 @@ class MapBuilderDialog(QMainWindow):
         self.elapsed_timer.timeout.connect(self._update_elapsed_display)
         self.dot_cycle = 0
 
-        last_time_str = get_settings_value("MapBuilder", "LastBuildTime", default="")
-        if last_time_str:
-            try:
-                self.ui.last_build_stats_label.setText(f"Last Build Time: {last_time_str}")
-            except Exception:
-                pass
+        self.ui.last_build_stats_label.setText("")
+        self.ui.last_build_stats_label.setVisible(False)
 
         from PySide6.QtWidgets import QProgressBar
         self.progress_bar = QProgressBar(self.ui.layoutWidget1)
@@ -508,10 +637,34 @@ class MapBuilderDialog(QMainWindow):
                 background-color: #1C1C1C;
             }
             QProgressBar::chunk {
-                background-color: #2a82da;
+                background-color: #1a528a;
+                margin: 0px;
+                width: 1px;
             }
         """)
         self.ui.verticalLayout_3.addWidget(self.progress_bar)
+        
+        self.total_progress_bar = QProgressBar(self.ui.layoutWidget1)
+        self.total_progress_bar.setTextVisible(True)
+        self.total_progress_bar.setFormat("Idle")
+        self.total_progress_bar.setFixedHeight(14)
+        self.total_progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #505050;
+                border-radius: 2px;
+                text-align: center;
+                color: white;
+                font-size: 10px;
+                background-color: #1C1C1C;
+            }
+            QProgressBar::chunk {
+                background-color: #1a528a;
+                margin: 0px;
+                width: 1px;
+            }
+        """)
+        self.total_progress_bar.setVisible(False)
+        self.ui.verticalLayout_3.addWidget(self.total_progress_bar)
 
         self.setup_settings_panel()
         self.setup_preset_buttons()
@@ -763,30 +916,70 @@ class MapBuilderDialog(QMainWindow):
         self.build_stats = []
         self.build_start_time = time.time()
         self.build_was_aborted = False
+        
+        self.total_est_time = 0.0
+        for rel in self.map_queue:
+            mappath_abs = os.path.abspath(rel)
+            single_settings = BuildSettings(**{f.name: getattr(settings, f.name) for f in fields(BuildSettings)})
+            single_settings.mappath = mappath_abs
+            if is_skybox_map(rel):
+                single_settings.build_nav = False
+                single_settings.build_vis = False
+                single_settings.lightmap_max_resolution = 2048
+            est = self.build_history.get_estimated_time(mappath_abs, single_settings)
+            if est > 0:
+                self.total_est_time += est
+            else:
+                self.total_est_time = -1.0
+                break
 
         self.ui.output_list_widget.clear()
 
         if len(self.map_queue) > 1:
+            self.total_progress_bar.setVisible(True)
+            if self.total_est_time > 0:
+                self.total_progress_bar.setRange(0, int(self.total_est_time))
+            else:
+                self.total_progress_bar.setRange(0, 100)
+            self.total_progress_bar.setValue(0)
+            self.total_progress_bar.setFormat(f"Total Progress: 0/{len(self.map_queue)}")
+            
             self.log_separator()
             self.log_phase(f'Batch compilation - queued {len(self.map_queue)} maps')
             self.log_separator()
         else:
-            pass
+            self.total_progress_bar.setVisible(False)
 
         self.process_next_map()
 
     def _update_elapsed_display(self):
         if self.is_compiling and self.elapsed_tracker.start_time:
             elapsed = self.elapsed_tracker.get_elapsed()
-            time_with_dots = self.elapsed_tracker.format_with_dots(elapsed, self.dot_cycle)
-            self.ui.last_build_stats_label.setText(f"Compiling: [{time_with_dots}]")
-            self.dot_cycle += 1
             
-            if self.current_est_time > 0:
+            cur_str = self.elapsed_tracker.format_time(elapsed)
+            est_str = self.elapsed_tracker.format_time(self.current_est_time) if getattr(self, 'current_est_time', -1.0) > 0 else "?"
+            
+            addon_prefix = getattr(self, 'current_addon_prefix', '')
+            map_base = getattr(self, 'current_map_base', '')
+            
+            if getattr(self, 'current_est_time', -1.0) > 0:
                 self.progress_bar.setValue(min(int(elapsed), int(self.current_est_time)))
+                self.progress_bar.setFormat(f"[{addon_prefix}] {map_base} | {cur_str} / {est_str}")
             else:
-                # Add a small continuous movement if indeterminate
                 self.progress_bar.setValue((self.progress_bar.value() + 1) % 100)
+                self.progress_bar.setFormat(f"[{addon_prefix}] {map_base} | {cur_str} / ?")
+            
+            if len(self.map_queue) > 1 and self.build_start_time:
+                total_elapsed = time.time() - self.build_start_time
+                total_cur_str = self.elapsed_tracker.format_time(total_elapsed)
+                
+                if getattr(self, 'total_est_time', -1.0) > 0:
+                    self.total_progress_bar.setValue(min(int(total_elapsed), int(self.total_est_time)))
+                    total_est_str = self.elapsed_tracker.format_time(self.total_est_time)
+                    self.total_progress_bar.setFormat(f"Total Progress ({self.current_map_index}/{len(self.map_queue)}): {total_cur_str} / {total_est_str}")
+                else:
+                    self.total_progress_bar.setValue((self.total_progress_bar.value() + 1) % 100)
+                    self.total_progress_bar.setFormat(f"Total Progress ({self.current_map_index}/{len(self.map_queue)}): {total_cur_str} / ?")
 
     def abort_compilation(self):
         self.build_was_aborted = True
@@ -800,6 +993,40 @@ class MapBuilderDialog(QMainWindow):
 
     def on_output_received(self, line: str):
         self.add_log_message(line)
+        
+        if not hasattr(self, 'phase_times'):
+            self.phase_times = {}
+        
+        # Strip HTML tags for reliable parsing
+        clean_line = re.sub(r'<[^>]+>', '', line)
+            
+        t = time.time()
+        
+        if "... Building 'nav'" in clean_line:
+            self.phase_times["nav_start"] = t
+        elif "... Building 'sareverb'" in clean_line or "--> Map build finished" in clean_line:
+            if "nav_start" in self.phase_times and "nav_end" not in self.phase_times:
+                self.phase_times["nav_end"] = t
+            if "-->" not in clean_line:
+                self.phase_times["audio_start"] = t
+                
+        if "--> Map build finished" in clean_line:
+            if "audio_start" in self.phase_times:
+                self.phase_times["audio_end"] = t
+                
+        # vis
+        vis_match = re.search(r'Visibility complete in ([\d\.]+)s', clean_line)
+        if vis_match:
+            self.phase_times["vis"] = float(vis_match.group(1))
+            
+        # light
+        if 'Baked Lighting Total Time' in clean_line:
+            light_match = re.search(r'(\d+)\s*hrs?\s+(\d+)\s*mins?\s+(\d+)\s*seconds?', clean_line)
+            if light_match:
+                self.phase_times["light"] = float(int(light_match.group(1))*3600 + int(light_match.group(2))*60 + int(light_match.group(3)))
+            else:
+                print(f"[DEBUG] Light regex failed on: {repr(clean_line)}")
+                print(f"[DEBUG] Raw line was: {repr(line)}")
 
     def on_compilation_finished(self, exit_code: int, elapsed_time: float):
         self.elapsed_timer.stop()
@@ -809,7 +1036,7 @@ class MapBuilderDialog(QMainWindow):
 
         self.last_build_time = elapsed_time
         time_str = self.format_time(elapsed_time)
-        self.ui.last_build_stats_label.setText(f"Last Build Time: {time_str}")
+        self.ui.last_build_stats_label.setText("")
 
         if self.build_was_aborted:
             self.log_separator()
@@ -828,7 +1055,30 @@ class MapBuilderDialog(QMainWindow):
             print(f"Failed to save LastBuildTime: {e}")
 
         if exit_code == 0:
-            self.build_history.record_time(self.current_build_sig, elapsed_time)
+            map_path = os.path.abspath(self.map_queue[self.current_map_index - 1])
+            settings = getattr(self, 'current_map_settings', self.settings_panel.get_settings())
+            
+            if hasattr(self, 'phase_times'):
+                vis = self.phase_times.get("vis", 0)
+                light = self.phase_times.get("light", 0)
+                nav = self.phase_times.get("nav_end", 0) - self.phase_times.get("nav_start", 0)
+                audio = self.phase_times.get("audio_end", 0) - self.phase_times.get("audio_start", 0)
+                
+                world_base = max(0.1, elapsed_time - vis - light - nav - audio)
+                
+                self.build_history.record_phase_time(map_path, "world", world_base)
+                
+                if "vis" in self.phase_times:
+                    self.build_history.record_phase_time(map_path, "vis", vis)
+                if "nav_start" in self.phase_times and "nav_end" in self.phase_times:
+                    self.build_history.record_phase_time(map_path, "nav", nav)
+                if "audio_start" in self.phase_times and "audio_end" in self.phase_times:
+                    self.build_history.record_phase_time(map_path, "audio", audio)
+                if "light" in self.phase_times:
+                    if not settings.no_light_calculations:
+                        light_key = f"light_Q{settings.lightmap_quality}_{settings.lightmap_max_resolution}_F{int(settings.lightmap_filtering)}_LB{int(settings.vrad3_large_block_size)}"
+                        self.build_history.record_phase_time(map_path, light_key, light)
+
             if self.settings_panel.get_settings().save_build_logs:
                 self._save_auto_log(Path(self.map_queue[self.current_map_index - 1]).stem)
             
@@ -837,6 +1087,11 @@ class MapBuilderDialog(QMainWindow):
             self.build_stats.append(self.current_map_stats)
             map_name = Path(self.map_queue[self.current_map_index - 1]).stem
             self.log_success(f'{map_name} compiled successfully')
+            
+            if len(self.map_queue) > 1:
+                # End of map progress will be updated automatically by _update_elapsed_display
+                # or handled nicely in the next map.
+                pass
         else:
             map_name = Path(self.map_queue[self.current_map_index - 1]).stem
             self.log_error(f'Compilation failed for {map_name}')
@@ -904,19 +1159,19 @@ class MapBuilderDialog(QMainWindow):
             self.dot_cycle = 0
             self.elapsed_timer.start(500)
 
-            self.current_build_sig = self._get_build_signature(mappath_abs, single_settings)
-            self.current_est_time = self.build_history.get_estimated_time(self.current_build_sig)
+            self.current_map_settings = single_settings
+            self.phase_times = {}
+            self.current_est_time = self.build_history.get_estimated_time(mappath_abs, single_settings)
             
-            addon_prefix = Path(addon_dir).name
-            map_base = Path(rel).stem
+            self.current_addon_prefix = Path(addon_dir).name
+            self.current_map_base = Path(rel).stem
+            
             if self.current_est_time > 0:
                 self.progress_bar.setRange(0, int(self.current_est_time))
                 self.progress_bar.setValue(0)
-                self.progress_bar.setFormat(f"[{addon_prefix}] {map_base} | Est: {self.format_time(self.current_est_time)}")
             else:
                 self.progress_bar.setRange(0, 100)
                 self.progress_bar.setValue(0)
-                self.progress_bar.setFormat(f"[{addon_prefix}] {map_base} | Est: Unknown")
 
             if len(self.map_queue) > 1:
                 self.log_phase(f'Compiling ({self.current_map_index}/{len(self.map_queue)}): {rel}')
@@ -981,6 +1236,9 @@ class MapBuilderDialog(QMainWindow):
             launch_cmd = f'"{cs2_exe}" {commands} +map_workshop {addon_name} {map_name}'
 
             self.log_phase(f'Launching map: {launch_cmd}')
+            self.log_info('Closing existing CS2 instances...')
+            subprocess.run(['taskkill', '/F', '/IM', 'cs2.exe'], capture_output=True, check=False)
+            time.sleep(1)
             subprocess.Popen(launch_cmd, shell=True)
         except Exception as e:
             self.log_error(f'Failed to launch map: {e}')
@@ -1068,7 +1326,8 @@ class MapBuilderDialog(QMainWindow):
         if '-disable_workshop_command_filtering' not in commands:
             commands += ' -disable_workshop_command_filtering'
 
-        commands = commands.replace('addon_name', addon_name)
+        # Note: Do not replace 'addon_name' here, as the BuildCubemapsThread
+        # will replace it for each addon in the queue.
 
         # Strip +map_workshop from launch args — the cubemap thread will
         # send map_workshop via netcon after CS2 reaches the main menu.
@@ -1144,6 +1403,9 @@ class MapBuilderDialog(QMainWindow):
         launch_cmd = f'"{cs2_exe}" {commands} +map_workshop {addon_name} {map_name}'
 
         self.log_phase(f'Launching: {launch_cmd}')
+        self.log_info('Closing existing CS2 instances...')
+        subprocess.run(['taskkill', '/F', '/IM', 'cs2.exe'], capture_output=True, check=False)
+        time.sleep(1)
         subprocess.Popen(launch_cmd, shell=True)
 
     def log_phase(self, message: str):
