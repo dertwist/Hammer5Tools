@@ -368,7 +368,8 @@ class PresetManager:
         """Update preset settings"""
         preset = self.get_preset(name)
         if preset:
-            preset.settings = fast_deepcopy(settings)
+            import copy
+            preset.settings = copy.deepcopy(settings)
             self.save_presets()
 
     def get_preset(self, name: str) -> Optional[BuildPreset]:

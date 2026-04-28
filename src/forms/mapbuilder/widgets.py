@@ -500,7 +500,10 @@ class SettingsPanel(QWidget):
 
     def set_settings(self, settings: BuildSettings):
         """Set all settings from BuildSettings object"""
-        settings_dict = {f.name: getattr(settings, f.name) for f in fields(settings)}
+        if isinstance(settings, dict):
+            settings_dict = settings
+        else:
+            settings_dict = {f.name: getattr(settings, f.name) for f in fields(BuildSettings)}
         for group in self.groups.values():
             group.set_values(settings_dict)
 
