@@ -208,7 +208,7 @@ class FolderSettingWidget(SettingWidget):
         self.set_value(str(self.default_value))
 
     def get_value(self) -> str:
-        items = [self.map_list.item(i).text() for i in range(self.map_list.count())]
+        items = [self.map_list.item(i).data(Qt.UserRole) for i in range(self.map_list.count())]
         if not items:
             return self.find_default_vmap()
         return ";".join(items)
@@ -217,53 +217,83 @@ class FolderSettingWidget(SettingWidget):
         self.map_list.clear()
         default_vmap = self.find_default_vmap()
         default_color = QColor("#65666D")
+        
         if value:
             parts = [p for p in value.split(";") if p]
             if parts:
                 for part in parts:
-                    item = self.map_list.addItem(part)
-                    # Highlight default vmap with gray color
+                    display_text = self._get_display_text(part)
+                    item = self.map_list.addItem(display_text)
+                    last_item = self.map_list.item(self.map_list.count() - 1)
+                    last_item.setData(Qt.UserRole, part)
+                    
                     if part == default_vmap:
-                        self.map_list.item(self.map_list.count() - 1).setForeground(default_color)
+                        last_item.setForeground(default_color)
             else:
-                item = self.map_list.addItem(default_vmap)
-                self.map_list.item(0).setForeground(default_color)
+                self._add_default_vmap_item(default_vmap, default_color)
         else:
-            item = self.map_list.addItem(default_vmap)
-            self.map_list.item(0).setForeground(default_color)
+            self._add_default_vmap_item(default_vmap, default_color)
+            
         self.valueChanged.emit(self.get_value())
 
+    def _add_default_vmap_item(self, path, color):
+        display_text = self._get_display_text(path)
+        self.map_list.addItem(display_text)
+        item = self.map_list.item(0)
+        item.setData(Qt.UserRole, path)
+        item.setForeground(color)
+
+    def _get_display_text(self, absolute_path: str) -> str:
+        """Convert absolute path to [Addon] maps/map.vmap format"""
+        try:
+            from pathlib import Path
+            p = Path(absolute_path)
+            # Find 'csgo_addons' in the path to extract addon name
+            parts = p.parts
+            if 'csgo_addons' in parts:
+                idx = parts.index('csgo_addons')
+                if idx + 1 < len(parts):
+                    addon_name = parts[idx + 1]
+                    # Get relative path from addon root
+                    try:
+                        rel_path = p.relative_to(Path(*parts[:idx + 2]))
+                        return f"[{addon_name}] {rel_path.as_posix()}"
+                    except Exception:
+                        pass
+            return p.name
+        except Exception:
+            return absolute_path
+
     def find_default_vmap(self):
-        return os.path.relpath(os.path.join(get_addon_dir(), 'maps', f'{get_addon_name()}.vmap'), get_addon_dir())
+        return os.path.join(get_addon_dir(), 'maps', f'{get_addon_name()}.vmap')
 
     def browse_maps(self):
+        from pathlib import Path
         addon_dir = get_addon_dir()
-        maps_dir = os.path.join(addon_dir, 'maps')
-
-        # Ensure maps directory exists
-        os.makedirs(maps_dir, exist_ok=True)
+        root_addons_dir = str(Path(addon_dir).parent) if 'csgo_addons' in str(addon_dir) else addon_dir
 
         files, _ = QFileDialog.getOpenFileNames(
             self,
             "Select Vmap files",
-            maps_dir,
+            root_addons_dir,
             "Vmap files (*.vmap);;All files (*)"
         )
 
         if not files:
             return
 
-        # Validate and add unique relative paths
-        existing = {self.map_list.item(i).text() for i in range(self.map_list.count())}
+        # Validate and add unique absolute paths
+        existing = {self.map_list.item(i).data(Qt.UserRole) for i in range(self.map_list.count())}
         for f in files:
             if not f.endswith('.vmap'):
                 continue
-            rel_path = os.path.relpath(f, addon_dir)
-            if rel_path.startswith('..'):
-                continue
-            if rel_path not in existing:
-                self.map_list.addItem(rel_path)
-                existing.add(rel_path)
+            abs_path = os.path.abspath(f)
+            if abs_path not in existing:
+                display_text = self._get_display_text(abs_path)
+                item_idx = self.map_list.count()
+                self.map_list.addItem(display_text)
+                self.map_list.item(item_idx).setData(Qt.UserRole, abs_path)
+                existing.add(abs_path)
 
         self.valueChanged.emit(self.get_value())
 
@@ -379,7 +409,7 @@ class SettingsPanel(QWidget):
 
     # Define which fields go in which groups
     FIELD_GROUPS = {
-        "Common": ["mappath", "threads"],
+        "Common": ["mappath", "threads", "save_build_logs"],
         "World": ["build_world", "entities_only",
                   "skip_aux_files", "no_settle",
                   "tile_mesh_base_geometry"],
