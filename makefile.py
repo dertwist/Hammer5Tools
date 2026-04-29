@@ -30,6 +30,67 @@ dotnet_dlls = [
     ("TinyEXR.NET.dll", "src\\external")
 ]
 
+# Create a runtimeconfig.json for the bundled .NET runtime
+def generate_runtime_config(target_dir):
+    config = {
+        "runtimeOptions": {
+            "tfm": "net9.0",
+            "frameworks": [
+                {
+                    "name": "Microsoft.WindowsDesktop.App",
+                    "version": "9.0.0"
+                },
+                {
+                    "name": "Microsoft.NETCore.App",
+                    "version": "9.0.0"
+                }
+            ]
+        }
+    }
+    import json
+    os.makedirs(target_dir, exist_ok=True)
+    with open(os.path.join(target_dir, 'Hammer5Tools.runtimeconfig.json'), 'w') as f:
+        json.dump(config, f, indent=2)
+
+def get_dotnet_runtime_data():
+    """Finds .NET 9.0 runtime files on the system to bundle them."""
+    import glob
+    dotnet_root = os.environ.get("DOTNET_ROOT", r"C:\Program Files\dotnet")
+    if not os.path.exists(dotnet_root):
+        return []
+
+    shared_path = os.path.join(dotnet_root, "shared")
+    results = []
+
+    # Find latest 9.0 versions
+    for framework in ["Microsoft.NETCore.App", "Microsoft.WindowsDesktop.App"]:
+        fw_path = os.path.join(shared_path, framework)
+        if os.path.exists(fw_path):
+            versions = [v for v in os.listdir(fw_path) if v.startswith("9.0")]
+            if versions:
+                latest = sorted(versions, key=lambda x: [int(i) for i in x.split('.')])[-1]
+                src = os.path.join(fw_path, latest)
+                dst = f"dotnet/shared/{framework}/{latest}"
+                results.append(f"--add-data={src};{dst}")
+
+    # Find host fxr
+    host_fxr_path = os.path.join(dotnet_root, "host", "fxr")
+    if os.path.exists(host_fxr_path):
+        versions = os.listdir(host_fxr_path)
+        if versions:
+            latest = sorted(versions, key=lambda x: [int(i) for i in x.split('.')])[-1]
+            src = os.path.join(host_fxr_path, latest)
+            dst = f"dotnet/host/fxr/{latest}"
+            results.append(f"--add-data={src};{dst}")
+
+    # Main host files
+    for dll in ["hostfxr.dll", "hostpolicy.dll"]:
+        dll_path = os.path.join(dotnet_root, dll)
+        if os.path.exists(dll_path):
+            results.append(f"--add-data={dll_path};dotnet")
+            
+    return results
+
 
 # Path to your .NET DLLs
 
@@ -201,8 +262,15 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--exclude-module=tabulate',
         external,
         *( [f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls] if channel == 'stable' else [] ),
+        *( get_dotnet_runtime_data() if channel == 'stable' else [] ),
+        '--add-data=src/external/dotnet;dotnet/' if os.path.exists('src/external/dotnet') else '',
         'src/main.py'
     ]
+    pyinstaller_cmd = [arg for arg in pyinstaller_cmd if arg]
+    
+    # Ensure runtime config exists for bundling
+    if channel == 'stable':
+        generate_runtime_config(os.path.join(cur_dir, 'src', 'external', 'dotnet'))
 
     if tables:
         lextab_path, yacctab_path = tables
