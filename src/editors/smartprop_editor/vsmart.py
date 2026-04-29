@@ -360,6 +360,7 @@ class VsmartSave:
             var_class = var_key_value[1]
             var_id = var_key_value[2]["m_nElementID"]
             var_hide_expression = var_key_value[2]["m_HideExpression"]
+            var_read_only_expression = var_key_value[2].get("m_ReadOnlyExpression")
 
             var_dict = {
                 "_class": variable_prefix + var_class,
@@ -369,9 +370,9 @@ class VsmartSave:
                 "m_nElementID": var_id
             }
             if var_key_value[4] in (None, ""):
-                var_dict.pop("m_ParameterName", None)
+                var_dict.pop("m_DisplayName", None)
             else:
-                var_dict.update({"m_ParameterName": var_key_value[4]})
+                var_dict.update({"m_DisplayName": var_key_value[4]})
                 
             import re
             is_category = False
@@ -383,7 +384,7 @@ class VsmartSave:
                     
             if is_category:
                 if is_start:
-                    match = re.search(r"----====(.*)===------?", var_key_value[4] if var_key_value[4] else "")
+                    match = re.search(r"---------- (.*) ----------", var_key_value[4] if var_key_value[4] else "")
                     cat_name = match.group(1).strip() if match else "Category name"
                     var_dict["m_Hammer5ToolsCategoryName"] = cat_name
                 else:
@@ -403,6 +404,8 @@ class VsmartSave:
                 var_dict.update({"m_sModelName": var_model})
             if var_hide_expression is not None:
                 var_dict.update({"m_HideExpression": var_hide_expression})
+            if var_read_only_expression is not None:
+                var_dict.update({"m_ReadOnlyExpression": var_read_only_expression})
             variables_.append(var_dict)
         return variables_
 
