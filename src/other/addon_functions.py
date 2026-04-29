@@ -9,24 +9,30 @@ from src.widgets import exception_handler
 
 
 @exception_handler
-def delete_addon(ui, cs2_path, get_addon_name):
+def delete_addon(ui=None):
+    cs2_path = get_cs2_path()
     if cs2_path is None:
         QMessageBox.warning(None, "CS2 Path Not Set", 
                           "CS2 installation path is not set. Please set it in Settings > General > CS2 Path.")
-        return
+        return False
         
     addon_name = get_addon_name()
     if not addon_name:
         QMessageBox.warning(None, "No Addon Selected", 
                           "No addon is selected for deletion.")
-        return
+        return False
         
     delete_paths = [
         os.path.join(cs2_path, 'content', 'csgo_addons', addon_name),
         os.path.join(cs2_path, 'game', 'csgo_addons', addon_name)
     ]
     
-    reply = QMessageBox.question(None, 'Remove Addon', f"Are you sure you want to permanently delete the addon '{addon_name}'? This action cannot be undone.", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+    reply = QMessageBox.question(None, 'Remove Addon', 
+                               f"Are you sure you want to permanently delete the addon '{addon_name}'?\n"
+                               "This will delete BOTH content and game folders!\n\n"
+                               "This action cannot be undone.", 
+                               QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+    
     if reply == QMessageBox.Yes:
         try:
             for path in delete_paths:
@@ -35,15 +41,22 @@ def delete_addon(ui, cs2_path, get_addon_name):
                     print(f'Successfully deleted: {path}')
                 else:
                     print(f'Path does not exist: {path}')
-            # Remove the item from ComboBoxSelectAddon
-            index = ui.ComboBoxSelectAddon.findText(addon_name)
-            if index != -1:
-                ui.ComboBoxSelectAddon.removeItem(index)
+            
+            # If UI is provided, we can try to update it directly, 
+            # though usually the caller handles the refresh.
+            if ui and hasattr(ui, 'ComboBoxSelectAddon'):
+                index = ui.ComboBoxSelectAddon.findText(addon_name)
+                if index != -1:
+                    ui.ComboBoxSelectAddon.removeItem(index)
+            
             QMessageBox.information(None, 'Addon Deleted', f"The addon '{addon_name}' has been successfully deleted.")
+            return True
         except Exception as e:
             QMessageBox.critical(None, 'Deletion Failed', f"Failed to delete the addon '{addon_name}'. You may need administrative permissions.\nError: {str(e)}")
+            return False
     else:
         print('Addon deletion cancelled')
+        return False
 
 def assemble_commands(commands:str, addon_name):
     return commands.replace('addon_name', addon_name)
