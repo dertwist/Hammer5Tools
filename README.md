@@ -95,4 +95,4 @@ The project utilizes **Velopack** for delta-based updates. The GitHub Actions pi
 Have questions? Found a bug? Or just want to show off what you've built? Join the **[Discord Server](https://discord.com/invite/DvCXEyhssd)**. A community of mappers and developers is available to help out.
 
 ---
-*Created with ❤️ by [Twist](https://github.com/dertwist) and the community.*
+*Created by [Twist](https://github.com/dertwist) and the community.*
