@@ -57,7 +57,24 @@ class DotNetInterop:
 
         try:
             from pythonnet import load
-            load("coreclr")
+            
+            # Check for bundled runtime in frozen (PyInstaller) state
+            if getattr(sys, 'frozen', False):
+                bundled_dotnet = os.path.join(sys._MEIPASS, 'dotnet')
+                if os.path.exists(bundled_dotnet):
+                    # Set DOTNET_ROOT to help clr_loader find the bundled runtime
+                    os.environ["DOTNET_ROOT"] = bundled_dotnet
+                    # Point to the runtime config if it exists
+                    runtime_config = os.path.join(bundled_dotnet, 'Hammer5Tools.runtimeconfig.json')
+                    if os.path.exists(runtime_config):
+                        load("coreclr", runtime_config=runtime_config)
+                    else:
+                        load("coreclr")
+                else:
+                    load("coreclr")
+            else:
+                load("coreclr")
+                
             import clr
             self._clr = clr
             self._initialized = True
@@ -327,6 +344,12 @@ class DotNetRuntimeChecker:
 
     def check_runtime(self, show_dialog: bool = True) -> bool:
         """Check if compatible .NET runtime is installed."""
+        # 1. Check for bundled runtime first (in frozen state)
+        if getattr(sys, 'frozen', False):
+            bundled_dotnet = os.path.join(sys._MEIPASS, 'dotnet')
+            if os.path.exists(bundled_dotnet):
+                return True
+
         try:
             result = subprocess.run(
                 ["dotnet", "--list-runtimes"],
