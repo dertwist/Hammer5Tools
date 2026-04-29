@@ -521,11 +521,7 @@ class Widget(QMainWindow):
         if dialog.exec() == QDialog.Accepted: self.refresh_addon_combobox()
 
     def delete_addon(self):
-        addon = get_addon_name()
-        if not addon: return
-        msg = QMessageBox.question(self, "Delete Addon", f"Are you sure you want to delete addon '{addon}'?\nThis will delete BOTH content and game folders!", QMessageBox.Yes | QMessageBox.No)
-        if msg == QMessageBox.Yes:
-            delete_addon(addon)
+        if delete_addon(self.ui):
             self.refresh_addon_combobox()
 
     def open_export_and_import_addon(self):
