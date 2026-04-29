@@ -171,6 +171,8 @@ class SmartPropEditorVariableViewport(QWidget):
         self._document.undo_stack.push(
             VariablesSnapshotCommand(self._document, old_state, new_state, "Duplicate Variable")
         )
+        self._document._modified = True
+        self._document._edited.emit()
         self._sync_committed_state()
 
     def add_new_variable(self):
@@ -208,6 +210,8 @@ class SmartPropEditorVariableViewport(QWidget):
         self._document.undo_stack.push(
             VariablesSnapshotCommand(self._document, old_state, new_state, "Add Variable")
         )
+        self._document._modified = True
+        self._document._edited.emit()
         self._sync_committed_state()
 
     def add_category(self, name, var_visible_in_editor, var_display_name, index=None, expanded=True):
@@ -253,7 +257,7 @@ class SmartPropEditorVariableViewport(QWidget):
         var_visible = True
         
         # Add Start
-        self.add_category(start_name, var_visible, f" ----===={display_name}===------")
+        self.add_category(start_name, var_visible, f"---------- {display_name} ----------")
         # Add End
         end_name = f"hammer5tools_category_{unique_hash}_end"
         self.add_category(end_name, False, "                                             ")
@@ -378,7 +382,8 @@ class SmartPropEditorVariableViewport(QWidget):
                     'min': variable.get('m_flParamaterMinValue'),
                     'max': variable.get('m_flParamaterMaxValue'),
                     'model': variable.get('m_sModelName'),
-                    'm_HideExpression': variable.get('m_HideExpression')
+                    'm_HideExpression': variable.get('m_HideExpression'),
+                    'm_ReadOnlyExpression': variable.get('m_ReadOnlyExpression')
                 }
 
                 self.element_id_generator.update_value(var_value, force=True)
@@ -395,11 +400,13 @@ class SmartPropEditorVariableViewport(QWidget):
                     cat_name = variable.get('m_Hammer5ToolsCategoryName')
                     if cat_name is not None:
                         if is_start:
-                            display_name = f" ----===={cat_name}===------"
+                            display_name = f"---------- {cat_name} ----------"
                         else:
                             display_name = "                                             "
                     else:
-                        display_name = variable.get('m_ParameterName')
+                        display_name = variable.get('m_sCommentary')
+                        if display_name is None:
+                            display_name = variable.get('m_ParameterName')
                         
                     self.add_category(
                         name=var_name,
@@ -407,12 +414,17 @@ class SmartPropEditorVariableViewport(QWidget):
                         var_display_name=display_name
                     )
                 else:
+                    display_name = variable.get('m_sCommentary')
+                    if display_name is None:
+                        display_name = variable.get('m_DisplayName')
+                    if display_name is None:
+                        display_name = variable.get('m_ParameterName')
                     self.add_variable(
                         name=var_name,
                         var_class=var_class,
                         var_value=var_value,
                         var_visible_in_editor=var_visible,
-                        var_display_name=variable.get('m_ParameterName')
+                        var_display_name=display_name
                     )
                 pasted_any = True
 
@@ -517,6 +529,8 @@ class SmartPropEditorVariableViewport(QWidget):
                     self._document, self._var_committed_state, new_state, description
                 )
             )
+            self._document._modified = True
+            self._document._edited.emit()
 
             if old_name and new_name:
                 self._document.rename_variable_references(old_name, new_name)
@@ -545,6 +559,8 @@ class SmartPropEditorVariableViewport(QWidget):
         self._document.undo_stack.push(
             VariablesSnapshotCommand(self._document, old_state, new_state, "Delete Variable")
         )
+        self._document._modified = True
+        self._document._edited.emit()
         self._sync_committed_state()
         CompletionUtils.invalidate_cache(self.ui.variables_scrollArea)
 

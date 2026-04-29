@@ -123,10 +123,10 @@ _KV3_COMPLETIONS = sorted({
     "m_bExposeAsParameter", "m_ParameterName",
     "m_flParamaterMinValue", "m_flParamaterMaxValue",
     "m_nParamaterMinValue", "m_nParamaterMaxValue",
-    "m_sModelName", "m_HideExpression",
+    "m_sModelName", "m_HideExpression", "m_ReadOnlyExpression",
     "m_Choices", "m_Options", "m_Name", "m_DefaultOption",
     "m_VariableValues", "m_TargetName", "m_DataType", "m_Value",
-    "m_Expression", "m_Comment", "m_StateName",
+    "m_Expression", "m_Comment", "m_StateName", "m_DisplayName",
     "m_nContentVersion", "generic_data_type", "editor_info",
     "m_sReferenceObjectID", "m_nReferenceID",
     "m_vRandomPositionMax", "m_vRandomPositionMin",
@@ -669,7 +669,7 @@ class ManualEditor(QWidget):
                 if widget.var_value.get('m_nElementID') is not None:
                     var_dict["m_nElementID"] = widget.var_value['m_nElementID']
                 if widget.var_display_name:
-                    var_dict["m_ParameterName"] = widget.var_display_name
+                    var_dict["m_DisplayName"] = widget.var_display_name
                 if widget.var_value.get('min') is not None:
                     var_dict["m_flParamaterMinValue"] = widget.var_value['min']
                 if widget.var_value.get('max') is not None:
@@ -678,6 +678,8 @@ class ManualEditor(QWidget):
                     var_dict["m_sModelName"] = widget.var_value['model']
                 if widget.var_value.get('m_HideExpression') is not None:
                     var_dict["m_HideExpression"] = widget.var_value['m_HideExpression']
+                if widget.var_value.get('m_ReadOnlyExpression') is not None:
+                    var_dict["m_ReadOnlyExpression"] = widget.var_value['m_ReadOnlyExpression']
                 variables.append(var_dict)
 
         data = {"m_Variables": variables}
@@ -815,13 +817,21 @@ class ManualEditor(QWidget):
                 'model': v.get('m_sModelName'),
                 'm_nElementID': v.get('m_nElementID'),
                 'm_HideExpression': v.get('m_HideExpression'),
+                'm_ReadOnlyExpression': v.get('m_ReadOnlyExpression'),
             }
+            # Commentary can be in m_sCommentary, m_DisplayName, or m_ParameterName
+            display_name = v.get('m_sCommentary')
+            if display_name is None:
+                display_name = v.get('m_DisplayName')
+            if display_name is None:
+                display_name = v.get('m_ParameterName')
+
             state.append({
                 'name': v.get('m_VariableName', ''),
                 'var_class': var_class,
                 'var_value': var_value,
                 'var_visible_in_editor': v.get('m_bExposeAsParameter', False),
-                'var_display_name': v.get('m_ParameterName'),
+                'var_display_name': display_name,
                 'expanded': False,
             })
             
