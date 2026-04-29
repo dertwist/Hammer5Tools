@@ -1124,11 +1124,13 @@ class SmartPropDocument(QMainWindow):
                 
                 if is_category and cat_name is not None:
                     if is_start:
-                        var_display_name = f" ----===={cat_name}===------"
+                        var_display_name = f"---------- {cat_name} ----------"
                     else:
                         var_display_name = "                                             "
                 else:
                     var_display_name = item.get("m_DisplayName", None)
+                    if var_display_name is None:
+                        var_display_name = item.get("m_sCommentary", None)
                     if var_display_name is None:
                         var_display_name = item.get("m_ParameterName", None)
                         
@@ -1137,7 +1139,8 @@ class SmartPropDocument(QMainWindow):
                     "default": item.get("m_DefaultValue", None),
                     "model": item.get("m_sModelName", None),
                     "m_nElementID": item.get("m_nElementID", None),
-                    'm_HideExpression': item.get("m_HideExpression", None)
+                    'm_HideExpression': item.get("m_HideExpression", None),
+                    'm_ReadOnlyExpression': item.get("m_ReadOnlyExpression", None)
                 }
                 if var_class == "Float":
                     var_value.update({
@@ -1400,11 +1403,15 @@ class SmartPropDocument(QMainWindow):
                         cat_name = item.get("m_Hammer5ToolsCategoryName")
                         if cat_name is not None:
                             if is_start:
-                                var_display_name = f" ----===={cat_name}===------"
+                                var_display_name = f"---------- {cat_name} ----------"
                             else:
                                 var_display_name = "                                             "
                         else:
-                            var_display_name = item.get("m_ParameterName", None)
+                            var_display_name = item.get("m_DisplayName", None)
+                            if var_display_name is None:
+                                var_display_name = item.get("m_sCommentary", None)
+                            if var_display_name is None:
+                                var_display_name = item.get("m_ParameterName", None)
 
                         # Still register element ID
                         element_id = item.get("m_nElementID", None)
@@ -1419,13 +1426,16 @@ class SmartPropDocument(QMainWindow):
                     else:
                         var_display_name = item.get("m_DisplayName", None)
                         if var_display_name is None:
+                            var_display_name = item.get("m_sCommentary", None)
+                        if var_display_name is None:
                             var_display_name = item.get("m_ParameterName", None)
 
                         var_value = {
                             "default": item.get("m_DefaultValue", None),
                             "model": item.get("m_sModelName", None),
                             "m_nElementID": item.get("m_nElementID", None),
-                            'm_HideExpression': item.get("m_HideExpression", None)
+                            'm_HideExpression': item.get("m_HideExpression", None),
+                            'm_ReadOnlyExpression': item.get("m_ReadOnlyExpression", None)
                         }
                         element_id = var_value['m_nElementID']
                         if element_id is not None:

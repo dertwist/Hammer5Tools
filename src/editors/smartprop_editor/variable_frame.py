@@ -1,7 +1,7 @@
 from src.common import JsonToKv3
 from src.editors.smartprop_editor.ui_variable_frame import Ui_Form
-from PySide6.QtWidgets import QWidget, QMenu, QApplication
-from PySide6.QtCore import Qt, Signal, QEvent
+from PySide6.QtWidgets import QWidget, QMenu, QApplication, QHBoxLayout, QLabel, QFrame
+from PySide6.QtCore import Qt, Signal, QEvent, QSize
 from PySide6.QtGui import QCursor, QAction
 from src.property.methods import PropertyMethods
 from src.widgets.element_id import *
@@ -36,6 +36,7 @@ class VariableFrame(PropertyMethods, QWidget):
         self.hide_expression = var_value.get('m_HideExpression')
         self.var_visible_in_editor = var_visible_in_editor
         self.var_display_name = var_display_name
+        self.read_only_expression = var_value.get('m_ReadOnlyExpression')
         self.element_id_generator = element_id_generator
 
         # Keep the full hide expression as-is (no extraction needed)
@@ -46,7 +47,8 @@ class VariableFrame(PropertyMethods, QWidget):
             'max': self.var_max,
             'model': self.var_model,
             'm_nElementID': get_ElementID(var_value),
-            'm_HideExpression': self.hide_expression
+            'm_HideExpression': self.hide_expression,
+            'm_ReadOnlyExpression': self.read_only_expression
         }
 
         # ID Handling
@@ -61,10 +63,10 @@ class VariableFrame(PropertyMethods, QWidget):
         # Instead of connecting textChanged signal to update_self, we install an event filter
         self.ui.variable_name.setText(name if name is not None else "")
         self.ui.varialbe_display_name.setText(var_display_name if var_display_name is not None else "")
+        self.ui.label_2.setText("Display name")
+        self.ui.varialbe_display_name.textChanged.connect(self.update_self)
         self.ui.variable_class.setText(var_class if var_class is not None else "")
         self.ui.visible_in_editor.setChecked(self.var_visible_in_editor)
-        self.ui.visible_in_editor.clicked.connect(self.update_self)
-        self.ui.varialbe_display_name.textChanged.connect(self.update_self)
         # Install event filter on variable_name to enforce uniqueness on focus out
         self.ui.variable_name.installEventFilter(self)
 
@@ -99,6 +101,39 @@ class VariableFrame(PropertyMethods, QWidget):
 
         #Expression text field
         self.ui.hide_expression_frame.layout().addWidget(self.hide_expression_input)
+
+        # Setup the Read Only Expression input
+        self.read_only_expression_input = CompletingPlainTextEdit()
+        self.read_only_expression_input.completion_tail = ''
+        self.read_only_expression_input.setPlaceholderText("Read only expression (e.g., variable_name == true)")
+        if self.read_only_expression:
+            self.read_only_expression_input.setPlainText(str(self.read_only_expression))
+        self.read_only_expression_input.textChanged.connect(self.on_read_only_expression_changed)
+
+        # Setup Read Only Expression frame to match the style of hide_expression_frame
+        self.read_only_frame = QFrame(self.ui.frame_layout)
+        self.read_only_frame.setMaximumSize(QSize(16777215, 32))
+        self.read_only_frame.setStyleSheet(self.ui.hide_expression_frame.styleSheet())
+        self.read_only_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.read_only_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.read_only_frame.setLineWidth(0)
+        
+        self.read_only_layout = QHBoxLayout(self.read_only_frame)
+        self.read_only_layout.setSpacing(16)
+        self.read_only_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.read_only_label = QLabel("Read only exp")
+        self.read_only_label.setStyleSheet("border:0px; background-color: rgba(255, 255, 255, 0); font: 8pt 'Segoe UI';")
+        self.read_only_label.setFixedWidth(80)
+        self.read_only_layout.addWidget(self.read_only_label)
+
+        # Expression editor for Read Only
+        self.read_only_expression_editor = ExpressionEditor(self.read_only_expression_input, self.widget_list)
+        self.read_only_layout.addWidget(self.read_only_expression_editor)
+        self.read_only_layout.addWidget(self.read_only_expression_input)
+
+        idx = self.ui.layout.indexOf(self.ui.hide_expression_frame)
+        self.ui.layout.insertWidget(idx + 1, self.read_only_frame)
 
         self.show_child()
         self.ui.show_child.clicked.connect(self.show_child)
@@ -244,6 +279,7 @@ class VariableFrame(PropertyMethods, QWidget):
         self.var_max = self.var_value['max']
         self.var_model = self.var_value['model']
         self.hide_expression = self.var_value['m_HideExpression']
+        self.read_only_expression = self.var_value.get('m_ReadOnlyExpression')
         self.ui.variable_class.setText(var_class)
 
         self._initialize_var_instance(var_class)
@@ -273,6 +309,13 @@ class VariableFrame(PropertyMethods, QWidget):
         # Update completer with current variable names and types
         self._setup_hide_expression_completer()
         # on_changed emits content_changed, so no extra emit needed here
+        self.on_changed()
+
+    def on_read_only_expression_changed(self):
+        """Handle changes to the read only expression input field."""
+        self.read_only_expression = self.read_only_expression_input.toPlainText().strip()
+        if not self.read_only_expression:
+            self.read_only_expression = None
         self.on_changed()
 
     def show_child(self):
@@ -313,7 +356,8 @@ class VariableFrame(PropertyMethods, QWidget):
                 'max': None,
                 'model': None,
                 'm_nElementID': self.element_id,
-                'm_HideExpression': self.hide_expression if self.hide_expression is not None else None
+                'm_HideExpression': self.hide_expression if self.hide_expression is not None else None,
+                'm_ReadOnlyExpression': self.read_only_expression if self.read_only_expression is not None else None
             }
         else:
             self.var_value = {
@@ -322,7 +366,8 @@ class VariableFrame(PropertyMethods, QWidget):
                 'max': self.var_max,
                 'model': self.var_model,
                 'm_nElementID': self.element_id,
-                'm_HideExpression': self.hide_expression if self.hide_expression is not None else None
+                'm_HideExpression': self.hide_expression if self.hide_expression is not None else None,
+                'm_ReadOnlyExpression': self.read_only_expression if self.read_only_expression is not None else None
             }
 
 
@@ -353,6 +398,16 @@ class VariableFrame(PropertyMethods, QWidget):
     def init_ui(self):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
+
+        # Initialize UI states
+        self.ui.visible_in_editor.setChecked(self.var_visible_in_editor)
+        self.ui.varialbe_display_name.setText(self.var_display_name if self.var_display_name else "")
+        self.ui.variable_name.setText(self.name)
+
+        # Connect signals
+        self.ui.visible_in_editor.clicked.connect(self.update_self)
+        self.ui.varialbe_display_name.textChanged.connect(self.update_self)
+        self.ui.variable_name.installEventFilter(self)
 
     def eventFilter(self, obj, event):
         """Enforce unique name when the variable name editing line loses focus.
@@ -405,8 +460,8 @@ class VariableFrame(PropertyMethods, QWidget):
             clipboard = QApplication.clipboard()
             m_variable = {'_class': f'CSmartPropVariable_{self.var_class}', 'm_VariableName': self.name,
                           'm_bExposeAsParameter': self.var_visible_in_editor}
-            if self.var_display_name is not None:
-                m_variable.update({'m_ParameterName': self.var_display_name})
+            if self.var_display_name:
+                m_variable.update({'m_DisplayName': self.var_display_name})
             if self.var_default is not None:
                 m_variable.update({'m_DefaultValue': self.var_default})
             if self.var_min is not None:
@@ -417,6 +472,8 @@ class VariableFrame(PropertyMethods, QWidget):
                 m_variable.update({'m_sModelName': self.var_model})
             if self.hide_expression is not None:
                 m_variable.update({'m_HideExpression': self.hide_expression})
+            if self.read_only_expression is not None:
+                m_variable.update({'m_ReadOnlyExpression': self.read_only_expression})
                 
             import re
             is_category = False
@@ -451,7 +508,7 @@ class CategoryFrame(VariableFrame):
         self.is_end = name.endswith('_end')
 
         # Category is always a Bool class internally for Valve to be happy, but we treat it specially
-        super().__init__(name=name, var_class='Bool', var_value={'default': None},
+        super().__init__(name=name, var_class='Bool', var_value={'default': None, 'm_ReadOnlyExpression': 'true'},
                          var_visible_in_editor=var_visible_in_editor,
                          var_display_name=var_display_name, widget_list=widget_list,
                          element_id_generator=element_id_generator)
@@ -516,7 +573,7 @@ class CategoryFrame(VariableFrame):
         # Extract "Name" from " ----====Name====----"
         if full_display_name:
             import re
-            match = re.search(r" ----====(.*)===------", full_display_name)
+            match = re.search(r"---------- (.*) ----------", full_display_name)
             if match:
                 return match.group(1).strip()
             return full_display_name
@@ -524,7 +581,7 @@ class CategoryFrame(VariableFrame):
 
     def _format_display_name(self, base_display_name):
         if self.is_start:
-            return f" ----===={base_display_name}===------"
+            return f"---------- {base_display_name} ----------"
         else:
             return "                                             "
 

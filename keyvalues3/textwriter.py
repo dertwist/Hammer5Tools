@@ -59,7 +59,8 @@ def encode(kv3file: kv3.KV3File | kv3.ValueType, options=KV3EncoderOptions()) ->
             case enum.IntEnum():
                 return str(value.value) if options.serialize_enums_as_ints else value.name
             case str():
-                return f'"{value}"'
+                escaped_value = value.replace('\\', '\\\\').replace('"', '\\"')
+                return f'"{escaped_value}"'
             case list():
                 if nested_list or force_single_line:
                     # When force_single_line is True, join items in one line.
