@@ -1,2 +1,2 @@
 ## 🔧 Main App
-* Fixed path error when deliting addon.
+* Added rename asset action.

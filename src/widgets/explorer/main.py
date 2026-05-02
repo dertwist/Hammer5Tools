@@ -3,7 +3,7 @@ import re
 import shutil
 import winreg
 from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QMenu, QMessageBox, \
-    QToolButton, QDialog, QListWidgetItem
+    QToolButton, QDialog, QListWidgetItem, QInputDialog, QLineEdit
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer
@@ -541,6 +541,16 @@ class Explorer(QMainWindow):
         asset_manager_action.triggered.connect(lambda: self.open_asset_manager(index))
         menu.addAction(asset_manager_action)
 
+        rename_asset_action = QAction("Rename Asset", self)
+        rename_asset_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        rename_asset_action.triggered.connect(lambda: self.open_asset_renamer(index))
+        menu.addAction(rename_asset_action)
+
+        export_action = QAction("Export Asset", self)
+        export_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        export_action.triggered.connect(lambda: self.open_asset_exporter(index))
+        menu.addAction(export_action)
+
         delete_folder_action = QAction("Delete Folder", self)
         delete_folder_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         delete_folder_action.triggered.connect(lambda: self.delete_item(index))
@@ -642,6 +652,11 @@ class Explorer(QMainWindow):
         asset_manager_action.setIcon(QIcon(":/icons/folder_open.svg"))
         asset_manager_action.triggered.connect(lambda: self.open_asset_manager(index))
         menu.addAction(asset_manager_action)
+
+        rename_asset_action = QAction("Rename Asset", self)
+        rename_asset_action.setIcon(QIcon(":/icons/edit_document_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        rename_asset_action.triggered.connect(lambda: self.open_asset_renamer(index))
+        menu.addAction(rename_asset_action)
 
         export_action = QAction("Export Asset", self)
         export_action.setIcon(QIcon(":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
@@ -816,6 +831,33 @@ class Explorer(QMainWindow):
         self.asset_exporter_window = AssetExporterWidget()
         self.asset_exporter_window.select_file(selected_paths)
         self.asset_exporter_window.show()
+
+    def open_asset_renamer(self, index):
+        if not index.isValid():
+            return
+
+        source_index = self.filter_proxy_model.mapToSource(index)
+        old_path = self.model.filePath(source_index)
+        old_name = os.path.basename(old_path)
+
+        new_name, ok = QInputDialog.getText(self, "Rename Asset", "Enter new name:", QLineEdit.Normal, old_name)
+        if ok and new_name and new_name != old_name:
+            new_path = os.path.join(os.path.dirname(old_path), new_name)
+            if os.path.exists(new_path):
+                QMessageBox.warning(self, "Rename Error", f"The file '{new_name}' already exists.")
+                return
+
+            from src.forms.asset_manager.move_worker import MoveWorker
+            # Explorer uses self.rootpath as the addon content path
+            self.worker = MoveWorker([(old_path, new_path)], self.rootpath)
+            self.worker.log.connect(lambda msg: debug(f"[Rename] {msg}"))
+            self.worker.finished_move.connect(self.on_rename_finished)
+
+            # Disable UI or show progress if needed, but for now just start
+            self.worker.start()
+
+    def on_rename_finished(self):
+        QMessageBox.information(self, "Success", "Asset renamed and references updated successfully.")
 
     def copy_audio_path(self, index, to_clipboard):
         file_path = self.model.filePath(index)
