@@ -35,6 +35,8 @@ pycparser
 
 ply
 Pillow
+numpy
+pyopencl
 
 matplotlib
 pynvml
@@ -45,4 +47,4 @@ lxml
 inkex
 uharfbuzz
 fontTools
-velopack
+velopack
