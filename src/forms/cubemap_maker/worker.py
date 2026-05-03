@@ -132,46 +132,48 @@ class CaptureWorker(QThread):
             time.sleep(0.5)
             
             # Build command list to avoid semicolon issues in netcon
+            t = 0.1 # Tick interval
             cmds = [
                 "sv_cheats 1", "noclip 1", "r_drawviewmodel 0", "cl_drawhud 0", "r_drawpanorama 0", "cl_firstperson_legs 0",
                 "fov_cs_debug 106.260205", "ent_fire cmd kill", "ent_create point_servercommand {targetname cmd}",
                 "screenshot_subdir screenshots\\\\cubemap",
                 'ent_fire worldent addoutput "OnUser1>cmd>command>r_always_render_all_windows true>0.01>1"',
                 # Forward
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{1*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang 0 0 0>{1*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_forward>{1*0.5 + 0.1}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{1*0.5 + 0.2}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{1*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 1 0 0>{1*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_forward>{1*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{1*t + 0.02}>1"',
                 # Right
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{2*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang 0 270 0>{2*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_right>{2*0.5 + 0.1}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{2*0.5 + 0.2}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{2*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 0 270 -1>{2*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_right>{2*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{2*t + 0.02}>1"',
                 # Back
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{3*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang 0 180 0>{3*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_back>{3*0.5 + 0.1}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{3*0.5 + 0.2}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{3*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact -1 180 0>{3*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_back>{3*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{3*t + 0.02}>1"',
                 # Left
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{4*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang 0 90 0>{4*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_left>{4*0.5 + 0.1}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{4*0.5 + 0.2}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{4*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 0 90 1>{4*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_left>{4*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{4*t + 0.02}>1"',
                 # Up
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{5*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang -90 0 0>{5*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_up>{5*0.5 + 0.1}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{5*0.5 + 0.2}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>fov_cs_debug 106.260205>{5*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{5*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact -89 0 0>{5*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_up>{5*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{5*t + 0.02}>1"',
                 # Down
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{6*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang 90 0 0>{6*0.5}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_down>{6*0.5 + 0.1}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{6*0.5 + 0.2}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{6*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 89 180 180>{6*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_down>{6*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{6*t + 0.02}>1"',
                 # Cleanup
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>cl_drawhud 1;r_drawviewmodel 1;r_drawpanorama 1;cl_firstperson_legs 1;fov_cs_debug 0;noclip 0>4.0>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>r_always_render_all_windows {original_render_all}>4.2>1"',
-                'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_subdir \"\">4.2>1"',
-                'ent_fire worldent addoutput "OnUser1>cmd>command>echo [Cubemap Done]>4.5>1"'
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>cl_drawhud 1;r_drawviewmodel 1;r_drawpanorama 1;cl_firstperson_legs 1;fov_cs_debug 0;noclip 1>{7*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>r_always_render_all_windows {original_render_all}>{7*t + 0.1}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_subdir \"\">{7*t + 0.1}>1"',
+                'ent_fire worldent addoutput "OnUser1>cmd>command>echo [Cubemap Done]>5.0>1"'
             ]
             
             CS2Netcon.send_many(cmds) # Send all setup commands including the sentinel echo
@@ -202,6 +204,15 @@ class CaptureWorker(QThread):
                 
                 if self.config['mode'] == "CrossHLayout":
                     stitcher.stitch_cross(faces, output_path)
+                elif self.config['mode'] == "Individual Faces":
+                    # Save individual faces to a subfolder
+                    indiv_dir = os.path.join(self.config['out'], f"individual_{ev_suffix}")
+                    os.makedirs(indiv_dir, exist_ok=True)
+                    face_names = ["forward", "right", "back", "left", "up", "down"]
+                    for i, name in enumerate(face_names):
+                        face_img = Image.fromarray(faces[i])
+                        face_img.save(os.path.join(indiv_dir, f"{name}.png"))
+                    self.progress.emit(f"Saved individual faces to {indiv_dir}")
                 else:
                     stitcher.stitch_equirectangular(faces, output_path)
                     
@@ -209,21 +220,8 @@ class CaptureWorker(QThread):
                 self.error.emit(f"Error stitching EV {ev}: {e}")
                 return
 
-        self.finished.emit(f"Success! Cubemap saved to: {self.config['out']}")
-            
-        # Ensure output folder exists
-        os.makedirs(self.config['out'], exist_ok=True)
-
-        out_name = "output_cubemap"
-        if self.config['mode'] == "CrossHLayout":
-            out_path = os.path.join(self.config['out'], f"{out_name}.exr")
-            stitcher.stitch_cross(faces, out_path)
-        else:
-            out_path = os.path.join(self.config['out'], f"{out_name}.jpg")
-            stitcher.stitch_equirectangular(faces, out_path)
-            
         # Success cleanup
         try: shutil.rmtree(cs2_ss_dir)
         except: pass
 
-        self.finished.emit(f"Success! Output saved to: {out_path}")
+        self.finished.emit(f"Success! Cubemap saved to: {self.config['out']}")

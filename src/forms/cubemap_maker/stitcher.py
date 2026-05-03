@@ -1,7 +1,8 @@
 import os
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 import numpy as np
 from PIL import Image
-import imageio
+import cv2
 import pyopencl as cl
 
 class CubemapStitcher:
@@ -16,25 +17,42 @@ class CubemapStitcher:
         except:
             self.ctx = None
 
+    def _save_image(self, img_bgr, output_path):
+        """Internal helper to save images with correct type for extension."""
+        if output_path.lower().endswith('.exr'):
+            # OpenEXR requires float16 or float32, does not support uint8
+            img_float = img_bgr.astype(np.float32) / 255.0
+            cv2.imwrite(output_path, img_float)
+        else:
+            # Standard formats like .jpg, .png, .tga support uint8
+            cv2.imwrite(output_path, img_bgr)
+
     def stitch_cross(self, faces, output_path):
         """Creates a 3x4 horizontal cross layout for CS2."""
-        # Standard cross layout doesn't need flipping if captured correctly
+        # New CS2 Layout:
+        # R0: [Empty] [Up 90rot] [Empty] [Empty]
+        # R1: [Back] [Left] [Forward] [Right]
+        # R2: [Empty] [Down 90rot] [Empty] [Empty]
         
         cross_img = np.zeros((self.face_size * 3, self.face_size * 4, 3), dtype=np.uint8)
         
         # Row 0
-        cross_img[0:self.face_size, self.face_size:self.face_size*2] = faces[4] # Up
-        # Row 1
-        cross_img[self.face_size:self.face_size*2, 0:self.face_size] = faces[3] # Left
-        cross_img[self.face_size:self.face_size*2, self.face_size:self.face_size*2] = faces[0] # Forward
-        cross_img[self.face_size:self.face_size*2, self.face_size*2:self.face_size*3] = faces[1] # Right
-        cross_img[self.face_size:self.face_size*2, self.face_size*3:self.face_size*4] = faces[2] # Back
-        # Row 2
-        cross_img[self.face_size*2:self.face_size*3, self.face_size:self.face_size*2] = faces[5] # Down
+        up_face = np.rot90(faces[4], k=1) # -90 rotate (clockwise)
+        cross_img[0:self.face_size, self.face_size:self.face_size*2] = up_face
         
-        # Save as EXR (normalized float32)
-        cross_float = cross_img.astype(np.float32) / 255.0
-        imageio.imwrite(output_path, cross_float)
+        # Row 1
+        cross_img[self.face_size:self.face_size*2, 0:self.face_size] = faces[2] # Back
+        cross_img[self.face_size:self.face_size*2, self.face_size:self.face_size*2] = faces[3] # Left
+        cross_img[self.face_size:self.face_size*2, self.face_size*2:self.face_size*3] = faces[0] # Forward
+        cross_img[self.face_size:self.face_size*2, self.face_size*3:self.face_size*4] = faces[1] # Right
+        
+        # Row 2
+        down_face = np.rot90(faces[5], k=-5) # 90 rotate (counter-clockwise)
+        cross_img[self.face_size*2:self.face_size*3, self.face_size:self.face_size*2] = down_face
+        
+        # Convert RGB to BGR for OpenCV
+        cross_bgr = cv2.cvtColor(cross_img, cv2.COLOR_RGB2BGR)
+        self._save_image(cross_bgr, output_path) 
         return output_path
 
     def stitch_equirectangular(self, faces, output_path, out_w=4096, out_h=2048):
@@ -107,5 +125,8 @@ class CubemapStitcher:
         output = np.empty((out_h, out_w, 3), dtype=np.uint8)
         cl.enqueue_copy(self.queue, output, dest_buf)
         
-        Image.fromarray(output).save(output_path, quality=95)
+        # Convert RGB to BGR for OpenCV
+        output_bgr = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
+        self._save_image(output_bgr, output_path)
+        
         return output_path

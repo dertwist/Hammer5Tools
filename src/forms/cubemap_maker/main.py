@@ -47,7 +47,7 @@ class CubemapMakerDialog(QDialog):
         # Mode
         config_layout.addWidget(QLabel("Layout Mode:"))
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["CrossHLayout", "Equirectangular"])
+        self.mode_combo.addItems(["CrossHLayout", "Equirectangular", "Individual Faces"])
         config_layout.addWidget(self.mode_combo)
         
         # Game Resolution
@@ -69,6 +69,12 @@ class CubemapMakerDialog(QDialog):
         self.pos_x = QDoubleSpinBox(); self.pos_x.setRange(-1e6, 1e6); self.pos_x.setDecimals(2); self.pos_x.setButtonSymbols(QSpinBox.NoButtons)
         self.pos_y = QDoubleSpinBox(); self.pos_y.setRange(-1e6, 1e6); self.pos_y.setDecimals(2); self.pos_y.setButtonSymbols(QSpinBox.NoButtons)
         self.pos_z = QDoubleSpinBox(); self.pos_z.setRange(-1e6, 1e6); self.pos_z.setDecimals(2); self.pos_z.setButtonSymbols(QSpinBox.NoButtons)
+        
+        # Load last position
+        self.pos_x.setValue(float(get_settings_value('CUBEMAP', 'last_pos_x', "0")))
+        self.pos_y.setValue(float(get_settings_value('CUBEMAP', 'last_pos_y', "0")))
+        self.pos_z.setValue(float(get_settings_value('CUBEMAP', 'last_pos_z', "0")))
+        
         pos_h.addWidget(self.pos_x); pos_h.addWidget(self.pos_y); pos_h.addWidget(self.pos_z)
         
         paste_btn = QPushButton("Paste")
@@ -174,6 +180,10 @@ class CubemapMakerDialog(QDialog):
             addon_dir = get_addon_dir()
             if addon_dir:
                 out_path = os.path.join(addon_dir, out_path)
+        
+        set_settings_value('CUBEMAP', 'last_pos_x', str(self.pos_x.value()))
+        set_settings_value('CUBEMAP', 'last_pos_y', str(self.pos_y.value()))
+        set_settings_value('CUBEMAP', 'last_pos_z', str(self.pos_z.value()))
         
         config = {
             'hdr': self.hdr_check.isChecked(),

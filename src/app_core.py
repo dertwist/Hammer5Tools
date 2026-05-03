@@ -430,6 +430,7 @@ class Widget(QMainWindow):
         self.ui.documentation_button.clicked.connect(self.open_about)
         self.ui.mapbuilder.clicked.connect(self.open_mapbuilder_dialog)
         self.ui.open_dialog_button.clicked.connect(self.open_selected_dialog)
+        self.ui.dialog_selection_combobox.currentTextChanged.connect(self.save_last_tool)
         self.updateLaunchAddonButton()
 
     def updateLaunchAddonButton(self):
@@ -531,7 +532,12 @@ class Widget(QMainWindow):
 
     def open_my_twitter(self): webbrowser.open("https://twitter.com/dertwist")
     def open_discord(self): webbrowser.open("https://discord.gg/6X88yX8Y")
-    def _restore_user_prefs(self): pass
+    def save_last_tool(self, text):
+        set_settings_value('APP', 'last_tool', text)
+    def _restore_user_prefs(self):
+        last_tool = get_settings_value('APP', 'last_tool')
+        if last_tool:
+            self.ui.dialog_selection_combobox.setCurrentText(last_tool)
     def show_minimize_message_once(self): pass
 
 def handle_new_connection(server, widget):

@@ -230,6 +230,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
 
         '--hidden-import=vpk',
         '--collect-all=velopack',
+        '--collect-all=imageio',
 
         '--noconfirm',
 
