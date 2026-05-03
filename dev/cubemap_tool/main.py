@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 import os
 import glob
+import imageio
 
 # --- CONFIGURATION ---
 # Target size for each face (square)
@@ -72,9 +73,11 @@ def load_faces(input_path):
         img = crop_to_square(img)
         
         # Resize to consistent FACE_SIZE if needed
+        # Resize to consistent FACE_SIZE if needed
         if img.size != (FACE_SIZE, FACE_SIZE):
             img = img.resize((FACE_SIZE, FACE_SIZE), Image.Resampling.LANCZOS)
         
+        # Convert to numpy
         faces.append(np.array(img))
     
     return np.array(faces, dtype=np.uint8)
@@ -89,20 +92,25 @@ def create_horizontal_cross(faces, output_path):
     
     cross_img = np.zeros((FACE_SIZE * 3, FACE_SIZE * 4, 3), dtype=np.uint8)
     
+    # Flip all faces horizontally for CS2 format before assembly
+    flipped_faces = [np.fliplr(f) for f in faces]
+    
     # Row 0
-    cross_img[0:FACE_SIZE, FACE_SIZE:FACE_SIZE*2] = faces[4]              # Up
+    cross_img[0:FACE_SIZE, FACE_SIZE:FACE_SIZE*2] = flipped_faces[4]              # Up
     
     # Row 1
-    cross_img[FACE_SIZE:FACE_SIZE*2, 0:FACE_SIZE] = faces[3]              # Left
-    cross_img[FACE_SIZE:FACE_SIZE*2, FACE_SIZE:FACE_SIZE*2] = faces[0]      # Forward
-    cross_img[FACE_SIZE:FACE_SIZE*2, FACE_SIZE*2:FACE_SIZE*3] = faces[1]      # Right
-    cross_img[FACE_SIZE:FACE_SIZE*2, FACE_SIZE*3:FACE_SIZE*4] = faces[2]      # Back
+    cross_img[FACE_SIZE:FACE_SIZE*2, 0:FACE_SIZE] = flipped_faces[3]              # Left
+    cross_img[FACE_SIZE:FACE_SIZE*2, FACE_SIZE:FACE_SIZE*2] = flipped_faces[0]      # Forward
+    cross_img[FACE_SIZE:FACE_SIZE*2, FACE_SIZE*2:FACE_SIZE*3] = flipped_faces[1]      # Right
+    cross_img[FACE_SIZE:FACE_SIZE*2, FACE_SIZE*3:FACE_SIZE*4] = flipped_faces[2]      # Back
     
     # Row 2
-    cross_img[FACE_SIZE*2:FACE_SIZE*3, FACE_SIZE:FACE_SIZE*2] = faces[5]      # Down
+    cross_img[FACE_SIZE*2:FACE_SIZE*3, FACE_SIZE:FACE_SIZE*2] = flipped_faces[5]      # Down
     
-    out_file = os.path.join(output_path, "output_cross.jpg")
-    Image.fromarray(cross_img).save(out_file, quality=95)
+    out_file = os.path.join(output_path, "output_cross.exr")
+    # Convert to float32 (0.0 to 1.0) for standard EXR format
+    cross_float = cross_img.astype(np.float32) / 255.0
+    imageio.imwrite(out_file, cross_float)
     print(f"Saved: {out_file}")
 
 def create_equirectangular_opencl(faces, output_path):

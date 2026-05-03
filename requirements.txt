@@ -37,6 +37,7 @@ ply
 Pillow
 numpy
 pyopencl
+imageio
 
 matplotlib
 pynvml
