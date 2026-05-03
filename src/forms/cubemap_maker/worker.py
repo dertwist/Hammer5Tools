@@ -30,15 +30,7 @@ class CaptureWorker(QThread):
         
         for name in face_names:
             pattern = os.path.join(ss_dir, f"{session_id}_cube_{ev_suffix}_{name}*.png")
-            
-            # Retry mechanism for file appearance (Source 2 can be slow to flush to disk)
-            files = []
-            for _ in range(15):  # Try for 3 seconds
-                files = glob.glob(pattern)
-                if files:
-                    break
-                time.sleep(0.2)
-
+            files = glob.glob(pattern)
             if not files:
                 raise FileNotFoundError(f"Missing face: {name} for session {session_id}")
             
@@ -140,7 +132,7 @@ class CaptureWorker(QThread):
             time.sleep(0.5)
             
             # Build command list to avoid semicolon issues in netcon
-            t = 0.2 # Increased tick interval for stability
+            t = 0.1 # Tick interval
             cmds = [
                 "sv_cheats 1", "noclip 1", "r_drawviewmodel 0", "cl_drawhud 0", "r_drawpanorama 0", "cl_firstperson_legs 0",
                 "fov_cs_debug 106.260205", "ent_fire cmd kill", "ent_create point_servercommand {targetname cmd}",
@@ -148,35 +140,35 @@ class CaptureWorker(QThread):
                 'ent_fire worldent addoutput "OnUser1>cmd>command>r_always_render_all_windows true>0.01>1"',
                 # Forward
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{1*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 1 0 0>{1*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_forward>{1*t + 0.05}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{1*t + 0.1}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 3 0 0>{1*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_forward>{1*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{1*t + 0.02}>1"',
                 # Right
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{2*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 0 270 -1>{2*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_right>{2*t + 0.05}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{2*t + 0.1}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 0 270 -3>{2*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_right>{2*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{2*t + 0.02}>1"',
                 # Back
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{3*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact -1 180 0>{3*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_back>{3*t + 0.05}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{3*t + 0.1}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact -3 180 0>{3*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_back>{3*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{3*t + 0.02}>1"',
                 # Left
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{4*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 0 90 1>{4*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_left>{4*t + 0.05}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{4*t + 0.1}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 0 90 3>{4*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_left>{4*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{4*t + 0.02}>1"',
                 # Up
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>fov_cs_debug 106.260205>{5*t}>1"',
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{5*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact -89 0 0>{5*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_up>{5*t + 0.05}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{5*t + 0.1}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact -87 0 0>{5*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_up>{5*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{5*t + 0.02}>1"',
                 # Down
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>setpos_exact {x} {y} {z}>{6*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 89 180 0>{6*t}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_down>{6*t + 0.05}>1"',
-                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{6*t + 0.1}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>setang_exact 87 180 0>{6*t}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>screenshot_prefix {session_id}_cube_{ev_suffix}_down>{6*t + 0.01}>1"',
+                f'ent_fire worldent addoutput "OnUser1>cmd>command>png_screenshot>{6*t + 0.02}>1"',
                 # Cleanup
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>cl_drawhud 1;r_drawviewmodel 1;r_drawpanorama 1;cl_firstperson_legs 1;fov_cs_debug 0;noclip 1>{7*t}>1"',
                 f'ent_fire worldent addoutput "OnUser1>cmd>command>r_always_render_all_windows {original_render_all}>{7*t + 0.1}>1"',
@@ -192,8 +184,6 @@ class CaptureWorker(QThread):
                 sentinel="[Cubemap Done]",
                 timeout=15.0
             )
-            # Small delay after each EV to ensure engine stability
-            time.sleep(1.0)
 
         # 3. Stitching
         self.progress.emit("Stitching images...")
