@@ -393,6 +393,7 @@ class Ui_MainWindow(object):
         self.open_dialog_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
         self.dialog_selection_combobox.setItemText(0, QCoreApplication.translate("MainWindow", u"Cleanup", None))
         self.dialog_selection_combobox.setItemText(1, QCoreApplication.translate("MainWindow", u"Material Importer", None))
+        self.dialog_selection_combobox.addItem(QCoreApplication.translate("MainWindow", u"Cubemap Maker", None))
 
     # retranslateUi
 

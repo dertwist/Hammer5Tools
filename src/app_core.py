@@ -48,6 +48,7 @@ from src.styles.qt_global_stylesheet import QT_Stylesheet_global
 from src.dotnet import check_dotnet_runtime
 from src.other.addon_validation import validate_addon_structure
 from src.forms.cleanup.main import CleanupDialog
+from src.forms.cubemap_maker.main import CubemapMakerDialog
 from src.forms.quick_create.main import QuickCreateDialog
 from src.widgets import *
 
@@ -485,6 +486,7 @@ class Widget(QMainWindow):
         selection = self.ui.dialog_selection_combobox.currentText()
         if selection == "Cleanup": CleanupDialog(self).show()
         elif selection == "Material Importer": self.material_importer_dialog = UE2SourceMaterialsWidget(parent=self); self.material_importer_dialog.show()
+        elif selection == "Cubemap Maker": CubemapMakerDialog(self).show()
 
     @exception_handler
     def open_mapbuilder_dialog(self):

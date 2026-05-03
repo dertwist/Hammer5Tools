@@ -32,13 +32,9 @@ cffi
 vdf
 vpk
 pycparser
-
 ply
 Pillow
 numpy
-pyopencl
-imageio
-
 matplotlib
 pynvml
 GPUtil
@@ -49,3 +45,5 @@ inkex
 uharfbuzz
 fontTools
 velopack
+imageio
+pyopencl
