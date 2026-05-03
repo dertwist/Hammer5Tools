@@ -18,20 +18,19 @@ class CubemapStitcher:
 
     def stitch_cross(self, faces, output_path):
         """Creates a 3x4 horizontal cross layout for CS2."""
-        # CS2 format: every face flipped horizontally
-        flipped_faces = [np.fliplr(f) for f in faces]
+        # Standard cross layout doesn't need flipping if captured correctly
         
         cross_img = np.zeros((self.face_size * 3, self.face_size * 4, 3), dtype=np.uint8)
         
         # Row 0
-        cross_img[0:self.face_size, self.face_size:self.face_size*2] = flipped_faces[4] # Up
+        cross_img[0:self.face_size, self.face_size:self.face_size*2] = faces[4] # Up
         # Row 1
-        cross_img[self.face_size:self.face_size*2, 0:self.face_size] = flipped_faces[3] # Left
-        cross_img[self.face_size:self.face_size*2, self.face_size:self.face_size*2] = flipped_faces[0] # Forward
-        cross_img[self.face_size:self.face_size*2, self.face_size*2:self.face_size*3] = flipped_faces[1] # Right
-        cross_img[self.face_size:self.face_size*2, self.face_size*3:self.face_size*4] = flipped_faces[2] # Back
+        cross_img[self.face_size:self.face_size*2, 0:self.face_size] = faces[3] # Left
+        cross_img[self.face_size:self.face_size*2, self.face_size:self.face_size*2] = faces[0] # Forward
+        cross_img[self.face_size:self.face_size*2, self.face_size*2:self.face_size*3] = faces[1] # Right
+        cross_img[self.face_size:self.face_size*2, self.face_size*3:self.face_size*4] = faces[2] # Back
         # Row 2
-        cross_img[self.face_size*2:self.face_size*3, self.face_size:self.face_size*2] = flipped_faces[5] # Down
+        cross_img[self.face_size*2:self.face_size*3, self.face_size:self.face_size*2] = faces[5] # Down
         
         # Save as EXR (normalized float32)
         cross_float = cross_img.astype(np.float32) / 255.0

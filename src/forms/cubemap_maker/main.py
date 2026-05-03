@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QApplication, QVBoxLayout, QHBoxLayout, 
     QLabel, QLineEdit, QCheckBox, QSpinBox, QDoubleSpinBox, QComboBox, QTextEdit, 
     QPushButton, QFileDialog, QMessageBox, QGroupBox, QFormLayout,
-    QDialog, QProgressBar
+    QDialog, QProgressBar, QWidget, QGridLayout
 )
 from PySide6.QtCore import Qt
 
@@ -27,96 +27,116 @@ class CubemapMakerDialog(QDialog):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
 
         # Info Label
-        info_label = QLabel("The tool makes cubemaps from ingame screenshots. Please load your map into the game.")
-        info_label.setWordWrap(True)
-        info_label.setStyleSheet("color: #aaa; font-style: italic; margin-bottom: 5px;")
+        info_label = QLabel("To capture cubemap, load map in game.")
+        info_label.setStyleSheet("color: #888; font-size: 11px;")
         layout.addWidget(info_label)
 
-        # Settings Group
-        group = QGroupBox("Capture Settings")
-        group_layout = QVBoxLayout(group)
+        # Capture Configuration
+        config_group = QGroupBox("Configuration")
+        config_layout = QVBoxLayout(config_group)
+        config_layout.setSpacing(10)
         
-        # Row 1: HDR and Mode
-        row1 = QHBoxLayout()
-        self.hdr_check = QCheckBox("Enable HDR (EV Steps)")
-        row1.addWidget(self.hdr_check)
-        row1.addStretch()
-        row1.addWidget(QLabel("Mode / Layout:"))
+        # HDR
+        self.hdr_check = QCheckBox("Enable HDR (Multi-EV)")
+        config_layout.addWidget(self.hdr_check)
+        
+        # Mode
+        config_layout.addWidget(QLabel("Layout Mode:"))
         self.mode_combo = QComboBox()
         self.mode_combo.addItems(["CrossHLayout", "Equirectangular"])
-        row1.addWidget(self.mode_combo)
-        group_layout.addLayout(row1)
+        config_layout.addWidget(self.mode_combo)
         
-        # Row 2: Resolutions
-        row2 = QHBoxLayout()
-        row2.addWidget(QLabel("Game Resolution:"))
+        # Game Resolution
+        config_layout.addWidget(QLabel("Game Resolution (e.g. 1920x1080):"))
         self.game_res_edit = QLineEdit(get_settings_value('CUBEMAP', 'game_res', "1920x1080"))
-        row2.addWidget(self.game_res_edit)
+        config_layout.addWidget(self.game_res_edit)
         
-        row2.addWidget(QLabel("Max Face Resolution:"))
+        # Face Resolution
+        config_layout.addWidget(QLabel("Max Face Resolution:"))
         self.face_res_spin = QSpinBox()
         self.face_res_spin.setRange(256, 4096)
         self.face_res_spin.setSingleStep(256)
         self.face_res_spin.setValue(int(get_settings_value('CUBEMAP', 'face_res', "1024")))
-        row2.addWidget(self.face_res_spin)
-        group_layout.addLayout(row2)
-        
-        layout.addWidget(group)
+        config_layout.addWidget(self.face_res_spin)
 
-        # Position Group
-        # Position Layout
-        pos_layout = QHBoxLayout()
+        # Position Row (Vertical inside)
+        config_layout.addWidget(QLabel("Position (X Y Z):"))
+        pos_h = QHBoxLayout()
+        self.pos_x = QDoubleSpinBox(); self.pos_x.setRange(-1e6, 1e6); self.pos_x.setDecimals(2); self.pos_x.setButtonSymbols(QSpinBox.NoButtons)
+        self.pos_y = QDoubleSpinBox(); self.pos_y.setRange(-1e6, 1e6); self.pos_y.setDecimals(2); self.pos_y.setButtonSymbols(QSpinBox.NoButtons)
+        self.pos_z = QDoubleSpinBox(); self.pos_z.setRange(-1e6, 1e6); self.pos_z.setDecimals(2); self.pos_z.setButtonSymbols(QSpinBox.NoButtons)
+        pos_h.addWidget(self.pos_x); pos_h.addWidget(self.pos_y); pos_h.addWidget(self.pos_z)
         
-        self.pos_x = QDoubleSpinBox()
-        self.pos_x.setRange(-1000000, 1000000); self.pos_x.setDecimals(4)
-        pos_layout.addWidget(QLabel("X:")); pos_layout.addWidget(self.pos_x)
-        
-        self.pos_y = QDoubleSpinBox()
-        self.pos_y.setRange(-1000000, 1000000); self.pos_y.setDecimals(4)
-        pos_layout.addWidget(QLabel("Y:")); pos_layout.addWidget(self.pos_y)
-        
-        self.pos_z = QDoubleSpinBox()
-        self.pos_z.setRange(-1000000, 1000000); self.pos_z.setDecimals(4)
-        pos_layout.addWidget(QLabel("Z:")); pos_layout.addWidget(self.pos_z)
-        
-        paste_btn = QPushButton("Paste from Clipboard")
+        paste_btn = QPushButton("Paste")
+        paste_btn.setFixedWidth(60)
         paste_btn.clicked.connect(self.paste_position)
-        pos_layout.addWidget(paste_btn)
+        pos_h.addWidget(paste_btn)
+        config_layout.addLayout(pos_h)
         
-        layout.addLayout(pos_layout)
+        layout.addWidget(config_group)
 
-        # Output Group
-        out_group = QGroupBox("Output")
-        out_h = QHBoxLayout(out_group)
+        # Output Path
+        layout.addWidget(QLabel("Output Path (Relative to Addon):"))
+        out_h = QHBoxLayout()
         
         addon_dir = get_addon_dir()
         if addon_dir:
             default_out = os.path.join(addon_dir, "materials", "lighting", "cubemaps")
+            display_path = os.path.relpath(default_out, addon_dir)
         else:
             default_out = "materials/lighting/cubemaps"
+            display_path = default_out
             
-        self.out_edit = QLineEdit(default_out)
+        self.out_edit = QLineEdit(display_path)
+        self.out_edit.setToolTip(default_out)
         out_h.addWidget(self.out_edit)
+        
         browse_btn = QPushButton("...")
         browse_btn.setFixedWidth(30)
         browse_btn.clicked.connect(self.browse_folder)
         out_h.addWidget(browse_btn)
-        layout.addWidget(out_group)
+        layout.addLayout(out_h)
 
         # Actions
-        self.capture_btn = QPushButton("Capture Cubemap")
+        self.capture_btn = QPushButton("CAPTURE CUBEMAP")
         self.capture_btn.setFixedHeight(40)
+        self.capture_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2d5a27;
+                color: white;
+                font-weight: bold;
+                border-radius: 4px;
+            }
+            QPushButton:hover { background-color: #3d7a35; }
+        """)
         self.capture_btn.clicked.connect(self.start_capture)
         layout.addWidget(self.capture_btn)
         
+        # Progress Bar (Map Builder Style)
         self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setFormat("Idle")
+        self.progress_bar.setFixedHeight(18)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #505050;
+                border-radius: 2px;
+                text-align: center;
+                color: white;
+                font-size: 10px;
+                background-color: #1C1C1C;
+            }
+            QProgressBar::chunk {
+                background-color: #1a528a;
+                margin: 0px;
+                width: 1px;
+            }
+        """)
         layout.addWidget(self.progress_bar)
-        
-        self.status_label = QLabel("Ready")
-        layout.addWidget(self.status_label)
 
     def paste_position(self):
         clipboard = QApplication.clipboard().text()
@@ -148,36 +168,45 @@ class CubemapMakerDialog(QDialog):
     def start_capture(self):
         self.save_settings()
         
+        # Resolve output path (could be relative or absolute)
+        out_path = self.out_edit.text()
+        if not os.path.isabs(out_path):
+            addon_dir = get_addon_dir()
+            if addon_dir:
+                out_path = os.path.join(addon_dir, out_path)
+        
         config = {
             'hdr': self.hdr_check.isChecked(),
+            'game_res': self.game_res_edit.text(),
             'res': self.face_res_spin.value(),
             'mode': self.mode_combo.currentText(),
-            'pos': [self.pos_x.value(), self.pos_y.value(), self.pos_z.value()],
-            'out': self.out_edit.text()
+            'pos': (self.pos_x.value(), self.pos_y.value(), self.pos_z.value()),
+            'out': out_path
         }
         
         self.capture_btn.setEnabled(False)
-        self.progress_bar.setVisible(True)
         self.progress_bar.setRange(0, 0)
-        self.status_label.setText("Starting capture sequence...")
+        self.progress_bar.setFormat("Starting...")
         
         self.worker = CaptureWorker(config)
-        self.worker.progress.connect(self.status_label.setText)
+        self.worker.progress.connect(self.progress_bar.setFormat)
         self.worker.error.connect(self.on_error)
         self.worker.finished.connect(self.on_finished)
         self.worker.start()
 
     def on_error(self, msg):
         self.capture_btn.setEnabled(True)
-        self.progress_bar.setVisible(False)
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setFormat("Error")
         QMessageBox.critical(self, "Capture Error", msg)
-        self.status_label.setText("Error occurred.")
 
     def on_finished(self, msg):
         self.capture_btn.setEnabled(True)
-        self.progress_bar.setVisible(False)
-        self.status_label.setText("Ready")
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(100)
+        self.progress_bar.setFormat("Finished")
         QMessageBox.information(self, "Success", msg)
+        self.progress_bar.setFormat("Idle")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
