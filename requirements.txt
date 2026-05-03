@@ -47,3 +47,4 @@ fontTools
 velopack
 imageio
 pyopencl
+opencv-python

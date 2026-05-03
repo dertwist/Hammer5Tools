@@ -239,6 +239,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--collect-all=psutil',
         '--collect-all=setuptools',
         '--collect-all=cffi',
+        '--collect-all=cv2',
 
         '--noconfirm',
 
