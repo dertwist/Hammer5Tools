@@ -16,6 +16,7 @@ import binascii
 from PySide6.QtWidgets import QMessageBox
 
 tests_path = Path(__file__).parent.parent / 'tests'
+RUNTIME_CONFIG_NAME = 'Hammer5Tools.runtimeconfig.json'
 
 
 class DotNetPaths:
@@ -57,21 +58,28 @@ class DotNetInterop:
 
         try:
             from pythonnet import load
-            
+
+            runtime_config = None
+
             # Check for bundled runtime in frozen (PyInstaller) state
             if getattr(sys, 'frozen', False):
                 bundled_dotnet = os.path.join(sys._MEIPASS, 'dotnet')
                 if os.path.exists(bundled_dotnet):
                     # Set DOTNET_ROOT to help clr_loader find the bundled runtime
                     os.environ["DOTNET_ROOT"] = bundled_dotnet
+                    os.environ["DOTNET_ROOT_X64"] = bundled_dotnet
                     # Point to the runtime config if it exists
-                    runtime_config = os.path.join(bundled_dotnet, 'Hammer5Tools.runtimeconfig.json')
-                    if os.path.exists(runtime_config):
-                        load("coreclr", runtime_config=runtime_config)
-                    else:
-                        load("coreclr")
-                else:
-                    load("coreclr")
+                    bundled_config = os.path.join(bundled_dotnet, RUNTIME_CONFIG_NAME)
+                    if os.path.exists(bundled_config):
+                        runtime_config = bundled_config
+
+            if runtime_config is None:
+                local_config = Path(__file__).parent / 'external' / 'dotnet' / RUNTIME_CONFIG_NAME
+                if local_config.exists():
+                    runtime_config = str(local_config)
+
+            if runtime_config:
+                load("coreclr", runtime_config=runtime_config)
             else:
                 load("coreclr")
                 
@@ -80,6 +88,11 @@ class DotNetInterop:
             self._initialized = True
         except ImportError as e:
             raise RuntimeError("Python.NET not available. Install with: pip install pythonnet") from e
+        except Exception as e:
+            raise RuntimeError(
+                ".NET Desktop Runtime 9.0 or newer is required for this tool. "
+                "Install it from https://dotnet.microsoft.com/download/dotnet/9.0"
+            ) from e
 
     def _load_assembly(self, path: Path) -> None:
         """Load a .NET assembly with error handling."""
@@ -347,7 +360,7 @@ class DotNetRuntimeChecker:
         # 1. Check for bundled runtime first (in frozen state)
         if getattr(sys, 'frozen', False):
             bundled_dotnet = os.path.join(sys._MEIPASS, 'dotnet')
-            if os.path.exists(bundled_dotnet):
+            if self._bundled_runtime_is_complete(bundled_dotnet):
                 return True
 
         try:
@@ -383,6 +396,26 @@ class DotNetRuntimeChecker:
                 setup_vrf()
                 setup_keyvalues2()
             return False
+
+    def _bundled_runtime_is_complete(self, bundled_dotnet: str) -> bool:
+        """Validate the bundled runtime enough to avoid pythonnet hostfxr crashes."""
+        if not os.path.isdir(bundled_dotnet):
+            return False
+
+        runtime_config = os.path.join(bundled_dotnet, RUNTIME_CONFIG_NAME)
+        if not os.path.isfile(runtime_config):
+            return False
+
+        shared = os.path.join(bundled_dotnet, "shared")
+        for framework in ("Microsoft.NETCore.App", "Microsoft.WindowsDesktop.App"):
+            framework_dir = os.path.join(shared, framework)
+            if not os.path.isdir(framework_dir):
+                return False
+            versions = [v for v in os.listdir(framework_dir) if v.startswith(self.min_version)]
+            if not versions:
+                return False
+
+        return True
 
     def _show_download_dialog(self):
         """Show dialog to download .NET runtime."""
