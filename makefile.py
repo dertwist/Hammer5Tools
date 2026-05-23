@@ -221,6 +221,11 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         _generate_pycparser_tables()
         tables = find_pycparser_tables()
 
+    runtime_config_dir = os.path.join(cur_dir, 'src', 'external', 'dotnet')
+    runtime_config_path = os.path.join(runtime_config_dir, 'Hammer5Tools.runtimeconfig.json')
+    if channel == 'stable':
+        generate_runtime_config(runtime_config_dir)
+
     pyinstaller_cmd = [
         sys.executable, '-m', 'PyInstaller',
         '--name=Hammer5Tools_Core',
@@ -263,14 +268,10 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         external,
         *( [f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls] if channel == 'stable' else [] ),
         *( get_dotnet_runtime_data() if channel == 'stable' else [] ),
-        '--add-data=src/external/dotnet;dotnet/' if os.path.exists('src/external/dotnet') else '',
+        f'--add-data={runtime_config_path};dotnet' if channel == 'stable' and os.path.exists(runtime_config_path) else '',
         'src/main.py'
     ]
     pyinstaller_cmd = [arg for arg in pyinstaller_cmd if arg]
-    
-    # Ensure runtime config exists for bundling
-    if channel == 'stable':
-        generate_runtime_config(os.path.join(cur_dir, 'src', 'external', 'dotnet'))
 
     if tables:
         lextab_path, yacctab_path = tables
