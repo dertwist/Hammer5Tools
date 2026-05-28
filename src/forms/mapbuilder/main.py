@@ -824,8 +824,12 @@ class MapBuilderDialog(QMainWindow):
             self.load_preset(preset)
 
     def load_preset(self, preset: BuildPreset):
+        current_mappath = self.settings_panel.get_settings().mappath
+
         self.current_preset = preset
-        self.settings_panel.set_settings(preset.settings)
+        preset_settings = BuildSettings(**{f.name: getattr(preset.settings, f.name) for f in fields(BuildSettings)})
+        preset_settings.mappath = current_mappath
+        self.settings_panel.set_settings(preset_settings)
 
         for name, btn in self.preset_buttons.items():
             btn.set_active(name == preset.name)
