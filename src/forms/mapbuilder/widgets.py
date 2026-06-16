@@ -409,7 +409,7 @@ class SettingsPanel(QWidget):
 
     # Define which fields go in which groups
     FIELD_GROUPS = {
-        "Common": ["mappath", "threads", "save_build_logs"],
+        "Common": ["mappath", "threads", "save_build_logs", "cleanup_vrad3_cache"],
         "World": ["build_world", "entities_only",
                   "skip_aux_files", "no_settle",
                   "tile_mesh_base_geometry"],
@@ -471,6 +471,17 @@ class SettingsPanel(QWidget):
                     return BoolSettingWidget("Noise removal", field_type, default_value)
                 elif field_name == "lightmap_compression":
                     return BoolSettingWidget("Compression", field_type, default_value)
+                elif field_name == "cleanup_vrad3_cache":
+                    widget = BoolSettingWidget(field_name, field_type, default_value)
+                    # Set the label literally; the auto display-name conversion
+                    # would strip the underscore and turn "_vrad3" into "Vrad3".
+                    widget.checkbox.setText("Cleanup _vrad3 cache")
+                    widget.checkbox.setToolTip(
+                        "Before compiling, delete the _vrad3 lightmap cache folder "
+                        "(game/csgo_addons/<addon>/_vrad3) of each addon in the build "
+                        "queue. Forces a clean lightmap rebuild."
+                    )
+                    return widget
                 elif field_type == bool:
                     return BoolSettingWidget(field_name, field_type, default_value)
                 elif field_type == int:
