@@ -34,8 +34,7 @@ from src.editors.hotkey_editor.main import HotkeyEditorMainWindow
 from src.forms.create_addon.main import Create_addon_Dialog
 from src.other.steam_restart import SteamNoLogoFixThreadClass
 from src.other.addon_functions import delete_addon, launch_addon
-from src.forms.file_association_prompt.main import FileAssociationPromptDialog
-from src.other.file_association import check_association
+from src.other.file_association import check_association, setup_all_associations
 from src.updater.check import check_updates
 from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
@@ -183,12 +182,32 @@ class Widget(QMainWindow):
         if not get_settings_bool('APP', 'check_associations', True):
             return
         _, is_us = check_association('.vsmart')
-        if not is_us:
-            dialog = FileAssociationPromptDialog(self)
-            if dialog.exec() == QDialog.Accepted:
-                pass
-            if dialog.dont_ask_again:
-                set_settings_bool('APP', 'check_associations', False)
+        if is_us:
+            return
+
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setWindowTitle("File Association Setup")
+        msg_box.setText("Associate .vsmart files with Hammer5Tools?")
+        msg_box.setInformativeText(
+            "This lets you double-click SmartProp (.vsmart) files to open them directly."
+        )
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.Yes)
+
+        # QMessageBox shrink-wraps to its text, which wraps the message into a
+        # cramped narrow column. Force a comfortable minimum width by stretching
+        # a spacer across the bottom row of its grid layout.
+        from PySide6.QtWidgets import QSpacerItem, QSizePolicy
+        grid = msg_box.layout()
+        if grid is not None:
+            grid.addItem(
+                QSpacerItem(440, 0, QSizePolicy.Minimum, QSizePolicy.Expanding),
+                grid.rowCount(), 0, 1, grid.columnCount()
+            )
+
+        if msg_box.exec() == QMessageBox.Yes:
+            setup_all_associations(force=False, parent_window=self)
 
     @exception_handler
     def update_title(self, status=None, file_path=None, text=None):
