@@ -61,6 +61,10 @@ class BuildSettings:
     # === Logging ===
     save_build_logs: bool = False
 
+    # === Cache Cleanup ===
+    # Delete game/csgo_addons/<addon>/_vrad3 for each compiling addon before building
+    cleanup_vrad3_cache: bool = False
+
     # === Cubemaps ===
     build_cubemaps: bool = False
 

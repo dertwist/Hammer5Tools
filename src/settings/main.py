@@ -6,7 +6,7 @@ import os
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QHBoxLayout, QTabWidget,
     QWidget, QLabel, QLineEdit, QCheckBox, QSpacerItem,
-    QSizePolicy, QFrame, QScrollArea, QFileDialog, QComboBox
+    QSizePolicy, QFrame, QScrollArea, QFileDialog, QComboBox, QMessageBox
 )
 from src.settings.common import *
 from src.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel
@@ -28,6 +28,15 @@ class ActionButtonsPanel(QFrame):
         self.open_userdata_folder_button = Button(text=" Open UserData")
         self.open_userdata_folder_button.set_icon_folder_open()
         h_layout_bottom.addWidget(self.open_userdata_folder_button)
+
+        self.cleanup_vrad3_button = Button(text=" Cleanup _vrad3 cache")
+        self.cleanup_vrad3_button.set_icon_delete()
+        self.cleanup_vrad3_button.setToolTip(
+            "Delete the _vrad3 lightmap cache folder from every addon in the "
+            "game directory (game/csgo_addons/*/_vrad3)."
+        )
+        h_layout_bottom.addWidget(self.cleanup_vrad3_button)
+
         h_layout_bottom.addStretch()
         self.version_label = QLabel("", self)
         h_layout_bottom.addWidget(self.version_label)
@@ -424,6 +433,7 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_combo_algorithm.currentIndexChanged.connect(self.update_default_file_setting)
         self.assetgroupmaker_edit_ignore_ext.textChanged.connect(self.update_default_file_setting)
         self.action_buttons_panel.open_userdata_folder_button.clicked.connect(self.open_userdata_folder)
+        self.action_buttons_panel.cleanup_vrad3_button.clicked.connect(self.cleanup_vrad3_cache)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
         self.browse_archive_button.clicked.connect(self.browse_archive)
         self.checkBox_play_on_click.toggled.connect(
@@ -475,6 +485,64 @@ class PreferencesDialog(QDialog):
     def open_userdata_folder(self):
         from src.common import user_data_dir
         os.startfile(str(user_data_dir))
+
+    def cleanup_vrad3_cache(self):
+        """Delete the _vrad3 lightmap cache folder from every addon in the
+        game directory (game/csgo_addons/*/_vrad3). Destructive, so it asks
+        for confirmation and reports the result."""
+        import shutil
+        from pathlib import Path
+        from PySide6.QtWidgets import QMessageBox
+
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+            QMessageBox.warning(self, "Cleanup _vrad3 cache",
+                                "CS2 path not found. Set it in the General tab first.")
+            return
+
+        game_addons_dir = Path(cs2_path) / 'game' / 'csgo_addons'
+        if not game_addons_dir.is_dir():
+            QMessageBox.warning(self, "Cleanup _vrad3 cache",
+                                f"Addons directory not found:\n{game_addons_dir}")
+            return
+
+        targets = [addon / '_vrad3' for addon in sorted(game_addons_dir.iterdir())
+                   if addon.is_dir() and (addon / '_vrad3').is_dir()]
+
+        if not targets:
+            QMessageBox.information(self, "Cleanup _vrad3 cache",
+                                    "No _vrad3 cache folders found.")
+            return
+
+        addon_list = "\n".join(f"  • {t.parent.name}" for t in targets)
+        reply = QMessageBox.question(
+            self, "Cleanup _vrad3 cache",
+            f"Delete the _vrad3 cache from {len(targets)} addon(s)?\n\n{addon_list}\n\n"
+            "This forces a full lightmap rebuild on the next compile.",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        removed, failed = 0, []
+        for target in targets:
+            try:
+                shutil.rmtree(target)
+                removed += 1
+            except Exception as e:
+                failed.append(f"{target.parent.name}: {e}")
+
+        if failed:
+            QMessageBox.warning(
+                self, "Cleanup _vrad3 cache",
+                f"Removed {removed} of {len(targets)} cache folder(s).\n\n"
+                "Failed:\n" + "\n".join(failed)
+            )
+        else:
+            QMessageBox.information(
+                self, "Cleanup _vrad3 cache",
+                f"Removed the _vrad3 cache from {removed} addon(s)."
+            )
 
     def check_update(self):
         self.action_buttons_panel.check_update_button.setEnabled(False)
