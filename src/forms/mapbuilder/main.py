@@ -4,6 +4,7 @@ import subprocess
 import threading
 import pathlib
 import os
+import shutil
 import time
 import signal
 import winsound
@@ -903,6 +904,37 @@ class MapBuilderDialog(QMainWindow):
                 if presets:
                     self.load_preset(presets[0])
 
+    def cleanup_vrad3_cache(self, map_queue: list):
+        """Delete the _vrad3 lightmap cache folder from the game directory of
+        each addon in the build queue (game/csgo_addons/<addon>/_vrad3).
+
+        Triggered by the 'Cleanup _vrad3 cache' build option. Each addon is
+        cleaned once even if multiple of its maps are queued.
+        """
+        if not self.cs2_path:
+            self.log_warning('Cannot clean _vrad3 cache - CS2 path not found')
+            return
+
+        game_addons_dir = Path(self.cs2_path) / 'game' / 'csgo_addons'
+        cleaned_addons = set()
+
+        self.log_phase('Cleaning _vrad3 cache for compiling addons...')
+        for rel in map_queue:
+            addon_name, _addon_dir, _map_name = self._parse_map_path(os.path.abspath(rel))
+            if not addon_name or addon_name in cleaned_addons:
+                continue
+            cleaned_addons.add(addon_name)
+
+            vrad3_dir = game_addons_dir / addon_name / '_vrad3'
+            if vrad3_dir.is_dir():
+                try:
+                    shutil.rmtree(vrad3_dir)
+                    self.log_success(f'Removed _vrad3 cache: {vrad3_dir}')
+                except Exception as e:
+                    self.log_error(f'Failed to remove _vrad3 cache for {addon_name}: {e}')
+            else:
+                self.log_info(f'No _vrad3 cache for {addon_name} (nothing to clean)')
+
     def start_compilation(self):
         if self.is_compiling:
             QMessageBox.warning(self, "Already Compiling", "Compilation already in progress")
@@ -938,6 +970,9 @@ class MapBuilderDialog(QMainWindow):
                 break
 
         self.ui.output_list_widget.clear()
+
+        if settings.cleanup_vrad3_cache:
+            self.cleanup_vrad3_cache(self.map_queue)
 
         if len(self.map_queue) > 1:
             self.total_progress_bar.setVisible(True)
