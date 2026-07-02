@@ -469,30 +469,49 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
 
 def load_dirtlist(addon_dir):
     """Load the .dirtlist ignore file from the addon directory.
-    Returns a set of lowercased relative paths to ignore during cleanup."""
+    Returns a list of lowercased relative path patterns to ignore during cleanup.
+    Supports:
+      - Directory prefixes: 'models/props/' matches all files under that directory
+      - Exact relative paths: 'models/my_model.vmdl' matches that specific file
+      - Filename-only: 'my_model.vmdl' matches any file with that name
+    """
     dirtlist_path = os.path.join(addon_dir, '.dirtlist')
-    ignored = set()
+    patterns = []
     if os.path.exists(dirtlist_path):
         try:
             with open(dirtlist_path, 'r', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith('#'):
-                        ignored.add(line.replace('\\', '/').lower())
+                        patterns.append(line.replace('\\', '/').lower())
         except Exception as e:
             print(f"Error reading .dirtlist: {e}")
-    return ignored
+    return patterns
+
+
+def is_dirtlisted(file_lower, dirtlist_patterns):
+    """Check if a file matches any dirtlist pattern."""
+    for pattern in dirtlist_patterns:
+        if file_lower == pattern:
+            return True
+        if pattern.endswith('/') and file_lower.startswith(pattern):
+            return True
+        if '/' not in pattern and file_lower.endswith('/' + pattern):
+            return True
+        if '/' in pattern and not pattern.endswith('/') and file_lower.startswith(pattern + '/'):
+            return True
+    return False
 
 
 def get_junk_files(addon_dir=None, vmap=None, scan_meshes=True):
     addon_assets, referenced_files = get_vmap_references(addon_dir, vmap, scan_meshes)
 
     referenced_files_lower = set(f.lower() for f in referenced_files)
-    dirtlist_ignored = load_dirtlist(addon_dir)
+    dirtlist_patterns = load_dirtlist(addon_dir)
     junk_collection = []
     for file in addon_assets:
         file_lower = file.lower()
-        if file_lower not in referenced_files_lower and file_lower not in dirtlist_ignored:
+        if file_lower not in referenced_files_lower and not is_dirtlisted(file_lower, dirtlist_patterns):
             full_path = os.path.join(addon_dir, file)
             try:
                 size = os.path.getsize(full_path)
