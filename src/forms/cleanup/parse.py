@@ -184,7 +184,7 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
         :param vsmart_path: Path to the .vsmart file.
         :param addon_dir: Base directory for resolving relative references.
         :param visited: Set of already visited file paths.
-        :return: List of referenced model names.
+        :return: List of referenced asset names.
         """
         if visited is None:
             visited = set()
@@ -209,17 +209,21 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
             return []
 
         references = []
+        allowed_ref_extensions = ('.vmat', '.vmt', '.vmdl', '.vmdl_prefab', '.fbx', '.dmx', '.obj', '.vpcf', '.vsndevts', '.vtex', '.vsmart')
 
         def extract_references(d):
             if isinstance(d, dict):
                 for key, value in d.items():
-                    if key == 'm_sModelName' and isinstance(value, str) and value:
-                        references.append(value)
-                    elif key == 'm_sSmartProp' and isinstance(value, str) and value:
-                        # Recursively process referenced smartprop files
-                        ref_path = os.path.join(addon_dir, value)
-                        references.extend(get_smartprop_references(ref_path, addon_dir, visited))
-                        references.append(value)
+                    if isinstance(value, str) and value:
+                        val_lower = value.strip().lower()
+                        if val_lower.endswith(allowed_ref_extensions):
+                            normalised = os.path.normpath(val_lower).replace('\\', '/').lstrip('/')
+                            if normalised not in references:
+                                references.append(normalised)
+                            if normalised.endswith('.vsmart'):
+                                # Recursively process referenced smartprop files
+                                ref_path = os.path.join(addon_dir, normalised)
+                                references.extend(get_smartprop_references(ref_path, addon_dir, visited))
                     elif isinstance(value, (dict, list)):
                         extract_references(value)
             elif isinstance(d, list):
@@ -314,7 +318,7 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
         ext = os.path.splitext(file_path)[1].lower()
         full_path = os.path.join(addon_dir, file_path)
         if ext == '.vsmart':
-            return get_smartprop_references(full_path)
+            return get_smartprop_references(full_path, addon_dir)
         elif ext in ['.vmdl', '.vmdl_prefab']:
             return get_model_references(full_path)
         elif ext == '.vmat':
