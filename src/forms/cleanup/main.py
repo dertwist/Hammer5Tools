@@ -1,14 +1,299 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QCheckBox, QLineEdit, \
-    QDialog, QPushButton, QTableView, QComboBox, QMessageBox, QHeaderView, QMenu, QSizePolicy
-from PySide6.QtCore import Qt, QSortFilterProxyModel
+    QDialog, QPushButton, QTableView, QComboBox, QMessageBox, QHeaderView, QMenu, QSizePolicy, QTextEdit, QProgressBar
+from PySide6.QtCore import Qt, QSortFilterProxyModel, QThread, Signal
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QAction
-import os, sys
+import os, sys, re, subprocess, time
 from src.styles.common import qt_stylesheet_combobox, qt_stylesheet_checkbox, qt_stylesheet_button, qt_stylesheet_table
 
-from src.settings.main import get_addon_name, get_addon_dir
+from src.settings.main import get_addon_name, get_addon_dir, get_cs2_path
 from src.widgets import qt_stylesheet_button, enable_dark_title_bar
 from src.forms.cleanup.common import format_size
 from src.forms.cleanup.parse import get_junk_files
+
+
+class VerificationThread(QThread):
+    output_signal = Signal(str)
+    error_signal = Signal(str)
+    finished_signal = Signal(list, dict)  # returns list of errors found, and dict of errors by map
+
+    def __init__(self, cs2_path, addon_dir, vmap_paths):
+        super().__init__()
+        self.cs2_path = cs2_path
+        self.addon_dir = addon_dir
+        self.vmap_paths = vmap_paths
+        self.errors_found = []
+        self.errors_by_map = {path: [] for path in vmap_paths}
+        self.is_aborted = False
+        self.process = None
+
+    def run(self):
+        rc_exe = os.path.join(self.cs2_path, "game", "bin", "win64", "resourcecompiler.exe")
+        if not os.path.exists(rc_exe):
+            self.errors_found.append(f"Resource compiler not found at: {rc_exe}")
+            self.finished_signal.emit(self.errors_found, self.errors_by_map)
+            return
+
+        for map_rel_path in self.vmap_paths:
+            if self.is_aborted:
+                break
+            
+            map_abs_path = os.path.join(self.addon_dir, map_rel_path)
+            if not os.path.exists(map_abs_path):
+                continue
+                
+            self.output_signal.emit(f"Checking map: {map_rel_path}...")
+            
+            cmd = [
+                rc_exe,
+                "-threads", str(os.cpu_count() or 4),
+                "-fshallow",
+                "-maxtextureres", "256",
+                "-dxlevel", "110",
+                "-quiet",
+                "-unbufferedio",
+                "-noassert",
+                "-i", map_abs_path,
+                "-world"
+            ]
+            
+            try:
+                self.process = subprocess.Popen(
+                    cmd,
+                    cwd=self.addon_dir,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    errors='ignore',
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
+                )
+                
+                start_time = time.time()
+                while True:
+                    if self.is_aborted:
+                        self.process.terminate()
+                        break
+                        
+                    if time.time() - start_time > 20.0:
+                        self.output_signal.emit("Timeout reached, moving to next map.")
+                        self.process.terminate()
+                        break
+                        
+                    line = self.process.stdout.readline()
+                    if not line and self.process.poll() is not None:
+                        break
+                        
+                    if line:
+                        line_stripped = line.strip()
+                        self.output_signal.emit(line_stripped)
+                        
+                        lower_line = line_stripped.lower()
+                        is_missing_ref = "failed loading resource" in lower_line or "doesn't exist in" in lower_line
+                        
+                        has_asset_ext = any(ext in lower_line for ext in [
+                            '.vmat', '.vmt', '.vmdl', '.vmdl_prefab', '.vpcf', '.vsndevts', '.vtex',
+                            '.vmat_c', '.vmt_c', '.vmdl_c', '.vmdl_prefab_c', '.vpcf_c', '.vsndevts_c', '.vtex_c'
+                        ])
+                        
+                        if is_missing_ref and has_asset_ext:
+                            self.errors_found.append(line_stripped)
+                            self.errors_by_map[map_rel_path].append(line_stripped)
+                            self.error_signal.emit(line_stripped)
+                            
+                        if "settling physics objects" in lower_line or "simulated" in lower_line or "--> map build finished" in lower_line:
+                            self.output_signal.emit("File checks complete. Stopping compiler.")
+                            self.process.terminate()
+                            break
+                            
+                self.process.wait()
+            except Exception as e:
+                err_msg = f"Error compiling {map_rel_path}: {e}"
+                self.errors_found.append(err_msg)
+                self.errors_by_map[map_rel_path].append(err_msg)
+                
+        self.finished_signal.emit(self.errors_found, self.errors_by_map)
+
+    def abort(self):
+        self.is_aborted = True
+        if self.process:
+            try:
+                if os.name == 'nt' and self.process.pid:
+                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.process.pid)],
+                                   capture_output=True, check=False)
+                else:
+                    self.process.terminate()
+            except Exception:
+                pass
+
+
+class VerificationDialog(QDialog):
+    def __init__(self, cs2_path, addon_dir, vmap_paths, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Verification - Cleanup Addon")
+        enable_dark_title_bar(self)
+        self.setMinimumSize(700, 450)
+        self.setModal(True)
+        
+        layout = QVBoxLayout(self)
+        
+        title = QLabel("Verifying Addon Cleanup")
+        title.setStyleSheet("font-size: 20px; font-weight: bold; color: #E3E3E3;")
+        layout.addWidget(title)
+        
+        self.status_label = QLabel("Initializing compilation check...")
+        self.status_label.setStyleSheet("color: #E3E3E3;")
+        layout.addWidget(self.status_label)
+        
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #505050;
+                border-radius: 2px;
+                text-align: center;
+                color: white;
+                background-color: #1C1C1C;
+            }
+            QProgressBar::chunk {
+                background-color: #1a528a;
+            }
+        """)
+        self.progress_bar.setRange(0, len(vmap_paths))
+        self.progress_bar.setValue(0)
+        layout.addWidget(self.progress_bar)
+        
+        self.log_view = QTextEdit()
+        self.log_view.setReadOnly(True)
+        self.log_view.setStyleSheet("""
+            QTextEdit {
+                background-color: #1E1E1E;
+                color: #D4D4D4;
+                font-family: Consolas, Courier New, monospace;
+                font-size: 11px;
+                border: 1px solid #333333;
+            }
+        """)
+        layout.addWidget(self.log_view)
+        
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        
+        self.close_btn = QPushButton("Close")
+        self.close_btn.setStyleSheet(qt_stylesheet_button)
+        self.close_btn.setEnabled(False)
+        self.close_btn.clicked.connect(self.accept)
+        
+        self.abort_btn = QPushButton("Abort")
+        self.abort_btn.setStyleSheet(qt_stylesheet_button)
+        self.abort_btn.clicked.connect(self.abort_verification)
+        
+        btn_layout.addWidget(self.close_btn)
+        btn_layout.addWidget(self.abort_btn)
+        layout.addLayout(btn_layout)
+        
+        self.thread = VerificationThread(cs2_path, addon_dir, vmap_paths)
+        self.thread.output_signal.connect(self.append_log)
+        self.thread.error_signal.connect(self.append_error)
+        self.thread.finished_signal.connect(self.verification_finished)
+        
+        self.errors_count = 0
+        self.vmap_paths = vmap_paths
+        self.current_index = 0
+        
+        self.thread.start()
+
+    def append_log(self, text):
+        if text.startswith("Checking map:"):
+            self.status_label.setText(text)
+            self.current_index += 1
+            self.progress_bar.setValue(self.current_index)
+        self.log_view.append(text)
+
+    def append_error(self, error):
+        self.errors_count += 1
+        self.log_view.append(f'<span style="color: #F44336; font-weight: bold;">[ERROR] {error}</span>')
+
+    def abort_verification(self):
+        self.thread.abort()
+        self.log_view.append('<span style="color: #FF9800; font-weight: bold;">Verification aborted by user.</span>')
+        self.status_label.setText("Verification aborted.")
+        self.abort_btn.setEnabled(False)
+        self.close_btn.setEnabled(True)
+
+    def verification_finished(self, errors, errors_by_map):
+        self.abort_btn.setEnabled(False)
+        self.close_btn.setEnabled(True)
+        
+        # Split the report from the actual log using - symbols
+        self.log_view.append("\n")
+        self.log_view.append('<span style="color: #555555;">----------------------------------------------------------------------</span>\n')
+        
+        # Extract unique missing paths across all maps
+        all_unique_missing = []
+        
+        def extract_missing_path(err):
+            import re
+            m = re.search(r'"([^"]+)"', err)
+            if m:
+                path = m.group(1)
+                if path.endswith('_c'):
+                    path = path[:-2]
+                return path
+            if "doesn't exist in" in err:
+                parts = err.split("doesn't exist in")
+                if len(parts) > 1:
+                    path = parts[1].strip().rstrip('!')
+                    if path.endswith('_c'):
+                        path = path[:-2]
+                    return path
+            return err
+
+        if errors:
+            self.status_label.setText(f"Verification complete. Detected {len(errors)} error(s)!")
+            self.log_view.append(f'<span style="color: #F44336; font-weight: bold; font-size: 13px;">'
+                                 f'WARNING: {len(errors)} missing resource references found! Please review the log above.</span>\n')
+            
+            self.log_view.append('<span style="color: #E3E3E3; font-weight: bold;">Missing files per vmap file</span>\n')
+            
+            for map_rel_path, map_errors in errors_by_map.items():
+                if map_errors:
+                    self.log_view.append(f'<span style="color: #F44336; font-weight: bold;">{map_rel_path} (missing {len(map_errors)}):</span>')
+                    
+                    unique_map_paths = []
+                    for err in map_errors:
+                        path = extract_missing_path(err)
+                        if path not in unique_map_paths:
+                            unique_map_paths.append(path)
+                        if path not in all_unique_missing:
+                            all_unique_missing.append(path)
+                            
+                    for path in unique_map_paths:
+                        self.log_view.append(f'<span style="color: #FF7043;">- {path}</span>')
+                    self.log_view.append("")  # blank line after map with errors
+                else:
+                    self.log_view.append(f'<span style="color: #4CAF50;">{map_rel_path} (missing 0)</span>')
+            
+            self.log_view.append('\n<span style="color: #E3E3E3; font-weight: bold;">Missing files (all missing files combined):</span>')
+            for path in sorted(all_unique_missing):
+                self.log_view.append(f'<span style="color: #FF7043;">- {path}</span>')
+            self.log_view.append("")
+            
+            QMessageBox.warning(self, "Verification Warning", 
+                                f"Detected {len(errors)} missing materials/models reference(s)!\n"
+                                "Please review the log to make sure nothing important was deleted.")
+        else:
+            self.status_label.setText("Verification complete. No errors detected!")
+            
+            self.log_view.append('<span style="color: #4CAF50; font-weight: bold; font-size: 13px;">'
+                                 'SUCCESS: No missing materials or models detected.</span>\n')
+            
+            self.log_view.append('<span style="color: #E3E3E3; font-weight: bold;">Missing files per vmap file</span>\n')
+            for map_rel_path in errors_by_map.keys():
+                self.log_view.append(f'<span style="color: #4CAF50;">{map_rel_path} (missing 0)</span>')
+            
+            self.log_view.append('\n<span style="color: #E3E3E3; font-weight: bold;">Missing files (all missing files combined):</span>')
+            self.log_view.append('<span style="color: #4CAF50;">None</span>\n')
+            
+            QMessageBox.information(self, "Verification Success", 
+                                    "No missing materials or models references detected.")
 
 
 class FileFilterProxyModel(QSortFilterProxyModel):
@@ -62,6 +347,12 @@ class CleanupDialog(QDialog):
         )
         instructions_label.setWordWrap(True)
         main_layout.addWidget(instructions_label)
+
+        # Checkbox option for mesh scanning
+        self.scan_meshes_checkbox = QCheckBox("Scan source mesh files (.fbx, .dmx) for material references")
+        self.scan_meshes_checkbox.setStyleSheet(qt_stylesheet_checkbox)
+        self.scan_meshes_checkbox.setChecked(True)
+        main_layout.addWidget(self.scan_meshes_checkbox)
 
         filters_frame = QFrame()
         filters_frame.setFrameShape(QFrame.StyledPanel)
@@ -130,6 +421,10 @@ class CleanupDialog(QDialog):
         self.recalculate_button.setStyleSheet(qt_stylesheet_button)
         button_layout.addWidget(self.recalculate_button)
 
+        self.verify_button = QPushButton("Verify")
+        self.verify_button.setStyleSheet(qt_stylesheet_button)
+        button_layout.addWidget(self.verify_button)
+
         self.cleanup_button = QPushButton("Delete Selected Files")
         self.cleanup_button.setStyleSheet(qt_stylesheet_button)
         self.cleanup_button.setDefault(True)
@@ -137,6 +432,7 @@ class CleanupDialog(QDialog):
 
         # Connect buttons to their respective actions
         self.recalculate_button.clicked.connect(self.recalculate)
+        self.verify_button.clicked.connect(self.run_verification)
         self.cleanup_button.clicked.connect(self.cleanup_addon)
 
         footer_layout.addLayout(button_layout)
@@ -146,7 +442,7 @@ class CleanupDialog(QDialog):
         # Data & model setup
         self.addon_dir = get_addon_dir()
         self.vmap_path = os.path.join(self.addon_dir, "maps", f"{get_addon_name()}.vmap")
-        self.junk_files = get_junk_files(addon_dir=self.addon_dir, vmap=self.vmap_path)
+        self.junk_files = get_junk_files(addon_dir=self.addon_dir, vmap=self.vmap_path, scan_meshes=self.scan_meshes_checkbox.isChecked())
         extensions = set(os.path.splitext(file)[1].lower() for file, _ in self.junk_files)
         self.filter_combo.addItem("All")
         for ext in sorted(extensions):
@@ -173,6 +469,7 @@ class CleanupDialog(QDialog):
         self.filter_combo.currentTextChanged.connect(self.proxy_model.setFileType)
         self.model.itemChanged.connect(self.update_statistics)
         self.proxy_model.layoutChanged.connect(self.update_statistics)
+        self.scan_meshes_checkbox.stateChanged.connect(self.recalculate)
 
         # Style labels for dark mode
         for label in self.findChildren(QLabel):
@@ -198,7 +495,8 @@ class CleanupDialog(QDialog):
 
     def recalculate(self):
         # Recalculate junk files based on current addon dir and vmap path
-        self.junk_files = get_junk_files(addon_dir=self.addon_dir, vmap=self.vmap_path)
+        scan_meshes = self.scan_meshes_checkbox.isChecked()
+        self.junk_files = get_junk_files(addon_dir=self.addon_dir, vmap=self.vmap_path, scan_meshes=scan_meshes)
 
         self.model.clear()
         self.model.setHorizontalHeaderLabels(["File Path", "Size"])
@@ -305,3 +603,34 @@ class CleanupDialog(QDialog):
             item = self.model.item(source_index.row(), 0)
             if item is not None:
                 item.setCheckState(state)
+
+    def run_verification(self):
+        cs2_path = get_cs2_path()
+        if not cs2_path:
+            QMessageBox.critical(self, "Error", "CS2 installation path not found. Please set it in settings.")
+            return
+            
+        try:
+            from src.forms.cleanup.parse import get_vmap_references
+            _, referenced_files = get_vmap_references(
+                self.addon_dir, 
+                self.vmap_path, 
+                scan_meshes=self.scan_meshes_checkbox.isChecked()
+            )
+            vmaps = [f for f in referenced_files if f.lower().endswith('.vmap')]
+            
+            main_rel = os.path.relpath(self.vmap_path, self.addon_dir).replace('\\', '/').lower()
+            if main_rel in vmaps:
+                vmaps.remove(main_rel)
+                vmaps.insert(0, main_rel)
+                
+            if not vmaps:
+                QMessageBox.information(self, "No Maps", "No maps found to verify.")
+                return
+                
+            verify_dialog = VerificationDialog(cs2_path, self.addon_dir, vmaps, self)
+            for label in verify_dialog.findChildren(QLabel):
+                label.setStyleSheet("color: #E3E3E3; background-color: transparent;")
+            verify_dialog.exec()
+        except Exception as e:
+            QMessageBox.warning(self, "Verification Error", f"Failed to start verification: {e}")
