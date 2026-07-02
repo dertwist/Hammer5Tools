@@ -354,6 +354,23 @@ class CleanupDialog(QDialog):
         self.scan_meshes_checkbox.setChecked(True)
         main_layout.addWidget(self.scan_meshes_checkbox)
 
+        # Dirtlist row
+        dirtlist_layout = QHBoxLayout()
+        dirtlist_label = QLabel(
+            'Files listed in <b>.dirtlist</b> will be ignored during cleanup.'
+        )
+        dirtlist_label.setStyleSheet("color: #999999; font-size: 11px; background-color: transparent;")
+        dirtlist_layout.addWidget(dirtlist_label)
+        dirtlist_layout.addStretch()
+
+        self.dirtlist_button = QPushButton("Open .dirtlist")
+        self.dirtlist_button.setStyleSheet(qt_stylesheet_button)
+        self.dirtlist_button.setFixedWidth(120)
+        self.dirtlist_button.clicked.connect(self.open_dirtlist)
+        dirtlist_layout.addWidget(self.dirtlist_button)
+
+        main_layout.addLayout(dirtlist_layout)
+
         filters_frame = QFrame()
         filters_frame.setFrameShape(QFrame.StyledPanel)
         filters_frame.setContentsMargins(8, 4, 8, 4)
@@ -603,6 +620,30 @@ class CleanupDialog(QDialog):
             item = self.model.item(source_index.row(), 0)
             if item is not None:
                 item.setCheckState(state)
+    def open_dirtlist(self):
+        """Open the .dirtlist file in the default text editor. Create it if it doesn't exist."""
+        dirtlist_path = os.path.join(self.addon_dir, '.dirtlist')
+        if not os.path.exists(dirtlist_path):
+            try:
+                with open(dirtlist_path, 'w', encoding='utf-8') as f:
+                    f.write("# Dirtlist - Files listed here will be ignored during cleanup.\n"
+                            "# Add one relative file path per line (relative to addon directory).\n"
+                            "# Lines starting with # are comments.\n"
+                            "# Example:\n"
+                            "# models/props/my_model.vmdl\n"
+                            "# materials/my_texture.tga\n")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Could not create .dirtlist file: {e}")
+                return
+        try:
+            if os.name == 'nt':
+                os.startfile(dirtlist_path)
+            elif sys.platform == 'darwin':
+                subprocess.Popen(['open', dirtlist_path])
+            else:
+                subprocess.Popen(['xdg-open', dirtlist_path])
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Could not open .dirtlist file: {e}")
 
     def run_verification(self):
         cs2_path = get_cs2_path()
