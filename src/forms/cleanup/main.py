@@ -342,8 +342,7 @@ class CleanupDialog(QDialog):
         instructions_label = QLabel(
             "This tool will remove all unused files from your addon (content).\n"
             f"It will keep only the files referenced in the {get_addon_name()}.vmap file."
-            "\n\n To complete the cleanup, you need to cleanup in Asset Browser in the editor.\n"
-            "\n\nWarning! .vmdl files that don't have any of the following properties: DefaultMaterialGroup, ReplaceMaterial, or MaterialGroup will have no material references!\n"
+            "\n\n To complete the cleanup, you need to cleanup in Asset Browser in the editor."
         )
         instructions_label.setWordWrap(True)
         main_layout.addWidget(instructions_label)
