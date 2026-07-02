@@ -334,11 +334,6 @@ class CleanupDialog(QDialog):
 
         main_layout = QVBoxLayout(self)
 
-        # Title and instructions
-        title_label = QLabel("Cleanup Addon")
-        title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
-        main_layout.addWidget(title_label)
-
         instructions_label = QLabel(
             "This tool will remove all unused files from your addon (content).\n"
             f"It will keep only the files referenced in the {get_addon_name()}.vmap file."
