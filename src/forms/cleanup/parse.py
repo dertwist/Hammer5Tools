@@ -467,13 +467,32 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
     return addon_assets, referenced_files
 
 
+def load_dirtlist(addon_dir):
+    """Load the .dirtlist ignore file from the addon directory.
+    Returns a set of lowercased relative paths to ignore during cleanup."""
+    dirtlist_path = os.path.join(addon_dir, '.dirtlist')
+    ignored = set()
+    if os.path.exists(dirtlist_path):
+        try:
+            with open(dirtlist_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        ignored.add(line.replace('\\', '/').lower())
+        except Exception as e:
+            print(f"Error reading .dirtlist: {e}")
+    return ignored
+
+
 def get_junk_files(addon_dir=None, vmap=None, scan_meshes=True):
     addon_assets, referenced_files = get_vmap_references(addon_dir, vmap, scan_meshes)
 
     referenced_files_lower = set(f.lower() for f in referenced_files)
+    dirtlist_ignored = load_dirtlist(addon_dir)
     junk_collection = []
     for file in addon_assets:
-        if file.lower() not in referenced_files_lower:
+        file_lower = file.lower()
+        if file_lower not in referenced_files_lower and file_lower not in dirtlist_ignored:
             full_path = os.path.join(addon_dir, file)
             try:
                 size = os.path.getsize(full_path)
