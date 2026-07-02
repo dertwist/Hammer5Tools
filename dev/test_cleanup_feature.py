@@ -52,6 +52,28 @@ class TestCleanupFeature(unittest.TestCase):
         self.unused_tex_path = os.path.join(self.materials_dir, "unused_texture.png")
         with open(self.unused_tex_path, "w") as f: f.write("fake unused png")
         
+        # Create smartprops directory
+        self.smartprops_dir = os.path.join(self.temp_dir, "smartprops")
+        os.makedirs(self.smartprops_dir)
+        
+        # Create mock vsmart files
+        self.vsmart_path = os.path.join(self.smartprops_dir, "test_prop.vsmart")
+        with open(self.vsmart_path, "w") as f:
+            f.write('<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{\n\t_class = "CSmartPropElement_Group"\n\tchildren = [\n\t\t{\n\t\t\t_class = "CSmartPropElement_Model"\n\t\t\tm_sModelName = "models/smart_model.vmdl"\n\t\t},\n\t\t{\n\t\t\t_class = "CSmartPropElement_SmartProp"\n\t\t\tm_sSmartProp = "smartprops/nested_prop.vsmart"\n\t\t}\n\t]\n}')
+            
+        self.nested_vsmart_path = os.path.join(self.smartprops_dir, "nested_prop.vsmart")
+        with open(self.nested_vsmart_path, "w") as f:
+            f.write('<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{\n\t_class = "CSmartPropElement_Model"\n\tm_sModelName = "models/nested_smart_model.vmdl"\n}')
+            
+        # Create mock smart models
+        self.smart_model_path = os.path.join(self.models_dir, "smart_model.vmdl")
+        with open(self.smart_model_path, "w") as f:
+            f.write('<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc32:version{c5dcef98-b629-46ab-88e3-a17c005c935e} -->\n{\n\trootNode = {}\n}')
+            
+        self.nested_smart_model_path = os.path.join(self.models_dir, "nested_smart_model.vmdl")
+        with open(self.nested_smart_model_path, "w") as f:
+            f.write('<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc32:version{c5dcef98-b629-46ab-88e3-a17c005c935e} -->\n{\n\trootNode = {}\n}')
+        
         # 6. Create a mock vmdl file referencing the FBX and DMX
         self.vmdl_path = os.path.join(self.models_dir, "test_model.vmdl")
         with open(self.vmdl_path, "w") as f:
@@ -64,7 +86,7 @@ class TestCleanupFeature(unittest.TestCase):
         # Mock extract_vmap_references in parse module for this test
         import src.forms.cleanup.parse
         self.original_extract_vmap_references = src.forms.cleanup.parse.extract_vmap_references
-        src.forms.cleanup.parse.extract_vmap_references = lambda vmap_path: ["models/test_model.vmdl"]
+        src.forms.cleanup.parse.extract_vmap_references = lambda vmap_path: ["models/test_model.vmdl", "smartprops/test_prop.vsmart"]
 
     def tearDown(self):
         # Restore original function
@@ -81,6 +103,14 @@ class TestCleanupFeature(unittest.TestCase):
         refs = get_mesh_material_references(self.dmx_path)
         self.assertIn("materials/test_material_dmx.vmat", refs)
 
+    def test_get_smartprop_references(self):
+        from src.forms.cleanup.parse import get_vmap_references
+        _, referenced_files = get_vmap_references(self.temp_dir, self.vmap_path, scan_meshes=True)
+        referenced_lower = set(f.lower() for f in referenced_files)
+        self.assertIn("models/smart_model.vmdl", referenced_lower)
+        self.assertIn("smartprops/nested_prop.vsmart", referenced_lower)
+        self.assertIn("models/nested_smart_model.vmdl", referenced_lower)
+
     def test_get_junk_files_with_scan_meshes(self):
         # When scan_meshes is True, the referenced vmat and texture files should NOT be junk
         junk = get_junk_files(addon_dir=self.temp_dir, vmap=self.vmap_path, scan_meshes=True)
@@ -95,6 +125,11 @@ class TestCleanupFeature(unittest.TestCase):
         self.assertNotIn("materials/test_texture.png", junk_paths)
         self.assertNotIn("materials/test_material_dmx.vmat", junk_paths)
         self.assertNotIn("materials/test_texture_dmx.png", junk_paths)
+        
+        # Smartprop assets should NOT be marked as junk
+        self.assertNotIn("models/smart_model.vmdl", junk_paths)
+        self.assertNotIn("smartprops/nested_prop.vsmart", junk_paths)
+        self.assertNotIn("models/nested_smart_model.vmdl", junk_paths)
 
     def test_get_junk_files_without_scan_meshes(self):
         # When scan_meshes is False, the assets referenced only inside FBX/DMX SHOULD be marked as junk
@@ -108,6 +143,11 @@ class TestCleanupFeature(unittest.TestCase):
         self.assertIn("materials/test_texture_dmx.png", junk_paths)
         self.assertIn("materials/unused_material.vmat", junk_paths)
         self.assertIn("materials/unused_texture.png", junk_paths)
+        
+        # Smartprop assets should still NOT be marked as junk (since they are referenced from vmap directly/indirectly)
+        self.assertNotIn("models/smart_model.vmdl", junk_paths)
+        self.assertNotIn("smartprops/nested_prop.vsmart", junk_paths)
+        self.assertNotIn("models/nested_smart_model.vmdl", junk_paths)
 
 class TestRealAssetsCleanup(unittest.TestCase):
     def test_real_fbx_parsing(self):
