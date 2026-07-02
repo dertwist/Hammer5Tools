@@ -8,7 +8,44 @@ import os
 import re
 
 
-def get_vmap_references(addon_dir=None, vmap=None):
+def get_mesh_material_references(file_path):
+    """
+    Extract material references (.vmat/.vmt) from a .fbx or .dmx file.
+    """
+    try:
+        with open(file_path, 'rb') as f:
+            content_bytes = f.read()
+        # Decode using utf-8 with ignore to get a clean string from binary
+        content = content_bytes.decode('utf-8', errors='ignore')
+    except Exception as e:
+        print(f"Error reading mesh file '{file_path}': {e}")
+        return []
+
+    # Find .vmat or .vmt references using regex
+    pattern_vmat = r'[a-zA-Z0-9_\-\\/.]+\.vmat'
+    matches_vmat = re.findall(pattern_vmat, content, re.IGNORECASE)
+    
+    pattern_vmt = r'[a-zA-Z0-9_\-\\/.]+\.vmt'
+    matches_vmt = re.findall(pattern_vmt, content, re.IGNORECASE)
+    
+    references = []
+    for match in matches_vmat + matches_vmt:
+        cleaned = match.strip().replace('\\', '/').lower().lstrip('/')
+        if cleaned:
+            references.append(cleaned)
+            
+    # De-duplicate while preserving order
+    unique_refs = []
+    seen = set()
+    for ref in references:
+        if ref not in seen:
+            seen.add(ref)
+            unique_refs.append(ref)
+            
+    return unique_refs
+
+
+def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
     """
     Identify unused (junk) files in the addon, including textures and meshes.
     Returns a list of tuples (file_path, size).
@@ -253,20 +290,21 @@ def get_vmap_references(addon_dir=None, vmap=None):
             return []
 
         references = []
+        allowed_ref_extensions = ('.vmat', '.vmt', '.vmdl', '.vmdl_prefab', '.fbx', '.dmx', '.obj', '.vpcf', '.vsndevts', '.vtex')
 
         def extract_references(d):
             if isinstance(d, dict):
                 for key, value in d.items():
-                    if key in ('filename', 'target_file', 'to', 'global_default_material',
-                               'single_override_material') and isinstance(value, str) and value:
-                        normalised = os.path.normpath(value).replace('\\', '/').lower()
-                        references.append(normalised)
+                    if isinstance(value, str) and value:
+                        val_lower = value.strip().lower()
+                        if val_lower.endswith(allowed_ref_extensions):
+                            normalised = os.path.normpath(val_lower).replace('\\', '/').lstrip('/')
+                            references.append(normalised)
                     elif isinstance(value, (dict, list)):
-                        if isinstance(value, dict):
-                            extract_references(value)
-                        else:
-                            for item in value:
-                                extract_references(item)
+                        extract_references(value)
+            elif isinstance(d, list):
+                for item in d:
+                    extract_references(item)
 
         extract_references(file)
         return references
@@ -288,13 +326,18 @@ def get_vmap_references(addon_dir=None, vmap=None):
             return get_particle_references(full_path)
         elif ext == '.vtex':
             return get_texture_references(full_path)
+        elif ext in ['.fbx', '.dmx']:
+            if scan_meshes:
+                return get_mesh_material_references(full_path)
+            else:
+                return []
 
         return []
 
-    # Define file extensions - UPDATED to include .vpcf and .vtex
+    # Define file extensions - UPDATED to include .vpcf, .vtex, and .dmx
     asset_extensions = ['.vmat', '.vmdl', '.vmdl_prefab', '.vsndevts', '.vsmart', '.vmap',
                         '.png', '.tga', '.fbx', '.obj', '.jpg', '.wav', '.mp3', '.ogg', '.vmap', '.hdri', '.tif',
-                        '.psd', '.exr', '.hdr', '.vpcf', '.vtex']
+                        '.psd', '.exr', '.hdr', '.vpcf', '.vtex', '.dmx']
     directories_to_search = ['maps', 'models', 'materials', 'sounds', 'soundevents', 'smartprops', 'particles']
     directories_to_ignore = ['materials\\default', 'weapons', 'RadGen', 'materials\\radgen']
     essentials_files = [f'soundevents/soundevents_addon.vsndevts']
@@ -401,50 +444,31 @@ def get_vmap_references(addon_dir=None, vmap=None):
         for r in refs:
             enqueue(r)
 
-    # Stage 1 – process every vmap first
-    while queue_vmap:
-        vmap_to_process = queue_vmap.popleft()
-        process_file(vmap_to_process)
-
-    # Stage 2 – process all smartprops (.vsmart)
-    while queue_vsmart:
-        smart_to_process = queue_vsmart.popleft()
-        process_file(smart_to_process)
-
-    # Stage 3 – process all particle systems (.vpcf)
-    while queue_vpcf:
-        vpcf_to_process = queue_vpcf.popleft()
-        process_file(vpcf_to_process)
-
-    # Stage 4 – process all models (.vmdl / .vmdl_prefab)
-    while queue_vmdl:
-        model_to_process = queue_vmdl.popleft()
-        process_file(model_to_process)
-
-    # Stage 5 – process all materials (.vmat)
-    while queue_vmat:
-        vmat_to_process = queue_vmat.popleft()
-        process_file(vmat_to_process)
-
-    # Stage 6 – process all texture compiler files (.vtex)
-    while queue_vtex:
-        vtex_to_process = queue_vtex.popleft()
-        process_file(vtex_to_process)
-
-    # Stage 7 – process all sound event files (.vsndevts)
-    while queue_vsndevts:
-        vsnd_to_process = queue_vsndevts.popleft()
-        process_file(vsnd_to_process)
-
-    # Finally process any remaining miscellaneous files
-    while queue_other:
-        process_file(queue_other.popleft())
+    # Process all queues until they are completely empty (dependency-solving queue loop)
+    while (queue_vmap or queue_vsmart or queue_vpcf or queue_vmdl or 
+           queue_vmat or queue_vtex or queue_vsndevts or queue_other):
+        if queue_vmap:
+            process_file(queue_vmap.popleft())
+        elif queue_vsmart:
+            process_file(queue_vsmart.popleft())
+        elif queue_vpcf:
+            process_file(queue_vpcf.popleft())
+        elif queue_vmdl:
+            process_file(queue_vmdl.popleft())
+        elif queue_vmat:
+            process_file(queue_vmat.popleft())
+        elif queue_vtex:
+            process_file(queue_vtex.popleft())
+        elif queue_vsndevts:
+            process_file(queue_vsndevts.popleft())
+        elif queue_other:
+            process_file(queue_other.popleft())
 
     return addon_assets, referenced_files
 
 
-def get_junk_files(addon_dir=None, vmap=None):
-    addon_assets, referenced_files = get_vmap_references(addon_dir, vmap)
+def get_junk_files(addon_dir=None, vmap=None, scan_meshes=True):
+    addon_assets, referenced_files = get_vmap_references(addon_dir, vmap, scan_meshes)
 
     referenced_files_lower = set(f.lower() for f in referenced_files)
     junk_collection = []
