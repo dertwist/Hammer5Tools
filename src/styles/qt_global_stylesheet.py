@@ -750,22 +750,30 @@ QListView::item:hover {
 
 /* ========================================================== */
 QHeaderView::section {
-    background-color: #D0D0D0;
+    background-color: #1C1C1C;
+    color: #9D9D9D;
     padding: 5px;
-    border: 1px solid #CCCCCC;
+    border: none;
+    font: 600 10pt "Segoe UI";
 }
-QTableWidget {
-    border: 1px solid #CCCCCC;
-    border-radius: 5px;
-    background-color: #FFFFFF;
+QTableWidget, QTableView {
+    border: none;
+    background-color: #151515;
+    color: #E3E3E3;
+    gridline-color: #2D2D30;
+    outline: none;
 }
-QTableWidget::item {
+QTableWidget::item, QTableView::item {
     padding: 5px;
-    border-bottom: 1px solid #E0E0E0;
+    border-bottom: 1px solid #2D2D30;
 }
-QTableWidget::item:selected {
+QTableWidget::item:selected, QTableView::item:selected {
     background-color: #414956;
     color: white;
+}
+QTableView QTableCornerButton::section {
+    background-color: #1C1C1C;
+    border: none;
 }
 
 

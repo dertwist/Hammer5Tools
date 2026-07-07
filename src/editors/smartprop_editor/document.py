@@ -124,6 +124,7 @@ class SmartPropDocument(QMainWindow):
         # _on_slider_committed once the last active slider is released.
         self._slider_dragging = 0
         self._slider_pre_drag_data = None
+        self._gizmo_pre_drag_data = None
 
         # Guard flag: while True, add_variable skips marking the document as modified
         # and emitting _edited (used during undo/redo restore).
@@ -256,7 +257,7 @@ class SmartPropDocument(QMainWindow):
         # Replace central widget content
         self.ui.centralwidget.layout().addWidget(self._center_tabs)
 
-        # Auto-refresh manual editor when switching to it
+        # Auto-refresh tabs when switching
         self._center_tabs.currentChanged.connect(self._on_center_tab_changed)
 
         # Re-apply tab styles to include the new center tab bar
@@ -270,9 +271,31 @@ class SmartPropDocument(QMainWindow):
         return self._modified
 
     def _on_center_tab_changed(self, index):
-        """Refresh the manual editor whenever the user switches to it."""
-        if self._center_tabs.widget(index) is self._manual_editor:
+        """Refresh the manual editor or viewport whenever the user switches to them."""
+        widget = self._center_tabs.widget(index)
+        if widget is self._manual_editor:
             self._manual_editor.refresh()
+
+    def select_element_by_id(self, element_id):
+        if element_id == 0:
+            self.ui.tree_hierarchy_widget.setCurrentItem(None)
+            return
+        root = self.ui.tree_hierarchy_widget.invisibleRootItem()
+        item = self._find_item_by_element_id(root, element_id)
+        if item:
+            self.ui.tree_hierarchy_widget.setCurrentItem(item)
+            self.ui.tree_hierarchy_widget.scrollToItem(item)
+
+    def _find_item_by_element_id(self, parent_item, element_id):
+        for i in range(parent_item.childCount()):
+            child = parent_item.child(i)
+            data = child.data(0, Qt.UserRole)
+            if data and data.get("m_nElementID") == element_id:
+                return child
+            res = self._find_item_by_element_id(child, element_id)
+            if res:
+                return res
+        return None
 
     def _prewarm_property_pools(self):
         """
@@ -732,6 +755,8 @@ class SmartPropDocument(QMainWindow):
         # handles that itself via _rebuild_properties_panel.
         if self._undo_redo_rebuilding:
             return
+
+
 
         # Refresh the manual editor if it is the active tab
         if (hasattr(self, '_center_tabs') and hasattr(self, '_manual_editor')
@@ -1767,7 +1792,316 @@ class SmartPropDocument(QMainWindow):
         bulk_import_action = menu.addAction("Bulk Model Importer")
         bulk_import_action.triggered.connect(self.open_bulk_model_importer)
 
+        menu.addSeparator()
+        load_vmap_action = menu.addAction("Load Vmap...")
+        load_vmap_action.triggered.connect(self.load_vmap_into_hierarchy)
+
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
+
+    def load_vmap_into_hierarchy(self):
+        from src.common import get_cs2_path
+        from src.settings.common import get_addon_name
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+        from src.dotnet import setup_keyvalues2
+        from src.editors.smartprop_editor.vsmart import deserialize_hierarchy_item
+        import os
+        
+        cs2_path = get_cs2_path()
+        addon_name = get_addon_name() or "addon"
+        start_dir = os.path.join(cs2_path, "content", "csgo_addons", addon_name, "maps") if cs2_path else ""
+        if not os.path.exists(start_dir):
+            start_dir = ""
+            
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select VMAP File to Load", start_dir, "VMAP Files (*.vmap)"
+        )
+        if not file_path:
+            return
+            
+        Datamodel, Element, DeferredMode = setup_keyvalues2()
+        
+        dmx_model = None
+        try:
+            # 1. Load the map
+            dmx_model = Datamodel.Load(file_path, DeferredMode.Automatic)
+            root = dmx_model.Root
+            if root is None or not root.ContainsKey("world") or root["world"] is None:
+                QMessageBox.critical(self, "Error", "Invalid VMAP file structure: could not find world element.")
+                return
+                
+            world = root["world"]
+            
+            # 2. Traverse the hierarchy recursively starting from world to find groups, smartprops, props
+            scanned_elements = []
+            
+            def traverse(el, parent=None):
+                if el is None:
+                    return
+                cn = el.ClassName
+                if cn in ["CMapGroup", "CMapSmartProp", "CMapEntity"]:
+                    scanned_elements.append(el)
+                    if cn in ["CMapGroup", "CMapSmartProp"]:
+                        # Groups and smartprops return early to avoid scanning children separately
+                        return
+                
+                if el.ContainsKey("children") and el["children"] is not None:
+                    for child in el["children"]:
+                        traverse(child, el)
+                        
+            traverse(world)
+            
+            # Filter scanned elements to only include actual valid ones
+            valid_elements = []
+            for el in scanned_elements:
+                cn = el.ClassName
+                if cn == "CMapGroup":
+                    valid_elements.append(el)
+                elif cn == "CMapSmartProp":
+                    valid_elements.append(el)
+                elif cn == "CMapEntity" and el.ContainsKey("entity_properties"):
+                    ep = el["entity_properties"]
+                    if ep is not None:
+                        classname = ep["classname"] if ep.ContainsKey("classname") else ""
+                        if classname.startswith("prop_") or "smart" in classname.lower():
+                            valid_elements.append(el)
+                            
+            if not valid_elements:
+                QMessageBox.warning(self, "No Props Found", "No valid props, groups, or smartprops were found in the selected map file.")
+                return
+                
+            # 3. Calculate pivot point P (Center of selection)
+            def format_imported_vector(vector):
+                should_round = get_settings_bool('SmartPropEditor', 'round_vmap_values', False)
+                if should_round:
+                    try:
+                        decimals = int(get_settings_value('SmartPropEditor', 'round_vmap_decimals', 4))
+                    except:
+                        decimals = 4
+                    return [round(float(x), decimals) for x in vector]
+                else:
+                    return [{"m_Expression": str(x)} for x in vector]
+            origins = []
+            for el in valid_elements:
+                if el.ContainsKey("origin") and el["origin"] is not None:
+                    try:
+                        origins.append([float(el["origin"].X), float(el["origin"].Y), float(el["origin"].Z)])
+                    except:
+                        pass
+            if not origins:
+                origins = [[0.0, 0.0, 0.0]]
+                
+            avg_x = sum(o[0] for o in origins) / len(origins)
+            avg_y = sum(o[1] for o in origins) / len(origins)
+            avg_z = sum(o[2] for o in origins) / len(origins)
+            pivot = [avg_x, avg_y, avg_z]
+            
+            import math
+            
+            def inverse_rotate_point_pyr(x, y, z, pitch, yaw, roll):
+                if yaw != 0:
+                    y_rad = math.radians(-yaw)
+                    c, s = math.cos(y_rad), math.sin(y_rad)
+                    x, y = x * c - y * s, x * s + y * c
+                if pitch != 0:
+                    p = math.radians(-pitch)
+                    c, s = math.cos(p), math.sin(p)
+                    y, z = y * c - z * s, y * s + z * c
+                if roll != 0:
+                    r = math.radians(-roll)
+                    c, s = math.cos(r), math.sin(r)
+                    x, z = x * c - z * s, x * s + z * c
+                return x, y, z
+
+            def normalize_angles(angles):
+                return [((a + 180) % 360) - 180 for a in angles]
+
+            # Helper to convert VMAP elements recursively
+            element_id_counter = [1]
+            
+            def convert_element(el, parent_origin, parent_angles=[0.0, 0.0, 0.0], parent_scale=[1.0, 1.0, 1.0]):
+                el_cn = el.ClassName
+                
+                origin = [0.0, 0.0, 0.0]
+                if el.ContainsKey("origin") and el["origin"] is not None:
+                    try:
+                        origin = [float(el["origin"].X), float(el["origin"].Y), float(el["origin"].Z)]
+                    except:
+                        pass
+                angles = [0.0, 0.0, 0.0]
+                if el.ContainsKey("angles") and el["angles"] is not None:
+                    try:
+                        angles = [float(el["angles"].Pitch), float(el["angles"].Yaw), float(el["angles"].Roll)]
+                    except:
+                        pass
+                scales = [1.0, 1.0, 1.0]
+                if el.ContainsKey("scales") and el["scales"] is not None:
+                    try:
+                        scales = [float(el["scales"].X), float(el["scales"].Y), float(el["scales"].Z)]
+                    except:
+                        pass
+                        
+                diff_pos = [origin[0] - parent_origin[0], origin[1] - parent_origin[1], origin[2] - parent_origin[2]]
+                if parent_angles != [0.0, 0.0, 0.0]:
+                    rel_pos = list(inverse_rotate_point_pyr(diff_pos[0], diff_pos[1], diff_pos[2], parent_angles[0], parent_angles[1], parent_angles[2]))
+                else:
+                    rel_pos = diff_pos
+                    
+                rel_rot = normalize_angles([angles[0] - parent_angles[0], angles[1] - parent_angles[1], angles[2] - parent_angles[2]])
+                rel_scale = [scales[i] / parent_scale[i] for i in range(3)]
+                
+                modifiers = []
+                if rel_pos != [0.0, 0.0, 0.0]:
+                    modifiers.append({
+                        "_class": "CSmartPropOperation_Translate",
+                        "m_vPosition": {
+                            "m_Components": format_imported_vector(rel_pos)
+                        }
+                    })
+                if rel_rot != [0.0, 0.0, 0.0]:
+                    modifiers.append({
+                        "_class": "CSmartPropOperation_Rotate",
+                        "m_vRotation": {
+                            "m_Components": format_imported_vector(rel_rot)
+                        }
+                    })
+                    
+                element_id = element_id_counter[0]
+                element_id_counter[0] += 1
+                
+                if el_cn == "CMapGroup":
+                    group_element = {
+                        "_class": "CSmartPropElement_Group",
+                        "m_nElementID": element_id,
+                        "m_sLabel": el.Name or f"Group_{el['nodeID']}",
+                        "m_Modifiers": modifiers,
+                        "m_SelectionCriteria": [],
+                        "m_Children": []
+                    }
+                    if rel_scale != [1.0, 1.0, 1.0]:
+                        should_round = get_settings_bool('SmartPropEditor', 'round_vmap_values', False)
+                        if should_round:
+                            try:
+                                decimals = int(get_settings_value('SmartPropEditor', 'round_vmap_decimals', 4))
+                            except:
+                                decimals = 4
+                            s_val = round(rel_scale[0], decimals)
+                        else:
+                            s_val = {"m_Expression": str(rel_scale[0])}
+                        modifiers.append({
+                            "_class": "CSmartPropOperation_Scale",
+                            "m_flScale": s_val
+                        })
+                        
+                    if el.ContainsKey("children") and el["children"] is not None:
+                        for child in el["children"]:
+                            if child.ClassName in ["CMapEntity", "CMapSmartProp", "CMapGroup"]:
+                                child_vsmart = convert_element(child, origin, angles, scales)
+                                if child_vsmart:
+                                    group_element["m_Children"].append(child_vsmart)
+                    return group_element
+                    
+                elif el_cn == "CMapSmartProp":
+                    smartprop_file = el["smartPropFilename"] if el.ContainsKey("smartPropFilename") else ""
+                    smartprop_element = {
+                        "_class": "CSmartPropElement_SmartProp",
+                        "m_sSmartProp": smartprop_file,
+                        "m_nElementID": element_id,
+                        "m_sLabel": el.Name or f"SmartProp_{el['nodeID']}",
+                        "m_Modifiers": modifiers,
+                        "m_SelectionCriteria": []
+                    }
+                    if rel_scale != [1.0, 1.0, 1.0]:
+                        if len(set(rel_scale)) == 1:
+                            should_round = get_settings_bool('SmartPropEditor', 'round_vmap_values', False)
+                            if should_round:
+                                try:
+                                    decimals = int(get_settings_value('SmartPropEditor', 'round_vmap_decimals', 4))
+                                except:
+                                    decimals = 4
+                                s_val = round(rel_scale[0], decimals)
+                            else:
+                                s_val = {"m_Expression": str(rel_scale[0])}
+                            smartprop_element["m_flUniformScale"] = s_val
+                        else:
+                            modifiers.append({
+                                "_class": "CSmartPropOperation_Scale",
+                                "m_flScale": format_imported_vector(rel_scale)[0]
+                            })
+                    return smartprop_element
+                    
+                elif el_cn == "CMapEntity":
+                    ep = el["entity_properties"]
+                    if ep is not None:
+                        classname = ep["classname"] if ep.ContainsKey("classname") else ""
+                        model_path = ep["model"] if ep.ContainsKey("model") else ""
+                        if not model_path and ep.ContainsKey("model_name"):
+                            model_path = ep["model_name"]
+                            
+                        model_name = os.path.splitext(os.path.basename(model_path))[0] if model_path else f"Prop_{classname}_{el['nodeID']}"
+                        model_element = {
+                            "_class": "CSmartPropElement_Model",
+                            "m_nElementID": element_id,
+                            "m_sModelName": model_path,
+                            "m_sLabel": model_name,
+                            "m_Modifiers": modifiers,
+                            "m_SelectionCriteria": []
+                        }
+                        if rel_scale != [1.0, 1.0, 1.0]:
+                            model_element["m_vModelScale"] = {"m_Components": format_imported_vector(rel_scale)}
+                        return model_element
+                return None
+                
+            # 4. Generate the parent Group element in JSON format
+            vmap_basename = os.path.splitext(os.path.basename(file_path))[0]
+            parent_group_vsmart = {
+                "_class": "CSmartPropElement_Group",
+                "m_sLabel": f"Imported_{vmap_basename}",
+                "m_Modifiers": [
+                    {
+                        "_class": "CSmartPropOperation_Translate",
+                        "m_vPosition": {
+                            "m_Components": format_imported_vector(pivot)
+                        }
+                    }
+                ],
+                "m_SelectionCriteria": [],
+                "m_Children": []
+            }
+            
+            # Convert all elements relative to the pivot and add as children of the parent group
+            for el in valid_elements:
+                converted = convert_element(el, pivot, [0.0, 0.0, 0.0], [1.0, 1.0, 1.0])
+                if converted:
+                    parent_group_vsmart["m_Children"].append(converted)
+                    
+            # 5. Deserialize to QTreeWidget items and add to hierarchy tree
+            imported_group_item = deserialize_hierarchy_item(parent_group_vsmart, self.element_id_generator)
+            self.ui.tree_hierarchy_widget.AddItem(imported_group_item)
+            
+            # Mark document as modified
+            self._modified = True
+            self._edited.emit()
+            
+            QMessageBox.information(
+                self,
+                "Import Success",
+                f"Successfully imported {len(valid_elements)} elements from {os.path.basename(file_path)} under a new parent Group."
+            )
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Import Failed", f"An error occurred while importing VMAP: {e}")
+            import traceback
+            traceback.print_exc()
+        finally:
+            if dmx_model is not None and hasattr(dmx_model, 'Dispose'):
+                dmx_model.Dispose()
+            import gc; gc.collect()
+            try:
+                import System
+                System.GC.Collect()
+                System.GC.WaitForPendingFinalizers()
+            except:
+                pass
 
     # ======================================[Tree widget functions]========================================
     def new_item_with_replacement(self, data):
@@ -2204,6 +2538,26 @@ class SmartPropDocument(QMainWindow):
                     cmd = PropertySnapshotCommand(self, item, self._slider_pre_drag_data, new_data)
                     self.undo_stack.push(cmd)
             self._slider_pre_drag_data = None
+
+    def _gizmo_commit_drag(self):
+        """Called when transform gizmo drag is finished/released.
+        Pushes a single PropertySnapshotCommand covering the full drag range.
+        """
+        if self._gizmo_pre_drag_data is not None:
+            item = self.ui.tree_hierarchy_widget.currentItem()
+            if item is not None and not self._property_undo_guard:
+                new_data = fast_deepcopy(item.data(0, Qt.UserRole))
+                if new_data != self._gizmo_pre_drag_data:
+                    cmd = PropertySnapshotCommand(self, item, self._gizmo_pre_drag_data, new_data)
+                    self.undo_stack.push(cmd)
+                    # Rebuild the properties panel to sync input boxes to new values
+                    self._rebuild_properties_panel(item)
+            self._gizmo_pre_drag_data = None
+
+    def update_property_frame_values(self, data):
+        """Callback to update property frames. Done on drag release for performance."""
+        pass
+
 
     # ======================================[Variables Panel Undo]========================================
     def _snapshot_variables(self):
