@@ -27,23 +27,15 @@ class SmartProp3DViewport(QWidget):
         # ---- toolbar ----
         self.toolbar = QWidget()
         self.toolbar.setObjectName("vp_toolbar_3d")
+        self.toolbar.setFixedHeight(20)
         self.toolbar.setStyleSheet(
             "QWidget#vp_toolbar_3d { background-color: #2D2D2D; border-bottom: 1px solid #363639; }"
+            " QWidget#vp_toolbar_3d QPushButton,"
+            " QWidget#vp_toolbar_3d QComboBox { max-height: 18px; padding: 0px 4px; }"
         )
         tbl = QHBoxLayout(self.toolbar)
-        tbl.setContentsMargins(6, 3, 6, 3)
+        tbl.setContentsMargins(6, 0, 6, 0)
         tbl.setSpacing(6)
-
-        # View presets
-        view_lbl = QLabel("View:")
-        view_lbl.setStyleSheet("color: #9D9D9D; font: 9pt 'Segoe UI';")
-        tbl.addWidget(view_lbl)
-
-        self._view_combo = QComboBox()
-        self._view_combo.setFixedWidth(110)
-        self._view_combo.addItems(["Perspective", "Top (XY)", "Front (XZ)", "Side (YZ)"])
-        self._view_combo.currentTextChanged.connect(self._on_view_preset)
-        tbl.addWidget(self._view_combo)
 
         # Shading modes
         shading_lbl = QLabel("Shading:")
@@ -108,10 +100,6 @@ class SmartProp3DViewport(QWidget):
         self.render_area = SmartProp3DRenderArea(document=document, parent=self)
         self.render_area.elementClicked.connect(self.elementClicked.emit)
         layout.addWidget(self.render_area)
-
-    def _on_view_preset(self, name):
-        self.render_area.camera.set_preset(name)
-        self.render_area.update()
 
     def _on_shading_mode(self, mode_name):
         self.render_area.shading_mode = mode_name.lower()
