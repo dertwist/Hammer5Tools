@@ -4,6 +4,26 @@ import argparse
 import time
 import ctypes
 
+# Configure PySide6 DLL directory and library paths for Windows
+if sys.platform == 'win32':
+    try:
+        import PySide6
+        pyside_dir = os.path.dirname(PySide6.__file__)
+        # Add to PATH so that plugin loader can find dependent Qt DLLs
+        os.environ["PATH"] = pyside_dir + os.path.pathsep + os.environ.get("PATH", "")
+        # Add to DLL Directory search path for Python 3.8+
+        if hasattr(os, 'add_dll_directory'):
+            os.add_dll_directory(pyside_dir)
+            plugins_dir = os.path.join(pyside_dir, "plugins")
+            if os.path.isdir(plugins_dir):
+                os.add_dll_directory(plugins_dir)
+                for sub in ["sceneparsers", "geometryloaders"]:
+                    sub_dir = os.path.join(plugins_dir, sub)
+                    if os.path.isdir(sub_dir):
+                        os.add_dll_directory(sub_dir)
+    except Exception as e:
+        print(f"Error configuring PySide6 DLL paths: {e}")
+
 # ==========================================================================================
 # VELOPACK / SQUIRREL HOOKS
 # This MUST run before any other imports (especially Qt) to prevent the GUI from opening
@@ -158,6 +178,14 @@ if __name__ == "__main__":
     from PySide6.QtCore import QTimer
 
     app = QApplication(sys.argv)
+    
+    # Explicitly add PySide6 plugins to library path to ensure scene importers (assimp, gltf) are resolved
+    import PySide6
+    plugins_dir = os.path.join(os.path.dirname(PySide6.__file__), "plugins")
+    if os.path.isdir(plugins_dir):
+        from PySide6.QtCore import QCoreApplication
+        QCoreApplication.addLibraryPath(plugins_dir)
+        
     app.setStyleSheet(QT_Stylesheet_global)
     
     # Check .NET runtime if libraries are present

@@ -374,6 +374,11 @@ class PropertyFrame(QWidget):
         self._worker_raw_value_with_class["_class"] = f"{self.name_prefix}_{self.name}"
 
     def _finish_init(self):
+        try:
+            self.parent()
+        except RuntimeError:
+            return  # underlying C/C++ object has been deleted
+
         """
         Phase 1: populate the first 4 property widgets immediately for fast
         perceived response. The remaining properties are deferred one tick.
@@ -394,6 +399,11 @@ class PropertyFrame(QWidget):
         QTimer.singleShot(0, self._finish_init_phase2)
 
     def _finish_init_phase2(self):
+        try:
+            self.parent()
+        except RuntimeError:
+            return  # underlying C/C++ object has been deleted
+
         """
         Phase 2: populate remaining properties and finalize the value dict.
         _setup_layout2dgrid_suppression requires ALL widgets to be present.

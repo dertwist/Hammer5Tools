@@ -344,6 +344,7 @@ class _PathEditorDialog(QDialog):
         self.table = QTableWidget(0, 3)
         self.table.setHorizontalHeaderLabels(["X", "Y", "Z"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.verticalHeader().setDefaultSectionSize(30)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.itemSelectionChanged.connect(self._on_table_selection)
         right_layout.addWidget(self.table)
@@ -514,12 +515,12 @@ class PropertyPathEditor(QWidget):
         dialog.setStyleSheet("""
             QDialog { background-color: #1C1C1C; }
             QWidget#vp_toolbar { background-color: #2D2D2D; border-bottom: 1px solid #363639; }
-            QTableWidget { background-color: #151515; color: #E3E3E3; border: 1px solid #363639; gridline-color: #363639; }
-            QHeaderView::section { background-color: #252526; color: #9D9D9D; border: 1px solid #363639; padding: 4px; }
+            QTableWidget { background-color: #151515; color: #E3E3E3; border: none; gridline-color: #2D2D30; }
+            QHeaderView::section { background-color: #252526; color: #9D9D9D; border: none; padding: 4px; }
             QPushButton { background-color: #333333; color: #E3E3E3; border: 1px solid #555555; border-radius: 2px; padding: 4px 12px; }
             QPushButton:hover { background-color: #444444; }
             QPushButton:pressed { background-color: #222222; }
-            QDoubleSpinBox { background-color: #252526; color: #E3E3E3; border: 1px solid #363639; padding: 2px; }
+            QDoubleSpinBox { background-color: #252526; color: #E3E3E3; border: 1px solid #363639; padding: 4px 6px; }
             QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { background-color: #333333; }
         """)
         

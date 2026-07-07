@@ -1,0 +1,46 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:modeldoc28:version{fb63b6ca-f435-4aa0-a2c7-c66ddc651dca} -->
+{
+	rootNode = 
+	{
+		_class = "RootNode"
+		children = 
+		[
+			
+			{
+				_class = "BoneMarkupList"
+				children = 
+				[
+				]
+				bone_cull_type = "None"
+			},
+			
+			{
+				_class = "RenderMeshList"
+				children = 
+				[
+					
+					{
+						_class = "RenderMeshFile"
+						name = "inferno_barrel_wood_01"
+						filename = "models/cs_italy/props/barrel/italy_barrel_wood_1_inferno_barrel_wood_01.dmx"
+					},
+				]
+			},
+			
+			{
+				_class = "PhysicsShapeList"
+				children = 
+				[
+					
+					{
+						_class = "PhysicsMeshFile"
+						filename = "models/cs_italy/props/barrel/italy_barrel_wood_1_phys.dmx"
+						surface_prop = "wood_basket"
+						collision_tags = ""
+						name = ""
+					},
+				]
+			},
+		]
+	}
+}
