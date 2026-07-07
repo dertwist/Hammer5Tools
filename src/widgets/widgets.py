@@ -120,14 +120,14 @@ class FloatWidget(QWidget):
                 value_current = float(text_current)
             except ValueError:
                 value_current = 0.0
-            self.Slider.setMaximum(abs(value_current) * self.slider_scale * 100 + 1000)
+            self.Slider.setMaximum(int(abs(value_current) * self.slider_scale * 100 + 1000))
             if self.only_positive:
                 self.Slider.setMinimum(0)
             else:
-                self.Slider.setMinimum(-abs(value_current) * self.slider_scale * 100 - 1000)
+                self.Slider.setMinimum(int(-abs(value_current) * self.slider_scale * 100 - 1000))
         else:
-            self.Slider.setMinimum(self.slider_range[0] * 100)
-            self.Slider.setMaximum(self.slider_range[1] * 100)
+            self.Slider.setMinimum(int(self.slider_range[0] * 100))
+            self.Slider.setMaximum(int(self.slider_range[1] * 100))
         # pre_press fires from mousePressEvent BEFORE valueChanged — guarantees
         # the undo snapshot is captured before the first value change.
         self.Slider.pre_press.connect(self._on_slider_pressed)
@@ -202,11 +202,11 @@ class FloatWidget(QWidget):
                 if self.only_positive:
                     self.Slider.setMinimum(0)
                 else:
-                    self.Slider.setMinimum(-abs(value) * self.slider_scale * 100 - 1000)
-                self.Slider.setMaximum(abs(value) * self.slider_scale * 100 + 1000)
+                    self.Slider.setMinimum(int(-abs(value) * self.slider_scale * 100 - 1000))
+                self.Slider.setMaximum(int(abs(value) * self.slider_scale * 100 + 1000))
         # Block slider signals to avoid double-emit when syncing slider to spinbox
         self.Slider.blockSignals(True)
-        self.Slider.setValue(value * 100)
+        self.Slider.setValue(int(value * 100))
         self.Slider.blockSignals(False)
         self.value = value
 
