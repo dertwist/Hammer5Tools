@@ -85,6 +85,9 @@ class Gizmo:
         self._arrow_vao = 0
         self._arrow_vbo = 0
         self._arrow_vertex_count = 0
+        self._shaft_vao = 0
+        self._shaft_vbo = 0
+        self._shaft_vertex_count = 0
         self._ring_vao = 0
         self._ring_vbo = 0
         self._ring_vertex_count = 0
@@ -125,6 +128,18 @@ class Gizmo:
         GL.glBindVertexArray(0)
         self._arrow_vertex_count = len(arrow_verts)
 
+        # Plain shaft geometry (used by the Scale gizmo, no arrowhead)
+        shaft_verts = self._build_shaft_vertices()
+        self._shaft_vao = GL.glGenVertexArrays(1)
+        self._shaft_vbo = GL.glGenBuffers(1)
+        GL.glBindVertexArray(self._shaft_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._shaft_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, shaft_verts.nbytes, shaft_verts, GL.GL_STATIC_DRAW)
+        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
+        GL.glEnableVertexAttribArray(0)
+        GL.glBindVertexArray(0)
+        self._shaft_vertex_count = len(shaft_verts)
+
         # Ring geometry
         ring_verts = self._build_ring_vertices()
         self._ring_vao = GL.glGenVertexArrays(1)
@@ -164,8 +179,23 @@ class Gizmo:
 
         from OpenGL import GL
 
+        # Bind the gizmo program before touching its uniforms — otherwise
+        # glGetUniformLocation resolves against the gizmo program while a
+        # *different* program is still current, and glUniform* raises
+        # GL_INVALID_OPERATION.  Upload view/projection once here.
+        GL.glUseProgram(shader_program)
+        GL.glUniformMatrix4fv(
+            GL.glGetUniformLocation(shader_program, "uView"), 1, GL.GL_FALSE, view_matrix
+        )
+        GL.glUniformMatrix4fv(
+            GL.glGetUniformLocation(shader_program, "uProjection"), 1, GL.GL_FALSE, proj_matrix
+        )
+
         GL.glDisable(GL.GL_DEPTH_TEST)
-        GL.glLineWidth(2.5)
+        # Force solid fill regardless of the viewport's shading mode (e.g.
+        # Wireframe), so the gizmo never inherits a leftover GL_LINE polygon
+        # mode from the model render pass.
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
 
         gl_pos = self._get_gl_position()
         dist = np.linalg.norm(camera_pos - gl_pos)
@@ -197,16 +227,16 @@ class Gizmo:
 
             if self.mode == GizmoMode.TRANSLATE:
                 GL.glBindVertexArray(self._arrow_vao)
-                GL.glDrawArrays(GL.GL_LINES, 0, self._arrow_vertex_count)
+                GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._arrow_vertex_count)
                 GL.glBindVertexArray(0)
             elif self.mode == GizmoMode.ROTATE:
                 GL.glBindVertexArray(self._ring_vao)
-                GL.glDrawArrays(GL.GL_LINE_STRIP, 0, self._ring_vertex_count)
+                GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._ring_vertex_count)
                 GL.glBindVertexArray(0)
             elif self.mode == GizmoMode.SCALE:
                 # Shaft
-                GL.glBindVertexArray(self._arrow_vao)
-                GL.glDrawArrays(GL.GL_LINES, 0, 2)
+                GL.glBindVertexArray(self._shaft_vao)
+                GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._shaft_vertex_count)
                 GL.glBindVertexArray(0)
                 # Cube at end
                 end_model = translation_matrix(*gl_pos) @ axis_rot
@@ -223,7 +253,6 @@ class Gizmo:
                 GL.glBindVertexArray(0)
 
         GL.glEnable(GL.GL_DEPTH_TEST)
-        GL.glLineWidth(1.0)
 
     def hit_test(self, ray_origin, ray_dir, camera_pos) -> str:
         """Test if a ray hits any gizmo axis. Returns axis name or GizmoAxis.NONE."""
@@ -330,31 +359,72 @@ class Gizmo:
         return self._dragging
 
     @staticmethod
-    def _build_arrow_vertices() -> np.ndarray:
-        """Build arrow geometry along +Y axis (unit length). Rendered as GL_LINES."""
+    def _cylinder_side(y0, y1, r0, r1, segments=12):
+        """Build a solid tapered cylinder (frustum) side wall between y0 and y1. Rendered as GL_TRIANGLES."""
         verts = []
-        # Shaft
-        verts.extend([[0, 0, 0], [0, 1, 0]])
-        # Arrowhead (cone approximation)
-        tip = [0, 1.15, 0]
-        n_segments = 8
-        radius = 0.04
-        for i in range(n_segments):
-            a1 = 2.0 * math.pi * i / n_segments
-            a2 = 2.0 * math.pi * (i + 1) / n_segments
-            p1 = [radius * math.cos(a1), 0.85, radius * math.sin(a1)]
-            p2 = [radius * math.cos(a2), 0.85, radius * math.sin(a2)]
-            verts.extend([p1, tip])
-            verts.extend([p1, p2])
+        for i in range(segments):
+            a1 = 2.0 * math.pi * i / segments
+            a2 = 2.0 * math.pi * (i + 1) / segments
+            p0a = [r0 * math.cos(a1), y0, r0 * math.sin(a1)]
+            p0b = [r0 * math.cos(a2), y0, r0 * math.sin(a2)]
+            p1a = [r1 * math.cos(a1), y1, r1 * math.sin(a1)]
+            p1b = [r1 * math.cos(a2), y1, r1 * math.sin(a2)]
+            if r0 > 1e-6:
+                verts.extend([p0a, p0b, p1a])
+            if r1 > 1e-6:
+                verts.extend([p0b, p1b, p1a])
+        return verts
+
+    @staticmethod
+    def _disc_cap(y, radius, segments=12):
+        """Build a filled disc cap at height y. Rendered as GL_TRIANGLES."""
+        verts = []
+        center = [0.0, y, 0.0]
+        for i in range(segments):
+            a1 = 2.0 * math.pi * i / segments
+            a2 = 2.0 * math.pi * (i + 1) / segments
+            p1 = [radius * math.cos(a1), y, radius * math.sin(a1)]
+            p2 = [radius * math.cos(a2), y, radius * math.sin(a2)]
+            verts.extend([center, p1, p2])
+        return verts
+
+    @staticmethod
+    def _build_arrow_vertices() -> np.ndarray:
+        """Build a solid arrow (shaft cylinder + cone head) along +Y (unit length). Rendered as GL_TRIANGLES."""
+        segments = 12
+        shaft_radius = 0.035
+        head_radius = 0.09
+        shaft_top = 0.75
+        tip_y = 1.15
+
+        verts = []
+        verts.extend(Gizmo._cylinder_side(0.0, shaft_top, shaft_radius, shaft_radius, segments))
+        verts.extend(Gizmo._disc_cap(shaft_top, head_radius, segments))
+        verts.extend(Gizmo._cylinder_side(shaft_top, tip_y, head_radius, 0.0, segments))
         return np.array(verts, dtype=np.float32)
 
     @staticmethod
+    def _build_shaft_vertices() -> np.ndarray:
+        """Build a solid thin cylinder shaft along +Y (unit length), no head. Rendered as GL_TRIANGLES."""
+        segments = 10
+        radius = 0.035
+        return np.array(Gizmo._cylinder_side(0.0, 1.0, radius, radius, segments), dtype=np.float32)
+
+    @staticmethod
     def _build_ring_vertices(segments=48) -> np.ndarray:
-        """Build ring geometry on the XZ plane (unit radius). Rendered as GL_LINE_STRIP."""
+        """Build a solid flat ring band on the XZ plane (unit outer radius). Rendered as GL_TRIANGLES."""
+        outer_r = 1.0
+        inner_r = 0.92
         verts = []
-        for i in range(segments + 1):
-            angle = 2.0 * math.pi * i / segments
-            verts.append([math.cos(angle), 0, math.sin(angle)])
+        for i in range(segments):
+            a1 = 2.0 * math.pi * i / segments
+            a2 = 2.0 * math.pi * (i + 1) / segments
+            o1 = [outer_r * math.cos(a1), 0.0, outer_r * math.sin(a1)]
+            o2 = [outer_r * math.cos(a2), 0.0, outer_r * math.sin(a2)]
+            i1 = [inner_r * math.cos(a1), 0.0, inner_r * math.sin(a1)]
+            i2 = [inner_r * math.cos(a2), 0.0, inner_r * math.sin(a2)]
+            verts.extend([i1, o1, o2])
+            verts.extend([i1, o2, i2])
         return np.array(verts, dtype=np.float32)
 
     @staticmethod

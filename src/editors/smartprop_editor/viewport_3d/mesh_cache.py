@@ -44,6 +44,29 @@ class GPUMesh:
 
 
 # ---------------------------------------------------------------------------
+# glTF -> Source coordinate conversion
+# ---------------------------------------------------------------------------
+# VRF's GltfModelExporter writes geometry in glTF space: Y-up and in *metres*
+# (1 Source inch = 0.0254 m), remapping the axes as
+#       glTF = 0.0254 * (Source_Y, Source_Z, Source_X)
+# trimesh preserves that frame, and load_glb() bakes the node transform into the
+# vertices, so the loaded verts are Y-up metres.  The rest of the viewport works
+# in Source space (Z-up, inches) — grid cells, gizmo, positions from the document
+# tree — and only converts to GL at draw time via SOURCE2_TO_GL.  So undo VRF's
+# conversion here and hand back geometry in raw Source space (Z-up, inches):
+#       Source = (glTF_Z, glTF_X, glTF_Y) / 0.0254
+_VRF_GLTF_SCALE = 0.0254  # Source inch -> glTF metre
+# Pure axis-swap (proper rotation, det +1) used for direction vectors (normals).
+_GLTF_TO_SOURCE_ROT = np.array([
+    [0.0, 0.0, 1.0],
+    [1.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0],
+], dtype=np.float32)
+# Axis-swap + inch scale, used for positions.
+_GLTF_TO_SOURCE = _GLTF_TO_SOURCE_ROT / _VRF_GLTF_SCALE
+
+
+# ---------------------------------------------------------------------------
 # GLB loader (using trimesh)
 # ---------------------------------------------------------------------------
 
@@ -60,25 +83,48 @@ def load_glb(path: str) -> Optional[MeshData]:
         all_indices = []
         offset = 0
 
-        # Flatten all meshes in the scene
-        for name, geom in scene.geometry.items():
-            if not isinstance(geom, trimesh.Trimesh):
-                continue
+        # Pair every geometry *instance* with its world transform via the scene
+        # graph.  Iterating scene.geometry directly and looking transforms up by
+        # geometry key is unreliable — trimesh's node names don't always match
+        # geometry keys (e.g. a mesh split by material yields '.foo' and
+        # '.foo_1', but the graph nodes are '.foo_ab12' / '.foo_cd34').  Any
+        # instance that misses its transform stays in a different coordinate
+        # space/scale from its siblings, so half the model ends up 39x too big.
+        instances = []
+        try:
+            node_names = list(scene.graph.nodes_geometry)
+        except Exception:
+            node_names = []
+        if node_names:
+            for node_name in node_names:
+                try:
+                    transform, geom_name = scene.graph[node_name]
+                except Exception:
+                    continue
+                geom = scene.geometry.get(geom_name)
+                if isinstance(geom, trimesh.Trimesh):
+                    instances.append((geom, np.array(transform, dtype=np.float32)))
+        else:
+            # No usable scene graph — take geometries as-is (identity transform).
+            for geom in scene.geometry.values():
+                if isinstance(geom, trimesh.Trimesh):
+                    instances.append((geom, np.eye(4, dtype=np.float32)))
 
+        # Flatten all instances into one buffer, baking each world transform so
+        # every instance shares the same glTF world space (Y-up, metres).
+        for geom, transform in instances:
             verts = np.array(geom.vertices, dtype=np.float32)
             faces = np.array(geom.faces, dtype=np.uint32)
+            norms = (np.array(geom.vertex_normals, dtype=np.float32)
+                     if geom.vertex_normals is not None and len(geom.vertex_normals) > 0
+                     else np.zeros_like(verts))
 
-            # Apply the geometry's transform if it exists in the scene graph
-            try:
-                transform = scene.graph.get(name)[0] if name in scene.graph else None
-                if transform is not None and not np.allclose(transform, np.eye(4)):
-                    ones = np.ones((len(verts), 1), dtype=np.float32)
-                    verts_h = np.hstack([verts, ones])
-                    verts = (verts_h @ transform.T)[:, :3].astype(np.float32)
-            except Exception:
-                pass
-
-            norms = np.array(geom.vertex_normals, dtype=np.float32) if geom.vertex_normals is not None and len(geom.vertex_normals) > 0 else np.zeros_like(verts)
+            if not np.allclose(transform, np.eye(4)):
+                ones = np.ones((len(verts), 1), dtype=np.float32)
+                verts = (np.hstack([verts, ones]) @ transform.T)[:, :3].astype(np.float32)
+                # Rotate normals by the transform's linear part (uniform scale +
+                # rotation); magnitude is fixed up by the final normalize.
+                norms = (norms @ transform[:3, :3].T).astype(np.float32)
 
             uvs = None
             if geom.visual and hasattr(geom.visual, 'uv') and geom.visual.uv is not None:
@@ -86,7 +132,7 @@ def load_glb(path: str) -> Optional[MeshData]:
 
             all_vertices.append(verts)
             all_normals.append(norms)
-            if uvs is not None:
+            if uvs is not None and len(uvs) == len(verts):
                 all_uvs.append(uvs)
             else:
                 all_uvs.append(np.zeros((len(verts), 2), dtype=np.float32))
@@ -100,6 +146,15 @@ def load_glb(path: str) -> Optional[MeshData]:
         normals = np.vstack(all_normals)
         uvs_arr = np.vstack(all_uvs) if all_uvs else None
         indices = np.vstack(all_indices).flatten().astype(np.uint32)
+
+        # Undo VRF's glTF (Y-up, metres) frame -> raw Source (Z-up, inches),
+        # so downstream transforms and the grid share one coordinate system.
+        vertices = (vertices @ _GLTF_TO_SOURCE.T).astype(np.float32)
+        normals = (normals @ _GLTF_TO_SOURCE_ROT.T).astype(np.float32)
+        # Renormalize: baking a scaled node transform changed normal lengths.
+        n_len = np.linalg.norm(normals, axis=1, keepdims=True)
+        n_len[n_len < 1e-8] = 1.0
+        normals = (normals / n_len).astype(np.float32)
 
         bbox_min = vertices.min(axis=0)
         bbox_max = vertices.max(axis=0)

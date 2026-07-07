@@ -100,10 +100,15 @@ def rotation_matrix_euler(pitch_deg, yaw_deg, roll_deg):
 #   GL_X =  S2_X
 #   GL_Y =  S2_Z
 #   GL_Z = -S2_Y
+# NOTE: like every other matrix builder in this file, this is written
+# pre-transposed — glUniformMatrix4fv(..., GL_FALSE, m) reinterprets numpy's
+# row-major memory as GL's column-major layout, which applies the transpose
+# of whatever is written here. Writing the "intuitive" matrix directly (not
+# pre-transposed) silently flips Z-up to -Y instead of +Y.
 SOURCE2_TO_GL = np.array([
     [1,  0,  0, 0],
-    [0,  0,  1, 0],
-    [0, -1,  0, 0],
+    [0,  0, -1, 0],
+    [0,  1,  0, 0],
     [0,  0,  0, 1],
 ], dtype=np.float32)
 
