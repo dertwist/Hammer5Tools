@@ -220,6 +220,35 @@ class PreferencesDialog(QDialog):
         layout_rt_saving.addLayout(row_rt_delay)
         layout.addWidget(frame_rt_saving)
 
+        # Divider for VMAP Import Subcategory
+        layout.addWidget(self.create_divider(smartprop_content))
+        label_vmap_import = QLabel("VMAP Importing", smartprop_content)
+        layout.addWidget(label_vmap_import)
+        frame_vmap_import = QFrame(smartprop_content)
+        layout_vmap_import = QVBoxLayout(frame_vmap_import)
+        
+        # VMAP Importing row (checkbox, label and combobox in one horizontal row)
+        row_vmap_import = QHBoxLayout()
+        
+        self.spe_round_vmap_values = QCheckBox("Round values during VMAP import (recommended)", frame_vmap_import)
+        self.spe_round_vmap_values.setStyleSheet(qt_stylesheet_checkbox)
+        row_vmap_import.addWidget(self.spe_round_vmap_values)
+        
+        row_vmap_import.addSpacing(20)
+        
+        label_decimals = QLabel("Decimal places:", frame_vmap_import)
+        row_vmap_import.addWidget(label_decimals)
+        
+        self.spe_round_vmap_decimals = QComboBox(frame_vmap_import)
+        self.spe_round_vmap_decimals.setStyleSheet(qt_stylesheet_combobox)
+        # Options: 2, 3, 4, 5, 6, 1, 0
+        for opt in ["2", "3", "4", "5", "6", "1", "0"]:
+            self.spe_round_vmap_decimals.addItem(opt, int(opt))
+        row_vmap_import.addWidget(self.spe_round_vmap_decimals)
+        row_vmap_import.addStretch()
+        
+        layout_vmap_import.addLayout(row_vmap_import)
+        layout.addWidget(frame_vmap_import)
 
         layout.addStretch()
         smartprop_scroll = self.wrap_in_scroll_area(smartprop_content)
@@ -395,6 +424,17 @@ class PreferencesDialog(QDialog):
             trans_win = 50
         self.spe_transparency_window.set_value(trans_win)
 
+        # Populate VMAP Import settings
+        self.spe_round_vmap_values.setChecked(get_settings_bool('SmartPropEditor', 'round_vmap_values', False))
+        self.spe_round_vmap_decimals.setEnabled(self.spe_round_vmap_values.isChecked())
+        
+        decimals_val = get_settings_value('SmartPropEditor', 'round_vmap_decimals') or "4"
+        idx = self.spe_round_vmap_decimals.findData(int(decimals_val))
+        if idx != -1:
+            self.spe_round_vmap_decimals.setCurrentIndex(idx)
+        else:
+            self.spe_round_vmap_decimals.setCurrentText("4")
+
     def update_default_file_setting(self):
         # Collect current settings from Default File subcategory fields (removed folder options)
         process = {
@@ -452,6 +492,14 @@ class PreferencesDialog(QDialog):
         )
         self.spe_transparency_window.edited.connect(
             lambda val: set_settings_value('SmartPropEditor', 'transparency_window', str(val))
+        )
+        # Connect VMAP Import rounding signals
+        self.spe_round_vmap_values.toggled.connect(
+            lambda: set_settings_bool('SmartPropEditor', 'round_vmap_values', self.spe_round_vmap_values.isChecked())
+        )
+        self.spe_round_vmap_values.toggled.connect(self.spe_round_vmap_decimals.setEnabled)
+        self.spe_round_vmap_decimals.currentIndexChanged.connect(
+            lambda: set_settings_value('SmartPropEditor', 'round_vmap_decimals', str(self.spe_round_vmap_decimals.currentData()))
         )
         self.btn_force_association.clicked.connect(self.force_file_associations)
 

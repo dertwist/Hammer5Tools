@@ -516,26 +516,26 @@ QLineEdit:hover {
 qt_stylesheet_table = """
 QTableView {
     color: #E3E3E3;
-    border: 2px solid #363639;
-    background-color: #1C1C1C;
-    alternate-background-color: #242424;
-    gridline-color: #363639;
+    border: none;
+    background-color: #151515;
+    alternate-background-color: #1D1D1F;
+    gridline-color: #2D2D30;
     selection-background-color: #414956;
     selection-color: white;
     font: 580 10pt "Segoe UI";
 }
 
 QHeaderView::section {
-    background-color: #2D2D30;
-    color: #E3E3E3;
-    padding: 4px;
-    border: 1px solid #363639;
-    font: 580 10pt "Segoe UI";
+    background-color: #1C1C1C;
+    color: #9D9D9D;
+    padding: 5px;
+    border: none;
+    font: 600 10pt "Segoe UI";
 }
 
 QTableView QTableCornerButton::section {
-    background-color: #2D2D30;
-    border: 1px solid #363639;
+    background-color: #1C1C1C;
+    border: none;
 }
 """
 

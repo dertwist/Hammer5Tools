@@ -1,5 +1,8 @@
 PySide6==6.9.0
 PySide6_Essentials==6.9.0
+PyOpenGL
+trimesh
+pygltflib
 packaging
 markdown2
 pypresence
