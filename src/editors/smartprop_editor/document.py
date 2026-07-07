@@ -254,6 +254,15 @@ class SmartPropDocument(QMainWindow):
         self._manual_editor = ManualEditor(document=self)
         self._center_tabs.addTab(self._manual_editor, "Manual Editor")
 
+        # 3D Viewport tab.  The OpenGL viewport (and its GL context / VRF
+        # decompilation) is expensive and can misbehave if created eagerly, so we
+        # add only a cheap placeholder here.  The real SmartProp3DViewport is built
+        # lazily the first time the user activates this tab (see _ensure_viewport_3d).
+        self._viewport_3d = None
+        self._viewport_3d_loaded = False
+        self._viewport_3d_placeholder = QWidget()
+        self._center_tabs.addTab(self._viewport_3d_placeholder, "3D Viewport")
+
         # Replace central widget content
         self.ui.centralwidget.layout().addWidget(self._center_tabs)
 
@@ -275,6 +284,60 @@ class SmartPropDocument(QMainWindow):
         widget = self._center_tabs.widget(index)
         if widget is self._manual_editor:
             self._manual_editor.refresh()
+        elif widget is self._viewport_3d_placeholder:
+            # First activation of the 3D tab: build the real OpenGL viewport now.
+            self._ensure_viewport_3d()
+        elif self._viewport_3d is not None and widget is self._viewport_3d:
+            self._refresh_viewport_3d()
+
+    def _ensure_viewport_3d(self):
+        """Lazily construct the OpenGL 3D viewport on first tab activation.
+
+        Building it here (rather than at document init) keeps the GL context and
+        VRF decompilation from spinning up unless the user actually opens the tab.
+        """
+        if self._viewport_3d is not None:
+            return
+        try:
+            from src.editors.smartprop_editor.viewport_3d.viewport import SmartProp3DViewport
+            self._viewport_3d = SmartProp3DViewport(document=self)
+            self._viewport_3d.elementClicked.connect(self._on_viewport_element_clicked)
+        except Exception as e:
+            # The viewport depends on OpenGL/VRF; never let it break the editor.
+            print(f"[SmartProp3D] 3D Viewport unavailable: {e}")
+            return
+
+        # Swap the placeholder for the real viewport in place.
+        idx = self._center_tabs.indexOf(self._viewport_3d_placeholder)
+        self._center_tabs.removeTab(idx)
+        self._center_tabs.insertTab(idx, self._viewport_3d, "3D Viewport")
+        self._viewport_3d_placeholder.deleteLater()
+        self._viewport_3d_placeholder = None
+        set_qdock_tab_style(self.findChildren)
+        # Selecting the new tab re-enters _on_center_tab_changed, which loads the
+        # scene via _refresh_viewport_3d().
+        self._center_tabs.setCurrentIndex(idx)
+
+    def _refresh_viewport_3d(self):
+        """Rebuild the 3D scene from the hierarchy and sync the current selection.
+
+        This is what triggers model loading / decompilation, so it only runs while
+        the 3D tab is active.
+        """
+        if self._viewport_3d is None:
+            return
+        self._viewport_3d.update_viewport()
+        if not self._viewport_3d_loaded:
+            self._viewport_3d_loaded = True
+            self._viewport_3d.fit_view()
+        current = self.ui.tree_hierarchy_widget.currentItem()
+        data = current.data(0, Qt.UserRole) if current is not None else None
+        eid = data.get("m_nElementID", 0) if isinstance(data, dict) else 0
+        self._viewport_3d.highlight_element(eid)
+
+    def _on_viewport_element_clicked(self, element_id):
+        """Clicking an element in the 3D viewport selects it in the hierarchy."""
+        self.select_element_by_id(element_id)
 
     def select_element_by_id(self, element_id):
         if element_id == 0:
@@ -762,6 +825,13 @@ class SmartPropDocument(QMainWindow):
         if (hasattr(self, '_center_tabs') and hasattr(self, '_manual_editor')
                 and self._center_tabs.currentWidget() is self._manual_editor):
             self._manual_editor.refresh()
+
+        # Mirror the tree selection into the 3D viewport highlight when it is active.
+        if (getattr(self, '_viewport_3d', None) is not None
+                and self._center_tabs.currentWidget() is self._viewport_3d):
+            data = current_item.data(0, Qt.UserRole) if current_item is not None else None
+            eid = data.get("m_nElementID", 0) if isinstance(data, dict) else 0
+            self._viewport_3d.highlight_element(eid)
 
         # Raise the guard BEFORE creating any PropertyFrame so the guard decrement
         # is queued AFTER all _finish_init singleShot(0) callbacks.  The decrement

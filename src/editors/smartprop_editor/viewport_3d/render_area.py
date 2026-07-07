@@ -186,13 +186,20 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         proj = self.camera.projection_matrix
         cam_pos = self.camera.position
 
-        # 1. Render Grid Floor
+        # 1. Render Grid Floor (depth writes disabled so the transparent
+        # areas of the floor never occlude models/gizmo drawn afterward)
+        GL.glDepthMask(GL.GL_FALSE)
+        # Force solid fill — otherwise a leftover GL_LINE polygon mode from
+        # the previous frame's Wireframe-shaded model pass would turn the
+        # grid quad into an outline instead of the shader-drawn overlay.
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
         GL.glUseProgram(self._grid_program)
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._grid_program, "uView"), 1, GL.GL_FALSE, view)
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._grid_program, "uProjection"), 1, GL.GL_FALSE, proj)
         GL.glBindVertexArray(self._grid_vao)
         GL.glDrawArrays(GL.GL_TRIANGLE_FAN, 0, 4)
         GL.glBindVertexArray(0)
+        GL.glDepthMask(GL.GL_TRUE)
 
         # 2. Render Models
         self._render_scene_models(view, proj, cam_pos, picking=False)
@@ -225,8 +232,23 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             scale = info.get("scale", [1.0, 1.0, 1.0])
             model_path = info.get("path", "")
 
-            # Construct S2 -> GL matrix
-            model_matrix = SOURCE2_TO_GL @ translation_matrix(*pos) @ rotation_matrix_euler(*rot) @ scale_matrix(*scale)
+            # Build the Source-space model matrix, then convert to GL.
+            #
+            # These helpers store transforms row-vector style (translation in the
+            # last row), and matrices are handed to GL untransposed (GL_FALSE), so
+            # GL reads each as its transpose.  With the shader computing uModel * v,
+            # the effective order applied to a vertex is scale -> rotate -> translate
+            # (all in Source Z-up space) -> SOURCE2_TO_GL (Source -> GL Y-up).
+            #
+            # SOURCE2_TO_GL is defined column-vector style, so it must be transposed
+            # to join this row-vector chain — otherwise the coordinate conversion
+            # never reaches the translation and models land at the wrong position.
+            model_matrix = (
+                scale_matrix(*scale)
+                @ rotation_matrix_euler(*rot)
+                @ translation_matrix(*pos)
+                @ SOURCE2_TO_GL.T
+            )
 
             # Query GPU mesh
             gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
@@ -294,13 +316,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
 
     def _draw_box_geometry(self, model_matrix, is_picking=False):
-        """Draw a box geometry based on S2 scale conversion."""
+        """Draw a ~50-unit placeholder box at the model's transform."""
         from OpenGL import GL
 
-        # Units base: standard 50.0 units
-        bx, by, bz = 50.0, 50.0, 50.0
-        # Remap Z-up to GL Y-up
-        gl_box_matrix = model_matrix @ scale_matrix(bx, bz, by)
+        # The unit box geometry spans [-0.5, 0.5]; scale it to a 50-inch cube in
+        # the model's local Source space.  In this row-vector chain, local scale
+        # is pre-multiplied so it is applied before the model transform.
+        box_size = 50.0
+        gl_box_matrix = scale_matrix(box_size, box_size, box_size) @ model_matrix
 
         program = self._picking_program if is_picking else self._wireframe_program
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(program, "uModel"), 1, GL.GL_FALSE, gl_box_matrix)
@@ -361,13 +384,33 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         has_bounds = False
         for eid, info in self._model_infos.items():
-            pos = np.array(info.get("position", [0.0, 0.0, 0.0]), dtype=np.float32)
-            # Map pos to GL coordinates
-            gl_pos = SOURCE2_TO_GL @ np.append(pos, 1.0)
-            gl_pos = gl_pos[:3]
+            pos = info.get("position", [0.0, 0.0, 0.0])
+            rot = info.get("rotation", [0.0, 0.0, 0.0])
+            scale = info.get("scale", [1.0, 1.0, 1.0])
 
-            bbox_min = np.minimum(bbox_min, gl_pos - 50.0)
-            bbox_max = np.maximum(bbox_max, gl_pos + 50.0)
+            model_matrix = (
+                scale_matrix(*scale)
+                @ rotation_matrix_euler(*rot)
+                @ translation_matrix(*pos)
+                @ SOURCE2_TO_GL.T
+            )
+            gpu_mesh = self.mesh_cache.get_gpu_mesh(info.get("path", ""))
+
+            if gpu_mesh is not None:
+                # Transform the mesh's Source-space AABB corners into GL space.
+                lo, hi = gpu_mesh.bbox_min, gpu_mesh.bbox_max
+                corners = np.array([[x, y, z, 1.0]
+                                    for x in (lo[0], hi[0])
+                                    for y in (lo[1], hi[1])
+                                    for z in (lo[2], hi[2])], dtype=np.float32)
+                gl_corners = (corners @ model_matrix)[:, :3]
+                bbox_min = np.minimum(bbox_min, gl_corners.min(axis=0))
+                bbox_max = np.maximum(bbox_max, gl_corners.max(axis=0))
+            else:
+                # Mesh not loaded yet — frame the placeholder box at the origin.
+                gl_pos = (SOURCE2_TO_GL @ np.append(np.array(pos, dtype=np.float32), 1.0))[:3]
+                bbox_min = np.minimum(bbox_min, gl_pos - 50.0)
+                bbox_max = np.maximum(bbox_max, gl_pos + 50.0)
             has_bounds = True
 
         if has_bounds:
@@ -421,8 +464,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     def mousePressEvent(self, event: QMouseEvent):
         self._last_mouse_pos = event.position()
 
-        # Hit test transform gizmo first
-        if self.gizmo.visible and self.gizmo.mode != GizmoMode.NONE:
+        # Hit test transform gizmo first (left click only, matches selection)
+        if event.button() == Qt.LeftButton and self.gizmo.visible and self.gizmo.mode != GizmoMode.NONE:
             # Build ray
             w, h = self.width(), self.height()
             ray_org, ray_dir = self.camera.screen_to_ray(event.position().x(), event.position().y(), w, h)
@@ -439,14 +482,19 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 self.update()
                 return
 
-        # Fallback to camera orbit or pan
+        # Blender-style navigation: MMB orbits, Shift+MMB pans, LMB selects
         if event.button() == Qt.LeftButton:
             # Trigger color-picking on next paintGL
             self._perform_pick_flag = True
             self._pick_pos = event.position()
             self.update()
-        elif event.button() in (Qt.RightButton, Qt.MiddleButton):
-            self._action = 'pan'
+        elif event.button() == Qt.MiddleButton:
+            if event.modifiers() & Qt.ControlModifier:
+                self._action = 'zoom'
+            elif event.modifiers() & Qt.ShiftModifier:
+                self._action = 'pan'
+            else:
+                self._action = 'orbit'
 
     def mouseMoveEvent(self, event: QMouseEvent):
         pos = event.position()
@@ -521,6 +569,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self.camera.orbit(dx, dy)
         elif self._action == 'pan':
             self.camera.pan(dx, dy)
+        elif self._action == 'zoom':
+            self.camera.zoom(-(dx - dy))
 
         self._last_mouse_pos = pos
         self.update()
