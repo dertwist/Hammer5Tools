@@ -269,6 +269,21 @@ class SmartPropDocument(QMainWindow):
         # Auto-refresh tabs when switching
         self._center_tabs.currentChanged.connect(self._on_center_tab_changed)
 
+        # Keep the 3D viewport following the hierarchy in real-time: whenever
+        # elements are added, removed, reordered, or their data edited, the scene
+        # is rebuilt (models loaded/unloaded to match).  A short debounce coalesces
+        # bursts (e.g. paste, bulk import, drag-drop) into a single rebuild, and the
+        # sync no-ops unless the 3D tab is actually the active view.
+        self._viewport_3d_sync_timer = QTimer(self)
+        self._viewport_3d_sync_timer.setSingleShot(True)
+        self._viewport_3d_sync_timer.setInterval(50)
+        self._viewport_3d_sync_timer.timeout.connect(self._sync_viewport_3d)
+        tree_model = self.ui.tree_hierarchy_widget.model()
+        tree_model.rowsInserted.connect(self._schedule_viewport_3d_sync)
+        tree_model.rowsRemoved.connect(self._schedule_viewport_3d_sync)
+        tree_model.rowsMoved.connect(self._schedule_viewport_3d_sync)
+        tree_model.dataChanged.connect(self._schedule_viewport_3d_sync)
+
         # Re-apply tab styles to include the new center tab bar
         set_qdock_tab_style(self.findChildren)
 
@@ -330,6 +345,45 @@ class SmartPropDocument(QMainWindow):
         if not self._viewport_3d_loaded:
             self._viewport_3d_loaded = True
             self._viewport_3d.fit_view()
+        current = self.ui.tree_hierarchy_widget.currentItem()
+        data = current.data(0, Qt.UserRole) if current is not None else None
+        eid = data.get("m_nElementID", 0) if isinstance(data, dict) else 0
+        self._viewport_3d.highlight_element(eid)
+
+    def _schedule_viewport_3d_sync(self, *args):
+        """Queue a debounced 3D scene rebuild after a hierarchy change.
+
+        Connected to the tree model's row/data signals.  Cheap and safe to call
+        for every mutation: it bails immediately unless the 3D viewport has been
+        built and is the active tab, so nothing happens while the user works in
+        the Property or Manual editors (or before the viewport is ever opened).
+        """
+        if getattr(self, '_viewport_3d', None) is None:
+            return
+        if self._center_tabs.currentWidget() is not self._viewport_3d:
+            return
+        # While the transform gizmo is being dragged the render area already
+        # mirrors the change locally every frame; a full rebuild mid-drag would
+        # be wasteful (and is applied once the drag settles anyway).
+        try:
+            if self._viewport_3d.render_area.gizmo.is_dragging:
+                return
+        except AttributeError:
+            pass
+        self._viewport_3d_sync_timer.start()
+
+    def _sync_viewport_3d(self):
+        """Rebuild the 3D scene from the hierarchy and re-apply the selection.
+
+        This is the debounced target of _schedule_viewport_3d_sync.  update_viewport
+        re-reads the tree, so newly added model elements are loaded and removed ones
+        are unloaded; the current selection's highlight/gizmo is then restored.
+        """
+        if getattr(self, '_viewport_3d', None) is None:
+            return
+        if self._center_tabs.currentWidget() is not self._viewport_3d:
+            return
+        self._viewport_3d.update_viewport()
         current = self.ui.tree_hierarchy_widget.currentItem()
         data = current.data(0, Qt.UserRole) if current is not None else None
         eid = data.get("m_nElementID", 0) if isinstance(data, dict) else 0
@@ -1949,7 +2003,9 @@ class SmartPropDocument(QMainWindow):
                         decimals = 4
                     return [round(float(x), decimals) for x in vector]
                 else:
-                    return [{"m_Expression": str(x)} for x in vector]
+                    # Emit raw float values so they load into the float fields
+                    # (full precision preserved) instead of the expression field.
+                    return [float(x) for x in vector]
             origins = []
             for el in valid_elements:
                 if el.ContainsKey("origin") and el["origin"] is not None:
@@ -2056,7 +2112,7 @@ class SmartPropDocument(QMainWindow):
                                 decimals = 4
                             s_val = round(rel_scale[0], decimals)
                         else:
-                            s_val = {"m_Expression": str(rel_scale[0])}
+                            s_val = float(rel_scale[0])
                         modifiers.append({
                             "_class": "CSmartPropOperation_Scale",
                             "m_flScale": s_val
@@ -2090,7 +2146,7 @@ class SmartPropDocument(QMainWindow):
                                     decimals = 4
                                 s_val = round(rel_scale[0], decimals)
                             else:
-                                s_val = {"m_Expression": str(rel_scale[0])}
+                                s_val = float(rel_scale[0])
                             smartprop_element["m_flUniformScale"] = s_val
                         else:
                             modifiers.append({

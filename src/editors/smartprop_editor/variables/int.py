@@ -10,6 +10,10 @@ class Var_class_Int(QWidget):
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
+        # Remove the artificial digit cap from the generated UI; use the full
+        # 32-bit range that QSpinBox supports.
+        for _sb in (self.ui.value_spinBox, self.ui.min_spinBox, self.ui.max_spinBox):
+            _sb.setRange(-2147483648, 2147483647)
         self.model = None
         if default == None:
             self.default = int(0)

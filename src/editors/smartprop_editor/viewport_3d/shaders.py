@@ -155,24 +155,25 @@ void main() {
     float majorAlpha = (1.0 - min(majorLine, 1.0)) * 0.35 * fade;
 
     float alpha = max(minorAlpha, majorAlpha);
+    vec3 color = vec3(0.5);
 
-    // X axis (red) and Z axis (blue)
-    if (abs(vWorldPos.z) < gridSize * 0.4) {
-        float xAxis = abs(vWorldPos.x) / fwidth(vWorldPos.x);
-        if (xAxis < 1.0) {
-            FragColor = vec4(0.85, 0.2, 0.2, (1.0 - xAxis) * 0.6 * fade);
-            return;
-        }
+    // Infinite ground-plane axes, Blender-style — full-length lines that fade
+    // with distance exactly like the grid cells (no vertical Z-up axis here).
+    //   Source X (red)   runs along GL +X  -> the line where GL z = 0
+    //   Source Y (green) runs along GL -Z  -> the line where GL x = 0
+    float axisX = abs(vWorldPos.z) / fwidth(vWorldPos.z);  // proximity to X axis
+    float axisY = abs(vWorldPos.x) / fwidth(vWorldPos.x);  // proximity to Y axis
+
+    if (axisX < 1.0) {
+        color = vec3(0.80, 0.25, 0.25);
+        alpha = max(alpha, (1.0 - axisX) * 0.75 * fade);
     }
-    if (abs(vWorldPos.x) < gridSize * 0.4) {
-        float zAxis = abs(vWorldPos.z) / fwidth(vWorldPos.z);
-        if (zAxis < 1.0) {
-            FragColor = vec4(0.2, 0.4, 0.85, (1.0 - zAxis) * 0.6 * fade);
-            return;
-        }
+    if (axisY < 1.0) {
+        color = vec3(0.30, 0.75, 0.35);
+        alpha = max(alpha, (1.0 - axisY) * 0.75 * fade);
     }
 
-    FragColor = vec4(vec3(0.5), alpha);
+    FragColor = vec4(color, alpha);
 }
 """
 

@@ -73,6 +73,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._action = None  # 'orbit' | 'pan'
         self._selected_id = 0
 
+        # How the currently-selected element's scale is stored, decided when the
+        # gizmo's axis availability is computed: "vector" (per-axis m_vModelScale),
+        # "uniform" (single m_flUniformModelScale / Scale-op m_flScale), or None
+        # (no scale property — scale axes are grayed and not created on drag).
+        self._scale_source = None
+
         # View Settings
         self.shading_mode = "textured"  # "textured" | "solid" | "wireframe"
 
@@ -94,8 +100,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._grid_vbo = 0
         self._box_vao = 0
         self._box_vbo = 0
-        self._axes_vao = 0
-        self._axes_vbo = 0
 
     def initializeGL(self):
         from OpenGL import GL
@@ -160,28 +164,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glEnableVertexAttribArray(0)
         GL.glBindVertexArray(0)
 
-        # World-axis indicator lines at the origin, in GL space.  The grid floor
-        # only marks the two horizontal axes, so this adds the vertical Source Z
-        # (up) axis — GL +Y — plus X/Y for reference:
-        #   Source X (red)   -> GL +X
-        #   Source Y (green) -> GL -Z
-        #   Source Z (blue)  -> GL +Y   (up)
-        self._axis_len = 128.0
-        L = self._axis_len
-        axes_lines = np.array([
-            [0.0, 0.0, 0.0], [L, 0.0, 0.0],     # X (Source X)
-            [0.0, 0.0, 0.0], [0.0, 0.0, -L],    # Y (Source Y)
-            [0.0, 0.0, 0.0], [0.0, L, 0.0],     # Z (Source Z, up)
-        ], dtype=np.float32)
-
-        self._axes_vao = GL.glGenVertexArrays(1)
-        self._axes_vbo = GL.glGenBuffers(1)
-        GL.glBindVertexArray(self._axes_vao)
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._axes_vbo)
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, axes_lines.nbytes, axes_lines, GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
-        GL.glEnableVertexAttribArray(0)
-        GL.glBindVertexArray(0)
+        # The two horizontal ground axes (Source X red / Source Y green) are drawn
+        # directly by the grid shader as infinite lines that fade with distance,
+        # Blender-style.  The vertical Source Z (up) axis is intentionally omitted.
 
         # Initialize Gizmo Geometry
         self.gizmo.init_geometry()
@@ -203,8 +188,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glClearColor(0.11, 0.11, 0.11, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
-        # Upload meshes ready on CPU
+        # Upload meshes ready on CPU and free ones the hierarchy dropped
         self.mesh_cache.upload_pending()
+        self.mesh_cache.release_unloaded()
 
         # Matrices
         view = self.camera.view_matrix
@@ -229,44 +215,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # 2. Render Models
         self._render_scene_models(view, proj, cam_pos, picking=False)
 
-        # 3. Render world-axis lines (incl. the vertical Z/up axis)
-        self._draw_world_axes(view, proj)
-
-        # 4. Render Gizmo
+        # 3. Render Gizmo
         self.gizmo.render(self._gizmo_program, view, proj, cam_pos)
-
-    def _draw_world_axes(self, view, proj):
-        """Draw the X/Y/Z world axes at the origin, with Z (up) drawn vertically."""
-        from OpenGL import GL
-
-        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
-        GL.glUseProgram(self._wireframe_program)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uView"), 1, GL.GL_FALSE, view)
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uProjection"), 1, GL.GL_FALSE, proj)
-        # Axis lines already live in GL space, so the model matrix is identity.
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uModel"), 1, GL.GL_FALSE, np.eye(4, dtype=np.float32))
-
-        try:
-            GL.glLineWidth(2.0)
-        except Exception:
-            pass
-
-        # (first-vertex offset, color) per axis — Z (up) is the emphasized blue one.
-        axis_draws = (
-            (0, np.array([0.85, 0.25, 0.25], dtype=np.float32)),  # X red
-            (2, np.array([0.30, 0.80, 0.35], dtype=np.float32)),  # Y green
-            (4, np.array([0.30, 0.55, 1.00], dtype=np.float32)),  # Z (up) blue
-        )
-        GL.glBindVertexArray(self._axes_vao)
-        for offset, color in axis_draws:
-            GL.glUniform3fv(GL.glGetUniformLocation(self._wireframe_program, "uColor"), 1, color)
-            GL.glDrawArrays(GL.GL_LINES, offset, 2)
-        GL.glBindVertexArray(0)
-
-        try:
-            GL.glLineWidth(1.0)
-        except Exception:
-            pass
 
     def _render_scene_models(self, view, proj, cam_pos, picking=False):
         from OpenGL import GL
@@ -504,10 +454,19 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             eid = info.get("id", 0)
             self._model_infos[eid] = info
 
+        # Unload any cached models the hierarchy no longer references so the
+        # viewport's memory footprint follows the tree (GPU frees happen on the
+        # next paint, inside the GL context).
+        referenced_paths = {
+            info.get("path", "") for info in self._model_infos.values() if info.get("path")
+        }
+        self.mesh_cache.prune(referenced_paths)
+
         # Sync selection gizmo transform if selection exists
         if self._selected_id in self._model_infos:
             sel = self._model_infos[self._selected_id]
             self.gizmo.set_transform(sel["position"], sel["rotation"], sel["scale"])
+            self._apply_gizmo_availability(sel.get("data"))
         else:
             self.gizmo.hide()
 
@@ -519,6 +478,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if element_id != 0 and element_id in self._model_infos:
             sel = self._model_infos[element_id]
             self.gizmo.set_transform(sel["position"], sel["rotation"], sel["scale"])
+            self._apply_gizmo_availability(sel.get("data"))
         else:
             self.gizmo.hide()
         self.update()
@@ -581,36 +541,33 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if delta and self.document:
                 # Apply dragging transform immediately to tree item
                 item = self.document.ui.tree_hierarchy_widget.currentItem()
-                if item:
+                if item and self._selected_id in self._model_infos:
                     from src.common import fast_deepcopy
                     data = fast_deepcopy(item.data(0, Qt.UserRole))
 
-                    # Apply position, rotation, or scale
-                    if "position" in delta:
-                        self._set_modifier_value(data, "CSmartPropOperation_Translate", "m_vPosition", delta["position"])
-                    elif "rotation" in delta:
-                        self._set_modifier_value(data, "CSmartPropOperation_Rotate", "m_vRotation", delta["rotation"])
-                    elif "scale" in delta:
-                        # Scale mod
-                        is_model = data.get("_class", "").startswith("CSmartPropElement_Model")
-                        if is_model and "m_vModelScale" in data:
-                            data["m_vModelScale"] = delta["scale"]
-                        else:
-                            self._set_modifier_value(data, "CSmartPropOperation_Scale", "m_flScale", delta["scale"][0])
+                    # Only the dragged axis changes.  Writing a single component
+                    # (instead of the whole vector) preserves any variable /
+                    # expression bindings on the other two axes.
+                    axis_idx = self._active_axis_index()
+                    is_center = self.gizmo.active_axis == GizmoAxis.CENTER
+                    info = self._model_infos[self._selected_id]
+
+                    if axis_idx is not None and "position" in delta:
+                        mod = self._find_or_create_modifier(data, "CSmartPropOperation_Translate", "m_vPosition")
+                        self._set_vector_component(mod, "m_vPosition", axis_idx, delta["position"][axis_idx], delta["position"])
+                        info["position"] = delta["position"]
+                    elif axis_idx is not None and "rotation" in delta:
+                        mod = self._find_or_create_modifier(data, "CSmartPropOperation_Rotate", "m_vRotation")
+                        self._set_vector_component(mod, "m_vRotation", axis_idx, delta["rotation"][axis_idx], delta["rotation"])
+                        info["rotation"] = delta["rotation"]
+                    elif "scale" in delta and (axis_idx is not None or is_center):
+                        new_scale = self._apply_scale_delta(data, axis_idx, delta["scale"], uniform=is_center)
+                        info["scale"] = new_scale
 
                     item.setData(0, Qt.UserRole, data)
 
-                    # Update local view caches without full rebuild
-                    self._model_infos[self._selected_id]["position"] = delta.get("position", self._model_infos[self._selected_id]["position"])
-                    self._model_infos[self._selected_id]["rotation"] = delta.get("rotation", self._model_infos[self._selected_id]["rotation"])
-                    self._model_infos[self._selected_id]["scale"] = delta.get("scale", self._model_infos[self._selected_id]["scale"])
-
-                    # Update gizmo position/rotation/scale
-                    self.gizmo.set_transform(
-                        self._model_infos[self._selected_id]["position"],
-                        self._model_infos[self._selected_id]["rotation"],
-                        self._model_infos[self._selected_id]["scale"]
-                    )
+                    # Update gizmo position/rotation/scale from the refreshed cache
+                    self.gizmo.set_transform(info["position"], info["rotation"], info["scale"])
 
                     # Refresh Property panel inputs if active
                     if hasattr(self.document, "ui") and hasattr(self.document.ui, "PropertiesFrame"):
@@ -668,27 +625,233 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             super().keyPressEvent(event)
 
     # ------------------------------------------------------------------
+    # Gizmo axis availability
+    # ------------------------------------------------------------------
+    # Element classes that carry a model (and therefore a model scale).
+    _MODEL_LIKE_CLASSES = (
+        "CSmartPropElement_Model",
+        "CSmartPropElement_ModelEntity",
+        "CSmartPropElement_PropPhysics",
+        "CSmartPropElement_PropDynamic",
+    )
+
+    def _active_axis_index(self):
+        """Return 0/1/2 for the axis currently being dragged, else None."""
+        return {GizmoAxis.X: 0, GizmoAxis.Y: 1, GizmoAxis.Z: 2}.get(self.gizmo.active_axis)
+
+    def _apply_gizmo_availability(self, data):
+        """Compute per-axis availability for ``data`` and push it to the gizmo."""
+        availability, scale_source = self._compute_axis_availability(data)
+        self._scale_source = scale_source
+        self.gizmo.set_axis_availability(availability)
+
+    def _compute_axis_availability(self, data):
+        """Work out which gizmo axes can be manipulated for an element.
+
+        Returns ``(availability, scale_source)`` where ``availability`` is
+        ``{GizmoMode: {axis: bool}}``.  An axis is unavailable when its value is
+        bound to a variable/expression, when the whole vector is variable-bound,
+        or (for scale) when the element has no scale property at all.
+
+        Translate/Rotate default to fully available even when the modifier is
+        absent — dragging creates it.  Scale is never auto-created.
+        """
+        all_on = {GizmoAxis.X: True, GizmoAxis.Y: True, GizmoAxis.Z: True}
+        availability = {
+            GizmoMode.TRANSLATE: dict(all_on),
+            GizmoMode.ROTATE:    dict(all_on),
+            GizmoMode.SCALE:     {GizmoAxis.X: False, GizmoAxis.Y: False,
+                                  GizmoAxis.Z: False, GizmoAxis.CENTER: False},
+        }
+        if not isinstance(data, dict):
+            return availability, None
+
+        translate = self._find_modifier(data, "CSmartPropOperation_Translate")
+        if translate is not None:
+            availability[GizmoMode.TRANSLATE] = self._vector_axis_availability(translate.get("m_vPosition"))
+
+        rotate = self._find_modifier(data, "CSmartPropOperation_Rotate")
+        if rotate is not None:
+            availability[GizmoMode.ROTATE] = self._vector_axis_availability(rotate.get("m_vRotation"))
+
+        scale_avail, scale_source = self._scale_axis_availability(data)
+        availability[GizmoMode.SCALE] = scale_avail
+        return availability, scale_source
+
+    def _scale_axis_availability(self, data):
+        """Return ``(availability, source)`` for the Scale gizmo.
+
+        ``source`` is ``"vector"`` (per-axis m_vModelScale), ``"uniform"``
+        (single value), or ``None`` (no scale property → all axes grayed).
+        """
+        all_on = {GizmoAxis.X: True, GizmoAxis.Y: True, GizmoAxis.Z: True}
+        all_off = {GizmoAxis.X: False, GizmoAxis.Y: False, GizmoAxis.Z: False}
+
+        # The center (uniform) handle needs every axis editable, since it scales
+        # them all at once — a variable/expression on any component disables it.
+        def with_center(avail):
+            avail = dict(avail)
+            avail[GizmoAxis.CENTER] = (
+                avail[GizmoAxis.X] and avail[GizmoAxis.Y] and avail[GizmoAxis.Z]
+            )
+            return avail
+
+        if data.get("_class", "") in self._MODEL_LIKE_CLASSES:
+            model_scale = data.get("m_vModelScale")
+            if model_scale is not None:
+                return with_center(self._vector_axis_availability(model_scale)), "vector"
+            if data.get("m_flUniformModelScale") is not None:
+                return with_center(all_on), "uniform"
+
+        scale_mod = self._find_modifier(data, "CSmartPropOperation_Scale")
+        if scale_mod is not None:
+            # A variable/expression-bound uniform scale can't be dragged.
+            if isinstance(scale_mod.get("m_flScale"), dict):
+                return with_center(all_off), "uniform"
+            return with_center(all_on), "uniform"
+
+        return with_center(all_off), None
+
+    def _vector_axis_availability(self, vec):
+        """Per-axis availability for a vector value (position/rotation/scale)."""
+        # Whole vector bound to a single variable → no per-axis editing.
+        if isinstance(vec, dict) and "m_SourceName" in vec and "m_Components" not in vec:
+            return {GizmoAxis.X: False, GizmoAxis.Y: False, GizmoAxis.Z: False}
+        comps = self._vector_components(vec)
+        if comps is None:
+            # Unset / None — treated as [0, 0, 0], all directly editable.
+            return {GizmoAxis.X: True, GizmoAxis.Y: True, GizmoAxis.Z: True}
+        axes = (GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z)
+        return {
+            axes[i]: (self._component_is_literal(comps[i]) if i < len(comps) else True)
+            for i in range(3)
+        }
+
+    # ------------------------------------------------------------------
     # Data modifier helpers
     # ------------------------------------------------------------------
-    def _set_modifier_value(self, data, class_name, key, value):
-        """Set a property value on a specific modifier or insert a new one if missing."""
+    @staticmethod
+    def _find_modifier(data, class_name):
+        """Return the first modifier dict of the given class, or None."""
+        for mod in data.get("m_Modifiers") or []:
+            if isinstance(mod, dict) and mod.get("_class") == class_name:
+                return mod
+        return None
+
+    def _find_or_create_modifier(self, data, class_name, vector_key=None):
+        """Return the modifier of ``class_name``, creating an enabled one if absent.
+
+        When created for a transform (``vector_key`` given) the vector is
+        initialised to a zeroed ``m_Components`` list, matching the editor's own
+        Translate/Rotate defaults.
+        """
+        mod = self._find_modifier(data, class_name)
+        if mod is not None:
+            return mod
         modifiers = data.get("m_Modifiers")
         if modifiers is None:
             modifiers = []
             data["m_Modifiers"] = modifiers
+        mod = {"_class": class_name, "m_bEnabled": True}
+        if vector_key is not None:
+            mod[vector_key] = {"m_Components": [0.0, 0.0, 0.0]}
+        modifiers.append(mod)
+        return mod
 
-        for mod in modifiers:
-            if isinstance(mod, dict) and mod.get("_class") == class_name:
-                mod[key] = value
-                return
+    def _set_vector_component(self, container, key, axis_idx, value, full_vector):
+        """Write one numeric component of a vector field, preserving the other
+        components (including variable/expression bindings) and the container
+        format (``m_Components`` dict vs plain list)."""
+        vec = container.get(key)
+        value = float(value)
+        if isinstance(vec, dict) and "m_Components" in vec:
+            comps = list(vec["m_Components"])
+            while len(comps) < 3:
+                comps.append(0.0)
+            comps[axis_idx] = value
+            new_vec = dict(vec)
+            new_vec["m_Components"] = comps
+            container[key] = new_vec
+        elif isinstance(vec, (list, tuple)):
+            comps = list(vec)
+            while len(comps) < 3:
+                comps.append(0.0)
+            comps[axis_idx] = value
+            container[key] = comps
+        else:
+            # None / unmergeable — build a fresh literal vector.
+            container[key] = [float(full_vector[0]), float(full_vector[1]), float(full_vector[2])]
 
-        # Insert new modifier
-        new_mod = {
-            "_class": class_name,
-            key: value,
-            "m_bActive": True
-        }
-        modifiers.append(new_mod)
+    def _apply_scale_delta(self, data, axis_idx, scale_vec, uniform=False):
+        """Apply a scale drag to ``data`` according to the element's scale source.
+
+        ``uniform`` (the center handle) scales every axis at once; otherwise only
+        ``axis_idx`` changes.  Returns the resolved [x, y, z] scale to cache.
+        """
+        source = self._scale_source
+        if uniform:
+            if source == "vector":
+                # Every component is literal (guaranteed by CENTER availability);
+                # write each so any non-uniform ratio is preserved.
+                for i in range(3):
+                    self._set_vector_component(data, "m_vModelScale", i, scale_vec[i], scale_vec)
+                return list(scale_vec)
+            if source == "uniform":
+                self._write_uniform_scale(data, scale_vec[0])
+                value = float(scale_vec[0])
+                return [value, value, value]
+            return list(scale_vec)
+
+        if source == "vector":
+            self._set_vector_component(data, "m_vModelScale", axis_idx, scale_vec[axis_idx], scale_vec)
+            return list(scale_vec)
+        if source == "uniform":
+            uniform_val = float(scale_vec[axis_idx])
+            self._write_uniform_scale(data, uniform_val)
+            # Uniform scale drives all three axes together.
+            return [uniform_val, uniform_val, uniform_val]
+        # source is None: scale axes are grayed and shouldn't be draggable.
+        return list(scale_vec)
+
+    def _write_uniform_scale(self, data, value):
+        """Write a single uniform scale value to whichever field the element uses."""
+        value = float(value)
+        if data.get("m_flUniformModelScale") is not None:
+            data["m_flUniformModelScale"] = value
+            return
+        scale_mod = self._find_modifier(data, "CSmartPropOperation_Scale")
+        if scale_mod is not None:
+            scale_mod["m_flScale"] = value
+        else:
+            data["m_flUniformModelScale"] = value
+
+    @staticmethod
+    def _vector_components(vec):
+        """Return the list of raw components of a vector value, or None if the
+        value has no per-component form (None, or a whole-vector variable)."""
+        if isinstance(vec, dict):
+            if "m_Components" in vec:
+                return list(vec["m_Components"])
+            return None
+        if isinstance(vec, (list, tuple)):
+            return list(vec)
+        return None
+
+    @staticmethod
+    def _component_is_literal(comp):
+        """True when a vector component is a plain number the gizmo can edit
+        (i.e. not a variable ``m_SourceName`` or ``m_Expression`` binding)."""
+        if isinstance(comp, bool):
+            return False
+        if isinstance(comp, (int, float)):
+            return True
+        if isinstance(comp, str):
+            try:
+                float(comp)
+                return True
+            except ValueError:
+                return False
+        return False
 
     # ------------------------------------------------------------------
     # Tree traversal (extracted from old viewport_3d.py)
@@ -789,6 +952,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     "position": new_pos,
                     "rotation": new_rot,
                     "scale":    new_scale,
+                    # Raw element data — used to decide which gizmo axes are
+                    # available (literal vs variable/expression bound) and how
+                    # the element stores its scale.
+                    "data":     data,
                 })
 
             self._traverse_tree(child, models_list, current_transform)

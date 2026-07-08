@@ -10,6 +10,11 @@ class Var_class_vector3d(QWidget):
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
+        # Remove the digit limits baked into the generated UI: allow high
+        # precision and a very wide magnitude range on each component.
+        for _sb in (self.ui.vector_x, self.ui.vector_y, self.ui.vector_z):
+            _sb.setDecimals(15)
+            _sb.setRange(-1e18, 1e18)
         self.model = None
         self.min = None
         self.max = None
