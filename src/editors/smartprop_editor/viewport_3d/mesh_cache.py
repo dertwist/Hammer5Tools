@@ -47,20 +47,26 @@ class GPUMesh:
 # glTF -> Source coordinate conversion
 # ---------------------------------------------------------------------------
 # VRF's GltfModelExporter writes geometry in glTF space: Y-up and in *metres*
-# (1 Source inch = 0.0254 m), remapping the axes as
-#       glTF = 0.0254 * (Source_Y, Source_Z, Source_X)
-# trimesh preserves that frame, and load_glb() bakes the node transform into the
-# vertices, so the loaded verts are Y-up metres.  The rest of the viewport works
-# in Source space (Z-up, inches) — grid cells, gizmo, positions from the document
-# tree — and only converts to GL at draw time via SOURCE2_TO_GL.  So undo VRF's
-# conversion here and hand back geometry in raw Source space (Z-up, inches):
-#       Source = (glTF_Z, glTF_X, glTF_Y) / 0.0254
+# (1 Source inch = 0.0254 m).  trimesh preserves that frame, and load_glb() bakes
+# the node transform into the vertices, so the loaded verts are Y-up metres.  The
+# rest of the viewport works in Source space (Z-up, inches) — grid cells, gizmo,
+# positions from the document tree — and only converts to GL at draw time via
+# SOURCE2_TO_GL.  So undo VRF's conversion here and hand back geometry in raw
+# Source space (Z-up, inches):
+#       Source = (glTF_Z, glTF_X, -glTF_Y) / 0.0254
+# The horizontal X/Y mapping is the axis-swap that already placed multi-part
+# assemblies correctly; ONLY the up (Z) component is negated.  That single flip
+# lands models the right way up (roof up / wheels down) without disturbing where
+# each part sits — a full rotation-about-X would also swing parts horizontally
+# around the shared group origin and scramble the assembly.  It is a reflection
+# (det -1), but because it flips only top/bottom the model is not mirrored
+# left/right, and normals are reflected the same way so shading stays correct.
 _VRF_GLTF_SCALE = 0.0254  # Source inch -> glTF metre
-# Pure axis-swap (proper rotation, det +1) used for direction vectors (normals).
+# Axis-swap + vertical (up) flip, used for direction vectors (normals).
 _GLTF_TO_SOURCE_ROT = np.array([
-    [0.0, 0.0, 1.0],
-    [1.0, 0.0, 0.0],
-    [0.0, 1.0, 0.0],
+    [ 0.0,  0.0,  1.0],
+    [ 1.0,  0.0,  0.0],
+    [ 0.0, -1.0,  0.0],
 ], dtype=np.float32)
 # Axis-swap + inch scale, used for positions.
 _GLTF_TO_SOURCE = _GLTF_TO_SOURCE_ROT / _VRF_GLTF_SCALE

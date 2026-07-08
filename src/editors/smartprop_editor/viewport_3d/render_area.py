@@ -94,6 +94,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._grid_vbo = 0
         self._box_vao = 0
         self._box_vbo = 0
+        self._axes_vao = 0
+        self._axes_vbo = 0
 
     def initializeGL(self):
         from OpenGL import GL
@@ -158,6 +160,29 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glEnableVertexAttribArray(0)
         GL.glBindVertexArray(0)
 
+        # World-axis indicator lines at the origin, in GL space.  The grid floor
+        # only marks the two horizontal axes, so this adds the vertical Source Z
+        # (up) axis — GL +Y — plus X/Y for reference:
+        #   Source X (red)   -> GL +X
+        #   Source Y (green) -> GL -Z
+        #   Source Z (blue)  -> GL +Y   (up)
+        self._axis_len = 128.0
+        L = self._axis_len
+        axes_lines = np.array([
+            [0.0, 0.0, 0.0], [L, 0.0, 0.0],     # X (Source X)
+            [0.0, 0.0, 0.0], [0.0, 0.0, -L],    # Y (Source Y)
+            [0.0, 0.0, 0.0], [0.0, L, 0.0],     # Z (Source Z, up)
+        ], dtype=np.float32)
+
+        self._axes_vao = GL.glGenVertexArrays(1)
+        self._axes_vbo = GL.glGenBuffers(1)
+        GL.glBindVertexArray(self._axes_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._axes_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, axes_lines.nbytes, axes_lines, GL.GL_STATIC_DRAW)
+        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
+        GL.glEnableVertexAttribArray(0)
+        GL.glBindVertexArray(0)
+
         # Initialize Gizmo Geometry
         self.gizmo.init_geometry()
 
@@ -204,8 +229,44 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # 2. Render Models
         self._render_scene_models(view, proj, cam_pos, picking=False)
 
-        # 3. Render Gizmo
+        # 3. Render world-axis lines (incl. the vertical Z/up axis)
+        self._draw_world_axes(view, proj)
+
+        # 4. Render Gizmo
         self.gizmo.render(self._gizmo_program, view, proj, cam_pos)
+
+    def _draw_world_axes(self, view, proj):
+        """Draw the X/Y/Z world axes at the origin, with Z (up) drawn vertically."""
+        from OpenGL import GL
+
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+        GL.glUseProgram(self._wireframe_program)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uView"), 1, GL.GL_FALSE, view)
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uProjection"), 1, GL.GL_FALSE, proj)
+        # Axis lines already live in GL space, so the model matrix is identity.
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uModel"), 1, GL.GL_FALSE, np.eye(4, dtype=np.float32))
+
+        try:
+            GL.glLineWidth(2.0)
+        except Exception:
+            pass
+
+        # (first-vertex offset, color) per axis — Z (up) is the emphasized blue one.
+        axis_draws = (
+            (0, np.array([0.85, 0.25, 0.25], dtype=np.float32)),  # X red
+            (2, np.array([0.30, 0.80, 0.35], dtype=np.float32)),  # Y green
+            (4, np.array([0.30, 0.55, 1.00], dtype=np.float32)),  # Z (up) blue
+        )
+        GL.glBindVertexArray(self._axes_vao)
+        for offset, color in axis_draws:
+            GL.glUniform3fv(GL.glGetUniformLocation(self._wireframe_program, "uColor"), 1, color)
+            GL.glDrawArrays(GL.GL_LINES, offset, 2)
+        GL.glBindVertexArray(0)
+
+        try:
+            GL.glLineWidth(1.0)
+        except Exception:
+            pass
 
     def _render_scene_models(self, view, proj, cam_pos, picking=False):
         from OpenGL import GL
@@ -462,6 +523,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     # Mouse & Keyboard Event Handlers
     # ------------------------------------------------------------------
     def mousePressEvent(self, event: QMouseEvent):
+        self.setFocus()
         self._last_mouse_pos = event.position()
 
         # Hit test transform gizmo first (left click only, matches selection)
