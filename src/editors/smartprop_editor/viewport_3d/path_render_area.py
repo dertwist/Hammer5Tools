@@ -129,6 +129,10 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         self.gizmo = Gizmo()
         self.gizmo.set_mode(GizmoMode.TRANSLATE)
 
+        # Grid and Snapping Settings
+        self.grid_step = 64.0
+        self.snapping_enabled = False
+
         # Interaction state
         self._last_mouse_pos = QPointF()
         self._action = None            # 'orbit' | 'pan' | 'zoom'
@@ -214,6 +218,23 @@ class PathEditor3DRenderArea(QOpenGLWidget):
             )
         else:
             self.gizmo.hide()
+
+    def _sync_gizmo_settings(self, event=None):
+        self.gizmo.camera_right = self.camera.right_vector
+        self.gizmo.camera_up = self.camera.up_vector
+        self.gizmo.camera_forward = self.camera.target - self.camera.position
+
+        # Snapping toggling with Ctrl key
+        ctrl_held = False
+        if event is not None:
+            ctrl_held = bool(event.modifiers() & Qt.ControlModifier)
+        else:
+            from PySide6.QtWidgets import QApplication
+            if QApplication.keyboardModifiers() & Qt.ControlModifier:
+                ctrl_held = True
+
+        self.gizmo.snapping_enabled = self.snapping_enabled ^ ctrl_held
+        self.gizmo.grid_step = self.grid_step
 
     # ------------------------------------------------------------------
     # GL lifecycle
@@ -312,6 +333,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         self._upload_curve_if_needed()
+        self._sync_gizmo_settings()
 
         view = self.camera.view_matrix
         proj = self.camera.projection_matrix
@@ -322,6 +344,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         GL.glUseProgram(self._grid_program)
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._grid_program, "uView"), 1, GL.GL_FALSE, view)
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._grid_program, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniform1f(GL.glGetUniformLocation(self._grid_program, "uGridStep"), float(self.grid_step))
         GL.glBindVertexArray(self._grid_vao)
         GL.glDrawArrays(GL.GL_TRIANGLE_FAN, 0, 4)
         GL.glBindVertexArray(0)
@@ -451,6 +474,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
     def mousePressEvent(self, event: QMouseEvent):
         self.setFocus()
         self._last_mouse_pos = event.position()
+        self._sync_gizmo_settings(event)
 
         # Gizmo handle first (left click)
         if event.button() == Qt.LeftButton and self.gizmo.visible and self.gizmo.mode != GizmoMode.NONE:
@@ -481,6 +505,8 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         pos = event.position()
         dx = pos.x() - self._last_mouse_pos.x()
         dy = pos.y() - self._last_mouse_pos.y()
+
+        self._sync_gizmo_settings(event)
 
         # Gizmo drag -> move the selected control point.
         if self.gizmo.is_dragging:
