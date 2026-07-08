@@ -18,16 +18,16 @@ def inverse_rotate_point_pyr(x, y, z, pitch, yaw, roll):
         y_rad = math.radians(-yaw)
         c, s = math.cos(y_rad), math.sin(y_rad)
         x, y = x * c - y * s, x * s + y * c
-    # Reverse Pitch (X rotation)
+    # Reverse Pitch (Y rotation)
     if pitch != 0:
         p = math.radians(-pitch)
         c, s = math.cos(p), math.sin(p)
-        y, z = y * c - z * s, y * s + z * c
-    # Reverse Roll (Y rotation)
+        x, z = x * c - z * s, x * s + z * c
+    # Reverse Roll (X rotation)
     if roll != 0:
         r = math.radians(-roll)
         c, s = math.cos(r), math.sin(r)
-        x, z = x * c - z * s, x * s + z * c
+        y, z = y * c - z * s, y * s + z * c
     return x, y, z
 
 def normalize_angles(angles):
