@@ -81,6 +81,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         # View Settings
         self.shading_mode = "textured"  # "textured" | "solid" | "wireframe"
+        self.coordinate_space = "World"
+        self.snapping_enabled = False
+        self.grid_step = 8.0
+        self.rotation_step = 15.0
+        self.display_groups = True
 
         # Scene Data (populated from document tree)
         self._model_infos = {}  # id -> info dict
@@ -224,6 +229,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         view = self.camera.view_matrix
         proj = self.camera.projection_matrix
         cam_pos = self.camera.position
+        self._sync_gizmo_settings()
 
         # 1. Render Grid Floor (depth writes disabled so the transparent
         # areas of the floor never occlude models/gizmo drawn afterward)
@@ -292,6 +298,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
             is_dot = info.get("is_dot", False)
             if is_dot:
+                if not self.display_groups:
+                    continue
                 if picking:
                     r = (eid & 0xFF) / 255.0
                     g = ((eid >> 8) & 0xFF) / 255.0
@@ -557,12 +565,30 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self.gizmo.hide()
         self.update()
 
+    def _sync_gizmo_settings(self, event=None):
+        self.gizmo.coordinate_space = self.coordinate_space
+        self.gizmo.camera_right = self.camera.right_vector
+        self.gizmo.camera_up = self.camera.up_vector
+        self.gizmo.camera_forward = self.camera.target - self.camera.position
+
+        # Snapping toggling with Ctrl key
+        ctrl_held = False
+        if event is not None:
+            ctrl_held = bool(event.modifiers() & Qt.ControlModifier)
+        elif QApplication.keyboardModifiers() & Qt.ControlModifier:
+            ctrl_held = True
+
+        self.gizmo.snapping_enabled = self.snapping_enabled ^ ctrl_held
+        self.gizmo.grid_step = self.grid_step
+        self.gizmo.rotation_step = self.rotation_step
+
     # ------------------------------------------------------------------
     # Mouse & Keyboard Event Handlers
     # ------------------------------------------------------------------
     def mousePressEvent(self, event: QMouseEvent):
         self.setFocus()
         self._last_mouse_pos = event.position()
+        self._sync_gizmo_settings(event)
 
         # Hit test transform gizmo first (left click only, matches selection)
         if event.button() == Qt.LeftButton and self.gizmo.visible and self.gizmo.mode != GizmoMode.NONE:
@@ -598,6 +624,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
     def mouseMoveEvent(self, event: QMouseEvent):
         pos = event.position()
+        self._sync_gizmo_settings(event)
         dx = pos.x() - self._last_mouse_pos.x()
         dy = pos.y() - self._last_mouse_pos.y()
 
