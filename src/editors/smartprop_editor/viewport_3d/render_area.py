@@ -241,6 +241,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glUseProgram(self._grid_program)
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._grid_program, "uView"), 1, GL.GL_FALSE, view)
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._grid_program, "uProjection"), 1, GL.GL_FALSE, proj)
+        GL.glUniform1f(GL.glGetUniformLocation(self._grid_program, "uGridStep"), float(self.grid_step))
         GL.glBindVertexArray(self._grid_vao)
         GL.glDrawArrays(GL.GL_TRIANGLE_FAN, 0, 4)
         GL.glBindVertexArray(0)
@@ -254,6 +255,15 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
     def _render_scene_models(self, view, proj, cam_pos, picking=False):
         from OpenGL import GL
+
+        # Resolve context addon from opened file
+        context_addon = None
+        if self.document and getattr(self.document, "opened_file", None):
+            import re
+            opened_path = self.document.opened_file.replace('\\', '/')
+            addon_match = re.search(r'/csgo_addons/([^/]+)/', opened_path, re.IGNORECASE)
+            if addon_match:
+                context_addon = addon_match.group(1)
 
         if picking:
             GL.glUseProgram(self._picking_program)
@@ -384,7 +394,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
                 else:
                     # Queue model decompile / load if not already started
-                    self.mesh_cache.request_model(model_path)
+                    self.mesh_cache.request_model(model_path, context_addon)
 
                     # Draw fallback wireframe bounding box placeholder
                     GL.glUseProgram(self._wireframe_program)
@@ -1073,9 +1083,121 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         return local_pos, local_rot, local_scale
 
+    def _load_and_traverse_nested_vsmart(self, smartprop_path, models_list, world_matrix, context_addon=None):
+        import os
+        import re
+        from src.settings.main import get_addon_name, get_cs2_path
+        cs2_path = get_cs2_path()
+        addon = context_addon or get_addon_name()
+        if cs2_path and addon:
+            addon_match = re.search(r'/csgo_addons/([^/]+)/(.*)$', '/' + smartprop_path.replace('\\', '/'), re.IGNORECASE)
+            if addon_match:
+                addon = addon_match.group(1)
+                smartprop_path = addon_match.group(2)
+            
+            full_vsmart_path = os.path.join(cs2_path, 'content', 'csgo_addons', addon, smartprop_path.replace('\\', '/').strip('/'))
+            if os.path.exists(full_vsmart_path):
+                try:
+                    with open(full_vsmart_path, "r") as f:
+                        content = f.read()
+                    content = re.sub(re.compile(r"= resource_name:"), "= ", content)
+                    content = content.replace("null,", "")
+                    import keyvalues3 as kv3
+                    vsmart_data = kv3.textreader.KV3TextReader().parse(content).value
+                    
+                    self._traverse_vsmart_dict(vsmart_data, models_list, world_matrix, addon)
+                except Exception as e:
+                    print(f"[SmartPropEditor] Failed to load/traverse nested smart prop {smartprop_path}: {e}")
+
+    def _traverse_vsmart_dict(self, data, models_list, parent_world_matrix=None, context_addon=None):
+        if parent_world_matrix is None:
+            parent_world_matrix = np.eye(4, dtype=np.float32)
+
+        # Handle enabling
+        is_enabled = data.get("m_bEnabled", True)
+        if is_enabled is False or is_enabled == "false":
+            return
+
+        local_pos, local_rot, local_scale = self._get_local_transform(data)
+
+        # Build local matrix
+        local_matrix = (
+            scale_matrix(*local_scale)
+            @ rotation_matrix_euler(*local_rot)
+            @ translation_matrix(*local_pos)
+        )
+
+        # Compose with parent
+        world_matrix = local_matrix @ parent_world_matrix
+
+        # Decompose to world TRS
+        world_pos, world_rot, world_scale = decompose_trs(world_matrix)
+
+        element_class = data.get("_class", "")
+        model_path = ""
+        if element_class in ("CSmartPropElement_Model",
+                             "CSmartPropElement_ModelEntity",
+                             "CSmartPropElement_PropPhysics",
+                             "CSmartPropElement_PropDynamic"):
+            model_path = data.get("m_sModelName", "")
+
+        # Nested smart prop support inside dict traversal
+        if element_class == "CSmartPropElement_SmartProp":
+            smartprop_path = data.get("m_sSmartProp", "")
+            if smartprop_path:
+                self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
+
+        eid = data.get("m_nElementID", 0)
+        if eid > 0 and model_path:
+            models_list.append({
+                "id":                  eid,
+                "path":                model_path,
+                "position":            world_pos,
+                "rotation":            world_rot,
+                "scale":               world_scale,
+                "parent_world_matrix": parent_world_matrix,
+                "data":                data,
+                "is_dot":              not bool(model_path)
+            })
+
+        # Traverse children
+        children = data.get("m_Children", [])
+        if not isinstance(children, list):
+            children = []
+
+        child_indices = list(range(len(children)))
+        if element_class == "CSmartPropElement_PickOne":
+            selection_mode = data.get("m_SelectionMode", "RANDOM")
+            selected_idx = 0
+            if selection_mode in ("SPECIFIC", "SPECIFIC_CHILD"):
+                specific_idx_val = data.get("m_SpecificChildIndex", 0)
+                try:
+                    selected_idx = int(float(str(specific_idx_val)))
+                except ValueError:
+                    selected_idx = 0
+            if len(children) > 0:
+                selected_idx = max(0, min(selected_idx, len(children) - 1))
+                child_indices = [selected_idx]
+            else:
+                child_indices = []
+
+        for idx in child_indices:
+            child_data = children[idx]
+            if isinstance(child_data, dict):
+                self._traverse_vsmart_dict(child_data, models_list, world_matrix, context_addon)
+
     def _traverse_tree(self, item, models_list, parent_world_matrix=None):
         if parent_world_matrix is None:
             parent_world_matrix = np.eye(4, dtype=np.float32)
+
+        # Resolve context addon from opened file
+        context_addon = None
+        if self.document and getattr(self.document, "opened_file", None):
+            import re
+            opened_path = self.document.opened_file.replace('\\', '/')
+            addon_match = re.search(r'/csgo_addons/([^/]+)/', opened_path, re.IGNORECASE)
+            if addon_match:
+                context_addon = addon_match.group(1)
 
         # Get parent info to see if we should restrict child traversal (e.g. for PickOne)
         parent_data = item.data(0, Qt.UserRole)
@@ -1144,6 +1266,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                                  "CSmartPropElement_PropPhysics",
                                  "CSmartPropElement_PropDynamic"):
                 model_path = data.get("m_sModelName", "")
+
+            # If this is a nested smart prop element, load and traverse it!
+            if element_class == "CSmartPropElement_SmartProp":
+                smartprop_path = data.get("m_sSmartProp", "")
+                if smartprop_path:
+                    self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
 
             eid = data.get("m_nElementID", 0)
             if eid > 0:

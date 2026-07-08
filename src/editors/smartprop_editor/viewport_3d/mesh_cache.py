@@ -175,13 +175,18 @@ def load_glb(path: str) -> Optional[MeshData]:
         for name, geom in scene.geometry.items():
             if isinstance(geom, trimesh.Trimesh) and geom.visual:
                 try:
-                    mat = geom.visual.material
-                    if hasattr(mat, 'image') and mat.image is not None:
+                    mat = getattr(geom.visual, 'material', None)
+                    # SimpleMaterial exposes .image; glTF PBRMaterial (what VRF's
+                    # exporter emits) exposes .baseColorTexture. Handle both.
+                    img = getattr(mat, 'image', None) if mat is not None else None
+                    if img is None and mat is not None:
+                        img = getattr(mat, 'baseColorTexture', None)
+                    if img is not None:
                         from io import BytesIO
                         buf = BytesIO()
-                        mat.image.save(buf, format='PNG')
+                        img.save(buf, format='PNG')
                         texture_data = buf.getvalue()
-                        tex_w, tex_h = mat.image.size
+                        tex_w, tex_h = img.size
                         break
                 except Exception:
                     pass
@@ -216,9 +221,10 @@ class _DecompileSignals(QObject):
 class _DecompileWorker(QRunnable):
     """Background worker that decompiles a .vmdl_c to .glb via VRF."""
 
-    def __init__(self, model_resource_path: str):
+    def __init__(self, model_resource_path: str, context_addon: str = None):
         super().__init__()
         self.model_resource_path = model_resource_path
+        self.context_addon = context_addon
         self.signals = _DecompileSignals()
         self.setAutoDelete(True)
 
@@ -226,7 +232,7 @@ class _DecompileWorker(QRunnable):
     def run(self):
         try:
             from src.dotnet import decompile_model_to_glb
-            result = decompile_model_to_glb(self.model_resource_path)
+            result = decompile_model_to_glb(self.model_resource_path, self.context_addon)
             if result and os.path.exists(result):
                 self.signals.finished.emit(self.model_resource_path, result)
             else:
@@ -263,7 +269,7 @@ class MeshCache(QObject):
         self._thread_pool = QThreadPool()
         self._thread_pool.setMaxThreadCount(2)             # Limit concurrent decompilations
 
-    def request_model(self, resource_path: str):
+    def request_model(self, resource_path: str, context_addon: str = None):
         """Request a model to be loaded. Non-blocking; emits model_ready when done."""
         if not resource_path:
             return
@@ -278,7 +284,7 @@ class MeshCache(QObject):
         if resource_path in self._failed:
             return
         # Check if GLB already exists in cache
-        glb_path = self._find_cached_glb(resource_path)
+        glb_path = self._find_cached_glb(resource_path, context_addon)
         if glb_path:
             mesh_data = load_glb(glb_path)
             if mesh_data:
@@ -287,22 +293,39 @@ class MeshCache(QObject):
                 self.model_ready.emit(resource_path)
                 return
             else:
-                self._failed.add(resource_path)
-                return
+                # Discard invalid/empty cached GLB and retry decompilation
+                try:
+                    os.remove(glb_path)
+                except Exception as e:
+                    print(f"[MeshCache] Failed to remove invalid cached GLB {glb_path}: {e}")
 
         # Queue decompilation
         self._loading.add(resource_path)
-        worker = _DecompileWorker(resource_path)
+        worker = _DecompileWorker(resource_path, context_addon)
         worker.signals.finished.connect(self._on_decompile_finished)
         worker.signals.error.connect(self._on_decompile_error)
         self._thread_pool.start(worker)
 
-    def _find_cached_glb(self, resource_path: str) -> Optional[str]:
+    def _find_cached_glb(self, resource_path: str, context_addon: str = None) -> Optional[str]:
         """Check if a GLB file already exists in the cache."""
         from src.common import SmartPropEditor_Path
         from src.settings.common import get_addon_name
 
+        import re
+
         normalized = resource_path.replace("\\", "/").strip("/")
+        
+        # Try to extract the addon name and convert to a relative path
+        addon_match = re.search(r'/csgo_addons/([^/]+)/(.*)$', '/' + normalized, re.IGNORECASE)
+        csgo_match = re.search(r'/csgo/(.*)$', '/' + normalized, re.IGNORECASE)
+        
+        addon_name = context_addon or get_addon_name() or "addon"
+        if addon_match:
+            addon_name = addon_match.group(1)
+            normalized = addon_match.group(2)
+        elif csgo_match:
+            normalized = csgo_match.group(1)
+
         if not normalized.endswith(".vmdl"):
             if normalized.endswith(".vmdl_c"):
                 normalized = normalized[:-2]
@@ -310,8 +333,6 @@ class MeshCache(QObject):
                 normalized += ".vmdl"
 
         glb_subpath = normalized.rsplit(".", 1)[0] + ".glb"
-
-        addon_name = get_addon_name() or "addon"
 
         # Check addon cache first, then csgo cache
         for subfolder in [addon_name, "csgo"]:
@@ -331,6 +352,12 @@ class MeshCache(QObject):
                 self._pending_upload[resource_path] = mesh_data
                 self.model_ready.emit(resource_path)
                 return
+            else:
+                # Decompiled GLB exists but is empty/invalid. Delete it so we don't load it next time.
+                try:
+                    os.remove(glb_path)
+                except Exception:
+                    pass
         self._failed.add(resource_path)
 
     def _on_decompile_error(self, resource_path: str, error_msg: str):
