@@ -7,6 +7,11 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QChe
 
 from src.editors.smartprop_editor.viewport_3d.render_area import SmartProp3DRenderArea
 from src.editors.smartprop_editor.viewport_3d.gizmo import GizmoMode
+from src.styles.common import (
+    qt_stylesheet_viewport_toolbar,
+    qt_stylesheet_combobox,
+    qt_stylesheet_checkbox,
+)
 
 
 class SmartProp3DViewport(QWidget):
@@ -22,35 +27,21 @@ class SmartProp3DViewport(QWidget):
 
         # 3D Toolbar
         toolbar = QWidget()
-        toolbar.setFixedHeight(32)
+        toolbar.setFixedHeight(28)
         toolbar.setObjectName("SPE_Viewport3D_Toolbar")
-        toolbar.setStyleSheet("""
-            QWidget#SPE_Viewport3D_Toolbar {
-                background-color: #2D2D2D;
-                border-bottom: 1px solid #1E1E1E;
-            }
-            QComboBox, QCheckBox, QLabel {
-                color: #E0E0E0;
-                font-family: 'Segoe UI';
-                font-size: 11px;
-            }
-            QComboBox {
-                background-color: #3D3D3D;
-                border: 1px solid #555555;
-                border-radius: 2px;
-                padding: 1px 4px;
-            }
-            QComboBox::drop-down {
-                border: none;
-            }
-            QCheckBox {
-                spacing: 4px;
-            }
-        """)
+        toolbar.setStyleSheet(qt_stylesheet_viewport_toolbar)
 
         tb_layout = QHBoxLayout(toolbar)
         tb_layout.setContentsMargins(8, 0, 8, 0)
-        tb_layout.setSpacing(12)
+        tb_layout.setSpacing(8)
+
+        # View dropdown (Textured, Solid, Wireframe)
+        tb_layout.addWidget(QLabel("View:"))
+        self.view_combo = QComboBox()
+        self.view_combo.addItems(["Textured", "Solid", "Wireframe"])
+        self.view_combo.setCurrentText("Textured")
+        self.view_combo.currentTextChanged.connect(self._on_view_mode_changed)
+        tb_layout.addWidget(self.view_combo)
 
         # Space dropdown
         tb_layout.addWidget(QLabel("Space:"))
@@ -88,6 +79,20 @@ class SmartProp3DViewport(QWidget):
         self.groups_check.stateChanged.connect(self._on_display_groups_changed)
         tb_layout.addWidget(self.groups_check)
 
+        # Create smaller styling for the toolbar controls
+        qt_stylesheet_viewport_combo = qt_stylesheet_combobox.replace(
+            "height:22px;", "height:16px; min-height:16px; max-height:16px; padding-top: 0px; padding-bottom: 0px; font: 580 8pt \"Segoe UI\";"
+        )
+        qt_stylesheet_viewport_check = qt_stylesheet_checkbox.replace(
+            "height:22px;", "height:16px; min-height:16px; max-height:16px; padding-top: 0px; padding-bottom: 0px; font: 580 8pt \"Segoe UI\";"
+        )
+
+        # Apply shared app stylesheets to the toolbar controls.
+        for combo in (self.space_combo, self.grid_combo, self.rot_combo, self.view_combo):
+            combo.setStyleSheet(qt_stylesheet_viewport_combo)
+        for check in (self.snap_check, self.groups_check):
+            check.setStyleSheet(qt_stylesheet_viewport_check)
+
         tb_layout.addStretch()
         layout.addWidget(toolbar)
 
@@ -101,6 +106,11 @@ class SmartProp3DViewport(QWidget):
         self._on_grid_step_changed("8")
         self._on_rot_step_changed("15")
         self._on_display_groups_changed(Qt.Checked)
+        self._on_view_mode_changed("Textured")
+
+    def _on_view_mode_changed(self, text):
+        self.render_area.shading_mode = text.lower()
+        self.render_area.update()
 
     def _on_space_changed(self, text):
         self.render_area.coordinate_space = text
@@ -112,6 +122,7 @@ class SmartProp3DViewport(QWidget):
     def _on_grid_step_changed(self, text):
         try:
             self.render_area.grid_step = float(text)
+            self.render_area.update()
         except ValueError:
             pass
 

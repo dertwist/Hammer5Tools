@@ -539,6 +539,20 @@ QTableView QTableCornerButton::section {
 }
 """
 
+qt_stylesheet_viewport_toolbar = """
+QWidget#SPE_Viewport3D_Toolbar {
+    background-color: #1C1C1C;
+    border: none;
+}
+QWidget#SPE_Viewport3D_Toolbar QLabel {
+    font: 580 8pt "Segoe UI";
+    color: #9D9D9D;
+    background-color: transparent;
+    border: none;
+    padding: 0px;
+}
+"""
+
 def apply_stylesheets(parent: QWidget) -> None:
     """
     Applies registered QT stylesheets to all child widgets of the given parent.
