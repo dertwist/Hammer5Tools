@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QDockWidget
 )
-from PySide6.QtGui import QUndoStack, QAction
+from PySide6.QtGui import QUndoStack
 from PySide6.QtCore import QTimer, Qt
 from src.settings.main import get_settings_value, get_settings_bool
 from src.editors.smartprop_editor.ui_main import Ui_MainWindow
@@ -59,9 +59,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.realtime_save_timer = QTimer(self)
         self.realtime_save_timer.setInterval(delay)
         self.realtime_save_timer.timeout.connect(self.realtime_save_all)
-
-        # Add Tools menu
-        self.init_tools_menu()
 
         # Set initial UI state based on document availability
         self.update_placeholder_visibility()
@@ -287,30 +284,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         if self.realtime_save_timer.isActive():
             self.realtime_save_timer.stop()
         event.accept()
-
-
-
-    def init_tools_menu(self):
-        menubar = self.menuBar()
-        tools_menu = menubar.addMenu("Tools")
-        
-        convert_action = QAction("Convert VMAP to SmartProp...", self)
-        convert_action.triggered.connect(self.show_converter_dialog)
-        tools_menu.addAction(convert_action)
-
-    def show_converter_dialog(self):
-        from src.editors.smartprop_editor.converter_dialog import VMapToVSmartConverterDialog
-        initial_vmap = None
-        if hasattr(self.mini_explorer, "get_current_path"):
-            path = self.mini_explorer.get_current_path(absolute=True)
-            if path and path.endswith(".vmap"):
-                initial_vmap = path
-                
-        dialog = VMapToVSmartConverterDialog(self, initial_vmap=initial_vmap)
-        if dialog.exec_() == QDialog.Accepted:
-            generated_vsmart = dialog.vsmart_input.text()
-            if os.path.exists(generated_vsmart):
-                self.open_file(external=True, filename=generated_vsmart)
 
 
 
