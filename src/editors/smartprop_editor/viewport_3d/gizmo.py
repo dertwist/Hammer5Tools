@@ -10,8 +10,27 @@ from typing import Optional, Tuple
 import numpy as np
 
 from src.editors.smartprop_editor.viewport_3d.camera import (
-    translation_matrix, scale_matrix, rotation_matrix_euler, _normalize, SOURCE2_TO_GL
+    translation_matrix, scale_matrix, rotation_matrix_euler, _normalize, SOURCE2_TO_GL, decompose_trs
 )
+
+
+def rotation_matrix_axis_angle(axis, angle_deg):
+    angle = math.radians(angle_deg)
+    c = math.cos(angle)
+    s = math.sin(angle)
+    t = 1.0 - c
+    x, y, z = axis
+    m = np.eye(4, dtype=np.float32)
+    m[0, 0] = t*x*x + c
+    m[0, 1] = t*x*y + s*z
+    m[0, 2] = t*x*z - s*y
+    m[1, 0] = t*x*y - s*z
+    m[1, 1] = t*y*y + c
+    m[1, 2] = t*y*z + s*x
+    m[2, 0] = t*x*z + s*y
+    m[2, 1] = t*y*z - s*x
+    m[2, 2] = t*z*z + c
+    return m
 
 
 class GizmoMode(IntEnum):
@@ -130,6 +149,60 @@ class Gizmo:
         self._cube_vbo = 0
         self._cube_vertex_count = 0
         self._initialized = False
+
+        # Coordinate Space & Snapping
+        self.coordinate_space = "World"  # "World" | "Local" | "Screen"
+        self.snapping_enabled = False
+        self.grid_step = 8.0
+        self.rotation_step = 15.0
+
+        # Camera vectors for Screen space
+        self.camera_right = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        self.camera_up = np.array([0.0, 1.0, 0.0], dtype=np.float32)
+        self.camera_forward = np.array([0.0, 0.0, -1.0], dtype=np.float32)
+
+    def get_axis_direction(self, axis_name: str) -> np.ndarray:
+        """Get the direction of the given axis in GL space."""
+        axis_name = axis_name.lower()
+        if self.coordinate_space == "Local":
+            R = rotation_matrix_euler(*self.rotation)
+            s2_dir = R[{"x": 0, "y": 1, "z": 2}[axis_name], :3]
+            gl_dir = (SOURCE2_TO_GL.T @ np.append(s2_dir, 0.0))[:3]
+            return _normalize(gl_dir)
+        elif self.coordinate_space == "Screen":
+            gl_dir = {
+                "x": self.camera_right,
+                "y": self.camera_up,
+                "z": self.camera_forward,
+            }[axis_name]
+            return _normalize(gl_dir)
+        else: # World
+            return {
+                "x": np.array([1.0, 0.0, 0.0], dtype=np.float32),
+                "y": np.array([0.0, 0.0, -1.0], dtype=np.float32),
+                "z": np.array([0.0, 1.0, 0.0], dtype=np.float32),
+            }[axis_name]
+
+    def get_s2_axis_direction(self, axis_name: str) -> np.ndarray:
+        """Get the direction of the given axis in Source 2 space."""
+        axis_name = axis_name.lower()
+        if self.coordinate_space == "Local":
+            R = rotation_matrix_euler(*self.rotation)
+            return _normalize(R[{"x": 0, "y": 1, "z": 2}[axis_name], :3])
+        elif self.coordinate_space == "Screen":
+            gl_dir = {
+                "x": self.camera_right,
+                "y": self.camera_up,
+                "z": self.camera_forward,
+            }[axis_name]
+            s2_dir = (SOURCE2_TO_GL @ np.append(gl_dir, 0.0))[:3]
+            return _normalize(s2_dir)
+        else: # World
+            return {
+                "x": np.array([1.0, 0.0, 0.0], dtype=np.float32),
+                "y": np.array([0.0, 1.0, 0.0], dtype=np.float32),
+                "z": np.array([0.0, 0.0, 1.0], dtype=np.float32),
+            }[axis_name]
 
     def set_mode(self, mode: GizmoMode):
         self.mode = mode
@@ -260,6 +333,21 @@ class Gizmo:
         dist = np.linalg.norm(camera_pos - gl_pos)
         gizmo_scale = max(dist * 0.06, 5.0)
 
+        # Build space rotation matrix
+        R_space = np.eye(4, dtype=np.float32)
+        if self.coordinate_space == "Local":
+            R = rotation_matrix_euler(*self.rotation)
+            gl_x = (SOURCE2_TO_GL.T @ np.append(R[0, :3], 0.0))[:3]
+            gl_y = (SOURCE2_TO_GL.T @ np.append(R[1, :3], 0.0))[:3]
+            gl_z = (SOURCE2_TO_GL.T @ np.append(R[2, :3], 0.0))[:3]
+            R_space[0, :3] = _normalize(gl_x)
+            R_space[1, :3] = _normalize(gl_y)
+            R_space[2, :3] = _normalize(gl_z)
+        elif self.coordinate_space == "Screen":
+            R_space[0, :3] = _normalize(self.camera_right)
+            R_space[1, :3] = _normalize(self.camera_up)
+            R_space[2, :3] = _normalize(self.camera_forward)
+
         for axis_name in [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]:
             available = self.is_axis_available(axis_name)
             is_active = available and (axis_name == self.active_axis)
@@ -287,6 +375,7 @@ class Gizmo:
             model = (
                 scale_matrix(gizmo_scale, gizmo_scale * length_factor, gizmo_scale)
                 @ axis_rot
+                @ R_space
                 @ translation_matrix(*gl_pos)
             )
 
@@ -330,6 +419,7 @@ class Gizmo:
                     scale_matrix(SCALE_CUBE_SIZE * gizmo_scale, SCALE_CUBE_SIZE * gizmo_scale, SCALE_CUBE_SIZE * gizmo_scale)
                     @ translation_matrix(0.0, gizmo_scale, 0.0)
                     @ axis_rot
+                    @ R_space
                     @ translation_matrix(*gl_pos)
                 )
                 GL.glUniformMatrix4fv(
@@ -404,7 +494,7 @@ class Gizmo:
             # Unavailable (grayed) axes are inert — they can't be hovered or grabbed.
             if not self.is_axis_available(axis_name):
                 continue
-            axis_dir = AXIS_DIRECTIONS[axis_name]
+            axis_dir = self.get_axis_direction(axis_name)
             d = self._ray_line_distance(
                 ray_origin, ray_dir,
                 gl_pos, gl_pos + axis_dir * axis_len
@@ -431,7 +521,7 @@ class Gizmo:
         for axis_name in [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]:
             if not self.is_axis_available(axis_name):
                 continue
-            normal = AXIS_DIRECTIONS[axis_name]
+            normal = self.get_axis_direction(axis_name)
             denom = float(np.dot(ray_dir, normal))
             if abs(denom) < 1e-6:
                 continue  # ray parallel to the ring's plane — skip (edge-on)
@@ -470,7 +560,7 @@ class Gizmo:
 
         if self.mode == GizmoMode.TRANSLATE:
             gl_pos = self._get_gl_position()
-            axis_dir_GL = AXIS_DIRECTIONS[self.active_axis]
+            axis_dir_GL = self.get_axis_direction(self.active_axis)
             dist = np.linalg.norm(camera_pos - gl_pos)
             gizmo_scale = max(dist * 0.06, 5.0)
 
@@ -490,11 +580,16 @@ class Gizmo:
             # Pixels to GL units
             gl_delta_val = drag_amount * (gizmo_scale / screen_dir_len)
 
-            # S2 translation directly maps to S2 coordinate component
-            new_pos = self._drag_start_value.copy()
-            axis_idx = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z].index(self.active_axis)
-            new_pos[axis_idx] += gl_delta_val
+            # Move along the active axis in Source 2 space
+            s2_axis_dir = self.get_s2_axis_direction(self.active_axis)
+            new_pos = self._drag_start_value + gl_delta_val * s2_axis_dir
+
+            # Snapping
+            if self.snapping_enabled and self.grid_step > 0.0:
+                new_pos = np.array([round(val / self.grid_step) * self.grid_step for val in new_pos], dtype=np.float32)
+
             return {"position": new_pos.tolist()}
+
         elif self.mode == GizmoMode.ROTATE:
             gl_pos = self._get_gl_position()
             center_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
@@ -517,30 +612,31 @@ class Gizmo:
             delta_angle = (delta_angle + math.pi) % (2 * math.pi) - math.pi
             angle_deg = math.degrees(delta_angle)
 
-            # Determine rotation sign dynamically from screen-space.
-            # Dot the rotation axis (in GL space) with the camera's view
-            # direction: when the axis faces toward the camera the drag
-            # sense is one way, when it faces away it flips — so rotation
-            # feels correct from any viewing angle instead of relying on
-            # hardcoded per-axis sign flips.
-            axis_dir_GL = AXIS_DIRECTIONS[self.active_axis]
+            # Determine rotation sign dynamically from screen-space
+            axis_dir_GL = self.get_axis_direction(self.active_axis)
             view_dir = _normalize(gl_pos - camera_pos)
             facing = float(np.dot(axis_dir_GL, view_dir))
             sign = 1.0 if facing > 0 else -1.0
 
-            new_rot = self._drag_start_value.copy()
-            # Map GizmoAxis.X -> 2 (Roll), GizmoAxis.Y -> 0 (Pitch), GizmoAxis.Z -> 1 (Yaw)
-            axis_map = {
-                GizmoAxis.X: 2,
-                GizmoAxis.Y: 0,
-                GizmoAxis.Z: 1,
-            }
-            axis_idx = axis_map.get(self.active_axis)
-            if axis_idx is not None:
-                new_rot[axis_idx] += angle_deg * sign
-                # Keep in [0, 360) range
-                new_rot[axis_idx] = new_rot[axis_idx] % 360.0
-            return {"rotation": new_rot.tolist()}
+            total_angle_deg = angle_deg * sign
+
+            if self.snapping_enabled and self.rotation_step > 0.0:
+                total_angle_deg = round(total_angle_deg / self.rotation_step) * self.rotation_step
+
+            # Build rotation delta in Source 2 space
+            s2_axis_dir = self.get_s2_axis_direction(self.active_axis)
+            R_delta = rotation_matrix_axis_angle(s2_axis_dir, total_angle_deg)
+
+            # Composition
+            R_start = rotation_matrix_euler(*self._drag_start_value)
+            if self.coordinate_space == "Local":
+                R_new = R_start @ R_delta
+            else:
+                R_new = R_delta @ R_start
+
+            # Decompose back to Euler
+            _, new_rot, _ = decompose_trs(R_new)
+            return {"rotation": new_rot}
 
         elif self.mode == GizmoMode.SCALE:
             # Scale proportional to drag
@@ -548,8 +644,6 @@ class Gizmo:
             factor = max(0.01, factor)
             new_scale = self._drag_start_value.copy()
             if self.active_axis == GizmoAxis.CENTER:
-                # Uniform: multiply every axis by the same factor (preserving any
-                # non-uniform ratio the object already has).
                 new_scale = new_scale * factor
             else:
                 axis_idx = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z].index(self.active_axis)
