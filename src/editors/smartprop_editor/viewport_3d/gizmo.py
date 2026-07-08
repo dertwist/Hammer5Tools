@@ -526,8 +526,8 @@ class Gizmo:
             }
             axis_idx = axis_map.get(self.active_axis)
             if axis_idx is not None:
-                # Invert drag rotation for X and Y axes
-                drag_dir = -1.0 if self.active_axis in (GizmoAxis.X, GizmoAxis.Y) else 1.0
+                # Invert drag rotation for X axis
+                drag_dir = -1.0 if self.active_axis == GizmoAxis.X else 1.0
                 new_rot[axis_idx] += angle * drag_dir
                 # Keep in [0, 360) range
                 new_rot[axis_idx] = new_rot[axis_idx] % 360.0
