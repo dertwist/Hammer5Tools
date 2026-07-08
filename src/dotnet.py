@@ -36,6 +36,7 @@ class DotNetPaths:
         self.compression = base_dir / 'K4os.Compression.LZ4.dll'
         self.sharp_gltf = base_dir / 'SharpGLTF.Toolkit.dll'
         self.sharp_gltf_core = base_dir / 'SharpGLTF.Core.dll'
+        self.sharp_gltf_runtime = base_dir / 'SharpGLTF.Runtime.dll'
         self.sharp_zstd = base_dir / 'SharpZstd.Interop.dll'
         self.skia_sharp = base_dir / 'SkiaSharp.dll'
         self.system_io_hashing = base_dir / 'System.IO.Hashing.dll'
@@ -91,8 +92,8 @@ class DotNetInterop:
             raise RuntimeError("Python.NET not available. Install with: pip install pythonnet") from e
         except Exception as e:
             raise RuntimeError(
-                ".NET Desktop Runtime 9.0 or newer is required for this tool. "
-                "Install it from https://dotnet.microsoft.com/download/dotnet/9.0"
+                ".NET Desktop Runtime 10.0 or newer is required for this tool. "
+                "Install it from https://dotnet.microsoft.com/download/dotnet/10.0"
             ) from e
 
     def _load_assembly(self, path: Path) -> None:
@@ -138,19 +139,28 @@ class DotNetInterop:
         default_context = default_prop.GetValue(None)
         load_method = alc_type.GetMethod("LoadFromAssemblyPath", [System.String])
 
-        # Load dependencies first
+        # Load dependencies first. SharpGLTF.Runtime (a Toolkit dependency used
+        # during model export) is preloaded explicitly; the remaining transitive
+        # deps of newer VRF (Blake3, Vortice.SpirvCross, native SkiaSharp/EXR/
+        # SPIRV, …) sit alongside VRF in src/external and are resolved by the
+        # LoadFrom context's directory probing when first touched.
         dependencies = [
             self.paths.valve_keyvalue,
             self.paths.zstd_sharp,
             self.paths.valve_pak,
             self.paths.system_io_hashing,
             self.paths.sharp_gltf_core,
+            self.paths.sharp_gltf_runtime,
             self.paths.sharp_gltf,
             self.paths.vrf
         ]
 
         for dep in dependencies:
             if not dep.exists():
+                # SharpGLTF.Runtime is absent from older bundles; skip rather
+                # than hard-fail so a legacy DLL set still loads.
+                if dep == self.paths.sharp_gltf_runtime:
+                    continue
                 raise FileNotFoundError(f"Assembly not found: {dep}")
             load_method.Invoke(default_context, [str(dep)])
 
@@ -361,7 +371,7 @@ class ResourceProcessor:
 class DotNetRuntimeChecker:
     """Check and manage .NET runtime installation."""
 
-    def __init__(self, min_version: str = "9.0"):
+    def __init__(self, min_version: str = "10.0"):
         self.min_version = min_version
 
     def check_runtime(self, show_dialog: bool = True) -> bool:
@@ -387,8 +397,17 @@ class DotNetRuntimeChecker:
                     parts = line.split()
                     if len(parts) >= 2:
                         version = parts[1]
-                        version_major_minor = ".".join(version.split(".")[:2])
-                        if version_major_minor >= self.min_version:
+                        # Numeric compare — a lexical ">=" wrongly accepts "9.0"
+                        # for a "10.0" minimum ("9" > "1").
+                        def _ver_tuple(v):
+                            out = []
+                            for part in v.split(".")[:2]:
+                                try:
+                                    out.append(int(part))
+                                except ValueError:
+                                    out.append(0)
+                            return tuple(out)
+                        if _ver_tuple(version) >= _ver_tuple(self.min_version):
                             return True
 
             if show_dialog:
@@ -477,7 +496,7 @@ class DotNetRuntimeChecker:
 
 
 # Convenience functions for backward compatibility
-def check_dotnet_runtime(min_version: str = "9.0", dev_mode: bool = False) -> bool:
+def check_dotnet_runtime(min_version: str = "10.0", dev_mode: bool = False) -> bool:
     """Check .NET runtime availability."""
     checker = DotNetRuntimeChecker(min_version)
     return checker.check_runtime(show_dialog=not dev_mode)
@@ -672,6 +691,7 @@ class TestVMapReferences(unittest.TestCase):
             self.fail(f"Failed to print references: {e}")
 
 import threading
+import contextlib
 _decompile_lock = threading.Lock()
 
 def synchronized(lock):
@@ -682,18 +702,55 @@ def synchronized(lock):
         return wrapper
     return decorator
 
+
+@contextlib.contextmanager
+def _suppress_dotnet_console():
+    """Silence VRF's Console output (VPK preloads, "Failed to load ..." notes)
+    for the duration of a block. Restores the streams afterwards. Safe because
+    decompilation is serialised by _decompile_lock. Requires pythonnet to be
+    initialised (call setup_vrf() first)."""
+    import System
+    import System.IO
+    orig_out, orig_err = System.Console.Out, System.Console.Error
+    try:
+        System.Console.SetOut(System.IO.TextWriter.Null)
+        System.Console.SetError(System.IO.TextWriter.Null)
+        yield
+    finally:
+        System.Console.SetOut(orig_out)
+        System.Console.SetError(orig_err)
+
 @synchronized(_decompile_lock)
-def decompile_model_to_glb(vmdl_path: str) -> Optional[str]:
+def decompile_model_to_glb(vmdl_path: str, context_addon: str = None) -> Optional[str]:
     """
     Decompiles a compiled model file (.vmdl_c) to a .glb file.
     Saves the output .glb under userdata/SmartPropEditor/ organized by Addon vs Core.
     """
     import os
+    import re
     from pathlib import Path
     from typing import Optional
 
+    # Import settings/common dynamically to avoid circular dependencies
+    from src.common import get_cs2_path, SmartPropEditor_Path
+    from src.settings.common import get_addon_name
+
     # Normalize paths
     vmdl_path = vmdl_path.replace("\\", "/").strip("/")
+
+    # Try to extract the addon name and convert to a relative path
+    addon_match = re.search(r'/csgo_addons/([^/]+)/(.*)$', '/' + vmdl_path, re.IGNORECASE)
+    csgo_match = re.search(r'/csgo/(.*)$', '/' + vmdl_path, re.IGNORECASE)
+
+    if addon_match:
+        addon_name = addon_match.group(1)
+        vmdl_path = addon_match.group(2)
+    elif csgo_match:
+        addon_name = context_addon or get_addon_name() or "addon"
+        vmdl_path = csgo_match.group(1)
+    else:
+        addon_name = context_addon or get_addon_name() or "addon"
+
     if not vmdl_path.endswith(".vmdl") and not vmdl_path.endswith(".vmdl_c"):
         vmdl_path += ".vmdl"
         
@@ -703,15 +760,9 @@ def decompile_model_to_glb(vmdl_path: str) -> Optional[str]:
     else:
         vmdl_c_path = vmdl_path + "_c"
         
-    # Import settings/common dynamically to avoid circular dependencies
-    from src.common import get_cs2_path, SmartPropEditor_Path
-    from src.settings.common import get_addon_name
-    
     cs2_path = get_cs2_path()
     if not cs2_path:
         return None
-        
-    addon_name = get_addon_name() or "addon"
     
     # Define source paths
     addon_vmdl_c = os.path.join(cs2_path, "game", "csgo_addons", addon_name, vmdl_c_path)
@@ -785,35 +836,64 @@ def decompile_model_to_glb(vmdl_path: str) -> Optional[str]:
     FileExtract = System.Type.GetType("ValveResourceFormat.IO.FileExtract, ValveResourceFormat")
     if not FileExtract:
         vrf_assembly = System.Reflection.Assembly.Load("ValveResourceFormat")
-        NullFileLoaderType = vrf_assembly.GetType("ValveResourceFormat.IO.NullFileLoader")
-        GltfModelExporterType = vrf_assembly.GetType("ValveResourceFormat.IO.GltfModelExporter")
-        Resource = vrf_assembly.GetType("ValveResourceFormat.Resource")
     else:
         vrf_assembly = FileExtract.Assembly
-        NullFileLoaderType = vrf_assembly.GetType("ValveResourceFormat.IO.NullFileLoader")
-        GltfModelExporterType = vrf_assembly.GetType("ValveResourceFormat.IO.GltfModelExporter")
-        Resource = vrf_assembly.GetType("ValveResourceFormat.Resource")
-        
-    null_file_loader = System.Activator.CreateInstance(NullFileLoaderType)
+    NullFileLoaderType = vrf_assembly.GetType("ValveResourceFormat.IO.NullFileLoader")
+    GameFileLoaderType = vrf_assembly.GetType("ValveResourceFormat.IO.GameFileLoader")
+    GltfModelExporterType = vrf_assembly.GetType("ValveResourceFormat.IO.GltfModelExporter")
+    Resource = vrf_assembly.GetType("ValveResourceFormat.Resource")
+
+    # Build a file loader that resolves the model's external references
+    # (materials, textures, and any non-embedded meshes) the way Source 2 Viewer
+    # does.  GameFileLoader walks up from the current file to find gameinfo.gi and
+    # mounts the core game search paths + VPKs; the addon's own game folder is
+    # added explicitly so addon-local materials/textures resolve too.  Without it
+    # (NullFileLoader) the export has geometry only — untextured, and empty for
+    # models whose mesh lives in a separate .vmesh_c.  Any failure falls back to
+    # NullFileLoader so decompilation still yields geometry.
+    current_file_name = source_fs_path or os.path.join(cs2_path, "game", "csgo", vmdl_c_path)
+    file_loader = None
+    if GameFileLoaderType is not None:
+        try:
+            with _suppress_dotnet_console():
+                file_loader = System.Activator.CreateInstance(GameFileLoaderType, None, current_file_name)
+                # Mount both the model's own addon folder and the active addon folder
+                active_addon = get_addon_name() or "addon"
+                for add_name in set([addon_name, active_addon]):
+                    addon_game_folder = os.path.join(cs2_path, "game", "csgo_addons", add_name)
+                    if os.path.isdir(addon_game_folder):
+                        file_loader.AddDiskPathToSearch(addon_game_folder)
+        except Exception as e:
+            print(f"GameFileLoader unavailable ({e}); falling back to NullFileLoader.")
+            file_loader = None
+    if file_loader is None:
+        file_loader = System.Activator.CreateInstance(NullFileLoaderType)
+
     resource = System.Activator.CreateInstance(Resource)
+    try:
+        resource.FileName = current_file_name
+    except Exception:
+        pass
     ms = MemoryStream(data)
     try:
         resource.Read(ms)
-        exporter = System.Activator.CreateInstance(GltfModelExporterType, null_file_loader)
+        exporter = System.Activator.CreateInstance(GltfModelExporterType, file_loader)
         
         # Ensure output folder exists
         os.makedirs(os.path.dirname(output_glb_path), exist_ok=True)
         import System.Threading
         token = getattr(System.Threading.CancellationToken, "None")
-        
-        # Try exporting with materials/textures first
-        try:
-            exporter.ExportMaterials = True
-            exporter.Export(resource, output_glb_path, token)
-        except Exception as e:
-            print(f"Failed to decompile with materials: {e}. Retrying without materials...")
-            exporter.ExportMaterials = False
-            exporter.Export(resource, output_glb_path, token)
+
+        # Try exporting with materials/textures first; VRF's per-reference
+        # Console spam is silenced during the export.
+        with _suppress_dotnet_console():
+            try:
+                exporter.ExportMaterials = True
+                exporter.Export(resource, output_glb_path, token)
+            except Exception as e:
+                print(f"Failed to decompile with materials: {e}. Retrying without materials...")
+                exporter.ExportMaterials = False
+                exporter.Export(resource, output_glb_path, token)
             
         if os.path.exists(output_glb_path):
             return output_glb_path

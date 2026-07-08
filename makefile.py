@@ -22,27 +22,36 @@ dotnet_dlls = [
     ("ValveResourceFormat.dll", "src\\external"),
     ("ZstdSharp.dll", "src\\external"),
     ("K4os.Compression.LZ4.dll", "src\\external"),
+    ("SharpGLTF.Core.dll", "src\\external"),
+    ("SharpGLTF.Runtime.dll", "src\\external"),
     ("SharpGLTF.Toolkit.dll", "src\\external"),
     ("SharpZstd.Interop.dll", "src\\external"),
     ("SkiaSharp.dll", "src\\external"),
     ("System.IO.Hashing.dll", "src\\external"),
     ("TinyBCSharp.dll", "src\\external"),
-    ("TinyEXR.NET.dll", "src\\external")
+    ("TinyEXR.NET.dll", "src\\external"),
+    # Added with VRF 19.x (net10.0): compressed-mesh / newer resource support.
+    ("TinyEXRNative.dll", "src\\external"),
+    ("Blake3.dll", "src\\external"),
+    ("blake3_dotnet.dll", "src\\external"),
+    ("Vortice.SPIRV.dll", "src\\external"),
+    ("Vortice.SpirvCross.dll", "src\\external"),
+    ("spirv-cross.dll", "src\\external"),
 ]
 
 # Create a runtimeconfig.json for the bundled .NET runtime
 def generate_runtime_config(target_dir):
     config = {
         "runtimeOptions": {
-            "tfm": "net9.0",
+            "tfm": "net10.0",
             "frameworks": [
                 {
                     "name": "Microsoft.WindowsDesktop.App",
-                    "version": "9.0.0"
+                    "version": "10.0.0"
                 },
                 {
                     "name": "Microsoft.NETCore.App",
-                    "version": "9.0.0"
+                    "version": "10.0.0"
                 }
             ]
         }
@@ -53,7 +62,7 @@ def generate_runtime_config(target_dir):
         json.dump(config, f, indent=2)
 
 def get_dotnet_runtime_data():
-    """Finds .NET 9.0 runtime files on the system to bundle them."""
+    """Finds .NET 10.0 runtime files on the system to bundle them."""
     import glob
     dotnet_root = os.environ.get("DOTNET_ROOT", r"C:\Program Files\dotnet")
     if not os.path.exists(dotnet_root):
@@ -62,11 +71,11 @@ def get_dotnet_runtime_data():
     shared_path = os.path.join(dotnet_root, "shared")
     results = []
 
-    # Find latest 9.0 versions
+    # Find latest 10.0 versions
     for framework in ["Microsoft.NETCore.App", "Microsoft.WindowsDesktop.App"]:
         fw_path = os.path.join(shared_path, framework)
         if os.path.exists(fw_path):
-            versions = [v for v in os.listdir(fw_path) if v.startswith("9.0")]
+            versions = [v for v in os.listdir(fw_path) if v.startswith("10.0")]
             if versions:
                 latest = sorted(versions, key=lambda x: [int(i) for i in x.split('.')])[-1]
                 src = os.path.join(fw_path, latest)
