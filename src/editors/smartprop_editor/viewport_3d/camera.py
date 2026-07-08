@@ -95,6 +95,61 @@ def rotation_matrix_euler(pitch_deg, yaw_deg, roll_deg):
     return m
 
 
+def decompose_trs(matrix):
+    """Decompose a 4x4 TRS matrix (row-vector style) into position, rotation (Euler), and scale.
+
+    Returns:
+        position: [x, y, z]
+        rotation: [pitch, yaw, roll] in degrees (Source 2 convention)
+        scale: [sx, sy, sz]
+    """
+    # Translation is in the last row
+    pos = matrix[3, :3].tolist()
+
+    # Extract scale as row norms of the top-left 3x3
+    sx = float(np.linalg.norm(matrix[0, :3]))
+    sy = float(np.linalg.norm(matrix[1, :3]))
+    sz = float(np.linalg.norm(matrix[2, :3]))
+    scale = [sx, sy, sz]
+
+    # Normalize rotation part
+    r00 = matrix[0, 0] / (sx if sx > 1e-8 else 1.0)
+    r01 = matrix[0, 1] / (sx if sx > 1e-8 else 1.0)
+    r02 = matrix[0, 2] / (sx if sx > 1e-8 else 1.0)
+
+    r10 = matrix[1, 0] / (sy if sy > 1e-8 else 1.0)
+    r11 = matrix[1, 1] / (sy if sy > 1e-8 else 1.0)
+    r12 = matrix[1, 2] / (sy if sy > 1e-8 else 1.0)
+
+    r20 = matrix[2, 0] / (sz if sz > 1e-8 else 1.0)
+    r21 = matrix[2, 1] / (sz if sz > 1e-8 else 1.0)
+    r22 = matrix[2, 2] / (sz if sz > 1e-8 else 1.0)
+
+    # Decompose rotation matrix into Euler angles
+    # r02 = -sp
+    sp = -r02
+    sp = max(-1.0, min(1.0, sp))
+    pitch = math.asin(sp)
+
+    if abs(math.cos(pitch)) > 1e-5:
+        yaw = math.atan2(r01, r00)
+        roll = math.atan2(r12, r22)
+    else:
+        # Gimbal lock
+        yaw = 0.0
+        if sp < 0.0:  # pitch = -90 deg
+            roll = math.atan2(-r10, r11)
+        else:  # pitch = 90 deg
+            roll = math.atan2(r10, r11)
+
+    rot = [
+        math.degrees(pitch),
+        math.degrees(yaw) % 360.0,
+        math.degrees(roll) % 360.0
+    ]
+    return pos, rot, scale
+
+
 # Source 2 uses Z-up. glTF (and our viewport) uses Y-up.
 # This matrix converts Source 2 coordinates → OpenGL Y-up:
 #   GL_X =  S2_X
