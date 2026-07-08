@@ -52,21 +52,25 @@ class GPUMesh:
 # rest of the viewport works in Source space (Z-up, inches) — grid cells, gizmo,
 # positions from the document tree — and only converts to GL at draw time via
 # SOURCE2_TO_GL.  So undo VRF's conversion here and hand back geometry in raw
-# Source space (Z-up, inches):
-#       Source = (glTF_Z, glTF_X, -glTF_Y) / 0.0254
-# The horizontal X/Y mapping is the axis-swap that already placed multi-part
-# assemblies correctly; ONLY the up (Z) component is negated.  That single flip
-# lands models the right way up (roof up / wheels down) without disturbing where
-# each part sits — a full rotation-about-X would also swing parts horizontally
-# around the shared group origin and scramble the assembly.  It is a reflection
-# (det -1), but because it flips only top/bottom the model is not mirrored
-# left/right, and normals are reflected the same way so shading stays correct.
+# Source space (Z-up, inches).
+#
+# VRF cyclically permutes the axes on export: glTF = (S_Y, S_Z, S_X), i.e. the
+# Source length axis (X) becomes glTF X, width (Y) becomes glTF Z, and up (Z)
+# becomes glTF Y.  The inverse (glTF -> Source) is therefore:
+#       Source = (glTF_Z, glTF_X, glTF_Y) / 0.0254
+# This is a proper rotation (det +1): the model comes back upright (roof up /
+# wheels down) and un-mirrored, with its geometry in the same Source frame as the
+# per-element positions read from the .vsmart tree.  Verified against
+# cargovan_01: the body footprint (Source X ±39, Y [-90,121]) contains all four
+# wheel elements (X ±35, Y +99/-56), so the assembly lines up.  Getting the up
+# sign wrong flips the model upside down; swapping the horizontal axes rotates
+# the body 90° away from the tree-driven wheel positions.
 _VRF_GLTF_SCALE = 0.0254  # Source inch -> glTF metre
-# Axis-swap + vertical (up) flip, used for direction vectors (normals).
+# Axis-swap (proper rotation), used for direction vectors (normals).
 _GLTF_TO_SOURCE_ROT = np.array([
     [ 0.0,  0.0,  1.0],
     [ 1.0,  0.0,  0.0],
-    [ 0.0, -1.0,  0.0],
+    [ 0.0,  1.0,  0.0],
 ], dtype=np.float32)
 # Axis-swap + inch scale, used for positions.
 _GLTF_TO_SOURCE = _GLTF_TO_SOURCE_ROT / _VRF_GLTF_SCALE
