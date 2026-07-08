@@ -165,7 +165,9 @@ class Camera:
     def orbit(self, dx, dy):
         """Orbit around the target. dx/dy are screen-space pixel deltas."""
         self.yaw -= dx * 0.3
-        self.pitch -= dy * 0.3
+        # Vertical orbit is inverted: dragging up tilts the camera down and
+        # vice-versa.
+        self.pitch += dy * 0.3
         self.pitch = max(-89.9, min(89.9, self.pitch))
 
     def pan(self, dx, dy):
