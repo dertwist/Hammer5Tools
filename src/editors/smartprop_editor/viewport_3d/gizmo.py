@@ -496,8 +496,27 @@ class Gizmo:
             new_pos[axis_idx] += gl_delta_val
             return {"position": new_pos.tolist()}
         elif self.mode == GizmoMode.ROTATE:
-            # Rotate proportional to drag (1px = 0.5 degrees)
-            angle = (dx - dy) * 0.5
+            gl_pos = self._get_gl_position()
+            center_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
+            
+            x0 = self._drag_start_pos[0] - center_screen[0]
+            y0 = self._drag_start_pos[1] - center_screen[1]
+            x1 = screen_pos[0] - center_screen[0]
+            y1 = screen_pos[1] - center_screen[1]
+            
+            len0 = math.hypot(x0, y0)
+            len1 = math.hypot(x1, y1)
+            if len0 < 1e-3 or len1 < 1e-3:
+                return None
+                
+            angle0 = math.atan2(y0, x0)
+            angle1 = math.atan2(y1, x1)
+            
+            delta_angle = angle1 - angle0
+            # Normalize to [-pi, pi] to avoid jump across boundary
+            delta_angle = (delta_angle + math.pi) % (2 * math.pi) - math.pi
+            angle = math.degrees(delta_angle)
+            
             new_rot = self._drag_start_value.copy()
             # Map GizmoAxis.X -> 2 (Roll), GizmoAxis.Y -> 0 (Pitch), GizmoAxis.Z -> 1 (Yaw)
             axis_map = {
