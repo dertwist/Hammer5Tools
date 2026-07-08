@@ -45,41 +45,71 @@ uniform sampler2D uTexture;
 
 out vec4 FragColor;
 
-void main() {
-    // Light direction (from upper-right, following camera roughly)
-    vec3 lightDir = normalize(vec3(0.3, 0.8, 0.5));
-    vec3 lightColor = vec3(1.0, 0.98, 0.95);
-    vec3 ambientColor = vec3(0.15, 0.16, 0.18);
+float pow2(float x) { return x * x; }
+vec3 pow2(vec3 x) { return x * x; }
+float saturate(float x) { return clamp(x, 0.0, 1.0); }
+vec3 saturate(vec3 x) { return clamp(x, 0.0, 1.0); }
 
+vec3 SrgbGammaToLinear(vec3 color)
+{
+    vec3 vLinearSegment = color / vec3(12.92);
+    vec3 vExpSegment = pow((color / vec3(1.055)) + vec3(0.0521327), vec3(2.4));
+
+    const float cap = 0.04045;
+    float select = color.r > cap ? vExpSegment.r : vLinearSegment.r;
+    float select1 = color.g > cap ? vExpSegment.g : vLinearSegment.g;
+    float select2 = color.b > cap ? vExpSegment.b : vLinearSegment.b;
+
+    return vec3(select, select1, select2);
+}
+
+vec3 SrgbLinearToGamma(vec3 vLinearColor)
+{
+    vec3 vLinearSegment = vLinearColor * 12.92;
+    vec3 vExpSegment = (1.055 * pow(vLinearColor, vec3(1.0 / 2.4))) - 0.055;
+
+    vec3 vGammaColor = vec3((vLinearColor.r <= 0.0031308) ? vLinearSegment.r : vExpSegment.r,
+                            (vLinearColor.g <= 0.0031308) ? vLinearSegment.g : vExpSegment.g,
+                            (vLinearColor.b <= 0.0031308) ? vLinearSegment.b : vExpSegment.b);
+    return vGammaColor;
+}
+
+vec3 CalculateFullbrightLighting(vec3 albedo, vec3 normal, vec3 viewVector)
+{
+    float flFakeDiffuseLighting = saturate(dot(normal, viewVector)) * 0.7 + 0.3;
+
+    vec3 vReflectionDirWs = reflect(-viewVector, normal);
+
+    float flFakeSpecularLighting = pow2(pow2(saturate(dot(viewVector, vReflectionDirWs)))) * 0.05;
+
+    // Weights converted from Source 2 space (Z-up) to OpenGL space (Y-up)
+    //   Source Z-up (1.0/0.2) -> OpenGL Y-up (1.0/0.2)
+    //   Source X-forward (0.6) -> OpenGL X-right (0.6)
+    //   Source Y-left (0.4) -> OpenGL Z-forward/backward (0.4)
+    float XtraLight1 = dot(vec3(0.6, 1.0, 0.4), pow2(saturate(normal)));
+    float XtraLight2 = dot(vec3(0.6, 0.2, 0.4), pow2(saturate(-normal)));
+    float xtraLight = XtraLight1 + XtraLight2;
+
+    return xtraLight * albedo * flFakeDiffuseLighting + flFakeSpecularLighting;
+}
+
+void main() {
     vec3 baseColor = uBaseColor;
     if (uHasTexture == 1) {
-        baseColor = texture(uTexture, vTexCoord).rgb;
+        baseColor = SrgbGammaToLinear(texture(uTexture, vTexCoord).rgb);
     }
 
-    // Diffuse
     vec3 norm = normalize(vNormal);
-    float diff = max(dot(norm, lightDir), 0.0);
-
-    // Specular (Blinn-Phong)
     vec3 viewDir = normalize(uCameraPos - vWorldPos);
-    vec3 halfDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(norm, halfDir), 0.0), 32.0);
 
-    // Fill light from below-left
-    vec3 fillDir = normalize(vec3(-0.5, -0.3, -0.4));
-    float fillDiff = max(dot(norm, fillDir), 0.0) * 0.15;
-
-    vec3 color = ambientColor * baseColor
-               + diff * lightColor * baseColor
-               + fillDiff * vec3(0.4, 0.5, 0.7) * baseColor
-               + spec * vec3(0.3);
+    vec3 color = CalculateFullbrightLighting(baseColor, norm, viewDir);
 
     // Highlight tint for selection
     if (uHighlight > 0.5) {
         color = mix(color, vec3(0.0, 0.85, 0.85), 0.25);
     }
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(SrgbLinearToGamma(color), 1.0);
 }
 """
 
@@ -134,8 +164,12 @@ GRID_FRAGMENT_SHADER = """
 in vec3 vWorldPos;
 out vec4 FragColor;
 
+uniform float uGridStep;
+
 void main() {
-    float gridSize = 50.0;
+    // Minor cell size follows the toolbar's Grid Step value so the floor
+    // visually matches the snapping increment. Guard against a zero step.
+    float gridSize = max(uGridStep, 0.001);
     float majorEvery = 5.0;
 
     vec2 coord = vWorldPos.xz / gridSize;
