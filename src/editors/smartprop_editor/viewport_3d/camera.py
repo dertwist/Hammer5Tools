@@ -72,7 +72,7 @@ def scale_matrix(sx, sy, sz):
 
 
 def rotation_matrix_euler(pitch_deg, yaw_deg, roll_deg):
-    """Build a 4x4 rotation matrix from Euler angles (Source 2 convention: pitch=X, yaw=Y, roll=Z)."""
+    """Build a 4x4 rotation matrix from Euler angles (Source 2 convention: pitch=Y, yaw=Z, roll=X)."""
     p = math.radians(pitch_deg)
     y = math.radians(yaw_deg)
     r = math.radians(roll_deg)
@@ -81,17 +81,17 @@ def rotation_matrix_euler(pitch_deg, yaw_deg, roll_deg):
     cy, sy = math.cos(y), math.sin(y)
     cr, sr = math.cos(r), math.sin(r)
 
-    # Rotation order: yaw (Z) * pitch (X) * roll (Y)  — Source 2 convention
+    # Rotation order: yaw (Z) * pitch (Y) * roll (X)  — Source 2 convention
     m = np.eye(4, dtype=np.float32)
-    m[0, 0] = cy * cr + sy * sp * sr
-    m[0, 1] = cp * sr
-    m[0, 2] = -sy * cr + cy * sp * sr
-    m[1, 0] = -cy * sr + sy * sp * cr
-    m[1, 1] = cp * cr
-    m[1, 2] = sy * sr + cy * sp * cr
-    m[2, 0] = sy * cp
-    m[2, 1] = -sp
-    m[2, 2] = cy * cp
+    m[0, 0] = cy * cp
+    m[0, 1] = sy * cp
+    m[0, 2] = -sp
+    m[1, 0] = cy * sp * sr - sy * cr
+    m[1, 1] = sy * sp * sr + cy * cr
+    m[1, 2] = cp * sr
+    m[2, 0] = cy * sp * cr + sy * sr
+    m[2, 1] = sy * sp * cr - cy * sr
+    m[2, 2] = cp * cr
     return m
 
 

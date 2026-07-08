@@ -2031,11 +2031,11 @@ class SmartPropDocument(QMainWindow):
                 if pitch != 0:
                     p = math.radians(-pitch)
                     c, s = math.cos(p), math.sin(p)
-                    y, z = y * c - z * s, y * s + z * c
+                    x, z = x * c - z * s, x * s + z * c
                 if roll != 0:
                     r = math.radians(-roll)
                     c, s = math.cos(r), math.sin(r)
-                    x, z = x * c - z * s, x * s + z * c
+                    y, z = y * c - z * s, y * s + z * c
                 return x, y, z
 
             def normalize_angles(angles):

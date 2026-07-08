@@ -556,10 +556,16 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                         mod = self._find_or_create_modifier(data, "CSmartPropOperation_Translate", "m_vPosition")
                         self._set_vector_component(mod, "m_vPosition", axis_idx, delta["position"][axis_idx], delta["position"])
                         info["position"] = delta["position"]
-                    elif axis_idx is not None and "rotation" in delta:
-                        mod = self._find_or_create_modifier(data, "CSmartPropOperation_Rotate", "m_vRotation")
-                        self._set_vector_component(mod, "m_vRotation", axis_idx, delta["rotation"][axis_idx], delta["rotation"])
-                        info["rotation"] = delta["rotation"]
+                    elif "rotation" in delta:
+                        rot_axis_idx = {
+                            GizmoAxis.X: 2,
+                            GizmoAxis.Y: 0,
+                            GizmoAxis.Z: 1,
+                        }.get(self.gizmo.active_axis)
+                        if rot_axis_idx is not None:
+                            mod = self._find_or_create_modifier(data, "CSmartPropOperation_Rotate", "m_vRotation")
+                            self._set_vector_component(mod, "m_vRotation", rot_axis_idx, delta["rotation"][rot_axis_idx], delta["rotation"])
+                            info["rotation"] = delta["rotation"]
                     elif "scale" in delta and (axis_idx is not None or is_center):
                         new_scale = self._apply_scale_delta(data, axis_idx, delta["scale"], uniform=is_center)
                         info["scale"] = new_scale
