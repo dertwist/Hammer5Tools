@@ -53,6 +53,12 @@ AXIS_DISABLED_COLOR = np.array([0.42, 0.42, 0.42], dtype=np.float32)
 CENTER_COLOR = np.array([0.88, 0.88, 0.88], dtype=np.float32)
 CENTER_HIGHLIGHT_COLOR = np.array([1.0, 0.85, 0.2], dtype=np.float32)
 
+# Translate arrows are 1.5x longer than the base gizmo size.
+TRANSLATE_LENGTH_SCALE = 1.5
+# Size of the Scale-mode end cubes, as a fraction of the gizmo size (1.5x the
+# original 0.08).
+SCALE_CUBE_SIZE = 0.12
+
 # Map Source 2 axes directions to OpenGL space
 # S2 is Z-up: S2 X -> GL X [1, 0, 0], S2 Y -> GL -Z [0, 0, -1], S2 Z -> GL Y [0, 1, 0]
 AXIS_DIRECTIONS = {
@@ -274,8 +280,12 @@ class Gizmo:
             # rotates gl_pos itself and flings the gizmo far from the model — making
             # it impossible to click/drag.
             axis_rot = self._axis_rotation_matrix(axis_name)
+            # Translate handles are 1.5x longer than the others.  axis_rot aims
+            # local +Y at the axis, so stretching local Y lengthens the arrow
+            # along its axis without thickening it (X/Z stay at gizmo_scale).
+            length_factor = TRANSLATE_LENGTH_SCALE if self.mode == GizmoMode.TRANSLATE else 1.0
             model = (
-                scale_matrix(gizmo_scale, gizmo_scale, gizmo_scale)
+                scale_matrix(gizmo_scale, gizmo_scale * length_factor, gizmo_scale)
                 @ axis_rot
                 @ translation_matrix(*gl_pos)
             )
@@ -317,7 +327,7 @@ class Gizmo:
                 # then aims local +Y at the axis direction), rotate, then translate
                 # to the gizmo origin — placing it at the shaft tip.
                 end_model = (
-                    scale_matrix(gizmo_scale * 0.08, gizmo_scale * 0.08, gizmo_scale * 0.08)
+                    scale_matrix(SCALE_CUBE_SIZE * gizmo_scale, SCALE_CUBE_SIZE * gizmo_scale, SCALE_CUBE_SIZE * gizmo_scale)
                     @ translation_matrix(0.0, gizmo_scale, 0.0)
                     @ axis_rot
                     @ translation_matrix(*gl_pos)
@@ -370,13 +380,22 @@ class Gizmo:
         gl_pos = self._get_gl_position()
         dist = np.linalg.norm(camera_pos - gl_pos)
         gizmo_scale = max(dist * 0.06, 5.0)
-        threshold = gizmo_scale * 0.15  # Hit radius
+
+        # Rotate handles are rings perpendicular to their axis, so they need a
+        # ring/plane hit test — probing a straight axis line (as Translate/Scale
+        # do) would miss the ring everywhere it's actually drawn.
+        if self.mode == GizmoMode.ROTATE:
+            return self._hit_test_rings(ray_origin, ray_dir, gl_pos, gizmo_scale)
 
         # In Scale mode the center cube (uniform scale) wins near the origin —
         # tested first because the three axis shafts also start there.
         if self.mode == GizmoMode.SCALE and self.is_axis_available(GizmoAxis.CENTER):
             if self._ray_point_distance(ray_origin, ray_dir, gl_pos) < gizmo_scale * 0.16:
                 return GizmoAxis.CENTER
+
+        # Translate arrows are rendered 1.5x longer, so probe that far too.
+        axis_len = gizmo_scale * (TRANSLATE_LENGTH_SCALE if self.mode == GizmoMode.TRANSLATE else 1.0)
+        threshold = gizmo_scale * 0.15  # Hit radius
 
         best_axis = GizmoAxis.NONE
         best_dist = float('inf')
@@ -388,10 +407,41 @@ class Gizmo:
             axis_dir = AXIS_DIRECTIONS[axis_name]
             d = self._ray_line_distance(
                 ray_origin, ray_dir,
-                gl_pos, gl_pos + axis_dir * gizmo_scale
+                gl_pos, gl_pos + axis_dir * axis_len
             )
             if d < threshold and d < best_dist:
                 best_dist = d
+                best_axis = axis_name
+
+        return best_axis
+
+    def _hit_test_rings(self, ray_origin, ray_dir, gl_pos, gizmo_scale) -> str:
+        """Hit test the three rotation rings.
+
+        Each ring is the circle of radius ``gizmo_scale`` centred at ``gl_pos``
+        lying in the plane whose normal is the axis direction.  For each ring we
+        intersect the ray with that plane and measure how far the hit point is
+        from the ring circle; the closest ring within tolerance wins.
+        """
+        radius = gizmo_scale
+        tol = gizmo_scale * 0.18
+        best_axis = GizmoAxis.NONE
+        best_dist = float('inf')
+
+        for axis_name in [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]:
+            if not self.is_axis_available(axis_name):
+                continue
+            normal = AXIS_DIRECTIONS[axis_name]
+            denom = float(np.dot(ray_dir, normal))
+            if abs(denom) < 1e-6:
+                continue  # ray parallel to the ring's plane — skip (edge-on)
+            t = float(np.dot(gl_pos - ray_origin, normal)) / denom
+            if t <= 0.0:
+                continue  # plane is behind the camera
+            hit = ray_origin + ray_dir * t
+            ring_dist = abs(float(np.linalg.norm(hit - gl_pos)) - radius)
+            if ring_dist < tol and ring_dist < best_dist:
+                best_dist = ring_dist
                 best_axis = axis_name
 
         return best_axis
@@ -445,15 +495,23 @@ class Gizmo:
             axis_idx = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z].index(self.active_axis)
             new_pos[axis_idx] += gl_delta_val
             return {"position": new_pos.tolist()}
-
         elif self.mode == GizmoMode.ROTATE:
             # Rotate proportional to drag (1px = 0.5 degrees)
             angle = (dx - dy) * 0.5
             new_rot = self._drag_start_value.copy()
-            axis_idx = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z].index(self.active_axis)
-            new_rot[axis_idx] += angle
-            # Keep in [0, 360) range
-            new_rot[axis_idx] = new_rot[axis_idx] % 360.0
+            # Map GizmoAxis.X -> 2 (Roll), GizmoAxis.Y -> 0 (Pitch), GizmoAxis.Z -> 1 (Yaw)
+            axis_map = {
+                GizmoAxis.X: 2,
+                GizmoAxis.Y: 0,
+                GizmoAxis.Z: 1,
+            }
+            axis_idx = axis_map.get(self.active_axis)
+            if axis_idx is not None:
+                # Invert drag rotation for X and Y axes
+                drag_dir = -1.0 if self.active_axis in (GizmoAxis.X, GizmoAxis.Y) else 1.0
+                new_rot[axis_idx] += angle * drag_dir
+                # Keep in [0, 360) range
+                new_rot[axis_idx] = new_rot[axis_idx] % 360.0
             return {"rotation": new_rot.tolist()}
 
         elif self.mode == GizmoMode.SCALE:
