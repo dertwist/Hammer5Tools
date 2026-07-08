@@ -679,6 +679,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     info["rotation"] = actual_world_rot
                     info["scale"] = actual_world_scale
 
+                    # Update all descendant transforms immediately so they follow the group smoothly
+                    self._update_subtree_transforms(item, M_actual_world)
+
                     # Update gizmo position/rotation/scale from the refreshed cache
                     self.gizmo.set_transform(info["position"], info["rotation"], info["scale"])
 
@@ -1129,3 +1132,73 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 })
 
             self._traverse_tree(child, models_list, world_matrix)
+
+    def _update_subtree_transforms(self, item, parent_world_matrix):
+        """Recursively update the world transforms of all descendants in self._model_infos."""
+        parent_data = item.data(0, Qt.UserRole)
+        parent_data = dict(parent_data) if parent_data is not None else {}
+        parent_class = parent_data.get("_class", "")
+
+        child_indices = list(range(item.childCount()))
+
+        if parent_class == "CSmartPropElement_PickOne":
+            selection_mode = parent_data.get("m_SelectionMode", "RANDOM")
+            selected_idx = 0
+            if selection_mode == "SPECIFIC" or selection_mode == "SPECIFIC_CHILD":
+                specific_idx_val = parent_data.get("m_SpecificChildIndex", 0)
+                if isinstance(specific_idx_val, (int, float)):
+                    selected_idx = int(specific_idx_val)
+                elif isinstance(specific_idx_val, str):
+                    try:
+                        selected_idx = int(float(specific_idx_val))
+                    except ValueError:
+                        selected_idx = 0
+                elif isinstance(specific_idx_val, dict) and "m_Expression" in specific_idx_val:
+                    try:
+                        selected_idx = int(float(specific_idx_val["m_Expression"]))
+                    except:
+                        selected_idx = 0
+                else:
+                    selected_idx = 0
+            else:
+                selected_idx = 0
+
+            if item.childCount() > 0:
+                selected_idx = max(0, min(selected_idx, item.childCount() - 1))
+                child_indices = [selected_idx]
+            else:
+                child_indices = []
+
+        for idx in child_indices:
+            child = item.child(idx)
+            data = child.data(0, Qt.UserRole)
+            data = dict(data) if data is not None else {}
+
+            is_enabled = data.get("m_bEnabled", True)
+            if is_enabled is False or is_enabled == "false":
+                continue
+
+            local_pos, local_rot, local_scale = self._get_local_transform(data)
+
+            # Build local matrix
+            local_matrix = (
+                scale_matrix(*local_scale)
+                @ rotation_matrix_euler(*local_rot)
+                @ translation_matrix(*local_pos)
+            )
+
+            # Compose with parent
+            world_matrix = local_matrix @ parent_world_matrix
+
+            # Decompose to world TRS
+            world_pos, world_rot, world_scale = decompose_trs(world_matrix)
+
+            eid = data.get("m_nElementID", 0)
+            if eid > 0 and eid in self._model_infos:
+                info = self._model_infos[eid]
+                info["position"] = world_pos
+                info["rotation"] = world_rot
+                info["scale"] = world_scale
+                info["parent_world_matrix"] = parent_world_matrix
+
+            self._update_subtree_transforms(child, world_matrix)
