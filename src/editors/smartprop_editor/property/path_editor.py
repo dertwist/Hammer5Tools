@@ -43,25 +43,6 @@ class _PathEditorDialog(QDialog):
         vp_layout.setContentsMargins(0, 0, 0, 0)
         vp_layout.setSpacing(0)
 
-        # Viewport toolbar
-        vp_toolbar = QWidget()
-        vp_toolbar.setObjectName('vp_toolbar')
-        vp_toolbar.setStyleSheet("background-color: #2D2D2D;")
-        vpt_layout = QHBoxLayout(vp_toolbar)
-        vpt_layout.setContentsMargins(6, 3, 6, 3)
-
-        hint = QLabel("MMB: Orbit  |  Shift+MMB: Pan  |  Wheel: Zoom  |  W: Move  F: Frame")
-        hint.setStyleSheet("color: #9D9D9D; font: 8pt 'Segoe UI';")
-        vpt_layout.addWidget(hint)
-        vpt_layout.addStretch()
-
-        self.frame_btn = QPushButton("Frame")
-        self.frame_btn.setToolTip("Fit all points into view (F)")
-        self.frame_btn.clicked.connect(lambda: self.viewport.frame_objects())
-        vpt_layout.addWidget(self.frame_btn)
-
-        vp_layout.addWidget(vp_toolbar)
-
         self.viewport = PathEditor3DRenderArea(self._points)
         self.viewport.frame_objects()
         self.viewport.points_changed.connect(self._on_viewport_modified)
@@ -248,7 +229,6 @@ class PropertyPathEditor(QWidget):
         # Override specific generic elements to enhance the Path Editor appearance
         dialog.setStyleSheet("""
             QDialog { background-color: #1C1C1C; }
-            QWidget#vp_toolbar { background-color: #2D2D2D; border-bottom: 1px solid #363639; }
             QTableWidget { background-color: #151515; color: #E3E3E3; border: none; gridline-color: #2D2D30; }
             QHeaderView::section { background-color: #252526; color: #9D9D9D; border: none; padding: 0px; }
             QPushButton { background-color: #333333; color: #E3E3E3; border: 1px solid #555555; border-radius: 2px; padding: 4px 12px; }
