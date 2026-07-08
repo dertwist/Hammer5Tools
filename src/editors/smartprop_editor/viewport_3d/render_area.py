@@ -100,6 +100,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._grid_vbo = 0
         self._box_vao = 0
         self._box_vbo = 0
+        self._dot_vao = 0
+        self._dot_vbo = 0
 
     def initializeGL(self):
         from OpenGL import GL
@@ -160,6 +162,32 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glBindVertexArray(self._box_vao)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._box_vbo)
         GL.glBufferData(GL.GL_ARRAY_BUFFER, box_lines.nbytes, box_lines, GL.GL_STATIC_DRAW)
+        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
+        GL.glEnableVertexAttribArray(0)
+        GL.glBindVertexArray(0)
+
+        # Initialize Solid Dot Geometry for empty elements
+        h_dot = 0.5
+        dot_verts = np.array([
+            [-h_dot, -h_dot,  h_dot], [ h_dot, -h_dot,  h_dot], [ h_dot,  h_dot,  h_dot],
+            [-h_dot, -h_dot,  h_dot], [ h_dot,  h_dot,  h_dot], [-h_dot,  h_dot,  h_dot],
+            [-h_dot, -h_dot, -h_dot], [-h_dot,  h_dot, -h_dot], [ h_dot,  h_dot, -h_dot],
+            [-h_dot, -h_dot, -h_dot], [ h_dot,  h_dot, -h_dot], [ h_dot, -h_dot, -h_dot],
+            [-h_dot,  h_dot, -h_dot], [-h_dot,  h_dot,  h_dot], [ h_dot,  h_dot,  h_dot],
+            [-h_dot,  h_dot, -h_dot], [ h_dot,  h_dot,  h_dot], [ h_dot,  h_dot, -h_dot],
+            [-h_dot, -h_dot, -h_dot], [ h_dot, -h_dot, -h_dot], [ h_dot, -h_dot,  h_dot],
+            [-h_dot, -h_dot, -h_dot], [ h_dot, -h_dot,  h_dot], [-h_dot, -h_dot,  h_dot],
+            [ h_dot, -h_dot, -h_dot], [ h_dot,  h_dot, -h_dot], [ h_dot,  h_dot,  h_dot],
+            [ h_dot, -h_dot, -h_dot], [ h_dot,  h_dot,  h_dot], [ h_dot, -h_dot,  h_dot],
+            [-h_dot, -h_dot, -h_dot], [-h_dot, -h_dot,  h_dot], [-h_dot,  h_dot,  h_dot],
+            [-h_dot, -h_dot, -h_dot], [-h_dot,  h_dot,  h_dot], [-h_dot,  h_dot, -h_dot]
+        ], dtype=np.float32)
+
+        self._dot_vao = GL.glGenVertexArrays(1)
+        self._dot_vbo = GL.glGenBuffers(1)
+        GL.glBindVertexArray(self._dot_vao)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self._dot_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, dot_verts.nbytes, dot_verts, GL.GL_STATIC_DRAW)
         GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 12, GL.ctypes.c_void_p(0))
         GL.glEnableVertexAttribArray(0)
         GL.glBindVertexArray(0)
@@ -261,6 +289,47 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 @ translation_matrix(*pos)
                 @ SOURCE2_TO_GL
             )
+
+            is_dot = info.get("is_dot", False)
+            if is_dot:
+                if picking:
+                    r = (eid & 0xFF) / 255.0
+                    g = ((eid >> 8) & 0xFF) / 255.0
+                    b = ((eid >> 16) & 0xFF) / 255.0
+                    GL.glUniform3f(GL.glGetUniformLocation(self._picking_program, "uPickColor"), r, g, b)
+                    dot_size = 12.0
+                    dot_matrix = scale_matrix(dot_size, dot_size, dot_size) @ model_matrix
+                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._picking_program, "uModel"), 1, GL.GL_FALSE, dot_matrix)
+                    GL.glBindVertexArray(self._dot_vao)
+                    GL.glDrawArrays(GL.GL_TRIANGLES, 0, 36)
+                    GL.glBindVertexArray(0)
+                else:
+                    is_selected = (eid == self._selected_id)
+                    GL.glUseProgram(self._wireframe_program)
+                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uView"), 1, GL.GL_FALSE, view)
+                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uProjection"), 1, GL.GL_FALSE, proj)
+                    
+                    dot_size = 12.0
+                    dot_matrix = scale_matrix(dot_size, dot_size, dot_size) @ model_matrix
+                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uModel"), 1, GL.GL_FALSE, dot_matrix)
+                    
+                    # Color: orange/brown for groups, cyan for selected
+                    dot_color = np.array([0.0, 0.85, 0.85] if is_selected else [0.8, 0.4, 0.1], dtype=np.float32)
+                    GL.glUniform3fv(GL.glGetUniformLocation(self._wireframe_program, "uColor"), 1, dot_color)
+                    
+                    GL.glBindVertexArray(self._dot_vao)
+                    GL.glDrawArrays(GL.GL_TRIANGLES, 0, 36)
+                    
+                    if is_selected:
+                        highlight_size = 14.0
+                        highlight_matrix = scale_matrix(highlight_size, highlight_size, highlight_size) @ model_matrix
+                        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uModel"), 1, GL.GL_FALSE, highlight_matrix)
+                        GL.glBindVertexArray(self._box_vao)
+                        GL.glDrawArrays(GL.GL_LINES, 0, 24)
+                        
+                    GL.glBindVertexArray(0)
+                    GL.glUseProgram(self._model_program)
+                continue
 
             # Query GPU mesh
             gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
@@ -406,26 +475,31 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 @ translation_matrix(*pos)
                 @ SOURCE2_TO_GL
             )
-            gpu_mesh = self.mesh_cache.get_gpu_mesh(info.get("path", ""))
-
-            if gpu_mesh is not None:
-                # Transform the mesh's Source-space AABB corners into GL space.
-                lo, hi = gpu_mesh.bbox_min, gpu_mesh.bbox_max
-                corners = np.array([[x, y, z, 1.0]
-                                    for x in (lo[0], hi[0])
-                                    for y in (lo[1], hi[1])
-                                    for z in (lo[2], hi[2])], dtype=np.float32)
-                gl_corners = (corners @ model_matrix)[:, :3]
-                bbox_min = np.minimum(bbox_min, gl_corners.min(axis=0))
-                bbox_max = np.maximum(bbox_max, gl_corners.max(axis=0))
-            else:
-                # Mesh not loaded yet — frame the placeholder box at the origin.
-                # This is a direct column-vector point transform, so the conversion
-                # matrix must be transposed here (opposite of the GL_FALSE render
-                # chain above, which uses SOURCE2_TO_GL as-is).
+            is_dot = info.get("is_dot", False)
+            if is_dot:
                 gl_pos = (SOURCE2_TO_GL.T @ np.append(np.array(pos, dtype=np.float32), 1.0))[:3]
-                bbox_min = np.minimum(bbox_min, gl_pos - 50.0)
-                bbox_max = np.maximum(bbox_max, gl_pos + 50.0)
+                bbox_min = np.minimum(bbox_min, gl_pos - 10.0)
+                bbox_max = np.maximum(bbox_max, gl_pos + 10.0)
+            else:
+                gpu_mesh = self.mesh_cache.get_gpu_mesh(info.get("path", ""))
+                if gpu_mesh is not None:
+                    # Transform the mesh's Source-space AABB corners into GL space.
+                    lo, hi = gpu_mesh.bbox_min, gpu_mesh.bbox_max
+                    corners = np.array([[x, y, z, 1.0]
+                                        for x in (lo[0], hi[0])
+                                        for y in (lo[1], hi[1])
+                                        for z in (lo[2], hi[2])], dtype=np.float32)
+                    gl_corners = (corners @ model_matrix)[:, :3]
+                    bbox_min = np.minimum(bbox_min, gl_corners.min(axis=0))
+                    bbox_max = np.maximum(bbox_max, gl_corners.max(axis=0))
+                else:
+                    # Mesh not loaded yet — frame the placeholder box at the origin.
+                    # This is a direct column-vector point transform, so the conversion
+                    # matrix must be transposed here (opposite of the GL_FALSE render
+                    # chain above, which uses SOURCE2_TO_GL as-is).
+                    gl_pos = (SOURCE2_TO_GL.T @ np.append(np.array(pos, dtype=np.float32), 1.0))[:3]
+                    bbox_min = np.minimum(bbox_min, gl_pos - 50.0)
+                    bbox_max = np.maximum(bbox_max, gl_pos + 50.0)
             has_bounds = True
 
         if has_bounds:
@@ -951,17 +1025,16 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             new_scale = [accumulated_transform["scale"][i]    * local_scale[i] for i in range(3)]
             current_transform = {"position": new_pos, "rotation": new_rot, "scale": new_scale}
 
-            if model_path:
+            eid = data.get("m_nElementID", 0)
+            if eid > 0:
                 models_list.append({
-                    "id":       data.get("m_nElementID", 0),
+                    "id":       eid,
                     "path":     model_path,
                     "position": new_pos,
                     "rotation": new_rot,
                     "scale":    new_scale,
-                    # Raw element data — used to decide which gizmo axes are
-                    # available (literal vs variable/expression bound) and how
-                    # the element stores its scale.
                     "data":     data,
+                    "is_dot":   not bool(model_path)
                 })
 
             self._traverse_tree(child, models_list, current_transform)
