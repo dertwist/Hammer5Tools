@@ -10,6 +10,11 @@ class Var_class_float(QWidget):
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
         self.setAcceptDrops(True)
+        # Remove the digit limits baked into the generated UI: allow high
+        # precision and a very wide magnitude range on all spin boxes.
+        for _sb in (self.ui.value_doubleSpinBox, self.ui.min_doubleSpinBox, self.ui.max_doubleSpinBox):
+            _sb.setDecimals(15)
+            _sb.setRange(-1e18, 1e18)
         self.model = None
         if default == None:
             self.default = float(0)
