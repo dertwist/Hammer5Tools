@@ -1047,10 +1047,50 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if parent_world_matrix is None:
             parent_world_matrix = np.eye(4, dtype=np.float32)
 
-        for idx in range(item.childCount()):
+        # Get parent info to see if we should restrict child traversal (e.g. for PickOne)
+        parent_data = item.data(0, Qt.UserRole)
+        parent_data = dict(parent_data) if parent_data is not None else {}
+        parent_class = parent_data.get("_class", "")
+
+        child_indices = list(range(item.childCount()))
+
+        if parent_class == "CSmartPropElement_PickOne":
+            selection_mode = parent_data.get("m_SelectionMode", "RANDOM")
+            selected_idx = 0
+            if selection_mode == "SPECIFIC" or selection_mode == "SPECIFIC_CHILD":
+                specific_idx_val = parent_data.get("m_SpecificChildIndex", 0)
+                if isinstance(specific_idx_val, (int, float)):
+                    selected_idx = int(specific_idx_val)
+                elif isinstance(specific_idx_val, str):
+                    try:
+                        selected_idx = int(float(specific_idx_val))
+                    except ValueError:
+                        selected_idx = 0
+                elif isinstance(specific_idx_val, dict) and "m_Expression" in specific_idx_val:
+                    try:
+                        selected_idx = int(float(specific_idx_val["m_Expression"]))
+                    except:
+                        selected_idx = 0
+                else:
+                    selected_idx = 0
+            else:
+                selected_idx = 0
+
+            if item.childCount() > 0:
+                selected_idx = max(0, min(selected_idx, item.childCount() - 1))
+                child_indices = [selected_idx]
+            else:
+                child_indices = []
+
+        for idx in child_indices:
             child = item.child(idx)
             data = child.data(0, Qt.UserRole)
             data = dict(data) if data is not None else {}
+
+            # Don't display elements if they are disabled
+            is_enabled = data.get("m_bEnabled", True)
+            if is_enabled is False or is_enabled == "false":
+                continue
 
             local_pos, local_rot, local_scale = self._get_local_transform(data)
 
