@@ -51,9 +51,15 @@ AXIS_DIRECTIONS = {
 
 
 def project_to_screen(world_pos, view_matrix, proj_matrix, w, h):
-    """Project a 3D GL world space point to 2D screen coordinates."""
+    """Project a 3D GL world space point to 2D screen coordinates.
+
+    view_matrix / proj_matrix are row-vector style (pre-transposed for GL_FALSE
+    upload), so the correct clip position is the row-vector chain
+    ``pos @ view @ proj`` — not ``proj @ view @ pos``, which would transform by
+    the transposes and land the point in the wrong place.
+    """
     pos_h = np.append(world_pos, 1.0)
-    clip_pos = proj_matrix @ view_matrix @ pos_h
+    clip_pos = pos_h @ view_matrix @ proj_matrix
     if abs(clip_pos[3]) > 1e-6:
         ndc = clip_pos[:3] / clip_pos[3]
     else:
@@ -167,9 +173,14 @@ class Gizmo:
         self._initialized = True
 
     def _get_gl_position(self):
-        """Map S2 position to GL space."""
+        """Map S2 position to GL space.
+
+        SOURCE2_TO_GL is written pre-transposed for GL_FALSE render chains, so a
+        direct column-vector point transform must use its transpose to land on
+        the same GL location the models are drawn at.
+        """
         pos_h = np.append(self.position, 1.0)
-        gl_pos = SOURCE2_TO_GL @ pos_h
+        gl_pos = SOURCE2_TO_GL.T @ pos_h
         return gl_pos[:3]
 
     def render(self, shader_program, view_matrix, proj_matrix, camera_pos):
@@ -207,10 +218,18 @@ class Gizmo:
 
             color = AXIS_HIGHLIGHT_COLORS[axis_name] if (is_active or is_hover) else AXIS_COLORS[axis_name]
 
-            # Model matrix
-            model = translation_matrix(*gl_pos)
+            # Model matrix.  These builders are row-vector style and the matrix is
+            # uploaded with GL_FALSE, so the chain must be written scale-first /
+            # translate-last (same convention as the model render chain).  Writing
+            # it translate-first pushes the translation innermost, which scales and
+            # rotates gl_pos itself and flings the gizmo far from the model — making
+            # it impossible to click/drag.
             axis_rot = self._axis_rotation_matrix(axis_name)
-            model = model @ axis_rot @ scale_matrix(gizmo_scale, gizmo_scale, gizmo_scale)
+            model = (
+                scale_matrix(gizmo_scale, gizmo_scale, gizmo_scale)
+                @ axis_rot
+                @ translation_matrix(*gl_pos)
+            )
 
             GL.glUniformMatrix4fv(
                 GL.glGetUniformLocation(shader_program, "uModel"),
@@ -238,12 +257,16 @@ class Gizmo:
                 GL.glBindVertexArray(self._shaft_vao)
                 GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._shaft_vertex_count)
                 GL.glBindVertexArray(0)
-                # Cube at end
-                end_model = translation_matrix(*gl_pos) @ axis_rot
-                # Rotate maps +Y to axis direction, so offset is along local +Y (which points to axis direction)
-                end_offset = np.array([0.0, 1.0, 0.0], dtype=np.float32) * gizmo_scale
-                end_model = end_model @ translation_matrix(*end_offset)
-                end_model = end_model @ scale_matrix(gizmo_scale * 0.08, gizmo_scale * 0.08, gizmo_scale * 0.08)
+                # Cube at end.  Same scale-first / translate-last convention: shrink
+                # the unit cube, push it out along local +Y by gizmo_scale (axis_rot
+                # then aims local +Y at the axis direction), rotate, then translate
+                # to the gizmo origin — placing it at the shaft tip.
+                end_model = (
+                    scale_matrix(gizmo_scale * 0.08, gizmo_scale * 0.08, gizmo_scale * 0.08)
+                    @ translation_matrix(0.0, gizmo_scale, 0.0)
+                    @ axis_rot
+                    @ translation_matrix(*gl_pos)
+                )
                 GL.glUniformMatrix4fv(
                     GL.glGetUniformLocation(shader_program, "uModel"),
                     1, GL.GL_FALSE, end_model
@@ -450,9 +473,12 @@ class Gizmo:
             m[0, 0], m[0, 1] = 0.0, -1.0
             m[1, 0], m[1, 1] = 1.0, 0.0
         elif axis_name == GizmoAxis.Y:
-            # Rotate -90° around X to point +Y → -Z (S2 Y in GL space)
-            m[1, 1], m[1, 2] = 0.0, 1.0
-            m[2, 1], m[2, 2] = -1.0, 0.0
+            # Rotate +90° around X to point +Y → -Z (S2 Y in GL space), matching
+            # AXIS_DIRECTIONS[Y] = (0, 0, -1).  The opposite sign renders the Y
+            # handle on +Z while hit_test probes the -Z segment, so the visible
+            # handle can't be grabbed.
+            m[1, 1], m[1, 2] = 0.0, -1.0
+            m[2, 1], m[2, 2] = 1.0, 0.0
         elif axis_name == GizmoAxis.Z:
             # Already pointing +Y (S2 Z in GL space)
             pass

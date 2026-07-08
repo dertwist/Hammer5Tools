@@ -301,14 +301,15 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             # the effective order applied to a vertex is scale -> rotate -> translate
             # (all in Source Z-up space) -> SOURCE2_TO_GL (Source -> GL Y-up).
             #
-            # SOURCE2_TO_GL is defined column-vector style, so it must be transposed
-            # to join this row-vector chain — otherwise the coordinate conversion
-            # never reaches the translation and models land at the wrong position.
+            # SOURCE2_TO_GL is already written pre-transposed for exactly this
+            # GL_FALSE row-vector chain, so it is used as-is here (NOT .T).  Adding
+            # a .T flips Source Z-up to GL -Y, sinking models below the grid and
+            # mirroring the scene.
             model_matrix = (
                 scale_matrix(*scale)
                 @ rotation_matrix_euler(*rot)
                 @ translation_matrix(*pos)
-                @ SOURCE2_TO_GL.T
+                @ SOURCE2_TO_GL
             )
 
             # Query GPU mesh
@@ -453,7 +454,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 scale_matrix(*scale)
                 @ rotation_matrix_euler(*rot)
                 @ translation_matrix(*pos)
-                @ SOURCE2_TO_GL.T
+                @ SOURCE2_TO_GL
             )
             gpu_mesh = self.mesh_cache.get_gpu_mesh(info.get("path", ""))
 
@@ -469,7 +470,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 bbox_max = np.maximum(bbox_max, gl_corners.max(axis=0))
             else:
                 # Mesh not loaded yet — frame the placeholder box at the origin.
-                gl_pos = (SOURCE2_TO_GL @ np.append(np.array(pos, dtype=np.float32), 1.0))[:3]
+                # This is a direct column-vector point transform, so the conversion
+                # matrix must be transposed here (opposite of the GL_FALSE render
+                # chain above, which uses SOURCE2_TO_GL as-is).
+                gl_pos = (SOURCE2_TO_GL.T @ np.append(np.array(pos, dtype=np.float32), 1.0))[:3]
                 bbox_min = np.minimum(bbox_min, gl_pos - 50.0)
                 bbox_max = np.maximum(bbox_max, gl_pos + 50.0)
             has_bounds = True

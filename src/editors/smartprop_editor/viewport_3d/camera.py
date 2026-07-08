@@ -209,12 +209,19 @@ class Camera:
         ndc_x = (2.0 * sx / viewport_w) - 1.0
         ndc_y = 1.0 - (2.0 * sy / viewport_h)
 
-        # Inverse projection
+        # Inverse projection.
+        #
+        # projection_matrix / view_matrix are built row-vector style (pre-transposed
+        # so a GL_FALSE upload hands GL the correct column-major matrix).  To invert
+        # them for column-vector ray math (M @ v) here, we need the inverse of the
+        # *column-vector* form, i.e. inv(proj.T) == inv(proj).T (same for view).
+        # Omitting the .T yields a ray that misses the cursor by hundreds of units,
+        # which is why the transform gizmo could never be grabbed.
         proj = self.projection_matrix
         view = self.view_matrix
 
-        inv_proj = np.linalg.inv(proj)
-        inv_view = np.linalg.inv(view)
+        inv_proj = np.linalg.inv(proj).T
+        inv_view = np.linalg.inv(view).T
 
         # Clip space → view space
         clip = np.array([ndc_x, ndc_y, -1.0, 1.0], dtype=np.float32)

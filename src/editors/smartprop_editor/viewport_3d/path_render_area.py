@@ -194,7 +194,9 @@ class PathEditor3DRenderArea(QOpenGLWidget):
     def _to_gl(point):
         """Source 2 point -> GL world position (xyz)."""
         p = [float(point[i]) if i < len(point) else 0.0 for i in range(3)]
-        gl = SOURCE2_TO_GL @ np.array([p[0], p[1], p[2], 1.0], dtype=np.float32)
+        # Direct column-vector point transform -> use the transpose (SOURCE2_TO_GL
+        # is written pre-transposed for GL_FALSE render chains, not for this form).
+        gl = SOURCE2_TO_GL.T @ np.array([p[0], p[1], p[2], 1.0], dtype=np.float32)
         return gl[:3]
 
     def _sphere_radius(self):
@@ -342,7 +344,8 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._line_program, "uView"), 1, GL.GL_FALSE, view)
         GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._line_program, "uProjection"), 1, GL.GL_FALSE, proj)
         # Curve verts are Source 2 coords; uModel converts them to GL space.
-        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._line_program, "uModel"), 1, GL.GL_FALSE, SOURCE2_TO_GL.T)
+        # SOURCE2_TO_GL is used as-is (NOT .T) for GL_FALSE upload — see render_area.
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._line_program, "uModel"), 1, GL.GL_FALSE, SOURCE2_TO_GL)
         GL.glUniform3fv(GL.glGetUniformLocation(self._line_program, "uColor"), 1,
                         np.array([0.95, 0.6, 0.2], dtype=np.float32))
         try:
@@ -360,7 +363,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         return (
             scale_matrix(radius, radius, radius)
             @ translation_matrix(p[0], p[1], p[2])
-            @ SOURCE2_TO_GL.T
+            @ SOURCE2_TO_GL
         )
 
     def _draw_spheres(self, view, proj, cam_pos, picking=False):
