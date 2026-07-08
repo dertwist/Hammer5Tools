@@ -675,13 +675,55 @@ class HierarchyItemModel(QTreeWidgetItem):
             else:
                 self.seticon_generic()
 
+    def _get_gray_icon(self, icon):
+        if getattr(self, "_last_normal_icon", None) == icon:
+            return self._last_gray_icon
+
+        from PySide6.QtGui import QPixmap, QImage, QColor, QIcon
+        from PySide6.QtCore import QSize
+        sizes = icon.availableSizes()
+        size = sizes[0] if sizes else QSize(16, 16)
+        pixmap = icon.pixmap(size)
+        if pixmap.isNull():
+            return icon
+        image = pixmap.toImage()
+        for y in range(image.height()):
+            for x in range(image.width()):
+                color = image.pixelColor(x, y)
+                if color.alpha() > 0:
+                    gray = int(0.299 * color.red() + 0.587 * color.green() + 0.114 * color.blue())
+                    color.setRgb(gray, gray, gray, color.alpha())
+                    image.setPixelColor(x, y, color)
+        gray_icon = QIcon(QPixmap.fromImage(image))
+        self._last_normal_icon = icon
+        self._last_gray_icon = gray_icon
+        return gray_icon
+
     def data(self, column, role):
         # Provide data from UserRole for column 0
         if column == 0 and role == Qt.UserRole:
             return super().data(0, Qt.UserRole)
 
-        if role == Qt.ForegroundRole and column in self.custom_colors:
-            return self.custom_colors[column]
+        # Check if enabled
+        item_data = super().data(0, Qt.UserRole)
+        is_enabled = True
+        if isinstance(item_data, dict):
+            val = item_data.get("m_bEnabled")
+            if val is False or val == "false":
+                is_enabled = False
+
+        if role == Qt.ForegroundRole:
+            if not is_enabled:
+                return QColor("#6B6B6B")  # Dim gray for disabled elements
+            if column in self.custom_colors:
+                return self.custom_colors[column]
+
+        if role == Qt.DecorationRole and column == 0:
+            normal_icon = super().data(0, Qt.DecorationRole)
+            if not is_enabled and normal_icon is not None:
+                return self._get_gray_icon(normal_icon)
+            return normal_icon
+
         if role == Qt.BackgroundRole and column in self.background_colors:
             return self.background_colors[column]
         if role == Qt.FontRole and column == 0:
