@@ -333,20 +333,33 @@ class Gizmo:
         dist = np.linalg.norm(camera_pos - gl_pos)
         gizmo_scale = max(dist * 0.06, 5.0)
 
-        # Build space rotation matrix
+        # Build the space-orientation matrix that carries the gizmo handles from
+        # World orientation into the active coordinate space.
+        #
+        # Each handle is first aimed by ``axis_rot`` at its *World* GL direction
+        # (X -> +X, Y -> -Z, Z -> +Y — i.e. the rows of SOURCE2_TO_GL), NOT the
+        # GL standard basis.  R_space must therefore map those World directions
+        # onto the per-space GL directions returned by ``get_axis_direction`` so
+        # every handle is rendered exactly where ``hit_test`` probes for it.
+        #
+        # With W = SOURCE2_TO_GL's 3x3 (rows = the World axis directions) and T
+        # the target frame (rows = this space's GL axis dirs), the row-vector
+        # requirement ``W @ R_space == T`` solves to ``R_space = W^-1 @ T``,
+        # which is ``W.T @ T`` because W is orthonormal.
+        #
+        # The previous code filled R_space's rows straight from the space basis
+        # (gl_x/gl_y/gl_z), ignoring axis_rot's Y->-Z / Z->+Y remap.  That drew
+        # the Local/Screen Y and Z handles along the wrong directions, so they
+        # rendered away from where hit_test looked and could never be grabbed.
         R_space = np.eye(4, dtype=np.float32)
-        if self.coordinate_space == "Local":
-            R = rotation_matrix_euler(*self.rotation)
-            gl_x = (SOURCE2_TO_GL.T @ np.append(R[0, :3], 0.0))[:3]
-            gl_y = (SOURCE2_TO_GL.T @ np.append(R[1, :3], 0.0))[:3]
-            gl_z = (SOURCE2_TO_GL.T @ np.append(R[2, :3], 0.0))[:3]
-            R_space[0, :3] = _normalize(gl_x)
-            R_space[1, :3] = _normalize(gl_y)
-            R_space[2, :3] = _normalize(gl_z)
-        elif self.coordinate_space == "Screen":
-            R_space[0, :3] = _normalize(self.camera_right)
-            R_space[1, :3] = _normalize(self.camera_up)
-            R_space[2, :3] = _normalize(self.camera_forward)
+        if self.coordinate_space in ("Local", "Screen"):
+            T = np.array([
+                self.get_axis_direction(GizmoAxis.X),
+                self.get_axis_direction(GizmoAxis.Y),
+                self.get_axis_direction(GizmoAxis.Z),
+            ], dtype=np.float32)
+            W = SOURCE2_TO_GL[:3, :3]
+            R_space[:3, :3] = W.T @ T
 
         for axis_name in [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]:
             available = self.is_axis_available(axis_name)
@@ -623,16 +636,23 @@ class Gizmo:
             if self.snapping_enabled and self.rotation_step > 0.0:
                 total_angle_deg = round(total_angle_deg / self.rotation_step) * self.rotation_step
 
-            # Build rotation delta in Source 2 space
+            # Build rotation delta in Source 2 space.  ``get_s2_axis_direction``
+            # returns the drag axis already expressed in *world* S2 coordinates
+            # for every space (Local -> the object's local axis rotated into
+            # world; Screen -> the camera axis in world; World -> the world
+            # axis), so R_delta is a world-frame rotation in all three cases.
             s2_axis_dir = self.get_s2_axis_direction(self.active_axis)
             R_delta = rotation_matrix_axis_angle(s2_axis_dir, total_angle_deg)
 
-            # Composition
+            # Composition.  In this row-vector chain a world-frame rotation is
+            # applied *after* the object's current orientation, i.e. the delta
+            # is projected onto the existing transform as ``R_start @ R_delta``.
+            # This holds for World and Screen too — the earlier
+            # ``R_delta @ R_start`` branch rotated about the axis in the
+            # object's local frame, so World/Screen rotations drifted off the
+            # picked axis as soon as the object already carried a rotation.
             R_start = rotation_matrix_euler(*self._drag_start_value)
-            if self.coordinate_space == "Local":
-                R_new = R_start @ R_delta
-            else:
-                R_new = R_delta @ R_start
+            R_new = R_start @ R_delta
 
             # Decompose back to Euler
             _, new_rot, _ = decompose_trs(R_new)
