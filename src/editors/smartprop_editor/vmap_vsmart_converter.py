@@ -42,7 +42,9 @@ def format_imported_vector(vector):
             decimals = 4
         return [round(float(x), decimals) for x in vector]
     else:
-        return [{"m_Expression": str(x)} for x in vector]
+        # Emit raw float values so they load into the float fields (full
+        # precision preserved) instead of the expression field.
+        return [float(x) for x in vector]
 
 
 def scan_vmap_for_props(vmap_path: str) -> List[Dict[str, Any]]:
@@ -370,7 +372,7 @@ def convert_vmap_props_to_vsmart(
                             decimals = 4
                         s_val = round(rel_scale[0], decimals)
                     else:
-                        s_val = {"m_Expression": str(rel_scale[0])}
+                        s_val = float(rel_scale[0])
                     modifiers.append({
                         "_class": "CSmartPropOperation_Scale",
                         "m_flScale": s_val
@@ -404,7 +406,7 @@ def convert_vmap_props_to_vsmart(
                                 decimals = 4
                             s_val = round(rel_scale[0], decimals)
                         else:
-                            s_val = {"m_Expression": str(rel_scale[0])}
+                            s_val = float(rel_scale[0])
                         smartprop_element["m_flUniformScale"] = s_val
                     else:
                         modifiers.append({

@@ -257,6 +257,7 @@ class MeshCache(QObject):
         self._cpu_cache: Dict[str, MeshData] = {}
         self._gpu_cache: Dict[str, GPUMesh] = {}
         self._pending_upload: Dict[str, MeshData] = {}    # Waiting for GL context
+        self._pending_unload: Dict[str, GPUMesh] = {}     # Waiting to be freed in GL context
         self._loading: set = set()                         # Currently decompiling
         self._failed: set = set()                          # Failed decompilations
         self._thread_pool = QThreadPool()
@@ -354,6 +355,61 @@ class MeshCache(QObject):
                 self._failed.add(resource_path)
             finally:
                 del self._pending_upload[resource_path]
+
+    def prune(self, referenced_paths):
+        """
+        Drop every cached model not in ``referenced_paths`` so the cache mirrors
+        what the hierarchy still uses.  GPU handles can't be freed here (this is
+        called from the tree-edit path, outside a GL context), so they are queued
+        in ``_pending_unload`` and released by ``release_unloaded`` on the next
+        paint.  CPU/pending/failed entries — cheap Python objects — are dropped
+        immediately so a later re-add reloads the model cleanly.
+        """
+        referenced = set(referenced_paths)
+
+        # Rescue any mesh that was queued for unload but is referenced again
+        # (rapid remove -> re-add within the debounce window) so it isn't freed
+        # and needlessly reloaded.
+        for path in list(self._pending_unload.keys()):
+            if path in referenced:
+                self._gpu_cache[path] = self._pending_unload.pop(path)
+
+        for path in list(self._gpu_cache.keys()):
+            if path not in referenced:
+                self._pending_unload[path] = self._gpu_cache.pop(path)
+
+        for path in list(self._pending_upload.keys()):
+            if path not in referenced:
+                del self._pending_upload[path]
+
+        for path in list(self._cpu_cache.keys()):
+            if path not in referenced:
+                del self._cpu_cache[path]
+
+        self._failed.difference_update(
+            {path for path in self._failed if path not in referenced}
+        )
+
+    def release_unloaded(self):
+        """
+        Free GPU resources queued by ``prune``. MUST be called from within a valid
+        GL context (e.g. inside paintGL).
+        """
+        if not self._pending_unload:
+            return
+
+        from OpenGL import GL
+
+        for path, gpu_mesh in list(self._pending_unload.items()):
+            try:
+                GL.glDeleteVertexArrays(1, [gpu_mesh.vao])
+                GL.glDeleteBuffers(2, [gpu_mesh.vbo, gpu_mesh.ebo])
+                if gpu_mesh.texture_id:
+                    GL.glDeleteTextures(1, [gpu_mesh.texture_id])
+            except Exception as e:
+                print(f"[MeshCache] GPU unload failed for {path}: {e}")
+            finally:
+                del self._pending_unload[path]
 
     def _upload_mesh(self, mesh_data: MeshData) -> GPUMesh:
         """Upload a MeshData to GPU buffers. Must be called in GL context."""
@@ -458,8 +514,18 @@ class MeshCache(QObject):
             except Exception:
                 pass
 
+        for gpu_mesh in self._pending_unload.values():
+            try:
+                GL.glDeleteVertexArrays(1, [gpu_mesh.vao])
+                GL.glDeleteBuffers(2, [gpu_mesh.vbo, gpu_mesh.ebo])
+                if gpu_mesh.texture_id:
+                    GL.glDeleteTextures(1, [gpu_mesh.texture_id])
+            except Exception:
+                pass
+
         self._gpu_cache.clear()
         self._cpu_cache.clear()
         self._pending_upload.clear()
+        self._pending_unload.clear()
         self._loading.clear()
         self._failed.clear()

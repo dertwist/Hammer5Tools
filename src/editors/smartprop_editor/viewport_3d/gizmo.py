@@ -26,6 +26,7 @@ class GizmoAxis:
     X = "x"
     Y = "y"
     Z = "z"
+    CENTER = "center"   # uniform-scale handle at the axes' origin (Scale mode only)
 
 
 # Axis colors (Red for X, Green for Y, Blue for Z)
@@ -40,6 +41,17 @@ AXIS_HIGHLIGHT_COLORS = {
     GizmoAxis.Y: np.array([0.6, 1.0, 0.2], dtype=np.float32),
     GizmoAxis.Z: np.array([0.2, 0.6, 1.0], dtype=np.float32),
 }
+
+# Grayscale color for an axis the gizmo cannot manipulate on the current
+# object — i.e. the value is bound to a variable/expression, or the transform
+# channel does not exist and can't be created (e.g. scale on an element with no
+# model scale).  Such axes render dim/gray and ignore hover + clicks.
+AXIS_DISABLED_COLOR = np.array([0.42, 0.42, 0.42], dtype=np.float32)
+
+# Uniform-scale center handle (the small cube where the three scale axes meet).
+# Dragging it scales every axis together.  Neutral by default, yellow on hover.
+CENTER_COLOR = np.array([0.88, 0.88, 0.88], dtype=np.float32)
+CENTER_HIGHLIGHT_COLOR = np.array([1.0, 0.85, 0.2], dtype=np.float32)
 
 # Map Source 2 axes directions to OpenGL space
 # S2 is Z-up: S2 X -> GL X [1, 0, 0], S2 Y -> GL -Z [0, 0, -1], S2 Z -> GL Y [0, 1, 0]
@@ -87,6 +99,17 @@ class Gizmo:
         self._drag_start_pos = None
         self._drag_start_value = None
 
+        # Per-mode, per-axis availability.  An axis is unavailable (rendered
+        # gray and non-interactive) when its value is bound to a variable or
+        # expression, or when the transform channel can't be manipulated for the
+        # selected element.  Defaults to fully available.
+        self.axis_availability = {
+            GizmoMode.TRANSLATE: {GizmoAxis.X: True, GizmoAxis.Y: True, GizmoAxis.Z: True},
+            GizmoMode.ROTATE:    {GizmoAxis.X: True, GizmoAxis.Y: True, GizmoAxis.Z: True},
+            # Scale also has a CENTER handle for uniform (all-axis) scaling.
+            GizmoMode.SCALE:     {GizmoAxis.X: True, GizmoAxis.Y: True, GizmoAxis.Z: True, GizmoAxis.CENTER: True},
+        }
+
         # GPU resources
         self._arrow_vao = 0
         self._arrow_vbo = 0
@@ -115,6 +138,25 @@ class Gizmo:
         self.visible = False
         self.active_axis = GizmoAxis.NONE
         self.hover_axis = GizmoAxis.NONE
+
+    def set_axis_availability(self, availability: dict):
+        """Update which axes can be manipulated.
+
+        ``availability`` is keyed by :class:`GizmoMode` then :class:`GizmoAxis`,
+        e.g. ``{GizmoMode.TRANSLATE: {"x": True, "y": False, "z": True}}``.
+        Modes/axes not present keep their current value.
+        """
+        for mode, axes in availability.items():
+            if mode in self.axis_availability and isinstance(axes, dict):
+                for axis, enabled in axes.items():
+                    if axis in self.axis_availability[mode]:
+                        self.axis_availability[mode][axis] = bool(enabled)
+
+    def is_axis_available(self, axis_name: str, mode: Optional[GizmoMode] = None) -> bool:
+        """Return whether the given axis can be dragged in the given mode
+        (defaults to the current mode)."""
+        m = self.mode if mode is None else mode
+        return self.axis_availability.get(m, {}).get(axis_name, True)
 
     def init_geometry(self):
         """Create GPU geometry for gizmo handles. Must be called in GL context."""
@@ -213,10 +255,17 @@ class Gizmo:
         gizmo_scale = max(dist * 0.06, 5.0)
 
         for axis_name in [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]:
-            is_active = (axis_name == self.active_axis)
-            is_hover = (axis_name == self.hover_axis and not self._dragging)
+            available = self.is_axis_available(axis_name)
+            is_active = available and (axis_name == self.active_axis)
+            is_hover = available and (axis_name == self.hover_axis and not self._dragging)
 
-            color = AXIS_HIGHLIGHT_COLORS[axis_name] if (is_active or is_hover) else AXIS_COLORS[axis_name]
+            if not available:
+                # Grayscale = this axis can't be manipulated on this object.
+                color = AXIS_DISABLED_COLOR
+            elif is_active or is_hover:
+                color = AXIS_HIGHLIGHT_COLORS[axis_name]
+            else:
+                color = AXIS_COLORS[axis_name]
 
             # Model matrix.  These builders are row-vector style and the matrix is
             # uploaded with GL_FALSE, so the chain must be written scale-first /
@@ -239,9 +288,15 @@ class Gizmo:
                 GL.glGetUniformLocation(shader_program, "uColor"),
                 1, color
             )
+            if not available:
+                alpha = 0.3
+            elif is_active or is_hover:
+                alpha = 1.0
+            else:
+                alpha = 0.85
             GL.glUniform1f(
                 GL.glGetUniformLocation(shader_program, "uAlpha"),
-                1.0 if (is_active or is_hover) else 0.85
+                alpha
             )
 
             if self.mode == GizmoMode.TRANSLATE:
@@ -275,6 +330,36 @@ class Gizmo:
                 GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._cube_vertex_count)
                 GL.glBindVertexArray(0)
 
+        # Uniform-scale center cube at the origin (Scale mode only).  Drawn once,
+        # after the axes, so it sits on top where the three shafts meet.
+        if self.mode == GizmoMode.SCALE:
+            center_available = self.is_axis_available(GizmoAxis.CENTER)
+            c_active = center_available and (self.active_axis == GizmoAxis.CENTER)
+            c_hover = center_available and (self.hover_axis == GizmoAxis.CENTER and not self._dragging)
+
+            if not center_available:
+                c_color = AXIS_DISABLED_COLOR
+                c_alpha = 0.3
+            elif c_active or c_hover:
+                c_color = CENTER_HIGHLIGHT_COLOR
+                c_alpha = 1.0
+            else:
+                c_color = CENTER_COLOR
+                c_alpha = 0.9
+
+            center_model = (
+                scale_matrix(gizmo_scale * 0.13, gizmo_scale * 0.13, gizmo_scale * 0.13)
+                @ translation_matrix(*gl_pos)
+            )
+            GL.glUniformMatrix4fv(
+                GL.glGetUniformLocation(shader_program, "uModel"), 1, GL.GL_FALSE, center_model
+            )
+            GL.glUniform3fv(GL.glGetUniformLocation(shader_program, "uColor"), 1, c_color)
+            GL.glUniform1f(GL.glGetUniformLocation(shader_program, "uAlpha"), c_alpha)
+            GL.glBindVertexArray(self._cube_vao)
+            GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._cube_vertex_count)
+            GL.glBindVertexArray(0)
+
         GL.glEnable(GL.GL_DEPTH_TEST)
 
     def hit_test(self, ray_origin, ray_dir, camera_pos) -> str:
@@ -287,10 +372,19 @@ class Gizmo:
         gizmo_scale = max(dist * 0.06, 5.0)
         threshold = gizmo_scale * 0.15  # Hit radius
 
+        # In Scale mode the center cube (uniform scale) wins near the origin —
+        # tested first because the three axis shafts also start there.
+        if self.mode == GizmoMode.SCALE and self.is_axis_available(GizmoAxis.CENTER):
+            if self._ray_point_distance(ray_origin, ray_dir, gl_pos) < gizmo_scale * 0.16:
+                return GizmoAxis.CENTER
+
         best_axis = GizmoAxis.NONE
         best_dist = float('inf')
 
         for axis_name in [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]:
+            # Unavailable (grayed) axes are inert — they can't be hovered or grabbed.
+            if not self.is_axis_available(axis_name):
+                continue
             axis_dir = AXIS_DIRECTIONS[axis_name]
             d = self._ray_line_distance(
                 ray_origin, ray_dir,
@@ -304,6 +398,9 @@ class Gizmo:
 
     def begin_drag(self, axis: str, screen_pos: Tuple[float, float]):
         """Start dragging the gizmo along an axis."""
+        # Defensive: never start a drag on a grayed-out (unavailable) axis.
+        if axis == GizmoAxis.NONE or not self.is_axis_available(axis):
+            return
         self.active_axis = axis
         self._dragging = True
         self._drag_start_pos = screen_pos
@@ -364,8 +461,13 @@ class Gizmo:
             factor = 1.0 + (dx - dy) * 0.005
             factor = max(0.01, factor)
             new_scale = self._drag_start_value.copy()
-            axis_idx = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z].index(self.active_axis)
-            new_scale[axis_idx] *= factor
+            if self.active_axis == GizmoAxis.CENTER:
+                # Uniform: multiply every axis by the same factor (preserving any
+                # non-uniform ratio the object already has).
+                new_scale = new_scale * factor
+            else:
+                axis_idx = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z].index(self.active_axis)
+                new_scale[axis_idx] *= factor
             return {"scale": new_scale.tolist()}
 
         return None
@@ -483,6 +585,16 @@ class Gizmo:
             # Already pointing +Y (S2 Z in GL space)
             pass
         return m
+
+    @staticmethod
+    def _ray_point_distance(ray_origin, ray_dir, point) -> float:
+        """Closest distance between a ray and a point (for the center handle)."""
+        denom = float(np.dot(ray_dir, ray_dir))
+        if denom < 1e-10:
+            return float('inf')
+        t = max(0.0, float(np.dot(point - ray_origin, ray_dir)) / denom)
+        closest = ray_origin + ray_dir * t
+        return float(np.linalg.norm(closest - point))
 
     @staticmethod
     def _ray_line_distance(ray_origin, ray_dir, line_start, line_end) -> float:
