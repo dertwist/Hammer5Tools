@@ -15,11 +15,30 @@ from PySide6.QtGui import QPainter, QPen, QColor, QDoubleValidator, QKeyEvent
 from PySide6.QtCore import Qt, QRect, QEvent, Signal, QLocale, QTimer
 import math
 
+# QSlider positions are 32-bit ints; clamp derived slider ranges/positions to
+# this so large user-entered values never overflow (the widget's stored float
+# value keeps full precision regardless of the slider position).
+_INT32_MAX = 2147483647
+_INT32_MIN = -2147483648
+
+
+def _clamp_int32(value):
+    return max(_INT32_MIN, min(_INT32_MAX, int(value)))
+
 
 def _make_double_validator(bottom, top, decimals, parent=None):
     """Create a QDoubleValidator that always uses '.' as decimal separator
-    and never produces scientific notation, regardless of system locale."""
-    v = QDoubleValidator(bottom, top, decimals, parent)
+    and never produces scientific notation, regardless of system locale.
+
+    Pass decimals < 0 (or None) to remove the fractional-digit limit entirely,
+    so values like 3.43543453453534 are accepted verbatim."""
+    v = QDoubleValidator(parent)
+    v.setRange(bottom, top)
+    if decimals is not None and decimals >= 0:
+        v.setDecimals(decimals)
+    else:
+        # No practical limit on fractional digits.
+        v.setDecimals(1000)
     v.setLocale(QLocale.c())
     v.setNotation(QDoubleValidator.StandardNotation)
     return v
@@ -73,7 +92,7 @@ class FloatWidget(QWidget):
     slider_pressed = Signal()   # emitted once when the user begins dragging the slider
     committed = Signal()        # emitted once when the user releases the slider (one undo entry)
 
-    def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0, only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True, vertical: bool = False, digits: int = 3, value_step: float = 1, slider_scale: int = 5):
+    def __init__(self, int_output: bool = False, slider_range: list = [0, 0], value: float = 0.0, only_positive: bool = False, lock_range: bool = False, spacer_enable: bool = True, vertical: bool = False, digits: int = -1, value_step: float = 1, slider_scale: int = 5):
         """Float widget is a widget with a spin box and a slider that are synchronized.
            The widget returns a float value (or a rounded integer if int_output is True).
            If lock_range is enabled and slider_range is provided (non [0,0]), the user cannot
@@ -100,7 +119,7 @@ class FloatWidget(QWidget):
         # Editline setup (replacing QDoubleSpinBox)
         self.SpinBox = _NumericLineEdit()
         self.SpinBox.setMaximumWidth(64)
-        self.SpinBox.setValidator(_make_double_validator(-99999999 if not self.only_positive else 0, 99999999, digits, self))
+        self.SpinBox.setValidator(_make_double_validator(0 if self.only_positive else -1e18, 1e18, digits, self))
         self.SpinBox.setText(str(value))
         self.SpinBox.editingFinished.connect(self._on_editing_finished)
         self.SpinBox.textChanged.connect(self._on_spinbox_text_changed)
@@ -120,14 +139,14 @@ class FloatWidget(QWidget):
                 value_current = float(text_current)
             except ValueError:
                 value_current = 0.0
-            self.Slider.setMaximum(int(abs(value_current) * self.slider_scale * 100 + 1000))
+            self.Slider.setMaximum(_clamp_int32(abs(value_current) * self.slider_scale * 100 + 1000))
             if self.only_positive:
                 self.Slider.setMinimum(0)
             else:
-                self.Slider.setMinimum(int(-abs(value_current) * self.slider_scale * 100 - 1000))
+                self.Slider.setMinimum(_clamp_int32(-abs(value_current) * self.slider_scale * 100 - 1000))
         else:
-            self.Slider.setMinimum(int(self.slider_range[0] * 100))
-            self.Slider.setMaximum(int(self.slider_range[1] * 100))
+            self.Slider.setMinimum(_clamp_int32(self.slider_range[0] * 100))
+            self.Slider.setMaximum(_clamp_int32(self.slider_range[1] * 100))
         # pre_press fires from mousePressEvent BEFORE valueChanged — guarantees
         # the undo snapshot is captured before the first value change.
         self.Slider.pre_press.connect(self._on_slider_pressed)
@@ -202,11 +221,11 @@ class FloatWidget(QWidget):
                 if self.only_positive:
                     self.Slider.setMinimum(0)
                 else:
-                    self.Slider.setMinimum(int(-abs(value) * self.slider_scale * 100 - 1000))
-                self.Slider.setMaximum(int(abs(value) * self.slider_scale * 100 + 1000))
+                    self.Slider.setMinimum(_clamp_int32(-abs(value) * self.slider_scale * 100 - 1000))
+                self.Slider.setMaximum(_clamp_int32(abs(value) * self.slider_scale * 100 + 1000))
         # Block slider signals to avoid double-emit when syncing slider to spinbox
         self.Slider.blockSignals(True)
-        self.Slider.setValue(int(value * 100))
+        self.Slider.setValue(_clamp_int32(value * 100))
         self.Slider.blockSignals(False)
         self.value = value
 
