@@ -11,7 +11,7 @@ from PySide6.QtGui import QColor, QMouseEvent
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication
 
-from src.editors.smartprop_editor.viewport_3d.camera import Camera, SOURCE2_TO_GL, translation_matrix, rotation_matrix_euler, scale_matrix
+from src.editors.smartprop_editor.viewport_3d.camera import Camera, SOURCE2_TO_GL, translation_matrix, rotation_matrix_euler, scale_matrix, decompose_trs
 from src.editors.smartprop_editor.viewport_3d.gizmo import Gizmo, GizmoMode, GizmoAxis
 from src.editors.smartprop_editor.viewport_3d.mesh_cache import MeshCache
 from src.editors.smartprop_editor.viewport_3d.shaders import (
@@ -625,26 +625,59 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     axis_idx = self._active_axis_index()
                     is_center = self.gizmo.active_axis == GizmoAxis.CENTER
                     info = self._model_infos[self._selected_id]
+                    parent_world_matrix = info.get("parent_world_matrix", np.eye(4, dtype=np.float32))
 
-                    if axis_idx is not None and "position" in delta:
+                    # 1. Build the updated world matrix based on the delta
+                    world_pos = delta.get("position", info.get("position", [0.0, 0.0, 0.0]))
+                    world_rot = delta.get("rotation", info.get("rotation", [0.0, 0.0, 0.0]))
+                    world_scale = delta.get("scale", info.get("scale", [1.0, 1.0, 1.0]))
+
+                    M_new_world = (
+                        scale_matrix(*world_scale)
+                        @ rotation_matrix_euler(*world_rot)
+                        @ translation_matrix(*world_pos)
+                    )
+
+                    # 2. Convert to local space
+                    M_parent_inv = np.linalg.inv(parent_world_matrix)
+                    M_new_local = M_new_world @ M_parent_inv
+
+                    # 3. Decompose to get target local values
+                    target_local_pos, target_local_rot, target_local_scale = decompose_trs(M_new_local)
+
+                    # 4. Apply to modifiers
+                    if "position" in delta:
                         mod = self._find_or_create_modifier(data, "CSmartPropOperation_Translate", "m_vPosition")
-                        self._set_vector_component(mod, "m_vPosition", axis_idx, delta["position"][axis_idx], delta["position"])
-                        info["position"] = delta["position"]
+                        avail = self._vector_axis_availability(mod.get("m_vPosition"))
+                        axes = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]
+                        for i, axis in enumerate(axes):
+                            if avail.get(axis, True):
+                                self._set_vector_component(mod, "m_vPosition", i, target_local_pos[i], target_local_pos)
                     elif "rotation" in delta:
-                        rot_axis_idx = {
-                            GizmoAxis.X: 2,
-                            GizmoAxis.Y: 0,
-                            GizmoAxis.Z: 1,
-                        }.get(self.gizmo.active_axis)
-                        if rot_axis_idx is not None:
-                            mod = self._find_or_create_modifier(data, "CSmartPropOperation_Rotate", "m_vRotation")
-                            self._set_vector_component(mod, "m_vRotation", rot_axis_idx, delta["rotation"][rot_axis_idx], delta["rotation"])
-                            info["rotation"] = delta["rotation"]
+                        mod = self._find_or_create_modifier(data, "CSmartPropOperation_Rotate", "m_vRotation")
+                        avail = self._vector_axis_availability(mod.get("m_vRotation"))
+                        axes = [GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z]
+                        for i, axis in enumerate(axes):
+                            if avail.get(axis, True):
+                                self._set_vector_component(mod, "m_vRotation", i, target_local_rot[i], target_local_rot)
                     elif "scale" in delta and (axis_idx is not None or is_center):
-                        new_scale = self._apply_scale_delta(data, axis_idx, delta["scale"], uniform=is_center)
-                        info["scale"] = new_scale
+                        self._apply_scale_delta(data, axis_idx, target_local_scale, uniform=is_center)
 
                     item.setData(0, Qt.UserRole, data)
+
+                    # 5. Reconstruct the actual world transform from what was written
+                    actual_local_pos, actual_local_rot, actual_local_scale = self._get_local_transform(data)
+                    M_actual_local = (
+                        scale_matrix(*actual_local_scale)
+                        @ rotation_matrix_euler(*actual_local_rot)
+                        @ translation_matrix(*actual_local_pos)
+                    )
+                    M_actual_world = M_actual_local @ parent_world_matrix
+                    actual_world_pos, actual_world_rot, actual_world_scale = decompose_trs(M_actual_world)
+
+                    info["position"] = actual_world_pos
+                    info["rotation"] = actual_world_rot
+                    info["scale"] = actual_world_scale
 
                     # Update gizmo position/rotation/scale from the refreshed cache
                     self.gizmo.set_transform(info["position"], info["rotation"], info["scale"])
@@ -964,77 +997,95 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return [float(val.Pitch), float(val.Yaw), float(val.Roll)]
         return default
 
-    def _traverse_tree(self, item, models_list, accumulated_transform=None):
-        if accumulated_transform is None:
-            accumulated_transform = {
-                "position": [0.0, 0.0, 0.0],
-                "rotation": [0.0, 0.0, 0.0],
-                "scale":    [1.0, 1.0, 1.0]
-            }
+    def _get_local_transform(self, data):
+        """Extract local pos, rot, scale from the element's data dictionary."""
+        local_pos   = [0.0, 0.0, 0.0]
+        local_rot   = [0.0, 0.0, 0.0]
+        local_scale = [1.0, 1.0, 1.0]
+
+        if not isinstance(data, dict):
+            return local_pos, local_rot, local_scale
+
+        for mod in data.get("m_Modifiers", []) or []:
+            if not isinstance(mod, dict):
+                continue
+            cls = mod.get("_class", "")
+            if cls == "CSmartPropOperation_Translate" and "m_vPosition" in mod:
+                comp = self._get_vector(mod["m_vPosition"], [0.0, 0.0, 0.0])
+                local_pos = [local_pos[i] + comp[i] for i in range(3)]
+            elif cls == "CSmartPropOperation_Rotate" and "m_vRotation" in mod:
+                comp = self._get_vector(mod["m_vRotation"], [0.0, 0.0, 0.0])
+                local_rot = [local_rot[i] + comp[i] for i in range(3)]
+            elif cls == "CSmartPropOperation_Scale" and "m_flScale" in mod:
+                try:
+                    s = float(mod["m_flScale"])
+                    local_scale = [local_scale[i] * s for i in range(3)]
+                except Exception:
+                    pass
+
+        element_class = data.get("_class", "")
+        if element_class == "CSmartPropElement_Model":
+            if data.get("m_vModelScale"):
+                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0])
+                local_scale = [local_scale[i] * comp[i] for i in range(3)]
+            elif data.get("m_flUniformModelScale") is not None:
+                try:
+                    s = float(data["m_flUniformModelScale"])
+                    local_scale = [local_scale[i] * s for i in range(3)]
+                except Exception:
+                    pass
+        elif element_class in ("CSmartPropElement_ModelEntity",
+                               "CSmartPropElement_PropPhysics",
+                               "CSmartPropElement_PropDynamic"):
+            if data.get("m_vModelScale"):
+                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0])
+                local_scale = [local_scale[i] * comp[i] for i in range(3)]
+
+        return local_pos, local_rot, local_scale
+
+    def _traverse_tree(self, item, models_list, parent_world_matrix=None):
+        if parent_world_matrix is None:
+            parent_world_matrix = np.eye(4, dtype=np.float32)
 
         for idx in range(item.childCount()):
             child = item.child(idx)
             data = child.data(0, Qt.UserRole)
             data = dict(data) if data is not None else {}
 
-            local_pos   = [0.0, 0.0, 0.0]
-            local_rot   = [0.0, 0.0, 0.0]
-            local_scale = [1.0, 1.0, 1.0]
+            local_pos, local_rot, local_scale = self._get_local_transform(data)
 
-            # Modifiers
-            for mod in data.get("m_Modifiers", []) or []:
-                if not isinstance(mod, dict):
-                    continue
-                cls = mod.get("_class", "")
-                if cls == "CSmartPropOperation_Translate" and "m_vPosition" in mod:
-                    comp = self._get_vector(mod["m_vPosition"], [0.0, 0.0, 0.0])
-                    local_pos = [local_pos[i] + comp[i] for i in range(3)]
-                elif cls == "CSmartPropOperation_Rotate" and "m_vRotation" in mod:
-                    comp = self._get_vector(mod["m_vRotation"], [0.0, 0.0, 0.0])
-                    local_rot = [local_rot[i] + comp[i] for i in range(3)]
-                elif cls == "CSmartPropOperation_Scale" and "m_flScale" in mod:
-                    try:
-                        s = float(mod["m_flScale"])
-                        local_scale = [local_scale[i] * s for i in range(3)]
-                    except Exception:
-                        pass
+            # Build local matrix in Source 2 space (Scale -> Rotate -> Translate)
+            local_matrix = (
+                scale_matrix(*local_scale)
+                @ rotation_matrix_euler(*local_rot)
+                @ translation_matrix(*local_pos)
+            )
+
+            # Compose with parent
+            world_matrix = local_matrix @ parent_world_matrix
+
+            # Decompose to world TRS
+            world_pos, world_rot, world_scale = decompose_trs(world_matrix)
 
             element_class = data.get("_class", "")
             model_path = ""
-            if element_class == "CSmartPropElement_Model":
+            if element_class in ("CSmartPropElement_Model",
+                                 "CSmartPropElement_ModelEntity",
+                                 "CSmartPropElement_PropPhysics",
+                                 "CSmartPropElement_PropDynamic"):
                 model_path = data.get("m_sModelName", "")
-                if data.get("m_vModelScale"):
-                    comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0])
-                    local_scale = [local_scale[i] * comp[i] for i in range(3)]
-                elif data.get("m_flUniformModelScale") is not None:
-                    try:
-                        s = float(data["m_flUniformModelScale"])
-                        local_scale = [local_scale[i] * s for i in range(3)]
-                    except Exception:
-                        pass
-            elif element_class in ("CSmartPropElement_ModelEntity",
-                                   "CSmartPropElement_PropPhysics",
-                                   "CSmartPropElement_PropDynamic"):
-                model_path = data.get("m_sModelName", "")
-                if data.get("m_vModelScale"):
-                    comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0])
-                    local_scale = [local_scale[i] * comp[i] for i in range(3)]
-
-            new_pos   = [accumulated_transform["position"][i] + local_pos[i]   for i in range(3)]
-            new_rot   = [accumulated_transform["rotation"][i] + local_rot[i]   for i in range(3)]
-            new_scale = [accumulated_transform["scale"][i]    * local_scale[i] for i in range(3)]
-            current_transform = {"position": new_pos, "rotation": new_rot, "scale": new_scale}
 
             eid = data.get("m_nElementID", 0)
             if eid > 0:
                 models_list.append({
-                    "id":       eid,
-                    "path":     model_path,
-                    "position": new_pos,
-                    "rotation": new_rot,
-                    "scale":    new_scale,
-                    "data":     data,
-                    "is_dot":   not bool(model_path)
+                    "id":                  eid,
+                    "path":                model_path,
+                    "position":            world_pos,
+                    "rotation":            world_rot,
+                    "scale":               world_scale,
+                    "parent_world_matrix": parent_world_matrix,
+                    "data":                data,
+                    "is_dot":              not bool(model_path)
                 })
 
-            self._traverse_tree(child, models_list, current_transform)
+            self._traverse_tree(child, models_list, world_matrix)
