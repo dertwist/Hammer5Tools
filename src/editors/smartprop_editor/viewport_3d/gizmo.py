@@ -498,25 +498,36 @@ class Gizmo:
         elif self.mode == GizmoMode.ROTATE:
             gl_pos = self._get_gl_position()
             center_screen = project_to_screen(gl_pos, view_matrix, proj_matrix, w, h)
-            
+
             x0 = self._drag_start_pos[0] - center_screen[0]
             y0 = self._drag_start_pos[1] - center_screen[1]
             x1 = screen_pos[0] - center_screen[0]
             y1 = screen_pos[1] - center_screen[1]
-            
+
             len0 = math.hypot(x0, y0)
             len1 = math.hypot(x1, y1)
             if len0 < 1e-3 or len1 < 1e-3:
                 return None
-                
+
             angle0 = math.atan2(y0, x0)
             angle1 = math.atan2(y1, x1)
-            
+
             delta_angle = angle1 - angle0
             # Normalize to [-pi, pi] to avoid jump across boundary
             delta_angle = (delta_angle + math.pi) % (2 * math.pi) - math.pi
-            angle = math.degrees(delta_angle)
-            
+            angle_deg = math.degrees(delta_angle)
+
+            # Determine rotation sign dynamically from screen-space.
+            # Dot the rotation axis (in GL space) with the camera's view
+            # direction: when the axis faces toward the camera the drag
+            # sense is one way, when it faces away it flips — so rotation
+            # feels correct from any viewing angle instead of relying on
+            # hardcoded per-axis sign flips.
+            axis_dir_GL = AXIS_DIRECTIONS[self.active_axis]
+            view_dir = _normalize(gl_pos - camera_pos)
+            facing = float(np.dot(axis_dir_GL, view_dir))
+            sign = 1.0 if facing > 0 else -1.0
+
             new_rot = self._drag_start_value.copy()
             # Map GizmoAxis.X -> 2 (Roll), GizmoAxis.Y -> 0 (Pitch), GizmoAxis.Z -> 1 (Yaw)
             axis_map = {
@@ -526,9 +537,7 @@ class Gizmo:
             }
             axis_idx = axis_map.get(self.active_axis)
             if axis_idx is not None:
-                # Invert drag rotation for X, Y, and Z axes
-                drag_dir = -1.0 if self.active_axis in (GizmoAxis.X, GizmoAxis.Y, GizmoAxis.Z) else 1.0
-                new_rot[axis_idx] += angle * drag_dir
+                new_rot[axis_idx] += angle_deg * sign
                 # Keep in [0, 360) range
                 new_rot[axis_idx] = new_rot[axis_idx] % 360.0
             return {"rotation": new_rot.tolist()}
