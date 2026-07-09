@@ -260,6 +260,7 @@ class SmartPropDocument(QMainWindow):
         # lazily the first time the user activates this tab (see _ensure_viewport_3d).
         self._viewport_3d = None
         self._viewport_3d_loaded = False
+        self._viewport_3d_failed = False
         self._viewport_3d_placeholder = QWidget()
         self._center_tabs.addTab(self._viewport_3d_placeholder, "3D Viewport")
 
@@ -311,7 +312,7 @@ class SmartPropDocument(QMainWindow):
         Building it here (rather than at document init) keeps the GL context and
         VRF decompilation from spinning up unless the user actually opens the tab.
         """
-        if self._viewport_3d is not None:
+        if self._viewport_3d is not None or self._viewport_3d_failed:
             return
         try:
             from src.editors.smartprop_editor.viewport_3d.viewport import SmartProp3DViewport
@@ -320,6 +321,13 @@ class SmartPropDocument(QMainWindow):
         except Exception as e:
             # The viewport depends on OpenGL/VRF; never let it break the editor.
             print(f"[SmartProp3D] 3D Viewport unavailable: {e}")
+            self._viewport_3d_failed = True
+            from PySide6.QtWidgets import QVBoxLayout
+            layout = QVBoxLayout(self._viewport_3d_placeholder)
+            label = QLabel("3d preview for this smartprop unavalible due to using of unsupported properties and elements.")
+            label.setAlignment(Qt.AlignCenter)
+            label.setStyleSheet("color: #888888; font-size: 11pt;")
+            layout.addWidget(label)
             return
 
         # Swap the placeholder for the real viewport in place.
