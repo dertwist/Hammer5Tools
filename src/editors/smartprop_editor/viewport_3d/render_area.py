@@ -55,6 +55,27 @@ def link_program(vertex_source, fragment_source):
     return program
 
 
+def safe_normal_matrix(model_matrix):
+    """Return the normal matrix (inverse-transpose of the 3x3) without ever raising.
+
+    A model whose scale is 0 on an axis produces a singular matrix, and plain
+    ``np.linalg.inv`` raises ``LinAlgError`` — which, in the render loop, crashes
+    paintGL and makes the whole viewport fail to draw.  Degenerate scales are
+    common here: ``m_vModelScale`` is often bound to an expression the viewport
+    can't evaluate, so its components fall back to 0.  In that case the geometry
+    is flattened/invisible and its normals don't matter, so fall back to identity
+    and keep rendering.
+    """
+    m3 = np.asarray(model_matrix[:3, :3], dtype=np.float32)
+    try:
+        nm = np.linalg.inv(m3).T
+    except np.linalg.LinAlgError:
+        return np.eye(3, dtype=np.float32)
+    if not np.all(np.isfinite(nm)):
+        return np.eye(3, dtype=np.float32)
+    return nm.astype(np.float32)
+
+
 class SmartProp3DRenderArea(QOpenGLWidget):
     elementClicked = Signal(int)
 
@@ -447,8 +468,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 is_selected = (eid == self._selected_id)
 
                 if gpu_mesh:
-                    # Normal matrix is transpose of inverse of the 3x3 model matrix.
-                    norm_mat = np.linalg.inv(model_matrix[:3, :3]).T
+                    # Normal matrix is transpose of inverse of the 3x3 model matrix
+                    # (crash-safe: degenerate/zero scales fall back to identity).
+                    norm_mat = safe_normal_matrix(model_matrix)
                     textured = (self.shading_mode == "textured")
 
                     for sm in gpu_mesh.submeshes:
@@ -1031,8 +1053,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                         @ translation_matrix(*world_pos)
                     )
 
-                    # 2. Convert to local space
-                    M_parent_inv = np.linalg.inv(parent_world_matrix)
+                    # 2. Convert to local space (guard a degenerate/zero-scale
+                    # ancestor so a drag can't crash on a singular parent matrix).
+                    try:
+                        M_parent_inv = np.linalg.inv(parent_world_matrix)
+                    except np.linalg.LinAlgError:
+                        M_parent_inv = np.eye(4, dtype=np.float32)
                     M_new_local = M_new_world @ M_parent_inv
 
                     # 3. Decompose to get target local values
@@ -1368,28 +1394,36 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     # ------------------------------------------------------------------
     # Tree traversal (extracted from old viewport_3d.py)
     # ------------------------------------------------------------------
-    def _get_vector(self, val, default):
+    def _get_vector(self, val, default, component_default=0.0):
+        """Resolve a vector value to three floats.
+
+        ``component_default`` is used for components the viewport can't evaluate
+        (variable/expression bindings, unparseable literals).  It is 0.0 for
+        position/rotation, but callers pass 1.0 for *scale* so a model bound to an
+        unevaluable scale expression previews at natural size instead of
+        collapsing to a zero-scale (invisible, and singular-matrix) transform.
+        """
         if val is None:
             return default
         if isinstance(val, (list, tuple)):
             val_list = list(val)
             while len(val_list) < 3:
-                val_list.append(0.0)
+                val_list.append(component_default)
             res = []
             for x in val_list[:3]:
                 if isinstance(x, dict) and "m_Expression" in x:
                     try:    res.append(float(x["m_Expression"]))
-                    except: res.append(0.0)
+                    except: res.append(component_default)
                 elif isinstance(x, dict) and "m_SourceName" in x:
-                    res.append(0.0)
+                    res.append(component_default)
                 else:
                     try:    res.append(float(x))
-                    except: res.append(0.0)
+                    except: res.append(component_default)
             return res
         if hasattr(val, "get"):
             comp = val.get("m_Components")
             if comp is not None:
-                return self._get_vector(comp, default)
+                return self._get_vector(comp, default, component_default)
         if hasattr(val, "X") and hasattr(val, "Y") and hasattr(val, "Z"):
             return [float(val.X), float(val.Y), float(val.Z)]
         if hasattr(val, "Pitch") and hasattr(val, "Yaw") and hasattr(val, "Roll"):
@@ -1425,7 +1459,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         element_class = data.get("_class", "")
         if element_class == "CSmartPropElement_Model":
             if data.get("m_vModelScale"):
-                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0])
+                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0], component_default=1.0)
                 local_scale = [local_scale[i] * comp[i] for i in range(3)]
             elif data.get("m_flUniformModelScale") is not None:
                 try:
@@ -1437,7 +1471,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                                "CSmartPropElement_PropPhysics",
                                "CSmartPropElement_PropDynamic"):
             if data.get("m_vModelScale"):
-                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0])
+                comp = self._get_vector(data["m_vModelScale"], [1.0, 1.0, 1.0], component_default=1.0)
                 local_scale = [local_scale[i] * comp[i] for i in range(3)]
 
         return local_pos, local_rot, local_scale

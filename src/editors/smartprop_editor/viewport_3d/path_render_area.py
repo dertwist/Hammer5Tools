@@ -24,7 +24,7 @@ from src.editors.smartprop_editor.viewport_3d.camera import (
     Camera, SOURCE2_TO_GL, translation_matrix, scale_matrix,
 )
 from src.editors.smartprop_editor.viewport_3d.gizmo import Gizmo, GizmoMode, GizmoAxis
-from src.editors.smartprop_editor.viewport_3d.render_area import link_program
+from src.editors.smartprop_editor.viewport_3d.render_area import link_program, safe_normal_matrix
 from src.editors.smartprop_editor.viewport_3d.shaders import (
     MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER,
     PICKING_VERTEX_SHADER, PICKING_FRAGMENT_SHADER,
@@ -449,7 +449,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
                 else:
                     base = np.array([0.9, 0.55, 0.2], dtype=np.float32)
                     highlight = 0.0
-                norm_mat = np.linalg.inv(model[:3, :3]).T
+                norm_mat = safe_normal_matrix(model)
                 GL.glUniformMatrix3fv(GL.glGetUniformLocation(prog, "uNormalMatrix"), 1, GL.GL_FALSE, norm_mat)
                 GL.glUniform3fv(GL.glGetUniformLocation(prog, "uBaseColor"), 1, base)
                 GL.glUniform1f(GL.glGetUniformLocation(prog, "uHighlight"), highlight)
