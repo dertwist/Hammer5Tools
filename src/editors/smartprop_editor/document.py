@@ -113,6 +113,8 @@ class SmartPropDocument(QMainWindow):
         _undo_sc.activated.connect(self.undo_stack.undo)
         _redo_sc = QShortcut(QKeySequence.Redo, self)
         _redo_sc.activated.connect(self.undo_stack.redo)
+        _isolate_sc = QShortcut(QKeySequence("Ctrl+H"), self)
+        _isolate_sc.activated.connect(self.toggle_isolation)
 
         # Guard counter: while > 0, update_tree_item_value skips pushing to the undo stack.
         # Incremented before rebuilding the properties panel during undo/redo; decremented
@@ -1928,7 +1930,51 @@ class SmartPropDocument(QMainWindow):
         load_vmap_action = menu.addAction("Load Vmap...")
         load_vmap_action.triggered.connect(self.load_vmap_into_hierarchy)
 
+        current_item = self.ui.tree_hierarchy_widget.currentItem()
+        if current_item:
+            data = current_item.data(0, Qt.UserRole)
+            if isinstance(data, dict):
+                eid = data.get("m_nElementID", 0)
+                if eid > 0:
+                    menu.addSeparator()
+                    render_area = self._viewport_3d.render_area if self._viewport_3d else None
+                    is_isolated = render_area and render_area.isolated_element_id == eid
+                    isolate_action = menu.addAction("Isolation")
+                    isolate_action.setCheckable(True)
+                    isolate_action.setChecked(bool(is_isolated))
+                    isolate_action.setShortcut(QKeySequence("Ctrl+H"))
+                    isolate_action.triggered.connect(self.toggle_isolation)
+
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
+
+    def toggle_isolation(self):
+        """Toggle isolated view for the currently selected element in the 3D viewport."""
+        if not self._viewport_3d:
+            return
+
+        render_area = self._viewport_3d.render_area
+        current_item = self.ui.tree_hierarchy_widget.currentItem()
+
+        if not current_item:
+            if render_area.isolated_element_id is not None:
+                render_area.isolated_element_id = None
+                self._viewport_3d.update_viewport()
+            return
+
+        data = current_item.data(0, Qt.UserRole)
+        if not isinstance(data, dict):
+            return
+
+        eid = data.get("m_nElementID", 0)
+        if eid <= 0:
+            return
+
+        if render_area.isolated_element_id == eid:
+            render_area.isolated_element_id = None
+        else:
+            render_area.isolated_element_id = eid
+
+        self._viewport_3d.update_viewport()
 
     def load_vmap_into_hierarchy(self):
         from src.common import get_cs2_path
