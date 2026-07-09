@@ -79,6 +79,12 @@ class SmartProp3DViewport(QWidget):
         self.groups_check.stateChanged.connect(self._on_display_groups_changed)
         tb_layout.addWidget(self.groups_check)
 
+        # Widgets Checkbox — locator / rotator / pickone preview widgets
+        self.widgets_check = QCheckBox("Widgets")
+        self.widgets_check.setChecked(True)
+        self.widgets_check.stateChanged.connect(self._on_show_widgets_changed)
+        tb_layout.addWidget(self.widgets_check)
+
         # Create smaller styling for the toolbar controls
         qt_stylesheet_viewport_combo = qt_stylesheet_combobox.replace(
             "height:22px;", "height:16px; min-height:16px; max-height:16px; padding-top: 0px; padding-bottom: 0px; font: 580 8pt \"Segoe UI\";"
@@ -90,7 +96,7 @@ class SmartProp3DViewport(QWidget):
         # Apply shared app stylesheets to the toolbar controls.
         for combo in (self.space_combo, self.grid_combo, self.rot_combo, self.view_combo):
             combo.setStyleSheet(qt_stylesheet_viewport_combo)
-        for check in (self.snap_check, self.groups_check):
+        for check in (self.snap_check, self.groups_check, self.widgets_check):
             check.setStyleSheet(qt_stylesheet_viewport_check)
 
         tb_layout.addStretch()
@@ -106,6 +112,7 @@ class SmartProp3DViewport(QWidget):
         self._on_grid_step_changed("8")
         self._on_rot_step_changed("15")
         self._on_display_groups_changed(Qt.Checked)
+        self._on_show_widgets_changed(Qt.Checked)
         self._on_view_mode_changed("Textured")
 
     def _on_view_mode_changed(self, text):
@@ -135,6 +142,10 @@ class SmartProp3DViewport(QWidget):
     def _on_display_groups_changed(self, state):
         self.render_area.display_groups = (state == Qt.Checked or state == 2)
         self.render_area.update_viewport()
+
+    def _on_show_widgets_changed(self, state):
+        self.render_area.show_widgets = (state == Qt.Checked or state == 2)
+        self.render_area.update()
 
     def _set_gizmo_mode(self, mode: GizmoMode):
         self.render_area.gizmo.set_mode(mode)
