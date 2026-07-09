@@ -250,6 +250,30 @@ class PreferencesDialog(QDialog):
         layout_vmap_import.addLayout(row_vmap_import)
         layout.addWidget(frame_vmap_import)
 
+        # Divider for 3D Viewport Subcategory
+        layout.addWidget(self.create_divider(smartprop_content))
+        label_viewport = QLabel("3D Viewport", smartprop_content)
+        layout.addWidget(label_viewport)
+        frame_viewport = QFrame(smartprop_content)
+        layout_viewport = QVBoxLayout(frame_viewport)
+
+        # Anti-aliasing (MSAA) row
+        row_msaa = QHBoxLayout()
+        label_msaa = QLabel("Anti-aliasing (reopen file to apply):", frame_viewport)
+        label_msaa.setMinimumWidth(130)
+        row_msaa.addWidget(label_msaa)
+        self.spe_viewport_msaa = QComboBox(frame_viewport)
+        self.spe_viewport_msaa.setStyleSheet(qt_stylesheet_combobox)
+        # Value stored is the MSAA sample count (0 == off).
+        for text, samples in [("Off", 0), ("2x MSAA", 2), ("4x MSAA", 4), ("8x MSAA", 8)]:
+            self.spe_viewport_msaa.addItem(text, samples)
+        self.spe_viewport_msaa.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.spe_viewport_msaa.setMinimumWidth(200)
+        row_msaa.addWidget(self.spe_viewport_msaa)
+        row_msaa.addStretch()
+        layout_viewport.addLayout(row_msaa)
+        layout.addWidget(frame_viewport)
+
         layout.addStretch()
         smartprop_scroll = self.wrap_in_scroll_area(smartprop_content)
         self.tabWidget.addTab(smartprop_scroll, "SmartProp Editor")
@@ -435,6 +459,14 @@ class PreferencesDialog(QDialog):
         else:
             self.spe_round_vmap_decimals.setCurrentText("4")
 
+        # Populate 3D Viewport anti-aliasing (MSAA sample count)
+        try:
+            msaa_val = int(get_settings_value('SmartPropEditor', 'viewport_msaa', 4))
+        except (TypeError, ValueError):
+            msaa_val = 4
+        msaa_idx = self.spe_viewport_msaa.findData(msaa_val)
+        self.spe_viewport_msaa.setCurrentIndex(msaa_idx if msaa_idx != -1 else self.spe_viewport_msaa.findData(4))
+
     def update_default_file_setting(self):
         # Collect current settings from Default File subcategory fields (removed folder options)
         process = {
@@ -500,6 +532,10 @@ class PreferencesDialog(QDialog):
         self.spe_round_vmap_values.toggled.connect(self.spe_round_vmap_decimals.setEnabled)
         self.spe_round_vmap_decimals.currentIndexChanged.connect(
             lambda: set_settings_value('SmartPropEditor', 'round_vmap_decimals', str(self.spe_round_vmap_decimals.currentData()))
+        )
+        # Connect 3D Viewport anti-aliasing signal (stored as an int sample count)
+        self.spe_viewport_msaa.currentIndexChanged.connect(
+            lambda: set_settings_value('SmartPropEditor', 'viewport_msaa', int(self.spe_viewport_msaa.currentData()))
         )
         self.btn_force_association.clicked.connect(self.force_file_associations)
 
