@@ -359,7 +359,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         
         # 1. Rectangle highlight around the viewport if in isolate mode (slighter, 2px)
         if self.isolated_element_id is not None:
-            pen = QPen(QColor(127, 255, 0), 2) # lime green, 2px width
+            pen = QPen(QColor("#accc8d"), 2) # isolated view highlight color
             painter.setPen(pen)
             w = self.width()
             h = self.height()
@@ -418,7 +418,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             painter.drawRect(box_x, box_y, box_width, box_height)
             
             # - Draw a clean 3px left accent line
-            accent_color = QColor(127, 255, 0) if self.isolated_element_id is not None else QColor(0, 120, 215)
+            accent_color = QColor("#accc8d") if self.isolated_element_id is not None else QColor(0, 120, 215)
             painter.setPen(Qt.NoPen)
             painter.setBrush(accent_color)
             painter.drawRect(box_x, box_y, 3, box_height)
@@ -426,7 +426,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             # Draw text lines
             for i, line in enumerate(hud_lines):
                 if line.startswith("Isolate Mode:"):
-                    painter.setPen(QColor(127, 255, 0)) # lime green
+                    painter.setPen(QColor("#accc8d")) # isolated view color
                 elif line.startswith("Translate:") or line.startswith("Rotate:") or line.startswith("Scale:") or line.startswith("Scaling"):
                     painter.setPen(QColor(255, 165, 0)) # orange for active transforms
                 else:
