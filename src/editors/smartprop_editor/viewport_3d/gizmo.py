@@ -61,6 +61,11 @@ AXIS_HIGHLIGHT_COLORS = {
     GizmoAxis.Z: np.array([0.2, 0.6, 1.0], dtype=np.float32),
 }
 
+# Hover/active handles use a single bright yellow across all axes — the standard
+# Unity/Blender convention that reads instantly as "this is the handle you'll
+# grab", regardless of the axis's own colour.
+AXIS_HOVER_COLOR = np.array([1.0, 0.9, 0.2], dtype=np.float32)
+
 # Grayscale color for an axis the gizmo cannot manipulate on the current
 # object — i.e. the value is bound to a variable/expression, or the transform
 # channel does not exist and can't be created (e.g. scale on an element with no
@@ -323,7 +328,15 @@ class Gizmo:
             GL.glGetUniformLocation(shader_program, "uProjection"), 1, GL.GL_FALSE, proj_matrix
         )
 
-        GL.glDisable(GL.GL_DEPTH_TEST)
+        # Clear only the depth buffer so the gizmo gets a fresh depth range: it
+        # always draws on top of the scene, yet with the depth test still enabled
+        # its own parts occlude each other correctly (crossing rings / arrows read
+        # as solid 3D instead of a flat draw-order stack).  The gizmo is the last
+        # thing rendered each frame, so wiping depth here is safe.  Depth writes
+        # must be on for glClear(DEPTH) to take effect, so enable them first.
+        GL.glDepthMask(GL.GL_TRUE)
+        GL.glClear(GL.GL_DEPTH_BUFFER_BIT)
+        GL.glEnable(GL.GL_DEPTH_TEST)
         # Force solid fill regardless of the viewport's shading mode (e.g.
         # Wireframe), so the gizmo never inherits a leftover GL_LINE polygon
         # mode from the model render pass.
@@ -370,7 +383,7 @@ class Gizmo:
                 # Grayscale = this axis can't be manipulated on this object.
                 color = AXIS_DISABLED_COLOR
             elif is_active or is_hover:
-                color = AXIS_HIGHLIGHT_COLORS[axis_name]
+                color = AXIS_HOVER_COLOR
             else:
                 color = AXIS_COLORS[axis_name]
 
@@ -405,7 +418,7 @@ class Gizmo:
             elif is_active or is_hover:
                 alpha = 1.0
             else:
-                alpha = 0.85
+                alpha = 0.95
             GL.glUniform1f(
                 GL.glGetUniformLocation(shader_program, "uAlpha"),
                 alpha

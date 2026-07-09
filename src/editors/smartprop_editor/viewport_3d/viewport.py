@@ -51,6 +51,16 @@ class SmartProp3DViewport(QWidget):
         self.space_combo.currentTextChanged.connect(self._on_space_changed)
         tb_layout.addWidget(self.space_combo)
 
+        # Translucency Checkbox — when off, BLEND materials render opaque.
+        self.translucency_check = QCheckBox("Translucency")
+        self.translucency_check.setChecked(True)
+        self.translucency_check.setToolTip(
+            "Render translucent (glass) materials see-through.\n"
+            "Turn off to draw them solid."
+        )
+        self.translucency_check.stateChanged.connect(self._on_translucency_changed)
+        tb_layout.addWidget(self.translucency_check)
+
         # Snapping Checkbox
         self.snap_check = QCheckBox("Snapping")
         self.snap_check.setChecked(False)
@@ -90,7 +100,7 @@ class SmartProp3DViewport(QWidget):
         # Apply shared app stylesheets to the toolbar controls.
         for combo in (self.space_combo, self.grid_combo, self.rot_combo, self.view_combo):
             combo.setStyleSheet(qt_stylesheet_viewport_combo)
-        for check in (self.snap_check, self.groups_check):
+        for check in (self.snap_check, self.groups_check, self.translucency_check):
             check.setStyleSheet(qt_stylesheet_viewport_check)
 
         tb_layout.addStretch()
@@ -107,6 +117,7 @@ class SmartProp3DViewport(QWidget):
         self._on_rot_step_changed("15")
         self._on_display_groups_changed(Qt.Checked)
         self._on_view_mode_changed("Textured")
+        self._on_translucency_changed(Qt.Checked)
 
     def _on_view_mode_changed(self, text):
         self.render_area.shading_mode = text.lower()
@@ -118,6 +129,10 @@ class SmartProp3DViewport(QWidget):
 
     def _on_snap_changed(self, state):
         self.render_area.snapping_enabled = (state == Qt.Checked or state == 2)
+
+    def _on_translucency_changed(self, state):
+        self.render_area.translucency_enabled = (state == Qt.Checked or state == 2)
+        self.render_area.update()
 
     def _on_grid_step_changed(self, text):
         try:
@@ -150,8 +165,9 @@ class SmartProp3DViewport(QWidget):
         self.render_area.highlight_element(element_id)
 
     def keyPressEvent(self, event):
-        # Forward transform-mode keys (W/E/R) to the render area.
-        if event.key() in (Qt.Key_W, Qt.Key_E, Qt.Key_R):
+        # Forward transform-mode keys (W/E/R) and the frame-selection key (F) to
+        # the render area.
+        if event.key() in (Qt.Key_W, Qt.Key_E, Qt.Key_R, Qt.Key_F):
             self.render_area.keyPressEvent(event)
         else:
             super().keyPressEvent(event)

@@ -46,7 +46,7 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
 from pathlib import Path
 
 # Versions
-app_version = '5.1.5'
+app_version = '5.2.0'
 
 def get_channel() -> str:
     """

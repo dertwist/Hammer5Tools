@@ -38,10 +38,28 @@ in vec3 vNormal;
 in vec2 vTexCoord;
 
 uniform vec3 uCameraPos;
-uniform vec3 uBaseColor;
-uniform float uHighlight;
-uniform int uHasTexture;
-uniform sampler2D uTexture;
+uniform vec3 uBaseColor;      // flat fallback colour (solid mode / untextured)
+uniform float uHighlight;     // >0.5 = draw the legacy fill highlight (path editor)
+
+// PBR material inputs (glTF metallic-roughness model, as written by VRF).
+uniform vec4 uBaseColorFactor;
+uniform int  uHasBaseTex;
+uniform sampler2D uBaseTex;   // unit 0 — sRGB albedo (+ alpha)
+uniform int  uHasNormalTex;
+uniform sampler2D uNormalTex; // unit 1 — tangent-space normal
+uniform int  uHasMRTex;
+uniform sampler2D uMRTex;     // unit 2 — G=roughness, B=metalness
+uniform float uRoughness;
+uniform float uMetallic;
+uniform int  uHasAO;
+uniform sampler2D uAOTex;     // unit 3 — R=occlusion
+uniform int  uHasEmissive;
+uniform sampler2D uEmissiveTex; // unit 4 — sRGB emissive
+uniform vec3 uEmissiveFactor;
+
+// 0 = OPAQUE, 1 = MASK (alpha test), 2 = BLEND (translucent)
+uniform int  uAlphaMode;
+uniform float uAlphaCutoff;
 
 out vec4 FragColor;
 
@@ -74,42 +92,127 @@ vec3 SrgbLinearToGamma(vec3 vLinearColor)
     return vGammaColor;
 }
 
-vec3 CalculateFullbrightLighting(vec3 albedo, vec3 normal, vec3 viewVector)
+// Per-pixel tangent frame from screen-space derivatives (Christian Schüler).
+// Lets us apply tangent-space normal maps without a vertex tangent attribute,
+// and stays correct through the viewport's Source<->GL coordinate remap.
+mat3 CotangentFrame(vec3 N, vec3 p, vec2 uv)
+{
+    vec3 dp1 = dFdx(p);
+    vec3 dp2 = dFdy(p);
+    vec2 duv1 = dFdx(uv);
+    vec2 duv2 = dFdy(uv);
+
+    vec3 dp2perp = cross(dp2, N);
+    vec3 dp1perp = cross(N, dp1);
+    vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+    vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+    float invmax = inversesqrt(max(dot(T, T), dot(B, B)));
+    return mat3(T * invmax, B * invmax, N);
+}
+
+// Stylised "fullbright" lighting matched to Source 2 Viewer, extended with
+// roughness (specular sharpness) and metalness (specular tint + diffuse loss).
+// ``specOut`` returns the scalar specular intensity so the translucent path can
+// keep highlights readable on otherwise see-through glass.
+vec3 CalculateLighting(vec3 albedo, vec3 normal, vec3 viewVector, float roughness, float metalness, float ao, out float specOut)
 {
     float flFakeDiffuseLighting = saturate(dot(normal, viewVector)) * 0.7 + 0.3;
 
     vec3 vReflectionDirWs = reflect(-viewVector, normal);
+    float specAngle = saturate(dot(viewVector, vReflectionDirWs));
+    // Rougher surfaces spread the highlight and dim it.
+    float specPower = mix(4.0, 80.0, 1.0 - roughness);
+    float flFakeSpecularLighting = pow(specAngle, specPower) * (1.0 - roughness) * 0.35;
+    specOut = flFakeSpecularLighting;
 
-    float flFakeSpecularLighting = pow2(pow2(saturate(dot(viewVector, vReflectionDirWs)))) * 0.05;
-
-    // Weights converted from Source 2 space (Z-up) to OpenGL space (Y-up)
-    //   Source Z-up (1.0/0.2) -> OpenGL Y-up (1.0/0.2)
-    //   Source X-forward (0.6) -> OpenGL X-right (0.6)
-    //   Source Y-left (0.4) -> OpenGL Z-forward/backward (0.4)
+    // Hemispheric ambient (weights from Source Z-up mapped to GL Y-up).
     float XtraLight1 = dot(vec3(0.6, 1.0, 0.4), pow2(saturate(normal)));
     float XtraLight2 = dot(vec3(0.6, 0.2, 0.4), pow2(saturate(-normal)));
     float xtraLight = XtraLight1 + XtraLight2;
 
-    return xtraLight * albedo * flFakeDiffuseLighting + flFakeSpecularLighting;
+    vec3 diffuse = xtraLight * albedo * flFakeDiffuseLighting * ao;
+    // Metals lose diffuse and tint their highlight with the albedo.
+    diffuse *= (1.0 - metalness * 0.75);
+    vec3 specColor = mix(vec3(1.0), albedo, metalness);
+
+    return diffuse + flFakeSpecularLighting * specColor;
 }
 
 void main() {
-    vec3 baseColor = uBaseColor;
-    if (uHasTexture == 1) {
-        baseColor = SrgbGammaToLinear(texture(uTexture, vTexCoord).rgb);
+    // ---- Base colour + alpha -------------------------------------------------
+    vec4 base = uBaseColorFactor;
+    base.rgb *= uBaseColor;
+    if (uHasBaseTex == 1) {
+        vec4 tex = texture(uBaseTex, vTexCoord);
+        base.rgb = SrgbGammaToLinear(tex.rgb) * uBaseColorFactor.rgb;
+        base.a *= tex.a;
     }
 
+    float alpha = base.a;
+    if (uAlphaMode == 1 && alpha < uAlphaCutoff) {
+        discard;                 // MASK / alpha-tested cutout
+    }
+
+    // ---- Normal --------------------------------------------------------------
     vec3 norm = normalize(vNormal);
+    // Two-sided shading: flip the normal on back faces so translucent surfaces
+    // (drawn from both sides) and open meshes light correctly instead of going
+    // dark/inverted where a back face points away from the camera.
+    if (!gl_FrontFacing) norm = -norm;
     vec3 viewDir = normalize(uCameraPos - vWorldPos);
-
-    vec3 color = CalculateFullbrightLighting(baseColor, norm, viewDir);
-
-    // Highlight tint for selection
-    if (uHighlight > 0.5) {
-        color = mix(color, vec3(0.0, 0.85, 0.85), 0.25);
+    if (uHasNormalTex == 1) {
+        vec3 mapN = texture(uNormalTex, vTexCoord).xyz * 2.0 - 1.0;
+        mat3 TBN = CotangentFrame(norm, vWorldPos, vTexCoord);
+        norm = normalize(TBN * mapN);
     }
 
-    FragColor = vec4(SrgbLinearToGamma(color), 1.0);
+    // ---- Roughness / metalness / occlusion ----------------------------------
+    float roughness = clamp(uRoughness, 0.04, 1.0);
+    float metalness = saturate(uMetallic);
+    if (uHasMRTex == 1) {
+        vec3 mr = texture(uMRTex, vTexCoord).rgb;   // R=ao(unused), G=rough, B=metal
+        roughness = clamp(roughness * mr.g, 0.04, 1.0);
+        metalness = saturate(metalness * mr.b);
+    }
+    float ao = 1.0;
+    if (uHasAO == 1) {
+        ao = texture(uAOTex, vTexCoord).r;
+    }
+
+    // ---- Shade ---------------------------------------------------------------
+    float specTerm = 0.0;
+    vec3 color = CalculateLighting(base.rgb, norm, viewDir, roughness, metalness, ao, specTerm);
+
+    if (uHasEmissive == 1) {
+        color += SrgbGammaToLinear(texture(uEmissiveTex, vTexCoord).rgb) * uEmissiveFactor;
+    } else {
+        color += uEmissiveFactor;
+    }
+
+    // Legacy fill highlight: a cyan Fresnel rim plus a faint body tint.  The
+    // SmartProp viewport no longer uses this (it draws a post-process silhouette
+    // outline instead — see the OUTLINE_* shaders and
+    // SmartProp3DRenderArea._render_selection_outline, and leaves uHighlight at 0),
+    // but the Path editor still relies on it, so the shared shader keeps it.
+    if (uHighlight > 0.5) {
+        vec3 selColor = vec3(0.15, 0.95, 1.0);
+        float rim = pow(1.0 - saturate(dot(norm, viewDir)), 2.5);
+        color = mix(color, selColor, 0.12);
+        color += selColor * rim * 1.35;
+    }
+
+    // ---- Output alpha --------------------------------------------------------
+    float outAlpha = 1.0;
+    if (uAlphaMode == 2) {
+        // Glass/translucent: a Fresnel term makes grazing angles more opaque, and
+        // the specular highlight boosts alpha so reflections read on top of the
+        // background instead of fading out with the body.
+        float fres = pow(1.0 - saturate(dot(norm, viewDir)), 4.0);
+        outAlpha = mix(saturate(alpha), 1.0, fres * 0.8);
+        outAlpha = saturate(outAlpha + specTerm * 2.0);
+    }
+    FragColor = vec4(SrgbLinearToGamma(color), outAlpha);
 }
 """
 
@@ -263,5 +366,61 @@ out vec4 FragColor;
 
 void main() {
     FragColor = vec4(uColor, 1.0);
+}
+"""
+
+# ---------------------------------------------------------------------------
+# Outline shader — post-process silhouette outline for the selected element
+# ---------------------------------------------------------------------------
+# The selected element is first rendered as a solid white-on-black, depth-culled
+# silhouette into an offscreen "mask" texture (via the picking shader).  This
+# fullscreen pass then dilates that mask and paints the ring that lies just
+# outside the silhouette, producing a crisp constant-width outline that works on
+# any mesh — unlike an inverted-hull shell, it never splits at the hard edges /
+# split normals common in game props.
+
+OUTLINE_VERTEX_SHADER = """
+#version 330 core
+out vec2 vUV;
+
+void main() {
+    // Gpu-generated fullscreen triangle (no VBO): IDs 0,1,2 -> UV 0,0 / 2,0 / 0,2.
+    vec2 uv = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);
+    vUV = uv;
+    gl_Position = vec4(uv * 2.0 - 1.0, 0.0, 1.0);
+}
+"""
+
+OUTLINE_FRAGMENT_SHADER = """
+#version 330 core
+in vec2 vUV;
+out vec4 FragColor;
+
+uniform sampler2D uMask;       // R = 1 inside the selected silhouette, 0 outside
+uniform vec2  uTexel;          // 1/width, 1/height of the mask (device pixels)
+uniform float uThickness;      // outline width, in device pixels
+uniform vec3  uOutlineColor;
+
+const int TAPS = 24;
+
+void main() {
+    float center = texture(uMask, vUV).r;
+
+    // Ring-sample the mask at the outline radius.  ``coverage`` is how strongly a
+    // neighbour falls inside the silhouette; linear filtering on the mask makes
+    // it fractional across the 1-texel boundary, softening the outline edge.
+    float coverage = 0.0;
+    for (int i = 0; i < TAPS; ++i) {
+        float a = 6.28318530718 * float(i) / float(TAPS);
+        vec2 off = vec2(cos(a), sin(a)) * uTexel * uThickness;
+        coverage = max(coverage, texture(uMask, vUV + off).r);
+    }
+
+    // Draw only the band that is outside the object (center ~0) but close enough
+    // to it that a neighbour is inside — so the outline hugs the silhouette
+    // without ever tinting the object's own surface.
+    float edge = coverage * (1.0 - center);
+    if (edge <= 0.003) discard;
+    FragColor = vec4(uOutlineColor, clamp(edge, 0.0, 1.0));
 }
 """

@@ -121,6 +121,14 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.StrongFocus)
 
+        # Match the model viewport: request a multisampled surface up front so
+        # GL_MULTISAMPLE actually smooths edges (see gl_settings).
+        from src.editors.smartprop_editor.viewport_3d.gl_settings import (
+            make_viewport_surface_format, get_viewport_msaa_samples,
+        )
+        self._msaa_samples = get_viewport_msaa_samples()
+        self.setFormat(make_viewport_surface_format(self._msaa_samples))
+
         self.points = points if points is not None else []
         self.selected_index = -1
         self._hover_index = -1
@@ -243,7 +251,8 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         from OpenGL import GL
 
         GL.glEnable(GL.GL_DEPTH_TEST)
-        GL.glEnable(GL.GL_MULTISAMPLE)
+        if GL.glGetIntegerv(GL.GL_SAMPLES) and GL.glGetIntegerv(GL.GL_SAMPLES) > 1:
+            GL.glEnable(GL.GL_MULTISAMPLE)
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
@@ -407,7 +416,17 @@ class PathEditor3DRenderArea(QOpenGLWidget):
             GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uView"), 1, GL.GL_FALSE, view)
             GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uProjection"), 1, GL.GL_FALSE, proj)
             GL.glUniform3fv(GL.glGetUniformLocation(prog, "uCameraPos"), 1, cam_pos)
-            GL.glUniform1i(GL.glGetUniformLocation(prog, "uHasTexture"), 0)
+            # The point spheres reuse the model (PBR) shader as flat, untextured,
+            # opaque geometry — their colour comes from uBaseColor per sphere, so
+            # neutralise the material inputs (factor = 1, no maps, opaque).
+            GL.glUniform4f(GL.glGetUniformLocation(prog, "uBaseColorFactor"), 1.0, 1.0, 1.0, 1.0)
+            GL.glUniform1f(GL.glGetUniformLocation(prog, "uRoughness"), 0.5)
+            GL.glUniform1f(GL.glGetUniformLocation(prog, "uMetallic"), 0.0)
+            GL.glUniform3f(GL.glGetUniformLocation(prog, "uEmissiveFactor"), 0.0, 0.0, 0.0)
+            GL.glUniform1i(GL.glGetUniformLocation(prog, "uAlphaMode"), 0)
+            GL.glUniform1f(GL.glGetUniformLocation(prog, "uAlphaCutoff"), 0.5)
+            for _has in ("uHasBaseTex", "uHasNormalTex", "uHasMRTex", "uHasAO", "uHasEmissive"):
+                GL.glUniform1i(GL.glGetUniformLocation(prog, _has), 0)
 
         GL.glBindVertexArray(self._sphere_vao)
         for i, pt in enumerate(self.points):
