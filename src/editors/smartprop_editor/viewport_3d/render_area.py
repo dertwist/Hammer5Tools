@@ -1430,6 +1430,25 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return [float(val.Pitch), float(val.Yaw), float(val.Roll)]
         return default
 
+    def _get_string(self, val, default=""):
+        """Resolve a string value, returning a plain string.
+
+        Handles cases where properties (like model paths) are bound to expressions
+        or variables and stored as dicts, falling back to the default empty string.
+        """
+        if val is None:
+            return default
+        if isinstance(val, str):
+            return val
+        if isinstance(val, dict):
+            if "m_Expression" in val:
+                return str(val["m_Expression"])
+            return default
+        try:
+            return str(val)
+        except:
+            return default
+
     def _get_local_transform(self, data):
         """Extract local pos, rot, scale from the element's data dictionary."""
         local_pos   = [0.0, 0.0, 0.0]
@@ -1532,11 +1551,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                              "CSmartPropElement_ModelEntity",
                              "CSmartPropElement_PropPhysics",
                              "CSmartPropElement_PropDynamic"):
-            model_path = data.get("m_sModelName", "")
+            model_path = self._get_string(data.get("m_sModelName", ""))
 
         # Nested smart prop support inside dict traversal
         if element_class == "CSmartPropElement_SmartProp":
-            smartprop_path = data.get("m_sSmartProp", "")
+            smartprop_path = self._get_string(data.get("m_sSmartProp", ""))
             if smartprop_path:
                 self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
 
@@ -1658,11 +1677,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                                  "CSmartPropElement_ModelEntity",
                                  "CSmartPropElement_PropPhysics",
                                  "CSmartPropElement_PropDynamic"):
-                model_path = data.get("m_sModelName", "")
+                model_path = self._get_string(data.get("m_sModelName", ""))
 
             # If this is a nested smart prop element, load and traverse it!
             if element_class == "CSmartPropElement_SmartProp":
-                smartprop_path = data.get("m_sSmartProp", "")
+                smartprop_path = self._get_string(data.get("m_sSmartProp", ""))
                 if smartprop_path:
                     self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
 
