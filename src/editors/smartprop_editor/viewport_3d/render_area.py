@@ -119,6 +119,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.grid_step = 8.0
         self.rotation_step = 15.0
         self.display_groups = True
+        self.isolated_element_id = None
 
         # Scene Data (populated from document tree)
         self._model_infos = {}  # id -> info dict
@@ -902,6 +903,16 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # Nothing selected (or selection has no bounds) — frame everything.
         self.fit_view()
 
+    def _is_element_in_tree(self, parent_item, eid):
+        for i in range(parent_item.childCount()):
+            child = parent_item.child(i)
+            data = child.data(0, Qt.UserRole)
+            if isinstance(data, dict) and data.get("m_nElementID") == eid:
+                return True
+            if self._is_element_in_tree(child, eid):
+                return True
+        return False
+
     def update_viewport(self):
         """Rebuild the scene models list from the current document tree."""
         self._model_infos.clear()
@@ -916,6 +927,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if tree_widget is None:
             self.update()
             return
+
+        if self.isolated_element_id is not None:
+            if not self._is_element_in_tree(tree_widget.invisibleRootItem(), self.isolated_element_id):
+                self.isolated_element_id = None
 
         models_info = []
         self._traverse_tree(tree_widget.invisibleRootItem(), models_info)
@@ -1598,7 +1613,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if isinstance(child_data, dict):
                 self._traverse_vsmart_dict(child_data, models_list, world_matrix, context_addon)
 
-    def _traverse_tree(self, item, models_list, parent_world_matrix=None):
+    def _traverse_tree(self, item, models_list, parent_world_matrix=None, is_in_isolated_subtree=False):
         if parent_world_matrix is None:
             parent_world_matrix = np.eye(4, dtype=np.float32)
 
@@ -1672,6 +1687,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             world_pos, world_rot, world_scale = decompose_trs(world_matrix)
 
             element_class = data.get("_class", "")
+            
+            eid = data.get("m_nElementID", 0)
+            
+            node_is_isolated_start = (self.isolated_element_id is not None and eid == self.isolated_element_id)
+            current_in_isolated = is_in_isolated_subtree or node_is_isolated_start
+
             model_path = ""
             if element_class in ("CSmartPropElement_Model",
                                  "CSmartPropElement_ModelEntity",
@@ -1683,22 +1704,23 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if element_class == "CSmartPropElement_SmartProp":
                 smartprop_path = self._get_string(data.get("m_sSmartProp", ""))
                 if smartprop_path:
-                    self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
+                    if self.isolated_element_id is None or current_in_isolated:
+                        self._load_and_traverse_nested_vsmart(smartprop_path, models_list, world_matrix, context_addon)
 
-            eid = data.get("m_nElementID", 0)
             if eid > 0:
-                models_list.append({
-                    "id":                  eid,
-                    "path":                model_path,
-                    "position":            world_pos,
-                    "rotation":            world_rot,
-                    "scale":               world_scale,
-                    "parent_world_matrix": parent_world_matrix,
-                    "data":                data,
-                    "is_dot":              not bool(model_path)
-                })
+                if self.isolated_element_id is None or current_in_isolated:
+                    models_list.append({
+                        "id":                  eid,
+                        "path":                model_path,
+                        "position":            world_pos,
+                        "rotation":            world_rot,
+                        "scale":               world_scale,
+                        "parent_world_matrix": parent_world_matrix,
+                        "data":                data,
+                        "is_dot":              not bool(model_path)
+                    })
 
-            self._traverse_tree(child, models_list, world_matrix)
+            self._traverse_tree(child, models_list, world_matrix, current_in_isolated)
 
     def _update_subtree_transforms(self, item, parent_world_matrix):
         """Recursively update the world transforms of all descendants in self._model_infos."""
