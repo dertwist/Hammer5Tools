@@ -120,6 +120,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.rotation_step = 15.0
         self.display_groups = True
         self.isolated_element_id = None
+        self.isolated_element_name = ""
+        self.current_transform_text = None
 
         # Scene Data (populated from document tree)
         self._model_infos = {}  # id -> info dict
@@ -330,6 +332,83 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         # 3. Render Gizmo
         self.gizmo.render(self._gizmo_program, view, proj, cam_pos)
+
+        # 4. Draw 2D HUD/Overlay
+        self._render_2d_overlay()
+
+    def _render_2d_overlay(self):
+        from PySide6.QtGui import QPainter, QPen, QColor, QFont
+        
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # 1. Rectangle highlight around the viewport if in isolate mode
+        if self.isolated_element_id is not None:
+            pen = QPen(QColor(127, 255, 0), 4) # lime green, 4px width
+            painter.setPen(pen)
+            w = self.width()
+            h = self.height()
+            painter.drawRect(2, 2, w - 4, h - 4)
+            
+        # 2. Build the HUD text lines in the left bottom corner
+        hud_lines = []
+        
+        # Line: Isolate Mode details
+        if self.isolated_element_id is not None:
+            isolated_name = getattr(self, "isolated_element_name", None) or "Unknown Object"
+            hud_lines.append(f"Isolate Mode: {isolated_name}")
+            
+        # Line: Object count
+        num_models = sum(1 for info in self._model_infos.values() if not info.get("is_dot"))
+        hud_lines.append(f"Objects: {num_models}")
+        
+        # Line: Active transformation details
+        transform_text = getattr(self, "current_transform_text", None)
+        if transform_text:
+            hud_lines.append(transform_text)
+            
+        # 3. Paint the HUD text lines in the bottom-left corner
+        if hud_lines:
+            font = QFont("Segoe UI", 10, QFont.Bold)
+            painter.setFont(font)
+            
+            margin_left = 15
+            margin_bottom = 15
+            line_height = 20
+            box_padding = 10
+            
+            longest_line_width = 0
+            for line in hud_lines:
+                metrics = painter.fontMetrics()
+                longest_line_width = max(longest_line_width, metrics.horizontalAdvance(line))
+                
+            box_width = longest_line_width + (box_padding * 2)
+            box_height = (len(hud_lines) * line_height) + (box_padding * 2) - 5
+            
+            w = self.width()
+            h = self.height()
+            
+            box_x = margin_left
+            box_y = h - margin_bottom - box_height
+            
+            # Draw semi-transparent dark background rect for readability
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor(0, 0, 0, 160))
+            painter.drawRoundedRect(box_x, box_y, box_width, box_height, 6, 6)
+            
+            # Draw text lines
+            for i, line in enumerate(hud_lines):
+                if line.startswith("Isolate Mode:"):
+                    painter.setPen(QColor(127, 255, 0)) # lime green
+                elif line.startswith("Translate:") or line.startswith("Rotate:") or line.startswith("Scale:") or line.startswith("Scaling"):
+                    painter.setPen(QColor(255, 165, 0)) # orange for active transforms
+                else:
+                    painter.setPen(QColor(240, 240, 240)) # default white
+                    
+                text_y = box_y + box_padding + (i * line_height) + painter.fontMetrics().ascent()
+                painter.drawText(box_x + box_padding, text_y, line)
+                
+        painter.end()
 
     def _render_scene_models(self, view, proj, cam_pos, picking=False, mask_id=None):
         from OpenGL import GL
@@ -931,6 +1010,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if self.isolated_element_id is not None:
             if not self._is_element_in_tree(tree_widget.invisibleRootItem(), self.isolated_element_id):
                 self.isolated_element_id = None
+                self.isolated_element_name = ""
 
         models_info = []
         self._traverse_tree(tree_widget.invisibleRootItem(), models_info)
@@ -1087,6 +1167,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                         for i, axis in enumerate(axes):
                             if avail.get(axis, True):
                                 self._set_vector_component(mod, "m_vPosition", i, target_local_pos[i], target_local_pos)
+                        self.current_transform_text = f"Translate: X: {target_local_pos[0]:.2f}, Y: {target_local_pos[1]:.2f}, Z: {target_local_pos[2]:.2f}"
                     elif "rotation" in delta:
                         mod = self._find_or_create_modifier(data, "CSmartPropOperation_Rotate", "m_vRotation")
                         avail = self._vector_axis_availability(mod.get("m_vRotation"))
@@ -1094,8 +1175,13 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                         for i, axis in enumerate(axes):
                             if avail.get(axis, True):
                                 self._set_vector_component(mod, "m_vRotation", i, target_local_rot[i], target_local_rot)
+                        self.current_transform_text = f"Rotate: Pitch: {target_local_rot[0]:.2f}, Yaw: {target_local_rot[1]:.2f}, Roll: {target_local_rot[2]:.2f}"
                     elif "scale" in delta and (axis_idx is not None or is_center):
                         self._apply_scale_delta(data, axis_idx, target_local_scale, uniform=is_center)
+                        if is_center:
+                            self.current_transform_text = f"Scaling {target_local_scale[0]:.2f}"
+                        else:
+                            self.current_transform_text = f"Scale: X: {target_local_scale[0]:.2f}, Y: {target_local_scale[1]:.2f}, Z: {target_local_scale[2]:.2f}"
 
                     item.setData(0, Qt.UserRole, data)
 
@@ -1155,6 +1241,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if self.document and hasattr(self.document, "_gizmo_commit_drag"):
                 self.document._gizmo_commit_drag()
         self._action = None
+        self.current_transform_text = None
         self.update()
 
     def wheelEvent(self, event):
@@ -1670,6 +1757,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
             eid = data.get("m_nElementID", 0)
             node_is_isolated_start = (self.isolated_element_id is not None and eid == self.isolated_element_id)
+            if node_is_isolated_start:
+                self.isolated_element_name = child.text(0)
             current_in_isolated = is_in_isolated_subtree or node_is_isolated_start
 
             is_ancestor = False
