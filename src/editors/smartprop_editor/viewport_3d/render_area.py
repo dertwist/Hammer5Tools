@@ -286,6 +286,21 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     def paintGL(self):
         from OpenGL import GL
 
+        # Explicitly restore expected OpenGL states that QPainter might have left dirty:
+        GL.glEnable(GL.GL_DEPTH_TEST)
+        GL.glDepthMask(GL.GL_TRUE)
+        GL.glDepthFunc(GL.GL_LESS)
+
+        GL.glEnable(GL.GL_BLEND)
+        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+        
+        GL.glDisable(GL.GL_CULL_FACE)
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+        
+        # Reset bindings to avoid any QPainter leftovers interfering
+        GL.glBindVertexArray(0)
+        GL.glUseProgram(0)
+
         # Perform picking pass first if flagged
         if self._perform_pick_flag:
             self._do_picking_pass()
@@ -342,13 +357,13 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # 1. Rectangle highlight around the viewport if in isolate mode
+        # 1. Rectangle highlight around the viewport if in isolate mode (slighter, 2px)
         if self.isolated_element_id is not None:
-            pen = QPen(QColor(127, 255, 0), 4) # lime green, 4px width
+            pen = QPen(QColor(127, 255, 0), 2) # lime green, 2px width
             painter.setPen(pen)
             w = self.width()
             h = self.height()
-            painter.drawRect(2, 2, w - 4, h - 4)
+            painter.drawRect(1, 1, w - 2, h - 2)
             
         # 2. Build the HUD text lines in the left bottom corner
         hud_lines = []
@@ -367,9 +382,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if transform_text:
             hud_lines.append(transform_text)
             
-        # 3. Paint the HUD text lines in the bottom-left corner
+        # 3. Paint the HUD text lines in the bottom-left corner with sharp stylesheet style
         if hud_lines:
-            font = QFont("Segoe UI", 10, QFont.Bold)
+            font = QFont("Segoe UI", 9)
             painter.setFont(font)
             
             margin_left = 15
@@ -382,7 +397,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 metrics = painter.fontMetrics()
                 longest_line_width = max(longest_line_width, metrics.horizontalAdvance(line))
                 
-            box_width = longest_line_width + (box_padding * 2)
+            box_width = longest_line_width + (box_padding * 2) + 10
             box_height = (len(hud_lines) * line_height) + (box_padding * 2) - 5
             
             w = self.width()
@@ -391,10 +406,22 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             box_x = margin_left
             box_y = h - margin_bottom - box_height
             
-            # Draw semi-transparent dark background rect for readability
+            # Sharp stylesheet box styling:
+            # - Draw sharp background box (dark gray, #1e1e1e with 220 alpha)
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QColor(0, 0, 0, 160))
-            painter.drawRoundedRect(box_x, box_y, box_width, box_height, 6, 6)
+            painter.setBrush(QColor(30, 30, 30, 220))
+            painter.drawRect(box_x, box_y, box_width, box_height)
+            
+            # - Draw sharp 1px border (#444444)
+            painter.setPen(QPen(QColor(68, 68, 68), 1))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRect(box_x, box_y, box_width, box_height)
+            
+            # - Draw a clean 3px left accent line
+            accent_color = QColor(127, 255, 0) if self.isolated_element_id is not None else QColor(0, 120, 215)
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(accent_color)
+            painter.drawRect(box_x, box_y, 3, box_height)
             
             # Draw text lines
             for i, line in enumerate(hud_lines):
@@ -406,7 +433,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     painter.setPen(QColor(240, 240, 240)) # default white
                     
                 text_y = box_y + box_padding + (i * line_height) + painter.fontMetrics().ascent()
-                painter.drawText(box_x + box_padding, text_y, line)
+                painter.drawText(box_x + box_padding + 6, text_y, line)
                 
         painter.end()
 
