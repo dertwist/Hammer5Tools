@@ -19,7 +19,8 @@ from src.editors.smartprop_editor.viewport_3d.shaders import (
     PICKING_VERTEX_SHADER, PICKING_FRAGMENT_SHADER,
     GRID_VERTEX_SHADER, GRID_FRAGMENT_SHADER,
     GIZMO_VERTEX_SHADER, GIZMO_FRAGMENT_SHADER,
-    WIREFRAME_VERTEX_SHADER, WIREFRAME_FRAGMENT_SHADER
+    WIREFRAME_VERTEX_SHADER, WIREFRAME_FRAGMENT_SHADER,
+    OUTLINE_VERTEX_SHADER, OUTLINE_FRAGMENT_SHADER
 )
 
 
@@ -63,6 +64,16 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.StrongFocus)
 
+        # Request a multisampled (anti-aliased) framebuffer.  This must be set
+        # before the widget's GL context is created; glEnable(GL_MULTISAMPLE) in
+        # initializeGL is a no-op without a multisampled surface behind it.  The
+        # sample count follows the SmartProp Editor's Anti-aliasing setting.
+        from src.editors.smartprop_editor.viewport_3d.gl_settings import (
+            make_viewport_surface_format, get_viewport_msaa_samples,
+        )
+        self._msaa_samples = get_viewport_msaa_samples()
+        self.setFormat(make_viewport_surface_format(self._msaa_samples))
+
         # Camera & Interaction
         self.camera = Camera()
         self.gizmo = Gizmo()
@@ -81,6 +92,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         # View Settings
         self.shading_mode = "textured"  # "textured" | "solid" | "wireframe"
+        self.translucency_enabled = True  # when False, BLEND materials draw opaque
         self.coordinate_space = "World"
         self.snapping_enabled = False
         self.grid_step = 8.0
@@ -100,6 +112,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._grid_program = 0
         self._gizmo_program = 0
         self._wireframe_program = 0
+        self._outline_program = 0
 
         self._grid_vao = 0
         self._grid_vbo = 0
@@ -107,16 +120,48 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._box_vbo = 0
         self._dot_vao = 0
         self._dot_vbo = 0
+        self._fs_vao = 0  # empty VAO for the fullscreen-triangle outline pass
+
+        # Selection outline appearance.  The selected element's silhouette is
+        # traced with a constant-width outline instead of a full-surface fill.
+        self.outline_enabled = True
+        self.outline_color = (0.15, 0.95, 1.0)  # cyan, matching the app's selection accent
+        self.outline_thickness = 3.0            # logical pixels (scaled by device ratio)
+
+        # Offscreen single-sample mask FBO for the selection silhouette.  Kept
+        # separate from the picking FBO: this one owns a *texture* colour target
+        # (the outline pass samples it), whereas picking reads back from a
+        # renderbuffer.
+        self._mask_fbo = 0
+        self._mask_color_tex = 0
+        self._mask_depth_rbo = 0
+        self._mask_fbo_w = 0
+        self._mask_fbo_h = 0
+
+        # Dedicated single-sample framebuffer for color-ID picking.  The visible
+        # surface is multisampled (MSAA), and glReadPixels is invalid on a
+        # multisampled buffer — plus MSAA would blend neighbouring IDs at edges
+        # and corrupt the lookup.  Picking therefore renders into this private
+        # non-multisampled FBO instead.
+        self._pick_fbo = 0
+        self._pick_color_rbo = 0
+        self._pick_depth_rbo = 0
+        self._pick_fbo_w = 0
+        self._pick_fbo_h = 0
 
     def initializeGL(self):
         from OpenGL import GL
 
         # Debug info
         renderer = GL.glGetString(GL.GL_RENDERER).decode('utf-8')
-        print(f"[SmartProp3D] OpenGL Context Initialized: {renderer}")
+        samples = GL.glGetIntegerv(GL.GL_SAMPLES)
+        print(f"[SmartProp3D] OpenGL Context Initialized: {renderer} (MSAA x{samples})")
 
         GL.glEnable(GL.GL_DEPTH_TEST)
-        GL.glEnable(GL.GL_MULTISAMPLE)
+        # Only enable multisampling when the surface actually provides samples;
+        # this keeps the state honest on drivers that report a 0-sample buffer.
+        if samples and samples > 1:
+            GL.glEnable(GL.GL_MULTISAMPLE)
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
@@ -126,6 +171,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._grid_program = link_program(GRID_VERTEX_SHADER, GRID_FRAGMENT_SHADER)
         self._gizmo_program = link_program(GIZMO_VERTEX_SHADER, GIZMO_FRAGMENT_SHADER)
         self._wireframe_program = link_program(WIREFRAME_VERTEX_SHADER, WIREFRAME_FRAGMENT_SHADER)
+        self._outline_program = link_program(OUTLINE_VERTEX_SHADER, OUTLINE_FRAGMENT_SHADER)
+
+        # Empty VAO required by core profile to issue the attribute-less
+        # fullscreen-triangle draw in the selection outline pass.
+        self._fs_vao = GL.glGenVertexArrays(1)
 
         # Initialize Grid Geometry
         size = 25000.0
@@ -250,11 +300,24 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # 2. Render Models
         self._render_scene_models(view, proj, cam_pos, picking=False)
 
+        # 2b. Selection outline overlay.  Composited here — after the models but
+        # before the gizmo — because the gizmo clears the depth buffer and draws
+        # on top; running the outline first keeps it from being wiped or occluded.
+        if self.outline_enabled and self._selected_id in self._model_infos:
+            self._render_selection_outline(view, proj, cam_pos)
+
         # 3. Render Gizmo
         self.gizmo.render(self._gizmo_program, view, proj, cam_pos)
 
-    def _render_scene_models(self, view, proj, cam_pos, picking=False):
+    def _render_scene_models(self, view, proj, cam_pos, picking=False, mask_id=None):
         from OpenGL import GL
+
+        # ``mask_id`` renders a selection silhouette: every element is drawn with
+        # the flat picking shader, but the element whose id == mask_id is painted
+        # solid white and all others black, so the resulting buffer is that one
+        # element's depth-occluded silhouette.  It shares the picking shader/geometry
+        # path, hence the combined ``use_pick`` flag below.
+        use_pick = picking or (mask_id is not None)
 
         # Resolve context addon from opened file
         context_addon = None
@@ -265,7 +328,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if addon_match:
                 context_addon = addon_match.group(1)
 
-        if picking:
+        if use_pick:
             GL.glUseProgram(self._picking_program)
             GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._picking_program, "uView"), 1, GL.GL_FALSE, view)
             GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._picking_program, "uProjection"), 1, GL.GL_FALSE, proj)
@@ -280,6 +343,26 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._model_program, "uView"), 1, GL.GL_FALSE, view)
             GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._model_program, "uProjection"), 1, GL.GL_FALSE, proj)
             GL.glUniform3fv(GL.glGetUniformLocation(self._model_program, "uCameraPos"), 1, cam_pos)
+
+        def set_pick_color(eid):
+            """Upload the flat colour for the picking/mask shader.
+
+            Mask mode: white for the outlined element, black otherwise.
+            Picking mode: the element id encoded across the RGB channels.
+            """
+            if mask_id is not None:
+                c = 1.0 if eid == mask_id else 0.0
+                GL.glUniform3f(GL.glGetUniformLocation(self._picking_program, "uPickColor"), c, c, c)
+            else:
+                r = (eid & 0xFF) / 255.0
+                g = ((eid >> 8) & 0xFF) / 255.0
+                b = ((eid >> 16) & 0xFF) / 255.0
+                GL.glUniform3f(GL.glGetUniformLocation(self._picking_program, "uPickColor"), r, g, b)
+
+        # Translucent (BLEND) submeshes are collected here and drawn in a second
+        # pass after all opaque geometry, sorted back-to-front with depth writes
+        # off so they composite correctly.
+        transparent_items = []
 
         for eid, info in self._model_infos.items():
             pos = info.get("position", [0.0, 0.0, 0.0])
@@ -310,11 +393,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             if is_dot:
                 if not self.display_groups:
                     continue
-                if picking:
-                    r = (eid & 0xFF) / 255.0
-                    g = ((eid >> 8) & 0xFF) / 255.0
-                    b = ((eid >> 16) & 0xFF) / 255.0
-                    GL.glUniform3f(GL.glGetUniformLocation(self._picking_program, "uPickColor"), r, g, b)
+                if use_pick:
+                    set_pick_color(eid)
                     dot_size = 12.0
                     dot_matrix = scale_matrix(dot_size, dot_size, dot_size) @ model_matrix
                     GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._picking_program, "uModel"), 1, GL.GL_FALSE, dot_matrix)
@@ -352,12 +432,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             # Query GPU mesh
             gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
 
-            if picking:
-                # Color encoding of the integer ID
-                r = (eid & 0xFF) / 255.0
-                g = ((eid >> 8) & 0xFF) / 255.0
-                b = ((eid >> 16) & 0xFF) / 255.0
-                GL.glUniform3f(GL.glGetUniformLocation(self._picking_program, "uPickColor"), r, g, b)
+            if use_pick:
+                # Flat id colour (picking) or white/black silhouette (mask mode).
+                set_pick_color(eid)
 
                 if gpu_mesh:
                     GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._picking_program, "uModel"), 1, GL.GL_FALSE, model_matrix)
@@ -370,28 +447,25 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 is_selected = (eid == self._selected_id)
 
                 if gpu_mesh:
-                    GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._model_program, "uModel"), 1, GL.GL_FALSE, model_matrix)
-                    # Normal matrix is transpose of inverse of 3x3 model matrix
+                    # Normal matrix is transpose of inverse of the 3x3 model matrix.
                     norm_mat = np.linalg.inv(model_matrix[:3, :3]).T
-                    GL.glUniformMatrix3fv(GL.glGetUniformLocation(self._model_program, "uNormalMatrix"), 1, GL.GL_FALSE, norm_mat)
+                    textured = (self.shading_mode == "textured")
 
-                    # Highlight selection
-                    GL.glUniform1f(GL.glGetUniformLocation(self._model_program, "uHighlight"), 1.0 if is_selected else 0.0)
-                    GL.glUniform3fv(GL.glGetUniformLocation(self._model_program, "uBaseColor"), 1, np.array([0.7, 0.7, 0.7], dtype=np.float32))
-
-                    # Texture setup
-                    has_tex = 0
-                    if self.shading_mode == "textured" and gpu_mesh.has_texture:
-                        GL.glActiveTexture(GL.GL_TEXTURE0)
-                        GL.glBindTexture(GL.GL_TEXTURE_2D, gpu_mesh.texture_id)
-                        GL.glUniform1i(GL.glGetUniformLocation(self._model_program, "uTexture"), 0)
-                        has_tex = 1
-
-                    GL.glUniform1i(GL.glGetUniformLocation(self._model_program, "uHasTexture"), has_tex)
-
-                    GL.glBindVertexArray(gpu_mesh.vao)
-                    GL.glDrawElements(GL.GL_TRIANGLES, gpu_mesh.index_count, GL.GL_UNSIGNED_INT, None)
-                    GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+                    for sm in gpu_mesh.submeshes:
+                        if textured and sm.material.is_transparent and self.translucency_enabled:
+                            # Defer translucent submeshes to the sorted second pass.
+                            dist = float(np.linalg.norm(cam_pos - model_matrix[3, :3]))
+                            transparent_items.append(
+                                (dist, gpu_mesh, sm, model_matrix, norm_mat, is_selected)
+                            )
+                        else:
+                            # Translucency off (or non-textured shading): draw BLEND
+                            # materials as solid so they don't render see-through.
+                            force_opaque = sm.material.is_transparent and not self.translucency_enabled
+                            self._draw_material_submesh(
+                                gpu_mesh, sm, model_matrix, norm_mat, is_selected, textured,
+                                force_opaque=force_opaque,
+                            )
                 else:
                     # Queue model decompile / load if not already started
                     self.mesh_cache.request_model(model_path, context_addon)
@@ -410,8 +484,29 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     # Restore model program
                     GL.glUseProgram(self._model_program)
 
+        # Second pass: translucent submeshes.  Sorted far-to-near across objects,
+        # depth writes off, and each submesh drawn in two culled sub-passes — its
+        # far (back) faces, then its near (front) faces over them.  Without the
+        # back/front split, unsorted double-sided blending lets a mesh's own
+        # interior/back faces punch through the surface, which reads as scrambled,
+        # "distorted" geometry.  Flipping the normal on back faces (in the shader)
+        # keeps both sides shaded correctly.
+        if not use_pick and transparent_items:
+            transparent_items.sort(key=lambda t: t[0], reverse=True)
+            GL.glUseProgram(self._model_program)
+            GL.glEnable(GL.GL_CULL_FACE)
+            GL.glFrontFace(GL.GL_CCW)
+            GL.glDepthMask(GL.GL_FALSE)
+            for _dist, gm, sm, mm, nm, sel in transparent_items:
+                GL.glCullFace(GL.GL_FRONT)   # keep back faces (far side) first
+                self._draw_material_submesh(gm, sm, mm, nm, sel, True)
+                GL.glCullFace(GL.GL_BACK)    # then front faces (near side) over them
+                self._draw_material_submesh(gm, sm, mm, nm, sel, True)
+            GL.glDepthMask(GL.GL_TRUE)
+            GL.glDisable(GL.GL_CULL_FACE)
+
         # Restore standard polygon fill mode
-        if not picking:
+        if not use_pick:
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
 
     def _draw_box_geometry(self, model_matrix, is_picking=False):
@@ -435,10 +530,131 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             GL.glDrawArrays(GL.GL_LINES, 0, 24)
         GL.glBindVertexArray(0)
 
-    def _do_picking_pass(self):
-        """Perform color-coded picking pass on backbuffer."""
+    # ------------------------------------------------------------------
+    # Material binding / submesh drawing
+    # ------------------------------------------------------------------
+    _ALPHA_MODE_CODE = {"OPAQUE": 0, "MASK": 1, "BLEND": 2}
+
+    def _bind_material(self, program, material, textured, force_opaque=False):
+        """Upload one GPUMaterial's uniforms and bind its textures (units 0-4).
+
+        In non-textured (solid / wireframe) shading the maps are ignored and the
+        surface renders as a neutral, opaque grey so geometry stays readable.
+        ``force_opaque`` renders a BLEND material as OPAQUE (used when the viewport
+        translucency toggle is off).
+        """
         from OpenGL import GL
 
+        def loc(name):
+            return GL.glGetUniformLocation(program, name)
+
+        # Flat fallback colour used when no base texture is bound.
+        GL.glUniform3f(loc("uBaseColor"), 0.7, 0.7, 0.7)
+
+        if not textured:
+            GL.glUniform4f(loc("uBaseColorFactor"), 1.0, 1.0, 1.0, 1.0)
+            GL.glUniform1f(loc("uRoughness"), 0.6)
+            GL.glUniform1f(loc("uMetallic"), 0.0)
+            GL.glUniform3f(loc("uEmissiveFactor"), 0.0, 0.0, 0.0)
+            GL.glUniform1i(loc("uAlphaMode"), 0)
+            GL.glUniform1f(loc("uAlphaCutoff"), 0.5)
+            for name in ("uHasBaseTex", "uHasNormalTex", "uHasMRTex", "uHasAO", "uHasEmissive"):
+                GL.glUniform1i(loc(name), 0)
+            return
+
+        bcf = material.base_color_factor
+        GL.glUniform4f(loc("uBaseColorFactor"), bcf[0], bcf[1], bcf[2], bcf[3])
+        GL.glUniform1f(loc("uRoughness"), float(material.roughness_factor))
+        GL.glUniform1f(loc("uMetallic"), float(material.metallic_factor))
+        ef = material.emissive_factor
+        GL.glUniform3f(loc("uEmissiveFactor"), ef[0], ef[1], ef[2])
+        alpha_mode = 0 if force_opaque else self._ALPHA_MODE_CODE.get(material.alpha_mode, 0)
+        GL.glUniform1i(loc("uAlphaMode"), alpha_mode)
+        GL.glUniform1f(loc("uAlphaCutoff"), float(material.alpha_cutoff))
+
+        def bind_tex(unit, tex, sampler_name, has_name):
+            GL.glActiveTexture(GL.GL_TEXTURE0 + unit)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, tex if tex else 0)
+            GL.glUniform1i(loc(sampler_name), unit)
+            GL.glUniform1i(loc(has_name), 1 if tex else 0)
+
+        bind_tex(0, material.base_tex, "uBaseTex", "uHasBaseTex")
+        bind_tex(1, material.normal_tex, "uNormalTex", "uHasNormalTex")
+        bind_tex(2, material.mr_tex, "uMRTex", "uHasMRTex")
+        bind_tex(3, material.ao_tex, "uAOTex", "uHasAO")
+        bind_tex(4, material.emissive_tex, "uEmissiveTex", "uHasEmissive")
+        GL.glActiveTexture(GL.GL_TEXTURE0)
+
+    def _draw_material_submesh(self, gpu_mesh, submesh, model_matrix, norm_mat, is_selected, textured, force_opaque=False):
+        """Draw one material submesh with the model shader."""
+        from OpenGL import GL
+        prog = self._model_program
+
+        GL.glUniformMatrix4fv(GL.glGetUniformLocation(prog, "uModel"), 1, GL.GL_FALSE, model_matrix)
+        GL.glUniformMatrix3fv(GL.glGetUniformLocation(prog, "uNormalMatrix"), 1, GL.GL_FALSE, norm_mat)
+        # Selection feedback is a post-process outline (see _render_selection_outline),
+        # not a per-fragment fill, so ``is_selected`` no longer feeds the model shader.
+
+        self._bind_material(prog, submesh.material, textured, force_opaque=force_opaque)
+
+        GL.glBindVertexArray(gpu_mesh.vao)
+        # index_offset is an element count; glDrawElements wants a byte offset
+        # into the element buffer (uint32 indices -> 4 bytes each).
+        GL.glDrawElements(
+            GL.GL_TRIANGLES, submesh.index_count, GL.GL_UNSIGNED_INT,
+            GL.ctypes.c_void_p(submesh.index_offset * 4),
+        )
+        GL.glBindVertexArray(0)
+
+    def _ensure_pick_fbo(self, w, h):
+        """Create (or resize) the single-sample picking framebuffer to w x h."""
+        from OpenGL import GL
+
+        if self._pick_fbo and self._pick_fbo_w == w and self._pick_fbo_h == h:
+            return
+
+        # Drop the old attachments/FBO before making new ones.
+        if self._pick_fbo:
+            GL.glDeleteFramebuffers(1, [self._pick_fbo])
+            GL.glDeleteRenderbuffers(2, [self._pick_color_rbo, self._pick_depth_rbo])
+
+        self._pick_color_rbo = GL.glGenRenderbuffers(1)
+        GL.glBindRenderbuffer(GL.GL_RENDERBUFFER, self._pick_color_rbo)
+        GL.glRenderbufferStorage(GL.GL_RENDERBUFFER, GL.GL_RGBA8, w, h)
+
+        self._pick_depth_rbo = GL.glGenRenderbuffers(1)
+        GL.glBindRenderbuffer(GL.GL_RENDERBUFFER, self._pick_depth_rbo)
+        GL.glRenderbufferStorage(GL.GL_RENDERBUFFER, GL.GL_DEPTH_COMPONENT24, w, h)
+
+        self._pick_fbo = GL.glGenFramebuffers(1)
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self._pick_fbo)
+        GL.glFramebufferRenderbuffer(GL.GL_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0,
+                                     GL.GL_RENDERBUFFER, self._pick_color_rbo)
+        GL.glFramebufferRenderbuffer(GL.GL_FRAMEBUFFER, GL.GL_DEPTH_ATTACHMENT,
+                                     GL.GL_RENDERBUFFER, self._pick_depth_rbo)
+
+        self._pick_fbo_w = w
+        self._pick_fbo_h = h
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.defaultFramebufferObject())
+
+    def _do_picking_pass(self):
+        """Render color-coded IDs into the private single-sample FBO and read
+        the pixel under the cursor.  Keeping picking off the multisampled default
+        framebuffer avoids the glReadPixels GL_INVALID_OPERATION and stops MSAA
+        from blending neighbouring IDs at silhouette edges."""
+        from OpenGL import GL
+
+        if self._pick_pos is None:
+            return
+
+        # Work in device pixels so picking lines up with the HiDPI framebuffer.
+        dpr = self.devicePixelRatioF()
+        fb_w = max(1, int(round(self.width() * dpr)))
+        fb_h = max(1, int(round(self.height() * dpr)))
+        self._ensure_pick_fbo(fb_w, fb_h)
+
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self._pick_fbo)
+        GL.glViewport(0, 0, fb_w, fb_h)
         GL.glClearColor(0.0, 0.0, 0.0, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         GL.glDisable(GL.GL_BLEND)
@@ -449,18 +665,25 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         self._render_scene_models(view, proj, cam_pos, picking=True)
 
-        # Read color under cursor
-        w, h = self.width(), self.height()
-        gl_y = h - self._pick_pos.y()
-        gl_x = self._pick_pos.x()
+        # Read color under cursor (device pixels, origin bottom-left).
+        gl_x = int(self._pick_pos.x() * dpr)
+        gl_y = int(fb_h - self._pick_pos.y() * dpr)
+        gl_x = min(max(gl_x, 0), fb_w - 1)
+        gl_y = min(max(gl_y, 0), fb_h - 1)
 
-        pixel = GL.glReadPixels(int(gl_x), int(gl_y), 1, 1, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+        GL.glReadBuffer(GL.GL_COLOR_ATTACHMENT0)
+        pixel = GL.glReadPixels(gl_x, gl_y, 1, 1, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+
+        # Restore the default (visible) framebuffer + blending for the main pass.
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.defaultFramebufferObject())
+        GL.glViewport(0, 0, fb_w, fb_h)
         GL.glEnable(GL.GL_BLEND)
 
-        # Decode ID
-        r = pixel[0]
-        g = pixel[1]
-        b = pixel[2]
+        # Decode ID.  PyOpenGL may hand back the single pixel as (1,1,4), (4,) or
+        # raw bytes depending on version — flatten so the RGB bytes are stable.
+        flat = np.frombuffer(bytes(pixel), dtype=np.uint8) if isinstance(pixel, (bytes, bytearray)) \
+            else np.asarray(pixel, dtype=np.uint8).reshape(-1)
+        r, g, b = int(flat[0]), int(flat[1]), int(flat[2])
         clicked_id = r | (g << 8) | (b << 16)
 
         if clicked_id != 0 and clicked_id in self._model_infos:
@@ -471,18 +694,128 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self.highlight_element(0)
 
     # ------------------------------------------------------------------
-    # Camera fitting
+    # Selection outline
     # ------------------------------------------------------------------
-    def fit_view(self):
-        """Zoom and position camera to fit all models in scene."""
-        if not self._model_infos:
+    def _ensure_mask_fbo(self, w, h):
+        """Create (or resize) the single-sample selection-mask framebuffer.
+
+        Colour is a sampleable texture (the outline pass reads it); depth is a
+        renderbuffer so the silhouette is correctly occluded by nearer geometry.
+        """
+        from OpenGL import GL
+
+        if self._mask_fbo and self._mask_fbo_w == w and self._mask_fbo_h == h:
             return
 
+        if self._mask_fbo:
+            GL.glDeleteFramebuffers(1, [self._mask_fbo])
+            GL.glDeleteTextures(1, [self._mask_color_tex])
+            GL.glDeleteRenderbuffers(1, [self._mask_depth_rbo])
+
+        self._mask_color_tex = GL.glGenTextures(1)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._mask_color_tex)
+        GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, w, h, 0,
+                        GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, None)
+        # Linear filtering softens the outline's edge when the pass samples between
+        # texels; clamp keeps the border ring from wrapping across the screen.
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
+
+        self._mask_depth_rbo = GL.glGenRenderbuffers(1)
+        GL.glBindRenderbuffer(GL.GL_RENDERBUFFER, self._mask_depth_rbo)
+        GL.glRenderbufferStorage(GL.GL_RENDERBUFFER, GL.GL_DEPTH_COMPONENT24, w, h)
+
+        self._mask_fbo = GL.glGenFramebuffers(1)
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self._mask_fbo)
+        GL.glFramebufferTexture2D(GL.GL_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0,
+                                  GL.GL_TEXTURE_2D, self._mask_color_tex, 0)
+        GL.glFramebufferRenderbuffer(GL.GL_FRAMEBUFFER, GL.GL_DEPTH_ATTACHMENT,
+                                     GL.GL_RENDERBUFFER, self._mask_depth_rbo)
+
+        self._mask_fbo_w = w
+        self._mask_fbo_h = h
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.defaultFramebufferObject())
+
+    def _render_selection_outline(self, view, proj, cam_pos):
+        """Draw a silhouette outline around the currently selected mesh.
+
+        Two passes: (1) render the selected element's depth-occluded silhouette as
+        white-on-black into the mask FBO; (2) a fullscreen pass dilates that mask
+        and paints the ring just outside the silhouette over the visible scene.
+
+        Only loaded meshes are outlined here — group dots and not-yet-loaded model
+        placeholders keep their own wireframe-box selection markers.
+        """
+        from OpenGL import GL
+
+        sel = self._model_infos.get(self._selected_id)
+        if not sel or sel.get("is_dot"):
+            return
+        if self.mesh_cache.get_gpu_mesh(sel.get("path", "")) is None:
+            return
+
+        # Work in device pixels so the mask lines up with the HiDPI framebuffer.
+        dpr = self.devicePixelRatioF()
+        fb_w = max(1, int(round(self.width() * dpr)))
+        fb_h = max(1, int(round(self.height() * dpr)))
+        self._ensure_mask_fbo(fb_w, fb_h)
+
+        # ---- Pass 1: silhouette mask -----------------------------------------
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self._mask_fbo)
+        GL.glViewport(0, 0, fb_w, fb_h)
+        GL.glClearColor(0.0, 0.0, 0.0, 1.0)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        GL.glDisable(GL.GL_BLEND)
+        GL.glEnable(GL.GL_DEPTH_TEST)
+        GL.glDepthMask(GL.GL_TRUE)
+        self._render_scene_models(view, proj, cam_pos, mask_id=self._selected_id)
+
+        # ---- Pass 2: composite outline over the visible framebuffer ----------
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.defaultFramebufferObject())
+        GL.glViewport(0, 0, fb_w, fb_h)
+        GL.glEnable(GL.GL_BLEND)
+        GL.glDisable(GL.GL_DEPTH_TEST)
+        GL.glDepthMask(GL.GL_FALSE)
+        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+
+        prog = self._outline_program
+        GL.glUseProgram(prog)
+        GL.glActiveTexture(GL.GL_TEXTURE0)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self._mask_color_tex)
+        GL.glUniform1i(GL.glGetUniformLocation(prog, "uMask"), 0)
+        GL.glUniform2f(GL.glGetUniformLocation(prog, "uTexel"), 1.0 / fb_w, 1.0 / fb_h)
+        GL.glUniform1f(GL.glGetUniformLocation(prog, "uThickness"),
+                       max(1.0, float(self.outline_thickness) * dpr))
+        oc = self.outline_color
+        GL.glUniform3f(GL.glGetUniformLocation(prog, "uOutlineColor"), oc[0], oc[1], oc[2])
+
+        GL.glBindVertexArray(self._fs_vao)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 3)
+        GL.glBindVertexArray(0)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+
+        # Restore depth writes/testing for the gizmo pass that follows.
+        GL.glDepthMask(GL.GL_TRUE)
+        GL.glEnable(GL.GL_DEPTH_TEST)
+
+    # ------------------------------------------------------------------
+    # Camera fitting
+    # ------------------------------------------------------------------
+    def _compute_bounds(self, infos):
+        """Return the GL-space AABB (min, max, has_bounds) enclosing ``infos``.
+
+        ``infos`` is an iterable of element info dicts (a subset of
+        ``self._model_infos.values()``).  Meshes use their transformed AABB;
+        dots and not-yet-loaded models fall back to a small box at their origin.
+        """
         bbox_min = np.array([float('inf'), float('inf'), float('inf')], dtype=np.float32)
         bbox_max = np.array([float('-inf'), float('-inf'), float('-inf')], dtype=np.float32)
 
         has_bounds = False
-        for eid, info in self._model_infos.items():
+        for info in infos:
             pos = info.get("position", [0.0, 0.0, 0.0])
             rot = info.get("rotation", [0.0, 0.0, 0.0])
             scale = info.get("scale", [1.0, 1.0, 1.0])
@@ -520,9 +853,32 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     bbox_max = np.maximum(bbox_max, gl_pos + 50.0)
             has_bounds = True
 
+        return bbox_min, bbox_max, has_bounds
+
+    def fit_view(self):
+        """Zoom and position camera to fit all models in scene."""
+        if not self._model_infos:
+            return
+        bbox_min, bbox_max, has_bounds = self._compute_bounds(self._model_infos.values())
         if has_bounds:
             self.camera.fit_to_bounds(bbox_min, bbox_max)
             self.update()
+
+    def frame_selection(self):
+        """Frame the camera on the current selection (F key).
+
+        Fits the selected element if one is selected; otherwise frames the whole
+        scene, matching the behaviour users expect from Blender/Hammer.
+        """
+        sel = self._model_infos.get(self._selected_id)
+        if sel is not None:
+            bbox_min, bbox_max, has_bounds = self._compute_bounds([sel])
+            if has_bounds:
+                self.camera.fit_to_bounds(bbox_min, bbox_max)
+                self.update()
+                return
+        # Nothing selected (or selection has no bounds) — frame everything.
+        self.fit_view()
 
     def update_viewport(self):
         """Rebuild the scene models list from the current document tree."""
@@ -774,6 +1130,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         elif event.key() == Qt.Key_R:
             self.gizmo.set_mode(GizmoMode.SCALE)
             self.update()
+        elif event.key() == Qt.Key_F:
+            # Frame the current selection (or the whole scene if nothing selected).
+            self.frame_selection()
         else:
             super().keyPressEvent(event)
 
