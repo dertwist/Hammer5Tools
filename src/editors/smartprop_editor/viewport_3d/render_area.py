@@ -1633,7 +1633,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         child_indices = list(range(item.childCount()))
 
-        if parent_class == "CSmartPropElement_PickOne":
+        bypass_pickone = (self.isolated_element_id is not None and not is_in_isolated_subtree)
+
+        if parent_class == "CSmartPropElement_PickOne" and not bypass_pickone:
             selection_mode = parent_data.get("m_SelectionMode", "RANDOM")
             selected_idx = 0
             if selection_mode == "SPECIFIC" or selection_mode == "SPECIFIC_CHILD":
@@ -1666,10 +1668,21 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             data = child.data(0, Qt.UserRole)
             data = dict(data) if data is not None else {}
 
+            eid = data.get("m_nElementID", 0)
+            node_is_isolated_start = (self.isolated_element_id is not None and eid == self.isolated_element_id)
+            current_in_isolated = is_in_isolated_subtree or node_is_isolated_start
+
+            is_ancestor = False
+            if self.isolated_element_id is not None and not current_in_isolated:
+                is_ancestor = self._is_element_in_tree(child, self.isolated_element_id)
+                if not is_ancestor:
+                    continue
+
             # Don't display elements if they are disabled
             is_enabled = data.get("m_bEnabled", True)
             if is_enabled is False or is_enabled == "false":
-                continue
+                if not (node_is_isolated_start or is_ancestor):
+                    continue
 
             local_pos, local_rot, local_scale = self._get_local_transform(data)
 
@@ -1687,12 +1700,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             world_pos, world_rot, world_scale = decompose_trs(world_matrix)
 
             element_class = data.get("_class", "")
-            
-            eid = data.get("m_nElementID", 0)
-            
-            node_is_isolated_start = (self.isolated_element_id is not None and eid == self.isolated_element_id)
-            current_in_isolated = is_in_isolated_subtree or node_is_isolated_start
-
             model_path = ""
             if element_class in ("CSmartPropElement_Model",
                                  "CSmartPropElement_ModelEntity",

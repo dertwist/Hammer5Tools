@@ -1134,6 +1134,9 @@ class SmartPropDocument(QMainWindow):
                 if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_D:
                     self.ui.tree_hierarchy_widget.DuplicateSelectedItems(self.element_id_generator)
                     return True
+                if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_H:
+                    self.toggle_isolation()
+                    return True
                 if event.matches(QKeySequence.Undo):
                     self.undo_stack.undo()
                     return True
@@ -1939,7 +1942,7 @@ class SmartPropDocument(QMainWindow):
                     menu.addSeparator()
                     render_area = self._viewport_3d.render_area if self._viewport_3d else None
                     is_isolated = render_area and render_area.isolated_element_id == eid
-                    isolate_action = menu.addAction("Isolation")
+                    isolate_action = menu.addAction("Isolate in 3d viewport")
                     isolate_action.setCheckable(True)
                     isolate_action.setChecked(bool(is_isolated))
                     isolate_action.setShortcut(QKeySequence("Ctrl+H"))
