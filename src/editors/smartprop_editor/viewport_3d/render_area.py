@@ -136,6 +136,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._eval_context = EvalContext()
         self._widget_infos = []  # list of resolved widget dicts to draw
 
+        # Preview-accuracy warnings surfaced in the HUD, rebuilt each
+        # update_viewport().
+        self._warn_approx_count = 0        # elements whose placement is approximate
+        self._warn_unsupported = set()     # unsupported element class short-names
+
         # Picking state
         self._perform_pick_flag = False
         self._pick_pos = None
@@ -409,7 +414,20 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         transform_text = getattr(self, "current_transform_text", None)
         if transform_text:
             hud_lines.append(transform_text)
-            
+
+        # Lines: preview-accuracy warnings (amber).  Marked with a leading "⚠" so
+        # the text-colour pass below can style them.
+        if getattr(self, "_warn_approx_count", 0) > 0:
+            n = self._warn_approx_count
+            hud_lines.append(
+                f"⚠ {n} element{'s' if n != 1 else ''} placed approximately "
+                f"(variable/expression transform)"
+            )
+        unsupported = getattr(self, "_warn_unsupported", None)
+        if unsupported:
+            names = ", ".join(sorted(unsupported))
+            hud_lines.append(f"⚠ Not fully previewed: {names}")
+
         # 3. Paint the HUD text lines in the bottom-left corner with sharp stylesheet style
         if hud_lines:
             font = QFont("Segoe UI", 9)
@@ -453,7 +471,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             
             # Draw text lines
             for i, line in enumerate(hud_lines):
-                if line.startswith("Isolate Mode:"):
+                if line.startswith("⚠"):
+                    painter.setPen(QColor(255, 196, 61)) # amber for preview warnings
+                elif line.startswith("Isolate Mode:"):
                     painter.setPen(QColor("#accc8d")) # isolated view color
                 elif line.startswith("Translate:") or line.startswith("Rotate:") or line.startswith("Scale:") or line.startswith("Scaling"):
                     painter.setPen(QColor(255, 165, 0)) # orange for active transforms
@@ -1047,10 +1067,25 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 return True
         return False
 
+    # Element classes the viewport can place/preview.  Anything else that carries
+    # geometry or replicates it (PlaceMultiple, BendDeformer, ModifyState, …) is
+    # only partially previewed, so it's surfaced as a HUD warning.
+    _SUPPORTED_ELEMENT_CLASSES = frozenset({
+        "CSmartPropElement_Model",
+        "CSmartPropElement_ModelEntity",
+        "CSmartPropElement_PropPhysics",
+        "CSmartPropElement_PropDynamic",
+        "CSmartPropElement_Group",
+        "CSmartPropElement_PickOne",
+        "CSmartPropElement_SmartProp",
+    })
+
     def update_viewport(self):
         """Rebuild the scene models list from the current document tree."""
         self._model_infos.clear()
         self._widget_infos = []
+        self._warn_approx_count = 0
+        self._warn_unsupported = set()
         self._eval_context = self._build_eval_context()
 
         if not self.document:
@@ -1590,6 +1625,42 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         except:
             return default
 
+    @staticmethod
+    def _value_has_binding(v):
+        """True if a value (or any of its components) is a variable/expression
+        binding rather than a plain literal."""
+        if isinstance(v, dict):
+            if "m_SourceName" in v or "m_Expression" in v:
+                return True
+            comps = v.get("m_Components")
+            if isinstance(comps, (list, tuple)):
+                return any(SmartProp3DRenderArea._value_has_binding(c) for c in comps)
+            return False
+        if isinstance(v, (list, tuple)):
+            return any(SmartProp3DRenderArea._value_has_binding(c) for c in v)
+        return False
+
+    def _transform_has_bindings(self, data):
+        """True when an element's placement depends on variable/expression
+        bindings, so the preview (using default values) is only approximate."""
+        if not isinstance(data, dict):
+            return False
+        for mod in data.get("m_Modifiers") or []:
+            if not isinstance(mod, dict):
+                continue
+            cls = mod.get("_class", "")
+            if cls == "CSmartPropOperation_Translate" and self._value_has_binding(mod.get("m_vPosition")):
+                return True
+            if cls == "CSmartPropOperation_Rotate" and self._value_has_binding(mod.get("m_vRotation")):
+                return True
+            if cls == "CSmartPropOperation_Scale" and self._value_has_binding(mod.get("m_flScale")):
+                return True
+        if self._value_has_binding(data.get("m_vModelScale")):
+            return True
+        if self._value_has_binding(data.get("m_flUniformModelScale")):
+            return True
+        return False
+
     def _get_local_transform(self, data):
         """Extract local pos, rot, scale from the element's data dictionary."""
         local_pos   = [0.0, 0.0, 0.0]
@@ -1898,6 +1969,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if is_enabled is False or is_enabled == "false":
             return
 
+        # Same preview-accuracy warnings as the tree traversal, for nested props.
+        if self._transform_has_bindings(data):
+            self._warn_approx_count += 1
+        nested_class = data.get("_class", "")
+        if (nested_class.startswith("CSmartPropElement_")
+                and nested_class not in self._SUPPORTED_ELEMENT_CLASSES):
+            self._warn_unsupported.add(nested_class.replace("CSmartPropElement_", ""))
+
         local_pos, local_rot, local_scale = self._get_local_transform(data)
 
         # Build local matrix
@@ -2042,6 +2121,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 if not (node_is_isolated_start or is_ancestor):
                     continue
 
+            # Placement is only approximate when the transform depends on
+            # variable/expression bindings — the preview resolves those against
+            # default values, not the real per-instance ones.
+            if self._transform_has_bindings(data):
+                self._warn_approx_count += 1
             local_pos, local_rot, local_scale = self._get_local_transform(data)
 
             # Build local matrix in Source 2 space (Scale -> Rotate -> Translate)
@@ -2058,6 +2142,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             world_pos, world_rot, world_scale = decompose_trs(world_matrix)
 
             element_class = data.get("_class", "")
+            # Flag element types the viewport can't fully preview.
+            if (element_class.startswith("CSmartPropElement_")
+                    and element_class not in self._SUPPORTED_ELEMENT_CLASSES):
+                self._warn_unsupported.add(element_class.replace("CSmartPropElement_", ""))
             model_path = ""
             if element_class in ("CSmartPropElement_Model",
                                  "CSmartPropElement_ModelEntity",
