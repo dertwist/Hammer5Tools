@@ -233,50 +233,66 @@ class SmartPropDocument(QMainWindow):
             lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem())
         )
 
-        # Hierarchy lives on the left; History / Variables / Choices stack on the right.
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.ui.HierarchyDock)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.ui.VariablesDock)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.ui.ChoicesDock)
+        # ── Dockable panels ─────────────────────────────────────────────
+        # Every major panel (Property Editor, Manual Editor, 3D Viewport,
+        # Hierarchy, History, Variables, Choices) is a QDockWidget, so the user
+        # can freely rearrange, float, tab, or hide any of them.  The central
+        # widget is collapsed to zero size so the docks fill the whole window.
+        _dock_features = (
+            QDockWidget.DockWidgetFeature.DockWidgetFloatable
+            | QDockWidget.DockWidgetFeature.DockWidgetMovable
+            | QDockWidget.DockWidgetFeature.DockWidgetClosable
+        )
 
-        self._setup_history_dock()
-
-        QTimer.singleShot(0, self._restore_user_prefs)
-
-        set_qdock_tab_style(self.findChildren)
-
-        # ── Central tab widget: Property Editor + Manual Editor ──────────
-        self._center_tabs = QTabWidget()
-        self._center_tabs.setDocumentMode(True)
-
-        # Move the existing PropertiesFrame into the first tab
+        # Property Editor dock (wraps the existing PropertiesFrame).
         self.ui.PropertiesFrame.setParent(None)
-        self._center_tabs.addTab(self.ui.PropertiesFrame, "Property Editor")
+        self._property_dock = QDockWidget("Property Editor", self)
+        self._property_dock.setObjectName("SPE_property_dock")
+        self._property_dock.setFeatures(_dock_features)
+        self._property_dock.setWidget(self.ui.PropertiesFrame)
 
-        # Create the Manual Editor tab
+        # Manual Editor dock.
         self._manual_editor = ManualEditor(document=self)
-        self._center_tabs.addTab(self._manual_editor, "Manual Editor")
+        self._manual_dock = QDockWidget("Manual Editor", self)
+        self._manual_dock.setObjectName("SPE_manual_dock")
+        self._manual_dock.setFeatures(_dock_features)
+        self._manual_dock.setWidget(self._manual_editor)
 
-        # 3D Viewport tab.  The OpenGL viewport (and its GL context / VRF
-        # decompilation) is expensive and can misbehave if created eagerly, so we
-        # add only a cheap placeholder here.  The real SmartProp3DViewport is built
-        # lazily the first time the user activates this tab (see _ensure_viewport_3d).
+        # 3D Viewport dock.  The OpenGL viewport (and its GL context / VRF
+        # decompilation) is expensive and can misbehave if created eagerly, so the
+        # dock starts with a cheap placeholder.  The real SmartProp3DViewport is
+        # built lazily the first time the dock becomes visible (see
+        # _on_viewport_dock_visibility_changed / _ensure_viewport_3d).
         self._viewport_3d = None
         self._viewport_3d_loaded = False
         self._viewport_3d_failed = False
         self._viewport_3d_placeholder = QWidget()
-        self._center_tabs.addTab(self._viewport_3d_placeholder, "3D Viewport")
+        self._viewport_dock = QDockWidget("3D Viewport", self)
+        self._viewport_dock.setObjectName("SPE_viewport_dock")
+        self._viewport_dock.setFeatures(_dock_features)
+        self._viewport_dock.setWidget(self._viewport_3d_placeholder)
 
-        # Replace central widget content
-        self.ui.centralwidget.layout().addWidget(self._center_tabs)
+        # Collapse the central widget: all content lives in docks now.
+        _central = QWidget(self)
+        _central.setObjectName("SPE_central_collapsed")
+        _central.setMaximumSize(0, 0)
+        self.setCentralWidget(_central)
 
-        # Auto-refresh tabs when switching
-        self._center_tabs.currentChanged.connect(self._on_center_tab_changed)
+        # Create the History dock (placed by the default-layout block below).
+        self._setup_history_dock()
+
+        # ── Default layout ──────────────────────────────────────────────
+        self._apply_default_layout()
+
+        # Refresh a panel when its dock becomes visible (replaces tab-change).
+        self._manual_dock.visibilityChanged.connect(self._on_manual_dock_visibility_changed)
+        self._viewport_dock.visibilityChanged.connect(self._on_viewport_dock_visibility_changed)
 
         # Keep the 3D viewport following the hierarchy in real-time: whenever
         # elements are added, removed, reordered, or their data edited, the scene
         # is rebuilt (models loaded/unloaded to match).  A short debounce coalesces
         # bursts (e.g. paste, bulk import, drag-drop) into a single rebuild, and the
-        # sync no-ops unless the 3D tab is actually the active view.
+        # sync no-ops unless the 3D viewport dock is actually visible.
         self._viewport_3d_sync_timer = QTimer(self)
         self._viewport_3d_sync_timer.setSingleShot(True)
         self._viewport_3d_sync_timer.setInterval(50)
@@ -287,7 +303,9 @@ class SmartPropDocument(QMainWindow):
         tree_model.rowsMoved.connect(self._schedule_viewport_3d_sync)
         tree_model.dataChanged.connect(self._schedule_viewport_3d_sync)
 
-        # Re-apply tab styles to include the new center tab bar
+        QTimer.singleShot(0, self._restore_user_prefs)
+
+        # Apply dock tab styling to the whole window.
         set_qdock_tab_style(self.findChildren)
 
         # Pre-warm pooled property widgets after first paint.
@@ -297,22 +315,25 @@ class SmartPropDocument(QMainWindow):
     def is_modified(self):
         return self._modified
 
-    def _on_center_tab_changed(self, index):
-        """Refresh the manual editor or viewport whenever the user switches to them."""
-        widget = self._center_tabs.widget(index)
-        if widget is self._manual_editor:
+    def _on_manual_dock_visibility_changed(self, visible):
+        """Refresh the manual editor whenever its dock becomes visible."""
+        if visible and getattr(self, '_manual_editor', None) is not None:
             self._manual_editor.refresh()
-        elif widget is self._viewport_3d_placeholder:
-            # First activation of the 3D tab: build the real OpenGL viewport now.
+
+    def _on_viewport_dock_visibility_changed(self, visible):
+        """Lazily build and refresh the 3D viewport when its dock becomes visible."""
+        if not visible:
+            return
+        if self._viewport_3d is None and not self._viewport_3d_failed:
             self._ensure_viewport_3d()
-        elif self._viewport_3d is not None and widget is self._viewport_3d:
+        if self._viewport_3d is not None:
             self._refresh_viewport_3d()
 
     def _ensure_viewport_3d(self):
-        """Lazily construct the OpenGL 3D viewport on first tab activation.
+        """Lazily construct the OpenGL 3D viewport on first dock activation.
 
         Building it here (rather than at document init) keeps the GL context and
-        VRF decompilation from spinning up unless the user actually opens the tab.
+        VRF decompilation from spinning up unless the user actually shows the dock.
         """
         if self._viewport_3d is not None or self._viewport_3d_failed:
             return
@@ -325,23 +346,18 @@ class SmartPropDocument(QMainWindow):
             print(f"[SmartProp3D] 3D Viewport unavailable: {e}")
             self._viewport_3d_failed = True
             from PySide6.QtWidgets import QVBoxLayout
-            layout = QVBoxLayout(self._viewport_3d_placeholder)
             label = QLabel("3d preview for this smartprop unavalible due to using of unsupported properties and elements.")
             label.setAlignment(Qt.AlignCenter)
             label.setStyleSheet("color: #888888; font-size: 11pt;")
+            layout = QVBoxLayout(self._viewport_3d_placeholder)
             layout.addWidget(label)
             return
 
-        # Swap the placeholder for the real viewport in place.
-        idx = self._center_tabs.indexOf(self._viewport_3d_placeholder)
-        self._center_tabs.removeTab(idx)
-        self._center_tabs.insertTab(idx, self._viewport_3d, "3D Viewport")
+        # Swap the placeholder for the real viewport inside the dock.
+        self._viewport_dock.setWidget(self._viewport_3d)
         self._viewport_3d_placeholder.deleteLater()
         self._viewport_3d_placeholder = None
         set_qdock_tab_style(self.findChildren)
-        # Selecting the new tab re-enters _on_center_tab_changed, which loads the
-        # scene via _refresh_viewport_3d().
-        self._center_tabs.setCurrentIndex(idx)
 
     def _refresh_viewport_3d(self):
         """Rebuild the 3D scene from the hierarchy and sync the current selection.
@@ -370,7 +386,7 @@ class SmartPropDocument(QMainWindow):
         """
         if getattr(self, '_viewport_3d', None) is None:
             return
-        if self._center_tabs.currentWidget() is not self._viewport_3d:
+        if not self._viewport_dock.isVisible():
             return
         # While the transform gizmo is being dragged the render area already
         # mirrors the change locally every frame; a full rebuild mid-drag would
@@ -391,7 +407,7 @@ class SmartPropDocument(QMainWindow):
         """
         if getattr(self, '_viewport_3d', None) is None:
             return
-        if self._center_tabs.currentWidget() is not self._viewport_3d:
+        if not self._viewport_dock.isVisible():
             return
         self._viewport_3d.update_viewport()
         current = self.ui.tree_hierarchy_widget.currentItem()
@@ -885,14 +901,16 @@ class SmartPropDocument(QMainWindow):
 
 
 
-        # Refresh the manual editor if it is the active tab
-        if (hasattr(self, '_center_tabs') and hasattr(self, '_manual_editor')
-                and self._center_tabs.currentWidget() is self._manual_editor):
+        # Refresh the manual editor if its dock is currently visible.
+        if (getattr(self, '_manual_dock', None) is not None
+                and getattr(self, '_manual_editor', None) is not None
+                and self._manual_dock.isVisible()):
             self._manual_editor.refresh()
 
-        # Mirror the tree selection into the 3D viewport highlight when it is active.
+        # Mirror the tree selection into the 3D viewport highlight when it is visible.
         if (getattr(self, '_viewport_3d', None) is not None
-                and self._center_tabs.currentWidget() is self._viewport_3d):
+                and getattr(self, '_viewport_dock', None) is not None
+                and self._viewport_dock.isVisible()):
             data = current_item.data(0, Qt.UserRole) if current_item is not None else None
             eid = data.get("m_nElementID", 0) if isinstance(data, dict) else 0
             self._viewport_3d.highlight_element(eid)
@@ -2387,13 +2405,76 @@ class SmartPropDocument(QMainWindow):
         self._edited.emit()
 
     # ======================================[Window State]========================================
+    def _apply_default_layout(self):
+        """Arrange the docks into the built-in factory layout.
+
+        Left:   Hierarchy
+        Center: Property Editor (tabbed with Manual Editor)
+        Right:  3D Viewport | vertical column of Variables over Choices (tabbed with History)
+        """
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.ui.HierarchyDock)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self._property_dock)
+        self.splitDockWidget(self.ui.HierarchyDock, self._property_dock, Qt.Horizontal)
+        self.tabifyDockWidget(self._property_dock, self._manual_dock)
+
+        self.addDockWidget(Qt.RightDockWidgetArea, self._viewport_dock)
+        # Right of the viewport: a single vertical column with Variables on top and
+        # Choices (tabbed with History) below it.
+        self.splitDockWidget(self._viewport_dock, self.ui.VariablesDock, Qt.Horizontal)
+        self.splitDockWidget(self.ui.VariablesDock, self.ui.ChoicesDock, Qt.Vertical)
+        self.tabifyDockWidget(self.ui.ChoicesDock, self._history_dock)
+
+        # All docks visible (a prior custom layout may have closed some).
+        for dock in (
+            self.ui.HierarchyDock, self._property_dock, self._manual_dock,
+            self._viewport_dock, self.ui.VariablesDock, self.ui.ChoicesDock,
+            self._history_dock,
+        ):
+            dock.show()
+
+        self.ui.ChoicesDock.raise_()
+        # Property Editor is the front tab of the center group.
+        self._property_dock.raise_()
+
+        # Give the columns and the right-hand column starting sizes matching the
+        # reference layout: a narrow Hierarchy, roughly equal Property Editor and
+        # 3D Viewport, a narrow Variables/Choices column, and an even split between
+        # Variables and Choices.
+        self.resizeDocks(
+            [self.ui.HierarchyDock, self._property_dock, self._viewport_dock],
+            [310, 670, 690],
+            Qt.Horizontal,
+        )
+        # Start the Variables/Choices column at its minimum width so the viewport
+        # gets the rest of the space by default.
+        self.resizeDocks(
+            [self._viewport_dock, self.ui.VariablesDock],
+            [10000, 1],
+            Qt.Horizontal,
+        )
+        self.resizeDocks(
+            [self.ui.VariablesDock, self.ui.ChoicesDock],
+            [300, 300],
+            Qt.Vertical,
+        )
+
+    def reset_layout(self):
+        """Restore the dock layout to the saved default, or the factory layout."""
+        state = self.settings.value("SmartPropEditorMainWindow/default_windowState_v3")
+        if state:
+            self.restoreState(state)
+        else:
+            self._apply_default_layout()
+
     def _restore_user_prefs(self):
-        # First try to load the explicit default layout
-        state = self.settings.value("SmartPropEditorMainWindow/default_windowState")
+        # First try to load the explicit default layout.  The key is versioned
+        # (v3) because the panel set changed when Property/Manual/Viewport became
+        # docks; older saved states describe a layout that no longer exists.
+        state = self.settings.value("SmartPropEditorMainWindow/default_windowState_v3")
         if not state:
-            # Fallback to the last closed tab's layout
-            state = self.settings.value("SmartPropEditorMainWindow/windowState_v2")
-        
+            # Fallback to the last closed document's layout.
+            state = self.settings.value("SmartPropEditorMainWindow/windowState_v3")
+
         if state:
             self.restoreState(state)
 
@@ -2404,15 +2485,15 @@ class SmartPropDocument(QMainWindow):
     def _save_user_prefs(self):
         current_index = self.variable_viewport.ui.add_new_variable_combobox.currentIndex()
         self.settings.setValue("SmartPropEditorMainWindow/currentComboBoxIndex", current_index)
-        # We don't auto-save geometry for tabs, and we save state to the 'last closed' key
-        self.settings.setValue("SmartPropEditorMainWindow/windowState_v2", self.saveState())
+        # Persist the dock layout to the 'last closed' key.
+        self.settings.setValue("SmartPropEditorMainWindow/windowState_v3", self.saveState())
 
     def save_layout_as_default(self):
         """Saves the current dock widget layout as the default for new documents."""
         # We explicitly save to a 'default' key that takes precedence in _restore_user_prefs
-        self.settings.setValue("SmartPropEditorMainWindow/default_windowState", self.saveState())
+        self.settings.setValue("SmartPropEditorMainWindow/default_windowState_v3", self.saveState())
         # Also save to the regular key so it's consistent
-        self.settings.setValue("SmartPropEditorMainWindow/windowState_v2", self.saveState())
+        self.settings.setValue("SmartPropEditorMainWindow/windowState_v3", self.saveState())
 
     # ======================================[Properties Panel Undo]========================================
     def _rebuild_properties_panel(self, item):
@@ -3039,17 +3120,12 @@ class SmartPropDocument(QMainWindow):
         self._history_dock.setMinimumWidth(160)
         history_view = QUndoView(self.undo_stack, self._history_dock)
         self._history_dock.setWidget(history_view)
-
-        # Anchor History at the top of the right column, then split Variables and
-        # Choices below it so the right panel reads: History → Variables → Choices.
-        self.addDockWidget(Qt.RightDockWidgetArea, self._history_dock)
-        self.splitDockWidget(self._history_dock, self.ui.VariablesDock, Qt.Vertical)
-        self.splitDockWidget(self.ui.VariablesDock, self.ui.ChoicesDock, Qt.Vertical)
-        self.resizeDocks(
-            [self._history_dock, self.ui.VariablesDock, self.ui.ChoicesDock],
-            [120, 300, 260],
-            Qt.Vertical,
+        self._history_dock.setFeatures(
+            QDockWidget.DockWidgetFeature.DockWidgetFloatable
+            | QDockWidget.DockWidgetFeature.DockWidgetMovable
+            | QDockWidget.DockWidgetFeature.DockWidgetClosable
         )
+        # Placement is handled by the default-layout block in __init__.
 
     def closeEvent(self, event):
         self._save_user_prefs()
