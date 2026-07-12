@@ -73,6 +73,26 @@ class SmartProp3DViewport(QWidget):
         tb_layout.setContentsMargins(8, 0, 8, 0)
         tb_layout.setSpacing(8)
 
+        # Display Groups toggle — single-state Hammer "solids" icon.
+        self.groups_check = self._make_toggle_button(
+            tooltip="Display Groups",
+            icon_off=_hammer_tool_icon_path("selection_mode_solids.png"),
+        )
+        self.groups_check.setChecked(True)
+        self.groups_check.toggled.connect(self._on_display_groups_changed)
+        tb_layout.addWidget(self.groups_check)
+
+        # Widgets toggle — locator / rotator / pickone preview widgets.  Uses the
+        # activated icon when on and the plain icon when off.
+        self.widgets_check = self._make_toggle_button(
+            tooltip="Widgets",
+            icon_off=_hammer_tool_icon_path("toggle_editor_objects.png"),
+            icon_on=_hammer_tool_icon_path("toggle_editor_objects_activated.png"),
+        )
+        self.widgets_check.setChecked(True)
+        self.widgets_check.toggled.connect(self._on_show_widgets_changed)
+        tb_layout.addWidget(self.widgets_check)
+
         # View dropdown (Textured, Solid, Wireframe)
         tb_layout.addWidget(QLabel("View:"))
         self.view_combo = QComboBox()
@@ -111,28 +131,8 @@ class SmartProp3DViewport(QWidget):
         self.rot_combo.currentTextChanged.connect(self._on_rot_step_changed)
         tb_layout.addWidget(self.rot_combo)
 
-        # Push the visibility toggles to the right edge of the toolbar.
+        # Keep all controls packed against the left edge of the toolbar.
         tb_layout.addStretch()
-
-        # Display Groups toggle — single-state Hammer "solids" icon.
-        self.groups_check = self._make_toggle_button(
-            tooltip="Display Groups",
-            icon_off=_hammer_tool_icon_path("selection_mode_solids.png"),
-        )
-        self.groups_check.setChecked(True)
-        self.groups_check.toggled.connect(self._on_display_groups_changed)
-        tb_layout.addWidget(self.groups_check)
-
-        # Widgets toggle — locator / rotator / pickone preview widgets.  Uses the
-        # activated icon when on and the plain icon when off.
-        self.widgets_check = self._make_toggle_button(
-            tooltip="Widgets",
-            icon_off=_hammer_tool_icon_path("toggle_editor_objects.png"),
-            icon_on=_hammer_tool_icon_path("toggle_editor_objects_activated.png"),
-        )
-        self.widgets_check.setChecked(True)
-        self.widgets_check.toggled.connect(self._on_show_widgets_changed)
-        tb_layout.addWidget(self.widgets_check)
 
         # Create smaller styling for the toolbar controls
         qt_stylesheet_viewport_combo = qt_stylesheet_combobox.replace(

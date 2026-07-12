@@ -2459,12 +2459,10 @@ class SmartPropDocument(QMainWindow):
         )
 
     def reset_layout(self):
-        """Restore the dock layout to the saved default, or the factory layout."""
-        state = self.settings.value("SmartPropEditorMainWindow/default_windowState_v3")
-        if state:
-            self.restoreState(state)
-        else:
-            self._apply_default_layout()
+        """Discard any saved layout and restore the built-in factory layout."""
+        self.settings.remove("SmartPropEditorMainWindow/default_windowState_v3")
+        self.settings.remove("SmartPropEditorMainWindow/windowState_v3")
+        self._apply_default_layout()
 
     def _restore_user_prefs(self):
         # First try to load the explicit default layout.  The key is versioned
