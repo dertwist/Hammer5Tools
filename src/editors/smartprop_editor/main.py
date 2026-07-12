@@ -269,6 +269,8 @@ class SmartPropEditorMainWindow(QMainWindow):
         menu = QMenu(self)
         save_layout_action = menu.addAction("Save Current Layout as Default")
         save_layout_action.triggered.connect(lambda: self.save_current_layout_as_default(index))
+        reset_layout_action = menu.addAction("Reset Layout")
+        reset_layout_action.triggered.connect(lambda: self.reset_document_layout(index))
 
         menu.exec(self.ui.DocumentTabWidget.mapToGlobal(position))
 
@@ -276,6 +278,11 @@ class SmartPropEditorMainWindow(QMainWindow):
         doc = self.ui.DocumentTabWidget.widget(index)
         if isinstance(doc, SmartPropDocument):
             doc.save_layout_as_default()
+
+    def reset_document_layout(self, index):
+        doc = self.ui.DocumentTabWidget.widget(index)
+        if isinstance(doc, SmartPropDocument):
+            doc.reset_layout()
 
     def closeEvent(self, event):
         """
