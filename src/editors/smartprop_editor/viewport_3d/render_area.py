@@ -1174,6 +1174,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
             if axis != GizmoAxis.NONE:
                 self.gizmo.begin_drag(axis, (event.position().x(), event.position().y()))
+                # Arm the one-shot panel-rebuild guard for this drag (used when a
+                # transform modifier is created on the first move).
+                if self.document is not None:
+                    self.document._gizmo_live_rebuilt = False
                 # Snapshot document data before dragging for undo history
                 if self.document and hasattr(self.document, "_gizmo_pre_drag_data"):
                     item = self.document.ui.tree_hierarchy_widget.currentItem()
@@ -1251,7 +1255,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     # 3. Decompose to get target local values
                     target_local_pos, target_local_rot, target_local_scale = decompose_trs(M_new_local)
 
-                    # 4. Apply to modifiers
+                    # 4. Apply to modifiers.  Collect the property keys touched so
+                    # the Property panel can live-update just those value widgets.
+                    changed_keys = []
                     if "position" in delta:
                         mod = self._find_or_create_modifier(data, "CSmartPropOperation_Translate", "m_vPosition")
                         avail = self._vector_axis_availability(mod.get("m_vPosition"))
@@ -1259,6 +1265,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                         for i, axis in enumerate(axes):
                             if avail.get(axis, True):
                                 self._set_vector_component(mod, "m_vPosition", i, target_local_pos[i], target_local_pos)
+                        changed_keys.append(f"m_Modifiers[{data['m_Modifiers'].index(mod)}].m_vPosition")
                         self.current_transform_text = f"Translate: X: {target_local_pos[0]:.2f}, Y: {target_local_pos[1]:.2f}, Z: {target_local_pos[2]:.2f}"
                     elif "rotation" in delta:
                         mod = self._find_or_create_modifier(data, "CSmartPropOperation_Rotate", "m_vRotation")
@@ -1267,9 +1274,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                         for i, axis in enumerate(axes):
                             if avail.get(axis, True):
                                 self._set_vector_component(mod, "m_vRotation", i, target_local_rot[i], target_local_rot)
+                        changed_keys.append(f"m_Modifiers[{data['m_Modifiers'].index(mod)}].m_vRotation")
                         self.current_transform_text = f"Rotate: Pitch: {target_local_rot[0]:.2f}, Yaw: {target_local_rot[1]:.2f}, Roll: {target_local_rot[2]:.2f}"
                     elif "scale" in delta and (axis_idx is not None or is_center):
-                        self._apply_scale_delta(data, axis_idx, target_local_scale, uniform=is_center)
+                        changed_keys.extend(self._apply_scale_delta(data, axis_idx, target_local_scale, uniform=is_center))
                         if is_center:
                             self.current_transform_text = f"Scaling {target_local_scale[0]:.2f}"
                         else:
@@ -1297,10 +1305,10 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     # Update gizmo position/rotation/scale from the refreshed cache
                     self.gizmo.set_transform(info["position"], info["rotation"], info["scale"])
 
-                    # Refresh Property panel inputs if active
-                    if hasattr(self.document, "ui") and hasattr(self.document.ui, "PropertiesFrame"):
-                        # Rebuild property view fields to match gizmo
-                        self.document.update_property_frame_values(data)
+                    # Live-refresh the touched Property panel value widgets so the
+                    # fields track the gizmo drag smoothly (not just on release).
+                    if changed_keys and hasattr(self.document, "ui") and hasattr(self.document.ui, "PropertiesFrame"):
+                        self.document.update_property_frame_values(data, changed_keys)
 
             self._last_mouse_pos = pos
             self.update()
@@ -1518,7 +1526,8 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         """Apply a scale drag to ``data`` according to the element's scale source.
 
         ``uniform`` (the center handle) scales every axis at once; otherwise only
-        ``axis_idx`` changes.  Returns the resolved [x, y, z] scale to cache.
+        ``axis_idx`` changes.  Returns the list of property keys written (e.g.
+        ``["m_vModelScale"]``) so the Property panel can live-update just those.
         """
         source = self._scale_source
         if uniform:
@@ -1527,35 +1536,35 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 # write each so any non-uniform ratio is preserved.
                 for i in range(3):
                     self._set_vector_component(data, "m_vModelScale", i, scale_vec[i], scale_vec)
-                return list(scale_vec)
+                return ["m_vModelScale"]
             if source == "uniform":
-                self._write_uniform_scale(data, scale_vec[0])
-                value = float(scale_vec[0])
-                return [value, value, value]
-            return list(scale_vec)
+                return [self._write_uniform_scale(data, scale_vec[0])]
+            return []
 
         if source == "vector":
             self._set_vector_component(data, "m_vModelScale", axis_idx, scale_vec[axis_idx], scale_vec)
-            return list(scale_vec)
+            return ["m_vModelScale"]
         if source == "uniform":
-            uniform_val = float(scale_vec[axis_idx])
-            self._write_uniform_scale(data, uniform_val)
-            # Uniform scale drives all three axes together.
-            return [uniform_val, uniform_val, uniform_val]
+            return [self._write_uniform_scale(data, scale_vec[axis_idx])]
         # source is None: scale axes are grayed and shouldn't be draggable.
-        return list(scale_vec)
+        return []
 
     def _write_uniform_scale(self, data, value):
-        """Write a single uniform scale value to whichever field the element uses."""
+        """Write a single uniform scale value to whichever field the element uses.
+
+        Returns the property key that was written, for the Property panel's
+        live drag update.
+        """
         value = float(value)
         if data.get("m_flUniformModelScale") is not None:
             data["m_flUniformModelScale"] = value
-            return
+            return "m_flUniformModelScale"
         scale_mod = self._find_modifier(data, "CSmartPropOperation_Scale")
         if scale_mod is not None:
             scale_mod["m_flScale"] = value
-        else:
-            data["m_flUniformModelScale"] = value
+            return f"m_Modifiers[{data['m_Modifiers'].index(scale_mod)}].m_flScale"
+        data["m_flUniformModelScale"] = value
+        return "m_flUniformModelScale"
 
     @staticmethod
     def _vector_components(vec):
@@ -1609,21 +1618,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     def _get_string(self, val, default=""):
         """Resolve a string value, returning a plain string.
 
-        Handles cases where properties (like model paths) are bound to expressions
-        or variables and stored as dicts, falling back to the default empty string.
+        Handles cases where properties (like model paths) are bound to a variable
+        (``{m_SourceName: ...}``) or an expression, delegating to the evaluation
+        engine so a bound model path reads the variable's default value.
         """
-        if val is None:
-            return default
-        if isinstance(val, str):
-            return val
-        if isinstance(val, dict):
-            if "m_Expression" in val:
-                return str(val["m_Expression"])
-            return default
-        try:
-            return str(val)
-        except:
-            return default
+        return self._eval_context.resolve_string(val, default)
 
     @staticmethod
     def _value_has_binding(v):
