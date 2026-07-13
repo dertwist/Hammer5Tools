@@ -12,6 +12,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
+from src.editors.smartprop_editor.property import compact
 
 
 class PropertyColor(QWidget, PooledPropertyMixin):
@@ -90,6 +91,13 @@ class PropertyColor(QWidget, PooledPropertyMixin):
         self.ui.value.clicked.connect(self.open_dialog)
 
         self.on_changed()
+
+        # Compact Source2-style row. The colour swatch button stays compact.
+        compact.apply_single_row(self)
+        self.ui.value.setFixedHeight(20)
+        compact.compact_variable_frame(self.variable_frame, self.variable)
+        compact.style_text_line(self.text_line)
+        compact.style_expr_button(self.expression_editor)
 
     def open_dialog(self):
         color_dialog = self.dialog

@@ -6,6 +6,7 @@ from PySide6.QtCore import Signal
 from src.widgets.popup_menu.main import PopupMenu
 from src.styles.common import qt_stylesheet_button
 from src.widgets import HierarchyItemModel
+from src.editors.smartprop_editor.property import compact
 import uuid
 
 class PropertyReference(QWidget):
@@ -45,6 +46,9 @@ class PropertyReference(QWidget):
             self.ui.reference_id.setText(str(value))
 
         self.on_changed()
+
+        # Compact Source2-style row (no value-mode switch).
+        compact.apply_row_no_switch(self, label_color="#8FB0FF")
 
     def reference_id_search(self):
         """
