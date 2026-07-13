@@ -25,6 +25,7 @@ class HierarchyTreeWidget(QTreeWidget):
         self.setDropIndicatorShown(True)
         self._ignore_next_drop = False
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.setAlternatingRowColors(True)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setDragDropMode(QTreeWidget.InternalMove)

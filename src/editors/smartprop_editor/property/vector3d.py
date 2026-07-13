@@ -9,6 +9,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
+from src.editors.smartprop_editor.property import compact
 
 
 class PropertyVector3D(QWidget, PooledPropertyMixin):
@@ -209,6 +210,56 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
 
         self.on_changed()
 
+        self._apply_compact()
+
+    def _apply_compact(self):
+        """Compact Source2-style vector: thin header row + 3 colour-tagged
+        component rows, each aligned to the scalar-editor grid."""
+        self.setStyleSheet(compact.widget_qss())
+        # Frames that receive the alternating row background (zebra).
+        self._compact_frames = [self.ui.frame_5, self.ui.frame,
+                                self.ui.frame_2, self.ui.frame_3]
+
+        # Header row (value-mode switch for the whole vector).
+        compact.compact_frame(self.ui.frame_5)
+        self.ui.horizontalLayout.setContentsMargins(6, 0, 4, 0)
+        self.ui.horizontalLayout.setSpacing(0)
+        self.ui.layout.setSpacing(4)
+        compact.style_label(self.ui.property_class, color="#A375FF")
+        compact.style_logic_switch(self.ui.logic_switch)
+        self.ui.layout.setAlignment(self.ui.logic_switch, compact.Qt.AlignVCenter)
+
+        # No whole-item offset: component fields align to the scalar grid.
+        self.ui.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.ui.verticalLayout_2.setSpacing(0)
+
+        tags = ("P", "Y", "R") if compact.is_angle_vector(self.value_class) else ("X", "Y", "Z")
+        rows = (
+            (self.ui.frame, self.ui.label, self.ui.comboBox_x, self.ui.horizontalLayout_2,
+             self.float_widget_x, self.variable_x_frame, self.variable_x,
+             self.text_line_x, self.expression_editor_x, self.ui.layout_x),
+            (self.ui.frame_2, self.ui.label_2, self.ui.comboBox_y, self.ui.horizontalLayout_7,
+             self.float_widget_y, self.variable_y_frame, self.variable_y,
+             self.text_line_y, self.expression_editor_y, self.ui.layout_y),
+            (self.ui.frame_3, self.ui.label_3, self.ui.comboBox_z, self.ui.horizontalLayout_8,
+             self.float_widget_z, self.variable_z_frame, self.variable_z,
+             self.text_line_z, self.expression_editor_z, self.ui.layout_z),
+        )
+        for i, (frame, label, combo, hbox, fw, var_frame, var,
+                text_line, expr_btn, inner) in enumerate(rows):
+            compact.compact_frame(frame)
+            hbox.setContentsMargins(6, 0, 4, 0)
+            hbox.setSpacing(0)
+            label.setText(tags[i])
+            # Indent only the X/Y/Z tag label (field stays on the grid).
+            compact.style_label(label, color=compact.VEC_XYZ[i], indent=15)
+            compact.style_logic_switch(combo)
+            inner.setAlignment(combo, compact.Qt.AlignVCenter)
+            compact.style_slider(fw)
+            compact.compact_variable_frame(var_frame, var)
+            compact.style_text_line(text_line)
+            compact.style_expr_button(expr_btn)
+
     def logic_switch_line(self):
         if self.ui.comboBox_x.currentIndex() == 0:
             self.text_line_x.hide()
@@ -377,6 +428,13 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
             intermediate = self._pattern_phase1.sub('', self.value_class)
             output = self._pattern_phase2.sub(r'\1 \2', intermediate)
             self.ui.property_class.setText(output)
+
+            # Refresh component tags (pool key is constant, so a reused vector
+            # widget must switch X/Y/Z <-> P/Y/R for the new value_class).
+            _tags = ("P", "Y", "R") if compact.is_angle_vector(value_class) else ("X", "Y", "Z")
+            self.ui.label.setText(_tags[0])
+            self.ui.label_2.setText(_tags[1])
+            self.ui.label_3.setText(_tags[2])
 
             # Reset sub-widgets that depend on document-wide variables_scrollArea.
             self.variable_logic_switch.reset(

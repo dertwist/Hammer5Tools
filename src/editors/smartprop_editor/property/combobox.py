@@ -8,6 +8,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
+from src.editors.smartprop_editor.property import compact
 
 class PropertyCombobox(QWidget, PooledPropertyMixin):
     edited = Signal()
@@ -95,6 +96,13 @@ class PropertyCombobox(QWidget, PooledPropertyMixin):
             self.ui.value.setCurrentText(str(value))
 
         self.on_changed()
+
+        # Compact Source2-style row.
+        compact.apply_single_row(self)
+        compact.style_value_combobox(self.ui.value)
+        compact.compact_variable_frame(self.variable_frame, self.variable)
+        compact.style_text_line(self.text_line)
+        compact.style_expr_button(self.expression_editor)
 
     def logic_switch(self):
         if self.ui.logic_switch.currentIndex() == 0:

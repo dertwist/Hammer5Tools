@@ -142,8 +142,6 @@ class Ui_Form(object):
         icon.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_button.setIcon(icon)
 
-        self.horizontalLayout.addWidget(self.add_button)
-
         self.property_class = QLineEdit(self.frame)
         self.property_class.setObjectName(u"property_class")
         self.property_class.setStyleSheet(u"QLineEdit {\n"
@@ -169,10 +167,41 @@ class Ui_Form(object):
 "}")
         self.property_class.setInputMethodHints(Qt.InputMethodHint.ImhLatinOnly|Qt.InputMethodHint.ImhLowercaseOnly)
         self.property_class.setMaxLength(32)
-        self.property_class.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.property_class.setAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
         self.property_class.setReadOnly(True)
+        self.property_class.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
+        self.property_class.setMinimumWidth(90)
 
         self.horizontalLayout.addWidget(self.property_class)
+
+        # Empty expanding field fills the header gap (matches the default/element
+        # header's property_class_4) and keeps the right buttons adaptive.
+        self.property_class_fill = QLineEdit(self.frame)
+        self.property_class_fill.setObjectName(u"property_class_fill")
+        self.property_class_fill.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.property_class_fill.setStyleSheet(u"QLineEdit {\n"
+"    font-size: 8pt;\n"
+"    font-family: \"Segoe UI\";\n"
+"    border-top: 0px;\n"
+"    border-left: 0px;\n"
+"    border-right: 0px;\n"
+"    border-bottom: 2px solid rgba(80, 80, 80, 255);\n"
+"    border-radius: 0px;\n"
+"    padding: 2px;\n"
+"    color: #E3E3E3;\n"
+"    background-color: #242424;\n"
+"}\n"
+"\n"
+"QLineEdit:focus {\n"
+"    border-color: rgba(80, 80, 80, 255);\n"
+"}\n"
+"\n"
+"QLineEdit::selection {\n"
+"    background-color: #414956;\n"
+"    color: white;\n"
+"}")
+        self.property_class_fill.setReadOnly(True)
+        self.horizontalLayout.addWidget(self.property_class_fill)
 
         self.paste_button = QPushButton(self.frame)
         self.paste_button.setObjectName(u"paste_button")
@@ -222,6 +251,9 @@ class Ui_Form(object):
 
         self.horizontalLayout.addWidget(self.paste_button)
 
+        # Add button moved to the far right of the header.
+        self.horizontalLayout.addWidget(self.add_button)
+
 
         self.verticalLayout.addWidget(self.frame)
 
@@ -270,11 +302,15 @@ class Ui_Form(object):
         self.show_child.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p><span style=\" font-size:8pt; font-weight:400;\">Show child</span></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.show_child.setText("")
-        self.add_button.setText(QCoreApplication.translate("Form", u"Create new", None))
+        self.add_button.setText("")
 #if QT_CONFIG(tooltip)
+        self.add_button.setToolTip(QCoreApplication.translate("Form", u"Create new", None))
         self.property_class.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.property_class.setText(QCoreApplication.translate("Form", u"Modifiers", None))
-        self.paste_button.setText(QCoreApplication.translate("Form", u"Paste", None))
+        self.paste_button.setText("")
+#if QT_CONFIG(tooltip)
+        self.paste_button.setToolTip(QCoreApplication.translate("Form", u"Paste", None))
+#endif // QT_CONFIG(tooltip)
     # retranslateUi
 

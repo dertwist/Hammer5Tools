@@ -2,9 +2,10 @@ import ast
 from src.editors.smartprop_editor.ui_properties_group_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget, QFrame, QApplication
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, QSize
 from src.property.methods import PropertyMethods
 from src.widgets import ErrorInfo
+from src.editors.smartprop_editor.property import compact
 
 # Group type color constants
 _GROUP_COLORS = {
@@ -30,6 +31,16 @@ class PropertiesGroupFrame(QWidget):
         self.ui.add_button.clicked.connect(self.add_action)
 
         self.ui.paste_button.clicked.connect(self.paste_action)
+
+        # CS2 tool icons for the header buttons.
+        self.ui.add_button.setIcon(compact.cs2_icon('add'))
+        self.ui.add_button.setIconSize(QSize(16, 16))
+        self.ui.paste_button.setIcon(compact.cs2_icon('paste'))
+        self.ui.paste_button.setIconSize(QSize(16, 16))
+
+        # The header's bottom line now comes from the field bottom-borders
+        # (name + gap filler), exactly like the default/element header — no
+        # separate frame border needed.
 
         self.ui.property_class.setText(self.name)
         self.widget_list = widget_list

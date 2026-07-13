@@ -9,6 +9,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
+from src.editors.smartprop_editor.property import compact
 
 class PropertyFloat(QWidget, PooledPropertyMixin):
     edited = Signal()
@@ -123,6 +124,17 @@ class PropertyFloat(QWidget, PooledPropertyMixin):
             self.float_widget.set_value(value)
 
         self.on_changed()
+
+        # Compact Source2-style row (thin, flat, inline drag-slider).
+        compact.apply_single_row(
+            self, label_color="#6C87FF" if self.int_bool else "#B5FFEF"
+        )
+        compact.style_slider(self.float_widget)
+        compact.compact_variable_frame(self.variable_frame, self.variable)
+        compact.style_text_line(self.text_line)
+        compact.style_expr_button(self.expression_editor)
+        # Let the row expand so the slider can stretch to the full width.
+        self.ui.layout.setSizeConstraint(compact.QLayout.SizeConstraint.SetDefaultConstraint)
 
     def logic_switch(self):
         if self.ui.logic_switch.currentIndex() == 0:
@@ -270,19 +282,11 @@ class PropertyFloat(QWidget, PooledPropertyMixin):
             output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
             self.ui.property_class.setText(output)
 
-            # STEP 6: Update stylesheet if int_bool changed.
-            if int_bool:
-                self.ui.property_class.setStyleSheet("""
-                    border:0px; background-color: rgba(255,255,255,0);
-                    font: 8pt "Segoe UI"; padding-right: 16px;
-                    color: rgb(108, 135, 255);
-                """)
-            else:
-                self.ui.property_class.setStyleSheet("""
-                    border:0px; background-color: rgba(255,255,255,0);
-                    font: 8pt "Segoe UI"; padding-right: 16px;
-                    color: rgb(181, 255, 239);
-                """)
+            # STEP 6: Update label styling (compact, keeps fixed column width).
+            compact.style_label(
+                self.ui.property_class,
+                color="#6C87FF" if int_bool else "#B5FFEF",
+            )
 
             # STEP 7: Apply the new mode/value.
             self.ui.logic_switch.setCurrentIndex(0)

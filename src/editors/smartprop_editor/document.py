@@ -303,6 +303,7 @@ class SmartPropDocument(QMainWindow):
         tree_model.rowsMoved.connect(self._schedule_viewport_3d_sync)
         tree_model.dataChanged.connect(self._schedule_viewport_3d_sync)
 
+        self._did_show_restore = False
         QTimer.singleShot(0, self._restore_user_prefs)
 
         # Apply dock tab styling to the whole window.
@@ -2475,6 +2476,10 @@ class SmartPropDocument(QMainWindow):
 
         if state:
             self.restoreState(state)
+            # restoreState() rebuilds the dock tab bars, discarding the tab
+            # styling applied in __init__. Re-apply so every dock's tabs
+            # (Choices/History included) match the Property/Manual docks.
+            set_qdock_tab_style(self.findChildren)
 
         saved_index = self.settings.value("SmartPropEditorMainWindow/currentComboBoxIndex")
         if saved_index is not None:
@@ -3124,6 +3129,18 @@ class SmartPropDocument(QMainWindow):
             | QDockWidget.DockWidgetFeature.DockWidgetClosable
         )
         # Placement is handled by the default-layout block in __init__.
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # Re-apply the saved layout once the window has its real on-screen size.
+        # restoreState() during __init__ (via singleShot) can run before the dock
+        # area is sized, which distorts the restored dock proportions so the
+        # loaded layout doesn't match what was saved. Doing it once more after the
+        # first real show (deferred a tick so the resize settles) fixes that; it's
+        # idempotent when the earlier restore was already correct.
+        if not getattr(self, "_did_show_restore", False):
+            self._did_show_restore = True
+            QTimer.singleShot(0, self._restore_user_prefs)
 
     def closeEvent(self, event):
         self._save_user_prefs()

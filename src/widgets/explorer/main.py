@@ -230,6 +230,7 @@ class Explorer(QMainWindow):
         self.tree.setModel(self.filter_proxy_model)
         self.tree.setRootIndex(self.filter_proxy_model.mapFromSource(self.model.index(self.tree_directory)))
         self.tree.setSortingEnabled(True)
+        self.tree.setAlternatingRowColors(True)
         for column in range(self.model.columnCount()):
             if column not in (CustomFileSystemModel.NAME_COLUMN, CustomFileSystemModel.SIZE_COLUMN):
                 self.tree.setColumnHidden(column, True)
