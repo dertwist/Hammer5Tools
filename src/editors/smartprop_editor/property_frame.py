@@ -2,8 +2,9 @@ from src.settings.main import debug
 from src.editors.smartprop_editor.ui_property_frame import Ui_Form
 
 from PySide6.QtWidgets import QWidget, QMenu, QApplication
-from PySide6.QtCore import Signal, Qt, QTimer, QThreadPool
+from PySide6.QtCore import Signal, Qt, QTimer, QThreadPool, QSize
 from PySide6.QtGui import QAction
+from src.editors.smartprop_editor.property import compact
 
 from src.property.methods import PropertyMethods
 from src.widgets.popup_menu.main import PopupMenu
@@ -314,6 +315,11 @@ class PropertyFrame(QWidget):
         else:
             self.ui.copy_button.clicked.connect(self.copy_action)
             self.ui.delete_button.clicked.connect(self.delete_action)
+            # CS2 tool icons for the per-element action strip.
+            self.ui.copy_button.setIcon(compact.cs2_icon('copy'))
+            self.ui.copy_button.setIconSize(QSize(16, 16))
+            self.ui.delete_button.setIcon(compact.cs2_icon('delete'))
+            self.ui.delete_button.setIconSize(QSize(16, 16))
 
         self.only_variable_properties = list(self._ONLY_VARIABLE_PROPERTIES)
 
@@ -417,7 +423,29 @@ class PropertyFrame(QWidget):
             self._add_widget_for_property('_WARN_NOT_VERIFIED', self.value.get("_WARN_NOT_VERIFIED"), force=True)
 
         self._setup_layout2dgrid_suppression()
+        self._apply_zebra()
         self.on_edited()
+
+    def _apply_zebra(self):
+        """Paint alternating row backgrounds (Source2-style) over the child
+        property rows in visual (top-to-bottom) order. Multi-row editors (e.g.
+        Vector3D: header + X/Y/Z) advance the stripe per sub-row so their
+        components alternate too. Re-applied on every (re)build so pooled rows
+        never keep a stale stripe colour."""
+        from src.editors.smartprop_editor.property import compact
+        idx = 0
+        layout = self.ui.layout
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            w = item.widget() if item is not None else None
+            frames = getattr(w, "_compact_frames", None)
+            if w is None or not frames:
+                continue
+            # Container bg = the first sub-row's colour (only shows in gaps).
+            compact.set_widget_bg(w, compact.zebra_color(idx))
+            for f in frames:
+                compact.set_frame_bg(f, compact.zebra_color(idx))
+                idx += 1
 
     @exception_handler
     def _add_widget_for_property(self, value_class, val, force=False):
