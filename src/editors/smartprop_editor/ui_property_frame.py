@@ -390,7 +390,7 @@ class Ui_Form(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(4, 0, 4, 0)
         self.layout = QVBoxLayout()
-        self.layout.setSpacing(4)
+        self.layout.setSpacing(0)
         self.layout.setObjectName(u"layout")
         self.layout.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
 
@@ -431,7 +431,11 @@ class Ui_Form(object):
         self.property_class_4.setToolTip(QCoreApplication.translate("Form", u"<html><head/><body><p>Variable name and display name</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.property_class_4.setText("")
-        self.delete_button.setText(QCoreApplication.translate("Form", u"Delete", None))
-        self.copy_button.setText(QCoreApplication.translate("Form", u"Copy", None))
+        self.delete_button.setText("")
+        self.copy_button.setText("")
+#if QT_CONFIG(tooltip)
+        self.delete_button.setToolTip(QCoreApplication.translate("Form", u"Delete", None))
+        self.copy_button.setToolTip(QCoreApplication.translate("Form", u"Copy", None))
+#endif // QT_CONFIG(tooltip)
     # retranslateUi
 

@@ -8,6 +8,7 @@ from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
 from src.editors.smartprop_editor.widgets.expression_editor.main import ExpressionEditor
 from src.editors.smartprop_editor.property.base_pooled import PooledPropertyMixin
+from src.editors.smartprop_editor.property import compact
 
 class PropertyString(QWidget, PooledPropertyMixin):
     edited = Signal()
@@ -128,6 +129,14 @@ class PropertyString(QWidget, PooledPropertyMixin):
             force_variable=self._pool_force_variable,
             filter_types=self._pool_filter_types,
         )
+
+        # Compact Source2-style row.
+        compact.apply_single_row(
+            self, label_color="#FF7B7D" if self.expression_bool else "#FFD199"
+        )
+        compact.compact_variable_frame(self.variable_frame, self.variable)
+        compact.style_text_line(self.text_line)
+        compact.style_expr_button(self.expression_editor)
 
     def logic_switch(self):
         if self.ui.logic_switch.currentIndex() == 0:
@@ -259,23 +268,11 @@ class PropertyString(QWidget, PooledPropertyMixin):
             self._pool_only_string = bool(only_string)
             self._pool_filter_types = list(filter_types_final)
 
-            # Update stylesheet based on expression_bool.
-            if self.expression_bool:
-                self.ui.property_class.setStyleSheet("""
-                    border:0px;
-                    background-color: rgba(255, 255, 255, 0);
-                    font: 8pt "Segoe UI";
-                    padding-right: 16px;
-                    color: rgb(255, 123, 125);
-                """)
-            else:
-                self.ui.property_class.setStyleSheet("""
-                    border:0px;
-                    background-color: rgba(255, 255, 255, 0);
-                    font: 8pt "Segoe UI";
-                    padding-right: 16px;
-                    color: rgb(255, 209, 153);
-                """)
+            # Update label styling based on expression_bool (keeps column width).
+            compact.style_label(
+                self.ui.property_class,
+                color="#FF7B7D" if self.expression_bool else "#FFD199",
+            )
 
             # Label text (mirrors __init__ logic).
             output = re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_', '', self.value_class)
