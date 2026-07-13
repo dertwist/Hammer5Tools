@@ -127,6 +127,10 @@ class SmartPropDocument(QMainWindow):
         self._slider_dragging = 0
         self._slider_pre_drag_data = None
         self._gizmo_pre_drag_data = None
+        # Set once per gizmo drag: guards the single panel rebuild that runs when
+        # a transform modifier is *created* mid-drag (see update_property_frame_values),
+        # so the async rebuild can't thrash on every subsequent mouse-move.
+        self._gizmo_live_rebuilt = False
 
         # Guard flag: while True, add_variable skips marking the document as modified
         # and emitting _edited (used during undo/redo restore).
@@ -302,6 +306,12 @@ class SmartPropDocument(QMainWindow):
         tree_model.rowsRemoved.connect(self._schedule_viewport_3d_sync)
         tree_model.rowsMoved.connect(self._schedule_viewport_3d_sync)
         tree_model.dataChanged.connect(self._schedule_viewport_3d_sync)
+        # Variable edits (default value, variable/expression bindings, add/remove)
+        # live in the variables panel, not the hierarchy tree, so they don't emit
+        # the tree-model signals above.  They do emit the document's _edited signal,
+        # so hook it too: a bound field (e.g. a model path bound to a variable)
+        # re-reads the variable's default on the next debounced rebuild.
+        self._edited.connect(self._schedule_viewport_3d_sync)
 
         self._did_show_restore = False
         QTimer.singleShot(0, self._restore_user_prefs)
@@ -2821,9 +2831,40 @@ class SmartPropDocument(QMainWindow):
                     self._rebuild_properties_panel(item)
             self._gizmo_pre_drag_data = None
 
-    def update_property_frame_values(self, data):
-        """Callback to update property frames. Done on drag release for performance."""
-        pass
+    def update_property_frame_values(self, data, changed_keys=None):
+        """Live-update the Property panel to track a transform-gizmo drag.
+
+        Invoked on every mouse-move while a gizmo is being dragged so the
+        Translate / Rotate / Scale value fields follow the gizmo smoothly,
+        instead of only refreshing when the drag is released.  Only the widgets
+        named in ``changed_keys`` are reconfigured (a lightweight, signal-free
+        update) — never a full rebuild — except the single time a transform
+        modifier is *created* mid-drag, where the panel has no frame to target
+        yet and must be rebuilt once so the new frame appears.
+        """
+        if not changed_keys:
+            return
+        item = self.ui.tree_hierarchy_widget.currentItem()
+        if item is None:
+            return
+
+        # A transform modifier created on the first drag move has no
+        # PropertyFrame yet.  Rebuild the panel a single time so it appears;
+        # the guard stops the (async, progressive) rebuild from thrashing on the
+        # moves that follow before its frames have finished materialising.
+        n_mods = len(data.get("m_Modifiers") or [])
+        n_frames = sum(
+            1
+            for i in range(self.modifiers_group_instance.layout.count())
+            if isinstance(self.modifiers_group_instance.layout.itemAt(i).widget(), PropertyFrame)
+        )
+        if n_mods != n_frames and not self._gizmo_live_rebuilt:
+            self._gizmo_live_rebuilt = True
+            item.setData(0, Qt.UserRole, fast_deepcopy(data))
+            self._rebuild_properties_panel(item)
+            return
+
+        self._incremental_property_update(item, data, changed_keys)
 
 
     # ======================================[Variables Panel Undo]========================================
