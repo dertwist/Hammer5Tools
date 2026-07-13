@@ -132,6 +132,22 @@ class TestContextResolution(unittest.TestCase):
         # Short list pads from the default.
         self.assertEqual(ctx.resolve_vector([2], [0.0, 0.0, 0.0]), [2.0, 0.0, 0.0])
 
+    def test_resolve_string_forms(self):
+        # A model path bound to a variable must read the variable's default.
+        ctx = EvalContext(variables={"ModelName": "models/a/b.vmdl", "on": True})
+        self.assertEqual(ctx.resolve_string("models/x.vmdl"), "models/x.vmdl")
+        self.assertEqual(ctx.resolve_string({"m_SourceName": "ModelName"}), "models/a/b.vmdl")
+        # Source 2 resolves variable names case-insensitively.
+        self.assertEqual(ctx.resolve_string({"m_SourceName": "modelname"}), "models/a/b.vmdl")
+        # Expression text is handed back verbatim for string fields.
+        self.assertEqual(ctx.resolve_string({"m_Expression": "models/x.vmdl"}), "models/x.vmdl")
+        # Unknown / empty bindings fall back to the default.
+        self.assertEqual(ctx.resolve_string({"m_SourceName": "missing"}, "DEF"), "DEF")
+        self.assertEqual(ctx.resolve_string({"m_SourceName": ""}, "DEF"), "DEF")
+        self.assertEqual(ctx.resolve_string({"m_Expression": ""}, "DEF"), "DEF")
+        self.assertEqual(ctx.resolve_string(None, "DEF"), "DEF")
+        self.assertEqual(ctx.resolve_string({"m_SourceName": "on"}), "true")
+
 
 class TestVariableMap(unittest.TestCase):
     def test_coerce_value(self):
@@ -156,6 +172,48 @@ class TestVariableMap(unittest.TestCase):
         self.assertEqual(m["offset"], [1.0, 2.0, 3.0])
         # Category marker is skipped.
         self.assertNotIn("hammer5tools_category_abc_start", m)
+
+    def test_variable_default_variable_and_expression_bindings(self):
+        # A variable's own default may be a variable reference or an expression;
+        # the preview map must resolve those (chains and all).
+        raw = {
+            0: ["speed", "Float", {"default": 4.0}, False, None],
+            1: ["scale", "Float", {"default": {"m_SourceName": "speed"}}, False, None],
+            2: ["count", "Int", {"default": {"m_Expression": "speed * 2 + 1"}}, False, None],
+            3: ["pos", "Vector3D", {"default": {"m_SourceName": "speed"}}, False, None],
+            # Chain: a -> b -> c, declared out of order.
+            4: ["a", "Float", {"default": {"m_Expression": "b + 1"}}, False, None],
+            5: ["b", "Float", {"default": {"m_SourceName": "c"}}, False, None],
+            6: ["c", "Float", {"default": 10.0}, False, None],
+            # String reference keeps the string value.
+            7: ["mat", "String", {"default": "metal"}, False, None],
+            8: ["mat2", "String", {"default": {"m_SourceName": "mat"}}, False, None],
+        }
+        m = varmod.build_variable_map_from_raw(raw)
+        self.assertEqual(m["scale"], 4.0)
+        self.assertEqual(m["count"], 9)
+        self.assertEqual(m["pos"], [4.0, 4.0, 4.0])
+        self.assertEqual(m["a"], 11.0)
+        self.assertEqual(m["b"], 10.0)
+        self.assertEqual(m["mat2"], "metal")
+
+    def test_variable_default_binding_cycle_terminates(self):
+        # Reference cycles must settle on seeded zeros, not loop forever.
+        raw = {
+            0: ["x", "Float", {"default": {"m_SourceName": "y"}}, False, None],
+            1: ["y", "Float", {"default": {"m_SourceName": "x"}}, False, None],
+        }
+        m = varmod.build_variable_map_from_raw(raw)
+        self.assertEqual(m["x"], 0.0)
+        self.assertEqual(m["y"], 0.0)
+
+    def test_variable_default_component_vector_stays_literal(self):
+        # A whole-vector literal default ({m_Components:[...]}) is not a binding.
+        raw = {
+            0: ["v", "Vector3D", {"default": {"m_Components": [1.0, 2.0, 3.0]}}, False, None],
+        }
+        m = varmod.build_variable_map_from_raw(raw)
+        self.assertEqual(m["v"], [1.0, 2.0, 3.0])
 
 
 class TestWidgetExtraction(unittest.TestCase):

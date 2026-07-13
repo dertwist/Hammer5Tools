@@ -104,6 +104,47 @@ class EvalContext:
         except (ValueError, TypeError):
             return evaluate_expression(str(v), self, default)
 
+    # -- string ------------------------------------------------------------
+    def resolve_string(self, value, default=""):
+        """Resolve any string value form to a plain string.
+
+        String fields (most importantly ``m_sModelName``) can be a literal path,
+        a variable binding (``{"m_SourceName": "ModelName"}``) that must read the
+        variable's default, or an expression whose text is the literal path.
+        """
+        if value is None:
+            return default
+        if isinstance(value, str):
+            return value
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, (int, float)):
+            return str(value)
+        if isinstance(value, dict):
+            if "m_SourceName" in value:
+                return self._var_string(value["m_SourceName"], default)
+            if "m_Expression" in value:
+                # String fields store the literal path as the expression text;
+                # the numeric expression evaluator can't produce a string, so
+                # hand the text back verbatim (empty falls back to default).
+                expr = value["m_Expression"]
+                return str(expr) if expr not in (None, "") else default
+            return default
+        try:
+            return str(value)
+        except Exception:
+            return default
+
+    def _var_string(self, name, default):
+        v = self.var(name)
+        if v is None:
+            return default
+        if isinstance(v, bool):
+            return "true" if v else "false"
+        if isinstance(v, str):
+            return v
+        return str(v)
+
     # -- vector ------------------------------------------------------------
     def resolve_vector(self, value, default=None):
         """Resolve any vector value form to ``[x, y, z]`` floats."""
