@@ -147,6 +147,18 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         self._perform_pick_flag = False
         self._pick_pos = None
 
+        # Dedicated single-sample framebuffer for color-ID picking.  The visible
+        # surface is multisampled (MSAA), and glReadPixels is invalid on a
+        # multisampled framebuffer (GL_INVALID_OPERATION) — reading straight from
+        # the default MSAA FBO raised inside paintGL and left the viewport black.
+        # Picking therefore renders into this private 1-sample FBO instead, just
+        # like SmartProp3DRenderArea.
+        self._pick_fbo = 0
+        self._pick_color_rbo = 0
+        self._pick_depth_rbo = 0
+        self._pick_fbo_w = 0
+        self._pick_fbo_h = 0
+
         # Shader programs
         self._model_program = 0
         self._picking_program = 0
@@ -335,8 +347,11 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         from OpenGL import GL
 
         if self._perform_pick_flag:
-            self._do_picking_pass()
+            # Clear the flag *before* the pass: if picking ever errors, the next
+            # paint must fall through to the normal scene render instead of
+            # re-entering picking forever (which would leave the viewport black).
             self._perform_pick_flag = False
+            self._do_picking_pass()
 
         GL.glClearColor(0.11, 0.11, 0.11, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -457,8 +472,55 @@ class PathEditor3DRenderArea(QOpenGLWidget):
             GL.glDrawElements(GL.GL_TRIANGLES, self._sphere_index_count, GL.GL_UNSIGNED_INT, None)
         GL.glBindVertexArray(0)
 
-    def _do_picking_pass(self):
+    def _ensure_pick_fbo(self, w, h):
+        """Create (or resize) the single-sample picking framebuffer to w x h."""
         from OpenGL import GL
+
+        if self._pick_fbo and self._pick_fbo_w == w and self._pick_fbo_h == h:
+            return
+
+        # Drop the old attachments/FBO before making new ones.
+        if self._pick_fbo:
+            GL.glDeleteFramebuffers(1, [self._pick_fbo])
+            GL.glDeleteRenderbuffers(2, [self._pick_color_rbo, self._pick_depth_rbo])
+
+        self._pick_color_rbo = GL.glGenRenderbuffers(1)
+        GL.glBindRenderbuffer(GL.GL_RENDERBUFFER, self._pick_color_rbo)
+        GL.glRenderbufferStorage(GL.GL_RENDERBUFFER, GL.GL_RGBA8, w, h)
+
+        self._pick_depth_rbo = GL.glGenRenderbuffers(1)
+        GL.glBindRenderbuffer(GL.GL_RENDERBUFFER, self._pick_depth_rbo)
+        GL.glRenderbufferStorage(GL.GL_RENDERBUFFER, GL.GL_DEPTH_COMPONENT24, w, h)
+
+        self._pick_fbo = GL.glGenFramebuffers(1)
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self._pick_fbo)
+        GL.glFramebufferRenderbuffer(GL.GL_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0,
+                                     GL.GL_RENDERBUFFER, self._pick_color_rbo)
+        GL.glFramebufferRenderbuffer(GL.GL_FRAMEBUFFER, GL.GL_DEPTH_ATTACHMENT,
+                                     GL.GL_RENDERBUFFER, self._pick_depth_rbo)
+
+        self._pick_fbo_w = w
+        self._pick_fbo_h = h
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.defaultFramebufferObject())
+
+    def _do_picking_pass(self):
+        """Render color-coded IDs into the private single-sample FBO and read the
+        pixel under the cursor.  Keeping picking off the multisampled default
+        framebuffer avoids the glReadPixels GL_INVALID_OPERATION that otherwise
+        raised in paintGL and left the viewport permanently black after a click."""
+        from OpenGL import GL
+
+        if self._pick_pos is None:
+            return
+
+        # Work in device pixels so picking lines up with the HiDPI framebuffer.
+        dpr = self.devicePixelRatioF()
+        fb_w = max(1, int(round(self.width() * dpr)))
+        fb_h = max(1, int(round(self.height() * dpr)))
+        self._ensure_pick_fbo(fb_w, fb_h)
+
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self._pick_fbo)
+        GL.glViewport(0, 0, fb_w, fb_h)
         GL.glClearColor(0.0, 0.0, 0.0, 1.0)
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         GL.glDisable(GL.GL_BLEND)
@@ -468,10 +530,15 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         cam_pos = self.camera.position
         self._draw_spheres(view, proj, cam_pos, picking=True)
 
-        w, h = self.width(), self.height()
-        gl_y = h - self._pick_pos.y()
-        gl_x = self._pick_pos.x()
-        pixel = GL.glReadPixels(int(gl_x), int(gl_y), 1, 1, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+        # Read color under cursor (device pixels, origin bottom-left).
+        gl_x = min(max(int(self._pick_pos.x() * dpr), 0), fb_w - 1)
+        gl_y = min(max(int(fb_h - self._pick_pos.y() * dpr), 0), fb_h - 1)
+        GL.glReadBuffer(GL.GL_COLOR_ATTACHMENT0)
+        pixel = GL.glReadPixels(gl_x, gl_y, 1, 1, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE)
+
+        # Restore the default (visible) framebuffer + blending for the main pass.
+        GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.defaultFramebufferObject())
+        GL.glViewport(0, 0, fb_w, fb_h)
         GL.glEnable(GL.GL_BLEND)
 
         pid = pixel[0] | (pixel[1] << 8) | (pixel[2] << 16)

@@ -63,6 +63,14 @@ class SmartPropEditorMainWindow(QMainWindow):
         # Set initial UI state based on document availability
         self.update_placeholder_visibility()
 
+        # The active document's dock layout must be persisted when the whole
+        # application quits (QApplication.quit() destroys the nested documents
+        # without ever sending them a closeEvent). aboutToQuit fires while the
+        # widgets are still alive, so the layout can still be read here.
+        app = QApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self._persist_current_document_layout)
+
     def update_placeholder_visibility(self):
         """
         Updates the UI: hides DocumentTabWidget and shows placeholder_label if no documents are open.
@@ -256,6 +264,14 @@ class SmartPropEditorMainWindow(QMainWindow):
                 return
 
         removed_widget = self.ui.DocumentTabWidget.widget(index)
+        # Persist the dock/viewport layout before the document is destroyed.
+        # Closing a tab uses removeTab()+deleteLater(), which never fires the
+        # document's closeEvent, so the layout has to be saved explicitly here.
+        if isinstance(removed_widget, SmartPropDocument):
+            try:
+                removed_widget._save_user_prefs()
+            except Exception:
+                pass
         self.ui.DocumentTabWidget.removeTab(index)
         if removed_widget is not None:
             removed_widget.deleteLater()
@@ -284,12 +300,32 @@ class SmartPropEditorMainWindow(QMainWindow):
         if isinstance(doc, SmartPropDocument):
             doc.reset_layout()
 
+    def _persist_current_document_layout(self):
+        """Save the active document's dock/viewport layout as the 'last' layout.
+
+        Used as the app-quit / window-close persistence point, since the nested
+        SmartPropDocument widgets do not receive closeEvent on those paths.
+        """
+        try:
+            doc = self.ui.DocumentTabWidget.currentWidget()
+        except RuntimeError:
+            # Tab widget already torn down.
+            return
+        if isinstance(doc, SmartPropDocument):
+            try:
+                doc._save_user_prefs()
+            except Exception:
+                pass
+
     def closeEvent(self, event):
         """
         Overridden close event to ensure the realtime save timer is stopped and cleanup is performed.
         """
         if self.realtime_save_timer.isActive():
             self.realtime_save_timer.stop()
+        # Closed on addon switch: keep the current layout so the next addon's
+        # documents open with the arrangement the user last used.
+        self._persist_current_document_layout()
         event.accept()
 
 
