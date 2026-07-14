@@ -82,12 +82,16 @@ class SoundEventEditorPropertyFrame(QWidget):
             SoundEventEditorPropertyFiles,
             SoundEventEditorPropertySoundEvent,
             SoundEventEditorPropertyCombobox,
-            SoundEventEditorPropertyBaseLegacy
+            SoundEventEditorPropertyBaseLegacy,
+            SoundEventEditorPropertyComment
         )
         from src.editors.soundevent_editor.property.curve.main import SoundEventEditorPropertyCurve
 
+        # Comment (may appear multiple times: comment, comment_2, comment_3, ...)
+        if name == 'comment' or (isinstance(name, str) and name.startswith('comment_')):
+            self.property_instance = SoundEventEditorPropertyComment(label_text=name, value=value)
         # Float (Only Positive)
-        if name == 'volume':
+        elif name == 'volume':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)
         elif name == 'delay':
             self.property_instance = SoundEventEditorPropertyFloat(label_text=name, slider_range=[0, 10], only_positive=True, value=value)

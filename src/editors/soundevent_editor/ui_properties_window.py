@@ -16,7 +16,7 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
+from PySide6.QtWidgets import (QApplication, QFrame,
     QLabel, QMainWindow, QScrollArea, QSizePolicy,
     QSpacerItem, QSplitter, QVBoxLayout, QWidget)
 import resources_rc
@@ -123,24 +123,6 @@ class Ui_MainWindow(object):
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.splitter.addWidget(self.scrollArea)
-        self.CommetSeciton = QFrame(self.splitter)
-        self.CommetSeciton.setObjectName(u"CommetSeciton")
-        self.CommetSeciton.setFrameShape(QFrame.Shape.StyledPanel)
-        self.CommetSeciton.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_3 = QHBoxLayout(self.CommetSeciton)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.splitter_2 = QSplitter(self.CommetSeciton)
-        self.splitter_2.setObjectName(u"splitter_2")
-        self.splitter_2.setOrientation(Qt.Orientation.Horizontal)
-        self.groupBox_2 = QGroupBox(self.splitter_2)
-        self.groupBox_2.setObjectName(u"groupBox_2")
-        self.horizontalLayout = QHBoxLayout(self.groupBox_2)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.splitter_2.addWidget(self.groupBox_2)
-
-        self.horizontalLayout_3.addWidget(self.splitter_2)
-
-        self.splitter.addWidget(self.CommetSeciton)
 
         self.verticalLayout_3.addWidget(self.splitter)
 
@@ -165,6 +147,5 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.properties_placeholder.setText(QCoreApplication.translate("MainWindow", u"Select an element in the soundvents", None))
-        self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"Comment", None))
     # retranslateUi
 

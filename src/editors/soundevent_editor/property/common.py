@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout, QTreeWidget, QSpacerItem, QSizePolicy
-from PySide6.QtWidgets import QFrame, QLineEdit
+from PySide6.QtWidgets import QFrame, QLineEdit, QPlainTextEdit
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtCore import Signal
 from src.widgets.popup_menu.main import PopupMenu
@@ -167,6 +167,78 @@ class SoundEventEditorPropertyLegacy(SoundEventEditorPropertyBase):
         self.value = {self.value_class: value}
     def init_label_color(self):
         return "#d9b34c"
+class _CommentTextEdit(QPlainTextEdit):
+    """Multiline edit that reports focus gain/loss, so the owning property can
+    batch a whole typing session into a single undo entry instead of one per
+    keystroke."""
+    focus_in = Signal()
+    focus_out = Signal()
+
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        self.focus_in.emit()
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_out.emit()
+
+class SoundEventEditorPropertyComment(SoundEventEditorPropertyBase):
+    # These reuse the frame's batch-commit channel (the same one float sliders
+    # use): slider_pressed opens an edit session and committed closes it, so the
+    # properties window records a single undo entry per session. Live value
+    # updates / realtime save still happen on every keystroke via `edited`.
+    slider_pressed = Signal()
+    committed = Signal()
+
+    def __init__(self, parent=None, label_text: str = None, value: str = None):
+        """
+        Comment property. A multiline text field for free-form annotations.
+
+        Unlike other properties, a sound event may hold several comments at once
+        (keyed 'comment', 'comment_2', 'comment_3', ...), so this widget can be
+        spawned any number of times.
+        """
+        super().__init__(parent, label_text, value)
+        self.value_class = label_text
+
+        # Coerce anything non-string (e.g. a comment whose text happens to parse
+        # as a Python literal upstream) back into text.
+        if value is None:
+            value = ""
+        elif not isinstance(value, str):
+            value = str(value)
+
+        self.text_field = _CommentTextEdit()
+        self.text_field.setPlaceholderText("Comment...")
+        self.text_field.setPlainText(value)
+        self.text_field.textChanged.connect(self.on_property_update)
+        # Begin an undo batch when editing starts, commit it when focus leaves.
+        self.text_field.focus_in.connect(self.slider_pressed)
+        self.text_field.focus_out.connect(self.committed)
+        self.add_property_widget(self.text_field)
+
+        # Updating value
+        self.value_update()
+
+    def on_property_update(self):
+        """Send signal that user changed the property"""
+        self.value_update()
+        self.edited.emit()
+
+    def value_update(self):
+        """Gather the text into the dict value. Double quotes are replaced so the
+        comment can never break KV3 string quoting on save (matches the previous
+        dedicated comment widget behavior)."""
+        text = self.text_field.toPlainText().replace('"', "''")
+        self.value = {self.value_class: text}
+
+    def init_label_color(self):
+        return "#6A9955"
+
+    def set_widget_size(self):
+        """Comments are multiline — allow a taller, growable field."""
+        self.setMinimumHeight(96)
+        self.setMaximumHeight(16777215)
 class SoundEventEditorPropertyBool(SoundEventEditorPropertyBase):
     def __init__(self, parent=None, label_text: str = None, value: dict = None):
         """
