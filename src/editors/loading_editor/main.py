@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -18,7 +19,7 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QRadioButton
 )
-from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool
+from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent
 from PySide6.QtSvgWidgets import QSvgWidget
 
@@ -403,17 +404,30 @@ class Loading_editorMainWindow(QMainWindow):
             self.game_screenshot_path = os.path.join(cs2_path, "game", "csgo_addons", get_addon_name(), "screenshots", "Hammer5Tools")
             self.loadingscreen_path = os.path.join(self.game_screenshot_path, "LoadingScreen")
             self.history_path = os.path.join(self.game_screenshot_path, "History")
-            os.makedirs(self.game_screenshot_path, exist_ok=True)
+            self.content_history_path = os.path.join(
+                cs2_path, "content", "csgo_addons", get_addon_name(),
+                "panorama", "history_screenshots"
+            )
+            os.makedirs(self.loadingscreen_path, exist_ok=True)
+            os.makedirs(self.content_history_path, exist_ok=True)
+            self.explorer_root = self._setup_explorer_root(
+                history_path=self.content_history_path,
+                loadingshots_path=self.loadingscreen_path,
+            )
         else:
             self.game_screenshot_path = ""
             self.loadingscreen_path = ""
             self.history_path = ""
+            self.content_history_path = ""
+            self.explorer_root = ""
 
-        # Create both views
-        self.explorer_view = ImageExplorer(tree_directory=self.game_screenshot_path)
+        # Create both views – the explorer root is a staging dir with two
+        # junction links so the tree shows "History" and "LoadingShots" as
+        # named top-level folders.
+        self.explorer_view = ImageExplorer(tree_directory=self.explorer_root)
         self.explorer_view.setStyleSheet("padding:0")
         
-        self.timeline_view = TimelineExplorer(history_directory=self.history_path)
+        self.timeline_view = TimelineExplorer(history_directory=self.content_history_path)
         self.timeline_view.setStyleSheet("padding:0")
         
         # Connect timeline image selection to viewport
@@ -451,9 +465,52 @@ class Loading_editorMainWindow(QMainWindow):
         self.load_existing_icon()
         self.load_existing_description()
 
+    @staticmethod
+    def _setup_explorer_root(history_path: str, loadingshots_path: str) -> str:
+        """Create a staging directory with two Windows junction links.
+
+        The staging folder lives next to the loading-editor package so it
+        survives restarts.  Two sub-entries are created (or refreshed):
+          • History      → content/.../panorama/history_screenshots/
+          • LoadingShots → game/.../screenshots/Hammer5Tools/LoadingScreen/
+
+        Returns the staging folder path (used as the ImageExplorer root).
+        """
+        staging_dir = os.path.join(os.path.dirname(__file__), "_explorer_root")
+        os.makedirs(staging_dir, exist_ok=True)
+
+        junctions = {
+            "History": history_path,
+            "LoadingShots": loadingshots_path,
+        }
+        for name, target in junctions.items():
+            link_path = os.path.join(staging_dir, name)
+            os.makedirs(target, exist_ok=True)
+            # Remove stale junction if it points to a different target
+            if os.path.isdir(link_path):
+                try:
+                    if os.readlink(link_path) != target:
+                        os.rmdir(link_path)
+                    else:
+                        continue  # already correct, nothing to do
+                except (OSError, NotImplementedError):
+                    pass  # not a junction; leave it alone
+            if not os.path.exists(link_path):
+                try:
+                    subprocess.run(
+                        ["cmd", "/c", "mklink", "/J", link_path, target],
+                        check=True, capture_output=True,
+                    )
+                    debug(f"Created junction: {link_path} -> {target}")
+                except subprocess.CalledProcessError as e:
+                    debug(f"Failed to create junction {link_path}: {e.stderr.decode()}")
+
+        return staging_dir
+
     def refresh_timeline(self):
         """Refresh timeline data"""
         self.timeline_view.load_timeline_data()
+
 
     def on_tab_changed(self, index: int):
         """Handle tab change between Explorer and Timeline"""
@@ -503,8 +560,8 @@ class Loading_editorMainWindow(QMainWindow):
 
     def start_apply_screenshots(self):
         try:
-            file_count = len([f for f in os.listdir(self.game_screenshot_path)
-                              if os.path.isfile(os.path.join(self.game_screenshot_path, f))])
+            file_count = len([f for f in os.listdir(self.loadingscreen_path)
+                              if os.path.isfile(os.path.join(self.loadingscreen_path, f))])
         except Exception as e:
             debug(f"Error counting files: {e}")
             file_count = 0
@@ -542,14 +599,55 @@ class Loading_editorMainWindow(QMainWindow):
         self.unified_dialog.cancel_button.clicked.connect(self.unified_dialog.close)
 
     def take_history_shots_action(self):
-        """Generate commands for history screenshots and send directly to CS2 via netcon."""
-        path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
-        commands = generate_commands(path, history=True)
-        if commands:
-            if not CS2Netcon.send_many(commands):
-                QMessageBox.warning(self, "CS2 Not Reachable",
-                    "Could not send commands to CS2.\n"
-                    "Make sure CS2 is running with -netconport 2121.")
+        """Generate commands for history screenshots and send directly to CS2 via netcon.
+
+        After sending the commands, a QTimer fires after a calculated delay to copy
+        the freshly captured images from
+            game/.../screenshots/Hammer5Tools/History/<date>/
+        into
+            content/.../panorama/history_screenshots/<date>/
+        """
+        vmap_path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
+        commands, session_date = generate_commands(vmap_path, history=True)
+        if not commands:
+            return
+
+        if not CS2Netcon.send_many(commands):
+            QMessageBox.warning(self, "CS2 Not Reachable",
+                "Could not send commands to CS2.\n"
+                "Make sure CS2 is running with -netconport 2121.")
+            return
+
+        if not session_date or not self.content_history_path:
+            return
+
+        # Each camera takes ~10 ticks at 64 Hz plus a 1-second buffer after the
+        # last shot, so estimate: cameras * (10/64) + 1 s, with a minimum of 3 s.
+        camera_count = max(1, (len(commands) - 8) // 6)  # rough estimate
+        delay_ms = max(3000, int(camera_count * (10 / 64) * 1000) + 2000)
+
+        src_folder = os.path.join(self.history_path, session_date)
+        dst_folder = os.path.join(self.content_history_path, session_date)
+
+        debug(f"Scheduling history screenshot copy in {delay_ms} ms: {src_folder} -> {dst_folder}")
+        QTimer.singleShot(delay_ms, lambda: self._copy_history_session(src_folder, dst_folder))
+
+    def _copy_history_session(self, src_folder: str, dst_folder: str):
+        """Copy history screenshots from the game folder into content/panorama/history_screenshots."""
+        if not os.path.isdir(src_folder):
+            debug(f"History source folder not found (CS2 may still be shooting): {src_folder}")
+            return
+        try:
+            os.makedirs(dst_folder, exist_ok=True)
+            copied = 0
+            for filename in os.listdir(src_folder):
+                src_file = os.path.join(src_folder, filename)
+                if os.path.isfile(src_file):
+                    shutil.copy2(src_file, os.path.join(dst_folder, filename))
+                    copied += 1
+            debug(f"Copied {copied} history screenshot(s) to {dst_folder}")
+        except Exception as e:
+            debug(f"Failed to copy history screenshots: {e}")
 
     def take_loading_screen_shots_action(self):
         """Generate commands for loading screen screenshots, clear previous shots, and send to CS2 via netcon."""
@@ -566,7 +664,7 @@ class Loading_editorMainWindow(QMainWindow):
                     debug(f"Failed to delete {file_path}: {e}")
 
         path = os.path.join(get_addon_dir(), "maps", f"{get_addon_name()}.vmap")
-        commands = generate_commands(path, history=False)
+        commands, _ = generate_commands(path, history=False)
         if commands:
             if not CS2Netcon.send_many(commands):
                 QMessageBox.warning(self, "CS2 Not Reachable",
@@ -604,10 +702,6 @@ class Loading_editorMainWindow(QMainWindow):
 
     def do_loading_editor_cs2_description(self):
         self.loading_editor_cs2_description(self.ui.PlainTextEdit_Description_2.toPlainText())
-    
-    def refresh_timeline(self):
-        """Refresh timeline data"""
-        self.timeline_view.load_timeline_data()
 
     def keyPressEvent(self, event: QKeyEvent):
         """
