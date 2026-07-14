@@ -10,6 +10,7 @@ from PySide6.QtCore import (
     QPropertyAnimation,
     QPoint,
     QFileSystemWatcher,
+    QEvent,
 )
 from PySide6.QtNetwork import QLocalServer
 
@@ -130,6 +131,15 @@ class Widget(QMainWindow):
         self.setup_buttons()
         self.current_tab(False)
         self.settings = settings
+
+        # Persist window geometry/maximized-state continuously (debounced) so it
+        # survives crashes and abrupt termination (e.g. stopping the debugger),
+        # not only a clean close. resize/move restart the timer; a single save
+        # fires once the window stops changing.
+        self._geometry_save_timer = QTimer(self)
+        self._geometry_save_timer.setSingleShot(True)
+        self._geometry_save_timer.setInterval(500)
+        self._geometry_save_timer.timeout.connect(self._save_window_state)
 
         self.default_title = "Hammer 5 Tools"
         self.setWindowTitle(self.default_title)
@@ -455,6 +465,9 @@ class Widget(QMainWindow):
         self.ui.Launch_Addon_Button.setText("Edit map" if commands and "-asset" in commands else "Launch Tools")
 
     def closeEvent(self, event):
+        # Capture geometry (including maximized/fullscreen state) while the
+        # window is still visible, before it is hidden or destroyed.
+        self._save_window_state()
         if get_settings_bool("APP", "minimize_to_tray", False):
             event.ignore()
             self.hide()
@@ -524,6 +537,11 @@ class Widget(QMainWindow):
 
     def exit_application(self):
         self.current_tab(True)
+        # Only overwrite the saved geometry when the window is actually visible;
+        # exiting from the tray (window hidden) would otherwise clobber the
+        # maximized state captured in closeEvent with a stale/normal geometry.
+        if self.isVisible():
+            self._save_window_state()
         if self.tray_icon: self.tray_icon.hide()
         QApplication.quit()
 
@@ -548,7 +566,48 @@ class Widget(QMainWindow):
 
     def open_my_twitter(self): webbrowser.open("https://twitter.com/dertwist")
     def open_discord(self): webbrowser.open("https://discord.gg/6X88yX8Y")
-    def _restore_user_prefs(self): pass
+
+    def _restore_user_prefs(self):
+        # Restore the window geometry saved on the previous exit. QWidget's
+        # saveGeometry/restoreGeometry round-trips the maximized/fullscreen
+        # state as well, so a window that was maximized reopens maximized.
+        try:
+            geometry = self.settings.value("MainWindow/geometry")
+            if geometry:
+                self.restoreGeometry(geometry)
+        except Exception as e:
+            print(f"Failed to restore window geometry: {e}")
+
+    def _save_window_state(self):
+        if getattr(self, 'settings', None) is None:
+            return
+        try:
+            self.settings.setValue("MainWindow/geometry", self.saveGeometry())
+            # Flush to disk immediately: QSettings otherwise buffers writes and
+            # loses them if the process is killed before its normal shutdown.
+            self.settings.sync()
+        except Exception as e:
+            print(f"Failed to save window geometry: {e}")
+
+    def _schedule_window_state_save(self):
+        timer = getattr(self, '_geometry_save_timer', None)
+        if timer is not None:
+            timer.start()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._schedule_window_state_save()
+
+    def moveEvent(self, event):
+        super().moveEvent(event)
+        self._schedule_window_state_save()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        # Persist maximize/restore/fullscreen transitions promptly.
+        if event.type() == QEvent.WindowStateChange:
+            self._save_window_state()
+
     def show_minimize_message_once(self): pass
 
 def handle_new_connection(server, widget):
