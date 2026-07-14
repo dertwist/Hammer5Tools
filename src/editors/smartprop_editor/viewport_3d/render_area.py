@@ -138,7 +138,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         # Preview-accuracy warnings surfaced in the HUD, rebuilt each
         # update_viewport().
-        self._warn_approx_count = 0        # elements whose placement is approximate
         self._warn_unsupported = set()     # unsupported element class short-names
 
         # Picking state
@@ -417,12 +416,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         # Lines: preview-accuracy warnings (amber).  Marked with a leading "⚠" so
         # the text-colour pass below can style them.
-        if getattr(self, "_warn_approx_count", 0) > 0:
-            n = self._warn_approx_count
-            hud_lines.append(
-                f"⚠ {n} element{'s' if n != 1 else ''} placed approximately "
-                f"(variable/expression transform)"
-            )
         unsupported = getattr(self, "_warn_unsupported", None)
         if unsupported:
             names = ", ".join(sorted(unsupported))
@@ -1084,7 +1077,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         """Rebuild the scene models list from the current document tree."""
         self._model_infos.clear()
         self._widget_infos = []
-        self._warn_approx_count = 0
         self._warn_unsupported = set()
         self._eval_context = self._build_eval_context()
 
@@ -1624,42 +1616,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         """
         return self._eval_context.resolve_string(val, default)
 
-    @staticmethod
-    def _value_has_binding(v):
-        """True if a value (or any of its components) is a variable/expression
-        binding rather than a plain literal."""
-        if isinstance(v, dict):
-            if "m_SourceName" in v or "m_Expression" in v:
-                return True
-            comps = v.get("m_Components")
-            if isinstance(comps, (list, tuple)):
-                return any(SmartProp3DRenderArea._value_has_binding(c) for c in comps)
-            return False
-        if isinstance(v, (list, tuple)):
-            return any(SmartProp3DRenderArea._value_has_binding(c) for c in v)
-        return False
-
-    def _transform_has_bindings(self, data):
-        """True when an element's placement depends on variable/expression
-        bindings, so the preview (using default values) is only approximate."""
-        if not isinstance(data, dict):
-            return False
-        for mod in data.get("m_Modifiers") or []:
-            if not isinstance(mod, dict):
-                continue
-            cls = mod.get("_class", "")
-            if cls == "CSmartPropOperation_Translate" and self._value_has_binding(mod.get("m_vPosition")):
-                return True
-            if cls == "CSmartPropOperation_Rotate" and self._value_has_binding(mod.get("m_vRotation")):
-                return True
-            if cls == "CSmartPropOperation_Scale" and self._value_has_binding(mod.get("m_flScale")):
-                return True
-        if self._value_has_binding(data.get("m_vModelScale")):
-            return True
-        if self._value_has_binding(data.get("m_flUniformModelScale")):
-            return True
-        return False
-
     def _get_local_transform(self, data):
         """Extract local pos, rot, scale from the element's data dictionary."""
         local_pos   = [0.0, 0.0, 0.0]
@@ -1969,8 +1925,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             return
 
         # Same preview-accuracy warnings as the tree traversal, for nested props.
-        if self._transform_has_bindings(data):
-            self._warn_approx_count += 1
         nested_class = data.get("_class", "")
         if (nested_class.startswith("CSmartPropElement_")
                 and nested_class not in self._SUPPORTED_ELEMENT_CLASSES):
@@ -2120,11 +2074,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 if not (node_is_isolated_start or is_ancestor):
                     continue
 
-            # Placement is only approximate when the transform depends on
-            # variable/expression bindings — the preview resolves those against
-            # default values, not the real per-instance ones.
-            if self._transform_has_bindings(data):
-                self._warn_approx_count += 1
             local_pos, local_rot, local_scale = self._get_local_transform(data)
 
             # Build local matrix in Source 2 space (Scale -> Rotate -> Translate)

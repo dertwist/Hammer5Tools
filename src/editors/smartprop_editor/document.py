@@ -288,6 +288,25 @@ class SmartPropDocument(QMainWindow):
         # ── Default layout ──────────────────────────────────────────────
         self._apply_default_layout()
 
+        # ── Continuous layout persistence ───────────────────────────────
+        # The dock/viewport arrangement is saved (debounced) whenever a dock is
+        # moved, floated, or resized, so the layout survives crashes and abrupt
+        # termination (e.g. stopping the debugger) rather than only a clean
+        # close. A short timer coalesces bursts (drag-resize) into one save.
+        self._layout_docks = (
+            self.ui.HierarchyDock, self.ui.ChoicesDock, self.ui.VariablesDock,
+            self._property_dock, self._manual_dock, self._viewport_dock,
+            self._history_dock,
+        )
+        self._layout_save_timer = QTimer(self)
+        self._layout_save_timer.setSingleShot(True)
+        self._layout_save_timer.setInterval(500)
+        self._layout_save_timer.timeout.connect(self._save_user_prefs)
+        for _dock in self._layout_docks:
+            _dock.dockLocationChanged.connect(self._schedule_layout_save)
+            _dock.topLevelChanged.connect(self._schedule_layout_save)
+            _dock.installEventFilter(self)
+
         # Refresh a panel when its dock becomes visible (replaces tab-change).
         self._manual_dock.visibilityChanged.connect(self._on_manual_dock_visibility_changed)
         self._viewport_dock.visibilityChanged.connect(self._on_viewport_dock_visibility_changed)
@@ -1139,7 +1158,19 @@ class SmartPropDocument(QMainWindow):
                 self.undo_stack.push(cmd)
 
     # ======================================[Event Filter]========================================
+    def _schedule_layout_save(self, *args):
+        """Debounced trigger to persist the dock layout after it changes."""
+        timer = getattr(self, '_layout_save_timer', None)
+        if timer is not None:
+            timer.start()
+
     def eventFilter(self, source, event):
+        # A dock being resized (splitter drag or window resize) or moved is a
+        # layout change worth persisting; schedule a debounced save.
+        if event.type() in (QEvent.Resize, QEvent.Move):
+            docks = getattr(self, '_layout_docks', None)
+            if docks and source in docks:
+                self._schedule_layout_save()
         if event.type() == QKeyEvent.KeyPress:
             if source == self.ui.tree_hierarchy_widget:
                 if event.matches(QKeySequence.Copy):
@@ -2500,6 +2531,9 @@ class SmartPropDocument(QMainWindow):
         self.settings.setValue("SmartPropEditorMainWindow/currentComboBoxIndex", current_index)
         # Persist the dock layout to the 'last closed' key.
         self.settings.setValue("SmartPropEditorMainWindow/windowState_v3", self.saveState())
+        # Flush immediately so the layout is not lost if the process is killed
+        # (crash / debugger-stop) before QSettings' normal buffered write.
+        self.settings.sync()
 
     def save_layout_as_default(self):
         """Saves the current dock widget layout as the default for new documents."""
