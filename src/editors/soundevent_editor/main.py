@@ -318,10 +318,11 @@ class SoundEventEditorMainWindow(QMainWindow):
         if not isinstance(value, dict):
             self.ui.label.setText(f"Properties: {event_name}")
             return
-        # Count properties: all keys except 'comment' and 'm_sLabel'
+        # Count properties: all keys except comment(s) and 'm_sLabel'
         prop_count = sum(
             1 for k in value
-            if k not in ('comment', 'm_sLabel')
+            if k != 'm_sLabel'
+            and not (isinstance(k, str) and (k == 'comment' or k.startswith('comment_')))
         )
         self.ui.label.setText(f"Properties: {event_name}    |    {prop_count} properties")
 

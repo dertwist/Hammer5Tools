@@ -141,29 +141,6 @@ border: none;</string>
         </layout>
        </widget>
       </widget>
-      <widget class="QFrame" name="CommetSeciton">
-       <property name="frameShape">
-        <enum>QFrame::Shape::StyledPanel</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Shadow::Raised</enum>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QSplitter" name="splitter_2">
-          <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
-          </property>
-          <widget class="QGroupBox" name="groupBox_2">
-           <property name="title">
-            <string>Comment</string>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout"/>
-          </widget>
-         </widget>
-        </item>
-       </layout>
-      </widget>
      </widget>
     </item>
    </layout>
