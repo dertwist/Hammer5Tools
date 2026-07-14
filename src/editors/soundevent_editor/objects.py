@@ -1,4 +1,7 @@
 soundevent_editor_properties = [
+    # Comment (can be added multiple times per event)
+    {'Comment': {'comment': ''}},
+
     # Float
     {'Volume': {'volume': 1}},
     {'Delay': {'delay': 1}},

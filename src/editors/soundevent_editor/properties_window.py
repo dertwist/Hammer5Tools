@@ -9,7 +9,7 @@ from src.editors.soundevent_editor.property.frame import SoundEventEditorPropert
 from src.widgets.popup_menu.main import PopupMenu
 from src.editors.soundevent_editor.objects import *
 from src.widgets import ErrorInfo
-from PySide6.QtWidgets import QMainWindow, QMenu, QPlainTextEdit, QApplication, QTreeWidget
+from PySide6.QtWidgets import QMainWindow, QMenu, QApplication, QTreeWidget
 from PySide6.QtGui import QKeySequence, QKeyEvent, QUndoStack, QUndoCommand, QShortcut
 from PySide6.QtCore import Qt, Signal
 
@@ -159,23 +159,22 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             return ast.literal_eval(value)
         elif isinstance(value, dict):
             return value
-    #===========================================================<  Comment Widget  >========================================================
+    #===========================================================<  Comment keys  >==========================================================
 
-    def get_comment(self):
-        try:
-            return self.comment_widget.toPlainText()
-        except:
-            return ""
-    def init_comment(self, value):
-        self.comment_widget = QPlainTextEdit()
-        self.comment_widget.setPlainText(value)
-        self.ui.groupBox_2.layout().addWidget(self.comment_widget)
-        self.comment_widget.textChanged.connect(self.on_update)
-    def delete_comment(self):
-        try:
-            self.comment_widget.deleteLater()
-        except:
-            pass
+    def _unique_comment_key(self):
+        """Return the next free comment key: 'comment', then 'comment_2', 'comment_3', ...
+
+        Comments are regular properties now, but unlike the others they can be added
+        any number of times. Each new comment gets a unique key so it round-trips
+        through the flat properties dict without colliding.
+        """
+        existing = set(self.get_properties_value().keys())
+        if 'comment' not in existing:
+            return 'comment'
+        index = 2
+        while f'comment_{index}' in existing:
+            index += 1
+        return f'comment_{index}'
 
     # =========================================================<  Properties Actions  >======================================================
 
@@ -191,7 +190,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         for dict_value in soundevent_editor_properties:
             for key, value in dict_value.items():
                 key_value = next(iter(value.items()))[0]
-                if key_value not in existing_items:
+                # 'comment' is always offered — it can be added multiple times
+                if key_value == 'comment' or key_value not in existing_items:
                     soundevent_editor_properties_filtered.append({key:value})
         # Use the filtered properties for the popup menu
         self.popup_menu = PopupMenu(soundevent_editor_properties_filtered, add_once=True, help_url="SoundEvent_Editor", window_name='soundevent_editor_properties_filtered')
@@ -218,6 +218,9 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Ensure value is a dictionary and has at least one item
         if isinstance(value, dict) and value:
             key, val = next(iter(value.items()))
+            # Comments can coexist — give each one a unique key
+            if key == 'comment':
+                key = self._unique_comment_key()
             self._next_undo_desc = f"Add property '{key}'"
             self.create_property(key, val)
         else:
@@ -232,13 +235,14 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         try:
             data = ast.literal_eval(clipboard_text)
             key = next(iter(data))
-            existing_items = set()
-            __properties = self.get_properties_value()
-            for item in __properties:
-                existing_items.add(item)
+            val = data[key]
+            existing_items = set(self.get_properties_value().keys())
+            # Comments can coexist — a pasted comment gets a fresh unique key
+            if isinstance(key, str) and (key == 'comment' or key.startswith('comment_')):
+                key = self._unique_comment_key()
             if key not in existing_items:
                 self._next_undo_desc = f"Paste property '{key}'"
-                self.create_property(key, data[key])
+                self.create_property(key, val)
             else:
                 ErrorInfo(
                     text='It seems a property with this name already exists in the sound event. Please remove the existing property to create a new one.').exec()
@@ -267,7 +271,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Hide properties and show placeholder"""
         self.ui.properties_spacer.hide()
         self.ui.properties_placeholder.show()
-        self.ui.CommetSeciton.hide()
 
         # Unset Filter
         self.ui.centralwidget.removeEventFilter(self)
@@ -285,7 +288,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         """Show properties and hide placeholder"""
         self.ui.properties_placeholder.hide()
         self.ui.properties_spacer.show()
-        self.ui.CommetSeciton.show()
 
         # Set Filter
         self.ui.centralwidget.installEventFilter(self)
@@ -325,26 +327,18 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             else:
                 i += 1
 
-        self.delete_comment()
         # keep play button and badge intact
     def populate_properties(self, _data):
         """Loading properties from given data"""
         if isinstance(_data, dict):
             # Reverse input data and use insertWidget with index 0 because in that way all widgets will be upper spacer
             debug(f"[props] populate: {list(_data.keys())}")
-            # If there is no comment in data init comment widget
-            if 'comment' in _data:
-                pass
-            else:
-                self.init_comment("")
 
             for item, value in _data.items():
-                if item == 'comment':
-                    self.init_comment(value)
-                elif item == 'm_sLabel':
+                if item == 'm_sLabel':
                     pass
                 else:
-                    self.create_property(item,value)
+                    self.create_property(item, value)
 
             # Ensure readonly mode applied after population
             self.apply_readonly_mode()
@@ -479,14 +473,8 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         # Clear the dragging flag LAST so any late valueChanged that arrives
         # during this method is still suppressed by on_update().
         self._slider_dragging = False
-    def clean_comment(self, text):
-        return text.replace('"', "''")
     def update_value(self):
-        _data = self.get_properties_value()
-        comment = self.get_comment()
-        if comment != "":
-            _data.update({'comment': self.clean_comment(comment)})
-        self.value = _data
+        self.value = self.get_properties_value()
     #============================================================<  Context menu  >=========================================================
     def open_context_menu(self, position):
         """Layout context menu"""
@@ -532,12 +520,12 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self.apply_readonly_mode()
 
     def apply_readonly_mode(self):
-        """Apply read-only state to all property frames and comment widget, keep Play enabled."""
+        """Apply read-only state to all property frames, keep Play enabled."""
         try:
             # Toggle badge
             if hasattr(self, 'readonly_badge'):
                 self.readonly_badge.setVisible(self.readonly_mode)
-            # Toggle property frames
+            # Toggle property frames (comments are ordinary frames now)
             for index in range(self.ui.properties_layout.count()):
                 widget = self.ui.properties_layout.itemAt(index).widget()
                 if isinstance(widget, SoundEventEditorPropertyFrame):
@@ -545,12 +533,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                         widget.setEnabled(not self.readonly_mode)
                     except Exception:
                         pass
-            # Toggle comment widget
-            try:
-                if hasattr(self, 'comment_widget') and self.comment_widget is not None:
-                    self.comment_widget.setReadOnly(self.readonly_mode)
-            except Exception:
-                pass
             # Play button always enabled
             try:
                 self.play_button.setEnabled(True)
