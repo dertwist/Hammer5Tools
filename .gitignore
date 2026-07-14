@@ -101,6 +101,7 @@ main.dist/
 dist/
 .idea
 __pycache__/
+_explorer_root/
 .qtcreator/
 .build/
 debug.kv3
