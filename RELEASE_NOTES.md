@@ -1,2 +1,9 @@
-## 🔧 Main App
-* Cleanup Addon: Added scanning of `.fbx`/`.dmx` meshes for material references, upgraded KV3 model/smartprop parsers to be suffix-generic with path normalization, added early-abort compilation verification, and integrated `.dirtlist` ignore file support.
+## ✏️ SmartProp Editor
+
+* 3D Viewport with live model rendering, move/rotate gizmos, snapping and Isolate view.
+* Default dock layout redesign.
+* Load Vmap feature.
+
+## 🔊 SoundEvent Editor
+
+* Comments are now regular, reorderable properties and can be added multiple times per soundevent.

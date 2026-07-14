@@ -13,13 +13,16 @@ try:
 except Exception:
     CS2Netcon = None
 
-def generate_commands(vmap_path, history=False):
+def generate_commands(vmap_path, history=False) -> tuple[list, str | None]:
     """
     Generate CS2 console commands for point_camera entities in a VMAP file.
     Args:
         vmap_path (str): Path to the .vmap file
+        history (bool): If True, uses a date-stamped History subfolder.
     Returns:
-        list: List of generated console command strings
+        tuple[list, str | None]: (commands, session_date) where session_date is the
+            date-stamped folder name used in screenshot_subdir (only set when history=True,
+            otherwise None).
     """
     print(f"Loading VMAP file: {vmap_path}")
     cameras = parse(vmap_path, show_entity_properties=False)
@@ -37,6 +40,7 @@ def generate_commands(vmap_path, history=False):
 
     map_name = os.path.splitext(os.path.basename(vmap_path))[0]
     current_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    session_date = current_date if history else None
     if history:
         screenshot_path = f"screenshots\\Hammer5Tools\\History\\{current_date}"
     else:
@@ -127,13 +131,13 @@ def generate_commands(vmap_path, history=False):
             "r_drawpanorama 0",
             "ent_fire worldent FireUser1"
         ])
-    return commands
+    return commands, session_date
 
 if __name__ == "__main__":
     pfd = r"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\content\csgo_addons\de_sanctum\maps\de_sanctum.vmap"
-    commands = generate_commands(pfd)
+    commands, session_date = generate_commands(pfd)
     if commands:
         print("\nGenerated console commands:")
         print(';'.join(commands))
     else:
-        print("No point_camera entities found.")
+        print("No point_camera entities found.")
