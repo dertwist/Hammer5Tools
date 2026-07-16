@@ -342,12 +342,56 @@ def convert_snake_case(name: str = None):
         return pretty_label
 
 #===============================================================<  Kv3 Format  >============================================================
+_kv3_parse_lock = threading.Lock()
+
+def _parse_kv3_text(text):
+    """Parse KV3 text on a fresh thread so it can't overflow the caller's stack.
+
+    keyvalues3's parsimonious-based reader walks the parse tree with plain
+    Python recursion (several stack frames per nesting level). This is fine in
+    isolation, but the smart-prop viewport parses nested .vsmart files from deep
+    inside the recursive _traverse_vsmart_dict tree-walk (itself under Qt's
+    paintGL chain). By then hundreds of frames are already on the stack, so even
+    a shallow file's parse (e.g. cloner.vsmart) tips past the default 1000-frame
+    limit and dies with RecursionError.
+
+    Running the parse on a dedicated worker thread starts it from an empty
+    stack, decoupling it from the caller's depth; the larger C stack and raised
+    recursion limit add extra headroom for genuinely deep assets. Real parse
+    errors (and any other exception) are captured and re-raised to the caller.
+    """
+    result = {}
+
+    def _run():
+        old_limit = sys.getrecursionlimit()
+        sys.setrecursionlimit(max(old_limit, 50000))
+        try:
+            result['value'] = kv3.textreader.KV3TextReader().parse(text)
+        except BaseException as exc:
+            result['error'] = exc
+        finally:
+            sys.setrecursionlimit(old_limit)
+
+    with _kv3_parse_lock:
+        old_stack_size = threading.stack_size()
+        threading.stack_size(64 * 1024 * 1024)
+        try:
+            worker = threading.Thread(target=_run)
+            worker.start()
+            worker.join()
+        finally:
+            threading.stack_size(old_stack_size)
+
+    if 'error' in result:
+        raise result['error']
+    return result['value']
+
 def Kv3ToJson(input):
     if '<!-- kv3 encoding:' in input:
         pass
     else:
         input = '<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n{' + input + '\n}'
-    output = kv3.textreader.KV3TextReader().parse(input).value
+    output = _parse_kv3_text(input).value
     return output
 def JsonToKv3(input, disable_line_value_length_limit_keys: list = None, format=None):
     if format == 'vmdl':
