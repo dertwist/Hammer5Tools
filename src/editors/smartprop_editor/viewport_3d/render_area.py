@@ -1908,9 +1908,9 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                         content = f.read()
                     content = re.sub(re.compile(r"= resource_name:"), "= ", content)
                     content = content.replace("null,", "")
-                    import keyvalues3 as kv3
-                    vsmart_data = kv3.textreader.KV3TextReader().parse(content).value
-                    
+                    from src.common import Kv3ToJson
+                    vsmart_data = Kv3ToJson(content)
+
                     self._traverse_vsmart_dict(vsmart_data, models_list, world_matrix, addon)
                 except Exception as e:
                     print(f"[SmartPropEditor] Failed to load/traverse nested smart prop {smartprop_path}: {e}")

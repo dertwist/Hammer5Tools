@@ -1,11 +1,10 @@
 import ast
 import re
-import keyvalues3 as kv3
 from PySide6.QtWidgets import QTreeWidget
 from PySide6.QtCore import Qt
 
 from src.editors.smartprop_editor.choices import AddChoice, AddOption, AddVariable
-from src.common import editor_info, JsonToKv3
+from src.common import editor_info, JsonToKv3, Kv3ToJson
 from src.settings.main import debug, get_settings_bool
 from src.editors.smartprop_editor._common import (
     disable_line_value_length_limit_keys,
@@ -222,7 +221,7 @@ class VsmartOpen:
         """Open file data, restore references, and populate tree and choices."""
         data = self.load_file(self.filename)
         data = self.fix_format(data)
-        data = kv3.textreader.KV3TextReader().parse(data).value
+        data = Kv3ToJson(data)
         debug(f"Loaded data:\n{data}")
         # Restore non-processed reference objects.
         restore_reference_objects(data)
