@@ -140,6 +140,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # update_viewport().
         self._warn_unsupported = set()     # unsupported element class short-names
 
+        # Nested smart-prop recursion guard. _nested_vsmart_stack holds the
+        # chain of .vsmart files currently being expanded so a self-referential
+        # prop (e.g. a cloner that references itself) can't recurse forever.
+        # _warned_cyclic_smartprops keeps the "cycle detected" log to one line
+        # per file instead of one per paint.
+        self._nested_vsmart_stack = []
+        self._warned_cyclic_smartprops = set()
+
         # Picking state
         self._perform_pick_flag = False
         self._pick_pos = None
@@ -1097,6 +1105,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 self.isolated_element_name = ""
 
         models_info = []
+        self._nested_vsmart_stack = []
         self._traverse_tree(tree_widget.invisibleRootItem(), models_info)
 
         for info in models_info:
@@ -1889,31 +1898,66 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         M[:3, :3] = R.T.astype(np.float32)  # transpose for the row-vector chain
         return M
 
+    # Hard cap on nested smart-prop recursion depth. Real nesting is only ever a
+    # handful deep; anything past this is a runaway (typically a self-referential
+    # prop) that would otherwise exhaust the call stack and crash the app.
+    _MAX_NESTED_VSMART_DEPTH = 16
+
     def _load_and_traverse_nested_vsmart(self, smartprop_path, models_list, world_matrix, context_addon=None):
         import os
         import re
         from src.settings.main import get_addon_name, get_cs2_path
         cs2_path = get_cs2_path()
         addon = context_addon or get_addon_name()
-        if cs2_path and addon:
-            addon_match = re.search(r'/csgo_addons/([^/]+)/(.*)$', '/' + smartprop_path.replace('\\', '/'), re.IGNORECASE)
-            if addon_match:
-                addon = addon_match.group(1)
-                smartprop_path = addon_match.group(2)
-            
-            full_vsmart_path = os.path.join(cs2_path, 'content', 'csgo_addons', addon, smartprop_path.replace('\\', '/').strip('/'))
-            if os.path.exists(full_vsmart_path):
-                try:
-                    with open(full_vsmart_path, "r") as f:
-                        content = f.read()
-                    content = re.sub(re.compile(r"= resource_name:"), "= ", content)
-                    content = content.replace("null,", "")
-                    from src.common import Kv3ToJson
-                    vsmart_data = Kv3ToJson(content)
+        if not (cs2_path and addon):
+            return
 
-                    self._traverse_vsmart_dict(vsmart_data, models_list, world_matrix, addon)
-                except Exception as e:
-                    print(f"[SmartPropEditor] Failed to load/traverse nested smart prop {smartprop_path}: {e}")
+        addon_match = re.search(r'/csgo_addons/([^/]+)/(.*)$', '/' + smartprop_path.replace('\\', '/'), re.IGNORECASE)
+        if addon_match:
+            addon = addon_match.group(1)
+            smartprop_path = addon_match.group(2)
+
+        full_vsmart_path = os.path.join(cs2_path, 'content', 'csgo_addons', addon, smartprop_path.replace('\\', '/').strip('/'))
+
+        # Cycle / depth guard: a smart prop that references itself (directly, or
+        # through a chain of other props) would recurse until the stack blows and
+        # the whole program crashes. Track the files currently being expanded and
+        # refuse to re-enter one already open; cap total depth as a backstop.
+        stack = getattr(self, "_nested_vsmart_stack", None)
+        if stack is None:
+            stack = self._nested_vsmart_stack = []
+        if getattr(self, "_warned_cyclic_smartprops", None) is None:
+            self._warned_cyclic_smartprops = set()
+        norm_key = os.path.normcase(os.path.normpath(full_vsmart_path))
+        if norm_key in stack:
+            if norm_key not in self._warned_cyclic_smartprops:
+                self._warned_cyclic_smartprops.add(norm_key)
+                print(f"[SmartPropEditor] Skipping self-referential smart prop (cycle): {smartprop_path}")
+            return
+        if len(stack) >= self._MAX_NESTED_VSMART_DEPTH:
+            if norm_key not in self._warned_cyclic_smartprops:
+                self._warned_cyclic_smartprops.add(norm_key)
+                print(f"[SmartPropEditor] Nested smart prop depth limit "
+                      f"({self._MAX_NESTED_VSMART_DEPTH}) reached; stopping at {smartprop_path}")
+            return
+
+        if not os.path.exists(full_vsmart_path):
+            return
+
+        stack.append(norm_key)
+        try:
+            with open(full_vsmart_path, "r") as f:
+                content = f.read()
+            content = re.sub(re.compile(r"= resource_name:"), "= ", content)
+            content = content.replace("null,", "")
+            from src.common import Kv3ToJson
+            vsmart_data = Kv3ToJson(content)
+
+            self._traverse_vsmart_dict(vsmart_data, models_list, world_matrix, addon)
+        except Exception as e:
+            print(f"[SmartPropEditor] Failed to load/traverse nested smart prop {smartprop_path}: {e}")
+        finally:
+            stack.pop()
 
     def _traverse_vsmart_dict(self, data, models_list, parent_world_matrix=None, context_addon=None):
         if parent_world_matrix is None:
