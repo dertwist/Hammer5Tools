@@ -12,7 +12,10 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QMenu,
     QWidget,
-    QVBoxLayout
+    QVBoxLayout,
+    QHBoxLayout,
+    QSizePolicy,
+    QAbstractItemView
 )
 from src.settings.main import debug
 import sys
@@ -321,140 +324,280 @@ class Viewport(QMainWindow):
                 
             debug(f"Restored shared camera position - Zoom: {self.saved_zoom_level}, H: {self.saved_h_scroll}, V: {self.saved_v_scroll}")
 
-class ImageExplorer(QMainWindow):
-    """
-    A simple file explorer with a tree view and an embedded Viewport to show images.
-    Supports drag/drop for new images.
-    Now supports removing folders and displays smaller icons for folders.
-    """
-    FOLDER_ICON_SIZE = QSize(32, 32)
+VALID_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
+
+
+class SectionHeader(QWidget):
+    """Custom, hand-built collapsible-section header: a disclosure arrow plus a
+    bold title, clickable across its whole width.  Built from plain widgets so
+    the explorer does not rely on QToolBox / stylesheet shortcuts."""
+    clicked = Signal()
+
+    ARROW_EXPANDED = "▾"   # ▾
+    ARROW_COLLAPSED = "▸"  # ▸
+
+    def __init__(self, title: str, parent=None):
+        super().__init__(parent)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setAutoFillBackground(True)
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(6, 4, 6, 4)
+        layout.setSpacing(6)
+
+        self.arrow_label = QLabel(self.ARROW_EXPANDED, self)
+        self.title_label = QLabel(title, self)
+        font = self.title_label.font()
+        font.setBold(True)
+        self.title_label.setFont(font)
+
+        self.count_label = QLabel("", self)
+        self.count_label.setStyleSheet("color: gray;")
+
+        layout.addWidget(self.arrow_label)
+        layout.addWidget(self.title_label)
+        layout.addStretch(1)
+        layout.addWidget(self.count_label)
+
+    def set_expanded(self, expanded: bool):
+        self.arrow_label.setText(self.ARROW_EXPANDED if expanded else self.ARROW_COLLAPSED)
+
+    def set_count(self, count: int):
+        self.count_label.setText(f"{count} image{'s' if count != 1 else ''}")
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if event.button() == Qt.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(event)
+
+
+class CollapsibleSection(QWidget):
+    """A custom collapsible container: a SectionHeader stacked above a body
+    widget whose visibility is toggled by clicking the header."""
+    def __init__(self, title: str, body: QWidget, expanded: bool = True, parent=None):
+        super().__init__(parent)
+        self._body = body
+        self._expanded = expanded
+
+        self.header = SectionHeader(title, self)
+        self.header.clicked.connect(self.toggle)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self.header)
+        layout.addWidget(self._body)
+
+        self._apply_state()
+
+    def toggle(self):
+        self.set_expanded(not self._expanded)
+
+    def set_expanded(self, expanded: bool):
+        self._expanded = expanded
+        self._apply_state()
+
+    def set_count(self, count: int):
+        self.header.set_count(count)
+
+    def _apply_state(self):
+        self._body.setVisible(self._expanded)
+        self.header.set_expanded(self._expanded)
+        # When collapsed the section should shrink to just its header height so
+        # the sibling section can claim the freed vertical space.
+        if self._expanded:
+            self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        else:
+            self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+
+class ImageTreeView(QTreeView):
+    """A QTreeView bound to a single real directory that accepts image files
+    dropped from outside and copies them into that directory."""
+    images_dropped = Signal(list)   # list[str] of destination paths
+    file_activated = Signal(str)    # image file path clicked
+
     FILE_ICON_SIZE = QSize(32, 32)
+    FOLDER_ICON_SIZE = QSize(32, 32)
 
-    def __init__(self, tree_directory=None):
-        super().__init__()
-        self.setWindowTitle("Explorer")
-        root_path = tree_directory if tree_directory else os.path.expanduser("~")
-        self.root_directory = root_path
-
-        splitter = QSplitter(self)
-
-        self.tree_view = QTreeView()
-        self.tree_view.setIconSize(self.FILE_ICON_SIZE)
+    def __init__(self, root_dir: str, parent=None):
+        super().__init__(parent)
+        self.root_dir = root_dir
+        self.setIconSize(self.FILE_ICON_SIZE)
+        self.setUniformRowHeights(False)
+        self.setAcceptDrops(True)
+        self.setDragDropMode(QAbstractItemView.NoDragDrop)
 
         self.file_model = QFileSystemModelWithThumbnails(self)
-        self.file_model.setRootPath(root_path)
-        self.file_model.setNameFilters(["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tga"])
+        self.file_model.setRootPath(root_dir)
+        self.file_model.setNameFilters([f"*{ext}" for ext in VALID_IMAGE_EXTENSIONS])
         self.file_model.setNameFilterDisables(False)
 
-        self.tree_view.setModel(self.file_model)
-        self.tree_view.setRootIndex(self.file_model.index(root_path))
-        self.tree_view.clicked.connect(self.on_item_click)
+        self.setModel(self.file_model)
+        self.setRootIndex(self.file_model.index(root_dir))
 
-        self.image_viewer = Viewport()
+        self.header().setDefaultSectionSize(120)
+        self.header().resizeSection(0, 160)
+        self.header().hideSection(1)
+        self.header().hideSection(2)
+        self.header().hideSection(3)
 
-        splitter.addWidget(self.tree_view)
-        splitter.addWidget(self.image_viewer)
-        self.setCentralWidget(splitter)
+        self.setItemDelegate(
+            FolderIconSizeDelegate(self.file_model, self.FOLDER_ICON_SIZE, self.FILE_ICON_SIZE, self)
+        )
 
-        self.tree_view.header().setDefaultSectionSize(120)
-        self.tree_view.header().resizeSection(0, 160)
-        self.tree_view.header().hideSection(1)
-        self.tree_view.header().hideSection(2)
-        self.tree_view.header().hideSection(3)
+        self.clicked.connect(self._on_clicked)
 
-        self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tree_view.customContextMenuRequested.connect(self.openContextMenu)
+    def _on_clicked(self, index):
+        if not self.file_model.isDir(index):
+            self.file_activated.emit(self.file_model.filePath(index))
 
-        # Enable drag and drop support
-        self.setAcceptDrops(True)
-
-        # Set a delegate to adjust folder icon size
-        self.tree_view.setItemDelegate(FolderIconSizeDelegate(self.file_model, self.FOLDER_ICON_SIZE, self.FILE_ICON_SIZE, self.tree_view))
+    def _has_valid_urls(self, event) -> bool:
+        if not event.mimeData().hasUrls():
+            return False
+        for url in event.mimeData().urls():
+            if url.isLocalFile() and os.path.splitext(url.toLocalFile())[1].lower() in VALID_IMAGE_EXTENSIONS:
+                return True
+        return False
 
     def dragEnterEvent(self, event: QDragEnterEvent):
-        if event.mimeData().hasUrls():
-            valid_extensions = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
-            for url in event.mimeData().urls():
-                if url.isLocalFile() and os.path.splitext(url.toLocalFile())[1].lower() in valid_extensions:
-                    event.acceptProposedAction()
-                    return
-        event.ignore()
-
-    def dropEvent(self, event: QDropEvent):
-        if event.mimeData().hasUrls():
-            valid_extensions = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
-            copied_files = []
-            for url in event.mimeData().urls():
-                if url.isLocalFile():
-                    source_file = url.toLocalFile()
-                    ext = os.path.splitext(source_file)[1].lower()
-                    if ext in valid_extensions:
-                        destination_file = os.path.join(self.root_directory, os.path.basename(source_file))
-                        try:
-                            shutil.copy(source_file, destination_file)
-                            copied_files.append(destination_file)
-                            debug(f"Copied file {source_file} to {destination_file}")
-                        except Exception as e:
-                            debug(f"Error copying file '{source_file}': {e}")
-            if copied_files:
-                self.file_model.refresh()
-                # Display the first copied image
-                self.image_viewer.showImage(copied_files[0])
-                event.acceptProposedAction()
-            else:
-                event.ignore()
+        if self._has_valid_urls(event):
+            event.acceptProposedAction()
         else:
             event.ignore()
 
-    def on_item_click(self, index):
-        file_path = self.file_model.filePath(index)
-        if not self.file_model.isDir(index):
-            self.image_viewer.showImage(file_path)
+    def dragMoveEvent(self, event: QDragEnterEvent):
+        if self._has_valid_urls(event):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
 
-    def openContextMenu(self, position):
-        index = self.tree_view.indexAt(position)
+    def dropEvent(self, event: QDropEvent):
+        if not self._has_valid_urls(event):
+            event.ignore()
+            return
+        copied_files = []
+        for url in event.mimeData().urls():
+            if not url.isLocalFile():
+                continue
+            source_file = url.toLocalFile()
+            if os.path.splitext(source_file)[1].lower() not in VALID_IMAGE_EXTENSIONS:
+                continue
+            destination_file = os.path.join(self.root_dir, os.path.basename(source_file))
+            try:
+                shutil.copy(source_file, destination_file)
+                copied_files.append(destination_file)
+                debug(f"Copied file {source_file} to {destination_file}")
+            except Exception as e:
+                debug(f"Error copying file '{source_file}': {e}")
+        if copied_files:
+            self.images_dropped.emit(copied_files)
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+
+class ImageExplorer(QWidget):
+    """
+    A file explorer that shows two real directories as separate collapsible,
+    thumbnailed groups (History and LoadingShots) alongside an embedded
+    Viewport.  No filesystem junction "shortcuts" are used — each group's tree
+    is rooted directly at its real directory.
+    """
+
+    def __init__(self, history_dir: str = "", loadingshots_dir: str = "", parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Explorer")
+
+        self.image_viewer = Viewport()
+
+        # One collapsible section per real directory.
+        self.sections = []  # list[tuple[CollapsibleSection, ImageTreeView]]
+
+        panel = QWidget(self)
+        panel_layout = QVBoxLayout(panel)
+        panel_layout.setContentsMargins(0, 0, 0, 0)
+        panel_layout.setSpacing(0)
+
+        for title, directory in (("LoadingShots", loadingshots_dir), ("History", history_dir)):
+            if not directory:
+                continue
+            os.makedirs(directory, exist_ok=True)
+            tree = ImageTreeView(directory, self)
+            tree.setContextMenuPolicy(Qt.CustomContextMenu)
+            tree.customContextMenuRequested.connect(
+                lambda pos, t=tree: self.openContextMenu(t, pos)
+            )
+            tree.file_activated.connect(self.image_viewer.showImage)
+            tree.images_dropped.connect(self.on_images_dropped)
+
+            section = CollapsibleSection(title, tree, expanded=True, parent=panel)
+            panel_layout.addWidget(section)
+            self.sections.append((section, tree))
+
+        if not self.sections:
+            panel_layout.addStretch(1)
+
+        splitter = QSplitter(self)
+        splitter.addWidget(panel)
+        splitter.addWidget(self.image_viewer)
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+        outer.addWidget(splitter)
+
+    def on_images_dropped(self, copied_files):
+        # QFileSystemModel auto-refreshes on directory change; just surface the
+        # first dropped image in the viewport.
+        if copied_files:
+            self.image_viewer.showImage(copied_files[0])
+
+    def openContextMenu(self, tree: "ImageTreeView", position):
+        model = tree.file_model
+        index = tree.indexAt(position)
         if not index.isValid():
             return
 
         menu = QMenu(self)
-        if self.file_model.isDir(index):
+        if model.isDir(index):
             open_folder_action = QAction("Open Folder", self)
-            open_folder_action.triggered.connect(lambda: os.startfile(self.file_model.filePath(index)))
+            open_folder_action.triggered.connect(lambda: os.startfile(model.filePath(index)))
             menu.addAction(open_folder_action)
             remove_action = QAction("Remove Folder", self)
-            remove_action.triggered.connect(lambda: self.removeSelectedFolder(index))
+            remove_action.triggered.connect(lambda: self.removeSelectedFolder(tree, index))
             menu.addAction(remove_action)
         else:
             open_folder_action = QAction("Open Folder", self)
-            file_path = self.file_model.filePath(index)
+            file_path = model.filePath(index)
             open_folder_action.triggered.connect(lambda: os.startfile(os.path.dirname(file_path)))
             menu.addAction(open_folder_action)
             remove_action = QAction("Remove Image", self)
-            remove_action.triggered.connect(lambda: self.removeSelectedImage(index))
+            remove_action.triggered.connect(lambda: self.removeSelectedImage(tree, index))
             menu.addAction(remove_action)
 
-        menu.exec(self.tree_view.viewport().mapToGlobal(position))
+        menu.exec(tree.viewport().mapToGlobal(position))
 
-    def removeSelectedImage(self, index):
-        file_path = self.file_model.filePath(index)
-        if not self.file_model.isDir(index):
+    def removeSelectedImage(self, tree: "ImageTreeView", index):
+        model = tree.file_model
+        file_path = model.filePath(index)
+        if not model.isDir(index):
             try:
                 os.remove(file_path)
-                self.file_model.remove(index)
+                model.remove(index)
                 self.image_viewer.set_placeholder_text()
-                self.setWindowTitle("Explorer")
                 debug(f"Removed image: {file_path}")
             except Exception as e:
                 debug(f"Error removing file '{file_path}': {e}")
 
-    def removeSelectedFolder(self, index):
-        folder_path = self.file_model.filePath(index)
-        if self.file_model.isDir(index):
+    def removeSelectedFolder(self, tree: "ImageTreeView", index):
+        model = tree.file_model
+        folder_path = model.filePath(index)
+        if model.isDir(index):
             try:
                 shutil.rmtree(folder_path)
-                self.file_model.remove(index)
+                model.remove(index)
                 self.image_viewer.set_placeholder_text()
-                self.setWindowTitle("Explorer")
                 debug(f"Removed folder: {folder_path}")
             except Exception as e:
                 debug(f"Error removing folder '{folder_path}': {e}")

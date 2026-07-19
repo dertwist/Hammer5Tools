@@ -1,6 +1,5 @@
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 
@@ -410,21 +409,18 @@ class Loading_editorMainWindow(QMainWindow):
             )
             os.makedirs(self.loadingscreen_path, exist_ok=True)
             os.makedirs(self.content_history_path, exist_ok=True)
-            self.explorer_root = self._setup_explorer_root(
-                history_path=self.content_history_path,
-                loadingshots_path=self.loadingscreen_path,
-            )
         else:
             self.game_screenshot_path = ""
             self.loadingscreen_path = ""
             self.history_path = ""
             self.content_history_path = ""
-            self.explorer_root = ""
 
-        # Create both views – the explorer root is a staging dir with two
-        # junction links so the tree shows "History" and "LoadingShots" as
-        # named top-level folders.
-        self.explorer_view = ImageExplorer(tree_directory=self.explorer_root)
+        # Create both views – the explorer shows the two real directories as
+        # separate collapsible groups (no filesystem junction shortcuts).
+        self.explorer_view = ImageExplorer(
+            history_dir=self.content_history_path,
+            loadingshots_dir=self.loadingscreen_path,
+        )
         self.explorer_view.setStyleSheet("padding:0")
         
         self.timeline_view = TimelineExplorer(history_directory=self.content_history_path)
@@ -464,48 +460,6 @@ class Loading_editorMainWindow(QMainWindow):
 
         self.load_existing_icon()
         self.load_existing_description()
-
-    @staticmethod
-    def _setup_explorer_root(history_path: str, loadingshots_path: str) -> str:
-        """Create a staging directory with two Windows junction links.
-
-        The staging folder lives next to the loading-editor package so it
-        survives restarts.  Two sub-entries are created (or refreshed):
-          • History      → content/.../panorama/history_screenshots/
-          • LoadingShots → game/.../screenshots/Hammer5Tools/LoadingScreen/
-
-        Returns the staging folder path (used as the ImageExplorer root).
-        """
-        staging_dir = os.path.join(os.path.dirname(__file__), "_explorer_root")
-        os.makedirs(staging_dir, exist_ok=True)
-
-        junctions = {
-            "History": history_path,
-            "LoadingShots": loadingshots_path,
-        }
-        for name, target in junctions.items():
-            link_path = os.path.join(staging_dir, name)
-            os.makedirs(target, exist_ok=True)
-            # Remove stale junction if it points to a different target
-            if os.path.isdir(link_path):
-                try:
-                    if os.readlink(link_path) != target:
-                        os.rmdir(link_path)
-                    else:
-                        continue  # already correct, nothing to do
-                except (OSError, NotImplementedError):
-                    pass  # not a junction; leave it alone
-            if not os.path.exists(link_path):
-                try:
-                    subprocess.run(
-                        ["cmd", "/c", "mklink", "/J", link_path, target],
-                        check=True, capture_output=True,
-                    )
-                    debug(f"Created junction: {link_path} -> {target}")
-                except subprocess.CalledProcessError as e:
-                    debug(f"Failed to create junction {link_path}: {e.stderr.decode()}")
-
-        return staging_dir
 
     def refresh_timeline(self):
         """Refresh timeline data"""
