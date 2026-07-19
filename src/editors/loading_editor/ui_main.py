@@ -314,7 +314,7 @@ class Ui_Loading_editorMainWindow(object):
         icon5.addFile(u":/icons/colors_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.camera_name_mode.setIcon(icon5)
         self.camera_name_mode.setIconSize(QSize(20, 20))
-        self.camera_name_mode.setChecked(True)
+        self.camera_name_mode.setChecked(False)
 
         self.horizontalLayout_2.addWidget(self.camera_name_mode)
 

@@ -494,7 +494,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </size>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
              </widget>
             </item>
