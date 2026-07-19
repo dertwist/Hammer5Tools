@@ -17,6 +17,7 @@ from src.editors.smartprop_editor.viewport_3d.mesh_cache import MeshCache
 from src.editors.smartprop_editor.viewport_3d.engine.context import EvalContext
 from src.editors.smartprop_editor.viewport_3d.engine.variables import build_variable_map
 from src.editors.smartprop_editor.viewport_3d.engine.process import extract_widget_specs
+from src.editors.smartprop_editor.viewport_3d.crash_guard import gl_guard
 from src.editors.smartprop_editor.viewport_3d.shaders import (
     MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER,
     PICKING_VERTEX_SHADER, PICKING_FRAGMENT_SHADER,
@@ -103,6 +104,14 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.gizmo = Gizmo()
         self.mesh_cache = MeshCache(self)
         self.mesh_cache.model_ready.connect(self.update)
+
+        # Anti-crash state (see crash_guard.gl_guard).  Exceptions in the GL
+        # callbacks/event handlers are caught and counted here instead of
+        # unwinding into Qt's C++ paint loop and aborting the whole editor; once
+        # the viewport gives up, _gl_disabled stays True and it renders an inert
+        # "disabled" frame.
+        self._gl_disabled = False
+        self._gl_crash_count = 0
 
         self._last_mouse_pos = QPointF()
         self._action = None  # 'orbit' | 'pan'
@@ -205,6 +214,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._pick_fbo_w = 0
         self._pick_fbo_h = 0
 
+    @gl_guard("init")
     def initializeGL(self):
         from OpenGL import GL
 
@@ -313,11 +323,13 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # Initialize preview-widget geometry (locators / rotators / pickone).
         self._init_widget_geometry()
 
+    @gl_guard("event")
     def resizeGL(self, w, h):
         from OpenGL import GL
         GL.glViewport(0, 0, w, h)
         self.camera.aspect = w / h if h > 0 else 1.0
 
+    @gl_guard("paint")
     def paintGL(self):
         from OpenGL import GL
 
@@ -1033,6 +1045,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         return bbox_min, bbox_max, has_bounds
 
+    @gl_guard("event")
     def fit_view(self):
         """Zoom and position camera to fit all models in scene."""
         if not self._model_infos:
@@ -1081,6 +1094,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         "CSmartPropElement_SmartProp",
     })
 
+    @gl_guard("event")
     def update_viewport(self):
         """Rebuild the scene models list from the current document tree."""
         self._model_infos.clear()
@@ -1130,6 +1144,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         self.update()
 
+    @gl_guard("event")
     def highlight_element(self, element_id: int):
         """Select/Highlight element and reposition gizmo."""
         self._selected_id = element_id
@@ -1161,6 +1176,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
     # ------------------------------------------------------------------
     # Mouse & Keyboard Event Handlers
     # ------------------------------------------------------------------
+    @gl_guard("event")
     def mousePressEvent(self, event: QMouseEvent):
         self.setFocus()
         self._last_mouse_pos = event.position()
@@ -1202,6 +1218,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             else:
                 self._action = 'orbit'
 
+    @gl_guard("event")
     def mouseMoveEvent(self, event: QMouseEvent):
         pos = event.position()
         self._sync_gizmo_settings(event)
@@ -1335,6 +1352,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self._last_mouse_pos = pos
         self.update()
 
+    @gl_guard("event")
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self.gizmo.is_dragging:
             self.gizmo.end_drag()
@@ -1345,10 +1363,12 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.current_transform_text = None
         self.update()
 
+    @gl_guard("event")
     def wheelEvent(self, event):
         self.camera.zoom(event.angleDelta().y())
         self.update()
 
+    @gl_guard("event")
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_W:
             self.gizmo.set_mode(GizmoMode.TRANSLATE)
