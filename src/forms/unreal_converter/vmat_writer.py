@@ -84,3 +84,66 @@ Layer0
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(content)
+
+
+def write_decal_vmat(
+    output_path: str,
+    slots: dict,
+    color_tint=None,
+):
+    """
+    Writes a Source 2 decal .vmat using csgo_static_overlay.vfx.
+
+    Matches Hammer's own blank-material template for this shader exactly (a
+    material editor's freshly-created csgo_static_overlay.vfx material, param
+    names and all) — an earlier version of this function used g_tColor/g_tNormal/
+    g_tAmbientOcclusion/g_tMetalness/F_BLEND_MODE, which came from decompiling a
+    *compiled* .vmat_c and reading its internal runtime parameter names; those do
+    not match the *source* .vmat authoring names Hammer actually writes, so
+    materials built that way loaded with an empty TextureColor. There is no
+    separate normal/AO/metalness slot in Hammer's default template for this
+    shader, so the decal is color-only; the shape comes from TextureColor's
+    alpha channel (material_converter composites the UE Opacity mask into it).
+
+    slots = {"color": "materials/path/name_color.tga"}  # RGBA, alpha = decal shape
+    """
+    color_tint_str = (
+        f"[{color_tint[0]:.6f} {color_tint[1]:.6f} {color_tint[2]:.6f} 0.000000]"
+        if color_tint and len(color_tint) >= 3
+        else "[1.000000 1.000000 1.000000 0.000000]"
+    )
+    color_path = slots.get("color") or ""
+
+    content = f"""// THIS FILE IS AUTO-GENERATED
+
+Layer0
+{{
+\tshader "csgo_static_overlay.vfx"
+
+\t//---- Color ----
+\tg_flModelTintAmount "1.000"
+\tg_flTexCoordRotation "0.000"
+\tg_fTextureColorBrightness "1.000"
+\tg_fTextureColorContrast "1.000"
+\tg_fTextureColorSaturation "1.000"
+\tg_nScaleTexCoordUByModelScaleAxis "0" // None
+\tg_nScaleTexCoordVByModelScaleAxis "0" // None
+\tg_vColorTint "{color_tint_str}"
+\tg_vTexCoordCenter "[0.500 0.500]"
+\tg_vTexCoordOffset "[0.000 0.000]"
+\tg_vTexCoordScale "[1.000 1.000]"
+\tg_vTexCoordScrollSpeed "[0.000 0.000]"
+\tg_vTextureColorCorrectionTint "[1.000000 1.000000 1.000000 0.000000]"
+\tTextureColor "{color_path}"
+
+\t//---- Fog ----
+\tg_bFogEnabled "1"
+
+\t//---- Texture Address Mode ----
+\tg_nTextureAddressModeU "0" // Wrap
+\tg_nTextureAddressModeV "0" // Wrap
+}}
+"""
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(content)

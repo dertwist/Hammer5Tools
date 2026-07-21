@@ -2,6 +2,7 @@ using System.Text;
 using CUE4Parse.FileProvider;
 using CUE4Parse.UE4.Assets.Exports.Actor;
 using CUE4Parse.UE4.Assets.Exports.Component.Landscape;
+using CUE4Parse.UE4.Assets.Objects;
 using CUE4Parse.UE4.Objects.Core.Math;
 using CUE4Parse.UE4.Objects.UObject;
 using CUE4Parse.UE4.Versions;
@@ -219,14 +220,14 @@ static class Program
 
             CUE4Parse.UE4.Assets.Exports.UObject? parent = null;
             var attachParentRef = curr.GetOrDefault<FPackageIndex?>("AttachParent", null);
-            if (attachParentRef?.ResolvedObject is CUE4Parse.UE4.Assets.Exports.UObject parentObj)
+            if (attachParentRef?.ResolvedObject?.Load() is CUE4Parse.UE4.Assets.Exports.UObject parentObj)
             {
                 parent = parentObj;
             }
-            else if (curr.Outer is CUE4Parse.UE4.Assets.Exports.UObject outer && outer != curr)
+            else if (curr.Outer?.Load() is CUE4Parse.UE4.Assets.Exports.UObject outer && outer != curr)
             {
                 var rootCompRef = outer.GetOrDefault<FPackageIndex?>("RootComponent", null);
-                if (rootCompRef?.ResolvedObject is CUE4Parse.UE4.Assets.Exports.UObject rootComp && rootComp != curr && !visited.Contains(rootComp))
+                if (rootCompRef?.ResolvedObject?.Load() is CUE4Parse.UE4.Assets.Exports.UObject rootComp && rootComp != curr && !visited.Contains(rootComp))
                 {
                     parent = rootComp;
                 }
@@ -293,13 +294,8 @@ static class Program
                 continue;
             }
 
-            string? outerName = export.Outer?.Name;
-            string? outerClass = export.Outer?.ExportType ?? export.Outer?.Class?.Name;
-
-            if (export.Name.Contains("ElectricPole", StringComparison.OrdinalIgnoreCase))
-            {
-                Console.Error.WriteLine($"DBG name={export.Name} cls={cls} outerName={outerName} outerClass={outerClass} outerRuntimeType={export.Outer?.GetType().FullName} outerClassObj={export.Outer?.Class?.GetType().FullName}");
-            }
+            string? outerName = export.Outer?.Name.Text;
+            string? outerClass = export.Outer?.Class?.Name.Text;
 
             if (!string.IsNullOrEmpty(outerName) && !string.IsNullOrEmpty(outerClass) &&
                 outerClass.EndsWith("_C", StringComparison.OrdinalIgnoreCase) &&
@@ -309,7 +305,10 @@ static class Program
                 if (processedBpActors.Add(outerName))
                 {
                     string bpName = outerClass.Substring(0, outerClass.Length - 2);
-                    var (bpLoc, bpRot, bpScale) = GetWorldTransform(export.Outer ?? export);
+                    var actorObj = export.Outer?.Load();
+                    var rootCompRef = actorObj?.GetOrDefault<FPackageIndex?>("RootComponent", null);
+                    var rootComp = rootCompRef?.ResolvedObject?.Load();
+                    var (bpLoc, bpRot, bpScale) = GetWorldTransform(rootComp ?? actorObj ?? export);
                     actors.Add(new
                     {
                         actor = outerName,
@@ -321,6 +320,28 @@ static class Program
                         scale = new { x = bpScale.X, y = bpScale.Y, z = bpScale.Z },
                     });
                 }
+                continue;
+            }
+
+            if (cls.Contains("DecalComponent", StringComparison.Ordinal))
+            {
+                var decalMatRef = export.GetOrDefault<FPackageIndex?>("DecalMaterial", null);
+                string? decalMat = decalMatRef?.ResolvedObject?.GetPathName();
+                if (decalMat == null)
+                    continue;
+
+                var (dLoc, dRot, dScale) = GetWorldTransform(export);
+                actors.Add(new
+                {
+                    actor = outerName,
+                    componentType = "DecalComponent",
+                    blueprint = (string?)null,
+                    mesh = (string?)null,
+                    material = decalMat,
+                    location = new { x = dLoc.X, y = dLoc.Y, z = dLoc.Z },
+                    rotation = new { pitch = dRot.Pitch, yaw = dRot.Yaw, roll = dRot.Roll },
+                    scale = new { x = dScale.X, y = dScale.Y, z = dScale.Z },
+                });
                 continue;
             }
 
@@ -363,7 +384,7 @@ static class Program
             if (export.ExportType != null && export.ExportType.Contains("SCS_Node", StringComparison.Ordinal))
             {
                 var templateRef = export.GetOrDefault<FPackageIndex?>("ComponentTemplate", null);
-                string? templateName = templateRef?.ResolvedObject?.Name;
+                string? templateName = templateRef?.ResolvedObject?.Name.Text;
                 var parentName = export.GetOrDefault<FName?>("AttachVariableName", null)?.Text
                     ?? export.GetOrDefault<FName?>("ParentComponentOrVariableName", null)?.Text;
 
@@ -396,7 +417,7 @@ static class Program
             var scale = export.GetOrDefault("RelativeScale3D", one);
 
             var attachParentRef = export.GetOrDefault<FPackageIndex?>("AttachParent", null);
-            string? parent = attachParentRef?.ResolvedObject?.Name;
+            string? parent = attachParentRef?.ResolvedObject?.Name.Text;
 
             string name = export.Name;
             if (string.IsNullOrEmpty(parent) && nodeParentMap.TryGetValue(name, out var scsParent))
@@ -421,70 +442,223 @@ static class Program
         return 0;
     }
 
+    // Walk a material's Parent chain to the base UMaterial and read the render
+    // flags that decide the Source shader (domain/blend/shading/two-sided), then
+    // apply any MI BasePropertyOverrides on top.
+    static string? EnumText(CUE4Parse.UE4.Assets.Exports.UObject o, string key)
+    {
+        // Byte/enum properties can surface as FName or as a plain string.
+        var fn = o.GetOrDefault<FName?>(key, null);
+        if (fn != null && !string.IsNullOrEmpty(fn.Value.Text)) return fn.Value.Text;
+        var s = o.GetOrDefault<string?>(key, null);
+        return string.IsNullOrEmpty(s) ? null : s;
+    }
+
+    static string? ParentPackagePath(CUE4Parse.UE4.Assets.Exports.UObject o)
+    {
+        var pref = o.GetOrDefault<FPackageIndex?>("Parent", null);
+        var name = pref?.ResolvedObject?.GetPathName();
+        if (string.IsNullOrEmpty(name)) return null;
+        name = name.Replace("/Game/", "");
+        int dot = name.LastIndexOf('.');
+        if (dot > 0) name = name.Substring(0, dot);   // drop ".ObjectName"
+        return name.TrimStart('/');
+    }
+
+    static object ResolveMaterialFlags(DefaultFileProvider provider, CUE4Parse.UE4.Assets.Exports.UObject miExport)
+    {
+        var baseMat = miExport;
+        var seen = new HashSet<string>();
+        for (int i = 0; i < 16; i++)
+        {
+            if (EnumText(baseMat, "MaterialDomain") != null) break;
+            var ppath = ParentPackagePath(baseMat);
+            if (ppath == null || !seen.Add(ppath)) break;
+            CUE4Parse.UE4.Assets.Exports.UObject? next = null;
+            try
+            {
+                var ppkg = provider.LoadPackage(ppath);
+                foreach (var ex in ppkg.GetExports())
+                {
+                    if (EnumText(ex, "MaterialDomain") != null || ex.GetOrDefault<FPackageIndex?>("Parent", null) != null)
+                    { next = ex; break; }
+                }
+                next ??= ppkg.GetExports().FirstOrDefault();
+            }
+            catch { }
+            if (next == null) break;
+            baseMat = next;
+        }
+
+        string? domain = EnumText(baseMat, "MaterialDomain");
+        string? blend = EnumText(baseMat, "BlendMode");
+        string? shading = EnumText(baseMat, "ShadingModel");
+        string? decalBlend = EnumText(baseMat, "DecalBlendMode");
+        bool twoSided = baseMat.GetOrDefault<bool>("TwoSided", false);
+
+        var bpo = miExport.GetOrDefault<FStructFallback?>("BasePropertyOverrides", null);
+        if (bpo != null)
+        {
+            if (bpo.GetOrDefault<bool>("bOverride_BlendMode", false))
+                blend = bpo.GetOrDefault<FName?>("BlendMode", null)?.Text ?? blend;
+            if (bpo.GetOrDefault<bool>("bOverride_TwoSided", false))
+                twoSided = bpo.GetOrDefault<bool>("TwoSided", twoSided);
+            if (bpo.GetOrDefault<bool>("bOverride_ShadingModel", false))
+                shading = bpo.GetOrDefault<FName?>("ShadingModel", null)?.Text ?? shading;
+        }
+
+        return new { domain, blendMode = blend, shadingModel = shading, twoSided, decalBlendMode = decalBlend };
+    }
+
+    // Extract a UE Material's OWN instance-level overrides (TextureParameterValues
+    // / ScalarParameterValues / VectorParameterValues) from a single export — used
+    // at every level while walking a MaterialInstance parent chain.
+    static void CollectInstanceParams(
+        CUE4Parse.UE4.Assets.Exports.UObject export,
+        Dictionary<string, string> textures, Dictionary<string, float> scalars, Dictionary<string, object> vectors)
+    {
+        var texParams = export.GetOrDefault<FStructFallback[]?>("TextureParameterValues", null);
+        if (texParams != null)
+            foreach (var tp in texParams)
+            {
+                var name = tp.GetOrDefault<FStructFallback?>("ParameterInfo", null)?.GetOrDefault<FName?>("Name", null)?.Text;
+                var texPath = tp.GetOrDefault<FPackageIndex?>("ParameterValue", null)?.ResolvedObject?.GetPathName();
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(texPath) && !textures.ContainsKey(name))
+                    textures[name] = texPath;
+            }
+
+        var scalarParams = export.GetOrDefault<FStructFallback[]?>("ScalarParameterValues", null);
+        if (scalarParams != null)
+            foreach (var sp in scalarParams)
+            {
+                var name = sp.GetOrDefault<FStructFallback?>("ParameterInfo", null)?.GetOrDefault<FName?>("Name", null)?.Text;
+                if (!string.IsNullOrEmpty(name) && !scalars.ContainsKey(name))
+                    scalars[name] = sp.GetOrDefault<float>("ParameterValue", 0f);
+            }
+
+        var vectorParams = export.GetOrDefault<FStructFallback[]?>("VectorParameterValues", null);
+        if (vectorParams != null)
+            foreach (var vp in vectorParams)
+            {
+                var name = vp.GetOrDefault<FStructFallback?>("ParameterInfo", null)?.GetOrDefault<FName?>("Name", null)?.Text;
+                var val = vp.GetOrDefault<FLinearColor?>("ParameterValue", null);
+                if (!string.IsNullOrEmpty(name) && val != null && !vectors.ContainsKey(name))
+                    vectors[name] = new { r = val.Value.R, g = val.Value.G, b = val.Value.B, a = val.Value.A };
+            }
+    }
+
+    // A base UMaterial has no instance param arrays — its "default" values for
+    // each named parameter live on the individual MaterialExpression*Parameter
+    // nodes in its expression graph. This is what a child MaterialInstance falls
+    // back to for any parameter it doesn't itself override, so it has to be
+    // walked once the parent chain bottoms out at a real Material.
+    static void CollectExpressionDefaults(
+        CUE4Parse.UE4.Assets.IPackage pkg,
+        Dictionary<string, string> textures, Dictionary<string, float> scalars, Dictionary<string, object> vectors)
+    {
+        foreach (var ex in pkg.GetExports())
+        {
+            switch (ex.ExportType)
+            {
+                case "MaterialExpressionTextureSampleParameter2D":
+                case "MaterialExpressionTextureSampleParameter":
+                case "MaterialExpressionTextureSampleParameterCube":
+                    {
+                        var name = EnumText(ex, "ParameterName");
+                        var tex = ex.GetOrDefault<FPackageIndex?>("Texture", null)?.ResolvedObject?.GetPathName();
+                        if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(tex) && !textures.ContainsKey(name))
+                            textures[name] = tex;
+                        break;
+                    }
+                case "MaterialExpressionScalarParameter":
+                    {
+                        var name = EnumText(ex, "ParameterName");
+                        if (!string.IsNullOrEmpty(name) && !scalars.ContainsKey(name))
+                            scalars[name] = ex.GetOrDefault<float>("DefaultValue", 0f);
+                        break;
+                    }
+                case "MaterialExpressionVectorParameter":
+                    {
+                        var name = EnumText(ex, "ParameterName");
+                        var val = ex.GetOrDefault<FLinearColor?>("DefaultValue", null);
+                        if (!string.IsNullOrEmpty(name) && val != null && !vectors.ContainsKey(name))
+                            vectors[name] = new { r = val.Value.R, g = val.Value.G, b = val.Value.B, a = val.Value.A };
+                        break;
+                    }
+            }
+        }
+    }
+
+    // Find the export in a loaded package that represents "the material" at this
+    // level: a MaterialInstance (has Parent or instance param arrays) or the base
+    // Material itself. NOTE: MaterialDomain is UE's default-valued Surface enum
+    // and is simply not serialized when left at its default, so its presence
+    // cannot be used to detect "this is a base Material" — the export TYPE name
+    // ("Material") is the reliable signal instead.
+    static CUE4Parse.UE4.Assets.Exports.UObject? FindMaterialExport(CUE4Parse.UE4.Assets.IPackage pkg)
+    {
+        foreach (var ex in pkg.GetExports())
+        {
+            if (ex.ExportType == "Material" ||
+                ex.GetOrDefault<FPackageIndex?>("Parent", null) != null ||
+                ex.GetOrDefault<FStructFallback[]?>("TextureParameterValues", null) != null)
+                return ex;
+        }
+        return null;
+    }
+
     static int DumpMaterial(DefaultFileProvider provider, string matPath)
     {
-        var pkg = provider.LoadPackage(matPath);
         var textures = new Dictionary<string, string>();
         var scalars = new Dictionary<string, float>();
         var vectors = new Dictionary<string, object>();
         string? parent = null;
+        object? flags = null;
 
-        foreach (var export in pkg.GetExports())
+        // Walk the MaterialInstance parent chain top -> bottom, merging each
+        // level's own overrides (highest priority = the requested material,
+        // decreasing per parent hop). Once the chain bottoms out at a base
+        // Material, the expression-graph node defaults fill anything still
+        // unset — this is what makes MIs whose own TextureParameterValues array
+        // is empty (they only override a scalar/vector) still resolve textures.
+        string? currentPath = matPath;
+        var seen = new HashSet<string>();
+        for (int level = 0; level < 16 && currentPath != null; level++)
         {
-            var parentRef = export.GetOrDefault<FPackageIndex?>("Parent", null);
-            if (parentRef?.ResolvedObject != null)
+            if (!seen.Add(currentPath)) break;
+
+            CUE4Parse.UE4.Assets.IPackage pkg;
+            try { pkg = provider.LoadPackage(currentPath); }
+            catch { break; }
+
+            var matExport = FindMaterialExport(pkg);
+            if (matExport == null) break;
+
+            if (level == 0)
             {
-                parent = parentRef.ResolvedObject.GetPathName();
+                var pref = matExport.GetOrDefault<FPackageIndex?>("Parent", null);
+                parent = pref?.ResolvedObject?.GetPathName();
             }
 
-            var texParams = export.GetOrDefault<FStructFallback[]?>("TextureParameterValues", null);
-            if (texParams != null)
+            CollectInstanceParams(matExport, textures, scalars, vectors);
+
+            if (flags == null)
             {
-                foreach (var tp in texParams)
-                {
-                    var info = tp.GetOrDefault<FStructFallback?>("ParameterInfo", null);
-                    var name = info?.GetOrDefault<FName?>("Name", null)?.Text;
-                    var valRef = tp.GetOrDefault<FPackageIndex?>("ParameterValue", null);
-                    string? texPath = valRef?.ResolvedObject?.GetPathName();
-                    if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(texPath))
-                    {
-                        textures[name] = texPath;
-                    }
-                }
+                try { flags = ResolveMaterialFlags(provider, matExport); } catch { }
             }
 
-            var scalarParams = export.GetOrDefault<FStructFallback[]?>("ScalarParameterValues", null);
-            if (scalarParams != null)
+            if (matExport.ExportType == "Material")
             {
-                foreach (var sp in scalarParams)
-                {
-                    var info = sp.GetOrDefault<FStructFallback?>("ParameterInfo", null);
-                    var name = info?.GetOrDefault<FName?>("Name", null)?.Text;
-                    var val = sp.GetOrDefault<float>("ParameterValue", 0f);
-                    if (!string.IsNullOrEmpty(name))
-                    {
-                        scalars[name] = val;
-                    }
-                }
+                // Reached the base Material — pull its expression-node defaults
+                // as the lowest-priority fallback layer, then stop.
+                CollectExpressionDefaults(pkg, textures, scalars, vectors);
+                break;
             }
 
-            var vectorParams = export.GetOrDefault<FStructFallback[]?>("VectorParameterValues", null);
-            if (vectorParams != null)
-            {
-                foreach (var vp in vectorParams)
-                {
-                    var info = vp.GetOrDefault<FStructFallback?>("ParameterInfo", null);
-                    var name = info?.GetOrDefault<FName?>("Name", null)?.Text;
-                    var val = vp.GetOrDefault<FLinearColor?>("ParameterValue", null);
-                    if (!string.IsNullOrEmpty(name) && val != null)
-                    {
-                        vectors[name] = new { r = val.Value.R, g = val.Value.G, b = val.Value.B, a = val.Value.A };
-                    }
-                }
-            }
+            currentPath = ParentPackagePath(matExport);
         }
 
-        var result = new { material = matPath, parent, textures, scalars, vectors };
+        var result = new { material = matPath, parent, flags, textures, scalars, vectors };
         Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
         return 0;
     }
