@@ -458,7 +458,14 @@ class Widget(QMainWindow):
         self.ui.documentation_button.clicked.connect(self.open_about)
         self.ui.mapbuilder.clicked.connect(self.open_mapbuilder_dialog)
         self.ui.open_dialog_button.clicked.connect(self.open_selected_dialog)
+        last_tool = get_settings_value("APP", "last_selected_tool", "DetailProp Editor")
+        tool_items = [self.ui.dialog_selection_combobox.itemText(i) for i in range(self.ui.dialog_selection_combobox.count())]
+        if last_tool in tool_items: self.ui.dialog_selection_combobox.setCurrentText(last_tool)
+        self.ui.dialog_selection_combobox.currentTextChanged.connect(self.save_selected_tool)
         self.updateLaunchAddonButton()
+
+    def save_selected_tool(self, text):
+        set_settings_value("APP", "last_selected_tool", text)
 
     def updateLaunchAddonButton(self):
         commands = get_settings_value("LAUNCH", "commands", default_commands)
@@ -517,6 +524,9 @@ class Widget(QMainWindow):
         selection = self.ui.dialog_selection_combobox.currentText()
         if selection == "Cleanup": CleanupDialog(self).show()
         elif selection == "Unreal Converter": self.unreal_converter_dialog = UnrealConverterWidget(parent=self); self.unreal_converter_dialog.show()
+        elif selection == "DetailProp Editor":
+            from src.forms.detail_prop_editor.main import DetailPropEditorWidget
+            self.detail_prop_editor_dialog = DetailPropEditorWidget(parent=self); self.detail_prop_editor_dialog.show()
 
     @exception_handler
     def open_mapbuilder_dialog(self):
