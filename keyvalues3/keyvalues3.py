@@ -116,7 +116,12 @@ def is_valid(value: ValueType) -> bool:
     except (ValueError, OverflowError, TypeError):
         return False
 
-@enum.global_enum
+def _global_enum_safe(cls):
+    if hasattr(enum, "global_enum"):
+        return enum.global_enum(cls)
+    return cls
+
+@_global_enum_safe
 class Flag(enum.IntFlag):
     resource = enum.auto()
     resource_name = enum.auto()
