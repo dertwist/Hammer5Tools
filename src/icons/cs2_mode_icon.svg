@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect x="0" y="0" width="28" height="64" fill="#e58e00" />
+  <rect x="28" y="0" width="36" height="64" fill="#1e3875" />
+  <!-- CS CT Soldier Silhouette with Rifle -->
+  <g fill="#ffffff">
+    <!-- Helmet & Visor -->
+    <path d="M 28 5 C 24 5 21 8 21 11 L 34 11 C 34 8 32 5 28 5 Z" />
+    <path d="M 23 11 L 37 11 C 37 14 35 16 33 16 L 24 16 Z" />
+    <!-- Torso & Arms holding Rifle -->
+    <path d="M 20 17 L 37 17 C 40 21 40 25 37 28 L 54 28 L 57 26 L 60 26 L 60 29 L 46 29 L 43 36 C 41 38 38 38 36 36 L 36 29 L 31 29 L 31 38 L 24 38 L 20 30 Z" />
+    <rect x="48" y="29" width="3" height="6" />
+    <!-- Legs -->
+    <path d="M 21 39 L 26 39 L 18 60 L 11 60 Z" />
+    <path d="M 28 39 L 34 39 L 35 60 L 28 60 Z" />
+  </g>
+</svg>

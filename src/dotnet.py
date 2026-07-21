@@ -738,6 +738,9 @@ def decompile_model_to_glb(vmdl_path: str, context_addon: str = None) -> Optiona
     # Normalize paths
     vmdl_path = vmdl_path.replace("\\", "/").strip("/")
 
+    if context_addon:
+        context_addon = context_addon.replace("\\", "/").replace("csgo_addons/", "").strip("/")
+
     # Try to extract the addon name and convert to a relative path
     addon_match = re.search(r'/csgo_addons/([^/]+)/(.*)$', '/' + vmdl_path, re.IGNORECASE)
     csgo_match = re.search(r'/csgo/(.*)$', '/' + vmdl_path, re.IGNORECASE)
@@ -750,6 +753,9 @@ def decompile_model_to_glb(vmdl_path: str, context_addon: str = None) -> Optiona
         vmdl_path = csgo_match.group(1)
     else:
         addon_name = context_addon or get_addon_name() or "addon"
+
+    if addon_name:
+        addon_name = addon_name.replace("\\", "/").replace("csgo_addons/", "").strip("/")
 
     if not vmdl_path.endswith(".vmdl") and not vmdl_path.endswith(".vmdl_c"):
         vmdl_path += ".vmdl"

@@ -120,7 +120,7 @@ class FloatWidget(QWidget):
         self.SpinBox = _NumericLineEdit()
         self.SpinBox.setMaximumWidth(64)
         self.SpinBox.setValidator(_make_double_validator(0 if self.only_positive else -1e18, 1e18, digits, self))
-        self.SpinBox.setText(str(value))
+        self.SpinBox.setText(str(value) if int_output else f"{value:.4f}".rstrip('0').rstrip('.'))
         self.SpinBox.editingFinished.connect(self._on_editing_finished)
         self.SpinBox.textChanged.connect(self._on_spinbox_text_changed)
         self.SpinBox.setStyleSheet('padding: 2px;')
@@ -243,7 +243,8 @@ class FloatWidget(QWidget):
             value = round(value)
         # Block spinbox signals to avoid re-entrant emit when syncing text
         self.SpinBox.blockSignals(True)
-        self.SpinBox.setText(str(value))
+        display = str(int(value)) if self.int_output else f"{value:.4f}".rstrip('0').rstrip('.')
+        self.SpinBox.setText(display)
         self.SpinBox.blockSignals(False)
         self.value = value
         self.edited.emit(value)
@@ -253,7 +254,11 @@ class FloatWidget(QWidget):
         self._programmatic_set = True
         self._commit_timer.stop()
         self.SpinBox.blockSignals(True)
-        self.SpinBox.setText(str(value))
+        if isinstance(value, float) and not self.int_output:
+            display = f"{value:.4f}".rstrip('0').rstrip('.')
+        else:
+            display = str(value)
+        self.SpinBox.setText(display)
         self.SpinBox.blockSignals(False)
         self._sync_value_from_spinbox()
         self._programmatic_set = False
