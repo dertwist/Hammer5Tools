@@ -933,14 +933,15 @@ class Explorer(QMainWindow):
     # ------------------------------------------------------------------
 
     def _build_panel(self):
-        """Create the floating overlay popup widget."""
+        """Create the floating overlay popup widget matching program stylesheet."""
         frame = QFrame(self, Qt.Popup | Qt.FramelessWindowHint)
         frame.setObjectName("explorerOverlayPanel")
         frame.setStyleSheet(
             "QFrame#explorerOverlayPanel {"
-            "  background: #1e1e1e;"
-            "  border: 1px solid #3a3a3a;"
-            "  border-radius: 4px;"
+            "  background-color: #1C1C1C;"
+            "  border: 2px solid black;"
+            "  border-color: rgba(80, 80, 80, 255);"
+            "  border-radius: 0px;"
             "}"
         )
         vbox = QVBoxLayout(frame)
@@ -950,15 +951,15 @@ class Explorer(QMainWindow):
         # Header row: label + close button
         header = QHBoxLayout()
         self._panel_title = QLabel("", frame)
-        self._panel_title.setStyleSheet("color:#cccccc; font-weight:bold; font-size:11px;")
+        self._panel_title.setStyleSheet("color: #E3E3E3; font: 580 9pt \"Segoe UI\"; font-weight: bold; background-color: transparent;")
         header.addWidget(self._panel_title)
         header.addStretch()
         close_btn = QToolButton(frame)
         close_btn.setText("✕")
         close_btn.setToolTip("Close")
         close_btn.setStyleSheet(
-            "QToolButton { color:#888; border:none; font-size:11px; padding:1px 4px; }"
-            "QToolButton:hover { color:#fff; }"
+            "QToolButton { color: #9D9D9D; border: none; font-size: 11px; padding: 1px 4px; background-color: transparent; }"
+            "QToolButton:hover { color: #FFFFFF; background-color: #414956; }"
         )
         close_btn.setMaximumHeight(20)
         close_btn.clicked.connect(self._hide_panel)
@@ -969,8 +970,14 @@ class Explorer(QMainWindow):
         self._panel_filter = QLineEdit(frame)
         self._panel_filter.setPlaceholderText("Filter...")
         self._panel_filter.setStyleSheet(
-            "QLineEdit { background:#2a2a2a; color:#ccc; border:1px solid #3a3a3a;"
-            " border-radius:3px; padding:3px 6px; font-size:11px; }"
+            "QLineEdit {"
+            "  font: 580 9pt \"Segoe UI\";"
+            "  background-color: #151515;"
+            "  color: #E3E3E3;"
+            "  border: 1px solid rgba(80, 80, 80, 255);"
+            "  border-radius: 0px;"
+            "  padding: 3px 6px;"
+            "}"
         )
         self._panel_filter.textChanged.connect(self._filter_panel_items)
         vbox.addWidget(self._panel_filter)
@@ -978,10 +985,26 @@ class Explorer(QMainWindow):
         # List
         self._panel_list = QListWidget(frame)
         self._panel_list.setStyleSheet(
-            "QListWidget { background:#1e1e1e; color:#ccc; border:none; font-size:11px; outline:none; }"
-            "QListWidget::item { padding:4px 6px; border-radius:2px; }"
-            "QListWidget::item:hover { background:#2d2d2d; }"
-            "QListWidget::item:selected { background:#0d6efd33; color:#fff; }"
+            "QListWidget {"
+            "  background-color: #1C1C1C;"
+            "  color: #E3E3E3;"
+            "  font: 580 9pt \"Segoe UI\";"
+            "  border: none;"
+            "  outline: none;"
+            "}"
+            "QListWidget::item {"
+            "  padding: 4px 6px;"
+            "  border-radius: 0px;"
+            "  border-bottom: 0.5px solid rgba(255, 255, 255, 10);"
+            "}"
+            "QListWidget::item:hover {"
+            "  background-color: #272729;"
+            "  color: #E3E3E3;"
+            "}"
+            "QListWidget::item:selected {"
+            "  background-color: #414956;"
+            "  color: white;"
+            "}"
         )
         self._panel_list.setContextMenuPolicy(Qt.CustomContextMenu)
         self._panel_list.customContextMenuRequested.connect(self._panel_context_menu)
