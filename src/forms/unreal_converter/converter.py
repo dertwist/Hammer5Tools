@@ -1,16 +1,16 @@
 import os
 import re
 from PySide6.QtCore import QThread, Signal
-from .texture_utils import unpack_rma, convert_to_tga, is_metallic
+from .texture_utils import unpack_rma, convert_to_tga, is_metallic, unpack_orh
 from .vmat_writer import write_vmat
 from .bridge_client import UnrealBridge, BridgeError
 from .material_converter import strip_ue_asset_folders
 
 _SUFFIX_MAP = {
-    "ALB": "ALB", "BC": "ALB", "D": "ALB", "COLOR": "ALB", "DIFFUSE": "ALB", "BASECOLOR": "ALB", "ALBEDO": "ALB",
+    "ALB": "ALB", "BC": "ALB", "D": "ALB", "COLOR": "ALB", "DIFFUSE": "ALB", "BASECOLOR": "ALB", "ALBEDO": "ALB", "C": "ALB", "B": "ALB", "A": "ALB",
     "NRM": "NRM", "N": "NRM", "NORMAL": "NRM", "NORM": "NRM",
     "RMA": "RMA", "ORM": "ORM", "MASK": "RMA", "PACKED": "RMA",
-    "RMAH": "RMAH", "ORMH": "ORMH",
+    "RMAH": "RMAH", "ORMH": "ORMH", "ORH": "ORH",
     "ROUGH": "ROUGH", "R": "ROUGH", "ROUGHNESS": "ROUGH",
     "METAL": "METAL", "M": "METAL", "METALLIC": "METAL", "MET": "METAL",
     "AO": "AO", "OCCLUSION": "AO",
@@ -102,6 +102,7 @@ class MaterialConvertWorker(QThread):
                 has_orm = "ORM" in suffixes
                 has_rmah = "RMAH" in suffixes
                 has_ormh = "ORMH" in suffixes
+                has_orh = "ORH" in suffixes
                 has_alb = "ALB" in suffixes
                 has_nrm = "NRM" in suffixes
                 has_rough = "ROUGH" in suffixes
@@ -115,7 +116,7 @@ class MaterialConvertWorker(QThread):
                     skipped.append((base_name, "RGBA unsupported"))
                     continue
 
-                if not has_alb and not has_nrm and not has_rough and not has_rma and not has_orm:
+                if not has_alb and not has_nrm and not has_rough and not has_rma and not has_orm and not has_orh:
                     raise Exception("Missing identifiable color/normal/mask textures")
 
                 slots = {}
@@ -148,6 +149,13 @@ class MaterialConvertWorker(QThread):
                         slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
                         slots["metal"] = format_vmat_path(f"{item_rel_path}/{out_name}_metal.tga")
                         slots["ao"] = format_vmat_path(f"{item_rel_path}/{out_name}_ao.tga")
+                elif has_orh:
+                    src = suffixes.get("ORH")
+                    res = unpack_orh(src, dest_dir, out_name)
+                    if res:
+                        slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
+                        slots["ao"] = format_vmat_path(f"{item_rel_path}/{out_name}_ao.tga")
+                        slots["height"] = format_vmat_path(f"{item_rel_path}/{out_name}_height.tga")
                 else:
                     if has_rough:
                         slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
@@ -172,7 +180,22 @@ class MaterialConvertWorker(QThread):
                 write_vmat(vmat_path, slots)
                 
                 created.append(base_name)
-                self.file_done.emit(base_name, True, "Success")
+                missing = []
+                if "color" not in slots:
+                    missing.append("color")
+                if "normal" not in slots:
+                    missing.append("normal")
+                if "rough" not in slots:
+                    missing.append("roughness")
+                if "metal" not in slots:
+                    missing.append("metalness")
+                if "ao" not in slots:
+                    missing.append("ao")
+                
+                msg = "Success"
+                if missing:
+                    msg += f" (missing: {', '.join(missing)})"
+                self.file_done.emit(base_name, True, msg)
             except Exception as e:
                 skipped.append((base_name, str(e)))
                 self.file_done.emit(base_name, False, str(e))

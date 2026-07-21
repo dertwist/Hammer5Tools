@@ -45,6 +45,12 @@ def ue_mesh_to_model_path(ue_mesh_path: str, models_root: str = "models", strip_
     "/Game/FireWatchTower/Meshes/SM_Barrel.SM_Barrel"
         -> "models/firewatchtower/meshes/sm_barrel.vmdl" (or barrel.vmdl if strip_prefix=True)
     """
+    if "'" in ue_mesh_path:
+        match = re.search(r"'(.*?)'", ue_mesh_path)
+        if match:
+            ue_mesh_path = match.group(1)
+    ue_mesh_path = ue_mesh_path.strip()
+
     p = ue_mesh_path.replace("\\", "/").strip("/")
     if p.lower().endswith(".vmdl"):
         p = p[:-5]
@@ -69,6 +75,12 @@ def find_bulk_export_mesh(bulk_dir: str, ue_mesh_path: str):
     """Locate the bulk-exported mesh file for a UE mesh ref by asset stem."""
     if not bulk_dir or not os.path.exists(bulk_dir):
         return None
+
+    if "'" in ue_mesh_path:
+        match = re.search(r"'(.*?)'", ue_mesh_path)
+        if match:
+            ue_mesh_path = match.group(1)
+    ue_mesh_path = ue_mesh_path.strip()
 
     clean_path = ue_mesh_path.replace("\\", "/")
     if clean_path.lower().endswith(".vmdl"):
@@ -400,6 +412,17 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
             model_rel_path=mesh_rel_path,
             default_mat_path=material_path
         )
+        if output_dir and material_remaps:
+            from .vmat_writer import write_vmat
+            for remap in material_remaps:
+                to_path = remap.get("to")
+                if to_path and not to_path.startswith("materials/dev/") and not to_path.startswith("materials/default/"):
+                    abs_vmat_path = os.path.join(output_dir, to_path)
+                    if not os.path.exists(abs_vmat_path):
+                        try:
+                            write_vmat(abs_vmat_path, {})
+                        except Exception:
+                            pass
 
     vmdl = _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=material_remaps, use_graybox_fallback=use_graybox_fallback)
 
