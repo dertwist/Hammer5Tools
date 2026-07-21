@@ -622,11 +622,6 @@ font: 700 10pt &quot;Segoe UI&quot;;</string>
           <string>Unreal Converter</string>
          </property>
         </item>
-        <item>
-         <property name="text">
-          <string>DetailProp Editor</string>
-         </property>
-        </item>
        </widget>
       </item>
      </layout>

@@ -372,6 +372,18 @@ class Widget(QMainWindow):
     def setup_tabs(self):
         self.HotkeyEditorMainWindow_instance = HotkeyEditorMainWindow()
         self.ui.hotkeyeditor_tab.layout().addWidget(self.HotkeyEditorMainWindow_instance)
+
+        # Programmatically create DetailProp Editor tab
+        from PySide6.QtWidgets import QWidget, QVBoxLayout
+        from PySide6.QtGui import QIcon
+        self.detailpropeditor_tab = QWidget()
+        self.detailpropeditor_tab.setObjectName("detailpropeditor_tab")
+        layout = QVBoxLayout(self.detailpropeditor_tab)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        dp_icon = QIcon(":/icons/density_medium_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        idx = self.ui.MainWindowTools_tabs.indexOf(self.ui.hotkeyeditor_tab)
+        self.ui.MainWindowTools_tabs.insertTab(idx + 1, self.detailpropeditor_tab, dp_icon, "DetailProp Editor")
         
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
@@ -458,9 +470,12 @@ class Widget(QMainWindow):
         self.ui.documentation_button.clicked.connect(self.open_about)
         self.ui.mapbuilder.clicked.connect(self.open_mapbuilder_dialog)
         self.ui.open_dialog_button.clicked.connect(self.open_selected_dialog)
-        last_tool = get_settings_value("APP", "last_selected_tool", "DetailProp Editor")
+        last_tool = get_settings_value("APP", "last_selected_tool", "Cleanup")
         tool_items = [self.ui.dialog_selection_combobox.itemText(i) for i in range(self.ui.dialog_selection_combobox.count())]
-        if last_tool in tool_items: self.ui.dialog_selection_combobox.setCurrentText(last_tool)
+        if last_tool in tool_items:
+            self.ui.dialog_selection_combobox.setCurrentText(last_tool)
+        else:
+            self.ui.dialog_selection_combobox.setCurrentText("Cleanup")
         self.ui.dialog_selection_combobox.currentTextChanged.connect(self.save_selected_tool)
         self.updateLaunchAddonButton()
 
@@ -495,6 +510,9 @@ class Widget(QMainWindow):
         if getattr(self, 'SmartPropEditorMainWindow', None):
             self.ui.smartpropeditor_tab.layout().removeWidget(self.SmartPropEditorMainWindow)
             self.SmartPropEditorMainWindow.close(); self.SmartPropEditorMainWindow.deleteLater(); self.SmartPropEditorMainWindow = None
+        if getattr(self, 'DetailPropEditorWidget_instance', None) and hasattr(self, 'detailpropeditor_tab'):
+            self.detailpropeditor_tab.layout().removeWidget(self.DetailPropEditorWidget_instance)
+            self.DetailPropEditorWidget_instance.close(); self.DetailPropEditorWidget_instance.deleteLater(); self.DetailPropEditorWidget_instance = None
         if getattr(self, 'BatchCreator_MainWindow', None):
             self.BatchCreator_MainWindow.close(); self.BatchCreator_MainWindow.deleteLater(); self.BatchCreator_MainWindow = None
         if getattr(self, 'LoadingEditorMainWindow', None):
@@ -508,6 +526,11 @@ class Widget(QMainWindow):
             self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
             self.LoadingEditorMainWindow = Loading_editorMainWindow(parent=self)
             self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
+
+            if hasattr(self, 'detailpropeditor_tab'):
+                from src.forms.detail_prop_editor.main import DetailPropEditorWidget
+                self.DetailPropEditorWidget_instance = DetailPropEditorWidget(parent=self)
+                self.detailpropeditor_tab.layout().addWidget(self.DetailPropEditorWidget_instance)
 
     @exception_handler
     def open_addons_folder(self):
@@ -524,9 +547,6 @@ class Widget(QMainWindow):
         selection = self.ui.dialog_selection_combobox.currentText()
         if selection == "Cleanup": CleanupDialog(self).show()
         elif selection == "Unreal Converter": self.unreal_converter_dialog = UnrealConverterWidget(parent=self); self.unreal_converter_dialog.show()
-        elif selection == "DetailProp Editor":
-            from src.forms.detail_prop_editor.main import DetailPropEditorWidget
-            self.detail_prop_editor_dialog = DetailPropEditorWidget(parent=self); self.detail_prop_editor_dialog.show()
 
     @exception_handler
     def open_mapbuilder_dialog(self):

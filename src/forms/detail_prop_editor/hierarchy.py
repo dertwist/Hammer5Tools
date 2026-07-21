@@ -32,10 +32,51 @@ class _DropSignalTree(QTreeWidget):
     """QTreeWidget that reports when an internal-move drop has completed."""
 
     dropped = Signal()
+    about_to_drop = Signal()
 
     def dropEvent(self, event):
+        self.about_to_drop.emit()
         super().dropEvent(event)
         self.dropped.emit()
+
+
+def get_selection_path(tree, item):
+    if item is None:
+        return None
+    if item.parent() is None:
+        return ("type", item.text(0))
+    else:
+        parent = item.parent()
+        type_name = parent.text(0)
+        model_idx = parent.indexOfChild(item)
+        return ("model", type_name, model_idx)
+
+
+def find_item_by_path(tree, path):
+    if not path:
+        return None
+    if path[0] == "type":
+        type_name = path[1]
+        for i in range(tree.topLevelItemCount()):
+            item = tree.topLevelItem(i)
+            if item.text(0) == type_name:
+                return item
+    elif path[0] == "model":
+        type_name = path[1]
+        model_idx = path[2]
+        for i in range(tree.topLevelItemCount()):
+            parent = tree.topLevelItem(i)
+            if parent.text(0) == type_name:
+                if 0 <= model_idx < parent.childCount():
+                    return parent.child(model_idx)
+    return None
+
+
+def restore_selection_path(tree, path):
+    item = find_item_by_path(tree, path)
+    tree.setCurrentItem(item)
+    if item:
+        tree.scrollToItem(item)
 
 
 def payload(item) -> dict:
@@ -62,8 +103,9 @@ class DetailPropTree(QWidget):
     selection_changed = Signal(object)   # the current QTreeWidgetItem, or None
     structure_changed = Signal()         # items added/removed/moved/renamed
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, editor=None):
         super().__init__(parent)
+        self.editor = editor
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
@@ -99,10 +141,12 @@ class DetailPropTree(QWidget):
 
         # Column 0 is the only editable column, same rule as SmartProp.
         self.tree.itemClicked.connect(on_three_hierarchyitem_clicked)
+        self.tree.itemDoubleClicked.connect(self._on_item_double_clicked)
         self.tree.currentItemChanged.connect(
             lambda current, previous: self.selection_changed.emit(current)
         )
         self.tree.itemChanged.connect(self._on_item_changed)
+        self.tree.about_to_drop.connect(self._on_about_to_drop)
         self.tree.dropped.connect(self._on_dropped)
 
         self._loading = False
@@ -201,6 +245,9 @@ class DetailPropTree(QWidget):
         return f"{base}_{suffix}"
 
     def add_type(self, name: str):
+        old_types = self.to_types()
+        old_sel = get_selection_path(self.tree, self.tree.currentItem())
+
         detail_type = default_type()
         item = self._make_type_item(self.unique_type_name(name), detail_type)
         self._loading = True
@@ -210,9 +257,27 @@ class DetailPropTree(QWidget):
         item.setExpanded(True)
         self._loading = False
         self.tree.setCurrentItem(item)
+
+        new_types = self.to_types()
+        new_sel = get_selection_path(self.tree, item)
+
+        if self.editor and self.editor.undo_stack:
+            cmd = self.editor.DetailPropTreeSnapshotCommand(
+                self.editor,
+                f"Add Type '{name}'",
+                old_types,
+                new_types,
+                old_sel,
+                new_sel
+            )
+            self.editor.undo_stack.push(cmd)
+            self.editor._mark_modified()
         self.structure_changed.emit()
 
     def add_model(self):
+        old_types = self.to_types()
+        old_sel = get_selection_path(self.tree, self.tree.currentItem())
+
         type_item = self.type_item_for(self.tree.currentItem())
         if type_item is None:
             return
@@ -222,6 +287,21 @@ class DetailPropTree(QWidget):
         type_item.setExpanded(True)
         self._loading = False
         self.tree.setCurrentItem(item)
+
+        new_types = self.to_types()
+        new_sel = get_selection_path(self.tree, item)
+
+        if self.editor and self.editor.undo_stack:
+            cmd = self.editor.DetailPropTreeSnapshotCommand(
+                self.editor,
+                "Add Model",
+                old_types,
+                new_types,
+                old_sel,
+                new_sel
+            )
+            self.editor.undo_stack.push(cmd)
+            self.editor._mark_modified()
         self.structure_changed.emit()
 
     def duplicate_current(self):
@@ -229,6 +309,9 @@ class DetailPropTree(QWidget):
         current = self.tree.currentItem()
         if current is None:
             return
+        old_types = self.to_types()
+        old_sel = get_selection_path(self.tree, current)
+
         self._loading = True
         if self.kind_of(current) == KIND_TYPE:
             models = [fast_deepcopy(payload(current.child(j)))
@@ -247,6 +330,21 @@ class DetailPropTree(QWidget):
             parent.insertChild(parent.indexOfChild(current) + 1, item)
         self._loading = False
         self.tree.setCurrentItem(item)
+
+        new_types = self.to_types()
+        new_sel = get_selection_path(self.tree, item)
+
+        if self.editor and self.editor.undo_stack:
+            cmd = self.editor.DetailPropTreeSnapshotCommand(
+                self.editor,
+                "Duplicate",
+                old_types,
+                new_types,
+                old_sel,
+                new_sel
+            )
+            self.editor.undo_stack.push(cmd)
+            self.editor._mark_modified()
         self.structure_changed.emit()
 
     def remove_current(self) -> str:
@@ -254,6 +352,9 @@ class DetailPropTree(QWidget):
         current = self.tree.currentItem()
         if current is None:
             return ""
+        old_types = self.to_types()
+        old_sel = get_selection_path(self.tree, current)
+
         self._loading = True
         try:
             if self.kind_of(current) == KIND_TYPE:
@@ -265,10 +366,34 @@ class DetailPropTree(QWidget):
                 parent.removeChild(current)
         finally:
             self._loading = False
+
+        new_types = self.to_types()
+        new_sel = get_selection_path(self.tree, self.tree.currentItem())
+
+        if self.editor and self.editor.undo_stack:
+            cmd = self.editor.DetailPropTreeSnapshotCommand(
+                self.editor,
+                "Delete",
+                old_types,
+                new_types,
+                old_sel,
+                new_sel
+            )
+            self.editor.undo_stack.push(cmd)
+            self.editor._mark_modified()
         self.structure_changed.emit()
         return ""
 
     # -------------------------------------------------------------- events --
+
+    def _on_item_double_clicked(self, item, column):
+        if column == 0 and self.kind_of(item) == KIND_TYPE:
+            self._rename_old_types = self.to_types()
+            self._rename_old_sel = get_selection_path(self.tree, item)
+
+    def _on_about_to_drop(self):
+        self._old_types_before_drop = self.to_types()
+        self._old_sel_before_drop = get_selection_path(self.tree, self.tree.currentItem())
 
     def _on_item_changed(self, item, column):
         """Inline rename of a detail type; model labels come from their path."""
@@ -288,6 +413,24 @@ class DetailPropTree(QWidget):
                 self._loading = True
                 item.setText(0, name)
                 self._loading = False
+
+            # Pushing to undo stack if editor is available and name changed
+            new_types = self.to_types()
+            new_sel = get_selection_path(self.tree, item)
+            if hasattr(self, "_rename_old_types") and self._rename_old_types:
+                if self._rename_old_types != new_types:
+                    if self.editor and self.editor.undo_stack:
+                        cmd = self.editor.DetailPropTreeSnapshotCommand(
+                            self.editor,
+                            f"Rename Type to '{name}'",
+                            self._rename_old_types,
+                            new_types,
+                            self._rename_old_sel,
+                            new_sel
+                        )
+                        self.editor.undo_stack.push(cmd)
+                        self.editor._mark_modified()
+                self._rename_old_types = None
             self.structure_changed.emit()
 
     def _on_dropped(self):
@@ -303,11 +446,36 @@ class DetailPropTree(QWidget):
         types = self._harvest_after_drop()
         selected = self.tree.currentItem()
         selected_name = selected.text(0) if selected is not None else None
-        self.load(types)
-        if selected_name:
-            matches = self.tree.findItems(selected_name, Qt.MatchExactly | Qt.MatchRecursive, 0)
-            if matches:
-                self.tree.setCurrentItem(matches[0])
+
+        old_types = getattr(self, "_old_types_before_drop", None)
+        old_sel = getattr(self, "_old_sel_before_drop", None)
+
+        if old_types is not None and self.editor and self.editor.undo_stack:
+            self.load(types)
+            if selected_name:
+                matches = self.tree.findItems(selected_name, Qt.MatchExactly | Qt.MatchRecursive, 0)
+                if matches:
+                    self.tree.setCurrentItem(matches[0])
+            new_types = self.to_types()
+            new_sel = get_selection_path(self.tree, self.tree.currentItem())
+
+            if old_types != new_types:
+                cmd = self.editor.DetailPropTreeSnapshotCommand(
+                    self.editor,
+                    "Drag & Drop Reorder",
+                    old_types,
+                    new_types,
+                    old_sel,
+                    new_sel
+                )
+                self.editor.undo_stack.push(cmd)
+                self.editor._mark_modified()
+        else:
+            self.load(types)
+            if selected_name:
+                matches = self.tree.findItems(selected_name, Qt.MatchExactly | Qt.MatchRecursive, 0)
+                if matches:
+                    self.tree.setCurrentItem(matches[0])
         self.structure_changed.emit()
 
     def _harvest_after_drop(self) -> dict:

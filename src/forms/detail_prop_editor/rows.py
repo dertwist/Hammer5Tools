@@ -174,7 +174,7 @@ class QAngleRow(BaseRow):
         self.float_widgets = []
         for axis, name in enumerate(("P", "Y", "R")):
             tag = QLabel(name)
-            compact.style_label(tag, color=compact.VEC_PYR[axis], width=12)
+            tag.setStyleSheet(f"color: {compact.VEC_PYR[axis]}; font: bold 8pt 'Segoe UI'; margin-left: 2px; margin-right: 2px; border: 0px; background: transparent;")
             self.ui.layout.addWidget(tag)
 
             spin = FloatWidget(
