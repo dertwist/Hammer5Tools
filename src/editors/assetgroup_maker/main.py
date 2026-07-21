@@ -508,6 +508,10 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_editor_visibility()
         self.update_explorer_title()
         self.update_reference_watcher()
+        # Track in recent files
+        if hasattr(self, 'explorer') and self.explorer is not None:
+            self.explorer.add_recent_file(file_path)
+
 
     def show_process_options(self):
         """Show the process options dialog."""

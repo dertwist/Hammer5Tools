@@ -217,6 +217,10 @@ class SmartPropEditorMainWindow(QMainWindow):
 
             self.ui.DocumentTabWidget.addTab(document, base_name)
             self.update_placeholder_visibility()
+            # Track in recent files
+            if hasattr(self, 'mini_explorer') and self.mini_explorer is not None:
+                self.mini_explorer.add_recent_file(norm_filename)
+
         else:
             error_dialog = ErrorInfo(text="No file selected", details="Please select a file to open.")
             error_dialog.exec_()
