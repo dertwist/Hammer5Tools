@@ -74,7 +74,8 @@ def write_vmap(
                       ue_mesh_to_model_path.
     unit_scale      : UE→Source unit multiplier (shared with the vmdl import scale).
     """
-    model_resolver = model_resolver or ue_mesh_to_model_path
+    if model_resolver is None:
+        model_resolver = lambda mesh: ue_mesh_to_model_path(mesh, strip_prefix=strip_prefix)
     template_path = template_path or find_empty_template()
     if not template_path:
         raise FileNotFoundError(
@@ -180,7 +181,8 @@ def write_vmap(
         if comp == "BlueprintActor" or bp:
             bp_name = bp or name
             from .vmdl_writer import strip_ue_prefix
-            smartprop_path = f"smartprops/{strip_ue_prefix(bp_name).lower()}.vsmart"
+            clean_bp_name = strip_ue_prefix(bp_name) if strip_prefix else bp_name
+            smartprop_path = f"smartprops/{clean_bp_name.lower()}.vsmart"
             children.Add(make_smartprop(name, smartprop_path, st.origin, angles, st.scales, node_id))
             result.placed_smartprops += 1
         elif comp == _SIMPLE_COMPONENT and mesh:

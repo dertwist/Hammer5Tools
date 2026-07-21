@@ -379,7 +379,7 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
     Write a .vmdl at output_path referencing mesh_rel_path (relative to the addon
     content root, forward slashes). If fbx_path is given, the FBX is inspected to
     build per-LOD render meshes and UCX physics; otherwise a simple single-mesh
-    vmdl is written. FBX files are automatically flattened and rotated (P 0 Y 90 R 0) in place.
+    vmdl is written. FBX files are automatically flattened and rotated (P 0 Y 0 R 90) in place.
     If material_path or output_dir is provided, material remapping will be set directly on the material group.
     """
     mesh_rel_path = mesh_rel_path.replace("\\", "/")
