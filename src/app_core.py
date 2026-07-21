@@ -41,7 +41,7 @@ from src.forms.export.main import ExportAndImportAddonDialog
 from src.editors.assetgroup_maker.main import BatchCreatorMainWindow
 from src.editors.smartprop_editor.main import SmartPropEditorMainWindow
 from src.editors.soundevent_editor.main import SoundEventEditorMainWindow
-from src.forms.ue2source_materials.main import UE2SourceMaterialsWidget
+from src.forms.unreal_converter.main import UnrealConverterWidget
 from src.forms.launch_options.main import LaunchOptionsDialog
 from src.common import app_version, default_commands, JsonToKv3, compile as run_compile
 from src.styles.qt_global_stylesheet import QT_Stylesheet_global
@@ -516,7 +516,7 @@ class Widget(QMainWindow):
     def open_selected_dialog(self):
         selection = self.ui.dialog_selection_combobox.currentText()
         if selection == "Cleanup": CleanupDialog(self).show()
-        elif selection == "Material Importer": self.material_importer_dialog = UE2SourceMaterialsWidget(parent=self); self.material_importer_dialog.show()
+        elif selection == "Unreal Converter": self.unreal_converter_dialog = UnrealConverterWidget(parent=self); self.unreal_converter_dialog.show()
 
     @exception_handler
     def open_mapbuilder_dialog(self):
