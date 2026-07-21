@@ -77,8 +77,9 @@ UNSUPPORTED = [
     Unsupported(
         "landscape",
         "Landscape / terrain",
-        "Unreal Landscape heightmaps map to Source 2 displacement/heightfield "
-        "through a separate pipeline, not this converter.",
+        "The Scenes step bakes a map's landscape into a static mesh prop_static "
+        "(one LOD, no true Source 2 displacement/heightfield). Layer blend "
+        "materials are not converted — assign a terrain vmat by hand.",
         [r"Landscape", r"^LS_", r"Terrain"],
     ),
     Unsupported(

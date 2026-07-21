@@ -16,6 +16,13 @@ from .engine_meshes import is_engine_mesh, generate_engine_mesh_obj, bundled_fbx
 
 _MESH_EXTS = (".fbx", ".obj", ".gltf", ".glb", ".dmx")
 
+# Synthetic mesh id prefix for landscape actors. Landscapes have no static-mesh
+# asset to reference, so dump_scene's "Landscape" actor entries are rewritten
+# (below) into ordinary StaticMeshComponent entries pointing at one of these —
+# the rest of the vmap/vmdl pipeline then treats a landscape exactly like any
+# other placed mesh, with the OBJ produced on demand via bridge.export_landscape.
+_LANDSCAPE_MESH_PREFIX = "/H5T/Landscape/"
+
 
 class SceneModelsWorker(QThread):
     log = Signal(str, str)      # message, level (info/warn/error/success)
@@ -36,9 +43,28 @@ class SceneModelsWorker(QThread):
         self.strip_prefix = strip_prefix
         self.unit_scale = unit_scale
         self.use_graybox_fallback = use_graybox_fallback
+        self.bridge = None
+        self._landscape_sources = {}   # synthetic mesh id -> map object path
 
     def _log(self, msg, level="info"):
         self.log.emit(msg, level)
+
+    def _normalize_landscape_actors(self, actors, map_obj_path):
+        """Rewrite dump_scene's "Landscape" actor entries (in place) into ordinary
+        StaticMeshComponent entries pointing at a synthetic mesh id, so the rest
+        of the vmap/vmdl pipeline places/builds them like any other mesh."""
+        map_name = os.path.basename(map_obj_path)
+        count = 0
+        for a in actors:
+            if a.get("componentType") != "Landscape":
+                continue
+            actor_name = a.get("landscapeActor") or a.get("actor") or "Landscape"
+            mesh_id = f"{_LANDSCAPE_MESH_PREFIX}{map_name}_{actor_name}.{map_name}_{actor_name}"
+            self._landscape_sources[mesh_id] = map_obj_path
+            a["mesh"] = mesh_id
+            a["componentType"] = "StaticMeshComponent"
+            count += 1
+        return count
 
     def run(self):
         try:
@@ -60,6 +86,7 @@ class SceneModelsWorker(QThread):
         self._log(f"Enabled     : {', '.join(flags) if flags else '(nothing)'}", "info")
 
         bridge = UnrealBridge(self.project_dir)
+        self.bridge = bridge
         if not bridge.is_available():
             self._log("CUE4Parse bridge unavailable — " + bridge.why_unavailable(), "error")
             return
@@ -89,6 +116,9 @@ class SceneModelsWorker(QThread):
                     self._log(f"{name}: scene read failed — {e}", "error")
                     continue
 
+                if self._normalize_landscape_actors(scene["actors"], obj):
+                    self._log(f"{name}: landscape actor found — will export as a mesh", "info")
+
                 vmap_path = os.path.join(self.output_dir, "maps", f"{name}.vmap")
                 res = write_vmap(scene["actors"], vmap_path, unit_scale=self.unit_scale, strip_prefix=self.strip_prefix)
                 referenced_meshes.update(
@@ -107,7 +137,9 @@ class SceneModelsWorker(QThread):
             # Models-only still needs the mesh list; pull it from the maps.
             for mk in map_keys:
                 try:
-                    scene = bridge.dump_scene(mk[:-len(".umap")])
+                    obj = mk[:-len(".umap")]
+                    scene = bridge.dump_scene(obj)
+                    self._normalize_landscape_actors(scene["actors"], obj)
                     referenced_meshes.update(
                         a["mesh"] for a in scene["actors"]
                         if a.get("mesh") and a.get("componentType") == "StaticMeshComponent"
@@ -180,13 +212,21 @@ class SceneModelsWorker(QThread):
             self._log(f"Referenced meshes found: {len(referenced_meshes)}", "info")
             if not referenced_meshes:
                 self._log("No referenced meshes to build vmdls for. Make sure Scenes is enabled or at least one map was scanned.", "warn")
-            made, missing, engine = 0, 0, 0
+            made, missing, engine, landscapes = 0, 0, 0, 0
             total = len(referenced_meshes)
             for i, mesh in enumerate(sorted(referenced_meshes)):
                 self.progress.emit(i + 1, total)
                 model_rel = ue_mesh_to_model_path(mesh, strip_prefix=self.strip_prefix)                 # models/.../x.vmdl
                 vmdl_path = os.path.join(self.output_dir, model_rel)
                 mat_rel = os.path.splitext(model_rel)[0].replace("models/", "materials/") + ".vmat" if self.do_materials else None
+
+                # Landscapes have no bulk-export FBX — the OBJ is generated on
+                # demand by the bridge from the map's heightmap/component data.
+                if mesh.startswith(_LANDSCAPE_MESH_PREFIX):
+                    if self._build_landscape_model(mesh, vmdl_path, model_rel, mat_rel):
+                        landscapes += 1
+                        made += 1
+                    continue
 
                 # UE engine defaults (BasicShapes) have no project bulk-export —
                 # use the real bundled engine FBX (falling back to a generated OBJ).
@@ -236,6 +276,38 @@ class SceneModelsWorker(QThread):
             parts = [f"{made} vmdl written"]
             if engine:
                 parts.append(f"{engine} engine primitive(s) generated")
+            if landscapes:
+                parts.append(f"{landscapes} landscape mesh(es) exported")
             level = "success" if missing == 0 else "warn"
             tail = f" ({missing} without a bulk-export FBX — vmdl references a missing mesh)" if missing else ""
             self._log("Models — " + ", ".join(parts) + tail, level)
+
+    def _build_landscape_model(self, mesh_id, vmdl_path, model_rel, mat_rel) -> bool:
+        """Export the landscape's OBJ via the bridge and wrap it in a vmdl,
+        exactly like an engine primitive OBJ (no LODs/collision to inspect)."""
+        map_obj_path = self._landscape_sources.get(mesh_id)
+        if not map_obj_path:
+            self._log(f"  {mesh_id}: no source map recorded, skipped", "warn")
+            return False
+
+        landscape_dir = os.path.join(self.output_dir, "_landscape_export", os.path.basename(map_obj_path))
+        try:
+            res = self.bridge.export_landscape(map_obj_path, landscape_dir, flags="mesh")
+        except BridgeError as e:
+            self._log(f"  {os.path.basename(map_obj_path)}: landscape export failed — {e}", "warn")
+            return False
+
+        src_obj = res.get("saved")
+        if not src_obj or not os.path.isfile(src_obj):
+            self._log(f"  {os.path.basename(map_obj_path)}: landscape export did not return an OBJ", "warn")
+            return False
+
+        obj_rel = os.path.splitext(model_rel)[0] + ".obj"
+        dst_obj = os.path.join(self.output_dir, obj_rel)
+        os.makedirs(os.path.dirname(dst_obj), exist_ok=True)
+        shutil.copy2(src_obj, dst_obj)
+        self._log(f"  {os.path.basename(map_obj_path)} landscape -> {obj_rel}", "info")
+
+        write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=mat_rel,
+                   use_graybox_fallback=self.use_graybox_fallback)
+        return True
