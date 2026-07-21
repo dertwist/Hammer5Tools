@@ -40,6 +40,32 @@ def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool 
         print(f"Error unpacking RMA/ORM: {e}")
         return None
 
+def unpack_orh(orh_path: str, output_dir: str, base_name: str):
+    """
+    Unpacks an Unreal ORH texture into separate TGA maps.
+    ORH: R -> AO, G -> Roughness, B -> Height
+    """
+    try:
+        img = Image.open(orh_path).convert("RGBA")
+        ch_r, ch_g, ch_b, ch_a = img.split()
+
+        ao_path = os.path.join(output_dir, f"{base_name}_ao.tga")
+        rough_path = os.path.join(output_dir, f"{base_name}_rough.tga")
+        height_path = os.path.join(output_dir, f"{base_name}_height.tga")
+
+        ch_r.convert("L").save(ao_path)
+        ch_g.convert("L").save(rough_path)
+        ch_b.convert("L").save(height_path)
+
+        return {
+            "ao": ao_path,
+            "rough": rough_path,
+            "height": height_path
+        }
+    except Exception as e:
+        print(f"Error unpacking ORH: {e}")
+        return None
+
 def convert_to_tga(input_path: str, output_dir: str, new_suffix: str):
     """
     Converts a PNG to TGA with a new suffix.

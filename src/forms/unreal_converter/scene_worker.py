@@ -340,8 +340,11 @@ class SceneModelsWorker(QThread):
                 data = self.bridge.dump_material(path)
                 res = convert_material(data, self.bulk_dir, self.output_dir)
                 done += 1
+                msg = f"  material {stem}: Success"
                 if res.missing:
                     missing_tex += 1
+                    msg += f" (missing: {', '.join(res.missing)})"
+                self._log(msg, "info")
             except Exception as e:
                 self._log(f"  material {stem}: {e}", "warn")
         note = f", {missing_tex} with missing textures" if missing_tex else ""

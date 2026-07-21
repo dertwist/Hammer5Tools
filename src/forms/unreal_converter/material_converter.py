@@ -36,6 +36,12 @@ def strip_ue_asset_folders(rel_path: str) -> str:
 def ue_material_to_vmat_path(ue_path: str, root: str = "materials") -> str:
     """/Game/FireWatchTower/Materials/Material_Instances/MI_Barrel(.MI_Barrel)
         -> materials/firewatchtower/mi_barrel.vmat"""
+    if "'" in ue_path:
+        match = re.search(r"'(.*?)'", ue_path)
+        if match:
+            ue_path = match.group(1)
+    ue_path = ue_path.strip()
+
     p = ue_path.split(".", 1)[0].replace("/Game/", "").replace("/game/", "").strip("/")
     p = strip_ue_asset_folders(p)
     return f"{root}/{p}.vmat".lower()
@@ -45,6 +51,12 @@ def find_bulk_texture(bulk_dir: str, ue_tex_path: str):
     """Resolve a UE texture reference to its bulk-exported image by stem."""
     if not bulk_dir or not ue_tex_path:
         return None
+    if "'" in ue_tex_path:
+        match = re.search(r"'(.*?)'", ue_tex_path)
+        if match:
+            ue_tex_path = match.group(1)
+    ue_tex_path = ue_tex_path.strip()
+
     stem = ue_tex_path.split(".", 1)[0].rstrip("/").rsplit("/", 1)[-1].lower()
     for root, _dirs, files in os.walk(bulk_dir):
         for fn in files:
@@ -66,14 +78,14 @@ def _tokens(name: str) -> set:
 # Whole-token matching avoids false hits like "rma" inside "noRMAl".
 _SLOT_TOKENS = [
     ("opacity",  {"opacity", "opac", "alpha"}),
-    ("orm",      {"orm", "rma", "rmah", "mrao", "arm", "packed"}),
+    ("orm",      {"orm", "rma", "rmah", "mrao", "arm", "packed", "orh"}),
     ("normal",   {"normal", "nrm", "n", "norm"}),
-    ("rough",    {"rough", "roughness"}),
-    ("metal",    {"metal", "metallic", "metalness"}),
+    ("rough",    {"rough", "roughness", "r"}),
+    ("metal",    {"metal", "metallic", "metalness", "m"}),
     ("ao",       {"ao", "occlusion"}),
-    ("height",   {"height", "displacement", "disp"}),
+    ("height",   {"height", "displacement", "disp", "h"}),
     ("emissive", {"emissive", "emmisive", "emission", "emi"}),
-    ("color",    {"base", "basecolor", "diffuse", "albedo", "color", "diff", "alb"}),
+    ("color",    {"base", "basecolor", "diffuse", "albedo", "color", "diff", "alb", "d", "c"}),
 ]
 _COLOR_EXCLUDE = {"var", "variation", "mask", "tint"}
 
@@ -219,11 +231,17 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
     # ORM packed -> split (UE convention: R=Occlusion, G=Roughness, B=Metallic)
     src, stem = load("orm")
     if src:
+        param_name = picks["orm"][0].lower()
+        is_orh_texture = "orh" in param_name or "orh" in stem
         r, g, b, _a = Image.open(src).convert("RGBA").split()
         slots["ao"] = save(r.convert("L"), f"{stem}_ao")
         slots["rough"] = save(g.convert("L"), f"{stem}_rough")
-        slots["metal"] = save(b.convert("L"), f"{stem}_metal")
-        written += 3
+        if is_orh_texture:
+            slots["height"] = save(b.convert("L"), f"{stem}_height")
+            written += 3
+        else:
+            slots["metal"] = save(b.convert("L"), f"{stem}_metal")
+            written += 3
     else:
         # unpacked rough/metal/ao if the material provides them separately
         for slot in ("rough", "metal", "ao", "height"):
