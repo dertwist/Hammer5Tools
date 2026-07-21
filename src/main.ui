@@ -619,7 +619,7 @@ font: 700 10pt &quot;Segoe UI&quot;;</string>
         </item>
         <item>
          <property name="text">
-          <string>Material Importer</string>
+          <string>Unreal Converter</string>
          </property>
         </item>
        </widget>

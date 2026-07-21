@@ -1,31 +1,35 @@
 import os
 from PIL import Image
 
-def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool = False):
+def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool = False, is_orm: bool = False):
     """
-    Unpacks an Unreal RMA (Roughness, Metalness, AO) or RMAH (+Height) texture.
-    R -> Roughness
-    G -> Metalness
-    B -> AO
+    Unpacks an Unreal RMA or ORM texture into separate TGA maps.
+    RMA: R -> Roughness, G -> Metalness, B -> AO
+    ORM: R -> AO, G -> Roughness, B -> Metalness
     A -> Height (if has_height is True)
     """
     try:
         img = Image.open(rma_path).convert("RGBA")
-        r, g, b, a = img.split()
-        
+        ch_r, ch_g, ch_b, ch_a = img.split()
+
+        if is_orm:
+            rough_ch, metal_ch, ao_ch = ch_g, ch_b, ch_r
+        else:
+            rough_ch, metal_ch, ao_ch = ch_r, ch_g, ch_b
+
         rough_path = os.path.join(output_dir, f"{base_name}_rough.tga")
         metal_path = os.path.join(output_dir, f"{base_name}_metal.tga")
         ao_path = os.path.join(output_dir, f"{base_name}_ao.tga")
-        
-        r.convert("L").save(rough_path)
-        g.convert("L").save(metal_path)
-        b.convert("L").save(ao_path)
-        
+
+        rough_ch.convert("L").save(rough_path)
+        metal_ch.convert("L").save(metal_path)
+        ao_ch.convert("L").save(ao_path)
+
         height_path = None
         if has_height:
             height_path = os.path.join(output_dir, f"{base_name}_height.tga")
-            a.convert("L").save(height_path)
-            
+            ch_a.convert("L").save(height_path)
+
         return {
             "rough": rough_path,
             "metal": metal_path,
@@ -33,7 +37,7 @@ def unpack_rma(rma_path: str, output_dir: str, base_name: str, has_height: bool 
             "height": height_path
         }
     except Exception as e:
-        print(f"Error unpacking RMA: {e}")
+        print(f"Error unpacking RMA/ORM: {e}")
         return None
 
 def convert_to_tga(input_path: str, output_dir: str, new_suffix: str):
