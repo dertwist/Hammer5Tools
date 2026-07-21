@@ -63,6 +63,7 @@ def write_vmap(
     model_resolver: Optional[Callable[[str], str]] = None,
     unit_scale: float = UnitScale.ONE_TO_ONE,
     template_path: Optional[str] = None,
+    strip_prefix: bool = False,
 ) -> VmapWriteResult:
     """
     Write a .vmap of prop_static entities from normalized scene actors.

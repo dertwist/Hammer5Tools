@@ -18,36 +18,37 @@ _SUFFIX_MAP = {
 
 def scan_and_group(input_dir):
     """
-    Scans a directory for image files (PNG, TGA, JPG, JPEG) and groups them by base name.
+    Scans a directory recursively for image files (PNG, TGA, JPG, JPEG) and groups them by base name.
     """
     groups = {}
     if not os.path.exists(input_dir):
         return groups
 
     valid_exts = (".png", ".tga", ".jpg", ".jpeg")
-    for file in os.listdir(input_dir):
-        if not file.lower().endswith(valid_exts):
-            continue
-        
-        # Skip LUT/RVT prefixes
-        if file.startswith(("LUT_", "RVT_")):
-            continue
-
-        parts = file.rsplit("_", 1)
-        if len(parts) < 2:
-            continue
+    for root, _dirs, files in os.walk(input_dir):
+        for file in files:
+            if not file.lower().endswith(valid_exts):
+                continue
             
-        base_name = parts[0]
-        raw_suffix = parts[1].rsplit(".", 1)[0].upper()
-        canonical_suffix = _SUFFIX_MAP.get(raw_suffix)
-        if not canonical_suffix:
-            continue
-        
-        if base_name not in groups:
-            groups[base_name] = {}
-        
-        groups[base_name][canonical_suffix] = os.path.join(input_dir, file)
-        
+            # Skip LUT/RVT prefixes
+            if file.startswith(("LUT_", "RVT_")):
+                continue
+
+            parts = file.rsplit("_", 1)
+            if len(parts) < 2:
+                continue
+                
+            base_name = parts[0]
+            raw_suffix = parts[1].rsplit(".", 1)[0].upper()
+            canonical_suffix = _SUFFIX_MAP.get(raw_suffix)
+            if not canonical_suffix:
+                continue
+            
+            if base_name not in groups:
+                groups[base_name] = {}
+            
+            groups[base_name][canonical_suffix] = os.path.join(root, file)
+            
     return groups
 
 class MaterialConvertWorker(QThread):
@@ -77,7 +78,20 @@ class MaterialConvertWorker(QThread):
 
         for i, (base_name, suffixes) in enumerate(self.selected_groups.items()):
             self.progress.emit(i + 1, total)
-            out_name = base_name.lower()
+            out_name = re.sub(r"^(t_|mi_|m_|mm_)", "", base_name, flags=re.IGNORECASE).lower().strip("_")
+            if not out_name:
+                out_name = base_name.lower()
+            
+            sample_file = next(iter(suffixes.values())) if suffixes else ""
+            rel_sub = os.path.dirname(os.path.relpath(sample_file, self.input_dir)).replace("\\", "/").lower() if sample_file else ""
+            if rel_sub and rel_sub != ".":
+                rel_sub = re.sub(r"^(textures/|materials/)", "", rel_sub, flags=re.IGNORECASE).strip("/")
+                item_rel_path = f"materials/{rel_sub}" if rel_sub else base_rel_path
+            else:
+                item_rel_path = base_rel_path
+
+            dest_dir = os.path.join(self.output_dir, item_rel_path)
+            os.makedirs(dest_dir, exist_ok=True)
             
             try:
                 has_rma = "RMA" in suffixes
@@ -106,51 +120,51 @@ class MaterialConvertWorker(QThread):
                     return path.lower().replace("\\", "/")
 
                 if has_alb:
-                    slots["color"] = format_vmat_path(f"{base_rel_path}/{out_name}_color.tga")
-                    convert_to_tga(suffixes["ALB"], self.output_dir, f"{out_name}_color")
+                    slots["color"] = format_vmat_path(f"{item_rel_path}/{out_name}_color.tga")
+                    convert_to_tga(suffixes["ALB"], dest_dir, f"{out_name}_color")
                 
                 if has_nrm:
-                    slots["normal"] = format_vmat_path(f"{base_rel_path}/{out_name}_normal.tga")
-                    convert_to_tga(suffixes["NRM"], self.output_dir, f"{out_name}_normal")
+                    slots["normal"] = format_vmat_path(f"{item_rel_path}/{out_name}_normal.tga")
+                    convert_to_tga(suffixes["NRM"], dest_dir, f"{out_name}_normal")
 
                 if has_rmah or has_ormh:
                     src = suffixes.get("RMAH") or suffixes.get("ORMH")
                     is_orm = "ORMH" in suffixes
-                    res = unpack_rma(src, self.output_dir, out_name, has_height=True, is_orm=is_orm)
+                    res = unpack_rma(src, dest_dir, out_name, has_height=True, is_orm=is_orm)
                     if res:
-                        slots["rough"] = format_vmat_path(f"{base_rel_path}/{out_name}_rough.tga")
-                        slots["metal"] = format_vmat_path(f"{base_rel_path}/{out_name}_metal.tga")
-                        slots["ao"] = format_vmat_path(f"{base_rel_path}/{out_name}_ao.tga")
-                        slots["height"] = format_vmat_path(f"{base_rel_path}/{out_name}_height.tga")
+                        slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
+                        slots["metal"] = format_vmat_path(f"{item_rel_path}/{out_name}_metal.tga")
+                        slots["ao"] = format_vmat_path(f"{item_rel_path}/{out_name}_ao.tga")
+                        slots["height"] = format_vmat_path(f"{item_rel_path}/{out_name}_height.tga")
                 elif has_rma or has_orm:
                     src = suffixes.get("RMA") or suffixes.get("ORM")
                     is_orm = "ORM" in suffixes
-                    res = unpack_rma(src, self.output_dir, out_name, has_height=False, is_orm=is_orm)
+                    res = unpack_rma(src, dest_dir, out_name, has_height=False, is_orm=is_orm)
                     if res:
-                        slots["rough"] = format_vmat_path(f"{base_rel_path}/{out_name}_rough.tga")
-                        slots["metal"] = format_vmat_path(f"{base_rel_path}/{out_name}_metal.tga")
-                        slots["ao"] = format_vmat_path(f"{base_rel_path}/{out_name}_ao.tga")
+                        slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
+                        slots["metal"] = format_vmat_path(f"{item_rel_path}/{out_name}_metal.tga")
+                        slots["ao"] = format_vmat_path(f"{item_rel_path}/{out_name}_ao.tga")
                 else:
                     if has_rough:
-                        slots["rough"] = format_vmat_path(f"{base_rel_path}/{out_name}_rough.tga")
-                        convert_to_tga(suffixes["ROUGH"], self.output_dir, f"{out_name}_rough")
+                        slots["rough"] = format_vmat_path(f"{item_rel_path}/{out_name}_rough.tga")
+                        convert_to_tga(suffixes["ROUGH"], dest_dir, f"{out_name}_rough")
                     if has_metal:
-                        slots["metal"] = format_vmat_path(f"{base_rel_path}/{out_name}_metal.tga")
-                        convert_to_tga(suffixes["METAL"], self.output_dir, f"{out_name}_metal")
+                        slots["metal"] = format_vmat_path(f"{item_rel_path}/{out_name}_metal.tga")
+                        convert_to_tga(suffixes["METAL"], dest_dir, f"{out_name}_metal")
                     if has_ao:
-                        slots["ao"] = format_vmat_path(f"{base_rel_path}/{out_name}_ao.tga")
-                        convert_to_tga(suffixes["AO"], self.output_dir, f"{out_name}_ao")
+                        slots["ao"] = format_vmat_path(f"{item_rel_path}/{out_name}_ao.tga")
+                        convert_to_tga(suffixes["AO"], dest_dir, f"{out_name}_ao")
                     if has_height:
-                        slots["height"] = format_vmat_path(f"{base_rel_path}/{out_name}_height.tga")
-                        convert_to_tga(suffixes["HEIGHT"], self.output_dir, f"{out_name}_height")
+                        slots["height"] = format_vmat_path(f"{item_rel_path}/{out_name}_height.tga")
+                        convert_to_tga(suffixes["HEIGHT"], dest_dir, f"{out_name}_height")
                 
                 if slots.get("metal"):
-                    metal_local_path = os.path.join(self.output_dir, f"{out_name}_metal.tga")
+                    metal_local_path = os.path.join(dest_dir, f"{out_name}_metal.tga")
                     if not is_metallic(metal_local_path):
                         slots["metal"] = None
 
                 vmat_name = f"{out_name}.vmat"
-                vmat_path = os.path.join(self.output_dir, vmat_name)
+                vmat_path = os.path.join(dest_dir, vmat_name)
                 write_vmat(vmat_path, slots)
                 
                 created.append(base_name)

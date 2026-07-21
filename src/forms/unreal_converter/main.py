@@ -15,7 +15,7 @@ from src.styles.common import apply_stylesheets
 from src.settings.main import get_addon_dir, get_addon_name, get_settings_value, set_settings_value
 
 from .console import ConsoleWidget
-from .constants import FILE_TYPES, FILE_TYPE_TARGETS, UNSUPPORTED, scan_unsupported
+from .constants import FILE_TYPES, FILE_TYPE_TARGETS, FILE_TYPE_DESCRIPTIONS, UNSUPPORTED, scan_unsupported
 from .converter import scan_and_group, MaterialConvertWorker
 from .transform import UnitScale
 
@@ -55,16 +55,17 @@ class UnrealConverterWidget(QDialog):
     def _setup_progress_bar_style(self):
         self.progress_bar.setStyleSheet("""
             QProgressBar {
-                border: 2px solid rgba(80, 80, 80, 255);
+                border: 1px solid #505050;
                 border-radius: 2px;
                 text-align: center;
-                color: #E3E3E3;
-                font: 580 10pt "Segoe UI";
+                color: white;
+                font-size: 10px;
                 background-color: #1C1C1C;
             }
             QProgressBar::chunk {
-                background-color: #414956;
-                border-radius: 0px;
+                background-color: #1a528a;
+                margin: 0px;
+                width: 1px;
             }
         """)
 
@@ -90,8 +91,7 @@ class UnrealConverterWidget(QDialog):
         self.tabs.addTab(self._build_scenes_tab(), "Scenes")
         self.tabs.addTab(self._build_models_tab(), "Models")
         self.tabs.addTab(self._build_materials_tab(), "Materials")
-        self.tabs.addTab(self._build_blueprints_tab(), "Blueprints")
-        self.tabs.addTab(self._build_other_tab(), "Other")
+        self.tabs.addTab(self._build_other_tab(), "Textures")
         left_layout.addWidget(self.tabs, 1)
 
         # Action bar in Left Panel
@@ -122,7 +122,7 @@ class UnrealConverterWidget(QDialog):
         self.progress_bar = QProgressBar()
         self.progress_bar.setTextVisible(True)
         self.progress_bar.setFormat("Idle")
-        self.progress_bar.setFixedHeight(22)
+        self.progress_bar.setFixedHeight(14)
         self.progress_bar.setValue(0)
         right_layout.addWidget(self.progress_bar)
 
@@ -134,6 +134,11 @@ class UnrealConverterWidget(QDialog):
         splitter.setSizes([450, 830])
 
         root.addWidget(splitter, 1)
+
+        # Initial auto-scan of bulk export folder if saved path exists
+        saved_bulk = self.bulk_folder_edit.text().strip()
+        if saved_bulk and os.path.isdir(saved_bulk):
+            self._scan_bulk(saved_bulk)
 
     def _build_paths_group(self):
         box = QGroupBox("Conversion settings — paths")
@@ -186,8 +191,6 @@ class UnrealConverterWidget(QDialog):
             self.project_folder_edit.setText(saved_project)
         if saved_bulk:
             self.bulk_folder_edit.setText(saved_bulk)
-            if os.path.isdir(saved_bulk):
-                self._scan_bulk(saved_bulk)
 
         addon_dir = get_addon_dir()
         if saved_output:
@@ -216,7 +219,8 @@ class UnrealConverterWidget(QDialog):
         types_box = QGroupBox("Convert file types")
         tv = QVBoxLayout(types_box)
         for t in FILE_TYPES:
-            cb = QCheckBox(f"{t}  →  {FILE_TYPE_TARGETS[t]}")
+            cb = QCheckBox(f"{t}  ->  {FILE_TYPE_TARGETS[t]}")
+            cb.setToolTip(FILE_TYPE_DESCRIPTIONS[t])
             cb.setChecked(True)
             self.type_checks[t] = cb
             tv.addWidget(cb)
@@ -224,7 +228,8 @@ class UnrealConverterWidget(QDialog):
 
         settings_box = QGroupBox("General settings")
         sv = QVBoxLayout(settings_box)
-        self.strip_prefixes_check = QCheckBox("Remove Unreal prefixes (e.g. SM_Chair → chair.vmdl, BP_Fence → fence.vsmart, MI_Wall → wall.vmat)")
+        self.strip_prefixes_check = QCheckBox("Remove Unreal's file prefixes")
+        self.strip_prefixes_check.setToolTip("Strips prefixes like SM_, BP_, MI_, T_, SK_ from converted asset names (e.g. SM_Chair → chair.vmdl)")
         strip_saved = get_settings_value("UnrealConverter", "strip_ue_prefixes", "false").lower() == "true"
         self.strip_prefixes_check.setChecked(strip_saved)
         self.strip_prefixes_check.stateChanged.connect(
@@ -278,6 +283,9 @@ class UnrealConverterWidget(QDialog):
         self.model_vmdl_check = QCheckBox("Generate .vmdl wrapper referencing the mesh")
         self.model_vmdl_check.setChecked(True)
         form.addRow(self.model_vmdl_check)
+        self.model_graybox_check = QCheckBox("Use global fallback material with graybox texture")
+        self.model_graybox_check.setChecked(False)
+        form.addRow(self.model_graybox_check)
         note = QLabel(
             "Wraps an exported FBX/glTF mesh in a .vmdl. Pivot/orientation uses "
             "the shared UE→Source transform (Y mirror, Z-up preserved). Nanite "
@@ -308,19 +316,6 @@ class UnrealConverterWidget(QDialog):
         )
         note.setWordWrap(True)
         layout.addWidget(note)
-        return tab
-
-    def _build_blueprints_tab(self):
-        tab = QWidget()
-        form = QFormLayout(tab)
-        self.bp_note = QLabel(
-            "Only content-assembly blueprints (a bundle of static meshes with "
-            "relative transforms, e.g. BP_Fence) convert to a .vsmart smart prop. "
-            "Event graphs and gameplay logic do not convert. Component trees are "
-            "read directly from the UE project via the CUE4Parse bridge."
-        )
-        self.bp_note.setWordWrap(True)
-        form.addRow(self.bp_note)
         return tab
 
     def _build_other_tab(self):
@@ -461,16 +456,19 @@ class UnrealConverterWidget(QDialog):
     def _scan_bulk(self, bulk_dir):
         """Scan the UE bulk-export folder for textures/materials (PNG groups)."""
         if not os.path.isdir(bulk_dir):
-            self.console.error(f"Bulk-export folder not found: {bulk_dir}")
+            if hasattr(self, "console"):
+                self.console.error(f"Bulk-export folder not found: {bulk_dir}")
             return
         self.groups = scan_and_group(bulk_dir)
-        self.group_list.clear()
-        for base_name in sorted(self.groups.keys()):
-            item = QListWidgetItem(base_name)
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            item.setCheckState(Qt.Checked)
-            self.group_list.addItem(item)
-        self.console.info(f"Bulk-export material groups detected: {len(self.groups)}")
+        if hasattr(self, "group_list") and self.group_list is not None:
+            self.group_list.clear()
+            for base_name in sorted(self.groups.keys()):
+                item = QListWidgetItem(base_name)
+                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                item.setCheckState(Qt.Checked)
+                self.group_list.addItem(item)
+        if hasattr(self, "console"):
+            self.console.info(f"Bulk-export material groups detected: {len(self.groups)}")
 
     # ------------------------------------------------------------- convert --
 
@@ -505,7 +503,7 @@ class UnrealConverterWidget(QDialog):
         did_something = False
 
         # Textures/materials from the bulk-export folder (synchronous worker).
-        if self.is_enabled("Other") or self.is_enabled("Materials"):
+        if self.is_enabled("Textures") or self.is_enabled("Materials"):
             did_something = self._convert_materials(output_dir) or did_something
 
         # Scenes -> vmap, Models -> vmdl, Blueprints -> vsmart via the CUE4Parse bridge + writers.
@@ -537,6 +535,7 @@ class UnrealConverterWidget(QDialog):
             do_materials=self.is_enabled("Materials"),
             strip_prefix=self.strip_prefixes_check.isChecked(),
             unit_scale=self.get_unit_scale(),
+            use_graybox_fallback=self.model_graybox_check.isChecked(),
         )
         self.scene_worker.log.connect(self._on_worker_log)
         self.scene_worker.progress.connect(self._on_progress)

@@ -13,7 +13,6 @@ from .vmap_writer import write_vmap
 from .vsmart_writer import write_vsmart
 from .vmdl_writer import write_vmdl, ue_mesh_to_model_path, find_bulk_export_mesh
 from .engine_meshes import is_engine_mesh, generate_engine_mesh_obj, bundled_fbx_for
-from .fbx_flatten import flatten_fbx
 
 _MESH_EXTS = (".fbx", ".obj", ".gltf", ".glb", ".dmx")
 
@@ -24,7 +23,8 @@ class SceneModelsWorker(QThread):
     done = Signal()
 
     def __init__(self, project_dir, bulk_dir, output_dir,
-                 do_scenes, do_models, do_blueprints=False, do_materials=False, strip_prefix=False, unit_scale=1.0, parent=None):
+                 do_scenes, do_models, do_blueprints=False, do_materials=False, strip_prefix=False, unit_scale=1.0,
+                 use_graybox_fallback=False, parent=None):
         super().__init__(parent)
         self.project_dir = project_dir
         self.bulk_dir = bulk_dir
@@ -35,17 +35,10 @@ class SceneModelsWorker(QThread):
         self.do_materials = do_materials
         self.strip_prefix = strip_prefix
         self.unit_scale = unit_scale
+        self.use_graybox_fallback = use_graybox_fallback
 
     def _log(self, msg, level="info"):
         self.log.emit(msg, level)
-
-    def _flatten(self, fbx_path):
-        """Flatten nested LOD/UCX meshes to top-level so ModelDoc import_filter
-        can select them. Failure is non-fatal (leaves the FBX as-is)."""
-        try:
-            flatten_fbx(fbx_path)
-        except Exception as e:
-            self._log(f"flatten skipped for {os.path.basename(fbx_path)}: {e}", "warn")
 
     def run(self):
         try:
@@ -204,12 +197,11 @@ class SceneModelsWorker(QThread):
                         dst = os.path.join(self.output_dir, fbx_rel)
                         os.makedirs(os.path.dirname(dst), exist_ok=True)
                         shutil.copy2(src, dst)
-                        self._flatten(dst)
-                        write_vmdl(vmdl_path, fbx_rel, import_scale=self.unit_scale, fbx_path=dst, material_path=mat_rel)
+                        write_vmdl(vmdl_path, fbx_rel, import_scale=self.unit_scale, fbx_path=dst, material_path=mat_rel, use_graybox_fallback=self.use_graybox_fallback)
                     else:
                         obj_rel = os.path.splitext(model_rel)[0] + ".obj"
                         generate_engine_mesh_obj(mesh, os.path.join(self.output_dir, obj_rel))
-                        write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=mat_rel)
+                        write_vmdl(vmdl_path, obj_rel, import_scale=self.unit_scale, material_path=mat_rel, use_graybox_fallback=self.use_graybox_fallback)
                     engine += 1
                     made += 1
                     continue
@@ -222,23 +214,23 @@ class SceneModelsWorker(QThread):
                     os.makedirs(os.path.dirname(dst_fbx), exist_ok=True)
                     try:
                         shutil.copy2(src_fbx, dst_fbx)
-                        self._flatten(dst_fbx)
-                        self._log(f"  ✓ {os.path.basename(src_fbx)} → {mesh_rel}", "info")
+                        self._log(f"  {os.path.basename(src_fbx)} -> {mesh_rel}", "info")
                     except Exception as e:
-                        self._log(f"  ✗ copy failed for {os.path.basename(src_fbx)}: {e}", "warn")
+                        self._log(f"  copy failed for {os.path.basename(src_fbx)}: {e}", "warn")
                         dst_fbx = None
                 else:
                     missing += 1
                     stem = mesh.split(".", 1)[0].rsplit("/", 1)[-1]
                     self._log(
-                        f"  ✗ {stem}: no FBX in bulk-export dir"
+                        f"  {stem}: no FBX in bulk-export dir"
                         + (f" ({self.bulk_dir})" if self.bulk_dir else " (no bulk dir set)"),
                         "warn",
                     )
 
                 # Inspect the copied FBX (or the source) to build LODs + physics.
                 write_vmdl(vmdl_path, mesh_rel, import_scale=self.unit_scale,
-                           fbx_path=dst_fbx or src_fbx, material_path=mat_rel)
+                           fbx_path=dst_fbx or src_fbx, material_path=mat_rel, output_dir=self.output_dir,
+                           use_graybox_fallback=self.use_graybox_fallback)
                 made += 1
 
             parts = [f"{made} vmdl written"]
