@@ -3,7 +3,7 @@ import re
 import shutil
 import winreg
 from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QMenu, QMessageBox, \
-    QToolButton, QDialog, QListWidgetItem, QInputDialog, QLineEdit
+    QToolButton, QListWidgetItem, QInputDialog, QLineEdit, QFrame, QLabel, QVBoxLayout, QWidget, QHBoxLayout, QListWidget
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer
@@ -279,7 +279,7 @@ class Explorer(QMainWindow):
         self.recent_button.setStyleSheet(qt_stylesheet_toolbutton)
         self.recent_button.setMaximumHeight(26)
         self.recent_button.setMaximumWidth(26)
-        self.recent_button.clicked.connect(self.open_recent_files_dialog)
+        self.recent_button.clicked.connect(lambda: self._toggle_panel("recent"))
         self.top_layout.addWidget(self.recent_button)
         self.favorites_button = QToolButton(self)
         self.favorites_button.setIcon(QIcon("://icons/bookmark_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
@@ -287,8 +287,10 @@ class Explorer(QMainWindow):
         self.favorites_button.setStyleSheet(qt_stylesheet_toolbutton)
         self.favorites_button.setMaximumHeight(26)
         self.favorites_button.setMaximumWidth(26)
-        self.favorites_button.clicked.connect(self.open_favorites_dialog)
+        self.favorites_button.clicked.connect(lambda: self._toggle_panel("favorites"))
         self.top_layout.addWidget(self.favorites_button)
+        self._panel_mode = None  # "recent" or "favorites"
+        self._panel_frame = self._build_panel()
         self.layout = QVBoxLayout(self)
         self.layout.addLayout(self.top_layout)
         self.layout.addWidget(self.tree)
@@ -926,141 +928,178 @@ class Explorer(QMainWindow):
         if input_path:
             self.select_tree_item(input_path)
 
-    def open_recent_files_dialog(self):
-        dialog = QDialog(self)
-        dialog.setMinimumWidth(500)
-        dialog.setWindowTitle("Recent Files")
-        enable_dark_title_bar(dialog)
-        layout = QVBoxLayout(dialog)
-        filter_edit = QLineEdit(dialog)
-        filter_edit.setPlaceholderText("Filter recent files...")
-        layout.addWidget(filter_edit)
-        list_widget = QListWidget(dialog)
-        for path in self.recent_files:
-            if path:
-                try:
-                    relative_path = os.path.relpath(path, self.tree_directory)
-                    item = QListWidgetItem(relative_path)
-                    if os.path.isdir(path):
-                        item.setIcon(QIcon("://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-                    else:
-                        ext = os.path.splitext(path)[1].lower()
-                        if ext in file_icons:
-                            item.setIcon(QIcon(file_icons[ext]))
-                        elif path.endswith(tuple(audio_extensions)):
-                            item.setIcon(QIcon("://icons/assettypes/vmix_sm.png"))
-                        elif path.endswith(tuple(generic_extensions)):
-                            item.setIcon(QIcon("://icons/assettypes/generic_sm.png"))
-                        else:
-                            item.setIcon(QIcon("://icons/file.svg"))
-                    list_widget.addItem(item)
-                except Exception as e:
-                    debug(f"Skipping invalid recent file path: {path} ({e})")
-        layout.addWidget(list_widget)
-        button_layout = QHBoxLayout()
-        ok_button = QPushButton("OK", dialog)
-        ok_button.setStyleSheet(qt_stylesheet_button)
-        cancel_button = QPushButton("Cancel", dialog)
-        cancel_button.setStyleSheet(qt_stylesheet_button)
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-        layout.addLayout(button_layout)
-        def on_item_double_clicked(item):
-            selected_relative = item.text()
-            full_path = os.path.join(self.tree_directory, selected_relative)
-            if os.path.exists(full_path):
-                self.select_tree_item(full_path)
-            dialog.accept()
-        def filter_items(text):
-            for index in range(list_widget.count()):
-                item = list_widget.item(index)
-                item.setHidden(text.lower() not in item.text().lower())
-        filter_edit.textChanged.connect(filter_items)
-        list_widget.itemDoubleClicked.connect(on_item_double_clicked)
-        ok_button.clicked.connect(lambda: dialog.accept())
-        cancel_button.clicked.connect(dialog.reject)
-        dialog.exec_()
+    # ------------------------------------------------------------------
+    # Inline recent-files / favorites panel
+    # ------------------------------------------------------------------
 
-    def open_favorites_dialog(self):
-        dialog = QDialog(self)
-        dialog.setMinimumWidth(500)
-        dialog.setWindowTitle("Favorites")
-        enable_dark_title_bar(dialog)
-        layout = QVBoxLayout(dialog)
-        filter_edit = QLineEdit(dialog)
-        filter_edit.setPlaceholderText("Filter favorites...")
-        layout.addWidget(filter_edit)
-        list_widget = QListWidget(dialog)
-        for path in self.favorites:
-            if path:
-                try:
-                    relative_path = os.path.relpath(path, self.tree_directory)
-                    item = QListWidgetItem(relative_path)
-                    if os.path.isdir(path):
-                        item.setIcon(QIcon("://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-                    else:
-                        ext = os.path.splitext(path)[1].lower()
-                        if ext in file_icons:
-                            item.setIcon(QIcon(file_icons[ext]))
-                        elif path.endswith(tuple(audio_extensions)):
-                            item.setIcon(QIcon("://icons/assettypes/vmix_sm.png"))
-                        elif path.endswith(tuple(generic_extensions)):
-                            item.setIcon(QIcon("://icons/assettypes/generic_sm.png"))
-                        else:
-                            item.setIcon(QIcon("://icons/file.svg"))
-                    list_widget.addItem(item)
-                except Exception as e:
-                    debug(f"Skipping invalid favorite file path: {path} ({e})")
-        list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+    def _build_panel(self):
+        """Create the floating overlay popup widget."""
+        frame = QFrame(self, Qt.Popup | Qt.FramelessWindowHint)
+        frame.setObjectName("explorerOverlayPanel")
+        frame.setStyleSheet(
+            "QFrame#explorerOverlayPanel {"
+            "  background: #1e1e1e;"
+            "  border: 1px solid #3a3a3a;"
+            "  border-radius: 4px;"
+            "}"
+        )
+        vbox = QVBoxLayout(frame)
+        vbox.setContentsMargins(6, 6, 6, 6)
+        vbox.setSpacing(4)
 
-        def handle_context_menu(pos):
-            item = list_widget.itemAt(pos)
-            if item is None:
-                return
-            menu = QMenu()
-            remove_action = QAction("Remove Favorite", dialog)
+        # Header row: label + close button
+        header = QHBoxLayout()
+        self._panel_title = QLabel("", frame)
+        self._panel_title.setStyleSheet("color:#cccccc; font-weight:bold; font-size:11px;")
+        header.addWidget(self._panel_title)
+        header.addStretch()
+        close_btn = QToolButton(frame)
+        close_btn.setText("✕")
+        close_btn.setToolTip("Close")
+        close_btn.setStyleSheet(
+            "QToolButton { color:#888; border:none; font-size:11px; padding:1px 4px; }"
+            "QToolButton:hover { color:#fff; }"
+        )
+        close_btn.setMaximumHeight(20)
+        close_btn.clicked.connect(self._hide_panel)
+        header.addWidget(close_btn)
+        vbox.addLayout(header)
+
+        # Filter
+        self._panel_filter = QLineEdit(frame)
+        self._panel_filter.setPlaceholderText("Filter...")
+        self._panel_filter.setStyleSheet(
+            "QLineEdit { background:#2a2a2a; color:#ccc; border:1px solid #3a3a3a;"
+            " border-radius:3px; padding:3px 6px; font-size:11px; }"
+        )
+        self._panel_filter.textChanged.connect(self._filter_panel_items)
+        vbox.addWidget(self._panel_filter)
+
+        # List
+        self._panel_list = QListWidget(frame)
+        self._panel_list.setStyleSheet(
+            "QListWidget { background:#1e1e1e; color:#ccc; border:none; font-size:11px; outline:none; }"
+            "QListWidget::item { padding:4px 6px; border-radius:2px; }"
+            "QListWidget::item:hover { background:#2d2d2d; }"
+            "QListWidget::item:selected { background:#0d6efd33; color:#fff; }"
+        )
+        self._panel_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self._panel_list.customContextMenuRequested.connect(self._panel_context_menu)
+        self._panel_list.itemClicked.connect(self._on_panel_item_clicked)
+        vbox.addWidget(self._panel_list)
+
+        return frame
+
+    def _toggle_panel(self, mode):
+        """Show the overlay panel in *mode* ('recent'/'favorites'), anchored to button."""
+        target_btn = self.recent_button if mode == "recent" else self.favorites_button
+        
+        if self._panel_frame.isVisible() and self._panel_mode == mode:
+            self._hide_panel()
+            return
+
+        self._panel_mode = mode
+        self._populate_panel()
+
+        # Size and position overlay popup relative to button
+        self._panel_frame.setFixedWidth(320)
+        max_h = min(300, max(120, self._panel_list.count() * 26 + 65))
+        self._panel_list.setFixedHeight(max(60, max_h - 60))
+        self._panel_frame.adjustSize()
+
+        # Position below the button
+        btn_pos = target_btn.mapToGlobal(target_btn.rect().bottomLeft())
+        # Shift slightly left if overflow right
+        self._panel_frame.move(btn_pos)
+        self._panel_frame.show()
+        self._panel_filter.setFocus()
+
+    def _hide_panel(self):
+        self._panel_frame.hide()
+        self._panel_mode = None
+        self._panel_filter.clear()
+
+    def _populate_panel(self):
+        """Fill the list widget according to the current panel mode."""
+        self._panel_list.clear()
+        self._panel_filter.clear()
+
+        if self._panel_mode == "recent":
+            self._panel_title.setText("Recent Files")
+            paths = self.load_recent_files()
+        else:
+            self._panel_title.setText("Favorites")
+            paths = self.load_favorites()
+
+        for path in paths:
+            if not path:
+                continue
+            try:
+                basename = os.path.basename(path)
+                item = QListWidgetItem(basename)
+                item.setToolTip(path)
+                item.setData(Qt.UserRole, path)  # store absolute path
+                if os.path.isdir(path):
+                    item.setIcon(QIcon("://icons/folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+                else:
+                    ext = os.path.splitext(path)[1].lower()
+                    if ext in file_icons:
+                        item.setIcon(QIcon(file_icons[ext]))
+                    elif path.endswith(tuple(audio_extensions)):
+                        item.setIcon(QIcon("://icons/assettypes/vmix_sm.png"))
+                    elif path.endswith(tuple(generic_extensions)):
+                        item.setIcon(QIcon("://icons/assettypes/generic_sm.png"))
+                    else:
+                        item.setIcon(QIcon("://icons/file.svg"))
+                self._panel_list.addItem(item)
+            except Exception as e:
+                debug(f"Skipping invalid panel path: {path} ({e})")
+
+    def _filter_panel_items(self, text):
+        for i in range(self._panel_list.count()):
+            item = self._panel_list.item(i)
+            full_path = item.data(Qt.UserRole) or ""
+            match = text.lower() in item.text().lower() or text.lower() in full_path.lower()
+            item.setHidden(not match)
+
+    def _on_panel_item_clicked(self, item):
+        full_path = item.data(Qt.UserRole)
+        if full_path and os.path.exists(full_path):
+            self.select_tree_item(full_path)
+        self._hide_panel()
+
+    def _panel_context_menu(self, pos):
+        """Context menu for the panel list (favorites: remove; recent: always available)."""
+        item = self._panel_list.itemAt(pos)
+        if item is None:
+            return
+        menu = QMenu(self)
+        if self._panel_mode == "favorites":
+            remove_action = QAction("Remove Favorite", self)
             remove_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-
-            def remove_item():
-                relative_path = item.text()
-                full_path = os.path.join(self.tree_directory, relative_path)
-                if full_path in self.favorites:
+            def _remove():
+                full_path = item.data(Qt.UserRole)
+                if full_path and full_path in self.favorites:
                     self.favorites.remove(full_path)
                     self.save_favorites()
-                list_widget.takeItem(list_widget.row(item))
-
-            remove_action.triggered.connect(remove_item)
+                self._panel_list.takeItem(self._panel_list.row(item))
+            remove_action.triggered.connect(_remove)
             menu.addAction(remove_action)
-            menu.exec_(list_widget.viewport().mapToGlobal(pos))
-
-        list_widget.customContextMenuRequested.connect(handle_context_menu)
-        layout.addWidget(list_widget)
-        button_layout = QHBoxLayout()
-        ok_button = QPushButton("OK", dialog)
-        ok_button.setStyleSheet(qt_stylesheet_button)
-        cancel_button = QPushButton("Cancel", dialog)
-        cancel_button.setStyleSheet(qt_stylesheet_button)
-        button_layout.addWidget(ok_button)
-        button_layout.addWidget(cancel_button)
-        layout.addLayout(button_layout)
-
-        def on_item_double_clicked(item):
-            selected_relative = item.text()
-            full_path = os.path.join(self.tree_directory, selected_relative)
-            if os.path.exists(full_path):
-                self.select_tree_item(full_path)
-            dialog.accept()
-
-        def filter_items(text):
-            for index in range(list_widget.count()):
-                item = list_widget.item(index)
-                item.setHidden(text.lower() not in item.text().lower())
-
-        filter_edit.textChanged.connect(filter_items)
-        list_widget.itemDoubleClicked.connect(on_item_double_clicked)
-        ok_button.clicked.connect(lambda: dialog.accept())
-        cancel_button.clicked.connect(dialog.reject)
-        dialog.exec_()
+        elif self._panel_mode == "recent":
+            remove_action = QAction("Remove from Recent", self)
+            remove_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            def _remove_recent():
+                full_path = item.data(Qt.UserRole)
+                recent = self.load_recent_files()
+                if full_path and full_path in recent:
+                    recent.remove(full_path)
+                    self.recent_files = recent
+                    self.save_recent_files()
+                self._panel_list.takeItem(self._panel_list.row(item))
+            remove_action.triggered.connect(_remove_recent)
+            menu.addAction(remove_action)
+        if not menu.isEmpty():
+            menu.exec_(self._panel_list.viewport().mapToGlobal(pos))
 
     def get_current_path(self, absolute=False):
             current_index = self.tree.currentIndex()
