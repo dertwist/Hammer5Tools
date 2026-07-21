@@ -2861,8 +2861,8 @@ class SmartPropDocument(QMainWindow):
                 if new_data != self._gizmo_pre_drag_data:
                     cmd = PropertySnapshotCommand(self, item, self._gizmo_pre_drag_data, new_data)
                     self.undo_stack.push(cmd)
-                    # Rebuild the properties panel to sync input boxes to new values
-                    self._rebuild_properties_panel(item)
+                    # No rebuild needed: the property panel was already kept in sync
+                    # incrementally via update_property_frame_values during the drag.
             self._gizmo_pre_drag_data = None
 
     def update_property_frame_values(self, data, changed_keys=None):
