@@ -305,7 +305,6 @@ class Ui_MainWindow(object):
         self.dialog_selection_combobox = QComboBox(self.centralwidget)
         self.dialog_selection_combobox.addItem("")
         self.dialog_selection_combobox.addItem("")
-        self.dialog_selection_combobox.addItem("")
         self.dialog_selection_combobox.setObjectName(u"dialog_selection_combobox")
         self.dialog_selection_combobox.setMinimumSize(QSize(120, 0))
         self.dialog_selection_combobox.setStyleSheet(u"font: 580 10pt \"Segoe UI\";")
@@ -394,7 +393,6 @@ class Ui_MainWindow(object):
         self.open_dialog_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
         self.dialog_selection_combobox.setItemText(0, QCoreApplication.translate("MainWindow", u"Cleanup", None))
         self.dialog_selection_combobox.setItemText(1, QCoreApplication.translate("MainWindow", u"Unreal Converter", None))
-        self.dialog_selection_combobox.setItemText(2, QCoreApplication.translate("MainWindow", u"DetailProp Editor", None))
 
     # retranslateUi
 
