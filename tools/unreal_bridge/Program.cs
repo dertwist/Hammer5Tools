@@ -56,7 +56,7 @@ static class Program
                 case "dump-scene": return DumpScene(provider, args[2]);
                 case "dump-blueprint": return DumpBlueprint(provider, args[2]);
                 case "dump-material": return DumpMaterial(provider, args[2]);
-                case "export-landscape": return ExportLandscape(provider, args[2], args[3]);
+                case "export-landscape": return ExportLandscape(provider, args[2], args[3], args.Length > 4 ? args[4] : "all");
                 default:
                     Console.Error.WriteLine("unknown command: " + cmd);
                     return 2;
@@ -259,14 +259,47 @@ static class Program
         var pkg = provider.LoadPackage(mapPath);
         var actors = new List<object>();
         var processedBpActors = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        ALandscapeProxy? landscapeActor = null;
 
         foreach (var export in pkg.GetExports())
         {
             var cls = export.ExportType;
             if (cls == null) continue;
 
+            // Landscapes have no static-mesh asset — they're heightmap-driven
+            // terrain baked by ExportLandscape into an OBJ. Only the first
+            // components-bearing landscape actor in the map is reported (matches
+            // ExportLandscape's own selection); the Python side calls
+            // export-landscape to get the actual mesh and treats it like any
+            // other placed prop_static using this actor's world transform.
+            if (export is ALandscapeProxy lp && lp.LandscapeComponents.Length > 0)
+            {
+                if (landscapeActor == null)
+                {
+                    landscapeActor = lp;
+                    var (lLoc, lRot, lScale) = GetWorldTransform(export);
+                    actors.Add(new
+                    {
+                        actor = export.Name,
+                        componentType = "Landscape",
+                        blueprint = (string?)null,
+                        mesh = (string?)null,
+                        landscapeActor = export.Name,
+                        location = new { x = lLoc.X, y = lLoc.Y, z = lLoc.Z },
+                        rotation = new { pitch = lRot.Pitch, yaw = lRot.Yaw, roll = lRot.Roll },
+                        scale = new { x = lScale.X, y = lScale.Y, z = lScale.Z },
+                    });
+                }
+                continue;
+            }
+
             string? outerName = export.Outer?.Name;
             string? outerClass = export.Outer?.ExportType ?? export.Outer?.Class?.Name;
+
+            if (export.Name.Contains("ElectricPole", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.Error.WriteLine($"DBG name={export.Name} cls={cls} outerName={outerName} outerClass={outerClass} outerRuntimeType={export.Outer?.GetType().FullName} outerClassObj={export.Outer?.Class?.GetType().FullName}");
+            }
 
             if (!string.IsNullOrEmpty(outerName) && !string.IsNullOrEmpty(outerClass) &&
                 outerClass.EndsWith("_C", StringComparison.OrdinalIgnoreCase) &&
@@ -456,8 +489,12 @@ static class Program
         return 0;
     }
 
-    // Research: convert a UE Landscape into a mesh (OBJ) + heightmap/weightmap PNGs.
-    static int ExportLandscape(DefaultFileProvider provider, string mapPath, string outDir)
+    // Convert a UE Landscape into a mesh (OBJ) and, optionally, heightmap/weightmap
+    // PNGs. flagsArg selects what to export: "mesh" (just the OBJ — used by the
+    // Unreal Converter's Scenes/Models pipeline to place the landscape as a
+    // prop_static), "heightmap", "weightmap", or "all" (default; used by the
+    // standalone research workflow).
+    static int ExportLandscape(DefaultFileProvider provider, string mapPath, string outDir, string flagsArg = "all")
     {
         var pkg = provider.LoadPackage(mapPath);
         ALandscapeProxy? landscape = null;
@@ -482,7 +519,14 @@ static class Program
             ExportMaterials = false,
         };
 
-        var exporter = new LandscapeExporter(landscape, comps, options, ELandscapeExportFlags.All);
+        ELandscapeExportFlags flags = flagsArg.ToLowerInvariant() switch
+        {
+            "mesh" => ELandscapeExportFlags.Mesh,
+            "heightmap" => ELandscapeExportFlags.Heightmap,
+            "weightmap" => ELandscapeExportFlags.Weightmap,
+            _ => ELandscapeExportFlags.All,
+        };
+        var exporter = new LandscapeExporter(landscape, comps, options, flags);
         Directory.CreateDirectory(outDir);
         if (exporter.TryWriteToDir(new DirectoryInfo(outDir), out var label, out var saved))
         {

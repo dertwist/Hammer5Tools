@@ -156,50 +156,158 @@ def patch_fbx_string(d: bytearray, voff: int, old_full: str, new_full: str, targ
     return d
 
 
+def _find_properties70(fbx: "_Fbx", model_node):
+    for cnm, cnode in fbx.child_nodes(model_node):
+        if cnm == "Properties70":
+            return cnode
+    return None
+
+
+def _find_rotation_prop(d: bytearray, fbx: "_Fbx", p70_node):
+    """Return (pnode, pprops) for the first existing Lcl Rotation/PreRotation
+    child of p70_node, or None if it has neither."""
+    for pnm, pnode in fbx.child_nodes(p70_node):
+        pprops, _ = _parse_props(d, pnode[4], pnode[2])
+        if len(pprops) >= 7 and pprops[0][1] in ("Lcl Rotation", "PreRotation"):
+            return pnode, pprops
+    return None
+
+
+def _insert_lcl_rotation(d: bytearray, fbx: "_Fbx", p70_node, pitch: float, yaw: float, roll: float) -> None:
+    """
+    Insert a brand-new "Lcl Rotation" P-record as a child of p70_node.
+
+    FBX only ever writes a Properties70 override for non-default values, so a
+    freshly exported static mesh (identity rotation) has no "Lcl Rotation" node
+    to patch at all — the common case in practice. Inserting one means growing
+    the file, which shifts every byte after the insertion point, so every node
+    EndOffset from here to EOF must be corrected to match.
+    """
+    _off, p70_end, _npr, _pl, _ps = p70_node
+    insertion_off = p70_end - fbx.null_len
+
+    def enc(t, v):
+        if t == 'S':
+            b = v.encode('ascii')
+            return b'S' + struct.pack("<I", len(b)) + b
+        if t == 'C':
+            return b'C' + bytes([ord(v)])
+        if t == 'D':
+            return b'D' + struct.pack("<d", v)
+        raise ValueError(t)
+
+    props_bytes = b"".join((
+        enc('S', "Lcl Rotation"),
+        enc('S', "Lcl Rotation"),
+        enc('S', ""),
+        enc('C', 'A'),
+        enc('D', float(pitch)),
+        enc('D', float(yaw)),
+        enc('D', float(roll)),
+    ))
+    name = b"P"
+    node_end = insertion_off + fbx.hdr_size + 1 + len(name) + len(props_bytes)
+    header = struct.pack(fbx.hdr_fmt, node_end, 7, len(props_bytes))
+    new_node = header + bytes([len(name)]) + name + props_bytes
+    delta = len(new_node)
+
+    # Collect (header_offset, EndOffset) for every node in the file so their
+    # stored EndOffset can be corrected once the new bytes are spliced in.
+    records = []
+
+    def collect(start, limit):
+        p = start
+        while p < limit - fbx.null_len:
+            e, _npr2, pl2 = struct.unpack(fbx.hdr_fmt, d[p:p + fbx.hdr_size])
+            if e == 0:
+                break
+            records.append((p, e))
+            nlen = d[p + fbx.hdr_size]
+            children_start = p + fbx.hdr_size + 1 + nlen + pl2
+            if children_start < e - fbx.null_len:
+                collect(children_start, e)
+            p = e
+
+    collect(27, len(d))
+
+    d[insertion_off:insertion_off] = new_node
+
+    end_fmt = "<Q" if fbx.hdr_fmt == "<QQQ" else "<I"
+    for hoff, old_end in records:
+        new_hoff = hoff + delta if hoff >= insertion_off else hoff
+        new_end = old_end + delta if old_end > insertion_off else old_end
+        if new_end != old_end:
+            struct.pack_into(end_fmt, d, new_hoff, new_end)
+
+
 def rotate_fbx_models(d: bytearray, pitch: float = 0.0, yaw: float = 90.0, roll: float = 0.0) -> bool:
     """
-    Apply (pitch, yaw, roll) rotation offset to all Model nodes in binary FBX d in place.
-    Modifies double-precision rotation properties in Properties70 (byte-size-preserving).
-    Returns True if any rotation properties were updated.
+    Apply (pitch, yaw, roll) rotation offset to every Model node in binary FBX d, in place.
+
+    Patches an existing "Lcl Rotation"/"PreRotation" Properties70 entry when
+    present (byte-size-preserving). When a Model has neither — the normal case
+    for a freshly exported static mesh, since FBX omits Properties70 overrides
+    that equal the default (identity) — a new "Lcl Rotation" P-record is
+    inserted into its Properties70 node instead, growing the file as needed.
+    Returns True if any Model was modified.
     """
     if d[:len(_MAGIC)] != _MAGIC:
         return False
 
+    modified = False
+
+    # Phase 1: patch existing rotation properties in place (no resize).
     fbx = _Fbx(d)
     tops = fbx.top_nodes()
     if "Objects" not in tops:
         return False
-
-    modified = False
     for nm, node in fbx.child_nodes(tops["Objects"]):
         if nm != "Model":
             continue
-
-        model_children = fbx.child_nodes(node)
-        p70_node = None
-        for cnm, cnode in model_children:
-            if cnm == "Properties70":
-                p70_node = cnode
-                break
-
+        p70_node = _find_properties70(fbx, node)
         if not p70_node:
             continue
+        found = _find_rotation_prop(d, fbx, p70_node)
+        if not found:
+            continue
+        pnode, pprops = found
+        x_off, y_off, z_off = pprops[4][2], pprops[5][2], pprops[6][2]
+        cur_x, cur_y, cur_z = float(pprops[4][1]), float(pprops[5][1]), float(pprops[6][1])
+        struct.pack_into("<d", d, x_off, cur_x + pitch)
+        struct.pack_into("<d", d, y_off, cur_y + yaw)
+        struct.pack_into("<d", d, z_off, cur_z + roll)
+        modified = True
 
-        for pnm, pnode in fbx.child_nodes(p70_node):
-            pprops, _ = _parse_props(d, pnode[4], pnode[2])
-            if len(pprops) >= 7 and pprops[0][1] in ("Lcl Rotation", "PreRotation"):
-                x_off = pprops[4][2]
-                y_off = pprops[5][2]
-                z_off = pprops[6][2]
-
-                cur_x = float(pprops[4][1])
-                cur_y = float(pprops[5][1])
-                cur_z = float(pprops[6][1])
-
-                struct.pack_into("<d", d, x_off, cur_x + pitch)
-                struct.pack_into("<d", d, y_off, cur_y + yaw)
-                struct.pack_into("<d", d, z_off, cur_z + roll)
-                modified = True
+    # Phase 2: insert a fresh "Lcl Rotation" for every Model that has neither
+    # property. Each insertion changes the file's byte layout, so re-parse
+    # from scratch after every insert and track handled models by id to avoid
+    # reprocessing them (or looping forever).
+    handled = set()
+    while True:
+        fbx = _Fbx(d)
+        tops = fbx.top_nodes()
+        if "Objects" not in tops:
+            break
+        target_p70 = None
+        for nm, node in fbx.child_nodes(tops["Objects"]):
+            if nm != "Model":
+                continue
+            props, _ = _parse_props(d, node[4], node[2])
+            model_id = props[0][1] if props else node[0]
+            if model_id in handled:
+                continue
+            handled.add(model_id)
+            p70_node = _find_properties70(fbx, node)
+            if not p70_node:
+                continue
+            if _find_rotation_prop(d, fbx, p70_node):
+                continue
+            target_p70 = p70_node
+            break
+        if target_p70 is None:
+            break
+        _insert_lcl_rotation(d, fbx, target_p70, pitch, yaw, roll)
+        modified = True
 
     return modified
 
@@ -207,7 +315,7 @@ def rotate_fbx_models(d: bytearray, pitch: float = 0.0, yaw: float = 90.0, roll:
 def flatten_fbx(path) -> dict:
     """
     Flatten path in place. Reparents LOD/UCX meshes to scene root (0), syncs
-    Geometry mesh data names, and applies FBX model rotation (P 0 Y 90 R 0).
+    Geometry mesh data names, and applies FBX model rotation (P 0 Y 0 R 90).
     Returns {"flattened": bool, "reparented": [mesh names], "renamed_geometries": [(old, new)], "reason": str}.
     """
     with open(path, "rb") as f:
@@ -219,9 +327,6 @@ def flatten_fbx(path) -> dict:
     tops = fbx.top_nodes()
     if "Objects" not in tops or "Connections" not in tops:
         return {"flattened": False, "reparented": [], "renamed_geometries": [], "reason": "no Objects/Connections"}
-
-    # Apply Unreal -> Source FBX model rotation (Pitch 0, Yaw 90, Roll 0)
-    rotated = rotate_fbx_models(d, pitch=0.0, yaw=90.0, roll=0.0)
 
     # Map Model id -> (clean_name, subtype)
     models = {}
@@ -287,6 +392,12 @@ def flatten_fbx(path) -> dict:
     for voff, old_full, new_full, old_clean, new_clean, node_off in geom_edits:
         patch_fbx_string(d, voff, old_full, new_full, target_node_off=node_off)
         renamed_list.append((old_clean, new_clean))
+
+    # Apply Unreal -> Source FBX model rotation as a 90-degree offset on the
+    # Z axis (roll slot -> Lcl Rotation Z). Done last (after reparenting/
+    # renaming may have resized d) since it re-parses d fresh internally and
+    # may itself insert bytes, growing the file further.
+    rotated = rotate_fbx_models(d, pitch=0.0, yaw=0.0, roll=90.0)
 
     if not reparent_patches and not renamed_list and not rotated:
         return {"flattened": False, "reparented": [], "renamed_geometries": [], "reason": "already flat, synced, and rotated"}

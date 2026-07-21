@@ -185,6 +185,17 @@ class UnrealBridge:
 
         return {"blueprint": bp_path, "count": len(components), "components": components}
 
+    def export_landscape(self, map_path: str, out_dir: str, flags: str = "mesh") -> dict:
+        """Export the map's (first) landscape actor as an OBJ mesh into out_dir.
+
+        flags: "mesh" (just the OBJ — what the Scenes/Models pipeline uses),
+        "heightmap", "weightmap", or "all". Returns {ok, components, label,
+        saved} where `saved` is the absolute path of the exported OBJ.
+        Raises BridgeError (message starts with "NO_LANDSCAPE") if the map has
+        no landscape actor with components.
+        """
+        return self._run_json("export-landscape", self.content_dir, map_path, out_dir, flags, timeout=600)
+
     def dump_material(self, mat_path: str) -> dict:
         """Normalized material instance properties: {material, parent, textures,
         scalars, vectors}."""
