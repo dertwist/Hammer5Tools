@@ -604,6 +604,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
         <property name="title">
          <string>Screenshot Preview</string>
         </property>
+        <property name="styleSheet">
+         <string>QGroupBox#screenshot_preview { outline: none; border: none; }</string>
+        </property>
         <layout class="QVBoxLayout" name="verticalLayout_6">
          <property name="spacing">
           <number>6</number>

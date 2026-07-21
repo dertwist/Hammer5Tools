@@ -656,6 +656,7 @@ class Ui_Loading_editorMainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.apply_screenshots_button.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Set loading images", None))
         self.screenshot_preview.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Screenshot Preview", None))
+        self.screenshot_preview.setStyleSheet(QCoreApplication.translate("Loading_editorMainWindow", u"QGroupBox#screenshot_preview { outline: none; border: none; }", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("Loading_editorMainWindow", u"Icon", None))
         self.svg_tips_label.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Tips: Convert text to paths. Avoid rasterized layers.", None))
 #if QT_CONFIG(tooltip)

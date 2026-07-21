@@ -18,7 +18,7 @@ from PySide6.QtGui import (
 from PySide6.QtSvg import QSvgRenderer
 
 
-def blur_qimage_region(image, rect, radius=5):
+def blur_qimage_region(image, rect, radius=45):
     # Validate rectangle dimensions and boundaries
     left, top, width_rect, height_rect = rect
     if (width_rect <= 0 or height_rect <= 0 or
@@ -26,18 +26,56 @@ def blur_qimage_region(image, rect, radius=5):
             top + height_rect > image.height()):
         return image
 
-    # Extract the region to blur as a QPixmap
-    region_pixmap = QPixmap.fromImage(image.copy(left, top, width_rect, height_rect))
+    scale = image.height() / 1080.0
+    blur_radius = max(15, int(radius * scale))
 
-    # Create a scaled-down size for the blur effect
-    scaled_down_size = QSize(region_pixmap.width() // 10, region_pixmap.height() // 10)
-    # Scale down and then up to simulate a blur
-    blurred = region_pixmap.scaled(scaled_down_size, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
-    blurred = blurred.scaled(region_pixmap.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+    # Expand region by blur_radius to prevent edge boundary artifacts
+    margin = blur_radius
+    exp_left = max(0, left - margin)
+    exp_top = max(0, top - margin)
+    exp_right = min(image.width(), left + width_rect + margin)
+    exp_bottom = min(image.height(), top + height_rect + margin)
+    exp_w = exp_right - exp_left
+    exp_h = exp_bottom - exp_top
 
-    # Paste the blurred region back onto the original image
+    cropped_region = image.copy(exp_left, exp_top, exp_w, exp_h)
+
+    # Use QGraphicsBlurEffect for ultra-high quality smooth blur
+    try:
+        from PySide6.QtWidgets import QGraphicsScene, QGraphicsPixmapItem, QGraphicsBlurEffect
+        region_pixmap = QPixmap.fromImage(cropped_region)
+        scene = QGraphicsScene()
+        item = QGraphicsPixmapItem(region_pixmap)
+        blur = QGraphicsBlurEffect()
+        blur.setBlurRadius(blur_radius)
+        blur.setBlurHints(QGraphicsBlurEffect.QualityHint)
+        item.setGraphicsEffect(blur)
+        scene.addItem(item)
+        
+        res = QPixmap(region_pixmap.size())
+        res.fill(Qt.transparent)
+        painter = QPainter(res)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+        scene.render(painter, QRectF(res.rect()), QRectF(region_pixmap.rect()))
+        painter.end()
+
+        # Crop out original rect from expanded blurred image
+        offset_x = left - exp_left
+        offset_y = top - exp_top
+        final_blurred = res.copy(offset_x, offset_y, width_rect, height_rect)
+        blurred_pixmap = final_blurred
+    except Exception:
+        # Multi-stage smooth downscale/upscale fallback if QGraphicsBlurEffect fails
+        region_pix = QPixmap.fromImage(image.copy(left, top, width_rect, height_rect))
+        pass1 = region_pix.scaled(max(1, region_pix.width() // 4), max(1, region_pix.height() // 4), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        pass2 = pass1.scaled(max(1, pass1.width() // 2), max(1, pass1.height() // 2), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        pass3 = pass2.scaled(max(1, pass1.width()), max(1, pass1.height()), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+        blurred_pixmap = pass3.scaled(region_pix.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+
     painter = QPainter(image)
-    painter.drawPixmap(left, top, blurred)
+    painter.setRenderHint(QPainter.SmoothPixmapTransform)
+    painter.drawPixmap(left, top, blurred_pixmap)
     painter.end()
 
     return image
@@ -63,23 +101,27 @@ def load_svg_as_qpixmap(svg_path, target_width):
     pixmap.fill(Qt.transparent)
 
     painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.Antialiasing)
+    painter.setRenderHint(QPainter.SmoothPixmapTransform)
     renderer.render(painter)
     painter.end()
 
     return pixmap
 
 
-def preview_image(image_path, svg_icon_path, description_text, output_path, viewport_size=(1280, 720)):
+def preview_image(image_path, svg_icon_path, description_text, output_path, viewport_size=(1920, 1080)):
     if not os.path.exists(image_path):
         print(f"Input image not found: {image_path}")
         return
 
-    # Load image and scale while preserving aspect ratio
+    # Load image and scale while preserving aspect ratio if viewport_size is specified
     image = QImage(image_path)
     if image.isNull():
         print(f"Error: unable to load {image_path}")
         return
-    image = image.scaled(viewport_size[0], viewport_size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+    if viewport_size and (image.width() != viewport_size[0] or image.height() != viewport_size[1]):
+        image = image.scaled(viewport_size[0], viewport_size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
     width = image.width()
     height = image.height()
@@ -94,12 +136,14 @@ def preview_image(image_path, svg_icon_path, description_text, output_path, view
 
     # Apply blur on the defined region if dimensions are valid
     if region_width > 0 and region_height > 0:
-        image = blur_qimage_region(image, (rect_left, rect_top, region_width, region_height), radius=5)
+        image = blur_qimage_region(image, (rect_left, rect_top, region_width, region_height), radius=45)
 
     # Convert the QImage to QPixmap for overlay drawing
     pixmap = QPixmap.fromImage(image)
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.Antialiasing)
+    painter.setRenderHint(QPainter.TextAntialiasing)
+    painter.setRenderHint(QPainter.SmoothPixmapTransform)
 
     # Draw semi-transparent overlay on the blurred region
     overlay_rect = QRectF(rect_left, rect_top, region_width, region_height)
@@ -182,9 +226,8 @@ def preview_image(image_path, svg_icon_path, description_text, output_path, view
     gradient_rect_top = rect_bottom - gradient_height - padding
     gradient_rect = QRectF(rect_left + padding, gradient_rect_top, region_width - 2 * padding, gradient_height)
     gradient = QLinearGradient(gradient_rect.topLeft(), gradient_rect.topRight())
-    gradient.setColorAt(0.0, QColor(0, 255, 0, 150))
-    gradient.setColorAt(0.5, QColor(255, 255, 0, 150))
-    gradient.setColorAt(1.0, QColor(255, 0, 0, 150))
+    gradient.setColorAt(0.0, QColor("#134f87"))
+    gradient.setColorAt(1.0, QColor("#1ab8e0"))
     painter.fillRect(gradient_rect, QBrush(gradient))
 
     painter.end()

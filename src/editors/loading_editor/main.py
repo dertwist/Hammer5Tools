@@ -18,13 +18,13 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QRadioButton
 )
-from PySide6.QtCore import Qt, QObject, Signal, QRunnable, QThreadPool, QTimer
+from PySide6.QtCore import Qt, QRect, QObject, Signal, QRunnable, QThreadPool, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from src.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir
 from src.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
-from src.editors.loading_editor.viewport import ImageExplorer
+from src.editors.loading_editor.viewport import ImageExplorer, extract_camera_name, is_generic_camera_name
 from src.editors.loading_editor.timeline import TimelineExplorer
 from src.common import compile
 from src.widgets import ErrorInfo
@@ -182,10 +182,7 @@ class ApplyScreenshotsWorker(QRunnable):
             # Extract camera name prefix if camera_name_mode is enabled
             camera_name = None
             if self.camera_name_mode:
-                # Extract prefix before underscore (e.g., "Donut" from "Donut_0000.png")
-                base_name = os.path.splitext(file_name)[0]
-                if '_' in base_name:
-                    camera_name = base_name.split('_')[0]
+                camera_name = extract_camera_name(file_name, get_addon_name())
             file_list.append((original_path, new_base_name, camera_name))
         self.signals.log.emit(f"Collected file list: {file_list}")
         return file_list
@@ -317,40 +314,34 @@ class ApplyScreenshotsWorker(QRunnable):
             self.signals.log.emit(f"Compiled vtex file {vtex_path}")
 
     def add_camera_name_label(self, pixmap: QPixmap, camera_name: str) -> QPixmap:
+        if not camera_name or is_generic_camera_name(camera_name):
+            return pixmap
         result = QPixmap(pixmap)
         painter = QPainter(result)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.TextAntialiasing)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
 
-        font_size = int(result.height() * 0.027)
-        margin_x = int(result.width() * 0.022)
-        margin_y = int(result.height() * 0.05)
+        scale = result.height() / 1080.0
+        font_size = max(8, int(31 * scale))
 
-        font = QFont()
-        for family in [
-            "Bahnschrift", 
-        ]:
-            font.setFamily(family)
-            font.setPointSize(font_size)
-            font.setWeight(QFont.DemiBold)
-            # Check if font is available
-            if QFont(family).exactMatch() or QFont(family).styleName() != "":
-                break
-        else:
-            pass
+        font = QFont("Bahnschrift")
+        font.setStyleName("Light SemiCondensed")
+        if not font.exactMatch():
+            font = QFont("Bahnschrift Light SemiCondensed")
+        if not font.exactMatch():
+            font = QFont("Noto Sans")
+        font.setPixelSize(font_size)
 
         painter.setFont(font)
 
-        metrics = painter.fontMetrics()
-        text_width = metrics.horizontalAdvance(camera_name)
-        text_height = metrics.height()
-
-        x = margin_x
-        y = result.height() - text_height - margin_y
+        cam_x = int(46 * scale)
+        cam_y = int(1010 * scale)
+        cam_h = int(31 * scale)
+        cam_rect = QRect(cam_x, cam_y, result.width() // 2, cam_h)
 
         painter.setPen(QColor(255, 255, 255))
-        painter.drawText(x, y + text_height, camera_name)
+        painter.drawText(cam_rect, Qt.AlignLeft | Qt.AlignVCenter, camera_name)
 
         painter.end()
         return result
@@ -441,6 +432,7 @@ class Loading_editorMainWindow(QMainWindow):
         
         # Store reference to the image viewer for camera position functionality
         self.image_viewer = self.explorer_view.image_viewer
+        self.image_viewer.set_preview_data_provider(self.get_loading_preview_data)
         
         # Connect tab change signal
         self.ui.screenshots_tabwidget.currentChanged.connect(self.on_tab_changed)
@@ -457,6 +449,11 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.generate_gifs.clicked.connect(self.export_all_to_gif)
 
         self.unified_dialog = UnifiedProcessingDialog(self)
+
+        self.ui.PlainTextEdit_Description_2.textChanged.connect(self.image_viewer.update_preview_content)
+        if hasattr(self.ui, 'camera_name_mode'):
+            self.ui.camera_name_mode.stateChanged.connect(self.image_viewer.update_preview_content)
+            self.ui.camera_name_mode.toggled.connect(self.image_viewer.update_preview_content)
 
         self.load_existing_icon()
         self.load_existing_description()
@@ -483,19 +480,43 @@ class Loading_editorMainWindow(QMainWindow):
             debug(f"Timeline image selected: {os.path.basename(image_path)}")
 
     def export_all_to_gif(self):
-        """Export all camera sequences to GIF files"""
         self.timeline_view.export_all_to_gif()
+
+    def get_loading_preview_data(self) -> dict:
+        """
+        Supplies the CS2 loading-screen preview overlay with the current map
+        icon, name, description, and camera name preference as configured in this editor.
+        """
+        icon_path = self.svg_preview_widget.file_path
+        if not icon_path or not os.path.exists(icon_path):
+            cs2_path = get_cs2_path()
+            if cs2_path:
+                possible_path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons", f"map_icon_{get_addon_name()}.svg")
+                if os.path.exists(possible_path):
+                    icon_path = possible_path
+
+        show_camera_name = False
+        if hasattr(self.ui, 'camera_name_mode'):
+            show_camera_name = self.ui.camera_name_mode.isChecked()
+
+        return {
+            "icon_path": icon_path,
+            "map_name": get_addon_name(),
+            "gamemode_text": "Competitive",
+            "description_html": self.ui.PlainTextEdit_Description_2.toPlainText(),
+            "show_camera_name": show_camera_name,
+        }
 
     def load_existing_icon(self):
         cs2_path = get_cs2_path()
-        if not cs2_path:
-            return
-        folder_path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
-        svg_icon_filename = f"map_icon_{get_addon_name()}.svg"
-        svg_path = os.path.join(folder_path, svg_icon_filename)
-        if os.path.exists(svg_path):
-            debug(f"Loading existing SVG icon from {svg_path}")
-            self.svg_preview_widget.load_svg(svg_path)
+        if cs2_path:
+            folder_path = os.path.join(cs2_path, "content", "csgo_addons", get_addon_name(), "panorama", "images", "map_icons")
+            svg_icon_filename = f"map_icon_{get_addon_name()}.svg"
+            svg_path = os.path.join(folder_path, svg_icon_filename)
+            if os.path.exists(svg_path):
+                debug(f"Loading existing SVG icon from {svg_path}")
+                self.svg_preview_widget.load_svg(svg_path)
+                return
 
     def load_existing_description(self):
         cs2_path = get_cs2_path()
@@ -636,7 +657,11 @@ class Loading_editorMainWindow(QMainWindow):
             f.write(description_text)
 
     def icon_processs(self):
-        svg_path = os.path.normpath(self.svg_preview_widget.get_svg_path())
+        try:
+            svg_path = os.path.normpath(self.svg_preview_widget.get_svg_path())
+        except ValueError:
+            debug("No SVG file loaded in icon drag and drop area.")
+            return
         cs2_path = get_cs2_path()
         if not cs2_path:
             return
