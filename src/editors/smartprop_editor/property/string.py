@@ -1,8 +1,9 @@
 import re
 from src.editors.smartprop_editor.property.ui_float import Ui_Widget
 from src.widgets.completer.main import CompletingPlainTextEdit
-from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QSizePolicy, QSpacerItem, QHBoxLayout, QPushButton
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QIcon
 from src.widgets import Spacer
 from src.editors.smartprop_editor.widgets.main import ComboboxVariablesWidget
 from src.editors.smartprop_editor.completion_utils import CompletionUtils
@@ -12,7 +13,7 @@ from src.editors.smartprop_editor.property import compact
 
 class PropertyString(QWidget, PooledPropertyMixin):
     edited = Signal()
-    def __init__(self, element_id_generator, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False, filter_types=None, parent=None):
+    def __init__(self, element_id_generator, value_class, value, variables_scrollArea, expression_bool=False, only_string=False, placeholder=None, only_variable=False, force_variable=False, filter_types=None, model_browser=False, parent=None):
         super().__init__(parent)
         self.ui = Ui_Widget()
         self.ui.setupUi(self)
@@ -88,6 +89,17 @@ class PropertyString(QWidget, PooledPropertyMixin):
         self.ui.layout.insertWidget(3, self.text_line)
         self.ui.layout.insertWidget(2, self.expression_editor)
         self.text_line.textChanged.connect(self.on_changed)
+
+        # Asset picker. Only meaningful in String mode, so logic_switch() drives
+        # its visibility alongside text_line.
+        self._model_browser = bool(model_browser)
+        self.browse_button = QPushButton()
+        self.browse_button.setIcon(QIcon(":/valve_common/icons/tools/common/browse.png"))
+        self.browse_button.setFixedSize(22, 22)
+        self.browse_button.setToolTip('Browse models')
+        self.browse_button.clicked.connect(self._open_model_browser)
+        self.browse_button.setVisible(self._model_browser)
+        self.ui.layout.insertWidget(4, self.browse_button)
         if isinstance(value, dict):
             if 'm_Expression' in value:
                 self.ui.logic_switch.setCurrentIndex(3)
@@ -128,6 +140,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
             only_variable=self._pool_only_variable,
             force_variable=self._pool_force_variable,
             filter_types=self._pool_filter_types,
+            model_browser=self._model_browser,
         )
 
         # Compact Source2-style row.
@@ -139,26 +152,37 @@ class PropertyString(QWidget, PooledPropertyMixin):
         compact.style_expr_button(self.expression_editor)
 
     def logic_switch(self):
-        if self.ui.logic_switch.currentIndex() == 0:
+        index = self.ui.logic_switch.currentIndex()
+        if index == 0:
             self.variable_frame.hide()
             self.text_line.hide()
             self.spacer.show()
             self.expression_editor.hide()
-        elif self.ui.logic_switch.currentIndex() == 1:
+        elif index == 1:
             self.variable_frame.hide()
             self.text_line.show()
             self.spacer.hide()
             self.expression_editor.hide()
-        elif self.ui.logic_switch.currentIndex() == 2:
+        elif index == 2:
             self.variable_frame.show()
             self.text_line.hide()
             self.spacer.hide()
             self.expression_editor.hide()
-        elif self.ui.logic_switch.currentIndex() == 3:
+        elif index == 3:
             self.variable_frame.hide()
             self.text_line.show()
             self.spacer.hide()
             self.expression_editor.show()
+
+        # A picked path is a literal, so the button only applies to String mode.
+        if getattr(self, 'browse_button', None) is not None:
+            self.browse_button.setVisible(self._model_browser and index == 1)
+
+    def _open_model_browser(self):
+        from src.widgets.model_browser import pick_model
+        path = pick_model(self, current_path=self.text_line.toPlainText().strip())
+        if path:
+            self.text_line.setPlainText(path)
 
     def _update_display_and_value(self):
         self.logic_switch()
@@ -208,6 +232,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
         only_variable=False,
         force_variable=False,
         filter_types=None,
+        model_browser=False,
         **kwargs,
     ):
         if filter_types is None:
@@ -218,6 +243,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
             bool(only_variable),
             bool(force_variable),
             tuple(filter_types),
+            bool(model_browser),
         )
 
     def _current_pool_key(self):
@@ -235,6 +261,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
         only_variable=False,
         force_variable=False,
         filter_types=None,
+        model_browser=False,
         **kwargs,
     ):
         children_to_block = [
@@ -267,6 +294,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
             self._pool_expression_bool = bool(expression_bool)
             self._pool_only_string = bool(only_string)
             self._pool_filter_types = list(filter_types_final)
+            self._model_browser = bool(model_browser)
 
             # Update label styling based on expression_bool (keeps column width).
             compact.style_label(
@@ -339,6 +367,7 @@ class PropertyString(QWidget, PooledPropertyMixin):
                 only_variable=only_variable,
                 force_variable=force_variable,
                 filter_types=filter_types_final,
+                model_browser=model_browser,
             )
         finally:
             for c in children_to_block:
