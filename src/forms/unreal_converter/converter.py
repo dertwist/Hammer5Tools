@@ -4,6 +4,7 @@ from PySide6.QtCore import QThread, Signal
 from .texture_utils import unpack_rma, convert_to_tga, is_metallic
 from .vmat_writer import write_vmat
 from .bridge_client import UnrealBridge, BridgeError
+from .material_converter import strip_ue_asset_folders
 
 _SUFFIX_MAP = {
     "ALB": "ALB", "BC": "ALB", "D": "ALB", "COLOR": "ALB", "DIFFUSE": "ALB", "BASECOLOR": "ALB", "ALBEDO": "ALB",
@@ -85,7 +86,10 @@ class MaterialConvertWorker(QThread):
             sample_file = next(iter(suffixes.values())) if suffixes else ""
             rel_sub = os.path.dirname(os.path.relpath(sample_file, self.input_dir)).replace("\\", "/").lower() if sample_file else ""
             if rel_sub and rel_sub != ".":
-                rel_sub = re.sub(r"^(textures/|materials/)", "", rel_sub, flags=re.IGNORECASE).strip("/")
+                # Drop UE asset-type folders (Game, Textures, Materials, …) —
+                # Source 2 keeps a material and its textures flat in one folder,
+                # it doesn't mirror UE's per-asset-type subfolder layout.
+                rel_sub = strip_ue_asset_folders(rel_sub)
                 item_rel_path = f"materials/{rel_sub}" if rel_sub else base_rel_path
             else:
                 item_rel_path = base_rel_path

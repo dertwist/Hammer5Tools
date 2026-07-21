@@ -52,7 +52,10 @@ class SceneModelsWorker(QThread):
     def _normalize_landscape_actors(self, actors, map_obj_path):
         """Rewrite dump_scene's "Landscape" actor entries (in place) into ordinary
         StaticMeshComponent entries pointing at a synthetic mesh id, so the rest
-        of the vmap/vmdl pipeline places/builds them like any other mesh."""
+        of the vmap/vmdl pipeline places/builds them like any other mesh — but
+        only if a matching bulk-exported FBX already exists. Without one, the
+        landscape actor is left untouched so write_vmap skips it (no prop_static
+        with a missing model) instead of placing a broken reference."""
         map_name = os.path.basename(map_obj_path)
         count = 0
         for a in actors:
@@ -60,10 +63,23 @@ class SceneModelsWorker(QThread):
                 continue
             actor_name = a.get("landscapeActor") or a.get("actor") or "Landscape"
             mesh_id = f"{_LANDSCAPE_MESH_PREFIX}{map_name}_{actor_name}.{map_name}_{actor_name}"
+
+            src_fbx = find_bulk_export_mesh(self.bulk_dir, mesh_id) if self.bulk_dir else None
+            if not src_fbx:
+                self._log(
+                    f"{map_name}: landscape actor '{actor_name}' has no bulk-exported FBX "
+                    f"('{actor_name}.fbx' or '{map_name}_{actor_name}.fbx' in the bulk-export dir) "
+                    f"— skipped, no entity placed. Export it from Unreal (Landscape -> Convert to "
+                    f"Static Mesh, then bulk-export like any other mesh) to have it converted.",
+                    "warn",
+                )
+                continue
+
             self._landscape_sources[mesh_id] = map_obj_path
             a["mesh"] = mesh_id
             a["componentType"] = "StaticMeshComponent"
             count += 1
+            self._log(f"{map_name}: landscape actor '{actor_name}' — bulk-exported FBX found, will be placed as a mesh", "info")
         return count
 
     def run(self):
@@ -116,8 +132,7 @@ class SceneModelsWorker(QThread):
                     self._log(f"{name}: scene read failed — {e}", "error")
                     continue
 
-                if self._normalize_landscape_actors(scene["actors"], obj):
-                    self._log(f"{name}: landscape actor found — will export as a mesh", "info")
+                self._normalize_landscape_actors(scene["actors"], obj)
 
                 vmap_path = os.path.join(self.output_dir, "maps", f"{name}.vmap")
                 res = write_vmap(scene["actors"], vmap_path, unit_scale=self.unit_scale, strip_prefix=self.strip_prefix)
@@ -207,6 +222,10 @@ class SceneModelsWorker(QThread):
             if bp_count == 0 and self.do_blueprints:
                 self._log("Blueprints — no content-assembly blueprints converted.", "info")
 
+        # --- Materials -> vmat (before Models so vmdl remaps resolve to real vmats) ---
+        if self.do_materials:
+            self._convert_materials(referenced_meshes)
+
         # --- Models -> vmdl ---
         if self.do_models:
             self._log(f"Referenced meshes found: {len(referenced_meshes)}", "info")
@@ -282,19 +301,86 @@ class SceneModelsWorker(QThread):
             tail = f" ({missing} without a bulk-export FBX — vmdl references a missing mesh)" if missing else ""
             self._log("Models — " + ", ".join(parts) + tail, level)
 
+    def _convert_materials(self, referenced_meshes):
+        """Convert the Material Instances used by the scene's meshes into vmats
+        (params from the bridge, textures from the bulk-export folder, packed
+        ORM/RMA auto-split). Writes into output_dir/materials/ so the vmdl
+        material remaps resolve to them by the FBX's embedded material name."""
+        from .material_converter import convert_material
+        from .fbx_flatten import list_materials
+
+        # Map MI stem -> UE object path (one bridge call).
+        try:
+            mi_keys = self.bridge.list("Material_Instances")
+        except BridgeError as e:
+            self._log(f"Materials — could not list material instances: {e}", "warn")
+            return
+        stem_to_path = {}
+        for k in mi_keys:
+            if k.lower().endswith(".uasset"):
+                stem_to_path[os.path.basename(k)[:-len(".uasset")].lower()] = k[:-len(".uasset")]
+
+        # Gather the MI names actually referenced by the meshes' FBXs.
+        wanted = set()
+        for mesh in referenced_meshes:
+            src = find_bulk_export_mesh(self.bulk_dir, mesh) if self.bulk_dir else None
+            if src:
+                for m in (list_materials(src) or []):
+                    wanted.add(m.lower())
+
+        targets = [(s, p) for s, p in stem_to_path.items() if s in wanted]
+        if not targets:
+            self._log("Materials — no matching material instances for the scene meshes.", "info")
+            return
+
+        done, missing_tex = 0, 0
+        for i, (stem, path) in enumerate(sorted(targets)):
+            self.progress.emit(i + 1, len(targets))
+            try:
+                data = self.bridge.dump_material(path)
+                res = convert_material(data, self.bulk_dir, self.output_dir)
+                done += 1
+                if res.missing:
+                    missing_tex += 1
+            except Exception as e:
+                self._log(f"  material {stem}: {e}", "warn")
+        note = f", {missing_tex} with missing textures" if missing_tex else ""
+        self._log(f"Materials — {done} vmat written{note}", "success")
+
     def _build_landscape_model(self, mesh_id, vmdl_path, model_rel, mat_rel) -> bool:
-        """Export the landscape's OBJ via the bridge and wrap it in a vmdl,
-        exactly like an engine primitive OBJ (no LODs/collision to inspect)."""
+        """Build the landscape's vmdl from a bulk-exported FBX if the user has
+        one (e.g. Unreal's Landscape "Convert to Static Mesh", then bulk-export
+        it like any other mesh — find_bulk_export_mesh matches it by filename
+        stem, same fuzzy lookup as regular meshes). Falls back to baking an OBJ
+        straight from the map's heightmap data via the bridge, which only works
+        when the project has cooked platform data (see export-landscape's
+        PF_Unknown failure on uncooked/loose projects)."""
         map_obj_path = self._landscape_sources.get(mesh_id)
         if not map_obj_path:
             self._log(f"  {mesh_id}: no source map recorded, skipped", "warn")
             return False
 
+        src_fbx = find_bulk_export_mesh(self.bulk_dir, mesh_id) if self.bulk_dir else None
+        if src_fbx:
+            fbx_rel = os.path.splitext(model_rel)[0] + ".fbx"
+            dst_fbx = os.path.join(self.output_dir, fbx_rel)
+            os.makedirs(os.path.dirname(dst_fbx), exist_ok=True)
+            shutil.copy2(src_fbx, dst_fbx)
+            self._log(f"  {os.path.basename(src_fbx)} -> {fbx_rel} (landscape)", "info")
+            write_vmdl(vmdl_path, fbx_rel, import_scale=self.unit_scale, fbx_path=dst_fbx,
+                       material_path=mat_rel, output_dir=self.output_dir,
+                       use_graybox_fallback=self.use_graybox_fallback)
+            return True
+
         landscape_dir = os.path.join(self.output_dir, "_landscape_export", os.path.basename(map_obj_path))
         try:
             res = self.bridge.export_landscape(map_obj_path, landscape_dir, flags="mesh")
         except BridgeError as e:
-            self._log(f"  {os.path.basename(map_obj_path)}: landscape export failed — {e}", "warn")
+            self._log(
+                f"  {os.path.basename(map_obj_path)}: no bulk-export FBX found for the landscape, "
+                f"and the bridge's heightmap bake failed — {e}",
+                "warn",
+            )
             return False
 
         src_obj = res.get("saved")

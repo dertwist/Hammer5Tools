@@ -12,7 +12,11 @@ from PySide6.QtWidgets import (
 
 from src.common import enable_dark_title_bar
 from src.styles.common import apply_stylesheets
-from src.settings.main import get_addon_dir, get_addon_name, get_settings_value, set_settings_value
+from src.settings.main import (
+    get_addon_dir, get_addon_name,
+    get_settings_value, set_settings_value,
+    get_settings_bool, set_settings_bool,
+)
 
 from .console import ConsoleWidget
 from .constants import FILE_TYPES, FILE_TYPE_TARGETS, FILE_TYPE_DESCRIPTIONS, UNSUPPORTED, scan_unsupported
@@ -221,7 +225,10 @@ class UnrealConverterWidget(QDialog):
         for t in FILE_TYPES:
             cb = QCheckBox(f"{t}  ->  {FILE_TYPE_TARGETS[t]}")
             cb.setToolTip(FILE_TYPE_DESCRIPTIONS[t])
-            cb.setChecked(True)
+            cb.setChecked(get_settings_bool("UnrealConverter", f"type_enabled_{t}", True))
+            cb.stateChanged.connect(
+                lambda state, t=t: set_settings_bool("UnrealConverter", f"type_enabled_{t}", state == Qt.Checked)
+            )
             self.type_checks[t] = cb
             tv.addWidget(cb)
         layout.addWidget(types_box)
@@ -262,6 +269,13 @@ class UnrealConverterWidget(QDialog):
         form = QFormLayout(tab)
         self.scene_entity_combo = QComboBox()
         self.scene_entity_combo.addItems(["prop_static", "prop_dynamic", "prop_physics"])
+        saved_entity = get_settings_value("UnrealConverter", "scene_entity_class", "prop_static")
+        idx = self.scene_entity_combo.findText(saved_entity)
+        if idx != -1:
+            self.scene_entity_combo.setCurrentIndex(idx)
+        self.scene_entity_combo.currentTextChanged.connect(
+            lambda text: set_settings_value("UnrealConverter", "scene_entity_class", text)
+        )
         form.addRow("Place actors as:", self.scene_entity_combo)
         note = QLabel(
             "Reads map actors directly from the UE project via the CUE4Parse "
@@ -279,12 +293,24 @@ class UnrealConverterWidget(QDialog):
         self.model_scale_combo = QComboBox()
         self.model_scale_combo.addItem("1 : 1  (keep unit count)", UnitScale.ONE_TO_ONE)
         self.model_scale_combo.addItem("cm → inch  (physically correct)", UnitScale.CM_TO_INCH)
+        saved_scale_idx = int(get_settings_value("UnrealConverter", "model_unit_scale_idx", 0))
+        if 0 <= saved_scale_idx < self.model_scale_combo.count():
+            self.model_scale_combo.setCurrentIndex(saved_scale_idx)
+        self.model_scale_combo.currentIndexChanged.connect(
+            lambda idx: set_settings_value("UnrealConverter", "model_unit_scale_idx", idx)
+        )
         form.addRow("Unit scale:", self.model_scale_combo)
         self.model_vmdl_check = QCheckBox("Generate .vmdl wrapper referencing the mesh")
-        self.model_vmdl_check.setChecked(True)
+        self.model_vmdl_check.setChecked(get_settings_bool("UnrealConverter", "model_generate_vmdl", True))
+        self.model_vmdl_check.stateChanged.connect(
+            lambda state: set_settings_bool("UnrealConverter", "model_generate_vmdl", state == Qt.Checked)
+        )
         form.addRow(self.model_vmdl_check)
         self.model_graybox_check = QCheckBox("Use global fallback material with graybox texture")
-        self.model_graybox_check.setChecked(False)
+        self.model_graybox_check.setChecked(get_settings_bool("UnrealConverter", "model_graybox_fallback", False))
+        self.model_graybox_check.stateChanged.connect(
+            lambda state: set_settings_bool("UnrealConverter", "model_graybox_fallback", state == Qt.Checked)
+        )
         form.addRow(self.model_graybox_check)
         note = QLabel(
             "Wraps an exported FBX/glTF mesh in a .vmdl. Pivot/orientation uses "
@@ -300,7 +326,10 @@ class UnrealConverterWidget(QDialog):
         layout = QVBoxLayout(tab)
 
         form = QFormLayout()
-        self.mat_shader_edit = QLineEdit("csgo_environment.vfx")
+        self.mat_shader_edit = QLineEdit(get_settings_value("UnrealConverter", "material_shader", "csgo_environment.vfx"))
+        self.mat_shader_edit.textChanged.connect(
+            lambda text: set_settings_value("UnrealConverter", "material_shader", text.strip())
+        )
         form.addRow("Target shader:", self.mat_shader_edit)
         layout.addLayout(form)
 
@@ -322,10 +351,20 @@ class UnrealConverterWidget(QDialog):
         tab = QWidget()
         form = QFormLayout(tab)
         self.tex_split_check = QCheckBox("Split packed textures (ORM / RMA / RMAH)")
-        self.tex_split_check.setChecked(True)
+        self.tex_split_check.setChecked(get_settings_bool("UnrealConverter", "tex_split_packed", True))
+        self.tex_split_check.stateChanged.connect(
+            lambda state: set_settings_bool("UnrealConverter", "tex_split_packed", state == Qt.Checked)
+        )
         form.addRow(self.tex_split_check)
         self.tex_format_combo = QComboBox()
         self.tex_format_combo.addItems(["tga", "png"])
+        saved_format = get_settings_value("UnrealConverter", "tex_output_format", "tga")
+        fmt_idx = self.tex_format_combo.findText(saved_format)
+        if fmt_idx != -1:
+            self.tex_format_combo.setCurrentIndex(fmt_idx)
+        self.tex_format_combo.currentTextChanged.connect(
+            lambda text: set_settings_value("UnrealConverter", "tex_output_format", text)
+        )
         form.addRow("Output texture format:", self.tex_format_combo)
         note = QLabel(
             "Converts textures to a Source-friendly format and splits packed "
