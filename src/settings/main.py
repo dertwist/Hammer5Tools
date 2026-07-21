@@ -37,6 +37,14 @@ class ActionButtonsPanel(QFrame):
         )
         h_layout_bottom.addWidget(self.cleanup_vrad3_button)
 
+        self.cleanup_model_browser_button = Button(text=" Cleanup model browser cache")
+        self.cleanup_model_browser_button.set_icon_delete()
+        self.cleanup_model_browser_button.setToolTip(
+            "Delete the model browser's asset index and generated thumbnails. "
+            "Both are rebuilt on the next browse."
+        )
+        h_layout_bottom.addWidget(self.cleanup_model_browser_button)
+
         h_layout_bottom.addStretch()
         self.version_label = QLabel("", self)
         h_layout_bottom.addWidget(self.version_label)
@@ -506,6 +514,8 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_edit_ignore_ext.textChanged.connect(self.update_default_file_setting)
         self.action_buttons_panel.open_userdata_folder_button.clicked.connect(self.open_userdata_folder)
         self.action_buttons_panel.cleanup_vrad3_button.clicked.connect(self.cleanup_vrad3_cache)
+        self.action_buttons_panel.cleanup_model_browser_button.clicked.connect(
+            self.cleanup_model_browser_cache)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
         self.browse_archive_button.clicked.connect(self.browse_archive)
         self.checkBox_play_on_click.toggled.connect(
@@ -626,6 +636,46 @@ class PreferencesDialog(QDialog):
             QMessageBox.information(
                 self, "Cleanup _vrad3 cache",
                 f"Removed the _vrad3 cache from {removed} addon(s)."
+            )
+
+    def cleanup_model_browser_cache(self):
+        """Delete the model browser's asset index and generated thumbnails.
+
+        Both are derived data, so this is safe — the only cost is that the next
+        browse rescans and re-renders. Useful after adding models to an addon, or
+        after changing the thumbnail settings, since cached tiles are keyed by
+        path and size and so survive a quality change.
+        """
+        from PySide6.QtWidgets import QMessageBox
+        from src.widgets.model_browser.cache import cache_size, clear_cache, human_size
+
+        total_bytes, file_count = cache_size()
+        if not file_count:
+            QMessageBox.information(self, "Cleanup model browser cache",
+                                    "The model browser cache is already empty.")
+            return
+
+        reply = QMessageBox.question(
+            self, "Cleanup model browser cache",
+            f"Delete {file_count} cached file(s) ({human_size(total_bytes)})?\n\n"
+            "The asset index and all model thumbnails will be rebuilt the next "
+            "time the model browser is opened.",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+        )
+        if reply != QMessageBox.Yes:
+            return
+
+        freed, removed, errors = clear_cache()
+        if errors:
+            QMessageBox.warning(
+                self, "Cleanup model browser cache",
+                f"Removed {removed} file(s) ({human_size(freed)}).\n\n"
+                "Failed:\n" + "\n".join(errors)
+            )
+        else:
+            QMessageBox.information(
+                self, "Cleanup model browser cache",
+                f"Removed {removed} cached file(s), freeing {human_size(freed)}."
             )
 
     def check_update(self):
