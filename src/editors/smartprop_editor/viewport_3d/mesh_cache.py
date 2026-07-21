@@ -154,23 +154,25 @@ _GLTF_TO_SOURCE = _GLTF_TO_SOURCE_ROT / _VRF_GLTF_SCALE
 MAX_TEXTURE_DIM = 1024
 
 
-def _image_to_rgba_array(img) -> Optional[np.ndarray]:
+def _image_to_rgba_array(img, max_dim: int = None) -> Optional[np.ndarray]:
     """Convert a trimesh/PIL image to a GL-ready RGBA uint8 array, or None.
 
-    Downscales to ``MAX_TEXTURE_DIM``, converts to RGBA and flips vertically so
-    the GL upload can hand the bytes straight to glTexImage2D.  Runs on the load
-    worker thread — deliberately doing all the pixel work here (not a PNG
-    round-trip) is the bulk of the loading speed-up.
+    Downscales to ``max_dim`` (default ``MAX_TEXTURE_DIM``), converts to RGBA and
+    flips vertically so the GL upload can hand the bytes straight to
+    glTexImage2D.  Runs on the load worker thread — deliberately doing all the
+    pixel work here (not a PNG round-trip) is the bulk of the loading speed-up.
     """
     if img is None:
         return None
+    if max_dim is None:
+        max_dim = MAX_TEXTURE_DIM
     try:
         from PIL import Image
         im = img
-        if im.width > MAX_TEXTURE_DIM or im.height > MAX_TEXTURE_DIM:
+        if im.width > max_dim or im.height > max_dim:
             im = im.copy()
             # Bilinear is plenty for a preview and far cheaper than Lanczos.
-            im.thumbnail((MAX_TEXTURE_DIM, MAX_TEXTURE_DIM), Image.BILINEAR)
+            im.thumbnail((max_dim, max_dim), Image.BILINEAR)
         im = im.convert("RGBA").transpose(Image.FLIP_TOP_BOTTOM)  # GL is bottom-up
         return np.asarray(im, dtype=np.uint8)
     except Exception:
@@ -200,7 +202,8 @@ def _rgba_factor(value, default):
     return tuple(out)
 
 
-def _extract_material(geom, cache: dict) -> MaterialData:
+def _extract_material(geom, cache: dict, max_texture_dim: int = None,
+                      base_color_only: bool = False) -> MaterialData:
     """Build a MaterialData for a trimesh geometry, deduped by material identity.
 
     ``cache`` maps id(trimesh_material) -> MaterialData so instances that share a
@@ -208,6 +211,11 @@ def _extract_material(geom, cache: dict) -> MaterialData:
     the glTF material's own ``alphaMode`` / base alpha as written by VRF — no name
     guessing, which wrongly tagged opaque "window"/"glass"/"blend"-named frame
     materials as see-through.
+
+    ``base_color_only`` skips the normal/MR/AO/emissive maps entirely, and
+    ``max_texture_dim`` caps the base map.  Callers that shade with albedo alone
+    (the model browser's thumbnails) use these to avoid decoding four extra
+    full-size images per material that they would only throw away.
     """
     mat_obj = getattr(getattr(geom, "visual", None), "material", None)
     key = id(mat_obj)
@@ -221,11 +229,12 @@ def _extract_material(geom, cache: dict) -> MaterialData:
         base_img = getattr(mat_obj, "baseColorTexture", None)
         if base_img is None:
             base_img = getattr(mat_obj, "image", None)
-        md.base_color_img = _image_to_rgba_array(base_img)
-        md.normal_img = _image_to_rgba_array(getattr(mat_obj, "normalTexture", None))
-        md.mr_img = _image_to_rgba_array(getattr(mat_obj, "metallicRoughnessTexture", None))
-        md.ao_img = _image_to_rgba_array(getattr(mat_obj, "occlusionTexture", None))
-        md.emissive_img = _image_to_rgba_array(getattr(mat_obj, "emissiveTexture", None))
+        md.base_color_img = _image_to_rgba_array(base_img, max_texture_dim)
+        if not base_color_only:
+            md.normal_img = _image_to_rgba_array(getattr(mat_obj, "normalTexture", None), max_texture_dim)
+            md.mr_img = _image_to_rgba_array(getattr(mat_obj, "metallicRoughnessTexture", None), max_texture_dim)
+            md.ao_img = _image_to_rgba_array(getattr(mat_obj, "occlusionTexture", None), max_texture_dim)
+            md.emissive_img = _image_to_rgba_array(getattr(mat_obj, "emissiveTexture", None), max_texture_dim)
 
         md.base_color_factor = _rgba_factor(getattr(mat_obj, "baseColorFactor", None), [1.0, 1.0, 1.0, 1.0])
         mf = getattr(mat_obj, "metallicFactor", None)
@@ -251,8 +260,14 @@ def _extract_material(geom, cache: dict) -> MaterialData:
 # GLB loader (using trimesh)
 # ---------------------------------------------------------------------------
 
-def load_glb(path: str) -> Optional[MeshData]:
-    """Load a .glb file and return MeshData, or None on failure."""
+def load_glb(path: str, max_texture_dim: int = None,
+             base_color_only: bool = False) -> Optional[MeshData]:
+    """Load a .glb file and return MeshData, or None on failure.
+
+    ``max_texture_dim`` / ``base_color_only`` bound the per-material texture work;
+    see :func:`_extract_material`.  The defaults preserve full-quality loading for
+    the viewport.
+    """
     try:
         import trimesh
 
@@ -326,7 +341,8 @@ def load_glb(path: str) -> Optional[MeshData]:
             # Record this instance as a submesh (index range + its material) so
             # every material renders with its own textures / blend mode.
             n_idx = int(faces.size)   # (F, 3) -> F*3 indices
-            material = _extract_material(geom, material_cache)
+            material = _extract_material(
+                geom, material_cache, max_texture_dim, base_color_only)
             submeshes.append(SubMeshData(index_offset=index_cursor,
                                          index_count=n_idx,
                                          material=material))
