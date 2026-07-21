@@ -175,13 +175,84 @@ def _import_filter(exclude_by_default: bool, exception_list):
     return {"exclude_by_default": exclude_by_default, "exception_list": list(exception_list)}
 
 
-def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, import_angles=(0.0, 90.0, 0.0), material_path=None):
+def clean_material_stem(name: str) -> str:
+    """
+    Strips material/texture prefixes (mi_, m_, mm_, t_) and extension if present.
+    e.g., 'mi_rock_3' -> 'rock_3', 'MI_Wood_01.vmat' -> 'wood_01', 't_wood_d' -> 'wood'
+    """
+    if not name:
+        return ""
+    stem = name.rsplit(".", 1)[0].strip()
+    clean = re.sub(r"^(mi_|m_|mm_|t_)", "", stem, flags=re.IGNORECASE)
+    clean = re.sub(r"_(d|bc|color|albedo|diffuse|nrm|n|normal|rough|r|metal|m|ao|orm|rma)$", "", clean, flags=re.IGNORECASE)
+    return clean.strip().lower()
+
+
+def resolve_material_remaps(fbx_path: str = None, output_dir: str = None, model_rel_path: str = None, default_mat_path: str = None) -> list:
+    """
+    Inspects fbx_path for embedded FBX material names (e.g. 'mi_rock_3').
+    Strips mi_, m_, mm_, t_ prefixes to find material stems.
+    Searches output_dir/materials/ for matching .vmat files.
+    Returns remaps list for DefaultMaterialGroup:
+    [
+        {"from": "mi_rock_3.vmat", "to": "materials/firewatch/rock_3.vmat"}
+    ]
+    """
+    from .fbx_flatten import list_materials
+    embedded_mats = list_materials(fbx_path) if (fbx_path and os.path.isfile(fbx_path)) else []
+    remaps = []
+
+    vmat_lookup = {}
+    if output_dir:
+        mats_root = os.path.join(output_dir, "materials")
+        if os.path.exists(mats_root):
+            for root, _dirs, files in os.walk(mats_root):
+                for f in files:
+                    if f.lower().endswith(".vmat"):
+                        full_p = os.path.join(root, f)
+                        rel_p = os.path.relpath(full_p, output_dir).replace("\\", "/").lower()
+                        stem = clean_material_stem(f)
+                        vmat_lookup[stem] = rel_p
+                        vmat_lookup[f[:-5].lower()] = rel_p
+
+    if embedded_mats:
+        for raw_mat in embedded_mats:
+            from_name = raw_mat if raw_mat.lower().endswith(".vmat") else f"{raw_mat}.vmat"
+            stem = clean_material_stem(raw_mat)
+            raw_clean = raw_mat.lower()
+
+            to_path = vmat_lookup.get(stem) or vmat_lookup.get(raw_clean)
+
+            if not to_path:
+                if model_rel_path:
+                    cat_dir = os.path.dirname(model_rel_path).replace("models/", "materials/").replace("models", "materials")
+                    to_path = f"{cat_dir}/{stem}.vmat".lower()
+                elif default_mat_path:
+                    to_path = default_mat_path.replace("\\", "/").lower()
+                else:
+                    to_path = f"materials/{stem}.vmat"
+
+            remaps.append({
+                "from": from_name,
+                "to": to_path
+            })
+
+    if not remaps:
+        if default_mat_path:
+            remaps.append({"from": "*", "to": default_mat_path.replace("\\", "/").lower()})
+        elif model_rel_path:
+            fallback_mat = model_rel_path.replace("models/", "materials/").replace(".vmdl", ".vmat").lower()
+            remaps.append({"from": "*", "to": fallback_mat})
+
+    return remaps
+
+
+def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=None, use_graybox_fallback=False):
     """Build the modeldoc rootNode dict with LOD + physics from mesh_info."""
     lods = mesh_info.get("lods") or []
     lod_filters = mesh_info.get("lod_filters") or []
     collision = mesh_info.get("collision") or []
     base = mesh_info.get("base") or os.path.splitext(os.path.basename(mesh_rel_path))[0]
-    angles_list = [float(import_angles[0]), float(import_angles[1]), float(import_angles[2])]
 
     render_children = []
     lod_groups = []
@@ -194,7 +265,6 @@ def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, import_angles=(0.0,
                 "name": ref,
                 "filename": mesh_rel_path,
                 "import_scale": float(import_scale),
-                "import_angles": angles_list,
                 "import_filter": _import_filter(True, exceptions),
             })
             lod_groups.append({
@@ -214,7 +284,6 @@ def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, import_angles=(0.0,
             "name": "mesh0",
             "filename": mesh_rel_path,
             "import_scale": float(import_scale),
-            "import_angles": angles_list,
             "import_filter": _import_filter(False, collision),
         })
 
@@ -236,7 +305,7 @@ def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, import_angles=(0.0,
         "tool_material": "",
         "recenter_on_parent_bone": False,
         "offset_origin": [0.0, 0.0, 0.0],
-        "offset_angles": angles_list,
+        "offset_angles": [0.0, 0.0, 0.0],
         "filename": mesh_rel_path,
         "import_scale": float(import_scale),
         "faceMergeAngle": 5.0,
@@ -249,11 +318,19 @@ def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, import_angles=(0.0,
         "import_filter": phys_filter,
     }
 
-    if material_path:
+    if use_graybox_fallback:
         mat_group = {
             "_class": "DefaultMaterialGroup",
             "name": "",
-            "remaps": [{"from": "*", "to": material_path.replace("\\", "/").lower()}],
+            "remaps": material_remaps or [],
+            "use_global_default": True,
+            "global_default_material": "materials/dev/reflectivity_20b.vmat",
+        }
+    elif material_remaps:
+        mat_group = {
+            "_class": "DefaultMaterialGroup",
+            "name": "",
+            "remaps": material_remaps,
             "use_global_default": False,
             "global_default_material": "",
         }
@@ -295,15 +372,15 @@ def _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, import_angles=(0.0,
 def write_vmdl(output_path: str, mesh_rel_path: str,
                import_scale: float = UnitScale.ONE_TO_ONE,
                fbx_path: str = None,
-               import_angles: tuple = (0.0, 90.0, 0.0),
-               material_path: str = None) -> str:
+               material_path: str = None,
+               output_dir: str = None,
+               use_graybox_fallback: bool = False) -> str:
     """
     Write a .vmdl at output_path referencing mesh_rel_path (relative to the addon
     content root, forward slashes). If fbx_path is given, the FBX is inspected to
     build per-LOD render meshes and UCX physics; otherwise a simple single-mesh
-    vmdl is written. FBX files are automatically flattened in place before inspection.
-    By default, import_angles applies the Unreal -> Source 2 mesh rotation correction (P 0 Y 90 R 0).
-    If material_path is provided, material remapping will be set directly on the material group.
+    vmdl is written. FBX files are automatically flattened and rotated (P 0 Y 90 R 0) in place.
+    If material_path or output_dir is provided, material remapping will be set directly on the material group.
     """
     mesh_rel_path = mesh_rel_path.replace("\\", "/")
     mesh_info = {}
@@ -315,7 +392,16 @@ def write_vmdl(output_path: str, mesh_rel_path: str,
             pass
         mesh_info = inspect_fbx_meshes(fbx_path)
 
-    vmdl = _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, import_angles=import_angles, material_path=material_path)
+    material_remaps = None
+    if material_path or fbx_path or output_dir:
+        material_remaps = resolve_material_remaps(
+            fbx_path=fbx_path,
+            output_dir=output_dir,
+            model_rel_path=mesh_rel_path,
+            default_mat_path=material_path
+        )
+
+    vmdl = _build_vmdl_dict(mesh_rel_path, import_scale, mesh_info, material_remaps=material_remaps, use_graybox_fallback=use_graybox_fallback)
 
     content = JsonToKv3(vmdl, format="vmdl")
     # Upgrade the header format token modeldoc36 -> modeldoc41.

@@ -13,6 +13,7 @@ recomputation — a low-risk in-place patch. Binary FBX only (7.x); ASCII/other
 inputs are returned untouched.
 """
 
+import os
 import struct
 
 _MAGIC = b"Kaydara FBX Binary"
@@ -155,10 +156,58 @@ def patch_fbx_string(d: bytearray, voff: int, old_full: str, new_full: str, targ
     return d
 
 
+def rotate_fbx_models(d: bytearray, pitch: float = 0.0, yaw: float = 90.0, roll: float = 0.0) -> bool:
+    """
+    Apply (pitch, yaw, roll) rotation offset to all Model nodes in binary FBX d in place.
+    Modifies double-precision rotation properties in Properties70 (byte-size-preserving).
+    Returns True if any rotation properties were updated.
+    """
+    if d[:len(_MAGIC)] != _MAGIC:
+        return False
+
+    fbx = _Fbx(d)
+    tops = fbx.top_nodes()
+    if "Objects" not in tops:
+        return False
+
+    modified = False
+    for nm, node in fbx.child_nodes(tops["Objects"]):
+        if nm != "Model":
+            continue
+
+        model_children = fbx.child_nodes(node)
+        p70_node = None
+        for cnm, cnode in model_children:
+            if cnm == "Properties70":
+                p70_node = cnode
+                break
+
+        if not p70_node:
+            continue
+
+        for pnm, pnode in fbx.child_nodes(p70_node):
+            pprops, _ = _parse_props(d, pnode[4], pnode[2])
+            if len(pprops) >= 7 and pprops[0][1] in ("Lcl Rotation", "PreRotation"):
+                x_off = pprops[4][2]
+                y_off = pprops[5][2]
+                z_off = pprops[6][2]
+
+                cur_x = float(pprops[4][1])
+                cur_y = float(pprops[5][1])
+                cur_z = float(pprops[6][1])
+
+                struct.pack_into("<d", d, x_off, cur_x + pitch)
+                struct.pack_into("<d", d, y_off, cur_y + yaw)
+                struct.pack_into("<d", d, z_off, cur_z + roll)
+                modified = True
+
+    return modified
+
+
 def flatten_fbx(path) -> dict:
     """
-    Flatten path in place. Reparents LOD/UCX meshes to scene root (0) and syncs
-    Geometry mesh data names to match connected Model object names.
+    Flatten path in place. Reparents LOD/UCX meshes to scene root (0), syncs
+    Geometry mesh data names, and applies FBX model rotation (P 0 Y 90 R 0).
     Returns {"flattened": bool, "reparented": [mesh names], "renamed_geometries": [(old, new)], "reason": str}.
     """
     with open(path, "rb") as f:
@@ -170,6 +219,9 @@ def flatten_fbx(path) -> dict:
     tops = fbx.top_nodes()
     if "Objects" not in tops or "Connections" not in tops:
         return {"flattened": False, "reparented": [], "renamed_geometries": [], "reason": "no Objects/Connections"}
+
+    # Apply Unreal -> Source FBX model rotation (Pitch 0, Yaw 90, Roll 0)
+    rotated = rotate_fbx_models(d, pitch=0.0, yaw=90.0, roll=0.0)
 
     # Map Model id -> (clean_name, subtype)
     models = {}
@@ -236,8 +288,8 @@ def flatten_fbx(path) -> dict:
         patch_fbx_string(d, voff, old_full, new_full, target_node_off=node_off)
         renamed_list.append((old_clean, new_clean))
 
-    if not reparent_patches and not renamed_list:
-        return {"flattened": False, "reparented": [], "renamed_geometries": [], "reason": "already flat and synced"}
+    if not reparent_patches and not renamed_list and not rotated:
+        return {"flattened": False, "reparented": [], "renamed_geometries": [], "reason": "already flat, synced, and rotated"}
 
     with open(path, "wb") as f:
         f.write(d)
@@ -271,3 +323,35 @@ def list_models(path):
         if len(props) >= 3:
             models.append((props[1][1].split('\x00', 1)[0], props[2][1]))
     return models
+
+
+def list_materials(path):
+    """
+    Return clean Material node names embedded in a binary FBX (e.g. ['mi_rock_3']).
+    Returns [] if the file isn't a binary FBX or has no Material nodes.
+    """
+    if not path or not os.path.isfile(path):
+        return []
+    try:
+        with open(path, "rb") as f:
+            d = bytearray(f.read())
+        if d[:len(_MAGIC)] != _MAGIC:
+            return []
+        fbx = _Fbx(d)
+        tops = fbx.top_nodes()
+        if "Objects" not in tops:
+            return []
+        mats = []
+        for nm, node in fbx.child_nodes(tops["Objects"]):
+            if nm != "Material":
+                continue
+            props, _ = _parse_props(d, node[4], node[2])
+            if len(props) >= 2:
+                raw_name = props[1][1]
+                if isinstance(raw_name, str):
+                    clean_name = raw_name.split('\x00', 1)[0]
+                    if clean_name and clean_name not in mats:
+                        mats.append(clean_name)
+        return mats
+    except Exception:
+        return []

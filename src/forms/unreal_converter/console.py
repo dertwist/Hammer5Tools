@@ -24,8 +24,9 @@ class ConsoleWidget(QTextEdit):
         self.setStyleSheet(
             "QTextEdit {\n"
             "    font: 580 10pt \"Segoe UI\";\n"
-            "    border: 2px solid rgba(80, 80, 80, 255);\n"
-            "    border-radius: 2px;\n"
+            "    border: 2px solid black;\n"
+            "    border-radius: 4px;\n"
+            "    border-color: rgba(80, 80, 80, 255);\n"
             "    padding: 4px;\n"
             "    padding-left: 6px;\n"
             "    padding-right: 6px;\n"
@@ -43,10 +44,10 @@ class ConsoleWidget(QTextEdit):
         sb.setValue(sb.maximum())
 
     def info(self, message):    self._emit(message, "info", True)
-    def warn(self, message):    self._emit(f"⚠ {message}", "warn", True)
-    def error(self, message):   self._emit(f"✖ {message}", "error", True)
-    def success(self, message): self._emit(f"✔ {message}", "success", True)
+    def warn(self, message):    self._emit(message, "warn", True)
+    def error(self, message):   self._emit(message, "error", True)
+    def success(self, message): self._emit(message, "success", True)
 
     def header(self, message):
         self._emit("", "info", False)
-        self._emit(f"── {message} ──", "header", False)
+        self._emit(f"-- {message} --", "header", False)

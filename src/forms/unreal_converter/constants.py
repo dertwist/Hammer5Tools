@@ -14,14 +14,22 @@ import re
 # File-type categories (drive the General-tab enable checkboxes + the tabs)
 # ---------------------------------------------------------------------------
 
-FILE_TYPES = ["Scenes", "Models", "Materials", "Blueprints", "Other"]
+FILE_TYPES = ["Scenes", "Models", "Materials", "Blueprints", "Textures"]
 
 FILE_TYPE_TARGETS = {
+    "Scenes":     "vmap",
+    "Models":     "vmdl",
+    "Materials":  "vmat",
+    "Blueprints": "vsmart",
+    "Textures":   "vtex",
+}
+
+FILE_TYPE_DESCRIPTIONS = {
     "Scenes":     "vmap  (map actors -> prop_static entities)",
     "Models":     "vmdl  (mesh wrapper referencing exported FBX/glTF)",
     "Materials":  "vmat  (material instance params -> csgo_environment)",
     "Blueprints": "vsmart (content-assembly blueprints -> smart props)",
-    "Other":      "vtex  (textures, incl. splitting packed ORM/RMA maps)",
+    "Textures":   "vtex  (textures, incl. splitting packed ORM/RMA maps)",
 }
 
 
