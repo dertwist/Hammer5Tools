@@ -162,8 +162,10 @@ class ConflictDialog(QDialog):
                     "%d object(s) were in a group the other side deleted. They "
                     "were kept and moved to the top level of the map."
                     % len(result.orphaned))
-        except ValueError as e:
-            # Not two versions of one map, or an unresolved block slipped through.
+        except Exception as e:
+            # Not two versions of one map, an unresolved block, or the DMX codec
+            # refusing a side. Anything raised here escapes into Qt otherwise and
+            # the button just does nothing.
             QMessageBox.warning(self, "Merge map", str(e))
         finally:
             if result is not None:
