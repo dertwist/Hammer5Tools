@@ -14,6 +14,11 @@ from src.common import SoundEventEditor_sounds_path, SoundEventEditor_path
 from src.widgets import exception_handler
 from src.dotnet import extract_vsnd_file
 
+# pak01_dir.vpk is global CS2 content, identical for every addon. Scan it once
+# and reuse the result so switching addons neither re-walks ~130k VPK entries
+# nor spawns a second scanner thread that races the editor teardown.
+_VSND_FOLDERS_CACHE = None
+
 
 @exception_handler
 class VPKLoaderThread(QThread):
@@ -59,9 +64,13 @@ class InternalSoundFileExplorer(QTreeWidget):
 
         self.itemClicked.connect(self.on_item_clicked)
         self.audio_player = audio_player
-        self.vpk_loader_thread = VPKLoaderThread(self)
-        self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
-        self.vpk_loader_thread.start()
+        self.vpk_loader_thread = None
+        if _VSND_FOLDERS_CACHE is not None:
+            self.populate_tree(_VSND_FOLDERS_CACHE)
+        else:
+            self.vpk_loader_thread = VPKLoaderThread(self)
+            self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
+            self.vpk_loader_thread.start()
 
     # ──────────────────────────────────────────────
     #  Filter
@@ -379,6 +388,10 @@ class InternalSoundFileExplorer(QTreeWidget):
         if not folders:
             QMessageBox.critical(self, "Error", "Failed to load VPK file.")
             return
+
+        global _VSND_FOLDERS_CACHE
+        if _VSND_FOLDERS_CACHE is None:
+            _VSND_FOLDERS_CACHE = folders
 
         self.setUpdatesEnabled(False)
 
