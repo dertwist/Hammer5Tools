@@ -1,6 +1,6 @@
 ## 🔧 Main App
 * Bottom bar redesign.
-* Console statusline
+* Console status line.
 * About dialog redesign.
 * Added audio conversion (mp3/wav).
 * Updated application icons.
