@@ -1,8 +1,11 @@
 """Sync button + git glue, scoped to the current addon.
 
-Fast reads/commits run synchronously (instant). fetch/pull/push run through a
-QProcess so `git --progress` streams onto the console line. The sync flow is a
-small async chain wired on QProcess.finished.
+Every git call except the one status read on click runs through a QProcess and
+returns via a signal. Spawning git costs ~150ms on Windows and `git status` over
+an addon's content tree costs more, so anything on a timer or in the sync chain
+would otherwise freeze the UI — the badge poll alone used to burn three blocking
+spawns every two seconds. The sync flow is an async chain wired on
+QProcess.finished.
 
 The button is icon-only (the settings "check updates" sync icon) with two badge
 overlays: a yellow circle = uncommitted local changes, a red circle = commits
@@ -13,7 +16,7 @@ from PySide6.QtGui import QIcon, QPainter, QColor, QFont
 from PySide6.QtWidgets import QPushButton, QMessageBox
 
 from src.settings.common import get_addon_dir
-from src.git_sync.backend import GitRepo
+from src.git_sync.backend import GitRepo, STATUS_V2_ARGS, parse_status_v2
 from src.git_sync.commit_msg import generate
 from src.git_sync.conflict_dialog import ConflictDialog
 
@@ -91,11 +94,14 @@ class GitController:
         self.repo = GitRepo(get_addon_dir())
         self.proc = None
         self._fetch_proc = None
+        self._status_proc = None
+        self._is_repo = True   # assumed until the first status says otherwise
+        self._msg = ""         # pending commit message, mid-sync
         self._busy = False
         self.button.clicked.connect(self.sync)
 
-        # ponytail: poll git status/rev-list (local, fast) instead of wiring a
-        # recursive filesystem watcher; swap to QFileSystemWatcher if 2s lag shows.
+        # ponytail: poll git status instead of wiring a recursive filesystem
+        # watcher; swap to QFileSystemWatcher if 2s lag shows.
         self._local_timer = QTimer(main_window)
         self._local_timer.setInterval(2_000)
         self._local_timer.timeout.connect(self._tick_badges)
@@ -116,26 +122,42 @@ class GitController:
 
     # ---- state / refresh ------------------------------------------------
     def refresh(self):
-        """Re-point at the current addon and update the button + badges."""
+        """Re-point at the current addon and kick a badge refresh."""
         self.repo = GitRepo(get_addon_dir())
-        if not self.repo.is_repo():
-            self.button.setEnabled(not self._busy)  # clickable -> shows "no repo" dialog
-            self.button.set_counts(0, 0)
-            return
-        self.button.setEnabled(not self._busy)
-        _ahead, behind = self.repo.ahead_behind()
-        self.button.set_counts(self.repo.local_change_count(), behind)
+        self._tick_badges()
 
     def _tick_badges(self):
-        """Cheap local refresh (no network) driven by the fast timer."""
-        if self._busy or not self.repo.is_repo():
+        """One async `git status` (no network) driven by the fast timer.
+
+        porcelain=v2 --branch answers is-a-repo, local change count and distance
+        from upstream in a single spawn, replacing the rev-parse + status +
+        rev-list trio this used to run blocking on the UI thread. Skipped while
+        one is still in flight, so a slow addon just polls less often.
+        """
+        if self._busy or self._status_proc is not None or not self.repo.dir:
             return
-        _ahead, behind = self.repo.ahead_behind()
-        self.button.set_counts(self.repo.local_change_count(), behind)
+        proc = QProcess(self.main)
+        proc.setWorkingDirectory(self.repo.dir)
+        proc.finished.connect(lambda code, _st: self._status_done(proc, code))
+        proc.errorOccurred.connect(lambda *_: self._status_done(proc, 1))
+        self._status_proc = proc
+        proc.start("git", STATUS_V2_ARGS)
+
+    def _status_done(self, proc, code):
+        # finished + errorOccurred can both fire; the guard makes it idempotent.
+        if self._status_proc is not proc:
+            return
+        self._status_proc = None
+        out = bytes(proc.readAllStandardOutput()).decode("utf-8", "replace")
+        proc.deleteLater()
+        self._is_repo = code == 0
+        local, _ahead, behind = parse_status_v2(out) if self._is_repo else (0, 0, 0)
+        self.button.set_counts(local, behind)
+        self.button.setEnabled(not self._busy)  # no repo -> shows "no repo" dialog
 
     def _auto_fetch(self):
         """Background `git fetch origin` every 15s; refresh the pull badge after."""
-        if self._busy or self._fetch_proc is not None or not self.repo.is_repo():
+        if self._busy or self._fetch_proc is not None or not self._is_repo:
             return
         proc = QProcess(self.main)
         proc.setWorkingDirectory(self.repo.dir)
@@ -154,8 +176,9 @@ class GitController:
         """Warn about >100MB non-LFS files and large total uploads.
 
         Returns True to proceed, False if the user cancelled."""
-        big = [(p, s) for p, s in files
-               if s > _LFS_LIMIT and not self.repo.is_lfs_tracked(p)]
+        huge = [(p, s) for p, s in files if s > _LFS_LIMIT]
+        lfs = self.repo.lfs_tracked([p for p, _ in huge])
+        big = [(p, s) for p, s in huge if p not in lfs]
         if big:
             listing = "\n".join(f"  • {p} ({_human(s)})" for p, s in big[:10])
             if len(big) > 10:
@@ -192,17 +215,31 @@ class GitController:
                                 "Git repository not found, cannot sync changes.")
             return
 
+        # The one blocking git call left: it gates a modal dialog, so it has to
+        # answer before we go on. Its output feeds the size checks *and* the
+        # commit message instead of running `git status` twice.
         porcelain = self.repo.status_porcelain()
-        if not self._precommit_size_checks(self.repo.changed_files()):
+        if not self._precommit_size_checks(self.repo.changed_files(porcelain)):
             return  # user cancelled
 
         self._set_busy(True)
-        self.repo._run("add", "-A")
-        if self.repo.has_staged():
-            msg = generate(porcelain)
-            self.repo._run("commit", "-m", msg)
-            self._log(f"Committed: {msg}")
+        if not porcelain.strip():
+            self._start_fetch()
+            return
+        self._msg = generate(porcelain)
+        self._stream(["add", "-A"], self._after_add)
 
+    def _after_add(self, _code):
+        self._stream(["commit", "-m", self._msg], self._after_commit)
+
+    def _after_commit(self, code):
+        # Non-zero == `add -A` staged nothing after all (everything ignored, or
+        # touched-but-identical). Nothing to report, carry on with the sync.
+        if code == 0:
+            self._log(f"Committed: {self._msg}")
+        self._start_fetch()
+
+    def _start_fetch(self):
         self._stream(["fetch", "--progress"], self._after_fetch)
 
     def _after_fetch(self, _code):
@@ -267,4 +304,4 @@ class GitController:
 
     def _set_busy(self, busy):
         self._busy = busy
-        self.button.setEnabled(not busy and self.repo.is_repo())
+        self.button.setEnabled(not busy and self._is_repo)
