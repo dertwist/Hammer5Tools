@@ -1,14 +1,39 @@
 """Thin wrapper over the system `git` CLI, scoped to one addon directory.
 
-Fast reads (branch, status, ahead/behind) run through subprocess.run and capture
-output. Long streaming ops (fetch/pull/push) are driven by the controller through
-a QProcess so `git --progress` reaches the console line; those are not here.
+Reads run through subprocess.run and capture output. Anything on a timer or in
+the sync chain (status polling, add/commit/fetch/pull/push) is driven by the
+controller through a QProcess instead — spawning git costs ~150ms per call here,
+which is a visible stall if it happens on the UI thread.
+
+STATUS_V2_ARGS + parse_status_v2 exist for that async path: one git call answers
+"is this a repo", "how many local changes" and "how far from upstream", which
+used to be three separate spawns.
 """
 import os
 import subprocess
 import sys
 
 _NO_WINDOW = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+
+# -uall lists untracked files individually; the default collapses whole dirs to
+# "dir/", which both undercounts the badge and hides per-file sizes.
+STATUS_V2_ARGS = ["status", "--porcelain=v2", "--branch", "-uall"]
+
+
+def parse_status_v2(out):
+    """(local_changes, ahead, behind) from STATUS_V2_ARGS output.
+
+    Every non-`#` line is one changed path (`1`/`2`/`u`/`?`); `# branch.ab`
+    carries the upstream deltas as "+N -M". No `branch.ab` == no upstream.
+    """
+    local = ahead = behind = 0
+    for line in out.splitlines():
+        if line.startswith("# branch.ab "):
+            a, b = line.split()[2:4]
+            ahead, behind = int(a), -int(b)
+        elif line and not line.startswith("#"):
+            local += 1
+    return local, ahead, behind
 
 
 class GitRepo:
@@ -36,45 +61,21 @@ class GitRepo:
         code, out, _ = self._run("rev-parse", "--is-inside-work-tree")
         return code == 0 and out.strip() == "true"
 
-    def current_branch(self):
-        code, out, _ = self._run("rev-parse", "--abbrev-ref", "HEAD")
-        return out.strip() if code == 0 else ""
-
-    def branches(self):
-        """Local branch names, current first."""
-        code, out, _ = self._run("branch", "--format=%(refname:short)")
-        if code != 0:
-            return []
-        names = [ln.strip() for ln in out.splitlines() if ln.strip()]
-        cur = self.current_branch()
-        if cur in names:
-            names.remove(cur)
-            names.insert(0, cur)
-        return names
-
     def status_porcelain(self):
-        # -uall lists untracked files individually (default collapses whole
-        # untracked dirs to "dir/", which hides per-file sizes).
+        # -uall: see STATUS_V2_ARGS.
         code, out, _ = self._run("status", "--porcelain", "-uall")
         return out if code == 0 else ""
 
-    def has_staged(self):
-        code, _, _ = self._run("diff", "--cached", "--quiet")
-        return code != 0  # non-zero exit == there are staged changes
-
-    def is_dirty(self):
-        return bool(self.status_porcelain().strip())
-
-    def local_change_count(self):
-        """Number of changed/untracked paths in the working tree."""
-        return len([ln for ln in self.status_porcelain().splitlines() if ln.strip()])
-
-    def changed_files(self):
+    def changed_files(self, porcelain=None):
         """(path, size_bytes) for added/modified/untracked files present on disk.
 
-        Deletions are skipped (they add no upload weight)."""
+        Deletions are skipped (they add no upload weight). Pass an existing
+        status_porcelain() result to reuse it instead of paying for a second
+        `git status`."""
         out = []
-        for line in self.status_porcelain().splitlines():
+        if porcelain is None:
+            porcelain = self.status_porcelain()
+        for line in porcelain.splitlines():
             if len(line) < 4:
                 continue
             if "D" in line[:2]:
@@ -87,9 +88,15 @@ class GitRepo:
                 out.append((path, os.path.getsize(full)))
         return out
 
-    def is_lfs_tracked(self, path):
-        code, out, _ = self._run("check-attr", "filter", "--", path)
-        return code == 0 and "filter: lfs" in out
+    def lfs_tracked(self, paths):
+        """Subset of paths Git LFS filters, in one check-attr call for the lot."""
+        if not paths:
+            return set()
+        code, out, _ = self._run("check-attr", "filter", "--", *paths)
+        if code != 0:
+            return set()
+        return {ln[:-len(": filter: lfs")] for ln in out.splitlines()
+                if ln.endswith(": filter: lfs")}
 
     def show_stage(self, stage, path):
         """Raw bytes of one side of a conflict: 1=base, 2=ours, 3=theirs.
@@ -123,15 +130,22 @@ class GitRepo:
                 out.append(line[3:].strip())
         return out
 
-    def ahead_behind(self):
-        """(ahead, behind) vs the upstream, or (0, 0) if no upstream."""
-        code, out, _ = self._run(
-            "rev-list", "--left-right", "--count", "@{u}...HEAD"
-        )
-        if code != 0:
-            return 0, 0
-        try:
-            behind, ahead = out.split()
-            return int(ahead), int(behind)
-        except ValueError:
-            return 0, 0
+
+def _demo():
+    assert parse_status_v2("") == (0, 0, 0)
+    assert parse_status_v2(
+        "# branch.oid abc\n# branch.head main\n") == (0, 0, 0)  # no upstream
+    assert parse_status_v2(
+        "# branch.oid abc\n"
+        "# branch.head main\n"
+        "# branch.upstream origin/main\n"
+        "# branch.ab +2 -3\n"
+        "1 .M N... 100644 100644 100644 aa bb src/a.py\n"
+        "u UU N... 100644 100644 100644 100644 aa bb cc maps/x.vmap\n"
+        "? untracked.txt\n"
+    ) == (3, 2, 3)
+    print("backend self-check OK")
+
+
+if __name__ == "__main__":
+    _demo()
