@@ -187,6 +187,8 @@ class SoundEventLoaderThread(QThread):
         try:
             with vpk.open(_get_vpk_path()) as pak:
                 for fp in pak:
+                    if self._stopped:
+                        break
                     if 'vsndevts_c' not in fp:
                         continue
                     key = fp.replace("\\", "/").lower()

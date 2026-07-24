@@ -19,12 +19,21 @@ from src.dotnet import extract_vsnd_file
 class VPKLoaderThread(QThread):
     vpk_loaded = Signal(list)
 
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._stopped = False
+
+    def stop(self):
+        self._stopped = True
+
     def run(self):
         try:
             path = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
             with vpk.open(path) as pak1:
                 folders = []
                 for filepath in pak1:
+                    if self._stopped:
+                        return
                     if 'vsnd_c' in filepath and 'sounds' in filepath:
                         filepath = filepath.replace('vsnd_c', 'vsnd')
                         element = filepath.split('/')[1:]
@@ -50,7 +59,7 @@ class InternalSoundFileExplorer(QTreeWidget):
 
         self.itemClicked.connect(self.on_item_clicked)
         self.audio_player = audio_player
-        self.vpk_loader_thread = VPKLoaderThread()
+        self.vpk_loader_thread = VPKLoaderThread(self)
         self.vpk_loader_thread.vpk_loaded.connect(self.populate_tree)
         self.vpk_loader_thread.start()
 
