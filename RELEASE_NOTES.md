@@ -1,11 +1,15 @@
 ## 🔧 Main App
-* DetailProp Editor.
-* Model Browser (Source 2 like) for SmartProp Editor and DetailProp Editor.
-* Replaced recent and favorites dialogs with inline overlays.
-* Replaced Material Importer with Unreal Converter.
+* Bottom bar redesign.
+* Console statusline
+* About dialog redesign.
+* Added audio conversion (mp3/wav).
+* Updated application icons.
+* Git sync with vmap block merge feature.
+* Audio Edtior
 
-## 🖼️ Loading Screen Editor
-* Added game widget preivew on LoadingShots images selection.
+## 🔊 SoundEvent Editor
+* VU Meter.
+* Wave Audio player.
 
 ## ✏️ SmartProp Editor
-* Removed force Property Edtior update after moving objets in the 3d viewport.
+* Moved explorer buttons to filemenu.
