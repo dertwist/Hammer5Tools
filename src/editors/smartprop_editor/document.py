@@ -104,17 +104,8 @@ class SmartPropDocument(QMainWindow):
 
         self.undo_stack = QUndoStack(self)
 
-        # Window-level undo/redo shortcuts so they work regardless of which
-        # child widget has focus (properties panel, variable fields, etc.).
-        # QShortcut with WindowShortcut context fires before the key event is
-        # dispatched to the focused widget, so there is no double-triggering
-        # with the identical bindings in the tree's event filter.
-        _undo_sc = QShortcut(QKeySequence.Undo, self)
-        _undo_sc.activated.connect(self.undo_stack.undo)
-        _redo_sc = QShortcut(QKeySequence.Redo, self)
-        _redo_sc.activated.connect(self.undo_stack.redo)
-        _isolate_sc = QShortcut(QKeySequence("Ctrl+H"), self)
-        _isolate_sc.activated.connect(self.toggle_isolation)
+        # Window-level undo/redo shortcuts are handled by main window menu actions
+        # (action_undo, action_redo, action_isolate) in SmartPropEditorMainWindow.
 
         # Guard counter: while > 0, update_tree_item_value skips pushing to the undo stack.
         # Incremented before rebuilding the properties panel during undo/redo; decremented
@@ -1693,7 +1684,7 @@ class SmartPropDocument(QMainWindow):
             QTimer.singleShot(0, self.undo_stack.clear)
 
     # ======================================[Save File]========================================
-    def save_file(self, external=False, realtime_save=False):
+    def save_file(self, external=False):
         if external:
             if not self.opened_file:
                 filename = None
@@ -1718,22 +1709,20 @@ class SmartPropDocument(QMainWindow):
         self.get_variables(self.variable_viewport.ui.variables_scrollArea)
         content_version = self.content_version_spinbox.value()
         if filename:
-            if not realtime_save:
-                try:
-                    VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget,variables_layout=self.variable_viewport.ui.variables_scrollArea, content_version=content_version)
-                except Exception as e:
-                    error_message = f"An error while saving Vsmart File: {e}"
-                    error_details = traceback.format_exc()
-                    error(error_message)
+            try:
+                VsmartSaveInstance = VsmartSave(filename=filename, tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget,variables_layout=self.variable_viewport.ui.variables_scrollArea, content_version=content_version)
+            except Exception as e:
+                error_message = f"An error while saving Vsmart File: {e}"
+                error_details = traceback.format_exc()
+                error(error_message)
 
-                    # Ensure the dialog is executed in the main thread
-                    app = QApplication.instance()
-                    if app is not None:
-                        ErrorInfo(text=error_message, details=error_details).exec_()
-                    else:
-                        print("Error: QApplication instance is not available.")
-            else:
-                VsmartSaveInstance = VsmartSave(filename=filename,tree=self.ui.tree_hierarchy_widget,choices_tree=self.ui.choices_tree_widget, variables_layout=self.variable_viewport.ui.variables_scrollArea, content_version=content_version)
+                # Ensure the dialog is executed in the main thread
+                app = QApplication.instance()
+                if app is not None:
+                    ErrorInfo(text=error_message, details=error_details).exec_()
+                else:
+                    print("Error: QApplication instance is not available.")
+                return
 
             self.opened_file = VsmartSaveInstance.filename
             if self.update_title:
@@ -1947,43 +1936,35 @@ class SmartPropDocument(QMainWindow):
     # ======================================[Tree widget hierarchy context menu]========================================
     def open_hierarchy_menu(self, position):
         menu = QMenu()
-        add_new_action = menu.addAction("New element")
+        add_new_action = menu.addAction("New element (Ctrl+F)")
         add_new_action.triggered.connect(self.add_an_element)
-        add_new_action.setShortcut(QKeySequence("Ctrl+F"))
 
         add_preset_action = menu.addAction("New from preset")
         add_preset_action.triggered.connect(self.add_preset)
 
         menu.addSeparator()
 
-        remove_action = menu.addAction("Remove")
+        remove_action = menu.addAction("Remove (Delete)")
         remove_action.triggered.connect(lambda: self.ui.tree_hierarchy_widget.DeleteSelectedItems())
-        remove_action.setShortcut(QKeySequence("Delete"))
 
-        duplicate_action = menu.addAction("Duplicate")
+        duplicate_action = menu.addAction("Duplicate (Ctrl+D)")
         duplicate_action.triggered.connect(lambda: self.ui.tree_hierarchy_widget.DuplicateSelectedItems(self.element_id_generator))
-        duplicate_action.setShortcut(QKeySequence("Ctrl+D"))
 
-        grouping_action = menu.addAction("Group selected")
+        grouping_action = menu.addAction("Group selected (Ctrl+G)")
         grouping_action.triggered.connect(lambda: self.undo_stack.push(GroupElementsCommand(self.ui.tree_hierarchy_widget)))
-        grouping_action.setShortcut(QKeySequence("Ctrl+G"))
 
         menu.addSeparator()
 
-        copy_action = menu.addAction("Copy")
-        copy_action.setShortcut(QKeySequence.Copy)
+        copy_action = menu.addAction("Copy (Ctrl+C)")
         copy_action.triggered.connect(lambda: self.copy_item(self.ui.tree_hierarchy_widget))
 
-        copy_action = menu.addAction("Cut")
-        copy_action.setShortcut(QKeySequence.Cut)
-        copy_action.triggered.connect(lambda: self.cut_item(self.ui.tree_hierarchy_widget))
+        cut_action = menu.addAction("Cut (Ctrl+X)")
+        cut_action.triggered.connect(lambda: self.cut_item(self.ui.tree_hierarchy_widget))
 
-        paste_action = menu.addAction("Paste")
-        paste_action.setShortcut(QKeySequence.Paste)
+        paste_action = menu.addAction("Paste (Ctrl+V)")
         paste_action.triggered.connect(lambda: self.paste_item(self.ui.tree_hierarchy_widget))
 
-        paste_replace_action = menu.addAction("Paste with replacement")
-        paste_replace_action.setShortcut(QKeySequence("Ctrl+Shift+V"))
+        paste_replace_action = menu.addAction("Paste with replacement (Ctrl+Shift+V)")
         paste_replace_action.triggered.connect(lambda: self.new_item_with_replacement(QApplication.clipboard().text()))
 
         bulk_import_action = menu.addAction("Bulk Model Importer")
@@ -2002,10 +1983,9 @@ class SmartPropDocument(QMainWindow):
                     menu.addSeparator()
                     render_area = self._viewport_3d.render_area if self._viewport_3d else None
                     is_isolated = render_area and render_area.isolated_element_id == eid
-                    isolate_action = menu.addAction("Isolate in 3d viewport")
+                    isolate_action = menu.addAction("Isolate in 3d viewport (Ctrl+H)")
                     isolate_action.setCheckable(True)
                     isolate_action.setChecked(bool(is_isolated))
-                    isolate_action.setShortcut(QKeySequence("Ctrl+H"))
                     isolate_action.triggered.connect(self.toggle_isolation)
 
         menu.exec(self.ui.tree_hierarchy_widget.viewport().mapToGlobal(position))
