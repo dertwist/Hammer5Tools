@@ -6,7 +6,7 @@ from src.widgets.tree import HierarchyTreeWidget
 from src.widgets.explorer.main import Explorer
 from PySide6.QtWidgets import QMainWindow, QMenu, QTreeWidget, QMessageBox, QApplication, QTreeWidgetItem, QFileDialog, QDockWidget, QUndoView
 from PySide6.QtGui import QKeySequence, QUndoStack, QKeyEvent
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 from src.widgets.popup_menu.main import PopupMenu
 from src.widgets import HierarchyItemModel, ErrorInfo
 from src.editors.soundevent_editor.commands import *
@@ -91,12 +91,6 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.undo_stack = QUndoStack(self)
         self.update_title = update_title
 
-        # Realtime save debounced timer (as in SmartPropEditor)
-        delay = 50
-        self.realtime_save_timer = QTimer(self)
-        self.realtime_save_timer.setInterval(delay)
-        self.realtime_save_timer.timeout.connect(self.realtime_save_all)
-
         # Variables
         cs2_path = get_cs2_path()
         if cs2_path:
@@ -152,7 +146,6 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Connections
         self.ui.open_preset_manager_button.clicked.connect(self.OpenPresetManager)
         self.ui.load_button.clicked.connect(self.load_soundevents)
-        self.ui.output_button.clicked.connect(self.open_soundevnets_file)
         self.ui.save_file_button.clicked.connect(self.save_soundevents)
 
 
@@ -241,19 +234,7 @@ class SoundEventEditorMainWindow(QMainWindow):
     #     self.audio_player.setSource(QUrl.fromLocalFile(file_path))
     #     self.audio_player.play()
     # #==============================================================<  Actions  >============================================================
-    def realtime_save(self):
-        return self.ui.realtime_save_checkbox.isChecked()
-
-    def realtime_save_all(self):
-        """Triggered by the debounce timer to save all changes."""
-        try:
-            self.realtime_save_timer.stop()
-        except Exception:
-            pass
-        self.save_soundevents()
     #============================================================<  SoundEvents  >==========================================================
-    def open_soundevnets_file(self):
-        os.startfile(self.filepath_vsndevts)
     @exception_handler
     def load_soundevents(self, filepath=None):
         """Load soundevents. If there is no soundevents file, ask the user if they want to copy it from the CS2 addon template folder."""
@@ -288,9 +269,8 @@ class SoundEventEditorMainWindow(QMainWindow):
     @exception_handler
     def save_soundevents(self):
         SaveSoundEvents(tree=self.ui.hierarchy_widget, path=(self.filepath_vsndevts))
-        if not self.realtime_save():
-            print(f'Saved file: {self.filepath_vsndevts}')
-            self.update_title('saved', self.filepath_vsndevts)
+        print(f'Saved file: {self.filepath_vsndevts}')
+        self.update_title('saved', self.filepath_vsndevts)
 
     #=======================================================<  Properties Window  >=====================================================
 
@@ -434,12 +414,6 @@ class SoundEventEditorMainWindow(QMainWindow):
         # Convert the dictionary to a string representation
         item.setData(0, Qt.UserRole, _data)
         debug(f"[hier] update: {item.text(0)}")
-        if self.realtime_save():
-            try:
-                self.realtime_save_timer.stop()
-            except Exception:
-                pass
-            self.realtime_save_timer.start()
 
     def on_changed_hierarchy_item(self, current_item: HierarchyItemModel):
         """Handles changes in the hierarchy item by updating the properties window."""
@@ -475,7 +449,6 @@ class SoundEventEditorMainWindow(QMainWindow):
             return
         cmd = RenameItemCommand(item, old_name, new_name, on_renamed=self.update_properties_label)
         self.undo_stack.push(cmd)
-        self.realtime_save_timer.start()
 
     # ======================================[Tree widget hierarchy filter]========================================
     def search_hierarchy(self, filter_text, parent_item):
@@ -736,8 +709,5 @@ class SoundEventEditorMainWindow(QMainWindow):
             # Lazy-load if the explorer emitted an empty dict (shouldn't happen, but safe)
             data = self.internal_soundevents_explorer.get_event_data(name)
         self.new_soundevent(_data=data, _soundevent_name=name)
-        if self.realtime_save():
-            self.realtime_save_timer.start()
-        else:
-            self.save_soundevents()
+        self.save_soundevents()
         debug(f"[vsndevts] Copied '{name}' to addon")
