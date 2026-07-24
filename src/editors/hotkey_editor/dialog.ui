@@ -27,7 +27,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../resources.qrc">
-    <normaloff>:/icons/keyboard.png</normaloff>:/icons/keyboard.png</iconset>
+    <normaloff>:/valve_common/icons/tools/common/help_keybinding_list.png</normaloff>:/valve_common/icons/tools/common/help_keybinding_list.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
