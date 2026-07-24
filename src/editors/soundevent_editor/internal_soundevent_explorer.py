@@ -168,6 +168,12 @@ def parse_vsndevts_file(path: str) -> Dict[str, Dict[str, Any]]:
 #  Background loader thread
 # ──────────────────────────────────────────────────────────────────────────────
 
+# CS2's built-in sound events are global, not per-addon. Cache the scan so an
+# addon switch reuses it instead of re-decompiling the VPK on a fresh thread
+# (which raced the editor teardown and crashed the app).
+_EVENTS_CACHE: Optional[Dict[str, str]] = None
+
+
 class SoundEventLoaderThread(QThread):
     events_loaded = Signal(dict)
     progress      = Signal(str)
@@ -250,6 +256,8 @@ class SoundEventLoaderThread(QThread):
     def run(self) -> None:
         try:
             merged = {**self._load_from_vpk(), **self._load_from_disk()}
+            if self._stopped:      # interrupted by teardown -> don't emit partial data
+                return
             self.events_loaded.emit(merged)
             self.progress.emit(f"Loaded {len(merged)} sound events")
         except Exception as e:
@@ -357,6 +365,9 @@ class InternalSoundEventExplorer(QWidget):
         self._source_model.set_names([])
         self._name_to_file.clear()
         self._parsed_files.clear()
+        if _EVENTS_CACHE is not None:
+            self._on_events_loaded(dict(_EVENTS_CACHE))
+            return
         if self.loader and self.loader.isRunning():
             self.loader.stop()
             self.loader.wait(1000)
@@ -396,6 +407,9 @@ class InternalSoundEventExplorer(QWidget):
     # ── Internals ─────────────────────────────────────────────────────────
 
     def _on_events_loaded(self, name_to_file: Dict[str, str]) -> None:
+        global _EVENTS_CACHE
+        if name_to_file and _EVENTS_CACHE is None:
+            _EVENTS_CACHE = dict(name_to_file)
         self._name_to_file = name_to_file
         self._source_model.set_names(sorted(name_to_file, key=str.lower))
         debug(f"[vsndevts] List populated with {len(name_to_file)} events")
