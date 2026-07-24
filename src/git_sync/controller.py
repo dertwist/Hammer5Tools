@@ -8,12 +8,18 @@ spawns every two seconds. The sync flow is an async chain wired on
 QProcess.finished.
 
 The button is icon-only (the settings "check updates" sync icon) with two badge
-overlays: a yellow circle = uncommitted local changes, a red circle = commits
-ahead of origin waiting to be pushed.
+overlays: yellow = uncommitted local changes, red = commits out of step with
+origin, whether they need pulling or pushing.
 """
-from PySide6.QtCore import QProcess, QTimer, QRectF, Qt
+import os
+import re
+import tempfile
+from time import monotonic
+
+from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QRectF, Qt
 from PySide6.QtGui import QIcon, QPainter, QColor, QFont
 from PySide6.QtWidgets import QPushButton, QMessageBox
+from shiboken6 import isValid
 
 from src.settings.common import get_addon_dir
 from src.git_sync.backend import GitRepo, STATUS_V2_ARGS, parse_status_v2
@@ -33,13 +39,134 @@ def _human(nbytes):
         nbytes /= 1024
 
 
+# What the status line says while each step runs, before git reports progress.
+_VERBS = {"add": "Staging changes", "commit": "Committing",
+          "fetch": "Checking for updates", "pull": "Downloading changes",
+          "push": "Uploading changes"}
+
+# git's own progress-line names -> what a mapper waiting on the button wants to
+# read. LFS transfers are not here: they come from the byte log below instead.
+_PHASES = (
+    ("Receiving objects", "Downloading"),
+    ("Writing objects", "Uploading"),
+    ("Compressing objects", "Compressing"),
+    ("Counting objects", "Processing"),
+    ("Enumerating objects", "Processing"),
+    ("Resolving deltas", "Processing"),
+    ("Updating files", "Updating files"),
+    ("Checking out files", "Updating files"),
+)
+_PCT = re.compile(r"(\d{1,3})%")
+
+# git-lfs' stderr meter counts *whole objects*, so one 300 MB map reads 0% for
+# its entire transfer. Muted in favour of the byte log, which the poll timer
+# turns into a percent that actually moves.
+_MUTED = ("LFS objects:", "Filtering content:")
+_LFS_LABEL = {"upload": "Uploading", "download": "Downloading"}
+# git-lfs appends "<dir> <n>/<of> <bytes>/<total> <name>" here, once per chunk;
+# pid-scoped so two running copies of H5T do not read each other's transfer.
+_LFS_LOG = os.path.join(tempfile.gettempdir(), "h5t_lfs_progress_%d.log" % os.getpid())
+
+
+class _LfsProgress:
+    """Whole-transfer progress, accumulated from git-lfs' per-file byte log.
+
+    Each line reports one file ("upload 1/3 12/300 a.vmap"), so a transfer-wide
+    percent means summing them here. Files that have not started have no line at
+    all and no known size; they are priced at the average of the files that do,
+    which self-corrects as the transfer runs and is exact once all have started.
+    Read forward from the last offset — the log gets a line per chunk, so
+    re-reading it whole every 200 ms would go quadratic on a big map.
+    """
+
+    __slots__ = ("path", "pos", "part", "files", "of", "direction")
+
+    def __init__(self, path=_LFS_LOG):
+        self.path = path
+        self.pos = 0
+        self.part = b""      # trailing half-written line, completed by the next read
+        self.files = {}      # name -> (bytes done, bytes total)
+        self.of = 0          # objects in the transfer, per git-lfs
+        self.direction = ""
+
+    def read(self):
+        """Consume whatever git-lfs appended. True if any byte counter moved."""
+        try:
+            with open(self.path, "rb") as f:
+                f.seek(self.pos)
+                new = f.read()
+        except OSError:
+            return False
+        if not new:
+            return False
+        self.pos += len(new)
+        lines = (self.part + new).split(b"\n")
+        self.part = lines.pop()
+        moved = False
+        for line in lines:
+            try:
+                direction, files, byts, name = line.decode(
+                    "utf-8", "replace").split(" ", 3)
+                done, total = (int(x) for x in byts.split("/"))
+                _n, of = (int(x) for x in files.split("/"))
+            except ValueError:
+                continue
+            if total <= 0:
+                continue
+            self.direction, self.of = direction, max(self.of, of)
+            if self.files.get(name) != (done, total):
+                self.files[name] = (done, total)
+                moved = True
+        return moved
+
+    @property
+    def done(self):
+        return sum(d for d, _t in self.files.values())
+
+    def status(self, rate=0.0):
+        """"Uploading 42% (1/3) — 126.0 MB / ~300.0 MB | 4.2 MB/s"."""
+        known = sum(t for _d, t in self.files.values())
+        if not known:
+            return None
+        estimated = self.of > len(self.files)
+        total = known * self.of // len(self.files) if estimated else known
+        finished = sum(1 for d, t in self.files.values() if d >= t)
+        return "%s %d%%%s — %s / %s%s%s" % (
+            _LFS_LABEL.get(self.direction, self.direction.title()),
+            min(100, self.done * 100 // total),
+            " (%d/%d)" % (finished, self.of) if self.of > 1 else "",
+            _human(self.done), "~" if estimated else "", _human(total),
+            " | %s/s" % _human(rate) if rate > 0 else "")
+
+
+def _read(proc, err=False):
+    """Decoded output, or "" if the window closed and took the QProcess with it."""
+    if not isValid(proc):
+        return ""
+    return bytes(proc.readAllStandardError() if err
+                 else proc.readAllStandardOutput()).decode("utf-8", "replace")
+
+
+def _progress(line):
+    """"Downloading 45% — 1.20 MiB | 500 KiB/s" for a git progress line, else None."""
+    for needle, label in _PHASES:
+        if needle not in line:
+            continue
+        pct = _PCT.search(line)
+        if not pct:
+            return label + "…"
+        tail = line.split(", ", 1)[1].strip() if ", " in line else ""
+        return "%s %s%%%s" % (label, pct.group(1),
+                              " — " + tail if "|" in tail else "")
+    return None
+
+
 class SyncButton(QPushButton):
-    """Icon-only sync button that paints local-change / ahead-of-origin badges."""
+    """Icon-only sync button that paints uncommitted / out-of-step-with-origin badges."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setIcon(QIcon(_SYNC_ICON))
-        self.setMinimumSize(40, 0)
         self.setStyleSheet("padding: 5px;")
         self.setToolTip(
             "<html><head/><body>"
@@ -47,43 +174,48 @@ class SyncButton(QPushButton):
             "<p>Commit local changes, fetch, pull (merge), resolve conflicts, "
             "then push the current addon repo.</p>"
             "<p><span style=\"color:#E5A00D;\">●</span> uncommitted local changes"
-            "&nbsp;&nbsp;<span style=\"color:#D64545;\">●</span> commits to pull</p>"
+            "&nbsp;&nbsp;<span style=\"color:#D64545;\">●</span> commits to pull "
+            "or push</p>"
             "</body></html>")
-        self._local = 0   # uncommitted changes -> yellow
-        self._behind = 0  # commits to pull     -> red
+        self._local = 0    # uncommitted changes          -> yellow
+        self._remote = 0   # commits to pull and/or push  -> red
 
-    def set_counts(self, local, behind):
-        if (local, behind) != (self._local, self._behind):
-            self._local, self._behind = local, behind
+    def set_counts(self, local, remote):
+        if (local, remote) != (self._local, self._remote):
+            self._local, self._remote = local, remote
             self.update()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.width() != self.height():
+            self.setFixedWidth(self.height())    # square; the row sets the height
 
     def paintEvent(self, event):
         super().paintEvent(event)
-        badges = []
-        if self._local > 0:
-            badges.append((QColor("#E5A00D"), self._local))   # yellow
-        if self._behind > 0:
-            badges.append((QColor("#D64545"), self._behind))  # red
-        if not badges:
+        if not (self._local or self._remote):
             return
+        # Both badges have to fit along the top edge of a square that is only as
+        # tall as the icon, so cap the diameter at half of it.
+        d = min(13, (min(self.width(), self.height()) - 2) // 2)
+        # One fixed corner each: a badge that moves when its neighbour clears is
+        # unreadable.
+        corners = ((self._local,  "#E5A00D", (self.width() - d - 1, 1)),
+                   (self._remote, "#D64545", (1, 1)))
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        p.setPen(Qt.NoPen)
         font = QFont(self.font())
-        font.setPixelSize(9)
+        font.setPixelSize(max(7, d - 4))
         font.setBold(True)
         p.setFont(font)
-        d = 14                      # badge diameter
-        x = self.width() - d - 2    # top-right, stacking leftwards
-        y = 2
-        for color, count in badges:
+        for count, color, (x, y) in corners:
+            if count <= 0:
+                continue
             p.setPen(Qt.NoPen)
-            p.setBrush(color)
+            p.setBrush(QColor(color))
             p.drawEllipse(QRectF(x, y, d, d))
             p.setPen(Qt.white)
-            text = "99+" if count > 99 else str(count)
-            p.drawText(QRectF(x, y, d, d), Qt.AlignCenter, text)
-            x -= d + 2
+            p.drawText(QRectF(x, y, d, d), Qt.AlignCenter,
+                       "99+" if count > 99 else str(count))
         p.end()
 
 
@@ -98,7 +230,15 @@ class GitController:
         self._is_repo = True   # assumed until the first status says otherwise
         self._msg = ""         # pending commit message, mid-sync
         self._busy = False
+        self._prog = None      # (when, bytes, rate) sample, for _tick_progress
+        self._lfs = _LfsProgress()
         self.button.clicked.connect(self.sync)
+
+        # git-lfs writes stderr in coarse bursts but logs every chunk, so poll
+        # the log: that is what makes the percent creep instead of jump.
+        self._prog_timer = QTimer(main_window)
+        self._prog_timer.setInterval(200)
+        self._prog_timer.timeout.connect(self._tick_progress)
 
         # ponytail: poll git status instead of wiring a recursive filesystem
         # watcher; swap to QFileSystemWatcher if 2s lag shows.
@@ -145,14 +285,16 @@ class GitController:
 
     def _status_done(self, proc, code):
         # finished + errorOccurred can both fire; the guard makes it idempotent.
-        if self._status_proc is not proc:
+        # isValid: closing the window mid-poll destroys the QProcess and *then*
+        # emits finished, so everything below would touch a dead C++ object.
+        if self._status_proc is not proc or not isValid(proc):
             return
         self._status_proc = None
-        out = bytes(proc.readAllStandardOutput()).decode("utf-8", "replace")
+        out = _read(proc)
         proc.deleteLater()
         self._is_repo = code == 0
-        local, _ahead, behind = parse_status_v2(out) if self._is_repo else (0, 0, 0)
-        self.button.set_counts(local, behind)
+        local, ahead, behind = parse_status_v2(out) if self._is_repo else (0, 0, 0)
+        self.button.set_counts(local, behind + ahead)
         self.button.setEnabled(not self._busy)  # no repo -> shows "no repo" dialog
 
     def _auto_fetch(self):
@@ -265,7 +407,7 @@ class GitController:
         if not files:
             return True
         dlg = ConflictDialog(self.repo, files, self.main)
-        if dlg.exec() != dlg.Accepted:
+        if not dlg.exec():          # 0 == rejected; dlg.Accepted is not a thing in PySide6
             self.repo._run("merge", "--abort")
             return False
         # All files added by the dialog -> finish the merge commit.
@@ -274,9 +416,21 @@ class GitController:
 
     # ---- QProcess streaming --------------------------------------------
     def _stream(self, args, on_done):
-        self._log("git " + " ".join(args))
+        self._log(_VERBS.get(args[0], "git " + args[0]) + "…")
         proc = QProcess(self.main)
         proc.setWorkingDirectory(self.repo.dir)
+        # git-lfs prints transfer progress only when stderr is a terminal, and
+        # the LFS objects are exactly the part worth watching in a map repo.
+        try:
+            os.remove(_LFS_LOG)      # git-lfs appends; each step starts clean
+        except OSError:
+            pass
+        env = QProcessEnvironment.systemEnvironment()
+        env.insert("GIT_LFS_FORCE_PROGRESS", "1")
+        env.insert("GIT_LFS_PROGRESS", _LFS_LOG)
+        proc.setProcessEnvironment(env)
+        self._prog, self._lfs = None, _LfsProgress()
+        self._prog_timer.start()
         proc.readyReadStandardError.connect(lambda: self._pump(proc, err=True))
         proc.readyReadStandardOutput.connect(lambda: self._pump(proc, err=False))
         proc.finished.connect(lambda ec, _st: self._finish(proc, ec, on_done))
@@ -287,16 +441,49 @@ class GitController:
             self._set_busy(False)
             self.refresh()
 
+    def _tick_progress(self):
+        """Advance the status line from git-lfs' byte log, five times a second.
+
+        Only on movement: when the transfer ends the label is left alone so the
+        next git phase from _pump can take it over. The rate is smoothed, an
+        instant delta over a 200 ms window swings wildly.
+        """
+        if not self._lfs.read():
+            return
+        done, now = self._lfs.done, monotonic()
+        if self._prog is None:
+            self._prog = (now, done, 0.0)    # a rate needs two samples
+            return
+        was, before, rate = self._prog
+        if done == before:
+            return
+        instant = (done - before) / max(1e-3, now - was)
+        rate = instant if rate <= 0 else rate * 0.7 + instant * 0.3
+        self._prog = (now, done, rate)
+        self._log(self._lfs.status(rate))
+
     def _pump(self, proc, err):
-        raw = (proc.readAllStandardError() if err
-               else proc.readAllStandardOutput())
-        text = bytes(raw).decode("utf-8", "replace")
-        for chunk in reversed(text.replace("\r", "\n").split("\n")):
-            if chunk.strip():
-                self._log(chunk.strip())
-                break
+        """Report the newest thing git said, as a phase where we recognise one.
+
+        git redraws one line with \\r, so a single read holds several updates and
+        its tail is often a half-written line. Newest recognised phase wins;
+        anything else falls through to the last line so errors still show.
+        """
+        text = _read(proc, err)
+        lines = [c.strip() for c in text.replace("\r", "\n").split("\n")
+                 if c.strip() and not any(m in c for m in _MUTED)]
+        for line in reversed(lines):
+            phase = _progress(line)
+            if phase:
+                self._log(phase)
+                return
+        if lines:
+            self._log(lines[-1])
 
     def _finish(self, proc, exit_code, on_done):
+        self._prog_timer.stop()
+        if not isValid(proc):       # window closed mid-step; see _status_done
+            return
         proc.deleteLater()
         if self.proc is proc:
             self.proc = None
@@ -305,3 +492,39 @@ class GitController:
     def _set_busy(self, busy):
         self._busy = busy
         self.button.setEnabled(not busy and self._is_repo)
+
+
+if __name__ == "__main__":   # python -m src.git_sync.controller
+    assert _progress("Receiving objects:  45% (450/1000), 1.20 MiB | 500.00 KiB/s") \
+        == "Downloading 45% — 1.20 MiB | 500.00 KiB/s"
+    assert _progress("remote: Counting objects:  9% (2/20)") == "Processing 9%"
+    assert _progress("Compressing objects: 100% (20/20), done.") == "Compressing 100%"
+    assert _progress("Enumerating objects: 20, done.") == "Processing…"
+    assert _progress("fatal: could not read Username for 'https://github.com'") is None
+
+    # git-lfs' own object-count percent is muted; the byte log replaces it
+    assert _progress("Uploading LFS objects:   0% (0/1), 12 MB | 517 KB/s") is None
+
+    log = os.path.join(tempfile.gettempdir(), "h5t_lfs_selfcheck.log")
+    p = _LfsProgress(log)
+    assert p.read() is False                        # no log yet
+    mb = 1024 * 1024
+    with open(log, "wb") as f:                      # one of three files, part done
+        f.write(b"upload 1/3 %d/%d a.vmap\nupload 1/3 %d/%d a.vm" % (
+            10 * mb, 100 * mb, 11 * mb, 100 * mb))  # trailing partial: ignored
+    assert p.read() is True
+    # 100 MB seen for 1 of 3 files -> total priced at 300 MB, so 10 of ~300
+    assert p.status() == "Uploading 3% (0/3) — 10.0 MB / ~300.0 MB"
+    assert p.read() is False                        # nothing new appended
+    with open(log, "ab") as f:                      # finish it, start the rest
+        f.write(b"ap\nupload 2/3 %d/%d a.vmap\nupload 2/3 %d/%d b.vmap\n"
+                b"upload 3/3 %d/%d c.vmap\n" % (100 * mb, 100 * mb, 50 * mb,
+                                                200 * mb, 0, 100 * mb))
+    assert p.read() is True
+    # every file seen now: real total, no ~, and the percent is transfer-wide
+    assert p.status(4404019) == "Uploading 37% (1/3) — 150.0 MB / 400.0 MB | 4.2 MB/s"
+    os.remove(log)
+
+    # badge counts: 2 changed paths, 3 to push, 1 to pull
+    assert parse_status_v2("# branch.ab +3 -1\n1 .M N... a\n? b\n") == (2, 3, 1)
+    print("ok")
