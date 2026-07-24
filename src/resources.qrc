@@ -264,6 +264,10 @@
     <file>icons/assettypes/xml_sm.png</file>
     <file>icons/keyboard.png</file>
     <file>icons/volume_up.png</file>
+    <file>icons/sound_event_editor.svg</file>
+    <file>icons/hotkey_editor.svg</file>
+    <file>icons/smartprop_editor.png</file>
+    <file>icons/tools/vmixtool/appicon.ico</file>
     <file>icons/assettypes/vsmart_sm.png</file>
   </qresource>
   <qresource prefix="social">
@@ -272,6 +276,8 @@
     <file>icons/social/twitter.png</file>
   </qresource>
   <qresource prefix="/valve_common">
+    <file>icons/tools/model_editor/hierarchy_sequence_group_referenced.png</file>
+    <file>icons/tools/hammer/displacement_tool_icon.png</file>
     <file>icons/tools/common/add.png</file>
     <file>icons/tools/common/add_editor_node.png</file>
     <file>icons/tools/common/add_med.png</file>
