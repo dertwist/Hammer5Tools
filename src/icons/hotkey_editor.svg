@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Valve Source 2 Hotkey Editor Icon -->
+  <!-- Keycap Base Plate -->
+  <rect x="2" y="3" width="13" height="13" rx="2.5" fill="#2E2E33" stroke="#9D9D9D" stroke-width="1.5"/>
+  <!-- Keycap Top Surface Face -->
+  <rect x="3.5" y="4.5" width="10" height="9" rx="1.5" fill="#44444A"/>
+  
+  <!-- Keycap Letter 'K' Symbol in Slate Gray -->
+  <path d="M6.5 6.5V11.5M6.5 9L9.5 6.5M6.5 9L9.5 11.5" stroke="#9D9D9D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Secondary Hotkey Action Badge (Valve Source 2 Orange Overlay) -->
+  <rect x="10.5" y="9.5" width="11.5" height="11.5" rx="3" fill="#FF7900" stroke="#1D1D1F" stroke-width="1"/>
+  
+  <!-- Lightning Bolt / Shortcut Action Symbol -->
+  <path d="M16.5 11L13.5 15.5H16.5L15.5 19.5L19.5 14.5H16.5L17.5 11H16.5Z" fill="#FFFFFF"/>
+</svg>

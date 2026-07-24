@@ -112,7 +112,7 @@ QTabBar::tab:selected {
       <widget class="QWidget" name="Loading_Editor_Tab">
        <attribute name="icon">
         <iconset resource="resources.qrc">
-         <normaloff>:/icons/imagesmode_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/imagesmode_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
+         <normaloff>:/valve_common/icons/tools/common/image.png</normaloff>:/valve_common/icons/tools/common/image.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Loading Editor</string>
@@ -125,7 +125,7 @@ QTabBar::tab:selected {
        </property>
        <attribute name="icon">
         <iconset resource="resources.qrc">
-         <normaloff>:/icons/volume_up.png</normaloff>:/icons/volume_up.png</iconset>
+         <normaloff>:/icons/tools/vmixtool/appicon.ico</normaloff>:/icons/tools/vmixtool/appicon.ico</iconset>
        </attribute>
        <attribute name="title">
         <string>SoundEvent Editor</string>
@@ -135,7 +135,7 @@ QTabBar::tab:selected {
       <widget class="QWidget" name="smartpropeditor_tab">
        <attribute name="icon">
         <iconset resource="resources.qrc">
-         <normaloff>:/icons/functions_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/functions_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
+         <normaloff>:/icons/smartprop_editor.png</normaloff>:/icons/smartprop_editor.png</iconset>
        </attribute>
        <attribute name="title">
         <string>SmartProp Editor</string>
@@ -145,7 +145,7 @@ QTabBar::tab:selected {
       <widget class="QWidget" name="BatchCreator_tab">
        <attribute name="icon">
         <iconset resource="resources.qrc">
-         <normaloff>:/icons/dashboard_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/dashboard_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
+         <normaloff>:/valve_common/icons/tools/model_editor/hierarchy_sequence_group_referenced.png</normaloff>:/valve_common/icons/tools/model_editor/hierarchy_sequence_group_referenced.png</iconset>
        </attribute>
        <attribute name="title">
         <string>AssetGroup Maker</string>
@@ -158,7 +158,7 @@ QTabBar::tab:selected {
        </property>
        <attribute name="icon">
         <iconset resource="resources.qrc">
-         <normaloff>:/icons/keyboard.png</normaloff>:/icons/keyboard.png</iconset>
+         <normaloff>:/valve_common/icons/tools/common/help_keybinding_list.png</normaloff>:/valve_common/icons/tools/common/help_keybinding_list.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Hotkey Editor</string>

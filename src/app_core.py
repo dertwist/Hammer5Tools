@@ -381,10 +381,22 @@ class Widget(QMainWindow):
         layout = QVBoxLayout(self.detailpropeditor_tab)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        dp_icon = QIcon(":/icons/density_medium_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        dp_icon = QIcon(":/valve_common/icons/tools/hammer/displacement_tool_icon.png")
         idx = self.ui.MainWindowTools_tabs.indexOf(self.ui.hotkeyeditor_tab)
         self.ui.MainWindowTools_tabs.insertTab(idx + 1, self.detailpropeditor_tab, dp_icon, "DetailProp Editor")
-        
+
+        # Programmatically create Audio Editor tab (addon-independent, created once)
+        from src.editors.soundevent_editor.wave_editor import AudioEditor
+        self.audio_editor_tab = QWidget()
+        self.audio_editor_tab.setObjectName("audio_editor_tab")
+        ae_layout = QVBoxLayout(self.audio_editor_tab)
+        ae_layout.setContentsMargins(0, 0, 0, 0)
+        self.AudioEditor_instance = AudioEditor(parent=self)
+        ae_layout.addWidget(self.AudioEditor_instance)
+        ae_icon = QIcon(":/valve_common/icons/tools/common/control_play.png")
+        sound_idx = self.ui.MainWindowTools_tabs.indexOf(self.ui.soundeditor_tab)
+        self.ui.MainWindowTools_tabs.insertTab(sound_idx + 1, self.audio_editor_tab, ae_icon, "Audio Editor")
+
     def populate_addon_combobox(self):
         exclude_addons = {"workshop_items", "addon_template"}
         if cs2_path is None:
@@ -526,6 +538,10 @@ class Widget(QMainWindow):
             self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
             self.LoadingEditorMainWindow = Loading_editorMainWindow(parent=self)
             self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
+
+            if getattr(self, 'AudioEditor_instance', None):
+                self.AudioEditor_instance.set_root(
+                    os.path.join(cs2_path, 'content', 'csgo_addons', new_addon, 'sounds'))
 
             if hasattr(self, 'detailpropeditor_tab'):
                 from src.forms.detail_prop_editor.main import DetailPropEditorWidget
