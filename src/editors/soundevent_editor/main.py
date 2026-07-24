@@ -688,6 +688,15 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.settings.setValue("SoundEventEditorMainWindow/windowState", self.saveState())
     def closeEvent(self, event):
         self._save_user_prefs()
+        # Stop the background VPK scanners before the editor is destroyed.
+        # Destroying a running QThread aborts the whole process
+        # ("QThread: Destroyed while thread is still running") — this is what
+        # crashed the app when switching addons.
+        for thr in (getattr(getattr(self, 'internal_explorer', None), 'vpk_loader_thread', None),
+                    getattr(getattr(self, 'internal_soundevents_explorer', None), 'loader', None)):
+            if thr is not None and thr.isRunning():
+                thr.stop()
+                thr.wait(5000)
 
     #============================================================<  File actions  >=========================================================
     def save_file(self, file_path):

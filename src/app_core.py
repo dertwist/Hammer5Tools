@@ -17,6 +17,7 @@ from PySide6.QtNetwork import QLocalServer
 from src.ipc.protocol import IPCMessage, IPCCommand
 from src.forms.about.main import AboutDialog
 from src.forms.mapbuilder.main import MapBuilderDialog
+from src.git_sync.controller import GitController, SyncButton
 from src.settings.main import (
     PreferencesDialog,
     get_steam_path,
@@ -510,6 +511,10 @@ class Widget(QMainWindow):
         launch_addon()
 
     def setup_buttons(self):
+        self.git_sync_button = SyncButton(self.centralWidget())
+        _combo_idx = self.ui.horizontalLayout_2.indexOf(self.ui.ComboBoxSelectAddon)
+        self.ui.horizontalLayout_2.insertWidget(_combo_idx + 1, self.git_sync_button)
+        self.git = GitController(self, self.git_sync_button)
         self.ui.Launch_Addon_Button.clicked.connect(self.launch_addon_action)
         self.ui.ComboBoxSelectAddon.wheelEvent = lambda event: None
         self.ui.ComboBoxSelectAddon.view().setAlternatingRowColors(True)
@@ -656,6 +661,9 @@ class Widget(QMainWindow):
                 self.DetailPropEditorWidget_instance = DetailPropEditorWidget(parent=self)
                 self.detailpropeditor_tab.layout().addWidget(self.DetailPropEditorWidget_instance)
                 self._hook_undo_console(getattr(self.DetailPropEditorWidget_instance, 'undo_stack', None))
+
+        if getattr(self, 'git', None):
+            self.git.refresh()
 
     @exception_handler
     def open_addons_folder(self, folder_type="content"):
