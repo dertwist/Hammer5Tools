@@ -28,7 +28,7 @@ class Ui_Dialog(object):
         Dialog.setMinimumSize(QSize(420, 128))
         Dialog.setMaximumSize(QSize(420, 128))
         icon = QIcon()
-        icon.addFile(u":/icons/keyboard.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/valve_common/icons/tools/common/help_keybinding_list.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         Dialog.setWindowIcon(icon)
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
