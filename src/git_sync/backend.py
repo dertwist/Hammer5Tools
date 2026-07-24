@@ -91,6 +91,27 @@ class GitRepo:
         code, out, _ = self._run("check-attr", "filter", "--", path)
         return code == 0 and "filter: lfs" in out
 
+    def show_stage(self, stage, path):
+        """Raw bytes of one side of a conflict: 1=base, 2=ours, 3=theirs.
+
+        None if that stage does not exist — stage 1 is missing whenever both
+        sides added the file, which just means there is no common ancestor.
+        Deliberately not _run(): that decodes as text and would wreck a binary
+        blob like a .vmap.
+        """
+        if not self.dir:
+            return None
+        try:
+            p = subprocess.run(
+                ["git", "show", f":{stage}:{path}"],
+                cwd=self.dir,
+                capture_output=True,
+                creationflags=_NO_WINDOW,
+            )
+        except (OSError, ValueError):
+            return None
+        return p.stdout if p.returncode == 0 else None
+
     def conflicts(self):
         """Paths with an unresolved merge conflict (both sides touched)."""
         out = []
