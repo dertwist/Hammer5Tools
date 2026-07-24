@@ -298,6 +298,7 @@ QDockWidget DockTitleWidget QToolButton::menu-indicator {
         border-color: rgba(80, 80, 80, 255);
         selection-background-color: #414956;
         background-color: #1C1C1C;
+        alternate-background-color: #26262A;
     }
     
     
@@ -825,6 +826,16 @@ QMenu::item:selected {
     border-color: rgba(80, 80, 80, 105);
 }
 
+QMenu::item:disabled {
+    color: #555555;
+    background-color: transparent;
+}
+
+QMenu::item:selected:disabled {
+    color: #555555;
+    background-color: transparent;
+}
+
 QMenu::separator {
     height: 1px;
     background: #61666e;
@@ -868,6 +879,11 @@ QMenuBar::item:selected {
 
 QMenuBar::item:pressed {
     background-color: #414956;
+}
+
+QMenuBar::item:disabled {
+    color: #555555;
+    background-color: transparent;
 }
 
 

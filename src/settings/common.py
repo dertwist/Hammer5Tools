@@ -47,6 +47,7 @@ def default_settings():
         set_settings_bool('APP', 'minimize_message_shown', True)
         set_settings_bool('APP', 'first_launch', True)
         set_settings_bool('APP', 'minimize_to_tray', False)
+        set_settings_bool('APP', 'show_about_on_startup', True)
         settings.sync()
 
 default_settings()
