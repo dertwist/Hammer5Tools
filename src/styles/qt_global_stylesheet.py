@@ -809,7 +809,7 @@ QMenu::item {
     border: 1px solid transparent; 
     border-radius: 1px;
     border-top: 0px;
-    bottom-bottom: 2px solid transparent;
+    border-bottom: 2px solid transparent;
     border-color: rgba(80, 80, 80, 105);
     padding: 4px 8px 4px 8px;
     padding-right: 20px;
@@ -822,7 +822,7 @@ QMenu::item:selected {
     border: 1px solid transparent; 
     border-radius: 1px;
     border-top: 0px;
-    bottom-bottom: 2px solid transparent;
+    border-bottom: 2px solid transparent;
     border-color: rgba(80, 80, 80, 105);
 }
 

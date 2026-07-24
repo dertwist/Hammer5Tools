@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QDockWidget
 )
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QPainter, QColor
 from PySide6.QtCore import (
     QPropertyAnimation,
     QPoint,
@@ -33,7 +33,6 @@ from src.settings.main import (
 from src.editors.loading_editor.main import Loading_editorMainWindow
 from src.editors.hotkey_editor.main import HotkeyEditorMainWindow
 from src.forms.create_addon.main import Create_addon_Dialog
-from src.other.steam_restart import SteamNoLogoFixThreadClass
 from src.other.addon_functions import delete_addon, launch_addon
 from src.other.file_association import check_association, setup_all_associations
 from src.updater.check import check_updates
@@ -73,6 +72,24 @@ def restore_window(hwnd):
     ctypes.windll.user32.SetForegroundWindow(hwnd)
     ctypes.windll.user32.BringWindowToTop(hwnd)
     ctypes.windll.user32.SwitchToThisWindow(hwnd, True)
+
+class AlternatingMenu(QMenu):
+    """QMenu with alternating row backgrounds (QMenu items aren't view rows,
+    so this can't be done via stylesheet). Paints a subtle band over odd,
+    non-separator rows on top of the normal render."""
+    ALT_COLOR = QColor(255, 255, 255, 14)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QPainter(self)
+        row = 0
+        for action in self.actions():
+            if action.isSeparator():
+                continue
+            if row % 2 == 1:
+                painter.fillRect(self.actionGeometry(action), self.ALT_COLOR)
+            row += 1
+
 
 class DevWidget(QWidget):
     def __init__(self, parent=None):
@@ -141,12 +158,7 @@ class Widget(QMainWindow):
         self._geometry_save_timer.setInterval(500)
         self._geometry_save_timer.timeout.connect(self._save_window_state)
 
-        self.default_title = "Hammer 5 Tools"
-        self.setWindowTitle(self.default_title)
-
-        self.title_reset_timer = QTimer(self)
-        self.title_reset_timer.setSingleShot(True)
-        self.title_reset_timer.timeout.connect(self.reset_title)
+        self.setWindowTitle("Hammer 5 Tools")
 
         self.launchOptionPoller = QTimer(self)
         self.launchOptionPoller.setInterval(1000)
@@ -220,20 +232,45 @@ class Widget(QMainWindow):
 
     @exception_handler
     def update_title(self, status=None, file_path=None, text=None):
-        base_title = "Hammer 5 Tools"
-        new_title = base_title
+        # Feeds the persistent console line only; window title stays static.
         if file_path:
             if status == "saved":
-                new_title = f"{base_title} [ Saved file --- {file_path} ]"
+                msg = f"Saved file [{file_path}]"
             elif status == "opened":
-                new_title = f"{base_title} [ Opened file --- {file_path} ]"
+                msg = f"Opened file [{file_path}]"
+            else:
+                return
         elif text:
-            new_title = f"{base_title} [ {text} ]"
-        self.setWindowTitle(new_title)
-        self.title_reset_timer.start(5000)
+            msg = text
+        else:
+            return
+        try: self.ui.console_label.setText(msg)
+        except Exception: pass
 
-    def reset_title(self):
-        self.setWindowTitle(self.default_title)
+    def _hook_undo_console(self, stack):
+        """Report a QUndoStack's actions to the console line. A fresh push and a
+        redo both advance the index by one, so count() disambiguates them."""
+        if stack is None:
+            return
+        state = {"idx": stack.index(), "count": stack.count()}
+
+        def on_index_changed(new_idx):
+            prev_idx, prev_count = state["idx"], state["count"]
+            count = stack.count()
+            state["idx"], state["count"] = new_idx, count
+            if count == 0:
+                return
+            if count > prev_count:                       # new command pushed
+                txt = stack.text(new_idx - 1)
+                if txt: self.update_title(text=txt[:1].upper() + txt[1:])
+            elif new_idx < prev_idx:                     # undo
+                txt = stack.text(new_idx)
+                if txt: self.update_title(text=f"Undo [{txt}]")
+            elif new_idx > prev_idx:                     # redo
+                txt = stack.text(new_idx - 1)
+                if txt: self.update_title(text=f"Redo [{txt}]")
+
+        stack.indexChanged.connect(on_index_changed)
 
     def current_tab(self, set_flag):
         if set_flag:
@@ -474,11 +511,8 @@ class Widget(QMainWindow):
 
     def setup_buttons(self):
         self.ui.Launch_Addon_Button.clicked.connect(self.launch_addon_action)
-        self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)
         self.ui.ComboBoxSelectAddon.wheelEvent = lambda event: None
         self.ui.ComboBoxSelectAddon.view().setAlternatingRowColors(True)
-        self.ui.open_addons_folder_downlist.wheelEvent = lambda event: None
-        self.ui.open_addons_folder_downlist.view().setAlternatingRowColors(True)
         self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
         addon = get_addon_name()
         combo_items = [self.ui.ComboBoxSelectAddon.itemText(i) for i in range(self.ui.ComboBoxSelectAddon.count())]
@@ -487,27 +521,48 @@ class Widget(QMainWindow):
         self.ui.ComboBoxSelectAddon.setCurrentText(get_addon_name())
         self.ui.ComboBoxSelectAddon.activated.connect(self.refresh_addon_combobox)
         self.ui.preferences_button.clicked.connect(self.open_preferences_dialog)
-        self.ui.create_new_addon_button.clicked.connect(self.open_create_addon_dialog)
-        self.ui.delete_addon_button.clicked.connect(self.delete_addon)
-        self.ui.launch_settings.clicked.connect(self.open_launch_options)
-        self.ui.export_and_import_addon_button.clicked.connect(self.open_export_and_import_addon)
-        self.ui.open_addons_folder_button.clicked.connect(self.open_addons_folder)
         self.ui.my_twitter_button.clicked.connect(self.open_my_twitter)
         self.ui.discord.clicked.connect(self.open_discord)
         self.ui.documentation_button.clicked.connect(self.open_about)
         self.ui.mapbuilder.clicked.connect(self.open_mapbuilder_dialog)
-        self.ui.open_dialog_button.clicked.connect(self.open_selected_dialog)
-        last_tool = get_settings_value("APP", "last_selected_tool", "Cleanup")
-        tool_items = [self.ui.dialog_selection_combobox.itemText(i) for i in range(self.ui.dialog_selection_combobox.count())]
-        if last_tool in tool_items:
-            self.ui.dialog_selection_combobox.setCurrentText(last_tool)
-        else:
-            self.ui.dialog_selection_combobox.setCurrentText("Cleanup")
-        self.ui.dialog_selection_combobox.currentTextChanged.connect(self.save_selected_tool)
+        self._build_addon_actions_menu()
+        self._build_utilities_menu()
+        # Hide the dropdown arrow and cap height to match the sibling buttons.
+        # Existing .ui styles are bare declarations, so wrap them in a selector
+        # before adding the sub-control rule (mixing the two is invalid CSS).
+        h = self.ui.preferences_button.sizeHint().height()
+        for b in (self.ui.utilities_button, self.ui.addon_actions_button):
+            base = b.styleSheet().strip()
+            wrapped = f"QToolButton {{ {base} }}\n" if base else ""
+            b.setStyleSheet(wrapped + "QToolButton::menu-indicator { image: none; width: 0px; }")
+            b.setMaximumHeight(h)
+        self.ui.utilities_button.setMinimumWidth(0)
+        self.ui.console_label.setText("Ready")
         self.updateLaunchAddonButton()
 
-    def save_selected_tool(self, text):
-        set_settings_value("APP", "last_selected_tool", text)
+    def _build_addon_actions_menu(self):
+        menu = AlternatingMenu(self)
+        menu.addAction("Edit launch parameters", self.open_launch_options)
+        menu.addSeparator()
+        menu.addAction("Create new addon", self.open_create_addon_dialog)
+        menu.addAction("Delete addon", self.delete_addon)
+        menu.addSeparator()
+        menu.addAction("Export addon", self.open_export_and_import_addon)
+        menu.addAction("Import addon", self.import_addon_action)
+        menu.addSeparator()
+        menu.addAction("Open content folder", lambda: self.open_addons_folder("content"))
+        menu.addAction("Open game folder", lambda: self.open_addons_folder("game"))
+        self.ui.addon_actions_button.setMenu(menu)
+
+    def _build_utilities_menu(self):
+        menu = AlternatingMenu(self)
+        menu.addAction("Cleanup", lambda: CleanupDialog(self).show())
+        menu.addAction("Unreal Converter", self._open_unreal_converter)
+        self.ui.utilities_button.setMenu(menu)
+
+    def _open_unreal_converter(self):
+        self.unreal_converter_dialog = UnrealConverterWidget(parent=self)
+        self.unreal_converter_dialog.show()
 
     def updateLaunchAddonButton(self):
         commands = get_settings_value("LAUNCH", "commands", default_commands)
@@ -585,8 +640,10 @@ class Widget(QMainWindow):
         if cs2_path is not None:
             self.SoundEventEditorMainWindow = SoundEventEditorMainWindow(update_title=self.update_title, parent=self)
             self.ui.soundeditor_tab.layout().addWidget(self.SoundEventEditorMainWindow)
+            self._hook_undo_console(getattr(self.SoundEventEditorMainWindow, 'undo_stack', None))
             self.SmartPropEditorMainWindow = SmartPropEditorMainWindow(update_title=self.update_title, parent=self)
             self.ui.smartpropeditor_tab.layout().addWidget(self.SmartPropEditorMainWindow)
+            self._hook_undo_console(getattr(self.SmartPropEditorMainWindow, 'undo_stack', None))
             self.LoadingEditorMainWindow = Loading_editorMainWindow(parent=self)
             self.ui.Loading_Editor_Tab.layout().addWidget(self.LoadingEditorMainWindow)
 
@@ -598,22 +655,17 @@ class Widget(QMainWindow):
                 from src.forms.detail_prop_editor.main import DetailPropEditorWidget
                 self.DetailPropEditorWidget_instance = DetailPropEditorWidget(parent=self)
                 self.detailpropeditor_tab.layout().addWidget(self.DetailPropEditorWidget_instance)
+                self._hook_undo_console(getattr(self.DetailPropEditorWidget_instance, 'undo_stack', None))
 
     @exception_handler
-    def open_addons_folder(self):
+    def open_addons_folder(self, folder_type="content"):
         if cs2_path is None:
             QMessageBox.warning(self, "CS2 Path Not Set", "CS2 installation path is not set. Please set it in Settings > General > CS2 Path."); return
         addon_name = self.ui.ComboBoxSelectAddon.currentText()
-        folder_path = r"\game\csgo_addons" if self.ui.open_addons_folder_downlist.currentText() == "Game" else r"\content\csgo_addons"
+        folder_path = r"\game\csgo_addons" if folder_type == "game" else r"\content\csgo_addons"
         full_path = f"{cs2_path}{folder_path}\\{addon_name}"
         if os.path.exists(full_path): os.startfile(full_path)
         else: QMessageBox.warning(self, "Folder Not Found", f"The addon folder does not exist:\n{full_path}")
-
-    @exception_handler
-    def open_selected_dialog(self):
-        selection = self.ui.dialog_selection_combobox.currentText()
-        if selection == "Cleanup": CleanupDialog(self).show()
-        elif selection == "Unreal Converter": self.unreal_converter_dialog = UnrealConverterWidget(parent=self); self.unreal_converter_dialog.show()
 
     @exception_handler
     def open_mapbuilder_dialog(self):
@@ -642,11 +694,6 @@ class Widget(QMainWindow):
         if self.tray_icon: self.tray_icon.hide()
         QApplication.quit()
 
-    def SteamNoLogonFix(self):
-        self.steam_fix_thread = SteamNoLogoFixThreadClass()
-        self.steam_fix_thread.start()
-        self.update_title(text="Applying Steam No-Logon Fix...")
-
     def open_about(self):
         AboutDialog(app_version, self).exec()
 
@@ -660,6 +707,11 @@ class Widget(QMainWindow):
 
     def open_export_and_import_addon(self):
         ExportAndImportAddonDialog(self).exec()
+
+    def import_addon_action(self):
+        dialog = ExportAndImportAddonDialog(self)
+        dialog.do_import_addon()
+        self.refresh_addon_combobox()
 
     def open_my_twitter(self): webbrowser.open("https://twitter.com/dertwist")
     def open_discord(self): webbrowser.open("https://discord.gg/6X88yX8Y")
