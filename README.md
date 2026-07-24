@@ -21,8 +21,6 @@
 
 ---
 
-# Level Up Your Mapping Workflow
-
 Welcome to **Hammer 5 Tools**. This toolkit is designed to bridge the gaps and streamline the level design workflow in Counter-Strike 2.
 
 Whether it's managing sound events, working with Smart Props, or compiling projects, the toolkit provides the necessary solutions.
@@ -32,8 +30,6 @@ Whether it's managing sound events, working with Smart Props, or compiling proje
 <p align="center">
   <video src="https://hammer5tools.github.io/videos/hero.mp4" controls="controls" width="100%" muted="true" loop="true" autoplay="true"></video>
 </p>
-
-## What's Inside?
 
 ### SmartProp Editor
 Editing `.vsmart` files manually is no longer necessary. The editor provides a visual way to manage position, rotation, and scaling in real-time. It is fully compatible with Valve's formats and includes presets to help build complex scenes efficiently.
@@ -90,9 +86,3 @@ The app is modular. Each editor lives in its own folder under `src/` and can run
 The project utilizes **Velopack** for delta-based updates. The GitHub Actions pipeline handles packaging automatically whenever a new tag (e.g., `v5.0.0`) is pushed to the repository.
 
 ---
-
-## Join the Community
-Have questions? Found a bug? Or just want to show off what you've built? Join the **[Discord Server](https://discord.com/invite/DvCXEyhssd)**. A community of mappers and developers is available to help out.
-
----
-*Created by [Twist](https://github.com/dertwist) and the community.*
