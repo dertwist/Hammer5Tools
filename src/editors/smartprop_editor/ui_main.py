@@ -69,6 +69,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout = QVBoxLayout(self.centralwidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalLayout.setContentsMargins(-1, 4, -1, -1)
         self.DocumentTabWidget = QTabWidget(self.centralwidget)
         self.DocumentTabWidget.setObjectName(u"DocumentTabWidget")
         self.DocumentTabWidget.setDocumentMode(True)
@@ -87,7 +88,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.ExplorerDock = QDockWidget(MainWindow)
         self.ExplorerDock.setObjectName(u"ExplorerDock")
-        self.ExplorerDock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetFloatable|QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.ExplorerDock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.ExplorerDock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea|Qt.DockWidgetArea.LeftDockWidgetArea|Qt.DockWidgetArea.RightDockWidgetArea)
         self.explorer_layout_widget = QWidget()
         self.explorer_layout_widget.setObjectName(u"explorer_layout_widget")
@@ -124,6 +125,6 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.placeholder_label.setText(QCoreApplication.translate("MainWindow", u"Open or create a new file", None))
-        self.ExplorerDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"Explorer", None))
+        self.ExplorerDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"", None))
     # retranslateUi
 
