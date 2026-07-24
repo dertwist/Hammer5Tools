@@ -22,19 +22,45 @@ import numpy as np
 import pyqtgraph as pg
 import imageio_ffmpeg
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QFrame,
-    QFileDialog, QMessageBox, QSplitter, QTabWidget, QMenuBar,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+    QFileDialog, QMessageBox, QTabWidget, QMenuBar,
+    QToolBar, QToolButton, QSizePolicy, QMainWindow, QDockWidget,
 )
-from PySide6.QtCore import Qt, QTimer, QUrl
-from PySide6.QtGui import QKeySequence, QShortcut, QAction, QPainter, QColor, QLinearGradient, QBrush
+from PySide6.QtCore import Qt, QTimer, QUrl, Signal, QSize
+from PySide6.QtGui import QKeySequence, QAction, QIcon, QPainter, QColor, QLinearGradient, QBrush
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 
-from src.editors.soundevent_editor.audio_player import compute_peak_envelope
+from src.editors.soundevent_editor.audio_player import compute_peak_envelope, DBInfoOverlay
 from src.widgets.explorer.main import Explorer
 from src.settings.main import get_cs2_path, get_addon_name
 
 _NO_WINDOW = 0x08000000 if os.name == "nt" else 0
 _AUDIO_EXTS = (".wav", ".mp3", ".flac", ".aac", ".m4a", ".ogg", ".wma")
+
+# Toolbar / menu icons (resource paths from the app's compiled .qrc)
+_CTRL = ":/valve_common/icons/tools/common/"
+_IC = {
+    "play": _CTRL + "control_play.png",
+    "pause": _CTRL + "control_pause.png",
+    "stop": _CTRL + "control_stop.png",
+    "open": ":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg",
+    "save": ":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg",
+    "save_as": ":/icons/save_as_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg",
+    "undo": ":/icons/undo_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg",
+    "redo": ":/icons/redo_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg",
+    "cut": ":/icons/content_cut_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg",
+    "copy": ":/icons/content_copy_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg",
+    "paste": ":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg",
+    "zoom_in": ":/icons/zoom_in_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg",
+    "zoom_out": ":/icons/remove_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg",
+    "fit": ":/icons/open_in_full_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg",
+    "smooth": ":/icons/gradient_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png",
+    "sharpen": ":/icons/tune_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png",
+    "vol_up": ":/icons/volume_up.png",
+    "vol_down": ":/icons/remove_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg",
+    "marker": ":/icons/new_label_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg",
+    "clear": ":/icons/clear_all_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg",
+}
 
 
 # ─────────────────────────────── WAV I/O ────────────────────────────────
@@ -152,9 +178,10 @@ def _sep():
 class _SelectViewBox(pg.ViewBox):
     """ViewBox where a left-drag paints a selection range instead of panning.
     Wheel and right-drag still zoom the time axis."""
-    def __init__(self, on_drag, *args, **kwargs):
+    def __init__(self, on_drag, on_click, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._on_drag = on_drag
+        self._on_click = on_click
 
     def mouseDragEvent(self, ev, axis=None):
         if ev.button() == Qt.LeftButton:
@@ -164,6 +191,14 @@ class _SelectViewBox(pg.ViewBox):
             self._on_drag(x0, x1)
         else:
             super().mouseDragEvent(ev, axis)
+
+    def mouseClickEvent(self, ev):
+        # A plain left-click (no drag) moves the playhead / seeks
+        if ev.button() == Qt.LeftButton:
+            ev.accept()
+            self._on_click(self.mapToView(ev.pos()).x())
+        else:
+            super().mouseClickEvent(ev)
 
 
 class VerticalVUMeter(QWidget):
@@ -188,7 +223,7 @@ class VerticalVUMeter(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing, True)
         r = self.rect()
-        p.fillRect(r, QColor(20, 20, 22))
+        p.fillRect(r, QColor(0x1D, 0x1D, 0x1F))  # #1D1D1F
 
         pad_top, pad_bot = 8, 8
         bar_x, bar_w = 6, 18
@@ -230,6 +265,8 @@ class VerticalVUMeter(QWidget):
 
 class AudioDocument(QWidget):
     """Single-file waveform editor (one open audio file)."""
+    dirty_changed = Signal(bool)     # unsaved-edits state changed
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
@@ -238,7 +275,9 @@ class AudioDocument(QWidget):
         self.sr = 44100
         self.path = None
         self._clipboard = None       # copied (M, ch) block
-        self._undo = []              # list of samples snapshots
+        self._undo = []              # undo snapshots (samples copies)
+        self._redo = []              # redo snapshots
+        self._dirty = False          # unsaved edits present
         self._render_dirty = True    # temp playback wav needs refresh
         self._temp_wav = None
         self._markers = []           # list of pg.InfiniteLine
@@ -257,74 +296,135 @@ class AudioDocument(QWidget):
         self._env = None
         self._env_dur = 0.0
 
-        QShortcut(QKeySequence.Undo, self, activated=self.undo)
-        QShortcut(QKeySequence("Ctrl+X"), self, activated=self.cut)
-        QShortcut(QKeySequence("Ctrl+C"), self, activated=self.copy)
-        QShortcut(QKeySequence("Ctrl+V"), self, activated=self.paste)
-        QShortcut(QKeySequence("Ctrl+S"), self, activated=self.save)
-        QShortcut(QKeySequence(Qt.Key_Space), self, activated=self.toggle_play)
-
     # ---- UI ----
+    def _make_actions(self):
+        """Build every command as a QAction (icon + shortcut) so the File menu and
+        the toolbar share one definition. WidgetWithChildrenShortcut scopes each
+        shortcut to this document, so multiple open tabs never fight over Ctrl+S."""
+        def mk(text, slot, icon=None, shortcut=None, tip=None):
+            a = QAction(text, self)
+            if icon:
+                a.setIcon(QIcon(icon))
+            if shortcut:
+                a.setShortcut(shortcut)
+            a.setToolTip(tip or text)
+            a.setShortcutContext(Qt.WidgetWithChildrenShortcut)
+            a.triggered.connect(slot)
+            self.addAction(a)
+            return a
+
+        self.act_open = mk("Open", self.open_file, _IC["open"], QKeySequence.Open)
+        self.act_save = mk("Save", self.save, _IC["save"], QKeySequence("Ctrl+S"))
+        self.act_save_as = mk("Save As", self.save_as, _IC["save_as"])
+        self.act_play = mk("Play", self.toggle_play, _IC["play"],
+                           QKeySequence(Qt.Key_Space), "Play/Pause (Space)")
+        self.act_stop = mk("Stop", self.stop, _IC["stop"])
+        self.act_undo = mk("Undo", self.undo, _IC["undo"], QKeySequence.Undo)
+        self.act_redo = mk("Redo", self.redo, _IC["redo"], QKeySequence.Redo)
+        self.act_cut = mk("Cut", self.cut, _IC["cut"], QKeySequence("Ctrl+X"))
+        self.act_copy = mk("Copy", self.copy, _IC["copy"], QKeySequence("Ctrl+C"))
+        self.act_paste = mk("Paste", self.paste, _IC["paste"], QKeySequence("Ctrl+V"))
+        self.act_zoom_in = mk("Zoom In", lambda: self._zoom(0.5), _IC["zoom_in"])
+        self.act_zoom_out = mk("Zoom Out", lambda: self._zoom(2.0), _IC["zoom_out"])
+        self.act_fit = mk("Fit", self.zoom_fit, _IC["fit"])
+        self.act_select_all = mk("Select All", self.select_all, None, QKeySequence.SelectAll)
+        self.act_smooth = mk("Smooth", lambda: self._apply(_smooth), _IC["smooth"],
+                             None, "Low-pass smooth selection")
+        self.act_sharpen = mk("Sharpen", lambda: self._apply(_sharpen), _IC["sharpen"],
+                              None, "High-boost selection")
+        self.act_vol_up = mk("Vol +", lambda: self._gain(1.25), _IC["vol_up"],
+                             None, "Increase volume +25%")
+        self.act_vol_down = mk("Vol −", lambda: self._gain(0.8), _IC["vol_down"],
+                               None, "Decrease volume -20%")
+        self.act_ramp_up = mk("Ramp Up", lambda: self._ramp(True), None,
+                              None, "Fade in over selection")
+        self.act_ramp_down = mk("Ramp Down", lambda: self._ramp(False), None,
+                                None, "Fade out over selection")
+        self.act_marker = mk("Add Marker", self.add_marker, _IC["marker"],
+                             QKeySequence("M"), "Add marker at playhead")
+        self.act_clear = mk("Clear Markers", self.clear_markers, _IC["clear"])
+
+        # Categorized menus (None = separator inside a menu). The toolbar reuses
+        # this structure, one group per menu with separators between groups.
+        self._menus = [
+            ("File", [self.act_open, self.act_save, self.act_save_as]),
+            ("Edit", [self.act_undo, self.act_redo, None,
+                      self.act_cut, self.act_copy, self.act_paste, None,
+                      self.act_select_all]),
+            ("View", [self.act_zoom_in, self.act_zoom_out, self.act_fit]),
+            ("Playback", [self.act_play, self.act_stop]),
+            ("Effects", [self.act_smooth, self.act_sharpen, None,
+                         self.act_vol_up, self.act_vol_down, None,
+                         self.act_ramp_up, self.act_ramp_down]),
+            ("Markers", [self.act_marker, self.act_clear]),
+        ]
     def _build_ui(self):
         root = QVBoxLayout(self)
         root.setContentsMargins(4, 4, 4, 4)
 
-        # File menu holds the file-level actions
+        self._make_actions()
+
+        # Categorized menu bar: File / Edit / View / Playback / Effects / Markers
         menubar = QMenuBar(self)
-        file_menu = menubar.addMenu("File")
-        act_open = QAction("Open...", self, triggered=self.open_file)
-        act_open.setShortcut(QKeySequence.Open)
-        act_save = QAction("Save", self, triggered=self.save)
-        act_save.setShortcut(QKeySequence("Ctrl+S"))
-        act_save_as = QAction("Save As...", self, triggered=self.save_as)
-        file_menu.addAction(act_open)
-        file_menu.addSeparator()
-        file_menu.addAction(act_save)
-        file_menu.addAction(act_save_as)
+        menubar.setStyleSheet(
+            "QMenuBar { background-color:#1C1C1C; color:#E3E3E3; border:none; }"
+            "QMenuBar::item { padding:3px 8px; background:transparent; }"
+            "QMenuBar::item:selected { background-color:#414956; color:#FFFFFF; }"
+            "QMenu { background-color:#1C1C1C; color:#E3E3E3;"
+            " border:1px solid rgba(80,80,80,255); }"
+            "QMenu::item { padding:4px 20px; }"
+            "QMenu::item:selected { background-color:#414956; color:#FFFFFF; }"
+            "QMenu::separator { height:1px; background:rgba(80,80,80,255); margin:3px 6px; }")
+        for name, acts in self._menus:
+            m = menubar.addMenu(name)
+            for a in acts:
+                if a is None:
+                    m.addSeparator()
+                else:
+                    m.addAction(a)
         root.setMenuBar(menubar)
 
-        bar = QHBoxLayout()
-        bar.setSpacing(3)
-
-        def btn(text, slot, tip=""):
-            b = QPushButton(text)
-            b.setToolTip(tip or text)
-            b.clicked.connect(slot)
-            b.setMaximumHeight(26)
+        # Compact toolbar mirroring the same actions (one group per menu).
+        # Colours/borders match the SoundEvent editor (#1C1C1C, 2px grey border,
+        # #414956 hover) but with tighter padding so the buttons stay small.
+        toolbar = QToolBar(self)
+        toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        toolbar.setIconSize(QSize(14, 14))
+        toolbar.setStyleSheet(
+            "QToolBar { background-color:#1C1C1C; border:none; spacing:2px; padding:2px; }"
+            "QToolBar::separator { background:rgba(80,80,80,255); width:1px; margin:2px 3px; }"
+            "QToolButton {"
+            "  font: 580 8pt 'Segoe UI';"
+            "  color:#E3E3E3; background-color:#1C1C1C;"
+            "  border:2px solid rgba(80,80,80,255); border-radius:2px;"
+            "  padding:1px 5px;"
+            "}"
+            "QToolButton:hover { background-color:#414956; color:#FFFFFF; }"
+            "QToolButton:pressed { background-color:#1C1C1C; }"
+            "QToolButton:checked { background-color:#414956; }")
+        # File ops + undo/redo live in the menus only, not the toolbar
+        toolbar_excluded = {self.act_open, self.act_save, self.act_save_as,
+                            self.act_undo, self.act_redo}
+        first = True
+        for name, acts in self._menus:
+            items = [a for a in acts if a is not None and a not in toolbar_excluded]
+            if not items:
+                continue
+            if not first:
+                toolbar.addSeparator()
+            first = False
+            for a in items:
+                toolbar.addAction(a)
+        for b in toolbar.findChildren(QToolButton):
             b.setFocusPolicy(Qt.NoFocus)  # so Space/Enter don't re-trigger a button
-            bar.addWidget(b)
-            return b
+        root.addWidget(toolbar)
 
-        self.play_btn = btn("Play", self.toggle_play, "Play/Pause (Space)")
-        btn("Stop", self.stop)
-        bar.addWidget(_sep())
-        btn("Cut", self.cut, "Cut selection (Ctrl+X)")
-        btn("Copy", self.copy, "Copy selection (Ctrl+C)")
-        btn("Paste", self.paste, "Paste at selection start (Ctrl+V)")
-        bar.addWidget(_sep())
-        btn("Zoom In", lambda: self._zoom(0.5))
-        btn("Zoom Out", lambda: self._zoom(2.0))
-        btn("Fit", self.zoom_fit)
-        btn("Select All", self.select_all)
-        bar.addWidget(_sep())
-        btn("Smooth", lambda: self._apply(_smooth), "Low-pass smooth selection")
-        btn("Sharpen", lambda: self._apply(_sharpen), "High-boost selection")
-        btn("Vol +", lambda: self._gain(1.25), "Increase volume +25%")
-        btn("Vol −", lambda: self._gain(0.8), "Decrease volume -20%")
-        btn("Ramp Up", lambda: self._ramp(True), "Fade in over selection")
-        btn("Ramp Down", lambda: self._ramp(False), "Fade out over selection")
-        bar.addWidget(_sep())
-        btn("+ Marker", self.add_marker, "Add marker at playhead")
-        btn("Clear Marks", self.clear_markers)
-        bar.addStretch(1)
-        root.addLayout(bar)
-
-        # Waveform plot (left) + vertical VU meter (right)
+        # Waveform plot (left) + vertical VU meter & reference guide (right)
         plot_row = QHBoxLayout()
         plot_row.setSpacing(4)
 
         pg.setConfigOptions(antialias=True)
-        self._vb = _SelectViewBox(self._set_selection)
+        self._vb = _SelectViewBox(self._set_selection, self._seek_to)
         self.plot = pg.PlotWidget(viewBox=self._vb)
         self.plot.setBackground("#1C1C1C")
         self.plot.showGrid(x=True, y=False, alpha=0.15)
@@ -340,17 +440,59 @@ class AudioDocument(QWidget):
         self.plot.addItem(self.region)
 
         self.playhead = pg.InfiniteLine(pos=0, angle=90, pen=pg.mkPen("#FF5050", width=2))
+        self.playhead.setZValue(20)
         self.plot.addItem(self.playhead)
 
         plot_row.addWidget(self.plot, 1)
+
+        # Right column: vertical VU meter + dB reference-guide button
+        right = QVBoxLayout()
+        right.setSpacing(4)
         self.vu = VerticalVUMeter()
-        plot_row.addWidget(self.vu)
+        right.addWidget(self.vu, 1)
+        self.info_button = QToolButton()
+        self.info_button.setToolTip("Show dB Level Reference Guide")
+        self.info_button.setFixedSize(22, 22)
+        self.info_button.setFocusPolicy(Qt.NoFocus)
+        info_icon = QIcon(":/valve_common/icons/tools/common/icon_info_sm.png")
+        if info_icon.isNull():
+            self.info_button.setText("ℹ")
+        else:
+            self.info_button.setIcon(info_icon)
+        self.info_button.setStyleSheet(
+            "QToolButton { background-color:#1D1D1F; border:1px solid #333336;"
+            " border-radius:2px; color:#E3E3E3; }"
+            "QToolButton:hover { background-color:#414956; color:#FFFFFF; }")
+        self._info_overlay = DBInfoOverlay(self)
+        self.info_button.clicked.connect(self._toggle_info)
+        right.addWidget(self.info_button, 0, Qt.AlignHCenter)
+        plot_row.addLayout(right)
+
         root.addLayout(plot_row, 1)
 
         self.status = QLabel("Drop an audio file here, or use File ▸ Open. "
-                             "Left-drag the waveform to select a range.")
+                             "Single-click to move the play line; left-drag to select.")
         self.status.setStyleSheet("color:#9D9D9D; font: 9pt 'Segoe UI';")
         root.addWidget(self.status)
+
+    def _seek_to(self, x):
+        """Single-click on the waveform → move the playhead / seek playback."""
+        if self.samples is None:
+            return
+        dur = len(self.samples) / float(self.sr)
+        x = max(0.0, min(dur, x))
+        self.playhead.setValue(x)
+        self.player.setPosition(int(x * 1000))
+
+    def _toggle_info(self):
+        if self._info_overlay.isVisible():
+            self._info_overlay.hide()
+            return
+        self._info_overlay.adjustSize()
+        tr = self.info_button.mapToGlobal(self.info_button.rect().topRight())
+        self._info_overlay.move(tr.x() - self._info_overlay.width(),
+                                tr.y() - self._info_overlay.height() - 4)
+        self._info_overlay.show()
 
     def _set_selection(self, x0, x1):
         """Set the selection region from a left-drag on the waveform."""
@@ -379,6 +521,8 @@ class AudioDocument(QWidget):
         self.stop()
         self.samples, self.sr, self.path = samples, sr, path
         self._undo.clear()
+        self._redo.clear()
+        self._set_dirty(False)
         self._render_dirty = True
         self.clear_markers()
         self._refresh_plot()
@@ -425,18 +569,38 @@ class AudioDocument(QWidget):
         if self.samples is not None:
             self.plot.setXRange(0, len(self.samples) / float(self.sr), padding=0.02)
 
-    # ---- edit primitives ----
+    # ---- undo / redo / dirty ----
+    def _set_dirty(self, value):
+        if value != self._dirty:
+            self._dirty = value
+            self.dirty_changed.emit(value)
+
     def _push_undo(self):
+        """Snapshot before a mutation; clears the redo stack and marks dirty."""
         if self.samples is not None:
             self._undo.append(self.samples.copy())
             if len(self._undo) > 20:
                 self._undo.pop(0)
+            self._redo.clear()
+            self._set_dirty(True)
 
     def undo(self):
-        if self._undo:
-            self.samples = self._undo.pop()
-            self._refresh_plot()
-            self.status.setText("Undo")
+        if not self._undo:
+            return
+        self._redo.append(self.samples.copy())
+        self.samples = self._undo.pop()
+        self._refresh_plot()
+        self._set_dirty(True)
+        self.status.setText("Undo")
+
+    def redo(self):
+        if not self._redo:
+            return
+        self._undo.append(self.samples.copy())
+        self.samples = self._redo.pop()
+        self._refresh_plot()
+        self._set_dirty(True)
+        self.status.setText("Redo")
 
     def _apply(self, fn):
         if self.samples is None:
@@ -491,8 +655,13 @@ class AudioDocument(QWidget):
             self._add_marker_at(self.playhead.value())
 
     def _add_marker_at(self, seconds):
-        line = pg.InfiniteLine(pos=seconds, angle=90, movable=True,
-                               pen=pg.mkPen("#FFC850", width=1, style=Qt.DashLine))
+        line = pg.InfiniteLine(
+            pos=seconds, angle=90, movable=True,
+            pen=pg.mkPen("#FFC850", width=1, style=Qt.DashLine),
+            label="{value:.2f}s",
+            labelOpts={"position": 0.92, "color": "#FFC850",
+                       "movable": True, "fill": (29, 29, 31, 200)})
+        line.setZValue(15)
         self.plot.addItem(line)
         self._markers.append(line)
 
@@ -521,8 +690,8 @@ class AudioDocument(QWidget):
         if path:
             if not path.lower().endswith(".wav"):
                 path += ".wav"
-            self._write(path)
             self.path = path
+            self._write(path)
 
     def _write(self, path):
         try:
@@ -530,6 +699,7 @@ class AudioDocument(QWidget):
         except Exception as error:
             QMessageBox.critical(self, "Save failed", str(error))
             return
+        self._set_dirty(False)
         self.status.setText(f"Saved {os.path.basename(path)}")
 
     # ---- playback ----
@@ -564,7 +734,9 @@ class AudioDocument(QWidget):
         self.playhead.setValue(ms / 1000.0)
 
     def _on_state(self, state):
-        self.play_btn.setText("Pause" if state == QMediaPlayer.PlayingState else "Play")
+        playing = state == QMediaPlayer.PlayingState
+        self.act_play.setText("Pause" if playing else "Play")
+        self.act_play.setIcon(QIcon(_IC["pause"] if playing else _IC["play"]))
         if state != QMediaPlayer.PlayingState:
             self._vu_timer.stop()
             self.vu.set_level(0.0)
@@ -591,35 +763,44 @@ class AudioDocument(QWidget):
                 break
 
 
-class AudioEditor(QWidget):
-    """Container: an audio explorer (addon sounds) plus a tabbed set of open
-    documents. Double-clicking an audio file in the explorer opens it in a tab."""
+class AudioEditor(QMainWindow):
+    """Container: a dockable audio explorer (addon sounds) plus a tabbed set of
+    open documents. Double-clicking an audio file in the explorer opens it in a
+    document tab."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
+        self.setContentsMargins(6, 6, 6, 6)  # breathing room around the main widget
 
-        root = QVBoxLayout(self)
-        root.setContentsMargins(0, 0, 0, 0)
-        splitter = QSplitter(Qt.Horizontal)
-
-        self.explorer = Explorer(
-            tree_directory=self._addon_sounds_dir(), addon=get_addon_name(),
-            editor_name="AudioEditor", parent=self, use_internal_player=False)
-        self.explorer.tree.setStyleSheet("border:none")
-        self.explorer.tree.doubleClicked.connect(self._on_explorer_double_click)
-        splitter.addWidget(self.explorer.frame)
-
+        # Documents live in the central tab widget
         self.tabs = QTabWidget()
         self.tabs.setTabsClosable(True)
         self.tabs.setMovable(True)
         self.tabs.setDocumentMode(True)
         self.tabs.tabCloseRequested.connect(self._close_tab)
-        splitter.addWidget(self.tabs)
+        self.setCentralWidget(self.tabs)
 
-        splitter.setStretchFactor(0, 0)
-        splitter.setStretchFactor(1, 1)
-        splitter.setSizes([260, 820])
-        root.addWidget(splitter)
+        # Audio explorer in a dockable panel
+        self.explorer = Explorer(
+            tree_directory=self._addon_sounds_dir(), addon=get_addon_name(),
+            editor_name="AudioEditor", parent=self, use_internal_player=True)
+        # use_internal_player=True routes the Explorer's play-on-click through its
+        # play_sound signal instead of spawning its own player. We connect nothing
+        # to that signal, so selecting a file (incl. the auto-selection at load)
+        # makes no sound — only double-click opens a document tab.
+        self.explorer.tree.setStyleSheet("border:none")
+        self.explorer.tree.doubleClicked.connect(self._on_explorer_double_click)
+
+        self._explorer_dock = QDockWidget("Audio Explorer", self)
+        self._explorer_dock.setObjectName("audio_explorer_dock")
+        self._explorer_dock.setWidget(self.explorer.frame)
+        self._explorer_dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self._explorer_dock)
+
+        # Match the SmartProp editor's dock/tab-bar styling
+        from src.common import set_qdock_tab_style
+        set_qdock_tab_style(self.findChildren)
 
     def _addon_sounds_dir(self):
         cs2 = get_cs2_path()
@@ -658,10 +839,39 @@ class AudioEditor(QWidget):
             doc.deleteLater()
             return
         idx = self.tabs.addTab(doc, os.path.basename(path))
+        doc.dirty_changed.connect(lambda dirty, d=doc: self._mark_tab(d, dirty))
         self.tabs.setCurrentIndex(idx)
+
+    def _mark_tab(self, doc, dirty):
+        """Prefix the tab title with '*' while the document has unsaved edits."""
+        i = self.tabs.indexOf(doc)
+        if i >= 0:
+            name = os.path.basename(doc.path or "Untitled")
+            self.tabs.setTabText(i, ("*" + name) if dirty else name)
+
+    def has_unsaved_changes(self) -> bool:
+        """Returns True if any open audio document tab has unsaved changes."""
+        for i in range(self.tabs.count()):
+            widget = self.tabs.widget(i)
+            if getattr(widget, "_dirty", False):
+                return True
+        return False
 
     def _close_tab(self, index):
         widget = self.tabs.widget(index)
+        if getattr(widget, "_dirty", False):
+            name = os.path.basename(widget.path or "audio")
+            resp = QMessageBox.question(
+                self, "Unsaved changes",
+                f"'{name}' has unsaved changes. Save before closing?",
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                QMessageBox.Save)
+            if resp == QMessageBox.Cancel:
+                return
+            if resp == QMessageBox.Save:
+                widget.save()
+                if widget._dirty:  # save cancelled or failed → abort close
+                    return
         try:
             widget.stop()
         except Exception:

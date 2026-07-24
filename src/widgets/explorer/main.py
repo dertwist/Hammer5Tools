@@ -241,6 +241,7 @@ class Explorer(QMainWindow):
         self.tree.setSelectionMode(QTreeView.ExtendedSelection)
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.open_context_menu)
+        self.tree.doubleClicked.connect(self._on_tree_double_clicked)
         self.tree.viewport().installEventFilter(self)
         self.tree.installEventFilter(self)
         self.top_layout = QHBoxLayout()
@@ -751,12 +752,50 @@ class Explorer(QMainWindow):
             error_dialog.exec_()
             return False
 
+    def _on_tree_double_clicked(self, index):
+        if not index.isValid():
+            return
+        source_index = self.filter_proxy_model.mapToSource(index)
+        if self.model.isDir(source_index):
+            return
+        file_path = self.model.filePath(source_index)
+        ext = os.path.splitext(file_path)[1].lower()
+        if ext in ('.vsmart', '.vdata'):
+            self.open_vsmart(file_path)
+        elif ext == '.hbat':
+            self.open_config(file_path)
+        elif ext in [f".{e}" for e in audio_extensions] or ext[1:] in audio_extensions:
+            if self.use_internal_player:
+                self.play_sound.emit(file_path)
+            else:
+                self.play_audio_file(file_path)
+        else:
+            self.open_file(index)
+
     def open_config(self, filepath):
         parent = self.parent()
-        parent.BatchCreator_MainWindow.open_filepath(filepath)
+        curr = parent
+        while curr is not None:
+            if hasattr(curr, 'BatchCreator_MainWindow') and curr.BatchCreator_MainWindow is not None:
+                curr.BatchCreator_MainWindow.open_filepath(filepath)
+                return
+            curr = curr.parent() if hasattr(curr, 'parent') else None
+        if parent and hasattr(parent, 'BatchCreator_MainWindow'):
+            parent.BatchCreator_MainWindow.open_filepath(filepath)
+
     def open_vsmart(self, filepath):
         parent = self.parent()
-        parent.SmartPropEditorMainWindow.open_file(external=False, filename=filepath)
+        curr = parent
+        while curr is not None:
+            if hasattr(curr, 'open_file_in_smartprop'):
+                curr.open_file_in_smartprop(filepath)
+                return
+            elif hasattr(curr, 'SmartPropEditorMainWindow') and curr.SmartPropEditorMainWindow is not None:
+                curr.SmartPropEditorMainWindow.open_file(external=False, filename=filepath)
+                return
+            curr = curr.parent() if hasattr(curr, 'parent') else None
+        if parent and hasattr(parent, 'SmartPropEditorMainWindow') and parent.SmartPropEditorMainWindow:
+            parent.SmartPropEditorMainWindow.open_file(external=False, filename=filepath)
 
 
     def copy_file(self, index):

@@ -265,12 +265,22 @@ class SoundEventEditorMainWindow(QMainWindow):
             if response == QMessageBox.Yes:
                 CopyDefaultSoundFolders()
                 LoadSoundEvents(tree=self.ui.hierarchy_widget, path=self.filepath_vsndevts)
+        if hasattr(self, 'undo_stack') and self.undo_stack:
+            self.undo_stack.clear()
 
     @exception_handler
     def save_soundevents(self):
         SaveSoundEvents(tree=self.ui.hierarchy_widget, path=(self.filepath_vsndevts))
+        if hasattr(self, 'undo_stack') and self.undo_stack:
+            self.undo_stack.setClean()
         print(f'Saved file: {self.filepath_vsndevts}')
         self.update_title('saved', self.filepath_vsndevts)
+
+    def has_unsaved_changes(self) -> bool:
+        """Returns True if soundevents file has unsaved edits in undo stack."""
+        if hasattr(self, 'undo_stack') and self.undo_stack is not None:
+            return not self.undo_stack.isClean()
+        return False
 
     #=======================================================<  Properties Window  >=====================================================
 
