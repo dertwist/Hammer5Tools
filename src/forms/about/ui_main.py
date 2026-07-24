@@ -218,19 +218,6 @@ class Ui_documentation_dialog(object):
         self.guides_btn_layout.addWidget(self.open_radio_sound_guide_button)
 
         self.guides_layout.addLayout(self.guides_btn_layout)
-
-        # Tooltip note
-        self.tooltip_note = QLabel(self.guides_card)
-        self.tooltip_note.setObjectName(u"tooltip_note")
-        font_tip = QFont()
-        font_tip.setFamilies([u"Segoe UI"])
-        font_tip.setPointSize(8.5)
-        self.tooltip_note.setFont(font_tip)
-        self.tooltip_note.setWordWrap(True)
-        self.tooltip_note.setStyleSheet(u"color: #98C379; border: none; margin-top: 4px;")
-        self.tooltip_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.guides_layout.addWidget(self.tooltip_note)
-
         self.content_layout.addWidget(self.guides_card)
         self.verticalLayout.addWidget(self.content_frame)
 
@@ -337,7 +324,7 @@ class Ui_documentation_dialog(object):
         self.guides_header.setText(QCoreApplication.translate("documentation_dialog", u"📚 Documentation & Guides", None))
         self.open_documentation_button.setText(QCoreApplication.translate("documentation_dialog", u"Documentation", None))
         self.open_radio_sound_guide_button.setText(QCoreApplication.translate("documentation_dialog", u"Radio Soundevent Guide", None))
-        self.tooltip_note.setText(QCoreApplication.translate("documentation_dialog", u"💡 Tip: Hover your cursor over buttons to display helpful tooltips. Note: Some tools might not have these tips.", None))
+
 
         self.dont_show_button.setText(QCoreApplication.translate("documentation_dialog", u"Don't show on startup", None))
         self.request_a_new_feature_button.setText(QCoreApplication.translate("documentation_dialog", u"Feedback", None))
