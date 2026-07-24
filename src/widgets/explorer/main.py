@@ -4,7 +4,7 @@ import shutil
 import winreg
 from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QMenu, QMessageBox, \
     QToolButton, QListWidgetItem, QInputDialog, QLineEdit, QFrame, QLabel, QVBoxLayout, QWidget, QHBoxLayout, QListWidget, QApplication
-from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
+from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication, QPainter, QColor
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer
 
@@ -13,6 +13,21 @@ from src.widgets.common import ErrorInfo
 from src.widgets.explorer.actions import QuickVmdlFile, QuickConfigFile, QuickProcess, FixPBRRange, QuickVsmart
 from src.styles.common import *
 from src.common import enable_dark_title_bar
+
+class ZebraMenu(QMenu):
+    """QMenu with alternating (zebra-striped) row backgrounds, since QSS has no nth-child selector for QMenu::item."""
+    _EVEN_COLOR = QColor("#1d1d1f")
+    _ODD_COLOR = QColor("#26262b")
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        for i, action in enumerate(self.actions()):
+            if action.isSeparator():
+                continue
+            rect = self.actionGeometry(action)
+            painter.fillRect(rect, self._ODD_COLOR if i % 2 else self._EVEN_COLOR)
+        painter.end()
+        super().paintEvent(event)
 
 audio_extensions = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'wma']
 smartprop_extensions = ['vsmart', 'vdata']
@@ -479,7 +494,7 @@ class Explorer(QMainWindow):
 
     def open_context_menu(self, position):
         index = self.tree.indexAt(position)
-        menu = QMenu()
+        menu = ZebraMenu()
         if index.isValid():
             source_index = self.filter_proxy_model.mapToSource(index)
             if self.model.isDir(source_index):
@@ -1162,7 +1177,7 @@ class Explorer(QMainWindow):
         item = self._panel_list.itemAt(pos)
         if item is None:
             return
-        menu = QMenu(self)
+        menu = ZebraMenu(self)
         if self._panel_mode == "favorites":
             remove_action = QAction("Remove Favorite", self)
             remove_action.setIcon(QIcon(":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))

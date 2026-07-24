@@ -27,7 +27,7 @@ class ExportAndImportAddonDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         enable_dark_title_bar(self)
-        self.setWindowTitle("Export and Import Addon")
+        self.setWindowTitle("Export Addon")
         self.cs2_path = get_cs2_path()
         self.setMinimumSize(750, 650)
         try:
@@ -66,13 +66,9 @@ class ExportAndImportAddonDialog(QDialog):
 
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
-        self.import_button = QPushButton("Import Addon")
-        self.import_button.setStyleSheet(qt_stylesheet_button)
-        self.import_button.setIcon(QIcon(":/icons/download_2_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         self.export_button = QPushButton("Export Addon")
         self.export_button.setStyleSheet(qt_stylesheet_button)
         self.export_button.setIcon(QIcon(":/icons/upload_2_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
-        btn_layout.addWidget(self.import_button)
         btn_layout.addWidget(self.export_button)
         self.layout.addLayout(btn_layout)
 
@@ -149,7 +145,6 @@ class ExportAndImportAddonDialog(QDialog):
 
     def _connect_signals(self):
         self.export_button.clicked.connect(self.do_export_addon)
-        self.import_button.clicked.connect(self.do_import_addon)
         self.table_view.doubleClicked.connect(self.open_file_location)
         self.file_model.itemChanged.connect(self.recalculate_size)
         self.table_view.setContextMenuPolicy(Qt.CustomContextMenu)

@@ -791,9 +791,15 @@ class AudioEditor(QMainWindow):
         self.explorer.tree.setStyleSheet("border:none")
         self.explorer.tree.doubleClicked.connect(self._on_explorer_double_click)
 
+        explorer_border = QWidget()
+        explorer_border.setStyleSheet("border:2px solid #363639;")
+        _border_lay = QVBoxLayout(explorer_border)
+        _border_lay.setContentsMargins(0, 0, 0, 0)
+        _border_lay.addWidget(self.explorer.frame)
+
         self._explorer_dock = QDockWidget("Audio Explorer", self)
         self._explorer_dock.setObjectName("audio_explorer_dock")
-        self._explorer_dock.setWidget(self.explorer.frame)
+        self._explorer_dock.setWidget(explorer_border)
         self._explorer_dock.setFeatures(
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
         self.addDockWidget(Qt.LeftDockWidgetArea, self._explorer_dock)

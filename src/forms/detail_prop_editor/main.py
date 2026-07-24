@@ -309,6 +309,10 @@ class DetailPropEditorWidget(QMainWindow):
         self._set_title("" if existed else " *")
         if not existed:
             self._modified = True
+        if existed:
+            parent = self.parent()
+            if parent is not None and hasattr(parent, "update_title"):
+                parent.update_title('opened', self.vdata_path)
 
     def add_type(self):
         name, ok = QInputDialog.getText(self, "Add Detail Type", "Type name:")
@@ -438,7 +442,7 @@ class DetailPropEditorWidget(QMainWindow):
         self.undo_stack.setClean()
         parent = self.parent()
         if parent is not None and hasattr(parent, "update_title"):
-            parent.update_title(text="Detail prop types saved")
+            parent.update_title('saved', self.vdata_path)
 
     def closeEvent(self, event):
         if self._modified:

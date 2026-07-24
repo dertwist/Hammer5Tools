@@ -20,12 +20,8 @@ class AboutDialog(QDialog):
         self.ui.watch_video_button.clicked.connect(self.open_video_tutorial)
         self.ui.close_button.clicked.connect(self.accept)
 
-        # Configure Don't show on startup button
-        self.ui.dont_show_button.setCheckable(True)
-        show_on_startup = get_settings_bool('APP', 'show_about_on_startup', True)
-        self.ui.dont_show_button.setChecked(not show_on_startup)
-        self.update_dont_show_button_state(not show_on_startup)
-        self.ui.dont_show_button.clicked.connect(self.toggle_dont_show_on_startup)
+        # Connect Don't show on startup button
+        self.ui.dont_show_button.clicked.connect(self.disable_show_on_startup_and_close)
 
     def open_request_a_new_feature(self):
         QDesktopServices.openUrl(QUrl(discord_feedback_channel))
@@ -39,15 +35,6 @@ class AboutDialog(QDialog):
     def open_video_tutorial(self):
         QDesktopServices.openUrl(QUrl("https://www.youtube.com/watch?v=-xIHW65kNYA"))
 
-    def toggle_dont_show_on_startup(self, checked):
-        show_on_startup = not checked
-        set_settings_bool('APP', 'show_about_on_startup', show_on_startup)
-        self.update_dont_show_button_state(checked)
-
-    def update_dont_show_button_state(self, is_disabled_on_startup):
-        if is_disabled_on_startup:
-            self.ui.dont_show_button.setText("✓ Won't show on startup")
-            self.ui.dont_show_button.setToolTip("Click to re-enable showing this dialog on app startup")
-        else:
-            self.ui.dont_show_button.setText("Don't show on startup")
-            self.ui.dont_show_button.setToolTip("Click to prevent this dialog from showing automatically on startup")
+    def disable_show_on_startup_and_close(self):
+        set_settings_bool('APP', 'show_about_on_startup', False)
+        self.accept()
