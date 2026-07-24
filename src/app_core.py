@@ -159,9 +159,8 @@ class Widget(QMainWindow):
 
         QTimer.singleShot(100, self.deferred_update_check)
         self._restore_user_prefs()
-        if get_settings_bool('APP', 'first_launch'):
-            self.open_about()
-            set_settings_bool('APP', 'first_launch', False)
+        if get_settings_bool('APP', 'show_about_on_startup', True):
+            QTimer.singleShot(500, self.open_about)
         
         QTimer.singleShot(2000, self.check_file_associations)
 
@@ -278,6 +277,18 @@ class Widget(QMainWindow):
                 dock.show()
 
     def open_file_in_smartprop(self, file_path):
+        if not file_path:
+            return
+        file_path = os.path.normpath(file_path)
+        if "csgo_addons" in file_path.lower():
+            parts = file_path.split(os.sep)
+            for i, part in enumerate(parts):
+                if part.lower() == "csgo_addons" and i + 1 < len(parts):
+                    addon_hint = parts[i + 1]
+                    if not self.check_addon_mismatch(addon_hint):
+                        return
+                    break
+
         if not self.SmartPropEditorMainWindow:
             print("SmartProp Editor not initialized")
             return
@@ -464,6 +475,10 @@ class Widget(QMainWindow):
     def setup_buttons(self):
         self.ui.Launch_Addon_Button.clicked.connect(self.launch_addon_action)
         self.ui.FixNoSteamLogon_Button.clicked.connect(self.SteamNoLogonFix)
+        self.ui.ComboBoxSelectAddon.wheelEvent = lambda event: None
+        self.ui.ComboBoxSelectAddon.view().setAlternatingRowColors(True)
+        self.ui.open_addons_folder_downlist.wheelEvent = lambda event: None
+        self.ui.open_addons_folder_downlist.view().setAlternatingRowColors(True)
         self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
         addon = get_addon_name()
         combo_items = [self.ui.ComboBoxSelectAddon.itemText(i) for i in range(self.ui.ComboBoxSelectAddon.count())]
@@ -515,7 +530,43 @@ class Widget(QMainWindow):
     def selected_addon_name(self, text=None):
         new_addon = self.ui.ComboBoxSelectAddon.currentText()
         if not new_addon: return
-        if get_addon_name() == new_addon and getattr(self, 'SmartPropEditorMainWindow', None): return
+        current_addon = get_addon_name()
+        if current_addon == new_addon and getattr(self, 'SmartPropEditorMainWindow', None): return
+
+        dirty_editors = []
+        if getattr(self, 'BatchCreator_MainWindow', None) and hasattr(self.BatchCreator_MainWindow, 'has_unsaved_changes'):
+            if self.BatchCreator_MainWindow.has_unsaved_changes():
+                dirty_editors.append("AssetGroup Maker")
+
+        if getattr(self, 'SmartPropEditorMainWindow', None) and hasattr(self.SmartPropEditorMainWindow, 'has_unsaved_changes'):
+            if self.SmartPropEditorMainWindow.has_unsaved_changes():
+                dirty_editors.append("SmartProp Editor")
+
+        if getattr(self, 'SoundEventEditorMainWindow', None) and hasattr(self.SoundEventEditorMainWindow, 'has_unsaved_changes'):
+            if self.SoundEventEditorMainWindow.has_unsaved_changes():
+                dirty_editors.append("SoundEvent Editor")
+
+        if getattr(self, 'AudioEditor_instance', None) and hasattr(self.AudioEditor_instance, 'has_unsaved_changes'):
+            if self.AudioEditor_instance.has_unsaved_changes():
+                if "SoundEvent Editor" not in dirty_editors:
+                    dirty_editors.append("SoundEvent Editor (Wave Editor)")
+
+        if dirty_editors and current_addon and current_addon != new_addon:
+            editors_str = ", ".join(dirty_editors)
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("Unsaved Changes")
+            msg_box.setText(f"You have unsaved changes in: {editors_str}.\n\nSwitching addons will close the current editors and lose unsaved changes. Do you want to proceed?")
+            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msg_box.setDefaultButton(QMessageBox.No)
+            if msg_box.exec() != QMessageBox.Yes:
+                try:
+                    self.ui.ComboBoxSelectAddon.currentTextChanged.disconnect(self.selected_addon_name)
+                    self.ui.ComboBoxSelectAddon.setCurrentText(current_addon)
+                finally:
+                    self.ui.ComboBoxSelectAddon.currentTextChanged.connect(self.selected_addon_name)
+                return
+
         set_addon_name(new_addon)
         if getattr(self, 'SoundEventEditorMainWindow', None):
             self.SoundEventEditorMainWindow.close(); self.SoundEventEditorMainWindow.deleteLater(); self.SoundEventEditorMainWindow = None
