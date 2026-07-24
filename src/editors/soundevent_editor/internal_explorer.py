@@ -242,7 +242,46 @@ class InternalSoundFileExplorer(QTreeWidget):
         copy_action = menu.addAction(label)
         copy_action.triggered.connect(lambda: self._copy_asset_names(vsnd_items))
 
+        menu.addSeparator()
+        decompile_action = menu.addAction(
+            f"Decompile {count} file{'s' if count > 1 else ''} to Addon"
+        )
+        decompile_action.triggered.connect(lambda: self._decompile_to_addon(vsnd_items))
+
         menu.exec(event.globalPos())
+
+    def _decompile_to_addon(self, items):
+        """Decompile the selected .vsnd assets to the current addon content folder.
+
+        extract_vsnd_file recreates the sounds/ path under it, writing .wav or .mp3 depending on the source.
+        ponytail: synchronous with a wait cursor — fine for a handful of files;
+        move to a QThread if bulk decompiles get slow.
+        """
+        dest = get_addon_dir()
+        if not dest:
+            QMessageBox.warning(self, "Decompile to Addon", "No active addon directory set.")
+            return
+        pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        done = 0
+        try:
+            for item in items:
+                rel = self.assemble_path(item)
+                internal_path = os.path.join(
+                    'sounds', rel.replace('vsnd', 'vsnd_c')
+                ).replace('/', '\\')
+                out = extract_vsnd_file(
+                    vpk_path=pak1, vpk_file=internal_path,
+                    output_folder=dest, export=True,
+                )
+                if out:
+                    done += 1
+        finally:
+            QApplication.restoreOverrideCursor()
+        QMessageBox.information(
+            self, "Decompile to Addon",
+            f"Decompiled {done}/{len(items)} file(s) to:\n{dest}"
+        )
 
     def _copy_asset_names(self, items):
         """
