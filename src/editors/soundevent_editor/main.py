@@ -20,6 +20,23 @@ from src.editors.soundevent_editor.soundevent_player import play_soundevent
 from src.editors.soundevent_editor.audio_player import AudioPlayer
 from src.widgets.common import exception_handler
 
+def _quiesce_thread(thr):
+    """Fully stop a background VPK scanner before its editor is destroyed.
+
+    Destroying a running QThread aborts the whole process
+    ("QThread: Destroyed while thread is still running"). On an addon switch the
+    old SoundEvent editor is torn down while its scanners may still be walking
+    the ~130k-entry pak01_dir.vpk, so we signal a stop and block until the OS
+    thread has actually exited. The scan loops poll the stop flag between entries,
+    so this returns quickly.
+    """
+    if thr is None or not thr.isRunning():
+        return
+    if hasattr(thr, 'stop'):
+        thr.stop()
+    thr.wait()
+
+
 class CopyDefaultSoundFolders:
     def __init__(self):
         """Coping  soundevents file and sounds from sounds folder from addon_template to the current addon"""
@@ -688,15 +705,10 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.settings.setValue("SoundEventEditorMainWindow/windowState", self.saveState())
     def closeEvent(self, event):
         self._save_user_prefs()
-        # Stop the background VPK scanners before the editor is destroyed.
-        # Destroying a running QThread aborts the whole process
-        # ("QThread: Destroyed while thread is still running") — this is what
-        # crashed the app when switching addons.
-        for thr in (getattr(getattr(self, 'internal_explorer', None), 'vpk_loader_thread', None),
-                    getattr(getattr(self, 'internal_soundevents_explorer', None), 'loader', None)):
-            if thr is not None and thr.isRunning():
-                thr.stop()
-                thr.wait(5000)
+        # Stop the background VPK scanners before this editor is destroyed on an
+        # addon switch, else the process aborts on a still-running QThread.
+        _quiesce_thread(getattr(getattr(self, 'internal_explorer', None), 'vpk_loader_thread', None))
+        _quiesce_thread(getattr(getattr(self, 'internal_soundevents_explorer', None), 'loader', None))
 
     #============================================================<  File actions  >=========================================================
     def save_file(self, file_path):
