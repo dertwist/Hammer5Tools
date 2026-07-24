@@ -62,6 +62,7 @@ class BatchCreatorMainWindow(QMainWindow):
         self.monitoring_running_state: bool = True
         self.search_results: List[int] = []
         self.current_search_index: int = -1
+        self._dirty: bool = False
 
         self.addon_name = get_addon_name()
         self.cs2_path = get_cs2_path()
@@ -131,6 +132,20 @@ class BatchCreatorMainWindow(QMainWindow):
         self.ui.viewport_searchbar.textChanged.connect(self.perform_search)
         self.ui.viewport_search_previous_button.clicked.connect(self.search_previous)
         self.ui.viewport_search_next_button.clicked.connect(self.search_next)
+
+        self.ui.reference_editline.textChanged.connect(self._mark_dirty)
+        self.ui.extension_lineEdit.textChanged.connect(self._mark_dirty)
+        self.ui.kv3_QplainTextEdit.textChanged.connect(self._mark_dirty)
+
+    def _mark_dirty(self):
+        self._dirty = True
+
+    def has_unsaved_changes(self) -> bool:
+        if getattr(self, '_dirty', False):
+            return True
+        if hasattr(self.ui, 'kv3_QplainTextEdit') and self.ui.kv3_QplainTextEdit.document().isModified():
+            return True
+        return False
 
     def closeEvent(self, event):
         """Override close event to save splitter position."""
@@ -446,6 +461,9 @@ class BatchCreatorMainWindow(QMainWindow):
             self.write_json_file(self.current_file, data)
         else:
             debug("No file is currently opened to save.")
+        self._dirty = False
+        if hasattr(self.ui, 'kv3_QplainTextEdit'):
+            self.ui.kv3_QplainTextEdit.document().setModified(False)
         self.update_title('saved', self.current_file)
 
     def open_file(self):
@@ -508,6 +526,9 @@ class BatchCreatorMainWindow(QMainWindow):
         self.update_editor_visibility()
         self.update_explorer_title()
         self.update_reference_watcher()
+        self._dirty = False
+        if hasattr(self.ui, 'kv3_QplainTextEdit'):
+            self.ui.kv3_QplainTextEdit.document().setModified(False)
         # Track in recent files
         if hasattr(self, 'explorer') and self.explorer is not None:
             self.explorer.add_recent_file(file_path)
