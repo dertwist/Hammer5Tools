@@ -15,6 +15,9 @@ import sys
 
 _NO_WINDOW = subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
 
+# First line of every Git LFS pointer file; see show_stage.
+_LFS_POINTER = b"version https://git-lfs.github.com/spec/v1"
+
 # -uall lists untracked files individually; the default collapses whole dirs to
 # "dir/", which both undercounts the badge and hides per-file sizes.
 STATUS_V2_ARGS = ["status", "--porcelain=v2", "--branch", "-uall"]
@@ -105,6 +108,10 @@ class GitRepo:
         sides added the file, which just means there is no common ancestor.
         Deliberately not _run(): that decodes as text and would wreck a binary
         blob like a .vmap.
+
+        LFS-tracked paths (which .vmap usually is) store a ~130-byte text
+        pointer in the index, not the map, so run it back through the smudge
+        filter to get the real bytes.
         """
         if not self.dir:
             return None
@@ -112,6 +119,17 @@ class GitRepo:
             p = subprocess.run(
                 ["git", "show", f":{stage}:{path}"],
                 cwd=self.dir,
+                capture_output=True,
+                creationflags=_NO_WINDOW,
+            )
+            if p.returncode != 0:
+                return None
+            if not p.stdout.startswith(_LFS_POINTER):
+                return p.stdout
+            p = subprocess.run(
+                ["git", "lfs", "smudge", "--", path],
+                cwd=self.dir,
+                input=p.stdout,
                 capture_output=True,
                 creationflags=_NO_WINDOW,
             )
