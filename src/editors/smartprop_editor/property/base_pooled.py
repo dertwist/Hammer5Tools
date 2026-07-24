@@ -66,15 +66,18 @@ class PooledPropertyMixin:
 
         # Important: disconnect outbound signals to prevent duplicate slot invocations
         # when the instance is re-acquired by a different PropertyFrame.
+        import warnings
         for sig_name in ("edited", "slider_pressed", "committed"):
             sig = getattr(inst, sig_name, None)
             if sig is None:
                 continue
-            try:
-                sig.disconnect()
-            except Exception:
-                # Some signals might not have any connections yet.
-                pass
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                try:
+                    sig.disconnect()
+                except Exception:
+                    # Some signals might not have any connections yet.
+                    pass
 
         inst.hide()
         try:

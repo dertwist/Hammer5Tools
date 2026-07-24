@@ -10,8 +10,7 @@ from PySide6.QtWidgets import (
     QDockWidget
 )
 from PySide6.QtGui import QUndoStack, QIcon, QKeySequence, QAction
-from PySide6.QtCore import QTimer, Qt
-from src.settings.main import get_settings_value, get_settings_bool
+from PySide6.QtCore import Qt
 from src.editors.smartprop_editor.ui_main import Ui_MainWindow
 from src.settings.main import get_addon_name, settings
 from src.widgets.explorer.main import Explorer
@@ -36,7 +35,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.settings = settings
-        self.realtime_save = False
         self.opened_file = None
         self.update_title = update_title
         enable_dark_title_bar(self)
@@ -50,6 +48,9 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         # Initialize file explorer
         self.init_explorer()
+        # Hide the Explorer dock title bar (no label, no float/close buttons)
+        from PySide6.QtWidgets import QWidget as _QWidget
+        self.ui.ExplorerDock.setTitleBarWidget(_QWidget())
 
         # Initialize categorized menu bar
         self.init_menu_bar()
@@ -57,12 +58,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         set_qdock_tab_style(self.findChildren)
 
         self.undo_stack = QUndoStack(self)
-
-        # Initialize realtime save timer (interval from settings or default to 2000ms)
-        delay = int(float(get_settings_value('SmartPropEditor', 'realtime_saving_delay', 5)))
-        self.realtime_save_timer = QTimer(self)
-        self.realtime_save_timer.setInterval(delay)
-        self.realtime_save_timer.timeout.connect(self.realtime_save_all)
 
         # Set initial UI state based on document availability
         self.update_placeholder_visibility()
@@ -83,9 +78,11 @@ class SmartPropEditorMainWindow(QMainWindow):
     def init_menu_bar(self):
         menubar = self.menuBar()
         menubar.clear()
+        menubar.setStyleSheet("QMenuBar { padding-top: 4px; padding-bottom: 4px; }")
 
         # --- File Menu ---
         file_menu = menubar.addMenu("&File")
+        file_menu.setStyleSheet("QMenu { padding-bottom: 6px; }")
 
         self.action_new = file_menu.addAction("New File")
         self.action_new.setShortcut(QKeySequence.New)
@@ -118,21 +115,11 @@ class SmartPropEditorMainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        self.action_realtime_save = file_menu.addAction("Realtime Save")
-        self.action_realtime_save.setCheckable(True)
-        self.action_realtime_save.setChecked(self.realtime_save)
-        self.action_realtime_save.triggered.connect(self.toggle_realtime_save)
-
-        file_menu.addSeparator()
-
         self.action_close = file_menu.addAction("Close File")
         self.action_close.setShortcut(QKeySequence("Ctrl+W"))
         self.action_close.triggered.connect(lambda: self.close_document())
 
         file_menu.addSeparator()
-
-        self.action_recompile = file_menu.addAction("Recompile Current File")
-        self.action_recompile.triggered.connect(self.recompile_current_file)
 
         self.action_recompile_all = file_menu.addAction("Recompile All in Addon")
         self.action_recompile_all.triggered.connect(self.recompile_all_in_addon)
@@ -260,7 +247,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         if hasattr(self, 'action_save_as'): self.action_save_as.setEnabled(has_doc)
         if hasattr(self, 'action_save_all'): self.action_save_all.setEnabled(has_doc)
         if hasattr(self, 'action_close'): self.action_close.setEnabled(has_doc)
-        if hasattr(self, 'action_recompile'): self.action_recompile.setEnabled(has_doc)
 
         # Edit menu actions
         if hasattr(self, 'action_undo'): self.action_undo.setEnabled(has_doc)
@@ -300,36 +286,6 @@ class SmartPropEditorMainWindow(QMainWindow):
                 if doc.opened_file:
                     base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
                 self.update_document_tab_title(doc, base_name)
-
-    def toggle_realtime_save(self, checked: bool = None):
-        """Toggles realtime auto-save state."""
-        if checked is None:
-            checked = not self.realtime_save
-        self.realtime_save = checked
-        if hasattr(self, 'action_realtime_save'):
-            self.action_realtime_save.setChecked(checked)
-        if get_settings_bool('SmartPropEditor', 'enable_transparency_window', True):
-            if self.realtime_save:
-                transparency = float(get_settings_value('SmartPropEditor', 'transparency_window', 70)) / 100
-                if self.parent:
-                    self.parent.setWindowOpacity(transparency)
-            else:
-                if self.parent:
-                    self.parent.setWindowOpacity(1)
-        if self.realtime_save:
-            self.realtime_save_timer.start()
-        else:
-            self.realtime_save_timer.stop()
-
-    def recompile_current_file(self):
-        doc = self.get_current_document()
-        if doc and hasattr(doc, 'save_file'):
-            check_vsmart_configuration()
-            doc.save_file(external=False)
-            base_name = "Untitled"
-            if doc.opened_file:
-                base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
-            self.update_document_tab_title(doc, base_name)
 
     def recompile_all_in_addon(self):
         check_vsmart_configuration()
@@ -444,7 +400,9 @@ class SmartPropEditorMainWindow(QMainWindow):
         if not hasattr(self, 'docks_menu'):
             return
         self.docks_menu.clear()
-        self.docks_menu.addAction(self.ui.ExplorerDock.toggleViewAction())
+        explorer_action = self.ui.ExplorerDock.toggleViewAction()
+        explorer_action.setText("Explorer")
+        self.docks_menu.addAction(explorer_action)
         doc = self.get_current_document()
         if doc:
             self.docks_menu.addSeparator()
@@ -502,40 +460,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         )
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
-    def buttons(self):
-        self.ui.open_file_button.clicked.connect(lambda: self.open_file())
-        self.ui.open_file_as_button.clicked.connect(lambda: self.open_file(external=True))
-        self.ui.save_file_button.clicked.connect(lambda: self.save_file())
-        self.ui.save_as_file_button.clicked.connect(lambda: self.save_file(external=True))
-        self.ui.cerate_file_button.clicked.connect(self.create_new_file)
-        self.ui.realtime_save_checkbox.clicked.connect(self.realtime_save_action)
-
-    def realtime_save_action(self):
-        self.realtime_save = self.ui.realtime_save_checkbox.isChecked()
-        if get_settings_bool('SmartPropEditor', 'enable_transparency_window', True):
-            if self.realtime_save:
-                transparency = float(get_settings_value('SmartPropEditor', 'transparency_window', 70)) / 100
-                self.parent.setWindowOpacity(transparency)
-            else:
-                self.parent.setWindowOpacity(1)
-        # Start or stop the realtime save timer
-        if self.realtime_save:
-            self.realtime_save_timer.start()
-        else:
-            self.realtime_save_timer.stop()
-
-    def realtime_save_all(self):
-        # Iterate over all open tabs/documents and auto-save if modified
-        for i in range(self.ui.DocumentTabWidget.count()):
-            doc = self.ui.DocumentTabWidget.widget(i)
-            if hasattr(doc, 'is_modified') and doc.is_modified():
-                # Auto-save document (assumed to be non-external save)
-                if hasattr(doc, 'save_file'):
-                    doc.save_file(external=False, realtime_save=True)
-                    base_name = "Untitled"
-                    if doc.opened_file:
-                        base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
-                    self.update_document_tab_title(doc, base_name)
     def create_new_file(self):
         """
         Creates a new blank document in a new tab.
@@ -566,6 +490,8 @@ class SmartPropEditorMainWindow(QMainWindow):
             if doc.opened_file:
                 base_name = os.path.splitext(os.path.basename(doc.opened_file))[0]
             self.update_document_tab_title(doc, base_name)
+            if self.update_title and doc.opened_file:
+                self.update_title('saved', doc.opened_file)
 
     def open_file(self, external=False, filename=None):
         """
@@ -623,6 +549,8 @@ class SmartPropEditorMainWindow(QMainWindow):
             # Track in recent files
             if hasattr(self, 'mini_explorer') and self.mini_explorer is not None:
                 self.mini_explorer.add_recent_file(norm_filename)
+            if self.update_title:
+                self.update_title('opened', norm_filename)
 
         else:
             error_dialog = ErrorInfo(text="No file selected", details="Please select a file to open.")
@@ -734,10 +662,8 @@ class SmartPropEditorMainWindow(QMainWindow):
 
     def closeEvent(self, event):
         """
-        Overridden close event to ensure the realtime save timer is stopped and cleanup is performed.
+        Overridden close event to persist layout and perform cleanup.
         """
-        if self.realtime_save_timer.isActive():
-            self.realtime_save_timer.stop()
         # Closed on addon switch: keep the current layout so the next addon's
         # documents open with the arrangement the user last used.
         self._persist_current_document_layout()
