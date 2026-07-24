@@ -3,7 +3,7 @@ import re
 import shutil
 import winreg
 from PySide6.QtWidgets import QMainWindow, QFileSystemModel, QStyledItemDelegate, QMenu, QMessageBox, \
-    QToolButton, QListWidgetItem, QInputDialog, QLineEdit, QFrame, QLabel, QVBoxLayout, QWidget, QHBoxLayout, QListWidget
+    QToolButton, QListWidgetItem, QInputDialog, QLineEdit, QFrame, QLabel, QVBoxLayout, QWidget, QHBoxLayout, QListWidget, QApplication
 from PySide6.QtGui import QIcon, QAction, QDesktopServices, QMouseEvent, QKeyEvent, QGuiApplication
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import Signal, Qt, QDir, QMimeData, QUrl, QFile, QFileInfo, QItemSelectionModel, QSortFilterProxyModel, QTimer
@@ -649,6 +649,17 @@ class Explorer(QMainWindow):
             fix_pbr_action.triggered.connect(lambda: FixPBRRange(file_path))
             menu.addAction(fix_pbr_action)
 
+        # --- Audio Tools (convert between wav/mp3) ---
+        if file_extension in ("mp3", "wav"):
+            menu.addSection("Audio Tools")
+            target = "wav" if file_extension == "mp3" else "mp3"
+            convert_action = QAction(f"Convert to {target.upper()}", self)
+            convert_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+            convert_action.triggered.connect(
+                lambda checked=False, p=file_path, t=target: self.convert_audio_file(p, t)
+            )
+            menu.addAction(convert_action)
+
         # --- Organize ---
         menu.addSection("Organize")
         asset_manager_action = QAction("Move Assets", self)
@@ -703,6 +714,22 @@ class Explorer(QMainWindow):
             copy_audio_path_action.setIcon(QIcon(":/icons/attachment.png"))
             copy_audio_path_action.triggered.connect(lambda: self.copy_audio_path(index, True))
             menu.addAction(copy_audio_path_action)
+
+    def convert_audio_file(self, file_path, target_ext):
+        """Convert an mp3<->wav file in place (writes a sibling with the new ext)."""
+        from src.editors.soundevent_editor.audio_convert import convert_audio
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            out = convert_audio(file_path, target_ext)
+        except Exception as error:
+            QApplication.restoreOverrideCursor()
+            QMessageBox.critical(self, "Conversion failed", str(error))
+            return
+        QApplication.restoreOverrideCursor()
+        QMessageBox.information(
+            self, "Conversion complete",
+            f"Created:\n{out}"
+        )
 
     def duplicate_file(self, index):
         file_path = self.model.filePath(index)

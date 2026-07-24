@@ -19,6 +19,7 @@ json-stream
 pyinstaller
 tabulate
 numpy
+imageio-ffmpeg
 pyqtgraph
 cairosvg
 lz4
