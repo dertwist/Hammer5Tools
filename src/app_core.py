@@ -507,7 +507,7 @@ class Widget(QMainWindow):
 
     def launch_addon_action(self):
         self.animate_launch_button()
-        self.update_title(text=f'Launched addon --- {get_addon_name()}')
+        self.update_title(text=f'Launched addon: {get_addon_name()}')
         launch_addon()
 
     def setup_buttons(self):
