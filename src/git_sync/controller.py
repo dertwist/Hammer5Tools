@@ -19,6 +19,16 @@ from src.git_sync.conflict_dialog import ConflictDialog
 
 _SYNC_ICON = ":/icons/sync_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"
 
+_LFS_LIMIT = 100 * 1024 * 1024    # GitHub rejects blobs over 100 MiB
+_LARGE_COMMIT = 500 * 1024 * 1024  # warn about slow uploads over this
+
+
+def _human(nbytes):
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if nbytes < 1024 or unit == "TB":
+            return f"{nbytes:.0f} {unit}" if unit in ("B", "KB") else f"{nbytes:.1f} {unit}"
+        nbytes /= 1024
+
 
 class SyncButton(QPushButton):
     """Icon-only sync button that paints local-change / ahead-of-origin badges."""
@@ -139,6 +149,39 @@ class GitController:
             self._fetch_proc = None
         self._tick_badges()
 
+    # ---- pre-commit size guards ----------------------------------------
+    def _precommit_size_checks(self, files):
+        """Warn about >100MB non-LFS files and large total uploads.
+
+        Returns True to proceed, False if the user cancelled."""
+        big = [(p, s) for p, s in files
+               if s > _LFS_LIMIT and not self.repo.is_lfs_tracked(p)]
+        if big:
+            listing = "\n".join(f"  • {p} ({_human(s)})" for p, s in big[:10])
+            if len(big) > 10:
+                listing += f"\n  … +{len(big) - 10} more"
+            r = QMessageBox.warning(
+                self.main, "Large files not tracked by LFS",
+                "These files are over 100 MB and are not tracked by Git LFS:\n\n"
+                f"{listing}\n\n"
+                "Hosts like GitHub reject files this large. Consider tracking "
+                "them with Git LFS (git lfs track) before committing.\n\n"
+                "Commit anyway?",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if r != QMessageBox.Yes:
+                return False
+
+        total = sum(s for _, s in files)
+        if total > _LARGE_COMMIT:
+            r = QMessageBox.question(
+                self.main, "Large commit",
+                f"You're going to upload {_human(total)} of files, this might "
+                "take longer than usual. Proceed?",
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+            if r != QMessageBox.Yes:
+                return False
+        return True
+
     # ---- the one-button sync flow --------------------------------------
     # commit existing changes -> fetch -> pull (merge) -> resolve -> push
     def sync(self):
@@ -148,9 +191,12 @@ class GitController:
             QMessageBox.warning(self.main, "Git Sync",
                                 "Git repository not found, cannot sync changes.")
             return
-        self._set_busy(True)
 
         porcelain = self.repo.status_porcelain()
+        if not self._precommit_size_checks(self.repo.changed_files()):
+            return  # user cancelled
+
+        self._set_busy(True)
         self.repo._run("add", "-A")
         if self.repo.has_staged():
             msg = generate(porcelain)
