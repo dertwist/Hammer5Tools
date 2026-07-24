@@ -6,75 +6,60 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>645</width>
-    <height>505</height>
+    <width>680</width>
+    <height>600</height>
    </rect>
-  </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
-    <width>645</width>
-    <height>505</height>
+    <width>680</width>
+    <height>600</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>645</width>
-    <height>505</height>
+    <width>680</width>
+    <height>600</height>
    </size>
   </property>
   <property name="windowTitle">
    <string>About</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: #1C1C1C;</string>
-  </property>
-  <property name="sizeGripEnabled">
-   <bool>false</bool>
+   <string notr="true">background-color: #1C1C1C; color: #E3E3E3;</string>
   </property>
   <property name="modal">
    <bool>false</bool>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
-    <number>0</number>
+    <number>10</number>
    </property>
    <property name="leftMargin">
-    <number>0</number>
+    <number>16</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>16</number>
    </property>
    <property name="bottomMargin">
-    <number>0</number>
+    <number>12</number>
    </property>
    <item>
     <widget class="QFrame" name="frame">
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>180</height>
+       <height>160</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>180</height>
+       <height>160</height>
       </size>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <property name="spacing">
@@ -97,9 +82,6 @@
         <property name="styleSheet">
          <string notr="true">image: url(:/images/help/header.png);</string>
         </property>
-        <property name="text">
-         <string/>
-        </property>
         <property name="alignment">
          <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
@@ -107,17 +89,8 @@
       </item>
       <item>
        <widget class="QLabel" name="version">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <family>Segoe UI Black</family>
-          <pointsize>13</pointsize>
-         </font>
+        <property name="styleSheet">
+         <string notr="true">color: #9D9D9D; font: bold 12pt "Segoe UI";</string>
         </property>
         <property name="text">
          <string>Version: 1.0.0</string>
@@ -131,47 +104,130 @@
     </widget>
    </item>
    <item>
-    <widget class="QFrame" name="frame_4">
-     <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
+    <widget class="QFrame" name="content_frame">
+     <property name="styleSheet">
+      <string notr="true">background-color: #242424; border: 1px solid #333333; border-radius: 0px;</string>
      </property>
-     <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="content_layout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>12</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>12</number>
+      </property>
+      <property name="bottomMargin">
+       <number>12</number>
+      </property>
       <item>
-       <widget class="QLabel" name="label_3">
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-         </font>
+       <widget class="QFrame" name="video_card">
+        <property name="styleSheet">
+         <string notr="true">background-color: #1E222A; border: 1px solid #333A48; border-radius: 0px;</string>
         </property>
-        <property name="text">
-         <string>Use tooltips to understand the program:
-For almost all buttons, an explanation appears when you hover your cursor over a button.</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
-        </property>
+        <layout class="QHBoxLayout" name="video_layout">
+         <property name="spacing">
+          <number>12</number>
+         </property>
+         <property name="leftMargin">
+          <number>10</number>
+         </property>
+         <property name="topMargin">
+          <number>10</number>
+         </property>
+         <property name="rightMargin">
+          <number>10</number>
+         </property>
+         <property name="bottomMargin">
+          <number>10</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="yt_preview_label">
+           <property name="styleSheet">
+            <string notr="true">border: 1px solid #3E4451; border-radius: 0px; background-color: #000000;</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="watch_video_button">
+           <property name="styleSheet">
+            <string notr="true">QPushButton { font: 600 9.5pt "Segoe UI"; border: 1px solid #E05252; border-radius: 0px; padding: 6px 14px; color: #FFFFFF; background-color: #C0392B; }</string>
+           </property>
+           <property name="text">
+            <string>▶ Watch Tutorial on YouTube</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="label_4">
-        <property name="minimumSize">
-         <size>
-          <width>400</width>
-          <height>200</height>
-         </size>
-        </property>
+       <widget class="QFrame" name="guides_card">
         <property name="styleSheet">
-         <string notr="true">image: url(:/images/help/about/tooltip_help.png);</string>
+         <string notr="true">background-color: #1E1E1E; border: 1px solid #333333; border-radius: 0px;</string>
         </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
-        </property>
+        <layout class="QVBoxLayout" name="guides_layout">
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <property name="leftMargin">
+          <number>10</number>
+         </property>
+         <property name="topMargin">
+          <number>10</number>
+         </property>
+         <property name="rightMargin">
+          <number>10</number>
+         </property>
+         <property name="bottomMargin">
+          <number>10</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="guides_header">
+           <property name="styleSheet">
+            <string notr="true">color: #E5C07B; font: bold 10.5pt "Segoe UI"; border: none;</string>
+           </property>
+           <property name="text">
+            <string>📚 Documentation &amp; Guides</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="guides_btn_layout">
+           <item>
+            <widget class="QPushButton" name="open_documentation_button">
+             <property name="text">
+              <string>Documentation</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="open_radio_sound_guide_button">
+             <property name="text">
+              <string>Radio Soundevent Guide</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="tooltip_note">
+           <property name="styleSheet">
+            <string notr="true">color: #98C379; font: 8.5pt "Segoe UI"; border: none;</string>
+           </property>
+           <property name="text">
+            <string>💡 Tip: Hover your cursor over buttons to display helpful tooltips.</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
@@ -185,119 +241,32 @@ For almost all buttons, an explanation appears when you hover your cursor over a
        <height>44</height>
       </size>
      </property>
-     <property name="frameShape">
-      <enum>QFrame::Shape::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Shadow::Raised</enum>
-     </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <property name="spacing">
-       <number>6</number>
-      </property>
-      <property name="leftMargin">
-       <number>9</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>9</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
       <item>
-       <widget class="QPushButton" name="open_documentation_button">
-        <property name="styleSheet">
-         <string notr="true">    QPushButton {
-
-        font: 580 10pt &quot;Segoe UI&quot;;
-    
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QPushButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }</string>
-        </property>
+       <widget class="QPushButton" name="dont_show_button">
         <property name="text">
-         <string>Documentation</string>
-        </property>
-        <property name="icon">
-         <iconset resource="../resources.qrc">
-          <normaloff>:/icons/developer_guide_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</normaloff>:/icons/developer_guide_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>20</width>
-          <height>20</height>
-         </size>
+         <string>Don't show on startup</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="request_a_new_feature_button">
-        <property name="styleSheet">
-         <string notr="true">    QPushButton {
-
-        font: 580 10pt &quot;Segoe UI&quot;;
-    
-
-        border: 2px solid black;
-        border-radius: 2px;
-        border-color: rgba(80, 80, 80, 255);
-        height:22px;
-        padding-top: 2px;
-        padding-bottom:2px;
-        padding-left: 4px;
-        padding-right: 4px;
-        color: #E3E3E3;
-        background-color: #1C1C1C;
-    }
-    QPushButton:hover {
-        background-color: #414956;
-        color: white;
-    }
-    QPushButton:pressed {
-        background-color: red;
-        background-color: #1C1C1C;
-        margin: 1 px;
-        margin-left: 2px;
-        margin-right: 2px;
-
-    }</string>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="request_a_new_feature_button">
         <property name="text">
          <string>Feedback</string>
         </property>
-        <property name="icon">
-         <iconset resource="../resources.qrc">
-          <normaloff>:/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</normaloff>:/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>20</width>
-          <height>20</height>
-         </size>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="close_button">
+        <property name="text">
+         <string>Close</string>
         </property>
        </widget>
       </item>
@@ -306,8 +275,6 @@ For almost all buttons, an explanation appears when you hover your cursor over a
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../../resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
