@@ -16,7 +16,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QGridLayout, QHBoxLayout,
-    QMainWindow, QPushButton, QSizePolicy, QSpacerItem,
+    QLabel, QMainWindow, QPushButton, QSizePolicy,
     QTabWidget, QToolButton, QVBoxLayout, QWidget)
 import resources_rc
 
@@ -111,6 +111,7 @@ class Ui_MainWindow(object):
         self.smartpropeditor_tab.setObjectName(u"smartpropeditor_tab")
         self.verticalLayout_4 = QVBoxLayout(self.smartpropeditor_tab)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalLayout_4.setContentsMargins(-1, 0, -1, -1)
         icon3 = QIcon()
         icon3.addFile(u":/icons/smartprop_editor.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.MainWindowTools_tabs.addTab(self.smartpropeditor_tab, icon3, "")
@@ -170,65 +171,56 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.documentation_button)
 
-        self.FixNoSteamLogon_Button = QPushButton(self.centralwidget)
-        self.FixNoSteamLogon_Button.setObjectName(u"FixNoSteamLogon_Button")
-        self.FixNoSteamLogon_Button.setMinimumSize(QSize(92, 0))
-        self.FixNoSteamLogon_Button.setStyleSheet(u"padding: 5px;\n"
-"font: 580 10pt \"Segoe UI\";")
-        icon9 = QIcon()
-        icon9.addFile(u":/icons/icons/steam_logo_2.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.FixNoSteamLogon_Button.setIcon(icon9)
-        self.FixNoSteamLogon_Button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.FixNoSteamLogon_Button)
-
         self.preferences_button = QPushButton(self.centralwidget)
         self.preferences_button.setObjectName(u"preferences_button")
         self.preferences_button.setMinimumSize(QSize(130, 0))
         self.preferences_button.setStyleSheet(u"padding: 5px;\n"
 "font: 580 10pt \"Segoe UI\";")
-        icon10 = QIcon()
-        icon10.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.preferences_button.setIcon(icon10)
+        icon9 = QIcon()
+        icon9.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.preferences_button.setIcon(icon9)
         self.preferences_button.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.preferences_button)
 
-        self.horizontalSpacer_3 = QSpacerItem(24, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
+        self.console_label = QLabel(self.centralwidget)
+        self.console_label.setObjectName(u"console_label")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.console_label.sizePolicy().hasHeightForWidth())
+        self.console_label.setSizePolicy(sizePolicy)
+        self.console_label.setStyleSheet(u"color: #9D9D9D;\n"
+"padding-left: 8px;\n"
+"padding-right: 8px;\n"
+"font: 580 9pt \"Segoe UI\";")
+        self.console_label.setAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
 
-        self.horizontalLayout_2.addItem(self.horizontalSpacer_3)
+        self.horizontalLayout_2.addWidget(self.console_label)
 
-        self.export_and_import_addon_button = QToolButton(self.centralwidget)
-        self.export_and_import_addon_button.setObjectName(u"export_and_import_addon_button")
-        font = QFont()
-        font.setPointSize(11)
-        self.export_and_import_addon_button.setFont(font)
+        self.utilities_button = QToolButton(self.centralwidget)
+        self.utilities_button.setObjectName(u"utilities_button")
+        self.utilities_button.setMinimumSize(QSize(110, 0))
+        self.utilities_button.setStyleSheet(u"padding: 5px;\n"
+"font: 580 10pt \"Segoe UI\";")
+        icon10 = QIcon()
+        icon10.addFile(u":/icons/apps_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.utilities_button.setIcon(icon10)
+        self.utilities_button.setIconSize(QSize(20, 20))
+        self.utilities_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.utilities_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+
+        self.horizontalLayout_2.addWidget(self.utilities_button)
+
+        self.addon_actions_button = QToolButton(self.centralwidget)
+        self.addon_actions_button.setObjectName(u"addon_actions_button")
         icon11 = QIcon()
-        icon11.addFile(u":/icons/publish_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.export_and_import_addon_button.setIcon(icon11)
-        self.export_and_import_addon_button.setIconSize(QSize(20, 20))
+        icon11.addFile(u":/icons/menu_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.addon_actions_button.setIcon(icon11)
+        self.addon_actions_button.setIconSize(QSize(20, 20))
+        self.addon_actions_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
 
-        self.horizontalLayout_2.addWidget(self.export_and_import_addon_button)
-
-        self.delete_addon_button = QToolButton(self.centralwidget)
-        self.delete_addon_button.setObjectName(u"delete_addon_button")
-        self.delete_addon_button.setFont(font)
-        icon12 = QIcon()
-        icon12.addFile(u":/icons/delete_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.delete_addon_button.setIcon(icon12)
-        self.delete_addon_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.delete_addon_button)
-
-        self.create_new_addon_button = QToolButton(self.centralwidget)
-        self.create_new_addon_button.setObjectName(u"create_new_addon_button")
-        self.create_new_addon_button.setFont(font)
-        icon13 = QIcon()
-        icon13.addFile(u":/icons/post_add_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.create_new_addon_button.setIcon(icon13)
-        self.create_new_addon_button.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.create_new_addon_button)
+        self.horizontalLayout_2.addWidget(self.addon_actions_button)
 
         self.ComboBoxSelectAddon = QComboBox(self.centralwidget)
         self.ComboBoxSelectAddon.setObjectName(u"ComboBoxSelectAddon")
@@ -237,22 +229,15 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addWidget(self.ComboBoxSelectAddon)
 
-        self.launch_settings = QToolButton(self.centralwidget)
-        self.launch_settings.setObjectName(u"launch_settings")
-        self.launch_settings.setIcon(icon10)
-        self.launch_settings.setIconSize(QSize(20, 20))
-
-        self.horizontalLayout_2.addWidget(self.launch_settings)
-
         self.Launch_Addon_Button = QPushButton(self.centralwidget)
         self.Launch_Addon_Button.setObjectName(u"Launch_Addon_Button")
         self.Launch_Addon_Button.setEnabled(True)
         self.Launch_Addon_Button.setMinimumSize(QSize(128, 0))
         self.Launch_Addon_Button.setStyleSheet(u"padding: 5px;\n"
 "font: 700 10pt \"Segoe UI\";")
-        icon14 = QIcon()
-        icon14.addFile(u":/icons/icons/hammer_icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.Launch_Addon_Button.setIcon(icon14)
+        icon12 = QIcon()
+        icon12.addFile(u":/icons/icons/hammer_icon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.Launch_Addon_Button.setIcon(icon12)
         self.Launch_Addon_Button.setIconSize(QSize(20, 20))
         self.Launch_Addon_Button.setCheckable(False)
 
@@ -260,56 +245,12 @@ class Ui_MainWindow(object):
 
         self.mapbuilder = QToolButton(self.centralwidget)
         self.mapbuilder.setObjectName(u"mapbuilder")
-        icon15 = QIcon()
-        icon15.addFile(u":/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.mapbuilder.setIcon(icon15)
+        icon13 = QIcon()
+        icon13.addFile(u":/icons/emoji_objects_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.mapbuilder.setIcon(icon13)
         self.mapbuilder.setIconSize(QSize(20, 20))
 
         self.horizontalLayout_2.addWidget(self.mapbuilder)
-
-        self.horizontalSpacer = QSpacerItem(24, 6, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum)
-
-        self.horizontalLayout_2.addItem(self.horizontalSpacer)
-
-        self.open_addons_folder_button = QToolButton(self.centralwidget)
-        self.open_addons_folder_button.setObjectName(u"open_addons_folder_button")
-        self.open_addons_folder_button.setFont(font)
-        icon16 = QIcon()
-        icon16.addFile(u":/icons/folder_open.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_addons_folder_button.setIcon(icon16)
-
-        self.horizontalLayout_2.addWidget(self.open_addons_folder_button)
-
-        self.open_addons_folder_downlist = QComboBox(self.centralwidget)
-        self.open_addons_folder_downlist.addItem("")
-        self.open_addons_folder_downlist.addItem("")
-        self.open_addons_folder_downlist.setObjectName(u"open_addons_folder_downlist")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.open_addons_folder_downlist.sizePolicy().hasHeightForWidth())
-        self.open_addons_folder_downlist.setSizePolicy(sizePolicy)
-        self.open_addons_folder_downlist.setMinimumSize(QSize(64, 0))
-        self.open_addons_folder_downlist.setStyleSheet(u"font: 580 10pt \"Segoe UI\";")
-
-        self.horizontalLayout_2.addWidget(self.open_addons_folder_downlist)
-
-        self.open_dialog_button = QToolButton(self.centralwidget)
-        self.open_dialog_button.setObjectName(u"open_dialog_button")
-        icon17 = QIcon()
-        icon17.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.open_dialog_button.setIcon(icon17)
-
-        self.horizontalLayout_2.addWidget(self.open_dialog_button)
-
-        self.dialog_selection_combobox = QComboBox(self.centralwidget)
-        self.dialog_selection_combobox.addItem("")
-        self.dialog_selection_combobox.addItem("")
-        self.dialog_selection_combobox.setObjectName(u"dialog_selection_combobox")
-        self.dialog_selection_combobox.setMinimumSize(QSize(120, 0))
-        self.dialog_selection_combobox.setStyleSheet(u"font: 580 10pt \"Segoe UI\";")
-
-        self.horizontalLayout_2.addWidget(self.dialog_selection_combobox)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)
@@ -343,30 +284,22 @@ class Ui_MainWindow(object):
         self.documentation_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Discord server</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.documentation_button.setText("")
-#if QT_CONFIG(tooltip)
-        self.FixNoSteamLogon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Fix No Steam Logon</span></p><p>This script restarts Steam and launches the current addon.</p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.FixNoSteamLogon_Button.setText(QCoreApplication.translate("MainWindow", u"Restart", None))
-#if QT_CONFIG(tooltip)
-        self.preferences_button.setToolTip("")
-#endif // QT_CONFIG(tooltip)
         self.preferences_button.setText(QCoreApplication.translate("MainWindow", u"Settings", None))
 #if QT_CONFIG(tooltip)
-        self.export_and_import_addon_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Archive addon</span></p><p>Create an archive from game and content folders.</p></body></html>", None))
+        self.console_label.setToolTip(QCoreApplication.translate("MainWindow", u"Console: recent saved files, launched addons and tool activity.", None))
 #endif // QT_CONFIG(tooltip)
-        self.export_and_import_addon_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
+        self.console_label.setText("")
 #if QT_CONFIG(tooltip)
-        self.delete_addon_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Delete addon</span></p><p>Delete the selected addon.</p></body></html>", None))
+        self.utilities_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Utilities</span></p><p>Open a utility tool (Cleanup, Unreal Converter).</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.delete_addon_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
+        self.utilities_button.setText(QCoreApplication.translate("MainWindow", u"Utilities", None))
 #if QT_CONFIG(tooltip)
-        self.create_new_addon_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Create addon</span></p><p>Quickly create an addon with custom presets.</p></body></html>", None))
+        self.addon_actions_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Addon actions</span></p><p>Launch parameters, create/delete/export/import addon, open folders.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.create_new_addon_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
+        self.addon_actions_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.ComboBoxSelectAddon.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:11pt; font-weight:700;\">Addon selection</span></p><p>All tools apply changes to the addon selected in this section.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.launch_settings.setText(QCoreApplication.translate("MainWindow", u"...", None))
 #if QT_CONFIG(tooltip)
         self.Launch_Addon_Button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Addon launch</span></p><p>Launches the current addon selected in the addon selection.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
@@ -375,24 +308,5 @@ class Ui_MainWindow(object):
         self.mapbuilder.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p>Mapbuilder: an external tool to compile vmap files (by addon name)</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.mapbuilder.setText(QCoreApplication.translate("MainWindow", u"...", None))
-#if QT_CONFIG(tooltip)
-        self.open_addons_folder_button.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Open Game/Content Addons folder</span></p><p><span style=\" font-size:9pt;\">Opens the game addons or content addons folder for the current addon selection. </span></p><p><span style=\" font-size:9pt;\">To choose the folder type to open, select a folder in the </span><span style=\" font-size:9pt; font-style:italic;\">Addon Folder Selection</span><span style=\" font-size:9pt;\">.</span></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.open_addons_folder_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-        self.open_addons_folder_downlist.setItemText(0, QCoreApplication.translate("MainWindow", u"Content", None))
-        self.open_addons_folder_downlist.setItemText(1, QCoreApplication.translate("MainWindow", u"Game", None))
-
-#if QT_CONFIG(tooltip)
-        self.open_addons_folder_downlist.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Addon Folder Selection</span></p><p>Used to choose the folder that should be opened in the <span style=\" font-style:italic;\">Open Game/Content Addons Folder.</span></p></body></html>", None))
-#endif // QT_CONFIG(tooltip)
-        self.open_addons_folder_downlist.setCurrentText("")
-        self.open_addons_folder_downlist.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Open Folder", None))
-#if QT_CONFIG(tooltip)
-        self.open_dialog_button.setToolTip(QCoreApplication.translate("MainWindow", u"Open selected tool", None))
-#endif // QT_CONFIG(tooltip)
-        self.open_dialog_button.setText(QCoreApplication.translate("MainWindow", u"...", None))
-        self.dialog_selection_combobox.setItemText(0, QCoreApplication.translate("MainWindow", u"Cleanup", None))
-        self.dialog_selection_combobox.setItemText(1, QCoreApplication.translate("MainWindow", u"Unreal Converter", None))
-
     # retranslateUi
 
