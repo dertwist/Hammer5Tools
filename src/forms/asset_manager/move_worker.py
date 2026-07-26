@@ -14,6 +14,7 @@ class MoveWorker(QThread):
 
     def run(self):
         updater = ReferenceUpdater(self.addon_content_path)
+        renames = {}
         for src, dst in self.moves:
             old_rel = os.path.relpath(src, self.addon_content_path).replace('\\', '/')
             new_rel = os.path.relpath(dst, self.addon_content_path).replace('\\', '/')
@@ -21,9 +22,15 @@ class MoveWorker(QThread):
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
                 shutil.move(src, dst)
                 self.log.emit(f"Moved:\n    {old_rel}\n    -> {new_rel}")
-                modified = updater.update_references(old_rel, new_rel)
-                if modified:
-                    self.log.emit(f"    Updated references in {len(modified)} files")
+                renames[old_rel] = new_rel
             except Exception as e:
                 self.log.emit(f"Error moving {old_rel}: {e}")
+
+        # One pass for every rename: fixing up per file re-walks the addon and
+        # reloads every map once per moved asset, which does not scale past a
+        # handful of files.
+        if renames:
+            self.log.emit(f"Updating references for {len(renames)} moved files...")
+            modified = updater.update_references_batch(renames)
+            self.log.emit(f"Updated references in {len(modified)} files")
         self.finished_move.emit()
