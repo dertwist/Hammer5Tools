@@ -17,6 +17,7 @@ class BuildSettings:
 
     # === Core Settings ===
     mappath: str = ""
+    save_map_path: bool = False
     threads: int = -1  # -1 = auto-detect
 
     # === World Building ===

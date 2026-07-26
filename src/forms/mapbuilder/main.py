@@ -789,6 +789,7 @@ class MapBuilderDialog(QMainWindow):
         self.ui.run_button.clicked.connect(self.run_map)
         self.ui.abort_button.clicked.connect(self.abort_compilation)
         self.ui.abort_button.setEnabled(False)
+        self.settings_panel.mappathSaveRequested.connect(self.on_save_mappath_clicked)
 
     def closeEvent(self, event):
         if (self.is_compiling and self.compilation_thread) or self.is_building_cubemaps:
@@ -824,12 +825,21 @@ class MapBuilderDialog(QMainWindow):
         if preset:
             self.load_preset(preset)
 
+    def on_save_mappath_clicked(self):
+        if not self.current_preset:
+            return
+        current_settings = self.settings_panel.get_settings()
+        current_settings.save_map_path = True
+        self.settings_panel.set_settings(current_settings)
+        self.save_preset_changes(self.current_preset)
+
     def load_preset(self, preset: BuildPreset):
         current_mappath = self.settings_panel.get_settings().mappath
 
         self.current_preset = preset
         preset_settings = BuildSettings(**{f.name: getattr(preset.settings, f.name) for f in fields(BuildSettings)})
-        preset_settings.mappath = current_mappath
+        if not getattr(preset.settings, 'save_map_path', False) or not preset.settings.mappath:
+            preset_settings.mappath = current_mappath
         self.settings_panel.set_settings(preset_settings)
 
         for name, btn in self.preset_buttons.items():
@@ -858,7 +868,20 @@ class MapBuilderDialog(QMainWindow):
         name, ok = QInputDialog.getText(self, "New Preset", "Enter preset name:")
 
         if ok and name:
+            reply = QMessageBox.question(
+                self,
+                "New Preset",
+                "Do you want to keep selected maps in new preset?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes
+            )
+            keep_maps = (reply == QMessageBox.Yes)
+
             current_settings = self.settings_panel.get_settings()
+            current_settings.save_map_path = keep_maps
+            if not keep_maps:
+                current_settings.mappath = ""
+
             new_preset = BuildPreset(
                 name=name,
                 settings=current_settings,

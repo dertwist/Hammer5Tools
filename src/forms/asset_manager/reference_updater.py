@@ -67,6 +67,30 @@ class ReferenceUpdater:
 
         return modified
 
+    def _rewrite_prefix(self, abs_path: str, pattern, renames: dict) -> bool:
+        """Repoint the paths in the DMX prefix block's asset-reference cache.
+
+        Datamodel.NET exposes only part of that region as writable attributes, so
+        renames applied through the object model leave the cache holding the old
+        paths and Hammer reports every moved asset as missing even though the map
+        body is correct. This rewrites the region's strings directly.
+        """
+        try:
+            from src.gitvmapmerge import rewrite_prefix_strings
+            with open(abs_path, 'rb') as f:
+                buf = f.read()
+            out = rewrite_prefix_strings(buf, lambda s: self._apply(s, pattern, renames))
+            if out is None:
+                print(f"Warning: could not rewrite prefix asset cache in {abs_path}")
+                return False
+            if out != buf:
+                with open(abs_path, 'wb') as f:
+                    f.write(out)
+                return True
+        except Exception as e:
+            print(f"Warning: prefix asset cache rewrite failed for {abs_path}: {e}")
+        return False
+
     def _update_vmap_references(self, abs_path: str, pattern, renames: dict) -> bool:
         import tempfile
         import shutil
@@ -143,7 +167,13 @@ class ReferenceUpdater:
                 dmx_model.Dispose()
             dmx_model = None
             import gc; gc.collect()
-            
+
+            # Not gated on `modified`: the body and the prefix cache can hold
+            # stale paths independently, and after a body-only rewrite the cache
+            # is the only thing left pointing at the old locations.
+            if self._rewrite_prefix(abs_path, pattern, renames):
+                modified = True
+
             return modified
         except Exception as e:
             print(f"Error updating vmap references via .NET in {abs_path}: {e}")

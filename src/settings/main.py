@@ -29,25 +29,15 @@ class ActionButtonsPanel(QFrame):
         self.open_userdata_folder_button.set_icon_folder_open()
         h_layout_bottom.addWidget(self.open_userdata_folder_button)
 
-        self.cleanup_vrad3_button = Button(text=" Cleanup _vrad3 cache")
-        self.cleanup_vrad3_button.set_icon_delete()
-        self.cleanup_vrad3_button.setToolTip(
-            "Delete the _vrad3 lightmap cache folder from every addon in the "
-            "game directory (game/csgo_addons/*/_vrad3)."
-        )
-        h_layout_bottom.addWidget(self.cleanup_vrad3_button)
-
-        self.cleanup_model_browser_button = Button(text=" Cleanup model browser cache")
-        self.cleanup_model_browser_button.set_icon_delete()
-        self.cleanup_model_browser_button.setToolTip(
-            "Delete the model browser's asset index and generated thumbnails. "
-            "Both are rebuilt on the next browse."
-        )
-        h_layout_bottom.addWidget(self.cleanup_model_browser_button)
-
         h_layout_bottom.addStretch()
         self.version_label = QLabel("", self)
         h_layout_bottom.addWidget(self.version_label)
+        self.checkBox_dev_channel = QCheckBox("Receive dev versions", self)
+        self.checkBox_dev_channel.setStyleSheet(qt_stylesheet_checkbox)
+        self.checkBox_dev_channel.setToolTip(
+            "Update to pre-release (dev) builds. These are less tested than stable releases."
+        )
+        h_layout_bottom.addWidget(self.checkBox_dev_channel)
         self.check_update_button = Button()
         self.check_update_button.set_icon_sync()
         h_layout_bottom.addWidget(self.check_update_button)
@@ -144,13 +134,19 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray = QCheckBox("Minimize on Close", self.frame_other)
         self.checkBox_close_to_tray.setStyleSheet(qt_stylesheet_checkbox)
         row_app.addWidget(self.checkBox_close_to_tray)
-        layout_other.addLayout(row_app)
-        
-        # File association button in General -> Other
+        self.cleanup_model_browser_button = Button(text=" Cleanup model browser cache")
+        self.cleanup_model_browser_button.set_icon_delete()
+        self.cleanup_model_browser_button.setToolTip(
+            "Delete the model browser's asset index and generated thumbnails. "
+            "Both are rebuilt on the next browse."
+        )
+        row_app.addWidget(self.cleanup_model_browser_button)
         self.btn_force_association = Button(text=" Force Associate File Extensions (.vsmart, .vsndevts, .hbat)")
         self.btn_force_association.set_icon_sync()
-        layout_other.addWidget(self.btn_force_association)
-        
+        row_app.addWidget(self.btn_force_association)
+        row_app.addStretch()
+        layout_other.addLayout(row_app)
+
         layout.addWidget(self.frame_other)
         layout.addStretch()
         # Wrap the general tab content in a scroll area
@@ -413,6 +409,7 @@ class PreferencesDialog(QDialog):
             else:
                 self.preferences_lineedit_cs2_path.setPlaceholderText("CS2 not found - set manually")
         self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', False))
+        self.action_buttons_panel.checkBox_dev_channel.setChecked(get_settings_bool('APP', 'dev_channel', False))
         # Read channel for the version label (shows "(dev)" suffix on dev builds)
         channel = get_channel()
         version_text = f"Version: {self.app_version}"
@@ -498,6 +495,9 @@ class PreferencesDialog(QDialog):
         self.checkBox_close_to_tray.toggled.connect(
             lambda: set_settings_bool('APP', 'minimize_to_tray', self.checkBox_close_to_tray.isChecked())
         )
+        self.action_buttons_panel.checkBox_dev_channel.toggled.connect(
+            lambda checked: set_settings_bool('APP', 'dev_channel', checked)
+        )
         self.spe_display_id_with_variable_class.toggled.connect(
             lambda: set_settings_bool('SmartPropEditor', 'display_id_with_variable_class', self.spe_display_id_with_variable_class.isChecked())
         )
@@ -513,9 +513,7 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_combo_algorithm.currentIndexChanged.connect(self.update_default_file_setting)
         self.assetgroupmaker_edit_ignore_ext.textChanged.connect(self.update_default_file_setting)
         self.action_buttons_panel.open_userdata_folder_button.clicked.connect(self.open_userdata_folder)
-        self.action_buttons_panel.cleanup_vrad3_button.clicked.connect(self.cleanup_vrad3_cache)
-        self.action_buttons_panel.cleanup_model_browser_button.clicked.connect(
-            self.cleanup_model_browser_cache)
+        self.cleanup_model_browser_button.clicked.connect(self.cleanup_model_browser_cache)
         self.action_buttons_panel.check_update_button.clicked.connect(self.check_update)
         self.browse_archive_button.clicked.connect(self.browse_archive)
         self.checkBox_play_on_click.toggled.connect(
@@ -579,64 +577,6 @@ class PreferencesDialog(QDialog):
     def open_userdata_folder(self):
         from src.common import user_data_dir
         os.startfile(str(user_data_dir))
-
-    def cleanup_vrad3_cache(self):
-        """Delete the _vrad3 lightmap cache folder from every addon in the
-        game directory (game/csgo_addons/*/_vrad3). Destructive, so it asks
-        for confirmation and reports the result."""
-        import shutil
-        from pathlib import Path
-        from PySide6.QtWidgets import QMessageBox
-
-        cs2_path = get_cs2_path()
-        if not cs2_path:
-            QMessageBox.warning(self, "Cleanup _vrad3 cache",
-                                "CS2 path not found. Set it in the General tab first.")
-            return
-
-        game_addons_dir = Path(cs2_path) / 'game' / 'csgo_addons'
-        if not game_addons_dir.is_dir():
-            QMessageBox.warning(self, "Cleanup _vrad3 cache",
-                                f"Addons directory not found:\n{game_addons_dir}")
-            return
-
-        targets = [addon / '_vrad3' for addon in sorted(game_addons_dir.iterdir())
-                   if addon.is_dir() and (addon / '_vrad3').is_dir()]
-
-        if not targets:
-            QMessageBox.information(self, "Cleanup _vrad3 cache",
-                                    "No _vrad3 cache folders found.")
-            return
-
-        addon_list = "\n".join(f"  • {t.parent.name}" for t in targets)
-        reply = QMessageBox.question(
-            self, "Cleanup _vrad3 cache",
-            f"Delete the _vrad3 cache from {len(targets)} addon(s)?\n\n{addon_list}\n\n"
-            "This forces a full lightmap rebuild on the next compile.",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-        )
-        if reply != QMessageBox.Yes:
-            return
-
-        removed, failed = 0, []
-        for target in targets:
-            try:
-                shutil.rmtree(target)
-                removed += 1
-            except Exception as e:
-                failed.append(f"{target.parent.name}: {e}")
-
-        if failed:
-            QMessageBox.warning(
-                self, "Cleanup _vrad3 cache",
-                f"Removed {removed} of {len(targets)} cache folder(s).\n\n"
-                "Failed:\n" + "\n".join(failed)
-            )
-        else:
-            QMessageBox.information(
-                self, "Cleanup _vrad3 cache",
-                f"Removed the _vrad3 cache from {removed} addon(s)."
-            )
 
     def cleanup_model_browser_cache(self):
         """Delete the model browser's asset index and generated thumbnails.
