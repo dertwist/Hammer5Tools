@@ -125,3 +125,4 @@ dist_hammer5tools
 *.exe
 userdata_dev
 /src/external/dotnet/
+scratch
