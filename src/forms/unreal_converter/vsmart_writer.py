@@ -2,9 +2,11 @@
 vsmart writer — turns a normalized UE Blueprint component tree into a Source 2
 .vsmart Smart Prop.
 
-Each Blueprint static mesh component becomes a CSmartPropElement_Model (or
-CSmartPropElement_Group for scene parents) whose relative transform is converted
-from UE space to Source 2 space via the shared transform module.
+Each Blueprint static mesh component becomes a CSmartPropElement_Model whose
+relative transform is converted from UE space to Source 2 space via the shared
+transform module. Models are leaves in Source 2, so anything that has children —
+a scene component, or a mesh component with components parented under it — is
+emitted as a CSmartPropElement_Group carrying the transform instead.
 """
 
 import os
@@ -60,13 +62,29 @@ def write_vsmart(
             p = None
         children_by_parent.setdefault(p, []).append(c)
 
-    def build_vsmart_element(c: dict) -> Optional[dict]:
+    def new_element_id() -> int:
+        elem_id = element_id_counter[0]
+        element_id_counter[0] += 1
+        return elem_id
+
+    def build_vsmart_element(c: dict, ancestry: frozenset = frozenset()) -> Optional[dict]:
         mesh = c.get("mesh")
-        comp_type = c.get("componentType", "")
         c_name = c.get("name", "Component")
 
-        has_children = bool(children_by_parent.get(c_name))
-        if not mesh and not has_children:
+        # Malformed parenting (a component reachable from itself) would recurse
+        # forever; the SCS tree should never do this, a hand-edited dump might.
+        if c_name in ancestry:
+            return None
+
+        child_elements = []
+        for child_c in children_by_parent.get(c_name, []):
+            child_elem = build_vsmart_element(child_c, ancestry | {c_name})
+            if child_elem:
+                child_elements.append(child_elem)
+
+        # Transform-only nodes (scene components, mesh-less parents) exist purely
+        # to carry an offset for their children — drop them only if empty.
+        if not mesh and not child_elements:
             return None
 
         loc = c.get("location") or {"x": 0.0, "y": 0.0, "z": 0.0}
@@ -99,52 +117,53 @@ def write_vsmart(
                 }
             })
 
-        elem_id = element_id_counter[0]
-        element_id_counter[0] += 1
+        scaled = any(abs(v - 1.0) > 1e-4 for v in st.scales)
+        if not mesh and scaled and len(set(st.scales)) == 1:
+            modifiers.append({
+                "_class": "CSmartPropOperation_Scale",
+                "m_flScale": round(float(st.scales[0]), 4)
+            })
 
-        child_elements = []
-        for child_c in children_by_parent.get(c_name, []):
-            child_elem = build_vsmart_element(child_c)
-            if child_elem:
-                child_elements.append(child_elem)
-
-        if mesh:
-            model_path = model_resolver(mesh)
-            result.models.add(model_path)
-            result.placed += 1
-            label = os.path.splitext(os.path.basename(model_path))[0] or c_name
-
-            elem = {
-                "_class": "CSmartPropElement_Model",
-                "m_nElementID": elem_id,
-                "m_sModelName": model_path,
-                "m_sLabel": label,
-                "m_Modifiers": modifiers,
-                "m_SelectionCriteria": [],
-            }
-            if any(abs(v - 1.0) > 1e-4 for v in st.scales):
-                elem["m_vModelScale"] = {
-                    "m_Components": [round(float(v), 4) for v in st.scales]
-                }
-            if child_elements:
-                elem["m_Children"] = child_elements
-            return elem
-        else:
-            elem = {
+        def group(children: list) -> dict:
+            return {
                 "_class": "CSmartPropElement_Group",
-                "m_nElementID": elem_id,
+                "m_nElementID": new_element_id(),
                 "m_sLabel": c_name,
                 "m_Modifiers": modifiers,
                 "m_SelectionCriteria": [],
-                "m_Children": child_elements,
+                "m_Children": children,
             }
-            if any(abs(v - 1.0) > 1e-4 for v in st.scales):
-                if len(set(st.scales)) == 1:
-                    elem["m_Modifiers"].append({
-                        "_class": "CSmartPropOperation_Scale",
-                        "m_flScale": round(float(st.scales[0]), 4)
-                    })
+
+        if not mesh:
+            return group(child_elements)
+
+        model_path = model_resolver(mesh)
+        result.models.add(model_path)
+        result.placed += 1
+        label = os.path.splitext(os.path.basename(model_path))[0] or c_name
+
+        elem = {
+            "_class": "CSmartPropElement_Model",
+            "m_nElementID": new_element_id(),
+            "m_sModelName": model_path,
+            "m_sLabel": label,
+            "m_Modifiers": [] if child_elements else modifiers,
+            "m_SelectionCriteria": [],
+        }
+        # ponytail: the model keeps its own scale, children of a scaled mesh
+        # component are not scaled with it. Compose scale into the child
+        # translations if a blueprint ever needs it.
+        if scaled:
+            elem["m_vModelScale"] = {
+                "m_Components": [round(float(v), 4) for v in st.scales]
+            }
+        if not child_elements:
             return elem
+
+        # CSmartPropElement_Model is a leaf in Source 2 — m_Children on it is
+        # ignored, which silently deletes every component parented to a mesh.
+        # Hoist the transform onto a Group and place the model inside it.
+        return group([elem] + child_elements)
 
     root_elements = []
     for root_c in children_by_parent.get(None, []):
@@ -155,11 +174,9 @@ def write_vsmart(
     if not root_elements:
         return result
 
-    top_id = element_id_counter[0]
-    element_id_counter[0] += 1
     top_group = {
         "_class": "CSmartPropElement_Group",
-        "m_nElementID": top_id,
+        "m_nElementID": new_element_id(),
         "m_sLabel": bp_name,
         "m_Modifiers": [],
         "m_SelectionCriteria": [],

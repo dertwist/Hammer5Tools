@@ -124,40 +124,116 @@ class UnrealBridge:
             return {"blueprint": bp_path, "count": 0, "components": []}
 
         components = []
+
+        # Mirrors DumpBlueprint in tools/unreal_bridge/Program.cs: a Blueprint's
+        # component hierarchy lives in the SimpleConstructionScript's ChildNodes,
+        # not in AttachParent, and templates are exported as "<Var>_GEN_VARIABLE".
+        def _var_name(n: str) -> str:
+            n = str(n).split(":")[-1]
+            return n[:-len("_GEN_VARIABLE")] if n.endswith("_GEN_VARIABLE") else n
+
+        def _ref_name(prop) -> str:
+            # CUE4Parse writes object refs as {"ObjectName": "Class'Name'", ...}.
+            raw = str((prop.get("ObjectName") if isinstance(prop, dict) else prop) or "").strip()
+            if raw.endswith("'") and "'" in raw[:-1]:
+                raw = raw[raw.index("'") + 1:-1]
+            return raw.split(":")[-1].split(".")[-1]
+
+        def _resolve(prop):
+            """Follow a reference to its export. ObjectPath ends with the export
+            index, which is what disambiguates sub-objects — names repeat (every
+            child actor template holds a "StaticMeshComponent0")."""
+            if not isinstance(prop, dict):
+                return None
+            idx = str(prop.get("ObjectPath") or "").rsplit(".", 1)[-1]
+            if idx.isdigit() and int(idx) < len(exports):
+                target = exports[int(idx)]
+                return target if isinstance(target, dict) else None
+            return None
+
+        def _mesh_path(prop):
+            if isinstance(prop, dict):
+                return prop.get("ObjectPath") or prop.get("ObjectName")
+            return prop or None
+
+        def _child_actor_mesh(props):
+            """A ChildActorComponent's mesh lives on the actor template it spawns."""
+            template = _resolve(props.get("ChildActorTemplate"))
+            if not template:
+                return None
+            tprops = template.get("Properties", {})
+            root = _resolve(tprops.get("StaticMeshComponent")) or _resolve(tprops.get("RootComponent"))
+            return _mesh_path(root.get("Properties", {}).get("StaticMesh")) if root else None
+
+        # Components inside a child actor template belong to the spawned actor;
+        # the ChildActorComponent stands in for them.
+        child_actor_templates = set()
+        for exp in exports:
+            if not isinstance(exp, dict):
+                continue
+            template = _resolve(exp.get("Properties", {}).get("ChildActorTemplate"))
+            if template:
+                child_actor_templates.add(template.get("Name"))
+
+        scs_nodes = {}   # export name -> properties
+        for exp in exports:
+            if not isinstance(exp, dict):
+                continue
+            if "SCS_Node" in (exp.get("Type") or exp.get("Class") or ""):
+                scs_nodes[exp.get("Name") or ""] = exp.get("Properties", {})
+
+        template_vars = {}   # template export name -> SCS variable name
+        for props in scs_nodes.values():
+            tmpl = _ref_name(props.get("ComponentTemplate"))
+            if not tmpl:
+                continue
+            internal = props.get("InternalVariableName")
+            template_vars[tmpl] = str(internal) if internal and internal != "None" else _var_name(tmpl)
+
+        def _node_var(props) -> str:
+            tmpl = _ref_name(props.get("ComponentTemplate"))
+            return template_vars.get(tmpl, _var_name(tmpl)) if tmpl else ""
+
         node_parent_map = {}
+        for props in scs_nodes.values():
+            my_var = _node_var(props)
+            if not my_var:
+                continue
+            for child_ref in props.get("ChildNodes") or []:
+                child = _resolve(child_ref)
+                child_props = child.get("Properties", {}) if child else scs_nodes.get(_ref_name(child_ref))
+                child_var = _node_var(child_props) if child_props else ""
+                if child_var and child_var != my_var:
+                    node_parent_map[child_var] = my_var
 
+        for props in scs_nodes.values():
+            my_var = _node_var(props)
+            parent_name = props.get("ParentComponentOrVariableName")
+            if my_var and my_var not in node_parent_map and parent_name and parent_name != "None":
+                if str(parent_name) != my_var:
+                    node_parent_map[my_var] = str(parent_name)
+
+        seen = set()
         for exp in exports:
             if not isinstance(exp, dict):
                 continue
             exp_type = exp.get("Type") or exp.get("Class") or ""
-            if "SCS_Node" in exp_type:
-                tmpl = exp.get("Properties", {}).get("ComponentTemplate", {})
-                template_name = tmpl.get("ObjectName", "").split(":")[-1] if isinstance(tmpl, dict) else ""
-                parent_name = exp.get("Properties", {}).get("AttachVariableName") or exp.get("Properties", {}).get("ParentComponentOrVariableName")
-                if template_name and parent_name and parent_name != "None":
-                    node_parent_map[template_name] = str(parent_name)
+            raw_name = exp.get("Name") or exp.get("ObjectName") or "Component"
+            # Keep every transform-carrying node, mesh or not: dropping an empty
+            # scene node orphans its children and loses the offset it held.
+            if raw_name not in template_vars and not exp_type.endswith("Component"):
+                continue
+            if _ref_name(exp.get("Outer")) in child_actor_templates:
+                continue
 
-        for exp in exports:
-            if not isinstance(exp, dict):
+            name = template_vars.get(raw_name, _var_name(raw_name))
+            if name in seen:
                 continue
-            exp_type = exp.get("Type") or exp.get("Class") or ""
-            is_sm = "StaticMeshComponent" in exp_type
-            is_sc = "SceneComponent" in exp_type
-            if not is_sm and not is_sc:
-                continue
+            seen.add(name)
 
             props = exp.get("Properties", {})
-            mesh_prop = props.get("StaticMesh")
-            mesh = None
-            if isinstance(mesh_prop, dict):
-                mesh = mesh_prop.get("ObjectPath") or mesh_prop.get("ObjectName")
-            elif isinstance(mesh_prop, str):
-                mesh = mesh_prop
+            mesh = _mesh_path(props.get("StaticMesh")) or _child_actor_mesh(props)
 
-            if is_sm and not mesh:
-                continue
-
-            name = exp.get("Name") or exp.get("ObjectName") or "Component"
             loc_prop = props.get("RelativeLocation", {})
             rot_prop = props.get("RelativeRotation", {})
             scl_prop = props.get("RelativeScale3D", {})
@@ -166,12 +242,10 @@ class UnrealBridge:
             rot = {"pitch": float(rot_prop.get("Pitch", 0)), "yaw": float(rot_prop.get("Yaw", 0)), "roll": float(rot_prop.get("Roll", 0))}
             scl = {"x": float(scl_prop.get("X", 1)), "y": float(scl_prop.get("Y", 1)), "z": float(scl_prop.get("Z", 1))}
 
-            attach_parent = props.get("AttachParent")
-            parent = None
-            if isinstance(attach_parent, dict):
-                parent = attach_parent.get("ObjectName", "").split(":")[-1]
+            parent = node_parent_map.get(name)
             if not parent:
-                parent = node_parent_map.get(name)
+                attach = _ref_name(props.get("AttachParent"))
+                parent = _var_name(attach) if attach else None
 
             components.append({
                 "name": name,
