@@ -360,6 +360,13 @@ def main() -> None:
 
     overall_start_time = time.time()
 
+    # ui_*.py and resources_rc.py are generated, not tracked in git.
+    if args.build_all or args.build_app:
+        stage_start_time = time.time()
+        import compile_ui
+        compile_ui.main(cur_dir)
+        print_elapsed_time("Compile UI/resources", stage_start_time)
+
     stage_start_time = time.time()
     # Kill processes
     for p in ["Hammer5Tools.exe", "fileedit.exe"]:
