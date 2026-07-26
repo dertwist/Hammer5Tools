@@ -241,7 +241,6 @@ class VPKExtractor:
         try:
             package.Read(vpk_path)
 
-            # Normalize path
             normalized_path = file_path.replace("\\", "/")
             file_entry = package.FindEntry(normalized_path)
 
@@ -253,7 +252,6 @@ class VPKExtractor:
             if read_method is None:
                 raise RuntimeError("Could not find ReadEntry method")
 
-            # Prepare method parameters
             params = read_method.GetParameters()
             args = System.Array.CreateInstance(System.Object, len(params))
             args[0] = file_entry
@@ -264,7 +262,6 @@ class VPKExtractor:
             if len(params) > 2:
                 args[2] = True  # validateCrc
 
-            # Invoke method
             read_method.Invoke(package, args)
             return args[1]  # The out parameter contains the data
 
@@ -315,12 +312,10 @@ class ResourceProcessor:
             try:
                 resource.Read(memory_stream)
 
-                # Extract using FileExtract
                 extract_method = self._find_extract_method(FileExtract)
                 if extract_method is None:
                     return False
 
-                # Invoke extract method
                 params = extract_method.GetParameters()
                 args = System.Array.CreateInstance(System.Object, len(params))
                 args[0] = resource
@@ -989,7 +984,6 @@ def decompile_texture_to_png(vtex_path: str) -> Optional[str]:
             print(f"Error reading filesystem texture {source_fs_path}: {e}")
             return None
     elif in_vpk:
-        # Load interop and extract from VPK
         from src.dotnet import DotNetInterop, VPKExtractor
         interop = DotNetInterop()
         interop._init_pythonnet()

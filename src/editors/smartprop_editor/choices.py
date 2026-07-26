@@ -51,7 +51,6 @@ class AddVariable():
         item.setText(1, str(value))
         item.setFlags(item.flags() | Qt.ItemIsEditable)
         parent.addChild(item)
-        # Combobox var
         combobox = ComboboxVariablesWidget(variables_layout=variables_scrollArea, filter_types=['Float', 'MaterialGroup', 'Material', 'Bool', 'Int', 'ScaleMode', 'PickMode', 'Model', 'String', 'Vector3D'], element_id_generator=element_id_generator)
         combobox.combobox.setCurrentText(name)
         combobox.combobox.addItem(name)

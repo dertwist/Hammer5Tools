@@ -151,7 +151,6 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         # Init LoadSoundEvents
         self.load_soundevents(self.filepath_vsndevts)
-        # Init PropertiesWindow
         self.PropertiesWindowInit()
 
         # Init filter
@@ -179,14 +178,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.mini_explorer.play_sound.connect(self.play_sound)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
-        # Internal Explorer
         self.internal_explorer = InternalSoundFileExplorer(self.audio_player)
         self.internal_explorer.setStyleSheet("""border:none""")
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
         self.ui.internal_explorer_search_bar.textChanged.connect(self.internal_explorer.filter_tree)
         self.internal_explorer.play_sound.connect(self.play_sound)
 
-        # Internal SoundEvents Explorer
         self.internal_soundevents_explorer = InternalSoundEventExplorer()
         self.ui.internal_soundevents_tab.layout().addWidget(self.internal_soundevents_explorer)
 
@@ -210,7 +207,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         # Audio player init
         self.add_player()
-    #============================================================<  History Dock  >==========================================================
+    # History Dock
     def _setup_history_dock(self):
         self._history_dock = QDockWidget("History", self)
         self._history_dock.setObjectName("history_dock")
@@ -231,7 +228,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             Qt.Vertical,
         )
 
-    #============================================================<  AudioPlayer  >==========================================================
+    # AudioPlayer
     def add_player(self):
         self.audio_player_widget = AudioPlayer()
         self.ui.explorer_layout_widget.layout().insertWidget(1,self.audio_player_widget)
@@ -250,8 +247,8 @@ class SoundEventEditorMainWindow(QMainWindow):
     #     self.audio_player.setAudioOutput(self.audio_output)
     #     self.audio_player.setSource(QUrl.fromLocalFile(file_path))
     #     self.audio_player.play()
-    # #==============================================================<  Actions  >============================================================
-    #============================================================<  SoundEvents  >==========================================================
+    # Actions
+    # SoundEvents
     @exception_handler
     def load_soundevents(self, filepath=None):
         """Load soundevents. If there is no soundevents file, ask the user if they want to copy it from the CS2 addon template folder."""
@@ -305,7 +302,7 @@ class SoundEventEditorMainWindow(QMainWindow):
             return []
         return [(self.filepath_vsndevts, self.save_soundevents)]
 
-    #=======================================================<  Properties Window  >=====================================================
+    # Properties Window
 
     def PropertiesWindowInit(self):
         self.PropertiesWindow = SoundEventEditorPropertiesWindow(tree=self.ui.hierarchy_widget, undo_stack=self.undo_stack)
@@ -339,7 +336,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         )
         self.ui.label.setText(f"Properties: {event_name}    |    {prop_count} properties")
 
-    #===============================================================<  Filter  >============================================================
+    # Filter
     def eventFilter(self, source, event):
         """Handle keyboard and shortcut events for various widgets."""
 
@@ -356,7 +353,6 @@ class SoundEventEditorMainWindow(QMainWindow):
                     self.paste_item(self.ui.hierarchy_widget, paste_to_parent=True)
                     return True
 
-                # Delete
                 if event.matches(QKeySequence.Delete):
                     self.ui.hierarchy_widget.DeleteSelectedItems()
 
@@ -381,7 +377,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         return super().eventFilter(source, event)
 
-    #=========================================================<  Hierarchy Actions  >=======================================================
+    # Hierarchy Actions
     def new_soundevent(self, _data: dict = None, _soundevent_name: str = None):
         """Creates new soundevent using given data. Input dict"""
         if _soundevent_name is None:
@@ -399,7 +395,6 @@ class SoundEventEditorMainWindow(QMainWindow):
         if _name is None:
             _name = "SoundEvent"
 
-        # Collect existing names
         existing_names = set()
         root = self.ui.hierarchy_widget.invisibleRootItem()
         for i in range(root.childCount()):
@@ -415,13 +410,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.new_soundevent(_data={})
     def new_soundevent_preset(self, _preset: str = None, _preset_url: str = None):
         """Call popup menu with all presets that are in the folder"""
-        # Load data form preset path
         _data = self.load_preset(_preset_url)
         # Get clean name of preset file
         _name = os.path.splitext(os.path.basename(_preset_url))[0]
         self.new_soundevent(_data=_data, _soundevent_name=_name)
 
-    #=========================================================<  Preset Popup menu  >=======================================================
+    # Preset Popup menu
 
     def call_soundevent_preset_menu(self):
         """Calls sound events preset menu"""
@@ -440,7 +434,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         __data = Kv3ToJson(__data)
         return __data
 
-    #================================================================<  Hierarchy  >=============================================================
+    # Hierarchy
 
     def update_hierarchy_item(self, item: HierarchyItemModel, _data: dict):
         """Sets the value to the data column and saves if in realtime mode."""
@@ -483,7 +477,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         cmd = RenameItemCommand(item, old_name, new_name, on_renamed=self.update_properties_label)
         self.undo_stack.push(cmd)
 
-    # ======================================[Tree widget hierarchy filter]========================================
+    # [Tree widget hierarchy filter]
     def search_hierarchy(self, filter_text, parent_item):
         self.filter_tree_item(parent_item, filter_text.strip().lower(), is_root=True)
 
@@ -522,7 +516,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         return item_visible or any_child_visible
 
-    # ======================================[Tree widget hierarchy context menu]========================================
+    # [Tree widget hierarchy context menu]
     def open_hierarchy_menu(self, position):
         menu = QMenu()
         # add_new_preset_lat_action = menu.addAction("(Last) - New from")
@@ -557,7 +551,7 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         menu.exec(self.ui.hierarchy_widget.viewport().mapToGlobal(position))
 
-    # ======================================[Tree widget functions]========================================
+    # [Tree widget functions]
 
     def move_tree_item(self, tree, direction):
         """Move selected tree items up or down. Supports undo via MoveItemsCommand."""
@@ -656,7 +650,7 @@ class SoundEventEditorMainWindow(QMainWindow):
         data.update({name_row: parent_data})
         return data
 
-    # ======================================[Tree item serialization and deserialization]========================================
+    # [Tree item serialization and deserialization]
 
     def serialization_hierarchy_items(self, tree, data=None):
         """Convert tree structure to json"""
@@ -689,12 +683,12 @@ class SoundEventEditorMainWindow(QMainWindow):
         return tree_items
 
 
-    #===========================================================<  Preset Manager  >========================================================
+    # Preset Manager
     def OpenPresetManager(self):
         self.PresetManager = SoundEventEditorPresetManagerWindow()
         self.PresetManager.show()
 
-    #======================================[Window State]========================================
+    # [Window State]
     def _restore_user_prefs(self):
         """Restore window state"""
         geo = self.settings.value("SoundEventEditorMainWindow/geometry")
@@ -716,11 +710,11 @@ class SoundEventEditorMainWindow(QMainWindow):
         _quiesce_thread(getattr(getattr(self, 'internal_explorer', None), 'vpk_loader_thread', None))
         _quiesce_thread(getattr(getattr(self, 'internal_soundevents_explorer', None), 'loader', None))
 
-    #============================================================<  File actions  >=========================================================
+    # File actions
     def save_file(self, file_path):
         """Serializing tree and save to the filepath"""
 
-    #============================================================< Internal SoundEvent Explorer handlers >=========================================================
+    # Internal SoundEvent Explorer handlers
 
     def _preview_internal_soundevent(self, name: str) -> None:
         """

@@ -286,7 +286,6 @@ class HotkeyEditorMainWindow(QMainWindow):
             item.setHidden(False)
             item.setExpanded(True)
 
-        # Return True if this item or any of its children is visible
         return item_visible or any_child_visible
 
     def filter_widget(self, item, filter_text, is_root=False):
@@ -329,7 +328,6 @@ class HotkeyEditorMainWindow(QMainWindow):
             item.setHidden(False)
             item.setExpanded(True)
 
-        # Return True if this item or any of its children is visible
         return item_visible or any_child_visible
 if __name__ == "__main__":
     app = QApplication([])

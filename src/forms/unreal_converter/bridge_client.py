@@ -91,7 +91,7 @@ class UnrealBridge:
         except json.JSONDecodeError as e:
             raise BridgeError(f"bridge returned non-JSON output: {e}") from e
 
-    # --- commands ---------------------------------------------------------
+    # commands
 
     def info(self) -> dict:
         return self._run_json("info", self.content_dir)

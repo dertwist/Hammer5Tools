@@ -80,7 +80,6 @@ def get_vmap_references(addon_dir=None, vmap=None, scan_meshes=True):
         matches = re.findall(pattern, content)
 
         for match in matches:
-            # Normalize path separators
             normalized_path = match.replace('\\', '/').lower()
             references.append(normalized_path)
 

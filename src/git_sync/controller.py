@@ -253,14 +253,14 @@ class GitController:
         self._fetch_timer.start()
         self.refresh()
 
-    # ---- console helper -------------------------------------------------
+    # console helper
     def _log(self, text):
         try:
             self.main.update_title(text=text)
         except Exception:
             pass
 
-    # ---- state / refresh ------------------------------------------------
+    # state / refresh
     def refresh(self):
         """Re-point at the current addon and kick a badge refresh."""
         self.repo = GitRepo(get_addon_dir())
@@ -313,7 +313,7 @@ class GitController:
             self._fetch_proc = None
         self._tick_badges()
 
-    # ---- pre-commit size guards ----------------------------------------
+    # pre-commit size guards
     def _precommit_size_checks(self, files):
         """Warn about >100MB non-LFS files and large total uploads.
 
@@ -347,7 +347,7 @@ class GitController:
                 return False
         return True
 
-    # ---- the one-button sync flow --------------------------------------
+    # the one-button sync flow
     # commit existing changes -> fetch -> pull (merge) -> resolve -> push
     def sync(self):
         if self._busy:
@@ -414,7 +414,7 @@ class GitController:
         self.repo._run("commit", "--no-edit")
         return not self.repo.conflicts()
 
-    # ---- QProcess streaming --------------------------------------------
+    # QProcess streaming
     def _stream(self, args, on_done):
         self._log(_VERBS.get(args[0], "git " + args[0]) + "…")
         proc = QProcess(self.main)

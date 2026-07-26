@@ -62,7 +62,6 @@ class VMapToVSmartConverterDialog(QDialog):
         filter_layout.addWidget(deselect_all_btn)
         main_layout.addLayout(filter_layout)
         
-        # Table widget
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["Select", "Classname", "Model Path", "Origin", "Scale"])
@@ -75,11 +74,9 @@ class VMapToVSmartConverterDialog(QDialog):
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         main_layout.addWidget(self.table)
         
-        # Status Label
         self.status_label = QLabel("Please select a VMAP file to scan.")
         main_layout.addWidget(self.status_label)
         
-        # 3. Pivot Strategy Group Box
         pivot_group = QGroupBox("Pivot Position Strategy")
         pivot_layout = QHBoxLayout(pivot_group)
         
@@ -105,7 +102,6 @@ class VMapToVSmartConverterDialog(QDialog):
         vsmart_layout.addWidget(vsmart_browse)
         main_layout.addLayout(vsmart_layout)
         
-        # 5. Buttons
         self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.button_box.button(QDialogButtonBox.Ok).setText("Convert")
         self.button_box.accepted.connect(self.perform_conversion)
@@ -166,7 +162,6 @@ class VMapToVSmartConverterDialog(QDialog):
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
         self.table.setRowCount(0)
         
-        # Scan props
         self.scanned_entities = scan_vmap_for_props(vmap_path)
         
         self.table.setRowCount(len(self.scanned_entities))

@@ -50,7 +50,7 @@ class BuildSettings:
     nav_debug: bool = False
     grid_nav: bool = False
 
-    # === Audio ===
+    # Audio
     build_reverb: bool = False
     build_paths: bool = False
     bake_custom_audio: bool = False
@@ -83,7 +83,6 @@ class BuildSettings:
     def to_command_line(self, addon_path: str, cs2_path: str) -> str:
         """Convert settings to resourcecompiler.exe command line arguments"""
 
-        # Determine if mappath is a file list
         is_filelist = self.mappath.lower().endswith(('.txt', '.lst'))
         input_flag = "-filelist" if is_filelist else "-i"
 
@@ -94,7 +93,6 @@ class BuildSettings:
 
         args = []
 
-        # Threads
         threads = self.threads if self.threads > 0 else os.cpu_count()
         args.append(f"-threads {threads}")
 
@@ -141,7 +139,6 @@ class BuildSettings:
         else:
             args.append("-nolightmaps")
 
-        # Physics
         if self.build_physics:
             args.append("-phys")
             if self.legacy_compile_collision_mesh:
@@ -163,7 +160,6 @@ class BuildSettings:
             if self.grid_nav:
                 args.append("-gridnav")
 
-        # Audio
         audio_threads = self.audio_threads if self.audio_threads > 0 else threads
         if self.build_reverb:
             args.append("-sareverb")
@@ -261,7 +257,6 @@ class PresetManager:
             except Exception as e:
                 print(f"Error loading presets from file: {e}")
         
-        # Create default presets if nothing found
         self._create_default_presets()
 
     def _create_default_presets(self):

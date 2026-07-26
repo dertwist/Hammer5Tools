@@ -11,7 +11,6 @@ from src.styles.common import qt_stylesheet_combobox, qt_stylesheet_checkbox, qt
 from src.settings.main import get_cs2_path, get_addon_name, get_settings_value, get_addon_dir
 from src.common import enable_dark_title_bar
 
-# PySide6 imports
 from PySide6.QtCore import Qt, QModelIndex, QUrl, QSize
 from PySide6.QtGui import QIcon, QStandardItemModel, QStandardItem, QDesktopServices
 from PySide6.QtWidgets import (

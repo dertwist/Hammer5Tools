@@ -14,7 +14,7 @@ from src.editors.soundevent_editor.common import vsnd_filepath_convert
 
 import re, os
 
-#===============================================================<  Properties >============================================================
+# Properties
 
 class SoundEventEditorPropertyBase(QWidget):
     edited = Signal()
@@ -280,7 +280,6 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
         self.value_class = label_text
         self.slider_range = slider_range if slider_range is not None else [-10, 10]
 
-        # Init Vertical layout
         self.init_vertical_layout()
 
         # Init values
@@ -324,7 +323,6 @@ class SoundEventEditorPropertyVector3(SoundEventEditorPropertyBase):
         # Initialize the vertical layout
         self.vertical_layout = QVBoxLayout(self.frame)
 
-        # Add the frame to the root layout
         self.root_layout.addWidget(self.frame)
 
     def init_root_layout(self):
@@ -389,13 +387,11 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
 
         self.setAcceptDrops(True)
 
-        # Init Vertical layout
         self.init_vertical_layout()
 
         # Init values
         self.float_widget_instances = []
 
-        # init button
         self.init_button()
 
 
@@ -439,7 +435,6 @@ class SoundEventEditorPropertyList(SoundEventEditorPropertyBase):
         self.spacer = QSpacerItem(40, 2, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.vertical_layout.layout().addItem(self.spacer)
-        # Add the frame to the root layout
         self.root_layout.addWidget(self.frame)
 
     def init_root_layout(self):
@@ -562,7 +557,6 @@ class SoundEventEditorPropertyCombobox(SoundEventEditorPropertyBase):
         #     self.combobox.setCurrentText(str(value))
 
 
-        # Init Search button
         self.search_button = Button()
         self.search_button.set_icon_search()
         self.search_button.setMaximumWidth(32)
@@ -643,7 +637,7 @@ class SoundEventEditorPropertyBaseSoundEvent(SoundEventEditorPropertyCombobox):
             self.popup_menu = PopupMenu(elements, add_once=False)
             self.popup_menu.add_property_signal.connect(lambda name, value: self.set_value(value))
             self.popup_menu.show()
-#==========================================================<  Properties Widgets  >=======================================================
+# Properties Widgets
 
 class SoundEventEditorPropertyEditLine(SoundEventEditorPropertyBase):
     def __init__(self, parent=None, label_text: str = None, value: str = None, tree: QTreeWidget = None, objects: list = None):
@@ -669,7 +663,6 @@ class SoundEventEditorPropertyEditLine(SoundEventEditorPropertyBase):
         #     self.combobox.setCurrentText(str(value))
 
 
-        # Init Search button
         self.search_button = Button()
         self.search_button.set_icon_search()
         self.search_button.setMaximumWidth(32)
@@ -766,13 +759,11 @@ class ListElement(QWidget):
         self.layout().addWidget(self.editline)
 
 
-        # Init Search button
         self.search_button = Button()
         self.search_button.set_icon_search()
         self.search_button.clicked.connect(self.call_search_popup_menu)
         self.layout().addWidget(self.search_button)
 
-        # Init delete button
         self.delete_button = DeleteButton(self)
         self.layout().addWidget(self.delete_button)
         self.on_update()

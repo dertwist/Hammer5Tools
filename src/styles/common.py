@@ -560,7 +560,6 @@ def apply_stylesheets(parent: QWidget) -> None:
     The mapping below associates widget types with the corresponding internal stylesheet.
     """
     widget_styles = {
-        # For QLabel, defaulting to 'label' style from qt_stylesheet_classes.
         QLabel: qt_stylesheet_classes.get('label'),
         QTreeView: qt_stylesheet_classes.get('tree'),
         QCheckBox: qt_stylesheet_checkbox,

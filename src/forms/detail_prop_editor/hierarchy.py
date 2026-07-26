@@ -151,7 +151,7 @@ class DetailPropTree(QWidget):
 
         self._loading = False
 
-    # --------------------------------------------------------------- items --
+    # items
 
     @staticmethod
     def _make_type_item(name: str, detail_type: dict) -> HierarchyItemModel:
@@ -191,7 +191,7 @@ class DetailPropTree(QWidget):
             item.setText(1, f"density {data.get('m_flDensity', 1.0):g}")
         self._loading = False
 
-    # ---------------------------------------------------------------- load --
+    # load
 
     def load(self, types: dict):
         self._loading = True
@@ -221,7 +221,7 @@ class DetailPropTree(QWidget):
             types[type_item.text(0)] = detail_type
         return types
 
-    # ------------------------------------------------------------ mutation --
+    # mutation
 
     @staticmethod
     def kind_of(item: QTreeWidgetItem) -> str:
@@ -384,7 +384,7 @@ class DetailPropTree(QWidget):
         self.structure_changed.emit()
         return ""
 
-    # -------------------------------------------------------------- events --
+    # events
 
     def _on_item_double_clicked(self, item, column):
         if column == 0 and self.kind_of(item) == KIND_TYPE:
@@ -509,7 +509,7 @@ class DetailPropTree(QWidget):
             types[name] = detail_type
         return types
 
-    # -------------------------------------------------------------- search --
+    # search
 
     def search_hierarchy(self, filter_text, parent_item):
         self.filter_tree_item(parent_item, filter_text.lower(), True)

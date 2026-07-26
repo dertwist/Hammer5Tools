@@ -79,7 +79,7 @@ class SmartPropEditorVariableViewport(QWidget):
             self._drop_index = -1
 
 
-    # ======================================[Variables Actions]========================================
+    # [Variables Actions]
     def add_variable(
             self,
             name,
@@ -115,7 +115,6 @@ class SmartPropEditorVariableViewport(QWidget):
             variable.ui.show_child.setChecked(True)
             variable.show_child()
         
-        # Ensure vertical spacer is at the end
         self._ensure_spacer_at_end()
         
         self.update_indentation()
@@ -256,7 +255,6 @@ class SmartPropEditorVariableViewport(QWidget):
         display_name = "New Category"
         var_visible = True
         
-        # Add Start
         self.add_category(start_name, var_visible, f"---------- {display_name} ----------")
         # Add End
         end_name = f"hammer5tools_category_{unique_hash}_end"
@@ -313,7 +311,7 @@ class SmartPropEditorVariableViewport(QWidget):
                 else:
                     widget.setVisible(should_show)
 
-    # ======================================[Variables Other]========================================
+    # [Variables Other]
     def search_variables(self, search_term=None):
         self.update_indentation()
 
@@ -343,7 +341,7 @@ class SmartPropEditorVariableViewport(QWidget):
                     data_out.update(item_)
             return data_out
 
-    # ======================================[Variables Context menu]========================================
+    # [Variables Context menu]
     def contextMenuEvent(self, event):
         context_menu = QMenu(self)
         if self.ui.variables_QscrollArea is QApplication.focusWidget():
@@ -440,7 +438,7 @@ class SmartPropEditorVariableViewport(QWidget):
             )
             self._sync_committed_state()
 
-    # ======================================[Variables Undo Helpers]========================================
+    # [Variables Undo Helpers]
     def _snapshot(self):
         """Serialise the current variable list to a list of dicts."""
         state = []

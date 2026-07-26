@@ -60,7 +60,6 @@ class FindAndReplaceDialog(QDialog):
         else:
             text_to_find = re.escape(text_to_find)
 
-        # Compile regex pattern
         pattern = re.compile(text_to_find, flags)
 
         # Find all matches and apply highlight

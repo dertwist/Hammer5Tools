@@ -3,9 +3,7 @@ GLSL shader source code for the 3D viewport.
 All shaders target OpenGL 3.3 core profile.
 """
 
-# ---------------------------------------------------------------------------
 # Model shader — Phong lighting with optional texture
-# ---------------------------------------------------------------------------
 
 MODEL_VERTEX_SHADER = """
 #version 330 core
@@ -216,9 +214,7 @@ void main() {
 }
 """
 
-# ---------------------------------------------------------------------------
 # Picking shader — renders each object with a unique flat color for ID lookup
-# ---------------------------------------------------------------------------
 
 PICKING_VERTEX_SHADER = """
 #version 330 core
@@ -243,9 +239,7 @@ void main() {
 }
 """
 
-# ---------------------------------------------------------------------------
 # Grid shader — procedural infinite grid on the XZ plane (Y=0)
-# ---------------------------------------------------------------------------
 
 GRID_VERTEX_SHADER = """
 #version 330 core
@@ -314,9 +308,7 @@ void main() {
 }
 """
 
-# ---------------------------------------------------------------------------
 # Gizmo shader — unlit solid color, always on top
-# ---------------------------------------------------------------------------
 
 GIZMO_VERTEX_SHADER = """
 #version 330 core
@@ -342,9 +334,7 @@ void main() {
 }
 """
 
-# ---------------------------------------------------------------------------
 # Wireframe / fallback box shader — simple unlit wireframe
-# ---------------------------------------------------------------------------
 
 WIREFRAME_VERTEX_SHADER = """
 #version 330 core
@@ -369,9 +359,7 @@ void main() {
 }
 """
 
-# ---------------------------------------------------------------------------
 # Outline shader — post-process silhouette outline for the selected element
-# ---------------------------------------------------------------------------
 # The selected element is first rendered as a solid white-on-black, depth-culled
 # silhouette into an offscreen "mask" texture (via the picking shader).  This
 # fullscreen pass then dilates that mask and paints the ring that lies just

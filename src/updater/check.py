@@ -121,7 +121,6 @@ def check_updates(repo_url, current_version, silent):
     _worker.no_update.connect(lambda r, o, re, m: show_latest_version_info(current_version, r, o, re, m), Qt.QueuedConnection)
     _worker.error.connect(lambda e: QMessageBox.critical(None, "Update Error", f"Failed to check for updates:\n{e}"), Qt.QueuedConnection)
     
-    # Run in a thread
     _worker_thread = threading.Thread(target=_worker.run, daemon=True)
     _worker_thread.start()
 
@@ -223,7 +222,6 @@ def show_install_dialog(update, mgr, parent_dialog):
 
 def handle_installation(update, mgr, parent_dialog=None):
     try:
-        # Create a progress dialog
         progress = QProgressDialog("Downloading update...", None, 0, 100)
         progress.setWindowTitle("Updating")
         progress.setWindowModality(Qt.ApplicationModal)

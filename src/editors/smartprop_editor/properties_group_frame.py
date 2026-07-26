@@ -94,7 +94,6 @@ class PropertiesGroupFrame(QWidget):
         else:
             self.ui.frame_layout.setMaximumSize(16666, 16666)
 
-    # ---- Drop indicator ----
     def _show_drop_indicator(self, index):
         self._hide_drop_indicator()
         indicator = QFrame()

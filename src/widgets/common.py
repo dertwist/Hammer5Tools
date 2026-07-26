@@ -25,7 +25,6 @@ from src.common import enable_dark_title_bar
 import winsound
 
 
-# Dialogs
 class ErrorInfo(QDialog):
     def __init__(self, text="Error", details=""):
         super().__init__()
@@ -38,30 +37,24 @@ class ErrorInfo(QDialog):
 
         self.details = details
         winsound.MessageBeep(winsound.MB_ICONHAND)
-        # Main layout
         main_layout = QVBoxLayout(self)
 
-        # Error message label
         self.message_label = QLabel(text)
         self.message_label.setWordWrap(True)
         main_layout.addWidget(self.message_label)
 
-        # Details text area
         self.details_text = QTextEdit()
         self.details_text.setReadOnly(True)
         self.details_text.setPlainText(self.details)
         self.details_text.setStyleSheet("background-color: #1C1C1C; border-color: #974533")
         main_layout.addWidget(self.details_text)
 
-        # Buttons layout
         buttons_layout = QHBoxLayout()
 
-        # Save Details button
         self.save_button = QPushButton("Save Details")
         self.save_button.clicked.connect(self.save_details)
         buttons_layout.addWidget(self.save_button)
 
-        # Report button
         self.report_button = QPushButton("Report")
         self.report_button.clicked.connect(self.report_issue)
         buttons_layout.addWidget(self.report_button)
@@ -69,7 +62,6 @@ class ErrorInfo(QDialog):
         # Spacer to push Close button to the right
         buttons_layout.addStretch()
 
-        # Close button
         self.close_button = QPushButton("Close")
         self.close_button.clicked.connect(self.close)
         buttons_layout.addWidget(self.close_button)
@@ -208,7 +200,7 @@ def exception_handler(func):
     return wrapper
 
 
-#================================================================<  Buttons  >==============================================================
+# Buttons
 class Button(QPushButton):
     def __init__(self, size: int = None, icon: str = None, height: int = None, width: int = None, text: str = None):
         super().__init__()
@@ -311,7 +303,6 @@ if __name__ == "__main__":
             button_group = QGroupBox("Buttons")
             button_layout = QHBoxLayout()
 
-            # Standard Button with text
             btn_text = Button(text="Standard")
             button_layout.addWidget(btn_text)
 
@@ -343,15 +334,12 @@ if __name__ == "__main__":
             checkbox_group = QGroupBox("CheckBoxes")
             checkbox_layout = QHBoxLayout()
 
-            # Unchecked
             cb_unchecked = CheckBox(text="Unchecked", checked=False)
             checkbox_layout.addWidget(cb_unchecked)
 
-            # Checked
             cb_checked = CheckBox(text="Checked", checked=True)
             checkbox_layout.addWidget(cb_checked)
 
-            # Custom label
             cb_custom = CheckBox(text="Custom Label")
             checkbox_layout.addWidget(cb_custom)
 

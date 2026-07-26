@@ -78,7 +78,6 @@ class CompletionUtils:
         Returns:
             List of completion strings
         """
-        # Get available variables with their types
         variables = CompletionUtils.get_available_variables_with_types(variables_scrollArea)
         
         # Filter variables by type if specified
@@ -88,7 +87,6 @@ class CompletionUtils:
         # Create completion suggestions
         completions = []
         
-        # Add variable names
         variable_names = [var['name'] for var in variables]
         completions.extend(variable_names)
         
@@ -97,7 +95,6 @@ class CompletionUtils:
             var_name = var['name']
             var_type = var['type']
             
-            # Generate completions based on variable type
             type_completions = CompletionUtils._generate_type_specific_completions(
                 var_name, var_type, context
             )
@@ -218,7 +215,6 @@ class CompletionUtils:
                     f'{var_name} != "{enum_value}"'
                 ])
         
-        # MaterialGroup, Material, and Model completions
         elif var_type in ['MaterialGroup', 'Material', 'Model']:
             completions.extend([
                 f'{var_name} == ""',

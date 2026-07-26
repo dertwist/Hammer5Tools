@@ -63,7 +63,6 @@ PREWARMED_CLASSES = [
     "LinearLength",
     "ChoiceWeight",
     "TraceInDirection",
-    # Comment
     "Comment",
 ]
 POOL_SIZE_PER_CLASS = 4

@@ -53,7 +53,6 @@ class PreferencesDialog(QDialog):
         self.setWindowTitle('Settings')
         self.main_layout = QVBoxLayout(self)
         self.tabWidget = QTabWidget(self)
-        # Set background color of tab widget to #1c1c1c
         self.tabWidget.setStyleSheet("background-color: #1c1c1c;")
         self.main_layout.addWidget(self.tabWidget)
         # Create tabs and bottom action panel
@@ -88,11 +87,10 @@ class PreferencesDialog(QDialog):
         return scroll_area
 
     def create_general_tab(self):
-        # Create the general tab content widget
         general_tab_content = QWidget()
         layout = QVBoxLayout(general_tab_content)
         layout.setContentsMargins(10, 10, 10, 10)
-        # ------------- Paths Subcategory -------------
+        # Paths Subcategory
         label_paths_header = QLabel("Paths", general_tab_content)
         layout.addWidget(label_paths_header)
         self.frame_paths = QFrame(general_tab_content)
@@ -125,7 +123,7 @@ class PreferencesDialog(QDialog):
         layout.addWidget(self.frame_cs2_path)
         # Add divider after Paths Subcategory
         layout.addWidget(self.create_divider(general_tab_content))
-        # ------------- Other Subcategory -------------
+        # Other Subcategory
         label_other_header = QLabel("Other", general_tab_content)
         layout.addWidget(label_other_header)
         self.frame_other = QFrame(general_tab_content)
@@ -149,7 +147,6 @@ class PreferencesDialog(QDialog):
 
         layout.addWidget(self.frame_other)
         layout.addStretch()
-        # Wrap the general tab content in a scroll area
         general_scroll = self.wrap_in_scroll_area(general_tab_content)
         self.tabWidget.addTab(general_scroll, "General")
 
@@ -168,7 +165,7 @@ class PreferencesDialog(QDialog):
         layout.addWidget(frame_interface)
         # Divider between subcategories
         layout.addWidget(self.create_divider(smartprop_content))
-        # ------------- Format Subcategory -------------
+        # Format Subcategory
         label_format_header = QLabel("Format", smartprop_content)
         layout.addWidget(label_format_header)
         frame_format = QFrame(smartprop_content)
@@ -191,7 +188,6 @@ class PreferencesDialog(QDialog):
         self.spe_enable_transparency_window.setStyleSheet(qt_stylesheet_checkbox)
         row_enable_transparency.addWidget(self.spe_enable_transparency_window)
         layout_rt_saving.addLayout(row_enable_transparency)
-        # Transparency Window row
         row_transparency = QHBoxLayout()
         label_transparency = QLabel("Transparency Window (%):", frame_rt_saving)
         label_transparency.setMinimumWidth(130)
@@ -286,7 +282,7 @@ class PreferencesDialog(QDialog):
         assetgroupmaker_content = QWidget()
         layout = QVBoxLayout(assetgroupmaker_content)
         layout.setContentsMargins(10, 10, 10, 10)
-        # ------------- Monitor Subcategory -------------
+        # Monitor Subcategory
         label_monitor_header = QLabel("Monitor", assetgroupmaker_content)
         layout.addWidget(label_monitor_header)
         frame_monitor = QFrame(assetgroupmaker_content)
@@ -299,7 +295,6 @@ class PreferencesDialog(QDialog):
         layout.addWidget(frame_monitor)
         # Divider before Default File Subcategory
         layout.addWidget(self.create_divider(assetgroupmaker_content))
-        # ------------- Default File Subcategory -------------
         label_default_file = QLabel("Default File", assetgroupmaker_content)
         layout.addWidget(label_default_file)
         frame_default_file = QFrame(assetgroupmaker_content)
@@ -487,7 +482,6 @@ class PreferencesDialog(QDialog):
         self.preferences_lineedit_archive_path.textChanged.connect(
             lambda: set_settings_value('PATHS', 'archive', self.preferences_lineedit_archive_path.text())
         )
-        # Connect CS2 path
         self.preferences_lineedit_cs2_path.textChanged.connect(
             lambda: set_manual_cs2_path(self.preferences_lineedit_cs2_path.text())
         )
@@ -626,7 +620,6 @@ class PreferencesDialog(QDialog):
         if hasattr(self.parent(), "trigger_update_check"):
             self.parent().trigger_update_check()
         
-        # Re-enable after check
         self.action_buttons_panel.check_update_button.setEnabled(True)
         self.populate_preferences()
 

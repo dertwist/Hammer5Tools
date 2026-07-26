@@ -13,14 +13,12 @@ class AboutDialog(QDialog):
         self.ui.version.setText(f"Version: {version}")
         enable_dark_title_bar(self)
 
-        # Connect buttons
         self.ui.request_a_new_feature_button.clicked.connect(self.open_request_a_new_feature)
         self.ui.open_documentation_button.clicked.connect(self.open_documentation)
         self.ui.open_radio_sound_guide_button.clicked.connect(self.open_radio_sound_guide)
         self.ui.watch_video_button.clicked.connect(self.open_video_tutorial)
         self.ui.close_button.clicked.connect(self.accept)
 
-        # Connect Don't show on startup button
         self.ui.dont_show_button.clicked.connect(self.disable_show_on_startup_and_close)
 
     def open_request_a_new_feature(self):

@@ -149,7 +149,6 @@ if __name__ == "__main__":
 
             layout.addWidget(self.tree)
 
-            # Shortcuts
             from PySide6.QtGui import QShortcut, QKeySequence
             QShortcut(QKeySequence("Delete"), self, activated=self.tree.DeleteSelectedItems)
             QShortcut(QKeySequence("Ctrl+D"), self, activated=self.tree.DuplicateSelectedItems)

@@ -109,13 +109,11 @@ class SmartProp3DViewport(QWidget):
         self.space_combo.currentTextChanged.connect(self._on_space_changed)
         tb_layout.addWidget(self.space_combo)
 
-        # Snapping Checkbox
         self.snap_check = QCheckBox("Snapping")
         self.snap_check.setChecked(False)
         self.snap_check.stateChanged.connect(self._on_snap_changed)
         tb_layout.addWidget(self.snap_check)
 
-        # Grid Step dropdown
         tb_layout.addWidget(QLabel("Grid Step:"))
         self.grid_combo = QComboBox()
         self.grid_combo.addItems(["1", "2", "4", "8", "16", "32", "64", "128", "256"])
@@ -123,7 +121,6 @@ class SmartProp3DViewport(QWidget):
         self.grid_combo.currentTextChanged.connect(self._on_grid_step_changed)
         tb_layout.addWidget(self.grid_combo)
 
-        # Rotation step dropdown
         tb_layout.addWidget(QLabel("Rotation Step:"))
         self.rot_combo = QComboBox()
         self.rot_combo.addItems(["5", "15", "45"])

@@ -73,7 +73,7 @@ class UnrealConverterWidget(QDialog):
             }
         """)
 
-    # ------------------------------------------------------------------ UI --
+    # UI
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -374,7 +374,7 @@ class UnrealConverterWidget(QDialog):
         form.addRow(note)
         return tab
 
-    # -------------------------------------------------------------- helpers --
+    # helpers
 
     def get_unit_scale(self):
         return self.model_scale_combo.currentData()
@@ -444,7 +444,7 @@ class UnrealConverterWidget(QDialog):
         except Exception as e:
             self.console.error(f"Failed to save log: {e}")
 
-    # ---------------------------------------------------------------- scan --
+    # scan
 
     def on_scan(self):
         project_dir = self.project_folder_edit.text().strip()
@@ -509,7 +509,7 @@ class UnrealConverterWidget(QDialog):
         if hasattr(self, "console"):
             self.console.info(f"Bulk-export material groups detected: {len(self.groups)}")
 
-    # ------------------------------------------------------------- convert --
+    # convert
 
     def on_convert(self):
         output_dir = self.output_folder_edit.text().strip()

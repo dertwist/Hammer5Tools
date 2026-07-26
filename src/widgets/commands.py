@@ -198,7 +198,6 @@ class DuplicateItemsCommand(QUndoCommand):
         super().__init__("Duplicate Item(s)")
         self.tree = tree
         
-        # Accept a list of items
         raw_items = items if isinstance(items, (list, tuple)) else [items]
         
         # Filter items: if a parent and its child are both selected, only duplicate the parent
@@ -310,10 +309,8 @@ class SelectItemsCommand(QUndoCommand):
         if items:
             self.tree.setCurrentItem(items[0])
             self.tree.scrollToItem(items[0])
-            # Explicitly set focus to the tree widget
             self.tree.setFocus(Qt.OtherFocusReason)
         else:
-            # If no items selected, clear current item
             self.tree.setCurrentItem(None)
 
     def redo(self):

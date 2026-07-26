@@ -39,9 +39,7 @@ class EvalError(Exception):
     """Raised internally for malformed expressions; always caught at the top."""
 
 
-# ---------------------------------------------------------------------------
 # Tokenizer
-# ---------------------------------------------------------------------------
 _WS = re.compile(r"\s+")
 _TOKEN = re.compile(
     r"(?P<num>\d+\.\d+|\.\d+|\d+)"
@@ -85,9 +83,7 @@ def _tokenize(text):
     return tokens
 
 
-# ---------------------------------------------------------------------------
 # Parser -> AST (tuples)
-# ---------------------------------------------------------------------------
 _MEMBERS = {"x": 0, "y": 1, "z": 2, "w": 3, "r": 0, "g": 1, "b": 2, "a": 3}
 
 
@@ -225,9 +221,7 @@ class _Parser:
         raise EvalError(f"Unexpected token {t}")
 
 
-# ---------------------------------------------------------------------------
 # Evaluation
-# ---------------------------------------------------------------------------
 class _NullContext:
     """Fallback context used when no EvalContext is supplied."""
 

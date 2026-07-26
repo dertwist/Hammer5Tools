@@ -23,9 +23,7 @@ from src.widgets.element_id import (
 from src.widgets import HierarchyItemModel, exception_handler
 from src.editors.smartprop_editor.objects import variable_prefix, element_prefix
 
-# =========================================================
 # [Reference handling / merging logic]
-# =========================================================
 
 def merge_reference_data(reference_data: dict, ref_object_data: dict) -> dict:
     """
@@ -133,7 +131,7 @@ def restore_reference_objects(file_data: dict):
         for child in file_data["m_Children"]:
             revert_item_recursive(child)
 
-# ======================================[Tree item serialization and deserialization]========================================
+# [Tree item serialization and deserialization]
 
 def serialization_hierarchy_items(item, data=None):
     """Convert tree structure to a JSON-like dict structure."""
@@ -194,7 +192,7 @@ def deserialize_hierarchy_item(m_Children, element_id_generator=None):
         tree_item.addChild(child_item)
     return tree_item
 
-# ======================================[Vsmart File Loading and Saving]========================================
+# [Vsmart File Loading and Saving]
 
 class VsmartOpen:
     def __init__(self, element_id_generator, filename, tree=QTreeWidget, choices_tree=QTreeWidget, variables_scrollArea=None):
@@ -223,7 +221,6 @@ class VsmartOpen:
         data = self.fix_format(data)
         data = Kv3ToJson(data)
         debug(f"Loaded data:\n{data}")
-        # Restore non-processed reference objects.
         restore_reference_objects(data)
         self.variables = data.get("m_Variables", None)
         # Clear previous tree data.

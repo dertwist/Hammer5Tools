@@ -19,7 +19,6 @@ class CustomHighlighter(QSyntaxHighlighter):
         super().__init__(parent)
         self.highlighting_rules = []
 
-        # Define text formats
         custom_format = QTextCharFormat()
         custom_format.setForeground(QColor("#C78662"))
 
@@ -35,7 +34,6 @@ class CustomHighlighter(QSyntaxHighlighter):
         asset_name_format = QTextCharFormat()
         asset_name_format.setForeground(QColor("#C78662"))
 
-        # Define keyword patterns
         keyword_patterns = [
             r"\bTextureAmbientOcclusion\b",
             r"\bTextureColor1\b",
@@ -48,7 +46,6 @@ class CustomHighlighter(QSyntaxHighlighter):
             regex = QRegularExpression(pattern)
             self.highlighting_rules.append((regex, keyword_format))
 
-        # Define quoted text pattern
         quoted_text_pattern = QRegularExpression(r'"\s*[^"]+\s*"')
         self.highlighting_rules.append((quoted_text_pattern, quoted_text_format))
 

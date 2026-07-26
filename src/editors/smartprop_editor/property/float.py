@@ -30,7 +30,6 @@ class PropertyFloat(QWidget, PooledPropertyMixin):
 
         self.ui.logic_switch.wheelEvent = lambda event: None
 
-        # Float widget setup
         self.float_widget = FloatWidget(slider_range=slider_range, int_output=int_bool)
         self.float_widget.edited.connect(self.on_changed)
         self.float_widget.slider_pressed.connect(self.slider_pressed)
@@ -67,7 +66,6 @@ class PropertyFloat(QWidget, PooledPropertyMixin):
                 color: rgb(181, 255, 239);
             """)
 
-        # Process value_class
         output = re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_', '', self.value_class)
         output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
         self.ui.property_class.setText(output)

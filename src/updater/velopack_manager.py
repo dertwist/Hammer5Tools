@@ -21,7 +21,6 @@ class VelopackManager:
                                         ExplicitChannel=channel)
             mgr = UpdateManager(get_update_url(), options=opts)
             
-            # Check for updates
             update = mgr.check_for_updates()
             
             if update:

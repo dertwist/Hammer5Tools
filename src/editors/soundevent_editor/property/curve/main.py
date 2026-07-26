@@ -166,7 +166,6 @@ class DataPointItem(QWidget):
 
     def cleanup(self):
         """Clean up all widgets and their layouts"""
-        # Clean up float widgets
         for widget in self.widgets['float_widgets']:
             layout = self.widgets['layouts'].get(widget)
             if layout:
@@ -174,7 +173,6 @@ class DataPointItem(QWidget):
             widget.setParent(None)
             widget.deleteLater()
 
-        # Clean up action buttons
         for button in self.widgets['action_buttons'].values():
             button.setParent(None)
             button.deleteLater()

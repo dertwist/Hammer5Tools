@@ -34,9 +34,7 @@ from src.editors.smartprop_editor.viewport_3d.shaders import (
 )
 
 
-# ---------------------------------------------------------------------------
 # Geometry helpers
-# ---------------------------------------------------------------------------
 def _make_sphere(stacks=16, slices=24):
     """Build a unit-radius UV sphere.
 
@@ -180,9 +178,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         self._curve_dirty = True
         self._mark_curve_dirty()
 
-    # ------------------------------------------------------------------
     # Public API (matches the old InteractiveCurveEditor)
-    # ------------------------------------------------------------------
     def set_points(self, points):
         self.points = points
         if self.selected_index >= len(self.points):
@@ -211,9 +207,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
     # Alias so callers used to the smartprop viewport can use fit_view too.
     fit_view = frame_objects
 
-    # ------------------------------------------------------------------
     # Internal helpers
-    # ------------------------------------------------------------------
     @staticmethod
     def _to_gl(point):
         """Source 2 point -> GL world position (xyz)."""
@@ -256,9 +250,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
         self.gizmo.snapping_enabled = self.snapping_enabled ^ ctrl_held
         self.gizmo.grid_step = self.grid_step
 
-    # ------------------------------------------------------------------
     # GL lifecycle
-    # ------------------------------------------------------------------
     def initializeGL(self):
         from OpenGL import GL
 
@@ -554,9 +546,7 @@ class PathEditor3DRenderArea(QOpenGLWidget):
                 self._sync_gizmo()
                 self.selection_changed.emit(-1)
 
-    # ------------------------------------------------------------------
     # Mouse & keyboard
-    # ------------------------------------------------------------------
     def mousePressEvent(self, event: QMouseEvent):
         self.setFocus()
         self._last_mouse_pos = event.position()

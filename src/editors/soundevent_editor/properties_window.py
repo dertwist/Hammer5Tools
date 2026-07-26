@@ -134,7 +134,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self.tree = tree
 
 
-        # Init context menu
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.open_context_menu)
 
@@ -150,16 +149,15 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         redo_shortcut_alt = QShortcut(QKeySequence("Ctrl+Shift+Z"), self)
         redo_shortcut_alt.activated.connect(self.undo_stack.redo)
 
-        # Hide properties on start
         self.properties_groups_hide()
 
-    #=============================================================<  Load value  >==========================================================
+    # Load value
     def load_value(self, value):
         if isinstance(value, str):
             return ast.literal_eval(value)
         elif isinstance(value, dict):
             return value
-    #===========================================================<  Comment keys  >==========================================================
+    # Comment keys
 
     def _unique_comment_key(self):
         """Return the next free comment key: 'comment', then 'comment_2', 'comment_3', ...
@@ -176,7 +174,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             index += 1
         return f'comment_{index}'
 
-    # =========================================================<  Properties Actions  >======================================================
+    # Properties Actions
 
     def new_property_popup(self):
         """Call popup menu with all properties"""
@@ -249,7 +247,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         except (ValueError, SyntaxError) as e:
             ErrorInfo("Error parsing clipboard content").exec()
         self.on_update()
-    #===============================================================<  Filter  >============================================================
+    # Filter
 
     def eventFilter(self, source, event):
         """Handle keyboard and shortcut events for various widgets."""
@@ -265,7 +263,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
                     return True
 
         return super().eventFilter(source, event)
-    #=======================================================<  Properties widget  >=====================================================
+    # Properties widget
 
     def properties_groups_hide(self):
         """Hide properties and show placeholder"""
@@ -296,7 +294,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.open_context_menu)
 
-        # Apply read-only state to widgets
         self.apply_readonly_mode()
     
     def collapse_all_properties(self):
@@ -349,7 +346,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
             print(f"[SoundEventEditorProperties]: Wrong input data format. Given data: \n {_data} \n {type(_data)}")
 
 
-    #=============================================================<  Property  >==========================================================
+    # Property
     def create_property(self, key, value):
         """Create frame widget instance"""
         widget_instance = SoundEventEditorPropertyFrame(_data={key: value}, widget_list=self.ui.properties_layout, tree=self.tree)
@@ -410,7 +407,7 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self._undo_enabled = True
         self.edited.emit()
 
-    #==============================================================<  Updating  >===========================================================
+    # Updating
     def _get_current_element_key_and_name(self):
         """Return (element_key, element_name) for the currently selected tree item."""
         element_key = None
@@ -475,40 +472,34 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         self._slider_dragging = False
     def update_value(self):
         self.value = self.get_properties_value()
-    #============================================================<  Context menu  >=========================================================
+    # Context menu
     def open_context_menu(self, position):
         """Layout context menu"""
         menu = QMenu()
 
-        # Undo action
         undo_action = menu.addAction("Undo")
         undo_action.setShortcut(QKeySequence("Ctrl+Z"))
         undo_action.setEnabled(self.undo_stack.canUndo())
         undo_action.triggered.connect(self.undo_stack.undo)
 
-        # Redo action
         redo_action = menu.addAction("Redo")
         redo_action.setShortcut(QKeySequence("Ctrl+Y"))
         redo_action.setEnabled(self.undo_stack.canRedo())
         redo_action.triggered.connect(self.undo_stack.redo)
 
         menu.addSeparator()
-        # New Property action
         new_property = menu.addAction("New Property")
         new_property.triggered.connect(self.new_property_popup)
         new_property.setShortcut(QKeySequence("Ctrl+F"))
-        # Paste action
         paste = menu.addAction("Paste")
         paste.triggered.connect(self.paste_property)
         paste.setShortcut(QKeySequence("Ctrl+V"))
         
         menu.addSeparator()
         
-        # Collapse all action
         collapse_all = menu.addAction("Collapse All")
         collapse_all.triggered.connect(self.collapse_all_properties)
         
-        # Expand all action
         expand_all = menu.addAction("Expand All")
         expand_all.triggered.connect(self.expand_all_properties)
         
@@ -541,7 +532,6 @@ class SoundEventEditorPropertiesWindow(QMainWindow):
         except Exception:
             pass
 
-    # ------------------------------------------------------------------
     def switch_to_item(self, item):
         """Centralized switching logic for when the active tree item changes.
 

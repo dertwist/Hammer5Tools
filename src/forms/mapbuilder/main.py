@@ -201,9 +201,7 @@ class BuildCubemapsThread(QThread):
         self.map_data = list(map_data)  # [(addon, map_name), ...]
         self._stop_event = __import__('threading').Event()
 
-    # -----------------------------------------------------------------
     # helpers
-    # -----------------------------------------------------------------
     def _wait_for_netcon(self, timeout: float) -> bool:
         """Block until the netcon TCP port is reachable."""
         import time as _time
@@ -233,14 +231,11 @@ class BuildCubemapsThread(QThread):
             stop_event=self._stop_event,
         )
 
-    # -----------------------------------------------------------------
     # main entry
-    # -----------------------------------------------------------------
     def run(self):
         import subprocess as _subprocess
         import time as _time
 
-        # Group maps by addon
         addon_groups = {}
         for addon_name, map_name in self.map_data:
             if addon_name not in addon_groups:
@@ -274,7 +269,6 @@ class BuildCubemapsThread(QThread):
                 self.finished.emit(False)
                 return
 
-            # --- 2. Wait for the netcon port ---
             self.outputReceived.emit("Waiting for CS2 to accept netcon connections...")
             if not self._wait_for_netcon(self.CONNECT_TIMEOUT):
                 self.outputReceived.emit(
@@ -334,7 +328,6 @@ class BuildCubemapsThread(QThread):
                     if self._stop_event.is_set():
                         break
 
-            # --- 6. Restore r_always_render_all_windows ---
             restore_ok = CS2Netcon.send(f"r_always_render_all_windows {original_render_all}")
             if not restore_ok:
                 # Retry: wait for netcon to be available and try again
@@ -366,7 +359,6 @@ class BuildCubemapsThread(QThread):
 
         self.finished.emit(all_ok)
 
-    # -----------------------------------------------------------------
     def _build_one_map(self, addon_name: str, map_name: str) -> bool:
         """Load *map_name* in CS2 and run buildcubemaps.  Returns True on
         success."""
@@ -687,7 +679,6 @@ class MapBuilderDialog(QMainWindow):
         self.current_build_sig = ""
         self.current_est_time = -1.0
 
-        # Cubemap queue state
         self.cubemap_queue = []
         self.cubemap_index = 0
         self.cubemap_thread: BuildCubemapsThread = None
@@ -722,7 +713,6 @@ class MapBuilderDialog(QMainWindow):
                     addon_name = parts[idx + 1]
                     addon_dir = str(Path(*parts[:idx + 2]))
 
-            # Get map name relative to maps/
             map_name = p.stem
             try:
                 if 'maps' in parts:
@@ -1076,12 +1066,10 @@ class MapBuilderDialog(QMainWindow):
             if "audio_start" in self.phase_times:
                 self.phase_times["audio_end"] = t
                 
-        # vis
         vis_match = re.search(r'Visibility complete in ([\d\.]+)s', clean_line)
         if vis_match:
             self.phase_times["vis"] = float(vis_match.group(1))
             
-        # light
         if 'Baked Lighting Total Time' in clean_line:
             light_match = re.search(r'(\d+)\s*hrs?\s+(\d+)\s*mins?\s+(\d+)\s*seconds?', clean_line)
             if light_match:
@@ -1362,7 +1350,7 @@ class MapBuilderDialog(QMainWindow):
         except Exception as e:
             self.log_error(f'Error finishing build: {e}')
 
-    # ====================== Cubemap Build Queue =======================
+    # Cubemap Build Queue
 
     def start_cubemap_queue(self, map_list: list):
         """Start building cubemaps for every map using a single CS2 instance."""
@@ -1430,7 +1418,6 @@ class MapBuilderDialog(QMainWindow):
         # CS2 is left running with the last map loaded (cubemaps baked in).
         # No need to relaunch.
 
-    # ==================================================================
 
     def run_map(self):
         settings = self.settings_panel.get_settings()

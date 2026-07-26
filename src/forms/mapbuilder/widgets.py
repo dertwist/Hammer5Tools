@@ -329,7 +329,6 @@ class SettingsGroup(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(4)
 
-        # Header
         header_frame = QFrame()
         header_frame.setFrameShape(QFrame.StyledPanel)
         header_frame.setMaximumHeight(32)
@@ -354,7 +353,6 @@ class SettingsGroup(QWidget):
         header_layout.addWidget(self.collapse_button)
 
 
-        # Content
         self.content_frame = QFrame()
         self.content_layout = QVBoxLayout(self.content_frame)
         self.content_layout.setContentsMargins(12, 8, 12, 8)

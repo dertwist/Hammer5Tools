@@ -158,7 +158,7 @@ class BatchCreatorMainWindow(QMainWindow):
         """Override close event to save splitter position."""
         super().closeEvent(event)
 
-    # ============================================================<  Referencing  >==========================================================
+    # Referencing
 
     def replace_reference_editline(self):
         """Replace the reference edit line with a drag-and-drop enabled line edit."""
@@ -247,7 +247,7 @@ class BatchCreatorMainWindow(QMainWindow):
             debug(f"Failed to load reference file: {e}")
             QMessageBox.critical(self, "Load Reference Error", f"An error occurred while loading the reference file: {e}")
 
-    # ============================================================<  Replacements  >=========================================================
+    # Replacements
 
     def init_replacements_editor(self):
         """Initialize the replacements editor."""
@@ -299,7 +299,7 @@ class BatchCreatorMainWindow(QMainWindow):
                 widget.setParent(None)
                 widget.deleteLater()
 
-    # =============================================================<  Viewport  >===========================================================
+    # Viewport
 
     def handle_plain_text_drop(self, event: QDropEvent):
         """Handle file drop into the editor."""
@@ -353,7 +353,6 @@ class BatchCreatorMainWindow(QMainWindow):
 
             cursor.endEditBlock()
 
-        # Update the search label
         self.update_search_label()
 
     def update_search_label(self):
@@ -396,7 +395,7 @@ class BatchCreatorMainWindow(QMainWindow):
             self.ui.process_groupbox.setDisabled(True)
             self.ui.label_editor_placeholder.show()
 
-    # =============================================================<  Explorer  >===========================================================
+    # Explorer
 
     def update_explorer_title(self):
         """Update the title of the explorer based on the current file."""

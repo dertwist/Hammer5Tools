@@ -87,7 +87,6 @@ def generate_commands(vmap_path, history=False) -> tuple[list, str | None]:
         # Adjust Z axis for player height (-70 units)
         if origin is not None:
             try:
-                # List/tuple: index 2
                 if isinstance(origin, (list, tuple)) and len(origin) >= 3:
                     origin = list(origin)
                     origin[2] = float(origin[2]) - 70

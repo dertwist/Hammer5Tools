@@ -47,16 +47,16 @@ class PropertyWidget(QFrame):
 
         self.selected: bool = False
 
-        # ---------- initial style ----------
+        # initial style
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.updateStyle()
 
-        # ---------- main layout ----------
+        # main layout
         self._main_layout = QVBoxLayout(self)
         self._main_layout.setContentsMargins(0, 0, 0, 0)
         self._main_layout.setSpacing(0)
 
-        # ---------- frame (header) ----------
+        # frame (header)
         self._frame_widget = QWidget()
         self._frame_widget.setFixedHeight(32)
         self._frame_widget.setObjectName("_frame_widget")
@@ -125,7 +125,7 @@ class PropertyWidget(QFrame):
 
         self._main_layout.addWidget(self._frame_widget)
 
-        # ---------- content area ----------
+        # content area
         self._content_widget = QWidget()
         self._content_layout = QVBoxLayout(self._content_widget)
         self._content_layout.setContentsMargins(8, 0, 0, 0)
@@ -134,7 +134,7 @@ class PropertyWidget(QFrame):
         self._content_widget.setVisible(True)
 
         self.populateControls()
-        # ---------- drag helpers ----------
+        # drag helpers
         self.setMouseTracking(True)
         self.drag_start_pos: QPoint | None = None
 
@@ -214,7 +214,7 @@ class PropertyWidget(QFrame):
         data = self.getData()
         self.modified.emit(data)
 
-    # ---------------------------------------------------- mouse events
+    # mouse events
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.drag_start_pos = event.position().toPoint()
@@ -231,7 +231,7 @@ class PropertyWidget(QFrame):
                 self.drag_start_pos = None
         super().mouseMoveEvent(event)
 
-    # ---------------------------------------------------- context menu
+    # context menu
     def contextMenuEvent(self, event):
         """
         Right-click menu showing Duplicate / Cut / Paste / Remove.
@@ -262,7 +262,7 @@ class PropertyWidget(QFrame):
         elif chosen is act_copy:
             self.requestCopy.emit(self)
 
-    # ---------------------------------------------------- style helpers
+    # style helpers
     def updateStyle(self):
         """Apply colours / borders according to selection state."""
         if self.selected:
