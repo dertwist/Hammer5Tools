@@ -16,13 +16,15 @@ from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout,
     QButtonGroup,
-    QRadioButton
+    QRadioButton,
+    QComboBox
 )
 from PySide6.QtCore import Qt, QRect, QObject, Signal, QRunnable, QThreadPool, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QKeyEvent
 from PySide6.QtSvgWidgets import QSvgWidget
 
 from src.settings.main import get_cs2_path, get_addon_name, debug, get_addon_dir
+from src.styles.common import qt_stylesheet_combobox
 from src.editors.loading_editor.ui_main import Ui_Loading_editorMainWindow
 from src.editors.loading_editor.viewport import ImageExplorer, extract_camera_name, is_generic_camera_name
 from src.editors.loading_editor.timeline import TimelineExplorer
@@ -446,7 +448,29 @@ class Loading_editorMainWindow(QMainWindow):
         self.ui.take_history_shots.clicked.connect(self.take_history_shots_action)
         self.ui.take_loading_screen_shots.clicked.connect(self.take_loading_screen_shots_action)
         self.ui.refresh.clicked.connect(self.refresh_timeline)
-        self.ui.generate_gifs.clicked.connect(self.export_all_to_gif)
+        self.ui.generate_gifs.clicked.connect(self.export_all_animations)
+
+        # Animation export settings (format + quality), inserted next to the
+        # Refresh / Create animation buttons in the timeline tab
+        self.animation_format_combo = QComboBox()
+        self.animation_format_combo.addItems(["GIF", "WEBP", "MP4"])
+        self.animation_format_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.animation_format_combo.setToolTip("Animation output format")
+        self.animation_format_combo.setMinimumHeight(32)
+
+        self.animation_quality_combo = QComboBox()
+        self.animation_quality_combo.addItems(["Low", "Medium", "High"])
+        self.animation_quality_combo.setCurrentText("High")
+        self.animation_quality_combo.setStyleSheet(qt_stylesheet_combobox)
+        self.animation_quality_combo.setToolTip("Animation quality (WEBP/MP4 only, ignored for GIF)")
+        self.animation_quality_combo.setMinimumHeight(32)
+
+        self.ui.horizontalLayout_6.insertWidget(1, self.animation_format_combo)
+        self.ui.horizontalLayout_6.insertWidget(2, self.animation_quality_combo)
+
+        self.animation_format_combo.currentTextChanged.connect(self.update_animation_settings)
+        self.animation_quality_combo.currentTextChanged.connect(self.update_animation_settings)
+        self.update_animation_settings()
 
         self.unified_dialog = UnifiedProcessingDialog(self)
 
@@ -479,8 +503,14 @@ class Loading_editorMainWindow(QMainWindow):
             self.image_viewer.showImage(image_path)
             debug(f"Timeline image selected: {os.path.basename(image_path)}")
 
-    def export_all_to_gif(self):
-        self.timeline_view.export_all_to_gif()
+    def export_all_animations(self):
+        self.timeline_view.export_all_animations()
+
+    def update_animation_settings(self):
+        self.timeline_view.set_export_settings(
+            self.animation_format_combo.currentText(),
+            self.animation_quality_combo.currentText(),
+        )
 
     def get_loading_preview_data(self) -> dict:
         """

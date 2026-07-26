@@ -785,7 +785,7 @@ class Explorer(QMainWindow):
             else:
                 self.play_audio_file(file_path)
         else:
-            self.open_file(index)
+            self.open_file(source_index)
 
     def open_config(self, filepath):
         parent = self.parent()

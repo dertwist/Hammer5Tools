@@ -147,6 +147,13 @@ class BatchCreatorMainWindow(QMainWindow):
             return True
         return False
 
+    def unsaved_files(self):
+        """(label, save_callable) for the open file, if it has unsaved edits."""
+        if not self.has_unsaved_changes():
+            return []
+        # Without a path there is nothing save_file() can write to.
+        return [(self.current_file or "Untitled", self.save_file if self.current_file else None)]
+
     def closeEvent(self, event):
         """Override close event to save splitter position."""
         super().closeEvent(event)

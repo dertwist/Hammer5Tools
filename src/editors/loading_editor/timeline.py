@@ -1,5 +1,7 @@
 import os
 import shutil
+import subprocess
+import tempfile
 from datetime import datetime
 from collections import defaultdict
 from typing import Dict, List, Tuple
@@ -28,92 +30,152 @@ from PySide6.QtWidgets import (
 )
 from src.settings.main import debug
 
+# 500ms per frame (matches the historical GIF export cadence)
+ANIMATION_FPS = 2
+WEBP_QUALITY_PRESETS = {"Low": 50, "Medium": 75, "High": 95}
+MP4_CRF_PRESETS = {"Low": 32, "Medium": 23, "High": 18}  # lower crf = higher quality
+_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+
+
+def render_animation(image_paths: List[str], output_dir: str, base_name: str,
+                      fmt: str = "GIF", quality: str = "High",
+                      progress_callback=None) -> str:
+    """Combine image_paths into a single animation file (GIF, WEBP, or MP4).
+
+    Resizes every frame to the largest resolution found in the sequence,
+    flattens transparency onto white, and writes the result to output_dir.
+    Returns the path of the created file. Raises ValueError if no valid
+    images could be loaded.
+    """
+    if not image_paths:
+        raise ValueError("No images to export")
+
+    fmt = fmt.upper()
+    total = len(image_paths)
+
+    # First pass: determine the maximum resolution
+    max_width, max_height = 0, 0
+    for image_path in image_paths:
+        try:
+            with Image.open(image_path) as img:
+                max_width = max(max_width, img.width)
+                max_height = max(max_height, img.height)
+        except Exception as e:
+            debug(f"Error checking image size {image_path}: {e}")
+
+    if max_width == 0 or max_height == 0:
+        raise ValueError("No valid images found")
+
+    # Second pass: load, resize, and flatten transparency
+    frames = []
+    for i, image_path in enumerate(image_paths):
+        try:
+            img = Image.open(image_path)
+            if img.width != max_width or img.height != max_height:
+                img = img.resize((max_width, max_height), Image.Resampling.LANCZOS)
+
+            if img.mode in ('RGBA', 'LA'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[-1])
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+
+            frames.append(img)
+        except Exception as e:
+            debug(f"Error loading image {image_path}: {e}")
+        if progress_callback:
+            progress_callback(int((i + 1) / total * 90))  # 90% for loading images
+
+    if not frames:
+        raise ValueError("No valid images could be loaded")
+
+    os.makedirs(output_dir, exist_ok=True)
+    duration_ms = int(1000 / ANIMATION_FPS)
+
+    if fmt == "MP4":
+        output_path = os.path.join(output_dir, f"{base_name}_timeline.mp4")
+        _save_mp4(frames, output_path, MP4_CRF_PRESETS.get(quality, 23))
+    elif fmt == "WEBP":
+        output_path = os.path.join(output_dir, f"{base_name}_timeline.webp")
+        frames[0].save(
+            output_path,
+            format="WEBP",
+            save_all=True,
+            append_images=frames[1:],
+            duration=duration_ms,
+            loop=0,
+            quality=WEBP_QUALITY_PRESETS.get(quality, 90),
+            method=6,
+        )
+    else:
+        output_path = os.path.join(output_dir, f"{base_name}_timeline.gif")
+        # Convert to palette mode for GIF (adaptive palette)
+        palette_frames = [f.convert('P', palette=Image.ADAPTIVE) for f in frames]
+        palette_frames[0].save(
+            output_path,
+            save_all=True,
+            append_images=palette_frames[1:],
+            duration=duration_ms,
+            loop=0,
+        )
+
+    if progress_callback:
+        progress_callback(100)
+    return output_path
+
+
+def _save_mp4(frames: List[Image.Image], output_path: str, crf: int) -> None:
+    """Encode frames to MP4 using the ffmpeg binary bundled with imageio-ffmpeg."""
+    import imageio_ffmpeg
+    tmp_dir = tempfile.mkdtemp(prefix="h5t_anim_")
+    try:
+        for i, frame in enumerate(frames):
+            frame.save(os.path.join(tmp_dir, f"frame_{i:05d}.png"))
+        args = [
+            imageio_ffmpeg.get_ffmpeg_exe(), "-y",
+            "-framerate", str(ANIMATION_FPS),
+            "-i", os.path.join(tmp_dir, "frame_%05d.png"),
+            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",  # libx264 requires even dimensions
+            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", str(crf),
+            output_path,
+        ]
+        subprocess.run(
+            args, check=True,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            creationflags=_NO_WINDOW,
+        )
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
 class TimelineExportSignals(QObject):
     progress = Signal(int)
     finished = Signal(str)
     error = Signal(str)
 
 class TimelineExportWorker(QRunnable):
-    """Worker thread for exporting timeline sequences to GIF"""
-    def __init__(self, camera_name: str, image_paths: List[str], output_path: str):
+    """Worker thread for exporting a timeline sequence to an animation file"""
+    def __init__(self, camera_name: str, image_paths: List[str], output_path: str,
+                 fmt: str = "GIF", quality: str = "High"):
         super().__init__()
         self.camera_name = camera_name
         self.image_paths = image_paths
         self.output_path = output_path
+        self.fmt = fmt
+        self.quality = quality
         self.signals = TimelineExportSignals()
 
     def run(self):
         try:
-            if not self.image_paths:
-                self.signals.error.emit("No images to export")
-                return
-
-            images = []
-            total_images = len(self.image_paths)
-            
-            # First pass: determine the maximum resolution
-            max_width, max_height = 0, 0
-            for image_path in self.image_paths:
-                try:
-                    with Image.open(image_path) as img:
-                        max_width = max(max_width, img.width)
-                        max_height = max(max_height, img.height)
-                except Exception as e:
-                    debug(f"Error checking image size {image_path}: {e}")
-                    continue
-            
-            if max_width == 0 or max_height == 0:
-                self.signals.error.emit("No valid images found")
-                return
-            
-            # Second pass: load and resize images
-            for i, image_path in enumerate(self.image_paths):
-                try:
-                    img = Image.open(image_path)
-                    
-                    # Resize to maximum resolution if needed
-                    if img.width != max_width or img.height != max_height:
-                        img = img.resize((max_width, max_height), Image.Resampling.LANCZOS)
-                    
-                    # Convert to RGB if necessary (GIF doesn't support RGBA)
-                    if img.mode in ('RGBA', 'LA'):
-                        background = Image.new('RGB', img.size, (255, 255, 255))
-                        if img.mode == 'RGBA':
-                            background.paste(img, mask=img.split()[-1])
-                        else:
-                            background.paste(img, mask=img.split()[-1])
-                        img = background
-                    elif img.mode != 'RGB':
-                        img = img.convert('RGB')
-                    
-                    # Convert to palette mode for GIF (adaptive palette)
-                    img = img.convert('P', palette=Image.ADAPTIVE)
-                    images.append(img)
-                    progress = int((i + 1) / total_images * 90)  # 90% for loading images
-                    self.signals.progress.emit(progress)
-                except Exception as e:
-                    debug(f"Error loading image {image_path}: {e}")
-                    continue
-
-            if not images:
-                self.signals.error.emit("No valid images could be loaded")
-                return
-
-            # Save as GIF
-            gif_path = os.path.join(self.output_path, f"{self.camera_name}_timeline.gif")
-            images[0].save(
-                gif_path,
-                save_all=True,
-                append_images=images[1:],
-                duration=500,  # 500ms per frame
-                loop=0
+            output_path = render_animation(
+                self.image_paths, self.output_path, self.camera_name,
+                fmt=self.fmt, quality=self.quality,
+                progress_callback=self.signals.progress.emit,
             )
-            
-            self.signals.progress.emit(100)
-            self.signals.finished.emit(gif_path)
-            
+            self.signals.finished.emit(output_path)
         except Exception as e:
-            self.signals.error.emit(f"Error creating GIF: {str(e)}")
+            self.signals.error.emit(f"Error creating animation: {str(e)}")
 
 class TimelineTreeWidget(QTreeWidget):
     """Custom tree widget for timeline view with thumbnail support"""
@@ -127,7 +189,11 @@ class TimelineTreeWidget(QTreeWidget):
         self.setIndentation(20)
         self.setRootIsDecorated(True)
         self.setAlternatingRowColors(True)
-        
+
+        # Animation export settings, kept in sync with TimelineExplorer.set_export_settings
+        self.export_format = "GIF"
+        self.export_quality = "High"
+
         # Enable context menu
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
@@ -159,8 +225,8 @@ class TimelineTreeWidget(QTreeWidget):
         menu = QMenu(self)
         
         if hasattr(item, 'camera_name'):  # Camera folder
-            export_action = QAction("Export to GIF", self)
-            export_action.triggered.connect(lambda: self.export_camera_to_gif(item))
+            export_action = QAction("Export Animation...", self)
+            export_action.triggered.connect(lambda: self.export_camera_animation(item))
             menu.addAction(export_action)
         elif hasattr(item, 'image_path'):  # Image item
             show_action = QAction("Show in Viewport", self)
@@ -180,65 +246,66 @@ class TimelineTreeWidget(QTreeWidget):
         if os.path.exists(folder_path):
             os.startfile(folder_path)
 
-    def export_camera_to_gif(self, camera_item: QTreeWidgetItem):
-        """Export all images for a camera to GIF format"""
+    def export_camera_animation(self, camera_item: QTreeWidgetItem):
+        """Export all images for a camera to an animation file (GIF/WEBP/MP4)"""
         if not hasattr(camera_item, 'camera_name'):
             return
-            
+
         # Collect all image paths for this camera
         image_paths = []
         for i in range(camera_item.childCount()):
             child = camera_item.child(i)
             if hasattr(child, 'image_path'):
                 image_paths.append(child.image_path)
-        
+
         if not image_paths:
             QMessageBox.warning(self, "Export Error", "No images found for this camera.")
             return
-        
+
         # Sort by timestamp (oldest first)
         image_paths.sort(key=lambda x: self.extract_timestamp_from_path(x))
-        
+
         # Ask user for output directory
         output_dir = QFileDialog.getExistingDirectory(
-            self, 
-            "Select Output Directory", 
+            self,
+            "Select Output Directory",
             os.path.expanduser("~/Desktop")
         )
-        
+
         if not output_dir:
             return
-        
+
         # Create progress dialog
-        progress_dialog = QProgressDialog("Exporting to GIF...", "Cancel", 0, 100, self)
+        progress_dialog = QProgressDialog("Exporting animation...", "Cancel", 0, 100, self)
         progress_dialog.setWindowModality(Qt.WindowModal)
         progress_dialog.show()
-        
+
         # Create worker
-        worker = TimelineExportWorker(camera_item.camera_name, image_paths, output_dir)
+        worker = TimelineExportWorker(camera_item.camera_name, image_paths, output_dir,
+                                       fmt=self.export_format, quality=self.export_quality)
         worker.signals.progress.connect(progress_dialog.setValue)
         worker.signals.finished.connect(lambda path: self.on_export_finished(progress_dialog, path))
         worker.signals.error.connect(lambda error: self.on_export_error(progress_dialog, error))
-        
+
         # Connect cancel button
         progress_dialog.canceled.connect(lambda: self.thread_pool.clear())
-        
+
         # Start export
         self.thread_pool.start(worker)
 
-    def on_export_finished(self, progress_dialog: QProgressDialog, gif_path: str):
-        """Handle successful GIF export"""
+    def on_export_finished(self, progress_dialog: QProgressDialog, output_path: str):
+        """Handle successful animation export"""
         progress_dialog.close()
         QMessageBox.information(
-            self, 
-            "Export Complete", 
-            f"GIF exported successfully to:\n{gif_path}"
+            self,
+            "Export Complete",
+            f"Animation exported successfully to:\n{output_path}"
         )
 
     def on_export_error(self, progress_dialog: QProgressDialog, error: str):
-        """Handle GIF export error"""
+        """Handle animation export error"""
         progress_dialog.close()
-        QMessageBox.critical(self, "Export Error", f"Failed to export GIF:\n{error}")
+        QMessageBox.critical(self, "Export Error", f"Failed to export animation:\n{error}")
 
     def extract_timestamp_from_path(self, image_path: str) -> datetime:
         """Extract timestamp from image path"""
@@ -403,11 +470,21 @@ class TimelineExplorer(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle("Timeline Explorer")
         self.history_directory = history_directory
-        
+        self.export_format = "GIF"
+        self.export_quality = "High"
+
         self.setup_ui()
-        
+
         if history_directory:
             self.load_timeline_data()
+
+    def set_export_settings(self, fmt: str, quality: str):
+        """Update the animation format/quality used by both the toolbar export and the
+        per-camera context menu export."""
+        self.export_format = fmt
+        self.export_quality = quality
+        self.timeline_tree.export_format = fmt
+        self.timeline_tree.export_quality = quality
 
     def setup_ui(self):
         """Setup the user interface"""
@@ -436,138 +513,87 @@ class TimelineExplorer(QMainWindow):
         
         self.timeline_tree.load_timeline_data(self.history_directory)
 
-    def export_all_to_gif(self):
-        """Export all camera sequences to GIF files"""
+    def export_all_animations(self):
+        """Export all camera sequences to animation files (GIF/WEBP/MP4)"""
         if not self.history_directory:
             QMessageBox.warning(self, "Export Error", "No history directory set.")
             return
-        
+
         # Ask user for output directory
         output_dir = QFileDialog.getExistingDirectory(
-            self, 
-            "Select Output Directory for All GIFs", 
+            self,
+            "Select Output Directory for All Animations",
             os.path.expanduser("~/Desktop")
         )
-        
+
         if not output_dir:
             return
-        
+
         # Collect all camera data
         camera_data = defaultdict(list)
-        
+
         try:
             for timestamp_folder in os.listdir(self.history_directory):
                 timestamp_path = os.path.join(self.history_directory, timestamp_folder)
                 if not os.path.isdir(timestamp_path):
                     continue
-                
+
                 try:
                     timestamp = datetime.strptime(timestamp_folder, "%Y-%m-%d_%H-%M-%S")
                 except ValueError:
                     continue
-                
+
                 for filename in os.listdir(timestamp_path):
                     if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.tga')):
                         camera_name = self.timeline_tree.extract_camera_name(filename)
                         if camera_name:
                             image_path = os.path.join(timestamp_path, filename)
                             camera_data[camera_name].append((timestamp, image_path))
-        
+
         except Exception as e:
             QMessageBox.critical(self, "Export Error", f"Error collecting camera data: {e}")
             return
-        
+
         if not camera_data:
             QMessageBox.warning(self, "Export Error", "No camera data found.")
             return
-        
+
         # Export each camera sequence
         total_cameras = len(camera_data)
-        progress_dialog = QProgressDialog("Exporting all cameras to GIF...", "Cancel", 0, total_cameras, self)
+        progress_dialog = QProgressDialog("Exporting all cameras...", "Cancel", 0, total_cameras, self)
         progress_dialog.setWindowModality(Qt.WindowModal)
         progress_dialog.show()
-        
+
         exported_count = 0
         for camera_name, images in camera_data.items():
             if progress_dialog.wasCanceled():
                 break
-            
+
             # Sort by timestamp (oldest first)
             images.sort(key=lambda x: x[0])
             image_paths = [img[1] for img in images]
-            
-            # Create GIF for this camera with image rescaling
+
             try:
-                pil_images = []
-                
-                # First pass: determine the maximum resolution
-                max_width, max_height = 0, 0
-                for image_path in image_paths:
-                    try:
-                        with Image.open(image_path) as img:
-                            max_width = max(max_width, img.width)
-                            max_height = max(max_height, img.height)
-                    except Exception as e:
-                        debug(f"Error checking image size {image_path}: {e}")
-                        continue
-                
-                if max_width == 0 or max_height == 0:
-                    debug(f"No valid images for camera {camera_name}")
-                    continue
-                
-                # Second pass: load and resize images
-                for image_path in image_paths:
-                    try:
-                        img = Image.open(image_path)
-                        
-                        # Resize to maximum resolution if needed
-                        if img.width != max_width or img.height != max_height:
-                            img = img.resize((max_width, max_height), Image.Resampling.LANCZOS)
-                        
-                        if img.mode in ('RGBA', 'LA'):
-                            background = Image.new('RGB', img.size, (255, 255, 255))
-                            if img.mode == 'RGBA':
-                                background.paste(img, mask=img.split()[-1])
-                            else:
-                                background.paste(img, mask=img.split()[-1])
-                            img = background
-                        elif img.mode != 'RGB':
-                            img = img.convert('RGB')
-                        # Convert to palette mode for GIF (adaptive palette)
-                        img = img.convert('P', palette=Image.ADAPTIVE)
-                        pil_images.append(img)
-                    except Exception as e:
-                        debug(f"Error processing image {image_path}: {e}")
-                        continue
-                
-                if pil_images:
-                    gif_path = os.path.join(output_dir, f"{camera_name}_timeline.gif")
-                    pil_images[0].save(
-                        gif_path,
-                        save_all=True,
-                        append_images=pil_images[1:],
-                        duration=500,
-                        loop=0
-                    )
-                    debug(f"Exported GIF: {gif_path}")
-            
+                output_path = render_animation(image_paths, output_dir, camera_name,
+                                                 fmt=self.export_format, quality=self.export_quality)
+                debug(f"Exported animation: {output_path}")
             except Exception as e:
                 debug(f"Error exporting {camera_name}: {e}")
-            
+
             exported_count += 1
             progress_dialog.setValue(exported_count)
             QApplication.processEvents()
-        
+
         progress_dialog.close()
-        
+
         if exported_count > 0:
             QMessageBox.information(
-                self, 
-                "Export Complete", 
-                f"Exported {exported_count} camera sequences to GIF files in:\n{output_dir}"
+                self,
+                "Export Complete",
+                f"Exported {exported_count} camera sequences to:\n{output_dir}"
             )
         else:
-            QMessageBox.warning(self, "Export Error", "No GIF files were created.")
+            QMessageBox.warning(self, "Export Error", "No animation files were created.")
 
 if __name__ == "__main__":
     import sys
