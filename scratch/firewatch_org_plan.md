@@ -182,7 +182,61 @@ hard-to-review step, and doing it first would mean moving 4 GB of files we're ab
 rewriting references we're about to change again. Fix in place where paths are still familiar,
 then move once.
 
-## 6. Open calls for you
+## RESULTS — executed on branch `asset-reorg` (baseline `7d9bac8`)
+
+| commit | what | effect |
+|---|---|---|
+| `75f9d2e` | 1/6 constant-fill textures → scalars | −82 files, −291 MB, 5 all-black AO bugs fixed |
+| `1020c2d` | 2/6 dedup byte-identical textures | −277 files, −3.33 GB |
+| `0793019` | 3/6 alpha, backfaces, scalars, rewires | 15 masks, 30 alpha-test blocks, 20 backfaces, 20 scalars clamped |
+| `384e8d9` | 4/6 wire unused PBR maps, drop duplicate library | +37 slots on 16 materials, −152 vmats |
+| `7e83165` | 5/6 move into `firewatch/thirdparty/<category>` | 1234 files, 0 collisions |
+
+**Pack: 9.5 GB → 5.9 GB** (3.6 GB reclaimed; 2.0 GB of that is the `_library/` bucket kept by choice).
+
+### Regression gate vs baseline
+
+288 models in, 288 out — none disappeared, none appeared. 162 resolve to byte-identical
+material+texture sets. All 126 changes trace to an intended fix:
+
+| change | n | phase |
+|---|---|---|
+| metalness → scalar | 93 | 1 |
+| AO → engine default | 45 | 1 |
+| roughness → scalar | 36 | 1 |
+| `TextureTranslucency1` added | 36 | 3 |
+| normal → engine default | 5 | 1 |
+| rough/metal/AO scalar → real map | 53 | 4 |
+| colour changed (the 3 rewires) | 19 models | 3 |
+
+The 19 colour changes are exactly `mi_car_02` (1 model), `mi_cloth` (11) and `mi_fence_net` (7).
+
+### Tooling landed in H5T (branch `unreal-converter-alpha`)
+
+- `ac2ca307` — `texture_utils.extract_alpha()` + `write_vmat(alpha_test_ref=, render_backfaces=)`,
+  so the converter stops emitting opaque foliage. 10 tests.
+- `1a184a46` — `ReferenceUpdater.update_references_batch()` (B1) and the vmap prefix-block
+  splice (B2). 9 tests, including a real binary-vmap round-trip.
+
+### Still open
+
+1. **Not verified in Hammer.** Nothing here has been compiled or opened. `maps/Showcase.vmap`
+   is the asset-showcase map and the fastest way to eyeball all of it.
+2. **32 materials have no normal map** — no `_normal.tga` exists for their stem, so this needs
+   new texture work, not rewiring.
+3. **~30 materials share another asset's trimsheet** (`mi_barrel` → `t_propset_02`). Almost all
+   correct — the UE atlas pattern — but worth a look for the ones flagged in §1.
+4. **16 cross-role duplicate texture groups** (29 files) left alone: the same image serving as
+   one material's AO and another's metalness. Merging needs a rename, not a delete.
+5. **`de_firewatch.vmap` doesn't use the pack at all.** Placements are in `Overview.vmap` and
+   `Showcase.vmap`. If that's unintended, it's a much bigger finding than anything above.
+
+## 6. Open calls (answered)
+
+- Dead textures → kept, moved to `_library/`.
+- `tweak*` → `nature/terrain`.
+
+## 7. Original open calls
 
 1. **`tweak1..7` + `tweak`** (8 models) — what are these? Terrain blend tweaks?
 2. **`models/firewatchtower/meshes/merged/`** (4 models: bridges, merged structure, poles) — own
