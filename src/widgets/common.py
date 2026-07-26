@@ -15,9 +15,9 @@ from PySide6.QtGui import QStandardItemModel
 from PySide6.QtGui import QIcon, QColor, QFont
 import sys, webbrowser
 from src.styles.common import *
-from PySide6.QtWidgets import QMessageBox, QFileDialog
+from PySide6.QtWidgets import QMessageBox, QFileDialog, QScrollArea
 from PySide6.QtGui import QIcon
-import webbrowser
+import os, webbrowser
 from src.common import discord_feedback_channel
 from logging import error
 import traceback, ctypes
@@ -100,6 +100,85 @@ class ErrorInfo(QDialog):
         webbrowser.open(discord_feedback_channel)
         # Close the dialog after reporting the issue
         self.close()
+
+
+class UnsavedFilesDialog(QDialog):
+    """Info dialog listing every unsaved file across the editors.
+
+    ``entries`` is an iterable of ``(editor_name, file_label, save_callable)``;
+    ``save_callable`` may be None when the document has no path to save to.
+    Accepted means the caller may proceed (files saved, or user chose to discard).
+    """
+
+    def __init__(self, entries, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Unsaved Files")
+        self.setWindowIcon(QIcon("../appicon.ico"))
+        enable_dark_title_bar(self)
+        self.setModal(True)
+        self.setMinimumWidth(520)
+
+        layout = QVBoxLayout(self)
+        header = QLabel("These files have unsaved changes. Save them before switching the addon:")
+        header.setWordWrap(True)
+        layout.addWidget(header)
+
+        rows_host = QWidget()
+        self._rows_layout = QVBoxLayout(rows_host)
+        self._rows_layout.setContentsMargins(0, 0, 0, 0)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(rows_host)
+        scroll.setMaximumHeight(260)
+        layout.addWidget(scroll)
+
+        self._savers = [self._add_row(*entry) for entry in entries]
+        self._rows_layout.addStretch()
+
+        buttons = QHBoxLayout()
+        save_all_button = QPushButton("Save All")
+        save_all_button.clicked.connect(self.save_all)
+        buttons.addWidget(save_all_button)
+        buttons.addStretch()
+        switch_button = QPushButton("Switch Anyway")
+        switch_button.clicked.connect(self.accept)
+        buttons.addWidget(switch_button)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setDefault(True)
+        cancel_button.clicked.connect(self.reject)
+        buttons.addWidget(cancel_button)
+        layout.addLayout(buttons)
+
+    def _add_row(self, editor_name, file_label, save):
+        row = QHBoxLayout()
+        label = QLabel(f"{editor_name}  —  {os.path.basename(str(file_label))}")
+        label.setToolTip(str(file_label))
+        row.addWidget(label, 1)
+        button = QPushButton("Save")
+        button.setEnabled(save is not None)
+        if save is None:
+            button.setToolTip("This document has no file path yet, save it from its editor.")
+        row.addWidget(button)
+        self._rows_layout.addLayout(row)
+
+        def do_save():
+            if not button.isEnabled():
+                return save is not None  # already saved, or nothing to save to
+            try:
+                save()
+            except Exception as e:
+                QMessageBox.critical(self, "Save failed", f"{file_label}\n\n{e}")
+                return False
+            button.setEnabled(False)
+            button.setText("Saved")
+            return True
+
+        button.clicked.connect(do_save)
+        return do_save
+
+    def save_all(self):
+        if all([saver() for saver in self._savers]):
+            self.accept()
 
 
 def exception_handler(func):

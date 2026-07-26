@@ -3,7 +3,8 @@ import time
 from PySide6.QtWidgets import (
     QSystemTrayIcon,
     QMenu,
-    QDockWidget
+    QDockWidget,
+    QDialog
 )
 from PySide6.QtGui import QAction, QPainter, QColor
 from PySide6.QtCore import (
@@ -645,6 +646,23 @@ class Widget(QMainWindow):
             self.show_minimize_message_once()
         else: self.exit_application()
 
+    def collect_unsaved_files(self):
+        """(editor_name, file_label, save_callable) for every unsaved file in the open editors."""
+        editors = (
+            ('BatchCreator_MainWindow', "AssetGroup Maker"),
+            ('SmartPropEditorMainWindow', "SmartProp Editor"),
+            ('SoundEventEditorMainWindow', "SoundEvent Editor"),
+            ('AudioEditor_instance', "Wave Editor"),
+        )
+        unsaved = []
+        for attr, editor_name in editors:
+            editor = getattr(self, attr, None)
+            if editor is None:
+                continue
+            for label, save in getattr(editor, 'unsaved_files', list)():
+                unsaved.append((editor_name, label, save))
+        return unsaved
+
     @exception_handler
     def selected_addon_name(self, text=None):
         new_addon = self.ui.ComboBoxSelectAddon.currentText()
@@ -652,33 +670,9 @@ class Widget(QMainWindow):
         current_addon = get_addon_name()
         if current_addon == new_addon and getattr(self, 'SmartPropEditorMainWindow', None): return
 
-        dirty_editors = []
-        if getattr(self, 'BatchCreator_MainWindow', None) and hasattr(self.BatchCreator_MainWindow, 'has_unsaved_changes'):
-            if self.BatchCreator_MainWindow.has_unsaved_changes():
-                dirty_editors.append("AssetGroup Maker")
-
-        if getattr(self, 'SmartPropEditorMainWindow', None) and hasattr(self.SmartPropEditorMainWindow, 'has_unsaved_changes'):
-            if self.SmartPropEditorMainWindow.has_unsaved_changes():
-                dirty_editors.append("SmartProp Editor")
-
-        if getattr(self, 'SoundEventEditorMainWindow', None) and hasattr(self.SoundEventEditorMainWindow, 'has_unsaved_changes'):
-            if self.SoundEventEditorMainWindow.has_unsaved_changes():
-                dirty_editors.append("SoundEvent Editor")
-
-        if getattr(self, 'AudioEditor_instance', None) and hasattr(self.AudioEditor_instance, 'has_unsaved_changes'):
-            if self.AudioEditor_instance.has_unsaved_changes():
-                if "SoundEvent Editor" not in dirty_editors:
-                    dirty_editors.append("SoundEvent Editor (Wave Editor)")
-
-        if dirty_editors and current_addon and current_addon != new_addon:
-            editors_str = ", ".join(dirty_editors)
-            msg_box = QMessageBox(self)
-            msg_box.setIcon(QMessageBox.Warning)
-            msg_box.setWindowTitle("Unsaved Changes")
-            msg_box.setText(f"You have unsaved changes in: {editors_str}.\n\nSwitching addons will close the current editors and lose unsaved changes. Do you want to proceed?")
-            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            msg_box.setDefaultButton(QMessageBox.No)
-            if msg_box.exec() != QMessageBox.Yes:
+        unsaved = self.collect_unsaved_files()
+        if unsaved and current_addon and current_addon != new_addon:
+            if UnsavedFilesDialog(unsaved, self).exec() != QDialog.Accepted:
                 try:
                     self.ui.ComboBoxSelectAddon.currentTextChanged.disconnect(self.selected_addon_name)
                     self.ui.ComboBoxSelectAddon.setCurrentText(current_addon)

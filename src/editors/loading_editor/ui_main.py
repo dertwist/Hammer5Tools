@@ -626,7 +626,7 @@ class Ui_Loading_editorMainWindow(object):
 "</style></head><body style=\" font-family:'Segoe UI'; font-size:10pt; font-weight:580; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
-        self.generate_gifs.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Generate gifs", None))
+        self.generate_gifs.setText(QCoreApplication.translate("Loading_editorMainWindow", u"Create animation", None))
         self.screenshots_tabwidget.setTabText(self.screenshots_tabwidget.indexOf(self.timeline_tab), QCoreApplication.translate("Loading_editorMainWindow", u"Timeline", None))
 #if QT_CONFIG(tooltip)
         self.take_history_shots.setToolTip(QCoreApplication.translate("Loading_editorMainWindow", u"<html><head/><body><p>Generate commands and send them to CS2 to take history screenshots. Images will be saved in: <tt>game/screenshots/Hammer5Tools/History/Date</tt></p></body></html>", None))

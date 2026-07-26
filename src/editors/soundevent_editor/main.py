@@ -299,6 +299,12 @@ class SoundEventEditorMainWindow(QMainWindow):
             return not self.undo_stack.isClean()
         return False
 
+    def unsaved_files(self):
+        """(label, save_callable) for the soundevents file, if it has unsaved edits."""
+        if not self.has_unsaved_changes():
+            return []
+        return [(self.filepath_vsndevts, self.save_soundevents)]
+
     #=======================================================<  Properties Window  >=====================================================
 
     def PropertiesWindowInit(self):

@@ -1,5 +1,6 @@
 import sys
 import os.path
+from functools import partial
 from PySide6.QtWidgets import (
     QMainWindow,
     QFileDialog,
@@ -576,13 +577,19 @@ class SmartPropEditorMainWindow(QMainWindow):
             text = f"*{base_name}" if doc.is_modified() else base_name
             self.ui.DocumentTabWidget.setTabText(idx, text)
 
-    def has_unsaved_changes(self) -> bool:
-        """Returns True if any open document tab has unsaved changes."""
+    def unsaved_files(self):
+        """(label, save_callable) for every modified document tab."""
+        files = []
         for i in range(self.ui.DocumentTabWidget.count()):
             doc = self.ui.DocumentTabWidget.widget(i)
             if hasattr(doc, 'is_modified') and doc.is_modified():
-                return True
-        return False
+                files.append((doc.opened_file or "Untitled", partial(self._save_document, doc)))
+        return files
+
+    def _save_document(self, doc):
+        """Save a specific document tab through the regular save path."""
+        self.ui.DocumentTabWidget.setCurrentWidget(doc)
+        self.save_file()
 
     def close_document(self, index=None):
         """

@@ -855,13 +855,14 @@ class AudioEditor(QMainWindow):
             name = os.path.basename(doc.path or "Untitled")
             self.tabs.setTabText(i, ("*" + name) if dirty else name)
 
-    def has_unsaved_changes(self) -> bool:
-        """Returns True if any open audio document tab has unsaved changes."""
+    def unsaved_files(self):
+        """(label, save_callable) for every audio tab with unsaved edits."""
+        files = []
         for i in range(self.tabs.count()):
             widget = self.tabs.widget(i)
             if getattr(widget, "_dirty", False):
-                return True
-        return False
+                files.append((widget.path or "Untitled", widget.save))
+        return files
 
     def _close_tab(self, index):
         widget = self.tabs.widget(index)
