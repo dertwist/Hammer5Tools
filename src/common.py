@@ -76,6 +76,18 @@ def get_channel() -> str:
         pass
     return 'stable'
 
+def get_update_url() -> str:
+    """
+    Velopack feed URL for the current channel.
+
+    The dev release is a GitHub pre-release, and Velopack's GitHub source skips
+    pre-releases (the Python binding exposes no prerelease flag), so dev points
+    straight at the fixed 'dev' tag's asset directory as a plain HTTP feed.
+    """
+    if get_channel() == 'dev':
+        return 'https://github.com/dertwist/Hammer5Tools/releases/download/dev'
+    return 'https://github.com/dertwist/Hammer5Tools'
+
 #=================================================================<  Title  >===============================================================
 def enable_dark_title_bar(window):
     DWMWA_USE_IMMERSIVE_DARK_MODE = 20

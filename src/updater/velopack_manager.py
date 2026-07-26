@@ -2,12 +2,11 @@ import threading
 from PySide6.QtCore import QTimer, Qt
 from PySide6.QtWidgets import QMessageBox, QProgressDialog
 from velopack import UpdateManager
-from src.common import get_channel, app_version
+from src.common import get_channel, get_update_url, app_version
 
 class VelopackManager:
     def __init__(self, parent_window):
         self.parent = parent_window
-        self.update_url = "https://github.com/dertwist/Hammer5Tools"
 
     def check_for_updates(self, interactive=False):
         """Checks for updates and prompts the user if one is found."""
@@ -20,7 +19,7 @@ class VelopackManager:
             opts = velopack.UpdateOptions(AllowVersionDowngrade=False, 
                                         MaximumDeltasBeforeFallback=0, 
                                         ExplicitChannel=channel)
-            mgr = UpdateManager(self.update_url, options=opts)
+            mgr = UpdateManager(get_update_url(), options=opts)
             
             # Check for updates
             update = mgr.check_for_updates()

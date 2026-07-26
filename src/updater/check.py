@@ -6,7 +6,7 @@ import threading
 import urllib.request
 import velopack
 from velopack import UpdateManager, UpdateOptions
-from src.common import get_channel
+from src.common import get_channel, get_update_url
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout,
     QSpacerItem, QSizePolicy, QScrollArea, QWidget, QFrame, QMessageBox,
@@ -47,7 +47,7 @@ class UpdateWorker(QObject):
                     opts = UpdateOptions(AllowVersionDowngrade=False, 
                                        MaximumDeltasBeforeFallback=0, 
                                        ExplicitChannel=channel)
-                    mgr = UpdateManager("https://github.com/dertwist/Hammer5Tools", options=opts)
+                    mgr = UpdateManager(get_update_url(), options=opts)
                     update = mgr.check_for_updates()
                 except Exception as ve:
                     print(f"Velopack check failed: {ve}")
