@@ -251,6 +251,33 @@ static class Program
         return DecomposeMatrix(worldMat);
     }
 
+    // Find the Blueprint actor a component belongs to, if any. The direct Outer
+    // covers a Blueprint's own components; the AttachParent hop covers the child
+    // actors a Blueprint spawns, which the editor saves into the level as
+    // top-level "..._CAT_<n>" actors owned by nothing. Without that hop every
+    // child actor is placed a second time as a loose prop_static alongside the
+    // smartprop that already contains it.
+    private static (string? actorName, string? className, CUE4Parse.UE4.Assets.Exports.UObject? actor)
+        OwningBlueprintActor(CUE4Parse.UE4.Assets.Exports.UObject comp)
+    {
+        var curr = comp;
+        for (int i = 0; i < 16 && curr != null; i++)
+        {
+            var outer = curr.Outer;
+            var outerName = outer?.Name.Text;
+            var outerClass = outer?.Class?.Name.Text;
+            if (outer != null && !string.IsNullOrEmpty(outerName) && !string.IsNullOrEmpty(outerClass) &&
+                outerClass.EndsWith("_C", StringComparison.OrdinalIgnoreCase) &&
+                !outerClass.Equals("Level", StringComparison.OrdinalIgnoreCase) &&
+                !outerClass.Equals("World", StringComparison.OrdinalIgnoreCase))
+            {
+                return (outerName, outerClass, outer.Load());
+            }
+            curr = curr.GetOrDefault<FPackageIndex?>("AttachParent", null)?.ResolvedObject?.Load();
+        }
+        return (null, null, null);
+    }
+
     // Normalized scene extraction: every static-mesh-bearing component with its
     // mesh reference and UE transform. Coordinate conversion to Source 2 is done
     // on the Python side via the shared transform module. Instanced/foliage/spline
@@ -295,23 +322,20 @@ static class Program
             }
 
             string? outerName = export.Outer?.Name.Text;
-            string? outerClass = export.Outer?.Class?.Name.Text;
 
-            if (!string.IsNullOrEmpty(outerName) && !string.IsNullOrEmpty(outerClass) &&
-                outerClass.EndsWith("_C", StringComparison.OrdinalIgnoreCase) &&
-                !outerClass.Equals("Level", StringComparison.OrdinalIgnoreCase) &&
-                !outerClass.Equals("World", StringComparison.OrdinalIgnoreCase))
+            var (bpActorName, bpClass, bpActorObj) = OwningBlueprintActor(export);
+            if (bpActorName != null && bpClass != null)
             {
-                if (processedBpActors.Add(outerName))
+                if (processedBpActors.Add(bpActorName))
                 {
-                    string bpName = outerClass.Substring(0, outerClass.Length - 2);
-                    var actorObj = export.Outer?.Load();
+                    string bpName = bpClass.Substring(0, bpClass.Length - 2);
+                    var actorObj = bpActorObj;
                     var rootCompRef = actorObj?.GetOrDefault<FPackageIndex?>("RootComponent", null);
                     var rootComp = rootCompRef?.ResolvedObject?.Load();
                     var (bpLoc, bpRot, bpScale) = GetWorldTransform(rootComp ?? actorObj ?? export);
                     actors.Add(new
                     {
-                        actor = outerName,
+                        actor = bpActorName,
                         componentType = "BlueprintActor",
                         blueprint = bpName,
                         mesh = (string?)null,
@@ -372,27 +396,121 @@ static class Program
         return 0;
     }
 
+    // SCS component templates are exported as "<VariableName>_GEN_VARIABLE".
+    // Native/inherited subobjects use the bare variable name, so normalizing to
+    // the variable name gives one namespace both sides can be keyed by.
+    private const string GenVariableSuffix = "_GEN_VARIABLE";
+
+    private static string ScsVariableName(string exportName) =>
+        exportName.EndsWith(GenVariableSuffix, StringComparison.Ordinal)
+            ? exportName.Substring(0, exportName.Length - GenVariableSuffix.Length)
+            : exportName;
+
+    // A ChildActorComponent carries no mesh of its own — it spawns a template
+    // actor that holds one. Unreal's "convert selected actors to Blueprint ->
+    // child actors" builds whole props this way (a fence is 11 StaticMeshActor
+    // child actors), so without this every one of them converts as an empty node.
+    private static CUE4Parse.UE4.Assets.Exports.UObject? ChildActorTemplate(CUE4Parse.UE4.Assets.Exports.UObject comp) =>
+        comp.GetOrDefault<FPackageIndex?>("ChildActorTemplate", null)?.ResolvedObject?.Load();
+
+    private static string? ChildActorMesh(CUE4Parse.UE4.Assets.Exports.UObject comp)
+    {
+        var template = ChildActorTemplate(comp);
+        if (template == null) return null;
+        // AStaticMeshActor's mesh component is also its root; check both names.
+        var rootRef = template.GetOrDefault<FPackageIndex?>("StaticMeshComponent", null)
+                   ?? template.GetOrDefault<FPackageIndex?>("RootComponent", null);
+        if (rootRef?.ResolvedObject?.Load() is not CUE4Parse.UE4.Assets.Exports.UObject rootComp)
+            return null;
+        // The template's own relative transform is discarded by Unreal — the
+        // child actor is spawned at the component's transform — so only the
+        // mesh reference is taken from here.
+        return rootComp.GetOrDefault<FPackageIndex?>("StaticMesh", null)?.ResolvedObject?.GetPathName();
+    }
+
     static int DumpBlueprint(DefaultFileProvider provider, string bpPath)
     {
         var pkg = provider.LoadPackage(bpPath);
         var one = new FVector(1f, 1f, 1f);
         var components = new List<object>();
 
-        var nodeParentMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        // A Blueprint's component hierarchy lives in the SimpleConstructionScript,
+        // NOT on the component templates: SCS templates are never AttachParent-ed
+        // to each other, so reading AttachParent alone flattens every nested
+        // component to the root and its parent's offset/rotation is lost. Walk
+        // USCS_Node.ChildNodes to recover the real tree.
+        var templateToVar = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var parentByVar = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        var scsNodes = pkg.GetExports()
+            .Where(e => e.ExportType != null && e.ExportType.Contains("SCS_Node", StringComparison.Ordinal))
+            .ToList();
+
+        static string? TemplateName(CUE4Parse.UE4.Assets.Exports.UObject node) =>
+            node.GetOrDefault<FPackageIndex?>("ComponentTemplate", null)?.ResolvedObject?.Name.Text;
+
+        foreach (var node in scsNodes)
+        {
+            var templateName = TemplateName(node);
+            if (string.IsNullOrEmpty(templateName)) continue;
+            var varName = node.GetOrDefault<FName?>("InternalVariableName", null)?.Text;
+            templateToVar[templateName] = string.IsNullOrEmpty(varName) || varName == "None"
+                ? ScsVariableName(templateName)
+                : varName;
+        }
+
+        // Must agree with the emitted component names below, so route through
+        // the same template -> variable map (a renamed variable keeps its old
+        // "_GEN_VARIABLE" template name).
+        string? TemplateVar(CUE4Parse.UE4.Assets.Exports.UObject node)
+        {
+            var templateName = TemplateName(node);
+            if (string.IsNullOrEmpty(templateName)) return null;
+            return templateToVar.TryGetValue(templateName, out var v) ? v : ScsVariableName(templateName);
+        }
+
+        foreach (var node in scsNodes)
+        {
+            var myVar = TemplateVar(node);
+            if (myVar == null) continue;
+
+            foreach (var childRef in node.GetOrDefault<FPackageIndex[]?>("ChildNodes", null) ?? Array.Empty<FPackageIndex>())
+            {
+                if (childRef?.ResolvedObject?.Load() is not CUE4Parse.UE4.Assets.Exports.UObject childNode) continue;
+                var childVar = TemplateVar(childNode);
+                if (childVar != null && !childVar.Equals(myVar, StringComparison.OrdinalIgnoreCase))
+                    parentByVar[childVar] = myVar;
+            }
+        }
+
+        // Root SCS nodes record their parent (a native or inherited component,
+        // e.g. DefaultSceneRoot) by name instead of appearing in any ChildNodes.
+        foreach (var node in scsNodes)
+        {
+            var myVar = TemplateVar(node);
+            if (myVar == null || parentByVar.ContainsKey(myVar)) continue;
+            var parentName = node.GetOrDefault<FName?>("ParentComponentOrVariableName", null)?.Text;
+            if (!string.IsNullOrEmpty(parentName) && parentName != "None" &&
+                !parentName.Equals(myVar, StringComparison.OrdinalIgnoreCase))
+                parentByVar[myVar] = parentName;
+        }
+
+        // Emitted names must be unique — the package can hold both an SCS template
+        // and an inherited subobject that normalize to the same variable name; the
+        // SCS template carries the authored transform, so it wins.
+        var byName = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        var fromScs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // Components living inside a ChildActorTemplate belong to the spawned
+        // actor, not to this Blueprint — the ChildActorComponent already stands
+        // in for them, so emitting them too would duplicate every mesh under a
+        // second, transform-less name.
+        var childActorTemplateNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var export in pkg.GetExports())
         {
-            if (export.ExportType != null && export.ExportType.Contains("SCS_Node", StringComparison.Ordinal))
-            {
-                var templateRef = export.GetOrDefault<FPackageIndex?>("ComponentTemplate", null);
-                string? templateName = templateRef?.ResolvedObject?.Name.Text;
-                var parentName = export.GetOrDefault<FName?>("AttachVariableName", null)?.Text
-                    ?? export.GetOrDefault<FName?>("ParentComponentOrVariableName", null)?.Text;
-
-                if (!string.IsNullOrEmpty(templateName) && !string.IsNullOrEmpty(parentName) && parentName != "None")
-                {
-                    nodeParentMap[templateName] = parentName;
-                }
-            }
+            if (export.ExportType?.Contains("ChildActorComponent", StringComparison.Ordinal) != true) continue;
+            var template = ChildActorTemplate(export);
+            if (template != null) childActorTemplateNames.Add(template.Name);
         }
 
         foreach (var export in pkg.GetExports())
@@ -400,32 +518,39 @@ static class Program
             var cls = export.ExportType;
             if (cls == null) continue;
 
-            bool isStaticMesh = cls.Contains("StaticMeshComponent", StringComparison.Ordinal);
-            bool isScene = cls.Contains("SceneComponent", StringComparison.Ordinal);
-
-            if (!isStaticMesh && !isScene)
+            // Anything that can hold a transform is kept, even without a mesh:
+            // dropping an empty scene/spline/arrow node orphans its children and
+            // loses the offset it was carrying for them.
+            bool isScsTemplate = templateToVar.ContainsKey(export.Name);
+            if (!isScsTemplate && !cls.EndsWith("Component", StringComparison.Ordinal))
                 continue;
+
+            var ownerName = export.Outer?.Name.Text;
+            if (!string.IsNullOrEmpty(ownerName) && childActorTemplateNames.Contains(ownerName))
+                continue;
+
+            string name = templateToVar.TryGetValue(export.Name, out var mappedVar)
+                ? mappedVar
+                : ScsVariableName(export.Name);
+
+            if (byName.ContainsKey(name) && (fromScs.Contains(name) || !isScsTemplate))
+                continue;
+            if (isScsTemplate) fromScs.Add(name);
 
             var meshRef = export.GetOrDefault<FPackageIndex?>("StaticMesh", null);
-            string? mesh = meshRef?.ResolvedObject?.GetPathName();
-
-            if (isStaticMesh && mesh == null)
-                continue;
+            string? mesh = meshRef?.ResolvedObject?.GetPathName() ?? ChildActorMesh(export);
 
             var loc = export.GetOrDefault("RelativeLocation", new FVector(0f, 0f, 0f));
             var rot = export.GetOrDefault("RelativeRotation", new FRotator(0f, 0f, 0f));
             var scale = export.GetOrDefault("RelativeScale3D", one);
 
-            var attachParentRef = export.GetOrDefault<FPackageIndex?>("AttachParent", null);
-            string? parent = attachParentRef?.ResolvedObject?.Name.Text;
-
-            string name = export.Name;
-            if (string.IsNullOrEmpty(parent) && nodeParentMap.TryGetValue(name, out var scsParent))
+            if (!parentByVar.TryGetValue(name, out string? parent))
             {
-                parent = scsParent;
+                var attachParentName = export.GetOrDefault<FPackageIndex?>("AttachParent", null)?.ResolvedObject?.Name.Text;
+                parent = string.IsNullOrEmpty(attachParentName) ? null : ScsVariableName(attachParentName);
             }
 
-            components.Add(new
+            byName[name] = new
             {
                 name,
                 componentType = cls,
@@ -434,9 +559,10 @@ static class Program
                 location = new { x = loc.X, y = loc.Y, z = loc.Z },
                 rotation = new { pitch = rot.Pitch, yaw = rot.Yaw, roll = rot.Roll },
                 scale = new { x = scale.X, y = scale.Y, z = scale.Z },
-            });
+            };
         }
 
+        components.AddRange(byName.Values);
         var result = new { blueprint = bpPath, count = components.Count, components };
         Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
         return 0;
