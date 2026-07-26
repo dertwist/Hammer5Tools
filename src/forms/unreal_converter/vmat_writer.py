@@ -8,6 +8,8 @@ def write_vmat(
     roughness_scale: float = 1.0,
     metalness_scale: float = 1.0,
     extra_params: dict = None,
+    alpha_test_ref: float = None,
+    render_backfaces: bool = False,
 ):
     """
     Writes a Source 2 .vmat file based on the provided texture slots and shader parameters.
@@ -18,7 +20,17 @@ def write_vmat(
         "metal": "materials/path/name_metal.tga" or None,
         "ao": "materials/path/name_ao.tga",
         "height": "materials/path/name_height.tga" or None,
+        "trans": "materials/path/name_trans.tga" or None,   # cutout mask
     }
+
+    Pass `alpha_test_ref` (e.g. 0.5, or ~0.33 for thick foliage cards) together with
+    a "trans" slot to emit the alpha-test block. Without it a cutout mesh - grass,
+    leaves, netting - renders as an opaque quad, which is what every foliage
+    material in a stock conversion does. `render_backfaces` is almost always wanted
+    alongside it, since cutout foliage is modelled as single-sided cards.
+
+    Get the mask from texture_utils.extract_alpha(); it declines to split a
+    channel that is a blend mask rather than a shape mask.
     """
     color_tint_str = (
         f"[{color_tint[0]:.6f} {color_tint[1]:.6f} {color_tint[2]:.6f} 0.000000]"
@@ -51,12 +63,29 @@ def write_vmat(
         for k, v in extra_params.items():
             extra_lines += f'\t{k} "{v}"\n'
 
+    # Feature flags sit directly under the shader line; their scalar companions go
+    # at the bottom. This is the layout Hammer's own material editor writes.
+    alpha_test = alpha_test_ref is not None and slots.get("trans")
+    flag_lines = ""
+    if alpha_test:
+        flag_lines += "\n\t//---- Translucent ----\n\tF_ALPHA_TEST 1\n"
+    if render_backfaces:
+        flag_lines += "\n\t//---- Faces ----\n\tF_RENDER_BACKFACES 1\n"
+
+    trans_line = f'\tTextureTranslucency1 "{slots["trans"]}"\n' if alpha_test else ""
+    alpha_tail = (
+        f'\n\t//---- Translucent ----\n'
+        f'\tg_flAlphaTestReference "{alpha_test_ref:.3f}"\n'
+        f'\tg_flAntiAliasedEdgeStrength "1.000"\n'
+        if alpha_test else ""
+    )
+
     content = f"""// THIS FILE IS AUTO-GENERATED
 
 Layer0
 {{
 \tshader "{shader}"
-
+{flag_lines}
 \t//---- Color ----
 \tg_flModelTintAmount "1.000"
 \tg_nScaleTexCoordUByModelScaleAxis "0" // None
@@ -75,11 +104,11 @@ Layer0
 \tg_vTexCoordOffset1 "[0.000 0.000]"
 \tg_vTexCoordScale1 "[1.000 1.000]"
 {ao_line}{color_line}{height_line}{metal_line}{normal_line}{rough_line}\tTextureTintMask1 "materials/default/default_mask.tga"
-{extra_lines}
+{trans_line}{extra_lines}
 \t//---- Texture Address Mode ----
 \tg_nTextureAddressModeU "0" // Wrap
 \tg_nTextureAddressModeV "0" // Wrap
-}}
+{alpha_tail}}}
 """
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:

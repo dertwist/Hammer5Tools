@@ -66,6 +66,43 @@ def unpack_orh(orh_path: str, output_dir: str, base_name: str):
         print(f"Error unpacking ORH: {e}")
         return None
 
+def extract_alpha(color_path: str, out_path: str, mid_band=(32, 223), max_mid=0.10, min_off=0.02):
+    """
+    Splits the alpha channel of an RGBA colour map out into its own 8-bit TGA,
+    for use as csgo_environment's TextureTranslucency slot.
+
+    Only does so when the alpha reads as a *cutout* mask. UE packs two different
+    things into that channel: a shape mask (bimodal - a pixel is on or off, this
+    is what alpha-test wants) and a blend/detail mask (a gradient, used to drive
+    a layer blend). Running alpha-test off a blend mask punches holes in solid
+    geometry, so a channel with more than `max_mid` of its pixels sitting in the
+    middle of the range is rejected, as is one with nothing meaningfully cut out.
+
+    Returns the written path, or None if the channel isn't a cutout mask.
+    """
+    try:
+        img = Image.open(color_path)
+        if img.mode != "RGBA":
+            return None
+        alpha = img.getchannel("A")
+        lo, hi = alpha.getextrema()
+        if lo == hi:
+            return None                       # constant - nothing to extract
+
+        hist = alpha.histogram()
+        total = sum(hist)
+        off = sum(hist[:mid_band[0]]) / total
+        mid = sum(hist[mid_band[0]:mid_band[1] + 1]) / total
+        if mid > max_mid or off < min_off:
+            return None                       # blend/detail mask, not a shape
+
+        alpha.save(out_path)
+        return out_path
+    except Exception as e:
+        print(f"Error extracting alpha from {color_path}: {e}")
+        return None
+
+
 def convert_to_tga(input_path: str, output_dir: str, new_suffix: str):
     """
     Converts a PNG to TGA with a new suffix.
