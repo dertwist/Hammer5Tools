@@ -40,7 +40,6 @@ class PropertyVariableOutput(QWidget):
         self.ui.logic_switch.deleteLater()
 
 
-        # Variable
         self.variable = ComboboxVariablesWidget(
             variables_layout=self.variables_scrollArea, 
             variable_type=variable_type, 

@@ -32,7 +32,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         self.ui.open_button.clicked.connect(self.open_preset)
         self.ui.save_button.clicked.connect(self.save_preset)
 
-    #==============================================================<  Explorer  >===========================================================
+    # Explorer
         self.mini_explorer = Explorer(
             tree_directory=self.tree_directory, 
             addon=get_addon_name(), 
@@ -48,7 +48,7 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         if hasattr(self.mini_explorer, 'root_selector'):
             self.ui.horizontalLayout_2.insertWidget(0, self.mini_explorer.root_selector)
 
-    #=======================================================<  Preset Manager Actions  >====================================================
+    # Preset Manager Actions
     def explorer_status(self):
         """Displays current opened preset"""
         __filepath = self.opened_file
@@ -106,9 +106,9 @@ class SoundEventEditorPresetManagerWindow(QMainWindow):
         with open(__filepath, 'w') as file:
             file.write(__data)
         print(f'Saved file: {__filepath}')
-    #=======================================================<  Properties Window  >=====================================================
+    # Properties Window
 
-    #======================================[Window State]========================================
+    # [Window State]
     def _restore_user_prefs(self):
         """Restore window state"""
         geo = self.settings.value("SoundEventEditorPresetManagerWindow/geometry")

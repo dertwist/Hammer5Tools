@@ -352,7 +352,7 @@ class PropertyFrame(QWidget):
             self.value = {'m_bEnabled': True}
             self.value.update(value)
 
-            #===========================================================<  Element ID  >========================================================
+            # Element ID
             self.element_id_generator.update_value(self.value)
             self.element_id = self.element_id_generator.get_key(self.value)
             debug(f'Property frame get_ElementID: {self.element_id}')

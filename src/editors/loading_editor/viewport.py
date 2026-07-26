@@ -745,7 +745,6 @@ class Viewport(QMainWindow):
         if event.button() == Qt.RightButton:
             self.panning = False
             QApplication.restoreOverrideCursor()
-            # Save camera position after panning
             self.saveCameraPosition()
     
     def saveCameraPosition(self):

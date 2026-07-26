@@ -433,7 +433,7 @@ class ThumbnailService(QObject):
         if len(self._memory) > self.MAX_MEMORY_CACHE:
             self._memory.popitem(last=False)
 
-    # ------------------------------------------------------------------ API
+    # API
 
     def request(self, entry) -> Optional[QPixmap]:
         """Return a thumbnail now if one exists, otherwise queue it and return None.
@@ -490,7 +490,7 @@ class ThumbnailService(QObject):
         self._failed.clear()
         clear_cache()
 
-    # -------------------------------------------------------------- internals
+    # internals
 
     @Slot(str, object)
     def _on_mesh_loaded(self, resource_path: str, mesh):
@@ -681,7 +681,7 @@ class ThumbnailService(QObject):
 # that is the frame the viewport works in (it converts to GL only at draw time).
 # Treating those verts as glTF Y-up lays every model on its side, so the swap has
 # to happen here too:
-#     GL_X =  S2_X      GL_Y =  S2_Z      GL_Z = -S2_Y
+# GL_X =  S2_X      GL_Y =  S2_Z      GL_Z = -S2_Y
 # Unlike camera.SOURCE2_TO_GL this is written in intuitive row-major form, not
 # pre-transposed, because the uniform uploads in this module pass GL_TRUE and let
 # GL do the transpose. Copying that matrix verbatim would flip Z-up to -Y.

@@ -125,6 +125,6 @@ class Ui_MainWindow(object):
 #endif // QT_CONFIG(tooltip)
         self.actionFormat_serttings.setText(QCoreApplication.translate("MainWindow", u"Format serttings", None))
         self.placeholder_label.setText(QCoreApplication.translate("MainWindow", u"Open or create a new file", None))
-        self.ExplorerDock.setWindowTitle(QCoreApplication.translate("MainWindow", u"", None))
+        self.ExplorerDock.setWindowTitle("")
     # retranslateUi
 

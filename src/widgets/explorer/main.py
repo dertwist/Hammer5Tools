@@ -529,7 +529,6 @@ class Explorer(QMainWindow):
         open_folder_action.triggered.connect(lambda: self.open_folder_in_explorer(index))
         menu.addAction(open_folder_action)
 
-        # --- Create ---
         menu.addSection("Create")
         new_folder_action = QAction("New Folder", self)
         new_folder_action.setIcon(QIcon(":/icons/create_new_folder_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
@@ -541,14 +540,12 @@ class Explorer(QMainWindow):
         quick_batch_action.triggered.connect(lambda: QuickCreateDialog(folder_path, "hbat", self).exec_())
         menu.addAction(quick_batch_action)
 
-        # --- Process ---
         menu.addSection("Process")
         quick_process_action = QAction("Quick Process AssetGroup folder", self)
         quick_process_action.setIcon(QIcon(":/icons/auto_towing_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         quick_process_action.triggered.connect(lambda: (run_compile(os.path.join(folder_path, "*.vmdl")), run_compile(os.path.join(folder_path, "*.vmat"))))
         menu.addAction(quick_process_action)
 
-        # --- Organize ---
         menu.addSection("Organize")
         paste_action = QAction("Paste File", self)
         paste_action.setIcon(QIcon(":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
@@ -581,7 +578,7 @@ class Explorer(QMainWindow):
         file_extension = file_path.split('.')[-1].lower()
         image_extensions = ["png", "tga", "jpg", "jpeg", "tif", "tiff"]
 
-        # --- Open ---
+        # Open
         menu.addSection("Open")
         if file_extension == "hbat":
             open_config_action = QAction("Open AssetGroup Config", self)
@@ -676,7 +673,6 @@ class Explorer(QMainWindow):
             )
             menu.addAction(convert_action)
 
-        # --- Organize ---
         menu.addSection("Organize")
         asset_manager_action = QAction("Move Assets", self)
         asset_manager_action.setIcon(QIcon(":/icons/folder_open.svg"))
@@ -713,7 +709,7 @@ class Explorer(QMainWindow):
         delete_action.triggered.connect(lambda: self.delete_item(index))
         menu.addAction(delete_action)
 
-        # --- Paths ---
+        # Paths
         menu.addSection("Path")
         copy_relative_path_action = QAction("Copy Relative Path", self)
         copy_relative_path_action.setIcon(QIcon(":/icons/attachment.png"))
@@ -1009,9 +1005,7 @@ class Explorer(QMainWindow):
         if input_path:
             self.select_tree_item(input_path)
 
-    # ------------------------------------------------------------------
     # Inline recent-files / favorites panel
-    # ------------------------------------------------------------------
 
     def _build_panel(self):
         """Create the floating overlay popup widget matching program stylesheet."""
@@ -1047,7 +1041,6 @@ class Explorer(QMainWindow):
         header.addWidget(close_btn)
         vbox.addLayout(header)
 
-        # Filter
         self._panel_filter = QLineEdit(frame)
         self._panel_filter.setPlaceholderText("Filter...")
         self._panel_filter.setStyleSheet(
@@ -1063,7 +1056,6 @@ class Explorer(QMainWindow):
         self._panel_filter.textChanged.connect(self._filter_panel_items)
         vbox.addWidget(self._panel_filter)
 
-        # List
         self._panel_list = QListWidget(frame)
         self._panel_list.setStyleSheet(
             "QListWidget {"

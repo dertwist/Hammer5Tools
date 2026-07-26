@@ -48,9 +48,7 @@ from typing import List, Sequence, Tuple
 Vec3 = Tuple[float, float, float]
 Mat3 = List[List[float]]
 
-# ---------------------------------------------------------------------------
 # Unit scale presets (multiply UE units to get Source units)
-# ---------------------------------------------------------------------------
 
 class UnitScale:
     ONE_TO_ONE = 1.0          # keep unit count (default for content migration)
@@ -65,9 +63,7 @@ _C: Mat3 = [
 ]
 
 
-# ---------------------------------------------------------------------------
 # Small matrix / vector helpers (column-vector convention: v' = M @ v)
-# ---------------------------------------------------------------------------
 
 def _matmul(a: Mat3, b: Mat3) -> Mat3:
     return [
@@ -84,9 +80,7 @@ def _matvec(m: Mat3, v: Sequence[float]) -> Vec3:
     )
 
 
-# ---------------------------------------------------------------------------
 # Unreal FRotator -> rotation matrix (column-vector convention)
-# ---------------------------------------------------------------------------
 
 def ue_rotation_matrix(pitch: float, yaw: float, roll: float) -> Mat3:
     """
@@ -115,9 +109,7 @@ def ue_rotation_matrix(pitch: float, yaw: float, roll: float) -> Mat3:
     ]
 
 
-# ---------------------------------------------------------------------------
 # Source rotation matrix -> QAngle (Source engine MatrixAngles)
-# ---------------------------------------------------------------------------
 
 def source_matrix_angles(m: Mat3) -> Vec3:
     """
@@ -142,9 +134,7 @@ def source_matrix_angles(m: Mat3) -> Vec3:
     return (pitch, yaw, roll)
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 def convert_position(pos_ue: Sequence[float], scale: float = UnitScale.ONE_TO_ONE) -> Vec3:
     """UE location (X, Y, Z) -> Source position, with unit scaling."""

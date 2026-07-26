@@ -38,10 +38,8 @@ class PropertyFrame(QWidget):
             self.setMinimumHeight(72)
             self.setMaximumHeight(72)
 
-            # Populate
             self.populate_properties(data=_data)
 
-            # Init
             self.init_connections()
             self.init_header()
 
@@ -60,7 +58,7 @@ class PropertyFrame(QWidget):
         """Setup for header frame"""
         self.ui.property_class.setText(convert_snake_case(self.name))
 
-    #=============================================================<  Properties  >===========================================================
+    # Properties
 
     def add_property(self, name: str, value:str):
         """
@@ -106,7 +104,7 @@ class PropertyFrame(QWidget):
     def deserialize_property(self, _data: dict = None):
         """Deserialize property from json"""
 
-    #==============================================================<  Actions  >============================================================
+    # Actions
 
     def copy_action(self):
         """Copy action"""
@@ -132,7 +130,7 @@ class PropertyFrame(QWidget):
         else:
             self.ui.content.setMaximumHeight(16666)
 
-    #===========================================================<  Drag and drop  >=========================================================
+    # Drag and drop
 
     mousePressEvent = PropertyMethods.mousePressEvent
     mouseMoveEvent = PropertyMethods.mouseMoveEvent

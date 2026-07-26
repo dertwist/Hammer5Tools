@@ -260,7 +260,6 @@ class Camera:
 
     def screen_to_ray(self, sx, sy, viewport_w, viewport_h):
         """Convert screen coordinates to a world-space ray (origin, direction)."""
-        # NDC
         ndc_x = (2.0 * sx / viewport_w) - 1.0
         ndc_y = 1.0 - (2.0 * sy / viewport_h)
 

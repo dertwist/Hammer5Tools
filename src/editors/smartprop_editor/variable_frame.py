@@ -74,7 +74,6 @@ class VariableFrame(PropertyMethods, QWidget):
 
         self.ui.change_class.clicked.connect(self.call_class_select_menu)
 
-        # Initialize variable instance based on var_class
         self._initialize_var_instance(var_class)
 
         # Connect the edited signal directly to the dedicated instance slot
@@ -95,14 +94,12 @@ class VariableFrame(PropertyMethods, QWidget):
 
 
 
-        #Setup Expression editor
         self.expression_editor = ExpressionEditor(self.hide_expression_input, self.widget_list)
         self.ui.hide_expression_frame.layout().addWidget(self.expression_editor)
 
         #Expression text field
         self.ui.hide_expression_frame.layout().addWidget(self.hide_expression_input)
 
-        # Setup the Read Only Expression input
         self.read_only_expression_input = CompletingPlainTextEdit()
         self.read_only_expression_input.completion_tail = ''
         self.read_only_expression_input.setPlaceholderText("Read only expression (e.g., variable_name == true)")
@@ -127,7 +124,6 @@ class VariableFrame(PropertyMethods, QWidget):
         self.read_only_label.setFixedWidth(80)
         self.read_only_layout.addWidget(self.read_only_label)
 
-        # Expression editor for Read Only
         self.read_only_expression_editor = ExpressionEditor(self.read_only_expression_input, self.widget_list)
         self.read_only_layout.addWidget(self.read_only_expression_editor)
         self.read_only_layout.addWidget(self.read_only_expression_input)
@@ -599,7 +595,6 @@ class CategoryFrame(VariableFrame):
             self.var_display_name = self._format_display_name(self.category_name)
             # DO NOT change self.name (m_VariableName)
 
-            # Sync with end widget if found
             self._sync_with_end_widget()
 
         self.content_changed.emit()

@@ -77,7 +77,6 @@ class PropertyVariableValue(QWidget):
             self.m_Value = None
             self.variables_scrollArea = variables_scrollArea
 
-            # Float widget setup
             self.float_widget = FloatWidget(slider_range=[0,0], int_output=False, spacer_enable=False)
             self.float_widget.edited.connect(self.on_changed)
             self.ui.layout_3.addWidget(self.float_widget)
@@ -86,7 +85,6 @@ class PropertyVariableValue(QWidget):
             self.ui.property_class_4.setStyleSheet(f"color: rgb{STRING_COLOR};")
             self.ui.property_class.setStyleSheet(f"color: rgb{STRING_COLOR};")
 
-            # Bool widget setup
             self.bool_widget = BoolWidget(spacer_enable=False)
             self.bool_widget.edited.connect(self.on_changed)
             self.bool_widget.checkbox.setStyleSheet('border:None; font: 580 9pt "Segoe UI";')
@@ -99,7 +97,6 @@ class PropertyVariableValue(QWidget):
             self.expression_editor = ExpressionEditor(self.text_line, self.variables_scrollArea)
             self.text_line.setPlaceholderText('Variable name, float or expression')
             
-            # Vector widget setup
             self.vector_widget = Vector3DInlineWidget(spacer_enable=False)
             self.vector_widget.edited.connect(self.on_changed)
             self.ui.layout_3.addWidget(self.vector_widget)
@@ -154,7 +151,6 @@ class PropertyVariableValue(QWidget):
             self.variable.combobox.changed.connect(self.on_changed)
             self.ui.layout_2.addWidget(self.variable_frame)
 
-            # Initialize value
             self.initialize_values(value)
 
             # Initial state update - do not emit signal during initialization

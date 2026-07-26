@@ -194,11 +194,9 @@ class TimelineTreeWidget(QTreeWidget):
         self.export_format = "GIF"
         self.export_quality = "High"
 
-        # Enable context menu
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
         
-        # Connect item selection
         self.itemClicked.connect(self.on_item_clicked)
         
         # Thread pool for thumbnail generation
@@ -275,7 +273,6 @@ class TimelineTreeWidget(QTreeWidget):
         if not output_dir:
             return
 
-        # Create progress dialog
         progress_dialog = QProgressDialog("Exporting animation...", "Cancel", 0, 100, self)
         progress_dialog.setWindowModality(Qt.WindowModal)
         progress_dialog.show()
@@ -287,7 +284,6 @@ class TimelineTreeWidget(QTreeWidget):
         worker.signals.finished.connect(lambda path: self.on_export_finished(progress_dialog, path))
         worker.signals.error.connect(lambda error: self.on_export_error(progress_dialog, error))
 
-        # Connect cancel button
         progress_dialog.canceled.connect(lambda: self.thread_pool.clear())
 
         # Start export
@@ -381,7 +377,6 @@ class TimelineTreeWidget(QTreeWidget):
                 image_item.image_path = image_path
                 image_item.timestamp = timestamp
                 
-                # Schedule thumbnail loading
                 self.schedule_thumbnail_load(image_item, image_path)
         
         debug(f"Loaded timeline data: {len(camera_data)} cameras")
@@ -495,7 +490,6 @@ class TimelineExplorer(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # Create timeline tree widget
         self.timeline_tree = TimelineTreeWidget()
         self.timeline_tree.image_selected.connect(self.image_selected.emit)
         

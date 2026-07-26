@@ -10,9 +10,7 @@ equivalent and must be rebuilt by hand. The lists below drive:
 
 import re
 
-# ---------------------------------------------------------------------------
 # File-type categories (drive the General-tab enable checkboxes + the tabs)
-# ---------------------------------------------------------------------------
 
 FILE_TYPES = ["Scenes", "Models", "Materials", "Blueprints", "Textures"]
 
@@ -33,9 +31,7 @@ FILE_TYPE_DESCRIPTIONS = {
 }
 
 
-# ---------------------------------------------------------------------------
 # Things that CANNOT be converted automatically -> warn the user up front
-# ---------------------------------------------------------------------------
 
 class Unsupported:
     """A category of Unreal content the converter cannot translate."""

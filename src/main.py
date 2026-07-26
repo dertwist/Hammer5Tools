@@ -24,11 +24,9 @@ if sys.platform == 'win32':
     except Exception as e:
         print(f"Error configuring PySide6 DLL paths: {e}")
 
-# ==========================================================================================
 # VELOPACK / SQUIRREL HOOKS
 # This MUST run before any other imports (especially Qt) to prevent the GUI from opening
 # during installation, uninstallation, or updates.
-# ==========================================================================================
 def _handle_velopack_hook(argv):
     # Check if any argument contains 'velopack' or 'squirrel'
     # This is a broad check to catch any technical calls from the installer.
@@ -126,7 +124,6 @@ if __name__ == "__main__":
     # 1. Handle installer hooks IMMEDIATELY (no Qt loaded yet)
     _handle_velopack_hook(sys.argv)
 
-    # 2. Parse arguments
     parser = argparse.ArgumentParser(description="Hammer 5 Tools Application")
     parser.add_argument('--dev', action='store_true', help='Enable development mode')
     parser.add_argument('--console', action='store_true', help='Enable console output')
@@ -197,10 +194,8 @@ if __name__ == "__main__":
     widget = Widget(dev_mode=args.dev)
     widget.show()
     
-    # Start IPC server
     instance_server = start_instance_server(widget)
 
-    # Handle initial arguments
     def handle_initial_args():
         if args.create_vmdl:
             widget.open_quick_create_dialog(os.path.abspath(args.create_vmdl), "vmdl")

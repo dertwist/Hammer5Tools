@@ -61,7 +61,6 @@ def scan_vmap_for_props(vmap_path: str) -> List[Dict[str, Any]]:
     entities = []
     
     try:
-        # Load map file
         dmx_model = Datamodel.Load(vmap_path, DeferredMode.Automatic)
         root = dmx_model.Root
         if root is None or not root.ContainsKey("world") or root["world"] is None:
@@ -243,7 +242,6 @@ def convert_vmap_props_to_vsmart(
 
     dmx_model = None
     try:
-        # 1. Load the map
         dmx_model = Datamodel.Load(vmap_path, DeferredMode.Automatic)
         root = dmx_model.Root
         world = root["world"]
@@ -480,7 +478,6 @@ def convert_vmap_props_to_vsmart(
         with open(output_vsmart_path, "w") as f:
             f.write(kv3_content)
 
-        # 6. Delete old entities from VMAP
         print(f"Deleting {len(selected_entities)} old entities from map...")
         for el, parent in selected_entities:
             if parent is not None:
@@ -508,7 +505,6 @@ def convert_vmap_props_to_vsmart(
         print("Creating replacement subclass_prop_smart entity...")
         new_entity = Element(dmx_model, "smartprop_group", None, "CMapEntity")
         
-        # Configure entity_properties
         ep = Element(dmx_model, "", None, "CMapEntityProperties")
         ep["classname"] = "subclass_prop_smart"
         ep["smartprop"] = rel_smartprop
@@ -518,7 +514,6 @@ def convert_vmap_props_to_vsmart(
         new_entity["angles"] = DM.QAngle(0.0, 0.0, 0.0)
         new_entity["scales"] = Vector3(1.0, 1.0, 1.0)
         
-        # Add to top-level world children
         world["children"].Add(new_entity)
         
         # 8. Save the VMAP to a temp file first to avoid read locks from Windows

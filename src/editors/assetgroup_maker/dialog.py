@@ -81,7 +81,6 @@ class BatchCreatorProcessDialog(QDialog):
         self.ui.process_button.clicked.connect(self.process_all_files)
         self.ui.paste_files_to_process_button.clicked.connect(self.paste_files_from_clipboard)
 
-        # Initially set context menu policy
         self.update_context_menu_policy(self.process_data.get('load_from_the_folder', False))
 
     def update_context_menu_policy(self, load_from_folder: bool) -> None:

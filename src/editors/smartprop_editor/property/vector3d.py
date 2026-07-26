@@ -45,7 +45,6 @@ class PropertyVector3D(QWidget, PooledPropertyMixin):
         self.ui.logic_switch.currentIndexChanged.connect(self.on_changed)
         filter_types = ['Float', 'Int']
 
-        # Variable
         self.variable_logic_switch = ComboboxVariablesWidget(
             variables_layout=self.variables_scrollArea,
             filter_types=['Vector3D'], variable_name=f"{self.value_class}",

@@ -231,7 +231,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
 
-        # Compile Shader Programs
         self._model_program = link_program(MODEL_VERTEX_SHADER, MODEL_FRAGMENT_SHADER)
         self._picking_program = link_program(PICKING_VERTEX_SHADER, PICKING_FRAGMENT_SHADER)
         self._grid_program = link_program(GRID_VERTEX_SHADER, GRID_FRAGMENT_SHADER)
@@ -317,7 +316,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # directly by the grid shader as infinite lines that fade with distance,
         # Blender-style.  The vertical Source Z (up) axis is intentionally omitted.
 
-        # Initialize Gizmo Geometry
         self.gizmo.init_geometry()
 
         # Initialize preview-widget geometry (locators / rotators / pickone).
@@ -383,7 +381,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glBindVertexArray(0)
         GL.glDepthMask(GL.GL_TRUE)
 
-        # 2. Render Models
         self._render_scene_models(view, proj, cam_pos, picking=False)
 
         # 2b. Selection outline overlay.  Composited here — after the models but
@@ -397,7 +394,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         if self.show_widgets and self._widget_infos:
             self._render_widgets(view, proj)
 
-        # 3. Render Gizmo
         self.gizmo.render(self._gizmo_program, view, proj, cam_pos)
 
         # 4. Draw 2D HUD/Overlay
@@ -618,7 +614,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     GL.glUseProgram(self._model_program)
                 continue
 
-            # Query GPU mesh
             gpu_mesh = self.mesh_cache.get_gpu_mesh(model_path)
 
             if use_pick:
@@ -630,7 +625,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     GL.glBindVertexArray(gpu_mesh.vao)
                     GL.glDrawElements(GL.GL_TRIANGLES, gpu_mesh.index_count, GL.GL_UNSIGNED_INT, None)
                 else:
-                    # Draw picking box placeholder
                     self._draw_box_geometry(model_matrix, is_picking=True)
             else:
                 is_selected = (eid == self._selected_id)
@@ -665,13 +659,11 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                     GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uView"), 1, GL.GL_FALSE, view)
                     GL.glUniformMatrix4fv(GL.glGetUniformLocation(self._wireframe_program, "uProjection"), 1, GL.GL_FALSE, proj)
 
-                    # Box color
                     box_color = np.array([0.0, 0.85, 0.85] if is_selected else [0.4, 0.6, 0.9], dtype=np.float32)
                     GL.glUniform3fv(GL.glGetUniformLocation(self._wireframe_program, "uColor"), 1, box_color)
 
                     self._draw_box_geometry(model_matrix, is_picking=False)
 
-                    # Restore model program
                     GL.glUseProgram(self._model_program)
 
         # Second pass: translucent submeshes.  Sorted far-to-near across objects,
@@ -720,9 +712,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             GL.glDrawArrays(GL.GL_LINES, 0, 24)
         GL.glBindVertexArray(0)
 
-    # ------------------------------------------------------------------
     # Material binding / submesh drawing
-    # ------------------------------------------------------------------
     _ALPHA_MODE_CODE = {"OPAQUE": 0, "MASK": 1, "BLEND": 2}
 
     def _bind_material(self, program, material, textured, force_opaque=False):
@@ -883,9 +873,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             self.elementClicked.emit(0)
             self.highlight_element(0)
 
-    # ------------------------------------------------------------------
     # Selection outline
-    # ------------------------------------------------------------------
     def _ensure_mask_fbo(self, w, h):
         """Create (or resize) the single-sample selection-mask framebuffer.
 
@@ -953,7 +941,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         fb_h = max(1, int(round(self.height() * dpr)))
         self._ensure_mask_fbo(fb_w, fb_h)
 
-        # ---- Pass 1: silhouette mask -----------------------------------------
+        # Pass 1: silhouette mask
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self._mask_fbo)
         GL.glViewport(0, 0, fb_w, fb_h)
         GL.glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -991,9 +979,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         GL.glDepthMask(GL.GL_TRUE)
         GL.glEnable(GL.GL_DEPTH_TEST)
 
-    # ------------------------------------------------------------------
     # Camera fitting
-    # ------------------------------------------------------------------
     def _compute_bounds(self, infos):
         """Return the GL-space AABB (min, max, has_bounds) enclosing ``infos``.
 
@@ -1173,9 +1159,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         self.gizmo.grid_step = self.grid_step
         self.gizmo.rotation_step = self.rotation_step
 
-    # ------------------------------------------------------------------
     # Mouse & Keyboard Event Handlers
-    # ------------------------------------------------------------------
     @gl_guard("event")
     def mousePressEvent(self, event: QMouseEvent):
         self.setFocus()
@@ -1225,7 +1209,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         dx = pos.x() - self._last_mouse_pos.x()
         dy = pos.y() - self._last_mouse_pos.y()
 
-        # Handle gizmo dragging
         if self.gizmo.is_dragging:
             w, h = self.width(), self.height()
             view = self.camera.view_matrix
@@ -1270,7 +1253,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                         M_parent_inv = np.eye(4, dtype=np.float32)
                     M_new_local = M_new_world @ M_parent_inv
 
-                    # 3. Decompose to get target local values
                     target_local_pos, target_local_rot, target_local_scale = decompose_trs(M_new_local)
 
                     # 4. Apply to modifiers.  Collect the property keys touched so
@@ -1385,9 +1367,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         else:
             super().keyPressEvent(event)
 
-    # ------------------------------------------------------------------
     # Gizmo axis availability
-    # ------------------------------------------------------------------
     # Element classes that carry a model (and therefore a model scale).
     _MODEL_LIKE_CLASSES = (
         "CSmartPropElement_Model",
@@ -1488,9 +1468,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             for i in range(3)
         }
 
-    # ------------------------------------------------------------------
     # Data modifier helpers
-    # ------------------------------------------------------------------
     @staticmethod
     def _find_modifier(data, class_name):
         """Return the first modifier dict of the given class, or None."""
@@ -1615,9 +1593,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
                 return False
         return False
 
-    # ------------------------------------------------------------------
     # Tree traversal (extracted from old viewport_3d.py)
-    # ------------------------------------------------------------------
     def _get_vector(self, val, default, component_default=0.0):
         """Resolve a vector value to three floats.
 
@@ -1685,9 +1661,7 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         return local_pos, local_rot, local_scale
 
-    # ------------------------------------------------------------------
     # SmartProp evaluation engine integration + preview widgets
-    # ------------------------------------------------------------------
     def _build_eval_context(self):
         """Construct an EvalContext from the document's variable defaults."""
         variables = {}
@@ -1996,7 +1970,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
         local_pos, local_rot, local_scale = self._get_local_transform(data)
 
-        # Build local matrix
         local_matrix = (
             scale_matrix(*local_scale)
             @ rotation_matrix_euler(*local_rot)
@@ -2006,7 +1979,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
         # Compose with parent
         world_matrix = local_matrix @ parent_world_matrix
 
-        # Decompose to world TRS
         world_pos, world_rot, world_scale = decompose_trs(world_matrix)
 
         element_class = data.get("_class", "")
@@ -2150,7 +2122,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             # Compose with parent
             world_matrix = local_matrix @ parent_world_matrix
 
-            # Decompose to world TRS
             world_pos, world_rot, world_scale = decompose_trs(world_matrix)
 
             element_class = data.get("_class", "")
@@ -2237,7 +2208,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
 
             local_pos, local_rot, local_scale = self._get_local_transform(data)
 
-            # Build local matrix
             local_matrix = (
                 scale_matrix(*local_scale)
                 @ rotation_matrix_euler(*local_rot)
@@ -2247,7 +2217,6 @@ class SmartProp3DRenderArea(QOpenGLWidget):
             # Compose with parent
             world_matrix = local_matrix @ parent_world_matrix
 
-            # Decompose to world TRS
             world_pos, world_rot, world_scale = decompose_trs(world_matrix)
 
             eid = data.get("m_nElementID", 0)

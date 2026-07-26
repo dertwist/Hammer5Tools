@@ -166,7 +166,7 @@ def _splice_prefix(src_path, out_path):
     return True
 
 
-# --- blocks ----------------------------------------------------------------
+# blocks
 
 def _keys(el):
     return set(str(k) for k in el.Keys)
@@ -331,7 +331,7 @@ class VmapDoc:
             self.dm = None
 
 
-# --- merge -----------------------------------------------------------------
+# merge
 
 class Conflict:
     """A block both sides changed differently. Resolve by picking OURS or THEIRS."""
@@ -359,7 +359,7 @@ class MergeResult:
         self.realigned = {}     # theirs id -> ours id, paired by content not GUID
         self._choices = {}
 
-    # -- resolution --------------------------------------------------------
+    # resolution
     def resolve(self, block_id, side):
         if side not in (OURS, THEIRS):
             raise ValueError("side must be OURS or THEIRS")
@@ -391,7 +391,7 @@ class MergeResult:
             if doc is not None:
                 doc.close()
 
-    # -- output ------------------------------------------------------------
+    # output
     def _alive(self):
         alive = {}
         for bid in set(self.ours.blocks) | set(self.theirs.blocks):
@@ -570,7 +570,7 @@ def merge(ours_path, theirs_path, base=None, allow_unrelated=False):
     return result
 
 
-# --- CLI -------------------------------------------------------------------
+# CLI
 
 def main(argv=None):
     import argparse

@@ -56,7 +56,7 @@ class _NumericLineEdit(QLineEdit):
         super().keyPressEvent(event)
 
 
-#============================================================<  Generic widgets  >==========================================================
+# Generic widgets
 class Spacer(QWidget):
     def __init__(self):
         """Spacer widget, can be hidden or shown"""
@@ -69,7 +69,7 @@ class Spacer(QWidget):
         self.setLayout(spacer_layout)
         self.setStyleSheet('border:None;')
         self.setContentsMargins(0,0,0,0)
-#============================================================<  Property widgets  >=========================================================
+# Property widgets
 
 class _UndoAwareSlider(QSlider):
     """QSlider subclass that emits a signal BEFORE valueChanged on mouse press.
@@ -318,7 +318,6 @@ class BoxSlider(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.setMinimumSize(self.min_width, self.min_height)
 
-        # Setup edit box
         self.edit_box = _NumericLineEdit(self)
         self.edit_box.hide()
         self.edit_box.setValidator(_make_double_validator(self.min_value, self.max_value, self.digits, self))
@@ -488,7 +487,6 @@ class LegacyWidget(QWidget):
         super().__init__()
         self.isdict = False
 
-        # Edit line initialization
         self.edit_line = QLineEdit()
         self.edit_line.textChanged.connect(self.on_editline_updated)
 
@@ -501,7 +499,6 @@ class LegacyWidget(QWidget):
             layout.addItem(spacer)
         self.setLayout(layout)
 
-        # Set initial value
         self.set_value(value)
 
     def on_editline_updated(self):
@@ -568,7 +565,7 @@ class BoolWidget(QWidget):
         self.checkbox.setText(str(value))
 
 
-#================================================================<  Combobox  >=============================================================
+# Combobox
 class ComboboxDynamicItems(QComboBox):
     clicked = Signal()
 
@@ -620,7 +617,7 @@ class ComboboxTreeChild(ComboboxDynamicItems):
 
         return data_out
 
-#==============================================================<  Tree widgets  >===========================================================
+# Tree widgets
 
 class HierarchyItemModel(QTreeWidgetItem):
     def __init__(self, _name="New Hierarchy Item", _data=None, _class=None, _id=None, parent=None, show_id:bool=True, icon=None):
@@ -806,7 +803,6 @@ class WidgetsShowcaseWindow(QMainWindow):
         self.float_test_3 = BoxSlider()
         main_layout.addWidget(self.float_test_3)
 
-        # Set the central widget
         self.setCentralWidget(main_widget)
 
 def main():

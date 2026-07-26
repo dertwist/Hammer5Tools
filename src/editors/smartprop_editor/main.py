@@ -81,7 +81,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         menubar.clear()
         menubar.setStyleSheet("QMenuBar { padding-top: 4px; padding-bottom: 4px; }")
 
-        # --- File Menu ---
         file_menu = menubar.addMenu("&File")
         file_menu.setStyleSheet("QMenu { padding-bottom: 6px; }")
 
@@ -133,7 +132,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.action_exit = file_menu.addAction("Exit")
         self.action_exit.triggered.connect(self.close)
 
-        # --- Edit Menu ---
         edit_menu = menubar.addMenu("&Edit")
 
         self.action_undo = edit_menu.addAction("Undo")
@@ -176,7 +174,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.action_group.setShortcut(QKeySequence("Ctrl+G"))
         self.action_group.triggered.connect(self.active_document_group)
 
-        # --- Element Menu ---
         element_menu = menubar.addMenu("&Element")
 
         self.action_add_element = element_menu.addAction("New Element...")
@@ -210,7 +207,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.action_load_vmap = element_menu.addAction("Load VMAP into Hierarchy...")
         self.action_load_vmap.triggered.connect(self.active_document_load_vmap)
 
-        # --- View Menu ---
         view_menu = menubar.addMenu("&View")
 
         self.action_isolate = view_menu.addAction("Isolate in 3D Viewport")
@@ -230,7 +226,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.action_reset_layout = view_menu.addAction("Reset Layout")
         self.action_reset_layout.triggered.connect(self.reset_layout_action)
 
-        # --- Tools Menu ---
         tools_menu = menubar.addMenu("&Tools")
 
         self.action_check_tools = tools_menu.addAction("Check VSmart Tooling Configuration")
@@ -260,7 +255,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         if hasattr(self, 'action_delete'): self.action_delete.setEnabled(has_doc)
         if hasattr(self, 'action_group'): self.action_group.setEnabled(has_doc)
 
-        # Element menu actions
         if hasattr(self, 'action_add_element'): self.action_add_element.setEnabled(has_doc)
         if hasattr(self, 'action_add_preset'): self.action_add_preset.setEnabled(has_doc)
         if hasattr(self, 'action_add_operator'): self.action_add_operator.setEnabled(has_doc)
@@ -502,7 +496,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         """
         if filename is None:
             if external:
-                # Open a file dialog to select the file
                 filename, _ = QFileDialog.getOpenFileName(
                     self,
                     "Open File",
@@ -517,7 +510,6 @@ class SmartPropEditorMainWindow(QMainWindow):
         if filename:
             norm_filename = os.path.abspath(filename)
             extension = os.path.splitext(norm_filename)[1].lower()
-            # Only .vsmart or .vdata
             if extension not in (".vsmart", ".vdata"):
                 warning_dialog = ErrorInfo(
                     text="Invalid File Format",

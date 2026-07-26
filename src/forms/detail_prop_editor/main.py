@@ -137,7 +137,6 @@ class DetailPropEditorWidget(QMainWindow):
         _save_sc = QShortcut(QKeySequence.Save, self)
         _save_sc.activated.connect(self.save)
 
-        # Context menu policy & event filter
         self.hierarchy.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.hierarchy.tree.customContextMenuRequested.connect(self.open_context_menu)
         self.hierarchy.tree.installEventFilter(self)
@@ -147,7 +146,7 @@ class DetailPropEditorWidget(QMainWindow):
 
         set_qdock_tab_style(self.findChildren)
 
-    # ------------------------------------------------------------------ UI --
+    # UI
 
     def _build_ui(self):
         central_widget = QWidget(self)
@@ -232,7 +231,7 @@ class DetailPropEditorWidget(QMainWindow):
         )
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._history_dock)
 
-    # ----------------------------------------------------------- shortcuts & events --
+    # shortcuts & events
 
     def eventFilter(self, source, event):
         if event.type() == QEvent.KeyPress:
@@ -248,21 +247,17 @@ class DetailPropEditorWidget(QMainWindow):
     def open_context_menu(self, position):
         menu = QMenu(self)
 
-        # Add Type
         add_type_action = menu.addAction("Add Detail Type")
         add_type_action.triggered.connect(self.add_type)
 
-        # Add Model
         add_model_action = menu.addAction("Add Model")
         add_model_action.triggered.connect(self.hierarchy.add_model)
 
         menu.addSeparator()
 
-        # Duplicate
         duplicate_action = menu.addAction("Duplicate")
         duplicate_action.triggered.connect(self.hierarchy.duplicate_current)
 
-        # Delete
         delete_action = menu.addAction("Delete")
         delete_action.triggered.connect(self.delete_selected)
 
@@ -275,7 +270,7 @@ class DetailPropEditorWidget(QMainWindow):
 
         menu.exec(self.hierarchy.tree.mapToGlobal(position))
 
-    # ---------------------------------------------------------------- data --
+    # data
 
     def _set_title(self, suffix: str = ""):
         """The file being edited lives in the title bar rather than a top row."""
@@ -334,7 +329,7 @@ class DetailPropEditorWidget(QMainWindow):
         if error:
             QMessageBox.information(self, "Cannot Delete", error)
 
-    # --------------------------------------------------- property rendering --
+    # property rendering
 
     def _clear_properties(self):
         while self.property_layout.count():
@@ -419,7 +414,7 @@ class DetailPropEditorWidget(QMainWindow):
                     row.browse_requested.connect(lambda r=row: self._browse_model(r))
                 self._add_row(row, item, key)
 
-    # -------------------------------------------------------------- browse --
+    # browse
 
     def _browse_model(self, row: ModelRow):
         # The browser already yields addon-relative resource paths, so no
@@ -429,7 +424,7 @@ class DetailPropEditorWidget(QMainWindow):
         if path:
             row.set_value(path)
 
-    # ---------------------------------------------------------------- save & close --
+    # save & close
 
     def save(self):
         if not self.vdata_path:

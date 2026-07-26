@@ -67,7 +67,6 @@ class PropertyString(QWidget, PooledPropertyMixin):
         self.text_line.completion_tail = ''
         self.expression_editor = ExpressionEditor(self.text_line, self.variables_scrollArea)
 
-        # Variable
         self.variable = ComboboxVariablesWidget(variables_layout=self.variables_scrollArea, filter_types=filter_types, variable_name=self.value_class, element_id_generator=element_id_generator)
         self.variable.setFixedWidth(256)
         self.variable.setMaximumHeight(24)
@@ -307,7 +306,6 @@ class PropertyString(QWidget, PooledPropertyMixin):
             output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
             self.ui.property_class.setText(output)
 
-            # Placeholder.
             if placeholder:
                 self.text_line.setPlaceholderText(placeholder)
             else:

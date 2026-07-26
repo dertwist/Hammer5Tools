@@ -58,7 +58,6 @@ class PropertyBase(QWidget):
         pass
 
 
-# --- Legacy Property ---
 class LegacyProperty(PropertyBase):
     def __init__(self, value_class, value, variables_scrollArea):
         super().__init__(value_class, value, variables_scrollArea)
@@ -93,7 +92,6 @@ class LegacyProperty(PropertyBase):
         self.value = {self.value_class: value}
 
 
-# --- PropertyFloat ---
 class PropertyFloat(PropertyBase):
     def __init__(self, value_class, value, variables_scrollArea, int_bool=False, slider_range=[0, 0]):
         super().__init__(value_class, value, variables_scrollArea)
@@ -204,7 +202,6 @@ class PropertyFloat(PropertyBase):
             self.value = {self.value_class: {'m_Expression': str(value)}}
 
 
-# --- PropertyString ---
 class PropertyString(PropertyBase):
     def __init__(self, value_class, value, variables_scrollArea, expression_bool=False, only_string=False,
                  placeholder=None, only_variable=False, force_variable=False, filter_types=None):
@@ -319,7 +316,6 @@ class PropertyString(PropertyBase):
             self.value = {self.value_class: {'m_Expression': str(self.text_line.toPlainText())}}
 
 
-# --- PropertyVector3D ---
 class PropertyVector3D(PropertyBase):
     edited = Signal()
     _pattern_phase1 = re.compile(r'm_fl|m_n|m_v|m_')
@@ -583,7 +579,6 @@ class PropertyVector3D(PropertyBase):
             self.value = {self.value_class: {'m_Components': [value_x, value_y, value_z]}}
 
 
-# --- PropertyComparison ---
 class PropertyComparison(PropertyBase):
     edited = Signal()
 
@@ -652,7 +647,6 @@ class PropertyComparison(PropertyBase):
                                          'm_Comparison': self.ui.comparison.currentText()}}
 
 
-# --- PropertyBool ---
 class PropertyBool(PropertyBase):
     edited = Signal()
 

@@ -419,13 +419,10 @@ class Loading_editorMainWindow(QMainWindow):
         self.timeline_view = TimelineExplorer(history_directory=self.content_history_path)
         self.timeline_view.setStyleSheet("padding:0")
         
-        # Connect timeline image selection to viewport
         self.timeline_view.image_selected.connect(self.on_timeline_image_selected)
         
-        # Add explorer view to the explorer tab
         self.ui.explorer.layout().addWidget(self.explorer_view)
         
-        # Add timeline view to the timeline tab
         self.ui.timeline_tab.layout().insertWidget(0, self.timeline_view)
         
         # Setup shared viewport
@@ -436,7 +433,6 @@ class Loading_editorMainWindow(QMainWindow):
         self.image_viewer = self.explorer_view.image_viewer
         self.image_viewer.set_preview_data_provider(self.get_loading_preview_data)
         
-        # Connect tab change signal
         self.ui.screenshots_tabwidget.currentChanged.connect(self.on_tab_changed)
 
         self.svg_preview_widget = SvgPreviewWidget()

@@ -108,7 +108,7 @@ class ConflictDialog(QDialog):
             self._mark_resolved(
                 path, "kept mine" if side == "--ours" else "kept theirs")
 
-    # ---- .vmap block merge ----------------------------------------------
+    # .vmap block merge
     def _merge_vmap(self, path):
         """Merge both sides of a conflicted map instead of discarding one.
 

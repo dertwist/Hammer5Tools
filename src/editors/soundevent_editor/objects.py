@@ -55,7 +55,6 @@ soundevent_editor_properties = [
     {'Restart Startpoint 02': {'restart_startpoint_02': 2.05}},
 
 
-    # Files
     {'Vsnd Files track 01': {'vsnd_files_track_01': []}},
     {'Vsnd Files': {'vsnd_files': 'sounds/music/survival_review_victory.vsnd'}},
 
@@ -128,7 +127,6 @@ soundevent_editor_properties = [
     {'Volume Convar': {'volume_convar': 'snd_surf_volume_slide'}},
     {'Mixlayer Name': {'mixlayer_name': 'VideoClipMixLayer'}},
 
-    # Curve
     {'Distance Volume Mapping Curve': {'distance_volume_mapping_curve': [[97.14286, 1.0, -0.001763, -0.001763, 2.0, 3.0], [2000.0, 0.0, -0.000526, -0.000526, 1.0, 1.0]]}},
     {'Fadetime Volume Mapping Curve': {'fadetime_volume_mapping_curve': [[0.0, 1.0, -1.223776, -1.223776, 2.0, 3.0], [0.691429, 0.0, 0.0, 0.0, 2.0, 3.0]]}},
     {'Distance Unfiltered Stereo Mapping Curve': {'distance_unfiltered_stereo_mapping_curve': [[0.0, 0.0, 0.0, 0.0, 2.0, 3.0], [300.0, 0.0, 0.0, 0.0, 2.0, 3.0]]}},

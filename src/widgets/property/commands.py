@@ -1,7 +1,7 @@
 from PySide6.QtGui import QUndoCommand
 
 
-# -------------------- Undo Command Classes --------------------
+# Undo Command Classes
 class DuplicateCommand(QUndoCommand):
     def __init__(self, window, frames_to_duplicate):
         super().__init__("Duplicate")

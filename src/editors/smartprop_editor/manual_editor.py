@@ -37,7 +37,6 @@ class Kv3SyntaxHighlighter(QSyntaxHighlighter):
         super().__init__(parent)
         self.highlighting_rules = []
 
-        # ── KV3 header ──
         header_fmt = QTextCharFormat()
         header_fmt.setForeground(QColor(109, 109, 109))  # #6D6D6D
         header_fmt.setFontItalic(True)
@@ -54,12 +53,10 @@ class Kv3SyntaxHighlighter(QSyntaxHighlighter):
         key_fmt.setForeground(QColor(156, 220, 254))   # #9CDCFE — light blue
         self.highlighting_rules.append((re.compile(r'\b(\w+)\s*='), key_fmt, 1))
 
-        # ── Strings ──
         string_fmt = QTextCharFormat()
         string_fmt.setForeground(QColor(206, 145, 120))  # #CE9178 — orange/brown
         self.highlighting_rules.append((re.compile(r'"[^"]*"'), string_fmt))
 
-        # ── Numbers ──
         number_fmt = QTextCharFormat()
         number_fmt.setForeground(QColor(181, 206, 168))  # #B5CEA8 — green
         self.highlighting_rules.append((re.compile(r'\b-?\d+(?:\.\d+)?\b'), number_fmt))
@@ -152,7 +149,6 @@ class Kv3CodeEditor(QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Line number gutter
         self.line_number_area = _LineNumberArea(self)
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
@@ -160,10 +156,8 @@ class Kv3CodeEditor(QPlainTextEdit):
         self.update_line_number_area_width(0)
         self.highlight_current_line()
 
-        # Syntax highlighter
         self.highlighter = Kv3SyntaxHighlighter(self.document())
 
-        # Completer
         from PySide6.QtWidgets import QCompleter
         self._completions_model = QStringListModel(self)
         self._completions_model.setStringList(_KV3_COMPLETIONS)
@@ -329,7 +323,6 @@ class _SearchReplaceBar(QFrame):
         layout.setContentsMargins(6, 4, 6, 4)
         layout.setSpacing(3)
 
-        # Search row
         search_row = QHBoxLayout()
         search_row.setSpacing(4)
         search_label = QLabel("Find:")
@@ -368,7 +361,6 @@ class _SearchReplaceBar(QFrame):
             search_row.addWidget(w)
         layout.addLayout(search_row)
 
-        # Replace row
         replace_row = QHBoxLayout()
         replace_row.setSpacing(4)
         replace_label = QLabel("Replace:")
@@ -517,12 +509,10 @@ class ManualEditor(QWidget):
         self._document = document
         self._current_focus = FOCUS_HIERARCHY
 
-        # ── Layout ────────────────────────────────────────────────────────
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # ── Toolbar ───────────────────────────────────────────────────────
         toolbar = QFrame()
         tb_layout = QHBoxLayout(toolbar)
         tb_layout.setContentsMargins(6, 3, 6, 3)
@@ -541,12 +531,10 @@ class ManualEditor(QWidget):
 
         tb_layout.addStretch()
 
-        # Refresh button
         self._refresh_btn = QPushButton("Refresh")
         self._refresh_btn.clicked.connect(self.refresh)
         tb_layout.addWidget(self._refresh_btn)
 
-        # Apply button
         self._apply_btn = QPushButton("Apply")
         self._apply_btn.clicked.connect(self._on_apply)
         tb_layout.addWidget(self._apply_btn)

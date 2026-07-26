@@ -155,7 +155,6 @@ class Gizmo:
         self._cube_vertex_count = 0
         self._initialized = False
 
-        # Coordinate Space & Snapping
         self.coordinate_space = "World"  # "World" | "Local" | "Screen"
         self.snapping_enabled = False
         self.grid_step = 8.0
@@ -433,7 +432,6 @@ class Gizmo:
                 GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._ring_vertex_count)
                 GL.glBindVertexArray(0)
             elif self.mode == GizmoMode.SCALE:
-                # Shaft
                 GL.glBindVertexArray(self._shaft_vao)
                 GL.glDrawArrays(GL.GL_TRIANGLES, 0, self._shaft_vertex_count)
                 GL.glBindVertexArray(0)
@@ -610,7 +608,6 @@ class Gizmo:
             s2_axis_dir = self.get_s2_axis_direction(self.active_axis)
             new_pos = self._drag_start_value + gl_delta_val * s2_axis_dir
 
-            # Snapping
             if self.snapping_enabled and self.grid_step > 0.0:
                 new_pos = np.array([round(val / self.grid_step) * self.grid_step for val in new_pos], dtype=np.float32)
 

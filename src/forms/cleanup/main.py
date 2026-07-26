@@ -342,7 +342,6 @@ class CleanupDialog(QDialog):
         instructions_label.setWordWrap(True)
         main_layout.addWidget(instructions_label)
 
-        # Checkbox option for mesh scanning
         self.scan_meshes_checkbox = QCheckBox("Scan source mesh files (.fbx, .dmx) for material references")
         self.scan_meshes_checkbox.setStyleSheet(qt_stylesheet_checkbox)
         self.scan_meshes_checkbox.setChecked(True)
@@ -372,7 +371,6 @@ class CleanupDialog(QDialog):
         filters_layout = QHBoxLayout(filters_frame)
         filters_layout.setSpacing(10)
 
-        # Search Label + Input
         search_label = QLabel("Search:")
         filters_layout.addWidget(search_label)
 
@@ -382,7 +380,6 @@ class CleanupDialog(QDialog):
         self.search_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         filters_layout.addWidget(self.search_box)
 
-        # File Type Label + ComboBox
         file_type_label = QLabel("File Type:")
         filters_layout.addSpacing(20)
         filters_layout.addWidget(file_type_label)
@@ -395,10 +392,8 @@ class CleanupDialog(QDialog):
         # Spacer to push everything to the left
         filters_layout.addStretch()
 
-        # Add to main layout
         main_layout.addWidget(filters_frame)
 
-        # Table view
         self.table_view = QTableView()
         self.table_view.setAlternatingRowColors(True)
         self.table_view.setSortingEnabled(True)
@@ -414,7 +409,6 @@ class CleanupDialog(QDialog):
         self.table_view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table_view.customContextMenuRequested.connect(self.show_context_menu)
 
-        # Stats
         stats_layout = QHBoxLayout()
         self.stats_label = QLabel()
         stats_layout.addWidget(self.stats_label)

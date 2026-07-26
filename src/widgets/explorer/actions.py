@@ -295,7 +295,6 @@ class QuickVsmart:
             'm_Variables': [],
             'm_Choices': []
         }
-        # Add editor info
         vsmart_content.update(fast_deepcopy(editor_info))
         if 'editor_info' in vsmart_content:
             vsmart_content['editor_info']['m_nElementID'] = element_id

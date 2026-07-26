@@ -12,9 +12,7 @@ import numpy as np
 from PySide6.QtCore import QObject, Signal, QRunnable, QThreadPool, Slot
 
 
-# ---------------------------------------------------------------------------
 # CPU-side mesh data (loaded from GLB, not yet on GPU)
-# ---------------------------------------------------------------------------
 
 @dataclass
 class MaterialData:
@@ -112,9 +110,7 @@ class GPUMesh:
         return any(sm.material.base_tex for sm in self.submeshes)
 
 
-# ---------------------------------------------------------------------------
 # glTF -> Source coordinate conversion
-# ---------------------------------------------------------------------------
 # VRF's GltfModelExporter writes geometry in glTF space: Y-up and in *metres*
 # (1 Source inch = 0.0254 m).  trimesh preserves that frame, and load_glb() bakes
 # the node transform into the vertices, so the loaded verts are Y-up metres.  The
@@ -145,9 +141,7 @@ _GLTF_TO_SOURCE_ROT = np.array([
 _GLTF_TO_SOURCE = _GLTF_TO_SOURCE_ROT / _VRF_GLTF_SCALE
 
 
-# ---------------------------------------------------------------------------
 # Material extraction helpers
-# ---------------------------------------------------------------------------
 
 # Preview textures are capped to this size.  Downscaling on the (background) load
 # thread bounds both VRAM and the per-texture CPU cost.
@@ -256,9 +250,7 @@ def _extract_material(geom, cache: dict, max_texture_dim: int = None,
     return md
 
 
-# ---------------------------------------------------------------------------
 # GLB loader (using trimesh)
-# ---------------------------------------------------------------------------
 
 def load_glb(path: str, max_texture_dim: int = None,
              base_color_only: bool = False) -> Optional[MeshData]:
@@ -385,9 +377,7 @@ def load_glb(path: str, max_texture_dim: int = None,
         return None
 
 
-# ---------------------------------------------------------------------------
 # Async load worker
-# ---------------------------------------------------------------------------
 
 class _ModelLoadSignals(QObject):
     # (model_resource_path, MeshData or None).  MeshData is a plain Python object
@@ -434,9 +424,7 @@ class _ModelLoadWorker(QRunnable):
         self.signals.loaded.emit(self.model_resource_path, mesh)
 
 
-# ---------------------------------------------------------------------------
 # Mesh Cache
-# ---------------------------------------------------------------------------
 
 class MeshCache(QObject):
     """

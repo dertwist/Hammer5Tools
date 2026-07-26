@@ -7,7 +7,6 @@ from PySide6.QtCore import Qt
 def main():
     app = QApplication(sys.argv)
 
-    # Create a main window
     main_window = QMainWindow()
 
 
@@ -32,7 +31,6 @@ def main():
     main_window.addDockWidget(Qt.RightDockWidgetArea, dock_widget)
     main_window.addDockWidget(Qt.LeftDockWidgetArea, dock_widgetd)
 
-    # Show the main window
     main_window.show()
 
     sys.exit(app.exec())

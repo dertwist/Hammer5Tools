@@ -12,7 +12,7 @@ except:
 from src.widgets import Button
 
 
-#===============================================================<  Properties >============================================================
+# Properties
 
 class PropertyBase(QWidget):
     edited = Signal()
@@ -84,7 +84,6 @@ class PropertyReplacement(PropertyBase):
         self.value_class = label_text
         self.objects = objects
 
-        # Init source line
         self.source_line = QPlainTextEdit()
         self.source_line.setMinimumWidth(64)
         self.layout().addWidget(self.source_line)

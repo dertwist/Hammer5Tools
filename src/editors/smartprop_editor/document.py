@@ -156,7 +156,6 @@ class SmartPropDocument(QMainWindow):
         self._choices_widget_debounce.setSingleShot(True)
         self._choices_widget_debounce.timeout.connect(self._push_choices_widget_edit)
 
-        #Viewports
         self.variable_viewport = SmartPropEditorVariableViewport(self)
         self.ui.VariableDockWidgetContent.layout().addWidget(self.variable_viewport)
 
@@ -191,7 +190,6 @@ class SmartPropDocument(QMainWindow):
         self.ui.tree_hierarchy_widget.itemDoubleClicked.connect(self._on_hierarchy_item_about_to_edit)
         self.ui.tree_hierarchy_widget.itemChanged.connect(self._on_hierarchy_item_changed)
 
-        # Content version
         self.content_version_spinbox = QSpinBox()
         self.content_version_label = QLabel("Content Version")
         self.content_version_layout = QHBoxLayout()
@@ -246,7 +244,6 @@ class SmartPropDocument(QMainWindow):
         self._property_dock.setFeatures(_dock_features)
         self._property_dock.setWidget(self.ui.PropertiesFrame)
 
-        # Manual Editor dock.
         self._manual_editor = ManualEditor(document=self)
         self._manual_dock = QDockWidget("Manual Editor", self)
         self._manual_dock.setObjectName("SPE_manual_dock")
@@ -276,7 +273,6 @@ class SmartPropDocument(QMainWindow):
         # Create the History dock (placed by the default-layout block below).
         self._setup_history_dock()
 
-        # ── Default layout ──────────────────────────────────────────────
         self._apply_default_layout()
 
         # ── Continuous layout persistence ───────────────────────────────
@@ -548,7 +544,7 @@ class SmartPropDocument(QMainWindow):
             # Prewarm must never prevent the editor from loading.
             pass
 
-    # ======================================[Properties groups]========================================
+    # [Properties groups]
     def properties_groups_init(self):
         self.modifiers_group_instance = PropertiesGroupFrame(
             widget_list=self.ui.properties_layout,
@@ -597,7 +593,7 @@ class SmartPropDocument(QMainWindow):
         frame.set_group_type(group_type)
         frame.selected_signal.connect(lambda f=frame: self._on_property_frame_selected(f))
 
-    # ======================================[Progressive modifier frames (large m_Modifiers)]========================================
+    # [Progressive modifier frames (large m_Modifiers)]
     def _modifier_batch_scroll_target(self):
         """Scroll area wrapping the modifiers group, or fallback to the group widget."""
         return self._modifiers_scroll_area or self.modifiers_group_instance
@@ -912,7 +908,7 @@ class SmartPropDocument(QMainWindow):
         else:
             self._submit_modifier_batch_worker(session, ordered)
 
-    # ======================================[Tree Hierarchy updating]========================================
+    # [Tree Hierarchy updating]
     def on_tree_current_item_changed(self, current_item, previous_item):
         # When a PropertySnapshotCommand undo/redo calls setCurrentItem to sync
         # the tree selection, we must not rebuild the panel here — the command
@@ -1095,7 +1091,6 @@ class SmartPropDocument(QMainWindow):
                     if value is not None:
                         modifiers.append(value)
 
-            # Collect selection criteria
             for i in range(self.selection_criteria_group_instance.layout.count()):
                 widget = self.selection_criteria_group_instance.layout.itemAt(i).widget()
                 if isinstance(widget, PropertyFrame):
@@ -1148,7 +1143,7 @@ class SmartPropDocument(QMainWindow):
                 cmd = PropertySnapshotCommand(self, item, old_data, new_data)
                 self.undo_stack.push(cmd)
 
-    # ======================================[Event Filter]========================================
+    # [Event Filter]
     def _schedule_layout_save(self, *args):
         """Debounced trigger to persist the dock layout after it changes."""
         timer = getattr(self, '_layout_save_timer', None)
@@ -1200,7 +1195,7 @@ class SmartPropDocument(QMainWindow):
                         return True
         return super().eventFilter(source, event)
 
-    # ======================================[Tree Widget Hierarchy New Element]========================================
+    # [Tree Widget Hierarchy New Element]
     def add_preset(self):
         from src.common import get_all_presets, SmartPropEditor_Internal_Preset_Path, SmartPropEditor_User_Preset_Path
         presets = get_all_presets(SmartPropEditor_Internal_Preset_Path, SmartPropEditor_User_Preset_Path)
@@ -1251,7 +1246,6 @@ class SmartPropDocument(QMainWindow):
             __data = file.read()
         __data = Kv3ToJson(self.fix_format(__data))
 
-        # Snapshot old state
         old_variables = self._snapshot_variables()
         old_choices = self._snapshot_choices()
 
@@ -1275,7 +1269,6 @@ class SmartPropDocument(QMainWindow):
         self._populate_choices(__data.get("m_Choices", None))
         self._populate_variables(__data.get("m_Variables"))
         
-        # Snapshot new state
         new_variables = self._snapshot_variables()
         new_choices = self._snapshot_choices()
 
@@ -1408,7 +1401,7 @@ class SmartPropDocument(QMainWindow):
         )
         self.ui.tree_hierarchy_widget.AddItem(new_element_item)
 
-    # ======================================[Properties operator]========================================
+    # [Properties operator]
     def new_operator(self, element_class, element_value):
         operator_instance = PropertyFrame(
             widget_list=self.modifiers_group_instance.layout,
@@ -1485,7 +1478,7 @@ class SmartPropDocument(QMainWindow):
             print("Clipboard data format is not valid.")
         self.update_tree_item_value()
 
-    # ======================================[Properties Selection Criteria]========================================
+    # [Properties Selection Criteria]
     def add_a_selection_criteria(self):
         elements_in_popupmenu = []
         exists_classes = []
@@ -1562,7 +1555,7 @@ class SmartPropDocument(QMainWindow):
             print("Clipboard data format is not valid.")
         self.update_tree_item_value()
 
-    # ======================================[Open File]========================================
+    # [Open File]
     @exception_handler
     def open_file(self, filename):
         # Suppress property snapshot commands while the file is being loaded.
@@ -1683,7 +1676,7 @@ class SmartPropDocument(QMainWindow):
             QTimer.singleShot(0, self._dec_property_undo_guard)
             QTimer.singleShot(0, self.undo_stack.clear)
 
-    # ======================================[Save File]========================================
+    # [Save File]
     def save_file(self, external=False):
         if external:
             if not self.opened_file:
@@ -1730,7 +1723,7 @@ class SmartPropDocument(QMainWindow):
             # Mark document as unmodified after saving
             self._modified = False
 
-    # ======================================[Choices Context Menu]========================================
+    # [Choices Context Menu]
     def open_MenuChoices(self, position):
         menu = QMenu()
         item = self.ui.choices_tree_widget.itemAt(position)
@@ -1796,7 +1789,7 @@ class SmartPropDocument(QMainWindow):
 
         menu.exec(self.ui.choices_tree_widget.viewport().mapToGlobal(position))
 
-    # ======================================[Variables Actions]========================================
+    # [Variables Actions]
     def add_variable(
             self,
             name,
@@ -1824,7 +1817,7 @@ class SmartPropDocument(QMainWindow):
     def add_new_variable(self):
         self.variable_viewport.add_new_variable()
 
-    # ======================================[Variables Other]========================================
+    # [Variables Other]
 
     def get_variables(self, layout, only_names=False):
         if only_names:
@@ -1852,7 +1845,7 @@ class SmartPropDocument(QMainWindow):
                     data_out.update(item_)
             return data_out
 
-    # ======================================[Tree widget hierarchy filter]========================================
+    # [Tree widget hierarchy filter]
     def search_hierarchy(self, filter_text, parent_item):
         self.filter_tree_item(parent_item, filter_text.lower(), True)
 
@@ -1933,7 +1926,7 @@ class SmartPropDocument(QMainWindow):
         dialog.accepted_data.connect(on_accept)
         dialog.exec()
 
-    # ======================================[Tree widget hierarchy context menu]========================================
+    # [Tree widget hierarchy context menu]
     def open_hierarchy_menu(self, position):
         menu = QMenu()
         add_new_action = menu.addAction("New element (Ctrl+F)")
@@ -2326,7 +2319,7 @@ class SmartPropDocument(QMainWindow):
             except:
                 pass
 
-    # ======================================[Tree widget functions]========================================
+    # [Tree widget functions]
     def new_item_with_replacement(self, data):
         instance = FindAndReplaceDialog(data=data)
         instance.accepted_output.connect(lambda text: self.paste_item(self.ui.tree_hierarchy_widget, data_input=text))
@@ -2426,7 +2419,7 @@ class SmartPropDocument(QMainWindow):
         self._modified = True
         self._edited.emit()
 
-    # ======================================[Window State]========================================
+    # [Window State]
     def _apply_default_layout(self):
         """Arrange the docks into the built-in factory layout.
 
@@ -2522,7 +2515,7 @@ class SmartPropDocument(QMainWindow):
         # Also save to the regular key so it's consistent
         self.settings.setValue("SmartPropEditorMainWindow/windowState_v3", self.saveState())
 
-    # ======================================[Properties Panel Undo]========================================
+    # [Properties Panel Undo]
     def _rebuild_properties_panel(self, item):
         """Rebuild the properties panel from the current tree-item data.
 
@@ -2881,7 +2874,7 @@ class SmartPropDocument(QMainWindow):
         self._incremental_property_update(item, data, changed_keys)
 
 
-    # ======================================[Variables Panel Undo]========================================
+    # [Variables Panel Undo]
     def _snapshot_variables(self):
         """Serialise all variable widgets to a list of dicts."""
         layout = self.variable_viewport.ui.variables_scrollArea
@@ -2942,7 +2935,7 @@ class SmartPropDocument(QMainWindow):
         self.variable_viewport._sync_committed_state()
         CompletionUtils.invalidate_cache(self.variable_viewport.ui.variables_scrollArea)
 
-    # ======================================[Choices Panel Undo]========================================
+    # [Choices Panel Undo]
     def _snapshot_choices(self):
         """Serialise the choices tree to a list of dicts."""
         tree = self.ui.choices_tree_widget
@@ -3200,14 +3193,14 @@ class SmartPropDocument(QMainWindow):
     def closeEvent(self, event):
         self._save_user_prefs()
 
-    # ======================================[Other]========================================
+    # [Other]
     def fix_format(self, file_content):
         pattern = re.compile(r"= resource_name:")
         modified_content = re.sub(pattern, "= ", file_content)
         modified_content = modified_content.replace("null,", "")
         return modified_content
 
-    # ======================================[Global Rename]========================================
+    # [Global Rename]
     def rename_variable_references(self, old_name, new_name):
         """Find and replace all references to old_name with new_name throughout the document."""
         import re
@@ -3222,10 +3215,8 @@ class SmartPropDocument(QMainWindow):
                 return {k: replace_in_val(v) for k, v in val.items()}
             return val
 
-        # 1. Hierarchy items
         self._rename_in_hierarchy_recursive(self.ui.tree_hierarchy_widget.invisibleRootItem(), replace_in_val)
 
-        # 2. Choices
         old_choices = self._snapshot_choices()
         new_choices_state = replace_in_val(old_choices)
         if new_choices_state != old_choices:
@@ -3250,7 +3241,6 @@ class SmartPropDocument(QMainWindow):
         if isinstance(old_data, dict):
             new_data = replace_fn(old_data)
             if new_data != old_data:
-                # Push command for this item
                 self.undo_stack.push(PropertySnapshotCommand(self, item, old_data, new_data))
                 # Apply the change
                 item.setData(0, Qt.UserRole, new_data)

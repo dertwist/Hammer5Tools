@@ -41,7 +41,7 @@ class PropertyViewport(QMainWindow):
         self.setCentralWidget(central)
         self.mainLayout = QVBoxLayout(central)
 
-        # ---------- scroll area ----------
+        # scroll area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         self.mainLayout.addWidget(scroll)
@@ -58,29 +58,29 @@ class PropertyViewport(QMainWindow):
         # Make scroll area fill available space
         self.mainLayout.setStretchFactor(scroll, 1)
 
-        # ---------- drag helpers ----------
+        # drag helpers
         self.dragged_frames: List[PropertyWidget] = []
         self.drag_image: DragImage | None = None
         self.drag_offset = QPoint()
         self.drag_snapshot: list = []
 
-        # ---------- drop indicator ----------
+        # drop indicator
         self.drop_indicator = QFrame()
         self.drop_indicator.setFixedHeight(self.DROP_HEIGHT)
         self.drop_indicator.setStyleSheet(
             f"background-color: {self.DROP_COLOR}; border: none;")
         self.drop_indicator.hide()
 
-        # ---------- cut / paste buffer ----------
+        # cut / paste buffer
         self.cut_buffer: List[PropertyWidget] = []
         self.copy_buffer: List[PropertyWidget] = []
-        # ---------- undo stack ----------
+        # undo stack
         if undo_stack is not None:
             self.undo_stack = undo_stack
         else:
             self.undo_stack = QUndoStack(self)
 
-        # ---------- frame data ----------
+        # frame data
         self.frames: List[PropertyWidget] = []
         for i in range(3):
             frame = PropertyWidget(PropertyViewport=self)
@@ -104,7 +104,7 @@ class PropertyViewport(QMainWindow):
         # Install mousePressEvent handler for deselection on empty space
         self.container.mousePressEvent = self.viewportContainerMousePressEvent
 
-    # ---------------------------------------------------- utilities
+    # utilities
     def addFrameSignals(self, frame: PropertyWidget):
         # context-menu actions
         frame.requestDuplicate.connect(self.duplicateFrame)
@@ -117,7 +117,7 @@ class PropertyViewport(QMainWindow):
         frame.requestDrag.connect(self.startDrag)
         frame.requestSelect.connect(self.handleSelect)
 
-    # ---------------------------------------------------- selection
+    # selection
     def handleSelect(self, frame, event):
         index = self.frames.index(frame)
         modifiers = event.modifiers()
@@ -152,10 +152,10 @@ class PropertyViewport(QMainWindow):
                 self.selected_frames = [frame]
             self.last_selected_index = index
 
-    # ---------------------------------------------------- frame operations
+    # frame operations
     # (Up/Down buttons removed – drag & drop now handles re-ordering)
 
-    # ---------- duplicate ----------
+    # duplicate
     def duplicateFrame(self, reference_frame: PropertyWidget):
         """
         Duplicate selected frames if any, otherwise duplicate the clicked one.
@@ -164,7 +164,7 @@ class PropertyViewport(QMainWindow):
         frames_to_duplicate = self.selected_frames or [reference_frame]
         self.undo_stack.push(DuplicateCommand(self, frames_to_duplicate))
 
-    # ---------- cut ----------
+    # cut
     def cutFrames(self, *_):
         """
         Remove currently selected frames from the list and keep them
@@ -174,7 +174,7 @@ class PropertyViewport(QMainWindow):
             return
         self.undo_stack.push(CutCommand(self, self.selected_frames))
 
-    # ---------- paste ----------
+    # paste
     def pasteFrames(self, target: PropertyWidget | None = None):
         """
         Insert previously cut frames after `target`. If target is None,
@@ -185,7 +185,7 @@ class PropertyViewport(QMainWindow):
         elif self.copy_buffer:
             self.undo_stack.push(PasteCommand(self, self.copy_buffer, target))
 
-    # ---------- remove ----------
+    # remove
     def removeFrames(self, *_):
         """
         Remove frames from the list. If multiple frames are selected,
@@ -204,7 +204,7 @@ class PropertyViewport(QMainWindow):
                 return
         self.undo_stack.push(RemoveCommand(self, frames_to_remove))
 
-    # ---------------------------------------------------- drag handling
+    # drag handling
     def startDrag(self, frame, event):
         # Determine which frames are dragged
         self.dragged_frames = self.selected_frames if frame.selected else [frame]
@@ -360,7 +360,7 @@ class PropertyViewport(QMainWindow):
         QWidget.mousePressEvent(self.container, event)
 
 
-# ---------------------------------------------------- run example
+# run example
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = PropertyViewport()

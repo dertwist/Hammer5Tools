@@ -208,7 +208,6 @@ class CS2Netcon:
             sock.settimeout(poll_interval)
             sock.connect((host, port))
 
-            # Send the command
             sock.sendall((command.strip() + "\n").encode('utf-8'))
             debug(f"[CS2Netcon] send_and_listen: sent '{command}' to {host}:{port}")
 

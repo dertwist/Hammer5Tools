@@ -94,7 +94,6 @@ property_tooltips = {
     "m_vUpDirection": "Vector specifying the up direction for alignment.",
     "m_UpDirectionSpace": "Defines the coordinate space for the up direction vector.",
     
-    # Operations
     "m_Material": "Target material file binding for tinting operations (.vmat).",
     "m_OutputVariable": "Maps operation results explicitly to a configured output Float variable.",
     "m_LocatorName": "Unique identifier string for the locator.",

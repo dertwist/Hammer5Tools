@@ -240,7 +240,6 @@ class WaveformWidget(QWidget):
         # Background (#1D1D1F)
         p.fillRect(self.rect(), QColor(29, 29, 31))
 
-        # Calculate progress ratio
         progress_ratio = 0.0
         if self._duration_ms > 0:
             progress_ratio = max(0.0, min(1.0, self._position_ms / float(self._duration_ms)))
@@ -292,7 +291,6 @@ class AudioPlayer(QWidget):
         self.ui = Ui_Form()
         self.ui.setupUi(self)
 
-        # Set background style to #1D1D1F
         self.setStyleSheet("QWidget { background-color: #1D1D1F; }")
         self.ui.content.setStyleSheet("QFrame#content { background-color: #1D1D1F; border: none; }")
 
@@ -350,7 +348,6 @@ class AudioPlayer(QWidget):
 
         self.ui.verticalLayout.addWidget(row2_widget)
 
-        # DB Info Overlay instance
         self.info_overlay = DBInfoOverlay(self)
         self.info_button.clicked.connect(self.toggle_info_overlay)
 

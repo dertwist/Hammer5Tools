@@ -40,10 +40,8 @@ class SoundEventEditorPropertyFrame(QWidget):
             self.widget_list = widget_list
             self._height = 24
 
-            # Populate
             self.populate_properties(data=_data)
 
-            # Init
             self.init_connections()
             self.init_header()
 
@@ -59,7 +57,7 @@ class SoundEventEditorPropertyFrame(QWidget):
         """Setup for header frame"""
         self.ui.property_class.setText(convert_snake_case(self.name))
 
-    #=============================================================<  Properties  >===========================================================
+    # Properties
 
     def add_property(self, name: str, value:str):
         """
@@ -270,7 +268,6 @@ class SoundEventEditorPropertyFrame(QWidget):
             bool_value = value == 'true' if isinstance(value, str) else bool(value)
             self.property_instance = SoundEventEditorPropertyBool(label_text=name, value=bool_value)
 
-        # Curve
         elif name == 'distance_volume_mapping_curve':
             self.property_instance = SoundEventEditorPropertyCurve(label_text=name, value=value, labels=["Distance", "Volume"])
         elif name == 'distance_unfiltered_stereo_mapping_curve':
@@ -359,7 +356,7 @@ class SoundEventEditorPropertyFrame(QWidget):
     def deserialize_property(self, _data: dict = None):
         """Deserialize property from json"""
 
-    #==============================================================<  Actions  >============================================================
+    # Actions
 
     def copy_action(self):
         """Copy action"""
@@ -390,7 +387,7 @@ class SoundEventEditorPropertyFrame(QWidget):
         """Forward the active element name to the inner property widget, if supported.
         """
 
-    #===========================================================<  Drag and drop  >=========================================================
+    # Drag and drop
 
     mousePressEvent = PropertyMethods.mousePressEvent
     mouseMoveEvent = PropertyMethods.mouseMoveEvent

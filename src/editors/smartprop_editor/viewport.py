@@ -18,7 +18,6 @@ class SmartPropViewport(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Placeholder label
         self.placeholder_label = QLabel("Select element to edit")
         self.placeholder_label.setAlignment(Qt.AlignCenter)
         self.placeholder_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -35,7 +34,6 @@ class SmartPropViewport(QWidget):
         self.spacer_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.scroll_area.setWidget(self.spacer_widget)
 
-        # Add widgets to main layout
         layout.addWidget(self.placeholder_label)
         layout.addWidget(self.scroll_area)
 

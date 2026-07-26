@@ -118,21 +118,18 @@ class ComboboxVariablesWidget(QWidget):
         self.combobox = ComboboxVariables(parent=self, layout=variables_layout, filter_types=filter_types)
         layout_widget.addWidget(self.combobox)
 
-        # Add new variable button.
         self.add_new_variable_button = Button()
         self.add_new_variable_button.set_icon_add()
         self.add_new_variable_button.set_size(width=24)
         self.add_new_variable_button.clicked.connect(self.add_new_variable_and_set)
         layout_widget.addWidget(self.add_new_variable_button)
 
-        # Search button.
         self.search_button = Button()
         self.search_button.set_icon_search()
         self.search_button.set_size(width=24)
         self.search_button.clicked.connect(self.call_search_popup_menu)
         layout_widget.addWidget(self.search_button)
 
-        # Set initial visibility of add button.
         self.update_add_button_visibility(self.combobox.currentText())
         self.combobox.currentTextChanged.connect(self.update_add_button_visibility)
 

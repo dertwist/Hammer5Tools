@@ -294,7 +294,6 @@ class MonitoringFileWatcher(QListWidget):
         # Watch the file for changes if not already watched.
         if path not in self.file_system_watcher.files():
             self.file_system_watcher.addPath(path)
-        # Initial reference update.
         self.update_reference(path)
 
     def remove_file_widget(self, path: str):

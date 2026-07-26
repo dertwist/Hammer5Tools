@@ -36,7 +36,6 @@ class DuplicateSoundEventsCommand(QUndoCommand):
         self.window = window
         self.tree = tree
         
-        # Accept a list of items
         raw_items = list(selected_items) if selected_items else []
         
         # Filter items: if a parent and its child are both selected, only duplicate the parent

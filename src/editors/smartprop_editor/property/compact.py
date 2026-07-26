@@ -32,14 +32,14 @@ def cs2_icon(name):
     return QIcon(os.path.join(_ICON_DIR, "cs2_%s.png" % name))
 
 
-# ---- geometry -------------------------------------------------------------
+# geometry
 ROW_H = 29          # compact row height (minimum) — 1.3x the base 22
 ROW_MAX = 57        # rows may grow to this (expression mode: button + text_line)
 FIELD_H = 23        # inner field height (comboboxes, text field, expr button)
 LABEL_W = 150       # fixed label column width -> the two-column grid
 LOGIC_W = 70        # width of the thin inline value-mode switch
 
-# ---- palette --------------------------------------------------------------
+# palette
 BG = "#1C1C1C"
 BG_ALT = "#232323"
 FG = "#E3E3E3"
@@ -56,7 +56,7 @@ VEC_XYZ = ("#ECA4A0", "#B6EFA2", "#A4B6EF")   # X / Y / Z  (red / green / blue)
 VEC_PYR = ("#ECA4A0", "#B6EFA2", "#A4B6EF")   # P / Y / R  (pitch / yaw / roll)
 
 
-# ---- stylesheets ----------------------------------------------------------
+# stylesheets
 def widget_qss(bg=BG):
     """Flat container: no padding, no border."""
     return (
@@ -165,7 +165,7 @@ def style_expr_button(btn):
         pass
 
 
-# ---- helpers --------------------------------------------------------------
+# helpers
 def style_logic_switch(combo):
     """Restyle the value-mode switch: very thin, flat, fixed narrow width."""
     combo.setStyleSheet(LOGIC_SWITCH_QSS)

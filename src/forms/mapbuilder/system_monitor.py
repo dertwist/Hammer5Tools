@@ -17,16 +17,13 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
 
-# -------------------------
 # Design System Colors (Hammer5Tools)
-# -------------------------
 class DesignColors:
     """Hammer5Tools design system color palette"""
     # Backgrounds
     BG_PRIMARY = "#1F2121"  # Charcoal-700
     BG_SURFACE = "#262828"  # Charcoal-800
 
-    # Text
     TEXT_PRIMARY = "#F5F5F5"  # Gray-200
     TEXT_SECONDARY = "#A7A9A9"  # Gray-300 (dimmed)
 
@@ -45,9 +42,7 @@ class DesignColors:
     CHART_TEXT = "#A7A9A9"
 
 
-# -------------------------
 # Helper: safe numeric parse
-# -------------------------
 def _safe_float(x, default=0.0):
     try:
         return float(x)
@@ -69,9 +64,7 @@ def _clamp_percent(v):
     return fv
 
 
-# -------------------------
 # Worker for GPU stats (runs in separate thread)
-# -------------------------
 class GPUStatsWorker(QObject):
     """Worker object for fetching GPU stats in a separate thread"""
     statsReady = Signal(object, object, object, object)  # usage, used_gb, total_gb, vendor
@@ -219,9 +212,7 @@ class GPUStatsWorker(QObject):
         self._running = False
 
 
-# -------------------------
 # History graph widget
-# -------------------------
 class HistoryGraph(QWidget):
     """Graph widget with design system styling"""
 
@@ -237,7 +228,6 @@ class HistoryGraph(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
-        # Title label
         self.label = QLabel(self.title)
         label_font = QFont()
         label_font.setPointSize(11)
@@ -300,16 +290,13 @@ class HistoryGraph(QWidget):
         self.ax.spines['bottom'].set_color(DesignColors.CHART_GRID)
         self.ax.set_facecolor(DesignColors.CHART_BG)
 
-        # Plot line with color
         self.ax.plot(list(self.values), color=self.color, linewidth=2, alpha=0.9)
         self.ax.fill_between(range(len(self.values)), list(self.values), alpha=0.15, color=self.color)
 
         self.canvas.draw_idle()
 
 
-# -------------------------
 # Main System Monitor Widget
-# -------------------------
 class SystemMonitor(QWidget):
     """System resource monitor with design system styling and threaded GPU queries"""
 
@@ -353,7 +340,6 @@ class SystemMonitor(QWidget):
         self.gpu_worker.statsReady.connect(self.handle_gpu_stats)
         self.gpu_thread.finished.connect(self.gpu_worker.deleteLater)
 
-        # Start the thread
         self.gpu_thread.start()
 
         # Timer for updates
@@ -401,9 +387,7 @@ class SystemMonitor(QWidget):
         event.accept()
 
 
-# -------------------------
 # Demo/Test
-# -------------------------
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = SystemMonitor()

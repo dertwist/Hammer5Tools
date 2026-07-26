@@ -41,7 +41,7 @@ class EvalContext:
     def _build_lower(d):
         return {k.lower(): v for k, v in d.items() if isinstance(k, str)}
 
-    # -- variable lookup ---------------------------------------------------
+    # variable lookup
     def var(self, name):
         if not isinstance(name, str):
             return None
@@ -59,7 +59,7 @@ class EvalContext:
         if isinstance(name, str):
             self._lower_overrides[name.lower()] = value
 
-    # -- scalar ------------------------------------------------------------
+    # scalar
     def resolve_scalar(self, value, default=0.0):
         """Resolve any scalar value form to a float."""
         if value is None:
@@ -104,7 +104,7 @@ class EvalContext:
         except (ValueError, TypeError):
             return evaluate_expression(str(v), self, default)
 
-    # -- string ------------------------------------------------------------
+    # string
     def resolve_string(self, value, default=""):
         """Resolve any string value form to a plain string.
 
@@ -145,7 +145,7 @@ class EvalContext:
             return v
         return str(v)
 
-    # -- vector ------------------------------------------------------------
+    # vector
     def resolve_vector(self, value, default=None):
         """Resolve any vector value form to ``[x, y, z]`` floats."""
         d = list(default) if default is not None else [0.0, 0.0, 0.0]

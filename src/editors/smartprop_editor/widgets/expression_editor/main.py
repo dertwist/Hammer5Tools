@@ -28,7 +28,6 @@ class ExpressionSyntaxHighlighter(QSyntaxHighlighter):
         int_color = QColor(255, 215, 0)  # Gold for int
         default_var_color = QColor(156, 220, 254)  # Light blue for other variables
 
-        # Keywords
         keyword_format = QTextCharFormat()
         keyword_format.setForeground(keyword_color)
         keyword_format.setFontWeight(QFont.Bold)
@@ -36,7 +35,6 @@ class ExpressionSyntaxHighlighter(QSyntaxHighlighter):
         for keyword in keywords:
             self.highlighting_rules.append((re.compile(f"\\b{keyword}\\b"), keyword_format))
 
-        # Operators
         operator_format = QTextCharFormat()
         operator_format.setForeground(operator_color)
         operator_format.setFontWeight(QFont.Bold)
@@ -44,12 +42,10 @@ class ExpressionSyntaxHighlighter(QSyntaxHighlighter):
         for op in operators:
             self.highlighting_rules.append((re.compile(op), operator_format))
 
-        # Numbers
         number_format = QTextCharFormat()
         number_format.setForeground(number_color)
         self.highlighting_rules.append((re.compile(r"\b\d+\.?\d*\b"), number_format))
 
-        # Functions
         function_format = QTextCharFormat()
         function_format.setForeground(function_color)
         self.highlighting_rules.append((re.compile(r"\b[a-zA-Z_][a-zA-Z0-9_]*(?=\()"), function_format))
@@ -185,7 +181,6 @@ class CodeEditor(CompletingPlainTextEdit):
             if block.isVisible() and (bottom >= event.rect().top()):
                 number = str(block_number + 1)
 
-                # Highlight current line number
                 if block_number == current_line:
                     # Highlight background for current line
                     highlight_rect = QRect(0, int(top), self.line_number_area.width() - 1, height)
@@ -276,7 +271,6 @@ class ExpressionEditor(QToolButton):
 
 
 
-        # Main layout
         main_layout = QVBoxLayout(dialog)
         main_layout.setContentsMargins(8, 8, 8, 8)
         main_layout.setSpacing(8)
@@ -350,7 +344,6 @@ class ExpressionEditor(QToolButton):
 
         left_layout.addWidget(variables_list)
 
-        # Functions/operators section
         functions_label = QLabel("Functions & Operators:")
         functions_label.setFont(QFont("Segoe UI", 9, QFont.Bold))
         functions_label.setStyleSheet(variables_label.styleSheet())
@@ -401,7 +394,6 @@ class ExpressionEditor(QToolButton):
         examples_list = QListWidget()
         examples_list.setStyleSheet(variables_list.styleSheet())
 
-        # Add example patterns
         example_patterns = [
             "(var == 1) ? 16 : 0",
             "(var >= 2 && var <= 3) ? 23 : 0",
@@ -422,7 +414,6 @@ class ExpressionEditor(QToolButton):
 
         splitter.addWidget(left_panel)
 
-        # Right panel - Editor
         right_panel = QFrame()
         right_panel.setStyleSheet("""
             QFrame {
@@ -479,7 +470,6 @@ class ExpressionEditor(QToolButton):
         
         splitter.addWidget(right_panel)
         
-        # Set splitter proportions
         splitter.setSizes([380, 920])
 
         # Button layout
@@ -521,7 +511,6 @@ class ExpressionEditor(QToolButton):
         save_btn.clicked.connect(save)
         cancel_btn.clicked.connect(cancel)
 
-        # Set focus to editor
         editor.setFocus()
 
         dialog.exec()

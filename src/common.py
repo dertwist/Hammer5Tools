@@ -45,7 +45,6 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
 
 from pathlib import Path
 
-# Versions
 app_version = '5.4.1'
 
 def get_channel() -> str:
@@ -56,7 +55,6 @@ def get_channel() -> str:
     read from line 2 of version.txt (next to the executable in frozen builds).
     """
     try:
-        # Local import: src.settings.common imports this module.
         from src.settings.common import get_settings_bool
         if get_settings_bool('APP', 'dev_channel', False):
             return 'dev'
@@ -88,7 +86,7 @@ def get_update_url() -> str:
         return 'https://github.com/dertwist/Hammer5Tools/releases/download/dev'
     return 'https://github.com/dertwist/Hammer5Tools'
 
-#=================================================================<  Title  >===============================================================
+# Title
 def enable_dark_title_bar(window):
     DWMWA_USE_IMMERSIVE_DARK_MODE = 20
     try:
@@ -103,7 +101,7 @@ def enable_dark_title_bar(window):
     except Exception as e:
         print(f"Failed to set dark mode title bar: {e}")
 
-#===============================================================<  Variables  >=============================================================
+# Variables
 
 editor_info = {
     'editor_info':
@@ -270,13 +268,13 @@ discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
 # other
 default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0 -netconport 2121"
 
-#------------<  QT functions  >----------
+# QT functions
 
 def set_qdock_tab_style(findChildren):
     for tab_bar in findChildren(QTabBar):
         tab_bar.setStyleSheet(qt_stylesheet_tabbar)
 
-#===========================================================<  generic functions  >=========================================================
+# generic functions
 def compile(input_file, fshallow=False, fshallow2=False, force=False, verbose=False):
     """Compiling a file through game resourcecompiler
 
@@ -343,7 +341,7 @@ discord_feedback_channel = "https://discord.gg/5yzvEQnazG"
 # other
 default_commands = " -addon " + 'addon_name' + ' -tool hammer' + ' -asset maps/' + 'addon_name' + '.vmap' + " -tools -steam -retail -gpuraytracing -noinsecru +install_dlc_workshoptools_cvar 1 +sv_steamauth_enforce 0 -netconport 2121"
 
-#------------<  QT functions  >----------
+# QT functions
 def set_qdock_tab_style(findChildren):
     for tab_bar in findChildren(QTabBar):
         tab_bar.setStyleSheet(qt_stylesheet_tabbar)
@@ -363,7 +361,7 @@ def convert_snake_case(name: str = None):
         pretty_label = ' '.join(word.capitalize() for word in words)
         return pretty_label
 
-#===============================================================<  Kv3 Format  >============================================================
+# Kv3 Format
 def Kv3ToJson(input):
     if '<!-- kv3 encoding:' in input:
         pass
@@ -387,7 +385,7 @@ def JsonToKv3(input, disable_line_value_length_limit_keys: list = None, format=N
     else:
         raise ValueError('[JsonToKv3] Invalid input type: Input should be a dictionary or list')
 
-#===============================================================<  Fast Copy  >=============================================================
+# Fast Copy
 import copy
 
 try:

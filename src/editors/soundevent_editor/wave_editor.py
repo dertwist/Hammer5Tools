@@ -296,7 +296,7 @@ class AudioDocument(QWidget):
         self._env = None
         self._env_dur = 0.0
 
-    # ---- UI ----
+    # UI
     def _make_actions(self):
         """Build every command as a QAction (icon + shortcut) so the File menu and
         the toolbar share one definition. WidgetWithChildrenShortcut scopes each
@@ -649,7 +649,6 @@ class AudioDocument(QWidget):
             [self.samples[:i0], self._clipboard, self.samples[i0:]], axis=0)
         self._refresh_plot()
 
-    # ---- markers ----
     def add_marker(self):
         if self.samples is not None:
             self._add_marker_at(self.playhead.value())
@@ -673,7 +672,7 @@ class AudioDocument(QWidget):
     def _marker_samples(self):
         return sorted(max(0, int(m.value() * self.sr)) for m in self._markers)
 
-    # ---- saving ----
+    # saving
     def save(self):
         if self.samples is None:
             return

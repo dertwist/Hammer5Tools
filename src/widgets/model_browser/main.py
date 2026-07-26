@@ -341,7 +341,7 @@ class ModelBrowserDialog(QDialog):
         self._build_ui()
         self._start_scan()
 
-    # ------------------------------------------------------------------ UI
+    # UI
 
     def _build_ui(self):
         root = QVBoxLayout(self)
@@ -478,7 +478,7 @@ class ModelBrowserDialog(QDialog):
 
         return row
 
-    # -------------------------------------------------------------- scanning
+    # scanning
 
     def _start_scan(self, use_cache: bool = True):
         from PySide6.QtCore import QThreadPool
@@ -505,7 +505,7 @@ class ModelBrowserDialog(QDialog):
 
         self._apply_filter()
 
-    # ------------------------------------------------------------- filtering
+    # filtering
 
     def _apply_filter(self, *_):
         needle = self.filter_edit.text().strip().lower()
@@ -592,7 +592,7 @@ class ModelBrowserDialog(QDialog):
             f"{len(self._visible)} of {len(self._entries)} Assets Visible")
         self._schedule_thumbnails()
 
-    # ------------------------------------------------------------ thumbnails
+    # thumbnails
 
     def _schedule_thumbnails(self, *_):
         self._thumb_timer.start()
@@ -700,7 +700,7 @@ class ModelBrowserDialog(QDialog):
         # dragging the slider never invalidates the cache.
         self._populate()
 
-    # -------------------------------------------------------------- selection
+    # selection
 
     def _on_view_mode_changed(self, grid_checked: bool):
         # Grid mode has no column header of its own — switching the stack is all
@@ -726,7 +726,7 @@ class ModelBrowserDialog(QDialog):
         item = self.list.currentItem()
         self._set_selected(item.data(0, _PATH_ROLE) if item else "")
 
-    # ------------------------------------------------------------------- API
+    # API
 
     def selected_path(self) -> str:
         return self._selected_path
