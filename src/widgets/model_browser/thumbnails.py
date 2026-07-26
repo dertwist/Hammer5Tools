@@ -29,6 +29,8 @@ from PySide6.QtOpenGL import QOpenGLFramebufferObject, QOpenGLFramebufferObjectF
 from src.editors.smartprop_editor.viewport_3d.mesh_cache import load_glb, MeshData
 
 
+from collections import OrderedDict
+
 THUMB_VERTEX_SHADER = """
 #version 330 core
 layout(location = 0) in vec3 a_position;
@@ -56,28 +58,65 @@ in vec2 v_uv;
 uniform sampler2D u_base_tex;
 uniform bool u_has_base_tex;
 uniform vec4 u_base_color;
+uniform vec3 u_view_dir;
 
 out vec4 frag_color;
 
+float pow2(float x) { return x * x; }
+vec3 pow2(vec3 x) { return x * x; }
+float saturate(float x) { return clamp(x, 0.0, 1.0); }
+vec3 saturate(vec3 x) { return clamp(x, 0.0, 1.0); }
+
+vec3 SrgbGammaToLinear(vec3 color)
+{
+    vec3 vLinearSegment = color / vec3(12.92);
+    vec3 vExpSegment = pow((color / vec3(1.055)) + vec3(0.0521327), vec3(2.4));
+
+    const float cap = 0.04045;
+    float select = color.r > cap ? vExpSegment.r : vLinearSegment.r;
+    float select1 = color.g > cap ? vExpSegment.g : vLinearSegment.g;
+    float select2 = color.b > cap ? vExpSegment.b : vLinearSegment.b;
+
+    return vec3(select, select1, select2);
+}
+
+vec3 SrgbLinearToGamma(vec3 vLinearColor)
+{
+    vec3 vLinearSegment = vLinearColor * 12.92;
+    vec3 vExpSegment = (1.055 * pow(vLinearColor, vec3(1.0 / 2.4))) - 0.055;
+
+    vec3 vGammaColor = vec3((vLinearColor.r <= 0.0031308) ? vLinearSegment.r : vExpSegment.r,
+                            (vLinearColor.g <= 0.0031308) ? vLinearSegment.g : vExpSegment.g,
+                            (vLinearColor.b <= 0.0031308) ? vLinearSegment.b : vExpSegment.b);
+    return vGammaColor;
+}
+
 void main() {
-    vec4 albedo = u_base_color;
+    vec4 base = u_base_color;
     if (u_has_base_tex) {
-        albedo *= texture(u_base_tex, v_uv);
+        vec4 tex = texture(u_base_tex, v_uv);
+        base.rgb *= SrgbGammaToLinear(tex.rgb);
+        base.a *= tex.a;
     }
-    if (albedo.a < 0.35) {
+    if (base.a < 0.35) {
         discard;
     }
 
-    // Three-quarter key light plus a hemisphere fill, matching the viewport's
-    // neutral studio feel closely enough that tiles read as the same scene.
-    vec3 normal = normalize(v_normal);
-    vec3 key_dir = normalize(vec3(-0.45, 0.75, 0.5));
-    float key = max(dot(normal, key_dir), 0.0);
-    float fill = 0.5 + 0.5 * normal.y;
+    vec3 norm = normalize(v_normal);
+    if (!gl_FrontFacing) norm = -norm;
+    vec3 viewDir = normalize(u_view_dir);
 
-    vec3 lit = albedo.rgb * (0.28 * fill + 0.85 * key);
-    lit = pow(lit, vec3(1.0 / 2.2));
-    frag_color = vec4(lit, 1.0);
+    // Fullbright shader calculation matched to SmartProp Editor 3D Viewport
+    float flFakeDiffuseLighting = saturate(dot(norm, viewDir)) * 0.7 + 0.3;
+
+    float XtraLight1 = dot(vec3(0.6, 1.0, 0.4), pow2(saturate(norm)));
+    float XtraLight2 = dot(vec3(0.6, 0.2, 0.4), pow2(saturate(-norm)));
+    float xtraLight = XtraLight1 + XtraLight2;
+
+    vec3 litLinear = xtraLight * base.rgb * flFakeDiffuseLighting;
+    vec3 litGamma = SrgbLinearToGamma(litLinear);
+
+    frag_color = vec4(litGamma, 1.0);
 }
 """
 
@@ -92,7 +131,7 @@ THUMB_SIZE = 128
 #: normal/MR/AO/emissive maps entirely and cap the base one. Dropping four of
 #: five maps is where the CPU saving comes from; this cap mainly bounds memory
 #: for models that ship 4K albedos.
-THUMB_TEXTURE_DIM = 512
+THUMB_TEXTURE_DIM = 2048
 
 
 def _worker_thread_count() -> int:
@@ -168,8 +207,9 @@ def load_vrf_mesh_direct(entry) -> Optional[MeshData]:
     # 1. Try loose filesystem file in game/csgo_addons/<addon> or game/csgo
     possible_fs_paths = []
     if getattr(entry, "fs_path", None):
-        possible_fs_paths.append(entry.fs_path)
-        if entry.fs_path.endswith(".vmdl"):
+        if entry.fs_path.endswith(".vmdl_c"):
+            possible_fs_paths.append(entry.fs_path)
+        elif entry.fs_path.endswith(".vmdl"):
             possible_fs_paths.append(entry.fs_path + "_c")
             possible_fs_paths.append(entry.fs_path.replace("/content/", "/game/") + "_c")
 
@@ -183,9 +223,11 @@ def load_vrf_mesh_direct(entry) -> Optional[MeshData]:
         if fs_path and os.path.isfile(fs_path):
             try:
                 with open(fs_path, "rb") as f:
-                    data_bytes = f.read()
-                if data_bytes:
-                    break
+                    header = f.read(16)
+                    if header and not (header.startswith(b'//') or header.startswith(b'<!--') or header.startswith(b'VKV3')):
+                        f.seek(0)
+                        data_bytes = f.read()
+                        break
             except Exception:
                 pass
 
@@ -209,10 +251,16 @@ def load_vrf_mesh_direct(entry) -> Optional[MeshData]:
         except Exception:
             pass
 
-    if data_bytes is None:
+    if not data_bytes or len(data_bytes) < 16:
+        return None
+
+    # Binary check: skip plain-text KeyValues3 files before passing to VRF
+    if data_bytes.startswith(b'//') or data_bytes.startswith(b'<!--') or data_bytes.startswith(b'VKV3'):
         return None
 
     # Parse .vmdl_c via VRF directly in memory
+    ms = None
+    res = None
     try:
         interop = DotNetInterop()
         Resource, _, _, _, _, _ = interop.setup_vrf()
@@ -301,8 +349,20 @@ def load_vrf_mesh_direct(entry) -> Optional[MeshData]:
             submeshes=[submesh]
         )
     except Exception as exc:
-        print(f"[model_browser] direct VRF mesh parse failed for {entry.path}: {exc}")
+        msg = str(exc).splitlines()[0] if str(exc) else "VRF read error"
+        print(f"[model_browser] direct VRF mesh parse skipped for {entry.path}: {msg}")
         return None
+    finally:
+        if ms is not None and hasattr(ms, "Dispose"):
+            try:
+                ms.Dispose()
+            except Exception:
+                pass
+        if res is not None and hasattr(res, "Dispose"):
+            try:
+                res.Dispose()
+            except Exception:
+                pass
 
 
 class _MeshLoadWorker(QRunnable):
@@ -317,15 +377,16 @@ class _MeshLoadWorker(QRunnable):
     def run(self):
         mesh = None
         try:
-            mesh = load_vrf_mesh_direct(self.entry)
+            from src.dotnet import decompile_model_to_glb
+            glb = decompile_model_to_glb(self.entry.path, context_addon=self.entry.mod)
+            if glb and os.path.isfile(glb):
+                mesh = load_glb(glb, max_texture_dim=THUMB_TEXTURE_DIM,
+                                base_color_only=True)
             if mesh is None:
-                from src.dotnet import decompile_model_to_glb
-                glb = decompile_model_to_glb(self.entry.path, context_addon=self.entry.mod)
-                if glb and os.path.isfile(glb):
-                    mesh = load_glb(glb, max_texture_dim=THUMB_TEXTURE_DIM,
-                                    base_color_only=True)
+                mesh = load_vrf_mesh_direct(self.entry)
         except Exception as exc:
-            print(f"[model_browser] thumbnail load failed for {self.entry.path}: {exc}")
+            msg = str(exc).splitlines()[0] if str(exc) else "Load error"
+            print(f"[model_browser] thumbnail load skipped for {self.entry.path}: {msg}")
         self.signals.loaded.emit(self.entry.path, mesh)
 
 
@@ -338,6 +399,7 @@ class ThumbnailService(QObject):
     #: Renders drained per timer tick. One keeps the dialog fully interactive
     #: while a large index bakes; the queue itself is what provides throughput.
     RENDERS_PER_TICK = 1
+    MAX_MEMORY_CACHE = 256
 
     def __init__(self, size: int = THUMB_SIZE, parent=None):
         super().__init__(parent)
@@ -354,7 +416,7 @@ class ThumbnailService(QObject):
         self._visible_paths: set = set()    # resource paths currently visible
         self._failed: set = set()           # resource paths that failed to load/render
         self._render_queue: list = []       # (resource_path, MeshData)
-        self._memory: Dict[str, QPixmap] = {}
+        self._memory: OrderedDict[str, QPixmap] = OrderedDict()
 
         self._surface = None
         self._context = None
@@ -364,6 +426,12 @@ class ThumbnailService(QObject):
         self._timer = QTimer(self)
         self._timer.setInterval(16)
         self._timer.timeout.connect(self._drain_render_queue)
+
+    def _store_memory_pixmap(self, resource_path: str, pixmap: QPixmap):
+        self._memory[resource_path] = pixmap
+        self._memory.move_to_end(resource_path)
+        if len(self._memory) > self.MAX_MEMORY_CACHE:
+            self._memory.popitem(last=False)
 
     # ------------------------------------------------------------------ API
 
@@ -376,13 +444,14 @@ class ThumbnailService(QObject):
 
         pixmap = self._memory.get(entry.path)
         if pixmap is not None:
+            self._memory.move_to_end(entry.path)
             return pixmap
 
         png = _cached_thumbnail(entry, self.size)
         if png:
             pixmap = QPixmap(png)
             if not pixmap.isNull():
-                self._memory[entry.path] = pixmap
+                self._store_memory_pixmap(entry.path, pixmap)
                 return pixmap
 
         if entry.path in self._failed:
@@ -403,6 +472,9 @@ class ThumbnailService(QObject):
 
     def is_pending(self, resource_path: str) -> bool:
         return resource_path in self._in_flight or any(p == resource_path for p, _ in self._render_queue)
+
+    def is_failed(self, resource_path: str) -> bool:
+        return resource_path in self._failed
 
     def has_pending(self) -> bool:
         return len(self._in_flight) > 0 or len(self._render_queue) > 0
@@ -450,7 +522,7 @@ class ThumbnailService(QObject):
                 continue
 
             pixmap = QPixmap.fromImage(image)
-            self._memory[resource_path] = pixmap
+            self._store_memory_pixmap(resource_path, pixmap)
 
             png = thumbnail_cache_path(resource_path, self.size)
             try:
@@ -537,6 +609,9 @@ class ThumbnailService(QObject):
             GL.glUniformMatrix3fv(
                 GL.glGetUniformLocation(self._program, "u_normal_matrix"),
                 1, GL.GL_TRUE, normal_matrix)
+            GL.glUniform3f(
+                GL.glGetUniformLocation(self._program, "u_view_dir"),
+                1.05, 0.85, 1.35)
 
             vao = GL.glGenVertexArrays(1)
             GL.glBindVertexArray(vao)

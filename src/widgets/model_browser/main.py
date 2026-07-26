@@ -251,9 +251,14 @@ def _vmdl_icon_pixmap(size: int, grayscaled: bool = False) -> QPixmap:
     return pixmap
 
 
+_PLACEHOLDER_CACHE = {}
+
+
 def _placeholder_pixmap(size: int) -> QPixmap:
-    """Fallback tile with a 3D model (.vmdl) icon shown when no thumbnail is available."""
-    return _vmdl_icon_pixmap(size, grayscaled=False)
+    """Fallback tile with a 3D model (.vmdl) icon shown when no thumbnail is available (cached)."""
+    if size not in _PLACEHOLDER_CACHE:
+        _PLACEHOLDER_CACHE[size] = _vmdl_icon_pixmap(size, grayscaled=False)
+    return _PLACEHOLDER_CACHE[size]
 
 
 def _loading_pixmap(size: int, angle: int = 0) -> QPixmap:
@@ -626,11 +631,14 @@ class ModelBrowserDialog(QDialog):
 
         has_pending = False
         loading_icon = _loading_pixmap(self._thumb_size, self._spinner_angle)
+        placeholder = _placeholder_pixmap(self._thumb_size)
 
         for item, entry in visible_items:
             pixmap = self.thumbnails.request(entry)
             if pixmap is not None:
                 item.setIcon(self._scaled(pixmap))
+            elif self.thumbnails.is_failed(entry.path):
+                item.setIcon(placeholder)
             else:
                 item.setIcon(loading_icon)
                 has_pending = True

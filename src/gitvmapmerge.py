@@ -73,9 +73,17 @@ _FIXED = {2: 4, 3: 4, 4: 1, 7: 4, 8: 4, 9: 8, 10: 12,
           11: 16, 12: 16, 13: 64, 14: 1, 15: 8, 16: 12}
 
 
-def _skip_value(buf, off, t):
+def _skip_value(buf, off, t, strings=None):
+    """Advance past one attribute value.
+
+    `strings` collects (start, end) of every string encountered, so callers can
+    rewrite them without reimplementing the walk.
+    """
     if t == _STRING:
-        return buf.index(b"\x00", off) + 1
+        end = buf.index(b"\x00", off)
+        if strings is not None:
+            strings.append((off, end))
+        return end + 1
     if t == _BLOB:
         return off + 4 + struct.unpack_from("<i", buf, off)[0]
     if t in _FIXED:
@@ -84,12 +92,12 @@ def _skip_value(buf, off, t):
         count = struct.unpack_from("<i", buf, off)[0]
         off += 4
         for _ in range(count):
-            off = _skip_value(buf, off, t - _ARRAY_BASE)
+            off = _skip_value(buf, off, t - _ARRAY_BASE, strings)
         return off
     raise ValueError("unsupported DMX attribute type %d" % t)
 
 
-def _prefix_end(buf):
+def _prefix_end(buf, strings=None):
     """Offset just past the header + prefix-attribute region, or None if unparsable."""
     try:
         off = buf.index(b"\x00") + 1
@@ -100,10 +108,47 @@ def _prefix_end(buf):
             off += 4
             for _ in range(count):
                 off = buf.index(b"\x00", off) + 1       # attribute name
-                off = _skip_value(buf, off + 1, buf[off])
+                off = _skip_value(buf, off + 1, buf[off], strings)
         return off
     except (ValueError, IndexError, struct.error):
         return None
+
+
+def rewrite_prefix_strings(buf, sub):
+    """Apply `sub(str) -> str` to every string in the prefix-attribute region.
+
+    Datamodel.NET does not expose this region's asset-reference cache as writable
+    attributes, so a rename applied through it leaves the cache pointing at the
+    old paths - Hammer then reports the moved assets as missing even though the
+    map body is correct. Strings here are null-terminated with no byte-length
+    fields anywhere in their enclosing structures, so substituting a different
+    length is safe; the rebuilt region is re-parsed before being returned, and
+    None comes back if that fails.
+    """
+    strings = []
+    end = _prefix_end(buf, strings)
+    if end is None:
+        return None
+
+    out, prev, changed = bytearray(), 0, 0
+    for start, stop in strings:
+        old = buf[start:stop]
+        try:
+            new = sub(old.decode("utf-8")).encode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        if new == old:
+            continue
+        out += buf[prev:start] + new
+        prev = stop
+        changed += 1
+    if not changed:
+        return buf
+    out += buf[prev:]
+
+    if _prefix_end(bytes(out)) is None:                 # rebuilt region must parse
+        return None
+    return bytes(out)
 
 
 def _splice_prefix(src_path, out_path):

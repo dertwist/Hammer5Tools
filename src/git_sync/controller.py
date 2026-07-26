@@ -481,9 +481,9 @@ class GitController:
             self._log(lines[-1])
 
     def _finish(self, proc, exit_code, on_done):
-        self._prog_timer.stop()
         if not isValid(proc):       # window closed mid-step; see _status_done
-            return
+            return                  # the timer died with it — nothing to stop
+        self._prog_timer.stop()
         proc.deleteLater()
         if self.proc is proc:
             self.proc = None

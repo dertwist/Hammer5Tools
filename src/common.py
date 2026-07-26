@@ -46,13 +46,23 @@ def generate_unique_name(base_name: str, existing_names: Set[str], separator: st
 from pathlib import Path
 
 # Versions
-app_version = '5.4.0'
+app_version = '5.4.1'
 
 def get_channel() -> str:
     """
-    Returns the build channel ('stable' or 'dev') by reading line 2 of version.txt.
-    In frozen builds, version.txt is next to the executable.
+    Returns the update channel ('stable' or 'dev').
+
+    Opting in via settings forces 'dev'; otherwise the channel is the build's own,
+    read from line 2 of version.txt (next to the executable in frozen builds).
     """
+    try:
+        # Local import: src.settings.common imports this module.
+        from src.settings.common import get_settings_bool
+        if get_settings_bool('APP', 'dev_channel', False):
+            return 'dev'
+    except Exception:
+        pass
+
     try:
         if getattr(sys, 'frozen', False):
             vtxt = Path(sys.executable).parent / 'version.txt'

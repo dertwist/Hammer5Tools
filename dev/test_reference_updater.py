@@ -1,18 +1,23 @@
 """Batch reference rewriting.
 
-Two things this guards, both found while reorganising a 250-prop UE5 port:
+Three things this guards, all found while reorganising a 250-prop UE5 port:
 
   * a per-file loop re-walked the whole addon and reloaded every map once per
     moved asset, so a realistic move never finished;
   * chained str.replace lets one rename's *output* be eaten by another rename's
-    input, silently producing paths that point nowhere.
+    input, silently producing paths that point nowhere;
+  * the DMX prefix block's asset-reference cache is not reachable through
+    Datamodel.NET's object model, so a rename left it pointing at the old paths
+    and Hammer reported every moved asset as missing.
 
-The vmap prefix-block case needs Datamodel.NET and is skipped where that isn't
-available; the text-file cases are pure Python and always run.
+The vmap cases need Datamodel.NET and a real map, and are skipped where either is
+unavailable; the text-file cases are pure Python and always run.
 """
+import collections
 import os
-import sys
+import re
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -123,27 +128,73 @@ class TestVmapRewrite(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    OLD = b"models/firewatchtower/meshes/antenna.vmdl"
-    NEW = b"models/firewatch/thirdparty/structures/tower/antenna.vmdl"
+    # Test paths come out of the fixture rather than being hardcoded: this map is a
+    # live file that gets reorganised, so a literal path goes stale and the test
+    # then passes vacuously against a map that no longer contains it.
+    MODEL = re.compile(rb"models/[a-z0-9_/\-]+\.vmdl")
 
-    def test_rewrites_model_paths_and_keeps_prefix_block(self):
+    def _pick(self, buf, prefix_end, region):
+        """A model path present in `region` ("prefix" or "body") of the fixture."""
+        chunk = buf[:prefix_end] if region == "prefix" else buf[prefix_end:]
+        counts = collections.Counter(self.MODEL.findall(chunk))
+        if not counts:
+            self.skipTest(f"fixture map has no model path in its {region}")
+        return counts.most_common(1)[0][0]
+
+    def test_rewrites_prefix_asset_cache(self):
+        """The prefix block's asset-reference cache must be repointed too.
+
+        Datamodel.NET exposes only part of that region as writable attributes, so
+        a rename applied through the object model left the cache holding the old
+        paths - Hammer then reported every moved asset as missing even though the
+        map body was correct. Measured on a real map mid-reorg: 217 of 218
+        surviving stale references were in here.
+        """
         from src.gitvmapmerge import _prefix_end
         with open(self.map, "rb") as f:
             before = f.read()
-        # assertTrue, not assertIn: a failed assertIn on a 500 KB blob dumps it
-        self.assertTrue(self.OLD in before, "fixture map no longer contains the test path")
-        prefix_before = _prefix_end(before)
+        pe = _prefix_end(before)
+        self.assertIsNotNone(pe, "fixture map prefix block does not parse")
+        old = self._pick(before, pe, "prefix")
+        new = b"models/zzz_test/renamed/thing.vmdl"
 
-        mod = self.u.update_references_batch({self.OLD.decode(): self.NEW.decode()})
+        self.u.update_references_batch({old.decode(): new.decode()})
+
+        with open(self.map, "rb") as f:
+            after = f.read()
+        pe2 = _prefix_end(after)
+        self.assertIsNotNone(pe2, "prefix block no longer parses after rewrite")
+        self.assertFalse(old in after[:pe2], "stale path survived in the asset cache")
+        self.assertTrue(new in after[:pe2], "new path missing from the asset cache")
+
+    def test_rewrites_body_and_keeps_thumbnail(self):
+        """The rewrite must not cost the map its thumbnail.
+
+        Datamodel.NET's writer drops the whole prefix region, so it is spliced
+        back from the original. Byte-equality is the wrong assertion now that the
+        asset cache inside it is deliberately repointed - what must survive is the
+        thumbnail, which is the only large blob in there.
+        """
+        from src.gitvmapmerge import _prefix_end
+        with open(self.map, "rb") as f:
+            before = f.read()
+        pe = _prefix_end(before)
+        old = self._pick(before, pe, "body")
+        new = b"models/zzz_test/renamed/thing.vmdl"
+        body_before = before[pe:].count(old)
+        self.assertTrue(body_before, "picked path is not in the body")
+
+        mod = self.u.update_references_batch({old.decode(): new.decode()})
         self.assertEqual(len(mod), 1)
 
         with open(self.map, "rb") as f:
             after = f.read()
-        self.assertFalse(self.OLD in after, "old path survived the rewrite")
-        self.assertTrue(self.NEW in after, "new path missing after rewrite")
-        self.assertEqual(_prefix_end(after), prefix_before)
-        self.assertTrue(after[:prefix_before] == before[:prefix_before],
-                        "prefix block (thumbnail + asset cache) was not preserved")
+        pe2 = _prefix_end(after)
+        self.assertFalse(old in after, "old path survived the rewrite")
+        self.assertEqual(after[pe2:].count(new), body_before)
+        # The thumbnail dominates the region; losing it would shrink it drastically.
+        self.assertGreater(pe2, pe * 0.9,
+                           f"prefix region collapsed from {pe} to {pe2} - thumbnail lost")
 
 
 if __name__ == "__main__":

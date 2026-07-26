@@ -175,6 +175,8 @@ class EnumSettingWidget(SettingWidget):
             pass
 
 class FolderSettingWidget(SettingWidget):
+    saveRequested = Signal()
+
     def setup_ui(self):
         # Use vertical layout with a list of maps and +/- controls
         layout = QVBoxLayout(self)
@@ -191,10 +193,14 @@ class FolderSettingWidget(SettingWidget):
         self.add_btn.setIcon(QIcon(":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
         self.remove_btn = QPushButton("Remove")
         self.remove_btn.setIcon(QIcon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.save_btn = QPushButton("Save changes")
+        self.save_btn.setIcon(QIcon(":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
         self.add_btn.setToolTip("Add .vmap files to the queue")
         self.remove_btn.setToolTip("Remove selected maps from the queue")
+        self.save_btn.setToolTip("Save map path changes to current preset")
         btn_layout.addWidget(self.add_btn)
         btn_layout.addWidget(self.remove_btn)
+        btn_layout.addWidget(self.save_btn)
         btn_layout.addStretch()
 
         layout.addWidget(self.label)
@@ -203,6 +209,7 @@ class FolderSettingWidget(SettingWidget):
 
         self.add_btn.clicked.connect(self.browse_maps)
         self.remove_btn.clicked.connect(self.remove_selected)
+        self.save_btn.clicked.connect(self.saveRequested.emit)
 
         # Initialize from default value
         self.set_value(str(self.default_value))
@@ -406,10 +413,11 @@ class SettingsGroup(QWidget):
 
 class SettingsPanel(QWidget):
     """Complete settings panel with auto-generated UI"""
+    mappathSaveRequested = Signal()
 
     # Define which fields go in which groups
     FIELD_GROUPS = {
-        "Common": ["mappath", "threads", "save_build_logs", "cleanup_vrad3_cache"],
+        "Common": ["mappath", "save_map_path", "threads", "save_build_logs", "cleanup_vrad3_cache"],
         "World": ["build_world", "entities_only",
                   "skip_aux_files", "no_settle",
                   "tile_mesh_base_geometry"],
@@ -467,7 +475,9 @@ class SettingsPanel(QWidget):
                 default_value = field.default
 
                 # Create widget based on type
-                if field_name == "lightmap_filtering":
+                if field_name == "save_map_path":
+                    return BoolSettingWidget("Save map path to preset", field_type, default_value)
+                elif field_name == "lightmap_filtering":
                     return BoolSettingWidget("Noise removal", field_type, default_value)
                 elif field_name == "lightmap_compression":
                     return BoolSettingWidget("Compression", field_type, default_value)
@@ -496,7 +506,9 @@ class SettingsPanel(QWidget):
                     else:
                         return IntSettingWidget(field_name, field_type, default_value)
                 elif field_type == str and field_name == "mappath":
-                    return FolderSettingWidget(field_name, field_type, default_value)
+                    w = FolderSettingWidget(field_name, field_type, default_value)
+                    w.saveRequested.connect(self.mappathSaveRequested.emit)
+                    return w
                 elif field_type == str:
                     return StringSettingWidget(field_name, field_type, default_value)
 

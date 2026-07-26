@@ -905,7 +905,8 @@ def decompile_model_to_glb(vmdl_path: str, context_addon: str = None) -> Optiona
             return output_glb_path
         return None
     except Exception as e:
-        print(f"Error decompiling model {vmdl_path}: {e}")
+        msg = str(e).splitlines()[0] if str(e) else "Error"
+        print(f"[model_browser] Decompilation skipped for {vmdl_path}: {msg}")
         return None
     finally:
         ms.Dispose()
