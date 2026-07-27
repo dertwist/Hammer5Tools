@@ -59,6 +59,9 @@ jobs:
           $ver = python -c "from src.common import app_version; print(app_version)"
           $ver = "$ver-dev.${{ github.run_number }}"
           echo "app_version=$ver" >> $env:GITHUB_OUTPUT
+          # Line 2 is the build channel; get_build_channel() reads it to decide the
+          # default for "Receive dev versions" on a fresh install.
+          "$ver`ndev" | Out-File -FilePath Hammer5Tools\version.txt -Encoding utf8
 
 
       - name: Get Release Notes

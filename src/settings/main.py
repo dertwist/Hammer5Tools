@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QSizePolicy, QFrame, QScrollArea, QFileDialog, QComboBox, QMessageBox
 )
 from src.settings.common import *
-from src.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel
+from src.common import enable_dark_title_bar, Presets_Path, app_dir, get_channel, get_build_channel
 from src.widgets.common import Button  # Using the internal Button class
 from src.styles.common import qt_stylesheet_checkbox, qt_stylesheet_combobox
 from src.widgets import FloatWidget  # Using the internal FloatWidget for float properties
@@ -383,11 +383,11 @@ class PreferencesDialog(QDialog):
             else:
                 self.preferences_lineedit_cs2_path.setPlaceholderText("CS2 not found - set manually")
         self.checkBox_close_to_tray.setChecked(get_settings_bool('APP', 'minimize_to_tray', False))
-        self.action_buttons_panel.checkBox_dev_channel.setChecked(get_settings_bool('APP', 'dev_channel', False))
-        # Read channel for the version label (shows "(dev)" suffix on dev builds)
-        channel = get_channel()
+        # Same default as get_channel(), so a dev build shows the box already ticked
+        self.action_buttons_panel.checkBox_dev_channel.setChecked(get_channel() == 'dev')
+        # The label describes the running build, not the channel being followed
         version_text = f"Version: {self.app_version}"
-        if channel == 'dev':
+        if get_build_channel() == 'dev':
             version_text += " (dev)"
         self.action_buttons_panel.version_label.setText(version_text)
         self.spe_export_properties.setChecked(get_settings_bool('SmartPropEditor', 'export_properties_in_one_line', True))
