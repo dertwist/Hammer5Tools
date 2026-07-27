@@ -2,12 +2,13 @@ import os
 import pathlib
 from datetime import datetime
 
-from PySide6.QtCore import Qt, Slot, QPoint
+from PySide6.QtCore import Qt, Slot, QPoint, QThread, Signal
 from PySide6.QtWidgets import (
     QDialog, QFileDialog, QListWidgetItem, QMessageBox, QWidget,
     QVBoxLayout, QHBoxLayout, QGridLayout, QFormLayout, QGroupBox, QLabel,
     QLineEdit, QPushButton, QListWidget, QProgressBar, QTabWidget, QComboBox,
-    QCheckBox, QSplitter, QSpacerItem, QSizePolicy, QMenu,
+    QCheckBox, QSplitter, QSpacerItem, QSizePolicy, QMenu, QInputDialog,
+    QTableWidget, QTableWidgetItem, QHeaderView,
 )
 
 from src.common import enable_dark_title_bar
@@ -22,6 +23,73 @@ from src.widgets.console import ConsoleWidget
 from .constants import FILE_TYPES, FILE_TYPE_TARGETS, FILE_TYPE_DESCRIPTIONS, UNSUPPORTED, scan_unsupported
 from .converter import scan_and_group, MaterialConvertWorker
 from .transform import UnitScale
+
+
+class UeExportWorker(QThread):
+    """Runs the UE Editor commandlet export off the UI thread — see
+    ue_export_runner.run_export. Assumes a local Unreal Engine install."""
+    log = Signal(str, str)
+    done = Signal(bool)
+
+    def __init__(self, engine_root, project_dir, output_dir, parent=None):
+        super().__init__(parent)
+        self.engine_root = engine_root
+        self.project_dir = project_dir
+        self.output_dir = output_dir
+
+    def run(self):
+        from .ue_export_runner import run_export, UeExportError
+
+        def _on_line(line: str):
+            self.log.emit(line, "info")
+
+        try:
+            run_export(self.engine_root, self.project_dir, self.output_dir, on_line=_on_line)
+            self.log.emit("UE export finished.", "success")
+            self.done.emit(True)
+        except UeExportError as e:
+            self.log.emit(str(e), "error")
+            self.done.emit(False)
+        except Exception as e:  # never let the thread die silently
+            self.log.emit(f"Unexpected error: {e}", "error")
+            self.done.emit(False)
+
+
+class ScanWorker(QThread):
+    """Scans project materials off the UI thread to prevent GUI freezing."""
+    log = Signal(str, str)
+    progress = Signal(int, int)
+    done = Signal(dict)
+
+    def __init__(self, project_dir, bulk_dir, output_dir, parent=None):
+        super().__init__(parent)
+        self.project_dir = project_dir
+        self.bulk_dir = bulk_dir
+        self.output_dir = output_dir
+
+    def run(self):
+        from .bridge_client import UnrealBridge
+        from .converter import scan_master_materials
+
+        bridge = None
+        if self.project_dir and os.path.isdir(self.project_dir):
+            bridge = UnrealBridge(self.project_dir)
+
+        def _log_cb(msg, level="info"):
+            self.log.emit(msg, level)
+
+        def _progress_cb(current, total):
+            self.progress.emit(current, total)
+
+        try:
+            master_groups = scan_master_materials(
+                self.project_dir, self.bulk_dir, bridge,
+                output_dir=self.output_dir, log_cb=_log_cb, progress_cb=_progress_cb
+            )
+            self.done.emit(master_groups)
+        except Exception as e:
+            self.log.emit(f"Scan failed: {e}", "error")
+            self.done.emit({})
 
 
 class UnrealConverterWidget(QDialog):
@@ -100,11 +168,19 @@ class UnrealConverterWidget(QDialog):
 
         # Action bar in Left Panel
         actions = QHBoxLayout()
+        self.ue_export_button = QPushButton("Run UE Export")
+        self.ue_export_button.setToolTip(
+            "Launches UnrealEditor-Cmd.exe / UE4Editor-Cmd.exe to batch-export meshes/textures under the "
+            "project into the cache folder (tools/ue_scripts/export_assets.py). "
+            "Requires a local Unreal Engine install (UE4.27 or UE5.x)."
+        )
+        self.ue_export_button.clicked.connect(self.on_run_ue_export)
         self.scan_button = QPushButton("Scan Folder")
         self.scan_button.clicked.connect(self.on_scan)
         self.convert_button = QPushButton("Convert")
         self.convert_button.clicked.connect(self.on_convert)
         self.convert_button.setEnabled(False)
+        actions.addWidget(self.ue_export_button)
         actions.addWidget(self.scan_button)
         actions.addWidget(self.convert_button)
         actions.addItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
@@ -182,6 +258,35 @@ class UnrealConverterWidget(QDialog):
         out_btn.clicked.connect(self.browse_output)
         grid.addWidget(out_btn, 2, 2)
 
+        # Row 3 — UE export cache folder: destination for tools/ue_scripts/
+        # export_assets.py, run inside the UE Editor to batch-export
+        # meshes/textures without a manual Bulk Export multi-select. Point
+        # "UE Bulk Export folder" above at the same folder once it's populated.
+        lbl_cache = QLabel("UE Export cache folder:")
+        lbl_cache.setToolTip(
+            "Output folder for tools/ue_scripts/export_assets.py (run inside the "
+            "UE Editor's Python console) — automates the manual Bulk Export step."
+        )
+        grid.addWidget(lbl_cache, 3, 0)
+        self.cache_folder_edit = QLineEdit()
+        self.cache_folder_edit.setPlaceholderText("folder passed as output_dir to export_assets.run(...)")
+        grid.addWidget(self.cache_folder_edit, 3, 1)
+        cache_btn = QPushButton("Browse")
+        cache_btn.clicked.connect(self.browse_cache)
+        grid.addWidget(cache_btn, 3, 2)
+
+        # Row 4 — local Unreal Engine install (assumes UE is installed), used
+        # to launch UnrealEditor-Cmd.exe / UE4Editor-Cmd.exe for the "Run UE Export" button.
+        lbl_engine = QLabel("Unreal Engine install:")
+        lbl_engine.setToolTip("Folder containing Engine/Binaries/Win64 (e.g. …/UE_4.27 or …/UE_5.7)")
+        grid.addWidget(lbl_engine, 4, 0)
+        self.engine_root_edit = QLineEdit()
+        self.engine_root_edit.setPlaceholderText("…/UE_4.27 or …/UE_5.7  (contains Engine/Binaries/Win64)")
+        grid.addWidget(self.engine_root_edit, 4, 1)
+        engine_btn = QPushButton("Browse")
+        engine_btn.clicked.connect(self.browse_engine)
+        grid.addWidget(engine_btn, 4, 2)
+
         # Back-compat: material worker still reads `input_folder_edit`; alias it
         # to the bulk-export folder (that's where exported textures live).
         self.input_folder_edit = self.bulk_folder_edit
@@ -190,11 +295,17 @@ class UnrealConverterWidget(QDialog):
         saved_project = get_settings_value("UnrealConverter", "project_folder", "")
         saved_bulk = get_settings_value("UnrealConverter", "bulk_folder", "")
         saved_output = get_settings_value("UnrealConverter", "output_folder", "")
+        saved_cache = get_settings_value("UnrealConverter", "cache_folder", "")
+        saved_engine = get_settings_value("UnrealConverter", "engine_root", "")
 
         if saved_project:
             self.project_folder_edit.setText(saved_project)
         if saved_bulk:
             self.bulk_folder_edit.setText(saved_bulk)
+        if saved_cache:
+            self.cache_folder_edit.setText(saved_cache)
+        if saved_engine:
+            self.engine_root_edit.setText(saved_engine)
 
         addon_dir = get_addon_dir()
         if saved_output:
@@ -213,6 +324,12 @@ class UnrealConverterWidget(QDialog):
         )
         self.output_folder_edit.textChanged.connect(
             lambda text: set_settings_value("UnrealConverter", "output_folder", text.strip())
+        )
+        self.cache_folder_edit.textChanged.connect(
+            lambda text: set_settings_value("UnrealConverter", "cache_folder", text.strip())
+        )
+        self.engine_root_edit.textChanged.connect(
+            lambda text: set_settings_value("UnrealConverter", "engine_root", text.strip())
         )
         return box
 
@@ -325,27 +442,91 @@ class UnrealConverterWidget(QDialog):
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
-        form = QFormLayout()
-        self.mat_shader_edit = QLineEdit(get_settings_value("UnrealConverter", "material_shader", "csgo_environment.vfx"))
-        self.mat_shader_edit.textChanged.connect(
-            lambda text: set_settings_value("UnrealConverter", "material_shader", text.strip())
-        )
-        form.addRow("Target shader:", self.mat_shader_edit)
-        layout.addLayout(form)
+        layout.addWidget(QLabel("Master Material CS2 Shader & Texture Slot Swap:"))
 
-        layout.addWidget(QLabel("Material groups (check to convert):"))
-        self.group_list = QListWidget()
-        self.group_list.setSelectionMode(QListWidget.NoSelection)
-        layout.addWidget(self.group_list, 1)
+        self.master_mat_table = QTableWidget(0, 5)
+        self.master_mat_table.setHorizontalHeaderLabels(["Convert", "Master Material", "Instances", "Target CS2 Shader", "Texture Slots"])
+        self.master_mat_table.horizontalHeader().setStretchLastSection(False)
+        self.master_mat_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.master_mat_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.master_mat_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.master_mat_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.master_mat_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        layout.addWidget(self.master_mat_table, 1)
 
         note = QLabel(
-            "Groups exported UE PNGs by base name and writes a .vmat per group. "
-            "Packed RMA/RMAH masks are split into rough/metal/ao/height. Master "
-            "material graphs are not converted — only instance parameters."
+            "Groups Material Instances by their parent Master Material. Select the target "
+            "CS2 shader and configure texture slot assignments per Master Material. "
+            "All Material Instances belonging to a Master Material inherit its shader and slot mappings."
         )
         note.setWordWrap(True)
         layout.addWidget(note)
         return tab
+
+    def _populate_master_materials_table(self, master_groups: dict):
+        self.master_groups = master_groups
+        self.master_mat_table.setRowCount(0)
+        self.master_shader_combos = {}
+        self.master_checkboxes = {}
+
+        shaders = [
+            "csgo_environment.vfx",
+            "csgo_static_overlay.vfx",
+            "csgo_foliage.vfx",
+            "csgo_glass.vfx",
+            "csgo_character.vfx",
+            "complex.vfx",
+        ]
+
+        for row, (master_name, info) in enumerate(sorted(master_groups.items())):
+            self.master_mat_table.insertRow(row)
+
+            chk = QCheckBox()
+            chk.setChecked(True)
+            self.master_checkboxes[master_name] = chk
+            chk_cell = QWidget()
+            chk_layout = QHBoxLayout(chk_cell)
+            chk_layout.addWidget(chk)
+            chk_layout.setAlignment(Qt.AlignCenter)
+            chk_layout.setContentsMargins(0, 0, 0, 0)
+            self.master_mat_table.setCellWidget(row, 0, chk_cell)
+
+            name_item = QTableWidgetItem(master_name)
+            name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
+            self.master_mat_table.setItem(row, 1, name_item)
+
+            count = info.get("count", len(info.get("instances", [])))
+            count_item = QTableWidgetItem(f"{count} instance{'s' if count != 1 else ''}")
+            count_item.setFlags(count_item.flags() & ~Qt.ItemIsEditable)
+            self.master_mat_table.setItem(row, 2, count_item)
+
+            combo = QComboBox()
+            combo.addItems(shaders)
+            pred_shader = info.get("shader", "csgo_environment.vfx")
+            idx = combo.findText(pred_shader)
+            if idx >= 0:
+                combo.setCurrentIndex(idx)
+            self.master_shader_combos[master_name] = combo
+            self.master_mat_table.setCellWidget(row, 3, combo)
+
+            map_btn = QPushButton("Map Slots…")
+            map_btn.setToolTip(f"Configure texture parameter slot assignments for {master_name}")
+            map_btn.clicked.connect(lambda _checked=False, name=master_name: self._on_map_master_slots(name))
+            self.master_mat_table.setCellWidget(row, 4, map_btn)
+
+    def _on_map_master_slots(self, master_name: str):
+        if not hasattr(self, "master_groups") or master_name not in self.master_groups:
+            return
+        info = self.master_groups[master_name]
+        textures = info.get("textures", {})
+        initial_overrides = info.get("slot_overrides", {})
+
+        from .slot_mapping import SlotMappingDialog
+        dlg = SlotMappingDialog(master_name, textures, initial_overrides, parent=self)
+        if dlg.exec() == QDialog.Accepted:
+            info["slot_overrides"] = dlg.result_overrides
+            count = len(dlg.result_overrides)
+            self.console.info(f"Updated texture slot mapping for {master_name} ({count} override(s) set).")
 
     def _build_other_tab(self):
         tab = QWidget()
@@ -410,6 +591,16 @@ class UnrealConverterWidget(QDialog):
         if folder:
             self.output_folder_edit.setText(folder)
 
+    def browse_cache(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select UE Export Cache Folder")
+        if folder:
+            self.cache_folder_edit.setText(folder)
+
+    def browse_engine(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select Unreal Engine Install Folder")
+        if folder:
+            self.engine_root_edit.setText(folder)
+
     def _console_context_menu(self, pos: QPoint):
         menu = self.console.createStandardContextMenu()
         menu.addSeparator()
@@ -444,22 +635,75 @@ class UnrealConverterWidget(QDialog):
         except Exception as e:
             self.console.error(f"Failed to save log: {e}")
 
+    # UE export
+
+    def on_run_ue_export(self):
+        engine_root = self.engine_root_edit.text().strip()
+        project_dir = self.project_folder_edit.text().strip()
+        output_dir = self.cache_folder_edit.text().strip()
+        if not engine_root or not os.path.isdir(engine_root):
+            QMessageBox.warning(self, "Error", "Set a valid Unreal Engine install folder first.")
+            return
+        if not project_dir or not os.path.isdir(project_dir):
+            QMessageBox.warning(self, "Error", "Set a valid UE Project Content folder first.")
+            return
+        if not output_dir:
+            QMessageBox.warning(self, "Error", "Set a UE Export cache folder first.")
+            return
+
+        self.console.header("UE Export")
+        self.ue_export_button.setEnabled(False)
+        self.ue_export_worker = UeExportWorker(engine_root, project_dir, output_dir)
+        self.ue_export_worker.log.connect(self._on_worker_log)
+        self.ue_export_worker.done.connect(self._on_ue_export_done)
+        self.ue_export_worker.start()
+
+    @Slot(bool)
+    def _on_ue_export_done(self, success):
+        if success:
+            self.console.info(f"UE export wrote into: {self.cache_folder_edit.text().strip()}")
+        self.ue_export_button.setEnabled(True)
+
     # scan
 
     def on_scan(self):
         project_dir = self.project_folder_edit.text().strip()
         bulk_dir = self.bulk_folder_edit.text().strip()
+        output_dir = self.output_folder_edit.text().strip()
         if not project_dir and not bulk_dir:
             QMessageBox.warning(self, "Error", "Set a UE project Content folder and/or a bulk-export folder.")
             return
 
         self.console.header("Scanning")
-        if project_dir:
+        self.scan_button.setEnabled(False)
+        self.convert_button.setEnabled(False)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setFormat("Scanning…")
+
+        self.scan_worker = ScanWorker(project_dir, bulk_dir, output_dir)
+        self.scan_worker.log.connect(self._on_worker_log)
+        self.scan_worker.progress.connect(self._on_progress)
+        self.scan_worker.done.connect(self._on_scan_done)
+        self.scan_worker.start()
+
+    @Slot(dict)
+    def _on_scan_done(self, master_groups):
+        if master_groups:
+            self._populate_master_materials_table(master_groups)
+        else:
+            self.console.warn("No Master Materials or material instances found.")
+
+        project_dir = self.project_folder_edit.text().strip()
+        if project_dir and os.path.isdir(project_dir):
             self._scan_project(project_dir)
-        if bulk_dir:
+        bulk_dir = self.bulk_folder_edit.text().strip()
+        if bulk_dir and os.path.isdir(bulk_dir):
             self._scan_bulk(bulk_dir)
 
-        self.convert_button.setEnabled(True)
+        self.progress_bar.setValue(self.progress_bar.maximum())
+        self.progress_bar.setFormat("Done")
+        self.scan_button.setEnabled(True)
+        self.convert_button.setEnabled(bool(master_groups))
 
     def _scan_project(self, project_dir):
         """Scan the raw UE project via the CUE4Parse bridge (entity data)."""
@@ -493,21 +737,18 @@ class UnrealConverterWidget(QDialog):
             self.console.info("No obviously unsupported assets detected.")
 
     def _scan_bulk(self, bulk_dir):
-        """Scan the UE bulk-export folder for textures/materials (PNG groups)."""
+        """Scan the UE bulk-export folder for textures/materials."""
         if not os.path.isdir(bulk_dir):
             if hasattr(self, "console"):
                 self.console.error(f"Bulk-export folder not found: {bulk_dir}")
             return
-        self.groups = scan_and_group(bulk_dir)
-        if hasattr(self, "group_list") and self.group_list is not None:
-            self.group_list.clear()
-            for base_name in sorted(self.groups.keys()):
-                item = QListWidgetItem(base_name)
-                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                item.setCheckState(Qt.Checked)
-                self.group_list.addItem(item)
-        if hasattr(self, "console"):
-            self.console.info(f"Bulk-export material groups detected: {len(self.groups)}")
+        if not hasattr(self, "master_groups") or not self.master_groups:
+            from .converter import scan_master_materials
+            master_groups = scan_master_materials("", bulk_dir, None)
+            if master_groups:
+                self._populate_master_materials_table(master_groups)
+                if hasattr(self, "console"):
+                    self.console.info(f"Bulk-export material groups detected: {len(master_groups)}")
 
     # convert
 
@@ -517,10 +758,6 @@ class UnrealConverterWidget(QDialog):
             QMessageBox.warning(self, "Error", "Set an output folder first.")
             return
 
-        # Guard: warn if output_dir ends with a known content subfolder name.
-        # The converter writes models/, materials/, maps/ etc. itself — pointing
-        # it at e.g. de_firewatch/models/ instead of de_firewatch/ will create
-        # double-nested paths like models/models/firewatchtower/...
         _bad_suffixes = ("models", "materials", "maps", "sounds", "particles", "panorama")
         _out_tail = output_dir.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1].lower()
         if _out_tail in _bad_suffixes:
@@ -541,11 +778,9 @@ class UnrealConverterWidget(QDialog):
         self.console.header("Converting")
         did_something = False
 
-        # Textures/materials from the bulk-export folder (synchronous worker).
         if self.is_enabled("Textures") or self.is_enabled("Materials"):
             did_something = self._convert_materials(output_dir) or did_something
 
-        # Scenes -> vmap, Models -> vmdl, Blueprints -> vsmart via the CUE4Parse bridge + writers.
         if self.is_enabled("Scenes") or self.is_enabled("Models") or self.is_enabled("Blueprints"):
             did_something = self._convert_scenes_models(output_dir) or did_something
 
@@ -595,24 +830,39 @@ class UnrealConverterWidget(QDialog):
         self.convert_button.setEnabled(True)
 
     def _convert_materials(self, output_dir):
-        selected = {}
-        for i in range(self.group_list.count()):
-            item = self.group_list.item(i)
-            if item.checkState() == Qt.Checked:
-                selected[item.text()] = self.groups[item.text()]
-        if not selected:
-            self.console.warn("Materials enabled but no groups selected/scanned.")
+        if not hasattr(self, "master_groups") or not self.master_groups:
+            self.console.warn("No Master Materials loaded to convert. Run Scan first.")
             return False
 
-        self.console.info(f"Converting {len(selected)} material group(s)…")
+        active_master_groups = {}
+        for master_name, info in self.master_groups.items():
+            chk = getattr(self, "master_checkboxes", {}).get(master_name)
+            combo = getattr(self, "master_shader_combos", {}).get(master_name)
+            enabled = chk.isChecked() if chk else True
+            selected_shader = combo.currentText() if combo else info.get("shader", "csgo_environment.vfx")
+
+            if enabled:
+                active_master_groups[master_name] = {
+                    "shader": selected_shader,
+                    "instances": info.get("instances", []),
+                    "enabled": True,
+                }
+
+        if not active_master_groups:
+            self.console.warn("No Master Material groups selected for conversion.")
+            return False
+
+        total_instances = sum(len(g["instances"]) for g in active_master_groups.values())
+        self.console.info(f"Converting {total_instances} material instance(s) across {len(active_master_groups)} Master Material swap group(s)…")
         self.scan_button.setEnabled(False)
         self.convert_button.setEnabled(False)
         self.progress_bar.setValue(0)
         self.progress_bar.setFormat("Starting…")
 
-        rel_path = self.get_calculated_rel_path()
-        self.worker = MaterialConvertWorker(
-            self.input_folder_edit.text().strip(), output_dir, rel_path, selected
+        from .converter import MasterMaterialConvertWorker
+
+        self.worker = MasterMaterialConvertWorker(
+            output_dir, self.bulk_folder_edit.text().strip(), active_master_groups
         )
         self.worker.progress.connect(self._on_progress)
         self.worker.file_done.connect(self._on_file_done)
