@@ -191,6 +191,31 @@ class ReferenceUpdater:
                 except Exception:
                     pass
 
+    def find_referencing(self, renames: dict) -> list[str]:
+        """Dry run: which files hold any of the old paths, without touching them.
+
+        A byte substring search, not a DMX load: the preview only has to name the
+        files, and parsing every map here would cost as much as the move itself.
+        """
+        needles = [k.replace('\\', '/').encode('utf-8') for k in renames if k]
+        if not needles:
+            return []
+
+        hits = []
+        for root, _, files in os.walk(self.addon_content_path):
+            for f in files:
+                if os.path.splitext(f)[1].lower() not in self.SCANNABLE_EXTS:
+                    continue
+                abs_path = os.path.join(root, f)
+                try:
+                    with open(abs_path, 'rb') as file:
+                        buf = file.read()
+                except OSError:
+                    continue
+                if any(n in buf for n in needles):
+                    hits.append(abs_path)
+        return hits
+
     def update_references(self, old_rel: str, new_rel: str) -> list[str]:
         """Single rename. Prefer update_references_batch when moving more than one
         file: this walks the whole addon and reloads every vmap per call."""

@@ -107,6 +107,74 @@ class TestBatchRewrite(unittest.TestCase):
         self.u.update_references('materials/old/red.vmat', 'materials/new/red.vmat')
         self.assertIn('materials/new/red.vmat', self._read('models/a.vmdl'))
 
+    def test_folder_rename_does_not_eat_a_sibling_with_the_same_prefix(self):
+        """Moving a folder is one rename of 'dir/' - without the trailing slash
+        'models/foo' also matches 'models/foobar' and drags the sibling along."""
+        self._write('models/a.vmdl', '"models/foo/tree.vmdl"\n"models/foobar/rock.vmdl"\n')
+        self.u.update_references_batch({'models/foo/': 'models/nature/foo/'})
+        out = self._read('models/a.vmdl')
+        self.assertIn('"models/nature/foo/tree.vmdl"', out)
+        self.assertIn('"models/foobar/rock.vmdl"', out)
+
+    def test_folder_rename_moves_every_reference_under_it(self):
+        self._write('models/a.vmdl', '"models/foo/a.vmdl"\n"models/foo/deep/b.vmdl"\n')
+        self.u.update_references_batch({'models/foo/': 'models/nature/foo/'})
+        out = self._read('models/a.vmdl')
+        self.assertIn('"models/nature/foo/a.vmdl"', out)
+        self.assertIn('"models/nature/foo/deep/b.vmdl"', out)
+
+
+class TestFindReferencing(unittest.TestCase):
+    """The Preview list. It must name the same files the rewrite would touch,
+    and must not write anything - it runs before the user has agreed to a move."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = self.tmp.name
+        self.u = ReferenceUpdater(self.root)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _write(self, rel, text):
+        p = os.path.join(self.root, rel.replace('/', os.sep))
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, 'w', encoding='utf-8', newline='') as f:
+            f.write(text)
+        return p
+
+    def _rel(self, paths):
+        return sorted(os.path.relpath(p, self.root).replace('\\', '/') for p in paths)
+
+    def test_finds_only_files_holding_the_path(self):
+        self._write('models/hit.vmdl', 'x "materials/old/red.vmat" y')
+        self._write('models/miss.vmdl', 'nothing here')
+        self.assertEqual(self._rel(self.u.find_referencing({'materials/old/red.vmat': 'w'})),
+                         ['models/hit.vmdl'])
+
+    def test_ignores_unscannable_extensions(self):
+        self._write('notes.txt', 'materials/old/red.vmat')
+        self.assertEqual(self.u.find_referencing({'materials/old/red.vmat': 'w'}), [])
+
+    def test_changes_nothing_on_disk(self):
+        p = self._write('models/a.vmdl', '"materials/old/red.vmat"')
+        before = os.stat(p).st_mtime_ns
+        self.u.find_referencing({'materials/old/red.vmat': 'materials/new/red.vmat'})
+        self.assertEqual(os.stat(p).st_mtime_ns, before)
+        with open(p, encoding='utf-8') as f:
+            self.assertIn('materials/old/red.vmat', f.read())
+
+    def test_empty_rename_map_is_a_noop(self):
+        self._write('models/a.vmdl', 'anything')
+        self.assertEqual(self.u.find_referencing({}), [])
+
+    def test_agrees_with_what_the_rewrite_touches(self):
+        self._write('models/hit.vmdl', '"models/foo/tree.vmdl"')
+        self._write('models/miss.vmdl', '"models/foobar/rock.vmdl"')
+        renames = {'models/foo/': 'models/nature/foo/'}
+        self.assertEqual(self._rel(self.u.find_referencing(renames)),
+                         self._rel(self.u.update_references_batch(renames)))
+
 
 VMAP = os.path.join(
     r"E:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive",
