@@ -178,11 +178,11 @@ class SoundEventEditorMainWindow(QMainWindow):
         self.mini_explorer.play_sound.connect(self.play_sound)
         self.ui.explorer_layout.addWidget(self.mini_explorer.frame)
 
-        self.internal_explorer = InternalSoundFileExplorer(self.audio_player)
+        self.internal_explorer = InternalSoundFileExplorer()
         self.internal_explorer.setStyleSheet("""border:none""")
         self.ui.internal_explorer_layout.addWidget(self.internal_explorer)
         self.ui.internal_explorer_search_bar.textChanged.connect(self.internal_explorer.filter_tree)
-        self.internal_explorer.play_sound.connect(self.play_sound)
+        self.internal_explorer.play_audio_data.connect(self.play_sound_data)
 
         self.internal_soundevents_explorer = InternalSoundEventExplorer()
         self.ui.internal_soundevents_tab.layout().addWidget(self.internal_soundevents_explorer)
@@ -232,14 +232,24 @@ class SoundEventEditorMainWindow(QMainWindow):
     def add_player(self):
         self.audio_player_widget = AudioPlayer()
         self.ui.explorer_layout_widget.layout().insertWidget(1,self.audio_player_widget)
-    def play_sound(self, file_path):
-        if get_settings_bool('SoundEventEditor', 'play_on_click'):
+
+    def _prepare_player(self):
+        if not get_settings_bool('SoundEventEditor', 'play_on_click'):
+            return False
+        if hasattr(self, 'audio_player_widget') and self.audio_player_widget:
             self.audio_player_widget.deleteLater()
-            self.add_player()
+        self.add_player()
+        return True
+
+    def play_sound(self, file_path):
+        if self._prepare_player():
             self.audio_player_widget.set_audiopath(file_path)
             self.audio_player_widget.play_sound()
-        else:
-            pass
+
+    def play_sound_data(self, data, ext):
+        if self._prepare_player():
+            self.audio_player_widget.set_audio_bytes(data, ext)
+            self.audio_player_widget.play_sound()
     #     if self.audio_player is not None:
     #         self.audio_player.deleteLater()
     #     self.audio_player = QMediaPlayer()

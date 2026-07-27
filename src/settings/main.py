@@ -359,27 +359,6 @@ class PreferencesDialog(QDialog):
         self.checkBox_play_on_click.setStyleSheet(qt_stylesheet_checkbox)
         layout_audio.addWidget(self.checkBox_play_on_click)
         layout.addWidget(self.frame_audio)
-        # ------------- Internal Sounds Subcategory -------------
-        layout.addWidget(self.create_divider(sound_editor_content))
-        label_internal = QLabel("Internal Sounds", sound_editor_content)
-        layout.addWidget(label_internal)
-        self.frame_internal_sounds = QFrame(sound_editor_content)
-        layout_internal = QVBoxLayout(self.frame_internal_sounds)
-        # Maximum cache size property using FloatWidget (float property, default 400)
-        row_cache_size = QHBoxLayout()
-        label_max_cache = QLabel("Maximum cache size:", self.frame_internal_sounds)
-        label_max_cache.setMinimumWidth(130)
-        row_cache_size.addWidget(label_max_cache)
-        self.floatWidget_max_cache_size = FloatWidget(self.frame_internal_sounds,
-                                                       slider_range=[50, 4000],
-                                                       lock_range=True,
-                                                       spacer_enable=False,
-                                                       digits=0,
-                                                       only_positive=True,
-                                                       value=400)
-        row_cache_size.addWidget(self.floatWidget_max_cache_size)
-        layout_internal.addLayout(row_cache_size)
-        layout.addWidget(self.frame_internal_sounds)
         layout.addStretch()
         sound_editor_scroll = self.wrap_in_scroll_area(sound_editor_content)
         self.tabWidget.addTab(sound_editor_scroll, "SoundEventEditor")
@@ -430,11 +409,6 @@ class PreferencesDialog(QDialog):
         self.assetgroupmaker_edit_ignore_ext.setText(process.get('ignore_extensions', 'mb,ma,max,st,blend,blend1,vmdl,vmat,vsmart,tga,png,jpg,exr,hdr'))
         # Populate SoundEventEditor preferences
         self.checkBox_play_on_click.setChecked(get_settings_bool('SoundEventEditor', 'play_on_click', True))
-        try:
-            max_cache = float(get_settings_value('SoundEventEditor', 'max_cache_size') or 400)
-        except ValueError:
-            max_cache = 400
-        self.floatWidget_max_cache_size.set_value(max_cache)
         # Populate new SmartPropEditor Realtime Saving preferences
         try:
             rt_delay = float(get_settings_value('SmartPropEditor', 'realtime_saving_delay') or 0.01)
@@ -512,10 +486,6 @@ class PreferencesDialog(QDialog):
         self.browse_archive_button.clicked.connect(self.browse_archive)
         self.checkBox_play_on_click.toggled.connect(
             lambda: set_settings_bool('SoundEventEditor', 'play_on_click', self.checkBox_play_on_click.isChecked())
-        )
-        # Connect using the FloatWidget's "edited" signal instead of "valueChanged"
-        self.floatWidget_max_cache_size.edited.connect(
-            lambda val: set_settings_value('SoundEventEditor', 'max_cache_size', str(val))
         )
         # Connect new SmartPropEditor Realtime Saving signals
         self.spe_realtime_saving_delay.edited.connect(

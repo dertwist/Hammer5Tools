@@ -85,7 +85,7 @@ def extract_vsndevts_file(
     if data is None:
         return None
     if not isinstance(data, bytes):
-        data = bytes([data[i] for i in range(data.Length)])
+        data = bytes(data)
 
     Resource, _, _, FileExtract, _, _ = extractor._vrf_types
     resource = System.Activator.CreateInstance(Resource)
@@ -107,9 +107,7 @@ def extract_vsndevts_file(
         content_file = extract_method.Invoke(None, args)
         if not content_file or not getattr(content_file, 'Data', None):
             return None
-        kv3_text = bytes(
-            [content_file.Data[i] for i in range(content_file.Data.Length)]
-        ).decode("utf-8", errors="replace")
+        kv3_text = bytes(content_file.Data).decode("utf-8", errors="replace")
     finally:
         ms.Dispose()
         if hasattr(resource, 'Dispose'):
