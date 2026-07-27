@@ -47,32 +47,51 @@ from pathlib import Path
 
 app_version = '5.5.0'
 
+def get_build_channel() -> str:
+    """Channel this build was published on, from line 2 of version.txt (frozen builds only)."""
+    try:
+        if not getattr(sys, 'frozen', False):
+            return 'stable'
+        vtxt = Path(sys.executable).parent / 'version.txt'
+        if vtxt.exists():
+            lines = vtxt.read_text(encoding='utf-8').splitlines()
+            if len(lines) >= 2 and lines[1].strip():
+                return lines[1].strip()
+    except Exception:
+        pass
+    return 'stable'
+
 def get_channel() -> str:
     """
     Returns the update channel ('stable' or 'dev').
 
-    Opting in via settings forces 'dev'; otherwise the channel is the build's own,
-    read from line 2 of version.txt (next to the executable in frozen builds).
+    The "Receive dev versions" setting decides in both directions: on -> dev,
+    off -> stable. The build's own channel is only the default for users who
+    never touched the setting, so a dev build keeps receiving dev updates until
+    it is explicitly opted out.
     """
     try:
         from src.settings.common import get_settings_bool
-        if get_settings_bool('APP', 'dev_channel', False):
-            return 'dev'
+        return 'dev' if get_settings_bool('APP', 'dev_channel', get_build_channel() == 'dev') else 'stable'
     except Exception:
-        pass
+        return get_build_channel()
 
-    try:
-        if getattr(sys, 'frozen', False):
-            vtxt = Path(sys.executable).parent / 'version.txt'
-        else:
-            return 'stable'
-        
-        if vtxt.exists():
-            lines = vtxt.read_text(encoding='utf-8').splitlines()
-            return lines[1].strip() if len(lines) >= 2 else 'stable'
-    except Exception:
-        pass
-    return 'stable'
+def get_update_options():
+    """
+    Velopack options for the current channel.
+
+    AllowVersionDowngrade must be on whenever dev is involved: a dev build is a
+    semver pre-release (5.6.0-dev.2) which sorts BELOW the stable 5.6.0, so
+    without it Velopack reports "no update" for every dev release, and a user on
+    a dev build could never fall back to stable.
+    """
+    from velopack import UpdateOptions
+    channel = get_channel()
+    return UpdateOptions(
+        AllowVersionDowngrade=(channel == 'dev' or get_build_channel() == 'dev'),
+        MaximumDeltasBeforeFallback=0,
+        ExplicitChannel=channel,
+    )
 
 def get_update_url() -> str:
     """
