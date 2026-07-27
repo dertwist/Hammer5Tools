@@ -334,11 +334,18 @@ def _vector_param(material, name, default):
         if str(entry.Key) == name:
             v = entry.Value
             out = list(default)
-            for i, comp in enumerate(("X", "Y", "Z", "W")[:len(out)]):
+            comps = ("X", "Y", "Z", "W")[:len(out)]
+            for i, comp in enumerate(comps):
                 try:
-                    out[i] = float(getattr(v, comp))
+                    if hasattr(v, comp):
+                        out[i] = float(getattr(v, comp))
                 except Exception:
                     pass
+            # Vector3s in VRF (e.g. g_vColorTint) are stored as Vector4 with W=0.
+            # For 4-element defaults (like RGBA color tints) where W is 0, preserve
+            # default alpha so materials don't turn completely transparent.
+            if len(default) == 4 and len(comps) == 4 and out[3] == 0.0 and default[3] != 0.0:
+                out[3] = default[3]
             return tuple(out)
     return tuple(default)
 
@@ -428,7 +435,27 @@ def _load_material(loader, material_path: str, max_dim: Optional[int],
         md.alpha_mode = "MASK"
         md.alpha_cutoff = _float_param(material, "g_flAlphaTestReference", 0.5)
     md.double_sided = bool(_int_param(material, "F_RENDER_BACKFACES"))
+
+    # When alpha testing/blending is enabled but base_color alpha is empty or missing,
+    # check if the normal map holds the alpha cutout mask (common in Source 2 environment shaders).
+    if md.alpha_mode in ("MASK", "BLEND") and md.normal_img is not None:
+        norm_a = md.normal_img[..., 3]
+        if md.base_color_img is None:
+            h, w = norm_a.shape[:2]
+            bg = np.full((h, w, 4), 255, dtype=np.uint8)
+            bg[..., 3] = norm_a
+            md.base_color_img = bg
+        else:
+            base_a = md.base_color_img[..., 3]
+            if float(base_a.mean()) < 30.0 and float(norm_a.mean()) > 50.0:
+                h, w = md.base_color_img.shape[:2]
+                if norm_a.shape[:2] != (h, w):
+                    norm_a = _nearest_resize(norm_a[..., None], h, w)[..., 0]
+                md.base_color_img = md.base_color_img.copy()
+                md.base_color_img[..., 3] = norm_a
+
     return md
+
 
 
 # Model reading
@@ -444,6 +471,8 @@ def _draw_call_tint_alpha(vrf, draw_call) -> tuple:
                 parsed.append(float(str(val)))
             if len(parsed) >= 3:
                 tint[:len(parsed)] = parsed[:4]
+                if len(parsed) == 3 or (len(parsed) == 4 and tint[3] == 0.0):
+                    tint[3] = 1.0
         except Exception:
             pass
 
@@ -456,6 +485,7 @@ def _draw_call_tint_alpha(vrf, draw_call) -> tuple:
             pass
 
     return tuple(tint), alpha
+
 
 
 def _mesh_list(loader, model):

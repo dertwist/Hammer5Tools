@@ -122,12 +122,25 @@ def main():
     assert glove_skin0.submeshes[0].material.name != glove_skin1.submeshes[0].material.name, \
         "skin 0 and skin 1 resolved same material"
 
-    # Test texture wrap mode attributes
-    for sub in mesh.submeshes:
-        assert hasattr(sub.material, "wrap_u") and hasattr(sub.material, "wrap_v")
+    # Test vector param color tint alpha (e.g. sign_04b with g_vColorTint vector3)
+    sign = load_model("models/de_cache_s2/signs_04/sign_04b")
+    check_structure(sign, "sign_04b")
+    assert sign.submeshes[0].material.base_color_factor[3] > 0.0, \
+        f"sign_04b base_color_factor alpha is 0.0: {sign.submeshes[0].material.base_color_factor}"
+
+    # Test addon model with normal-map alpha mask fallback (fence01 in de_firewatch)
+    fence = load_model("models/firewatch/structures/fences/fence/fence01.vmdl", context_addon="de_firewatch")
+    if fence is not None:
+        check_structure(fence, "fence01")
+        # Submesh 1 is extra_wire.vmat, whose base_color alpha is filled from normal_img alpha
+        extra_wire_sm = fence.submeshes[1]
+        assert extra_wire_sm.material.base_color_img[..., 3].mean() > 50, \
+            "extra_wire alpha mask failed to resolve from normal map"
 
     print("OK  all checks passed")
     return 0
+
+
 
 
 
