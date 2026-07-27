@@ -146,7 +146,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon = QIcon()
-        icon.addFile(u":/icons/arrow_back_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/arrow_back_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.viewport_search_previous_button.setIcon(icon)
         self.viewport_search_previous_button.setIconSize(QSize(20, 20))
 
@@ -188,7 +188,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon1 = QIcon()
-        icon1.addFile(u":/icons/arrow_forward_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u":/icons/arrow_forward_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.viewport_search_next_button.setIcon(icon1)
         self.viewport_search_next_button.setIconSize(QSize(20, 20))
 
@@ -242,7 +242,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon2 = QIcon()
-        icon2.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon2.addFile(u":/icons/add_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.new_replacement_button.setIcon(icon2)
         self.new_replacement_button.setIconSize(QSize(20, 20))
 
@@ -361,7 +361,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon3 = QIcon()
-        icon3.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon3.addFile(u":/icons/file_open_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.open_button.setIcon(icon3)
         self.open_button.setIconSize(QSize(20, 20))
 
@@ -403,7 +403,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon4 = QIcon()
-        icon4.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon4.addFile(u":/icons/save_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.save_button.setIcon(icon4)
         self.save_button.setIconSize(QSize(20, 20))
 
@@ -504,7 +504,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon5 = QIcon()
-        icon5.addFile(u":/icons/settings_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon5.addFile(u":/icons/settings_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.process_options_button.setIcon(icon5)
         self.process_options_button.setIconSize(QSize(20, 20))
 
@@ -547,7 +547,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon6 = QIcon()
-        icon6.addFile(u":/icons/undo_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon6.addFile(u":/icons/undo_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.return_button.setIcon(icon6)
         self.return_button.setIconSize(QSize(20, 20))
         self.return_button.setCheckable(False)
@@ -590,7 +590,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon7 = QIcon()
-        icon7.addFile(u":/icons/tab_move_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon7.addFile(u":/icons/tab_move_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.process_all_button.setIcon(icon7)
         self.process_all_button.setIconSize(QSize(20, 20))
 
@@ -656,7 +656,7 @@ class Ui_BatchCreator_MainWindow(object):
 " background-color: #2C2C2C;\n"
 "}")
         icon8 = QIcon()
-        icon8.addFile(u":/icons/file_present_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon8.addFile(u":/icons/file_present_24dp.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.select_reference_button.setIcon(icon8)
         self.select_reference_button.setIconSize(QSize(20, 20))
 

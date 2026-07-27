@@ -159,7 +159,7 @@ class Ui_Widget(object):
 "    color: white;\n"
 "}")
         icon = QIcon()
-        icon.addFile(u":/icons/cancel_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/cancel_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.reference_clear.setIcon(icon)
         self.reference_clear.setIconSize(QSize(24, 24))
 
@@ -189,7 +189,7 @@ class Ui_Widget(object):
 "    color: white;\n"
 "}")
         icon1 = QIcon()
-        icon1.addFile(u":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u":/icons/search_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.reference_search.setIcon(icon1)
         self.reference_search.setIconSize(QSize(24, 24))
 

@@ -268,7 +268,7 @@ class Ui_MainWindow(object):
 "\n"
 "    }")
         icon = QIcon()
-        icon.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/check_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.set_current_button.setIcon(icon)
         self.set_current_button.setIconSize(QSize(20, 20))
 
@@ -307,7 +307,7 @@ class Ui_MainWindow(object):
 "\n"
 "    }")
         icon1 = QIcon()
-        icon1.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u":/icons/add_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.new_button.setIcon(icon1)
         self.new_button.setIconSize(QSize(20, 20))
 
@@ -346,7 +346,7 @@ class Ui_MainWindow(object):
 "\n"
 "    }")
         icon2 = QIcon()
-        icon2.addFile(u":/icons/file_open_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon2.addFile(u":/icons/file_open_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.open_button.setIcon(icon2)
         self.open_button.setIconSize(QSize(20, 20))
 
@@ -428,7 +428,7 @@ class Ui_MainWindow(object):
 "\n"
 "    }")
         icon3 = QIcon()
-        icon3.addFile(u":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon3.addFile(u":/icons/save_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.save_button.setIcon(icon3)
         self.save_button.setIconSize(QSize(20, 20))
 
@@ -468,7 +468,7 @@ class Ui_MainWindow(object):
 "\n"
 "    }")
         icon4 = QIcon()
-        icon4.addFile(u":/icons/all_match_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon4.addFile(u":/icons/all_match_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.save_restart_button.setIcon(icon4)
         self.save_restart_button.setIconSize(QSize(20, 20))
         self.save_restart_button.setCheckable(True)

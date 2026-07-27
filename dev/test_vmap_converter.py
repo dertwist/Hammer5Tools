@@ -9,13 +9,12 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from src.dotnet import decompile_model_to_glb
 from src.editors.smartprop_editor.vmap_vsmart_converter import scan_vmap_for_props, convert_vmap_props_to_vsmart
 from src.common import get_cs2_path
 
 class TestVMapConverter(unittest.TestCase):
     """
-    Unit test suite to verify model decompilation, VMAP scanning,
+    Unit test suite to verify direct model loading, VMAP scanning,
     and VMAP-VSMART conversion routines.
     """
     def setUp(self):
@@ -45,18 +44,17 @@ class TestVMapConverter(unittest.TestCase):
             except:
                 pass
 
-    def test_01_model_decompilation(self):
-        """Test model decompilation to GLB."""
-        print("\n--- Running Model Decompilation Test ---")
+    def test_01_model_loading(self):
+        """Test direct model loading."""
+        print("\n--- Running Direct Model Loading Test ---")
+        from src.editors.smartprop_editor.viewport_3d.vmdl_reader import load_model
         model_path = "models/cs_italy/props/barrel/italy_barrel_wood_1.vmdl"
-        
-        # This will trigger decompile (either from VPK or cache)
-        glb_path = decompile_model_to_glb(model_path)
-        
-        self.assertIsNotNone(glb_path, "Decompilation failed to return a GLB path")
-        self.assertTrue(os.path.exists(glb_path), f"Decompiled GLB file does not exist: {glb_path}")
-        self.assertTrue(glb_path.endswith(".glb"), "Output file does not have .glb extension")
-        print(f"Decompilation success! GLB saved at: {glb_path} (Size: {os.path.getsize(glb_path)} bytes)")
+        mesh = load_model(model_path)
+        self.assertIsNotNone(mesh, "Direct load failed to return MeshData")
+        self.assertGreater(len(mesh.vertices), 0, "Loaded MeshData has 0 vertices")
+        print(f"Direct load success! {len(mesh.vertices)} vertices, {len(mesh.submeshes)} submeshes")
+
+
 
     def test_02_vmap_scanning(self):
         """Test scanning a VMAP for prop entities."""

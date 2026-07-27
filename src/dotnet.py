@@ -34,10 +34,8 @@ class DotNetPaths:
         self.zstd_sharp = base_dir / 'ZstdSharp.dll'
         self.keyvalues2_net = base_dir / 'Datamodel.NET.dll'
         self.compression = base_dir / 'K4os.Compression.LZ4.dll'
-        self.sharp_gltf = base_dir / 'SharpGLTF.Toolkit.dll'
-        self.sharp_gltf_core = base_dir / 'SharpGLTF.Core.dll'
-        self.sharp_gltf_runtime = base_dir / 'SharpGLTF.Runtime.dll'
         self.sharp_zstd = base_dir / 'SharpZstd.Interop.dll'
+
         self.skia_sharp = base_dir / 'SkiaSharp.dll'
         self.system_io_hashing = base_dir / 'System.IO.Hashing.dll'
         self.tiny_bc_sharp = base_dir / 'TinyBCSharp.dll'
@@ -141,30 +139,20 @@ class DotNetInterop:
         default_context = default_prop.GetValue(None)
         load_method = alc_type.GetMethod("LoadFromAssemblyPath", [System.String])
 
-        # Load dependencies first. SharpGLTF.Runtime (a Toolkit dependency used
-        # during model export) is preloaded explicitly; the remaining transitive
-        # deps of newer VRF (Blake3, Vortice.SpirvCross, native SkiaSharp/EXR/
-        # SPIRV, …) sit alongside VRF in src/external and are resolved by the
-        # LoadFrom context's directory probing when first touched.
+        # Load dependencies first.
         dependencies = [
             self.paths.valve_keyvalue,
             self.paths.zstd_sharp,
             self.paths.valve_pak,
             self.paths.system_io_hashing,
-            self.paths.sharp_gltf_core,
-            self.paths.sharp_gltf_runtime,
-            self.paths.sharp_gltf,
             self.paths.vrf
         ]
 
         for dep in dependencies:
             if not dep.exists():
-                # SharpGLTF.Runtime is absent from older bundles; skip rather
-                # than hard-fail so a legacy DLL set still loads.
-                if dep == self.paths.sharp_gltf_runtime:
-                    continue
                 raise FileNotFoundError(f"Assembly not found: {dep}")
             load_method.Invoke(default_context, [str(dep)])
+
 
         # Get required types
         vrf_assembly = System.Reflection.Assembly.LoadFrom(str(self.paths.vrf))
@@ -730,357 +718,23 @@ def _suppress_dotnet_console():
         System.Console.SetOut(orig_out)
         System.Console.SetError(orig_err)
 
-@synchronized(_decompile_lock)
-def decompile_model_to_glb(vmdl_path: str, context_addon: str = None) -> Optional[str]:
-    """
-    Decompiles a compiled model file (.vmdl_c) to a .glb file.
-    Saves the output .glb under userdata/SmartPropEditor/ organized by Addon vs Core.
-    """
-    import os
-    import re
-    from pathlib import Path
-    from typing import Optional
 
-    # Import settings/common dynamically to avoid circular dependencies
-    from src.common import get_cs2_path, SmartPropEditor_Path
-    from src.settings.common import get_addon_name
-
-    # Normalize paths
-    vmdl_path = vmdl_path.replace("\\", "/").strip("/")
-
-    if context_addon:
-        context_addon = context_addon.replace("\\", "/").replace("csgo_addons/", "").strip("/")
-
-    # Try to extract the addon name and convert to a relative path
-    addon_match = re.search(r'/csgo_addons/([^/]+)/(.*)$', '/' + vmdl_path, re.IGNORECASE)
-    csgo_match = re.search(r'/csgo/(.*)$', '/' + vmdl_path, re.IGNORECASE)
-
-    if addon_match:
-        addon_name = addon_match.group(1)
-        vmdl_path = addon_match.group(2)
-    elif csgo_match:
-        addon_name = context_addon or get_addon_name() or "addon"
-        vmdl_path = csgo_match.group(1)
-    else:
-        addon_name = context_addon or get_addon_name() or "addon"
-
-    if addon_name:
-        addon_name = addon_name.replace("\\", "/").replace("csgo_addons/", "").strip("/")
-
-    if not vmdl_path.endswith(".vmdl") and not vmdl_path.endswith(".vmdl_c"):
-        vmdl_path += ".vmdl"
-        
-    if vmdl_path.endswith(".vmdl_c"):
-        vmdl_c_path = vmdl_path
-        vmdl_path = vmdl_path[:-2]
-    else:
-        vmdl_c_path = vmdl_path + "_c"
-        
+if __name__ == "__main__":
+    from src.settings.main import get_cs2_path
     cs2_path = get_cs2_path()
-    if not cs2_path:
-        return None
-    
-    # Define source paths
-    addon_vmdl_c = os.path.join(cs2_path, "game", "csgo_addons", addon_name, vmdl_c_path)
-    core_vmdl_c = os.path.join(cs2_path, "game", "csgo", vmdl_c_path)
-    vpk_path = os.path.join(cs2_path, "game", "csgo", "pak01_dir.vpk")
-    
-    is_addon_model = False
-    source_fs_path = None
-    in_vpk = False
-    
-    # Locate the model
-    if os.path.exists(addon_vmdl_c):
-        is_addon_model = True
-        source_fs_path = addon_vmdl_c
-    elif os.path.exists(core_vmdl_c):
-        is_addon_model = False
-        source_fs_path = core_vmdl_c
+    vpk_path = os.path.join(cs2_path, 'game', 'csgo', 'pak01_dir.vpk') if cs2_path else None
+    if vpk_path and os.path.exists(vpk_path):
+        vpk_file = r'sounds\items\healthshot_thud_01.vsnd_c'
+        data, ext = decode_vsnd(vpk_path, vpk_file)
+        if data:
+            assert len(data) > 0, "Decoded data is empty"
+            assert data.startswith(b'RIFF') or data.startswith(b'ID3') or data.startswith(b'\xff\xfb') or data.startswith(b'\xff\xf3') or data.startswith(b'\xff\xf2'), f"Unexpected header: {data[:4]}"
+            print(f"Self-check passed: decoded {vpk_file} -> {len(data)} bytes ({ext})")
+        else:
+            print(f"Self-check skipped: file {vpk_file} not found in VPK")
     else:
-        in_vpk = True
-        is_addon_model = False
-        
-    # Determine target cache path
-    dest_subfolder = os.path.join("cache", addon_name if is_addon_model else "csgo")
-    glb_subpath = vmdl_path.rsplit(".", 1)[0] + ".glb"
-    output_glb_path = os.path.join(str(SmartPropEditor_Path), dest_subfolder, glb_subpath)
-    
-    # Check cache validity
-    if os.path.exists(output_glb_path):
-        if in_vpk:
-            return output_glb_path
-        elif source_fs_path:
-            src_mtime = os.path.getmtime(source_fs_path)
-            dest_mtime = os.path.getmtime(output_glb_path)
-            if dest_mtime > src_mtime:
-                return output_glb_path
-                
-    # Extract bytes
-    data = None
-    if source_fs_path:
-        try:
-            with open(source_fs_path, "rb") as f:
-                data = f.read()
-        except Exception as e:
-            print(f"Error reading filesystem model {source_fs_path}: {e}")
-            return None
-    elif in_vpk:
-        # Load interop and extract from VPK
-        interop = DotNetInterop()
-        interop._init_pythonnet()
-        extractor = VPKExtractor(interop)
-        extractor._ensure_vrf_loaded()
-        try:
-            data = extractor.extract_file(vpk_path, vmdl_c_path)
-        except Exception as e:
-            print(f"Error extracting {vmdl_c_path} from VPK: {e}")
-            return None
-            
-    if data is None:
-        return None
-        
-    if not isinstance(data, bytes):
-        data = bytes(data)
-        
-    # Decompile using GltfModelExporter (ensure assemblies loaded first)
-    setup_vrf()
-    
-    import System
-    from System.IO import MemoryStream
-    
-    # Resolve types from loaded assemblies
-    FileExtract = System.Type.GetType("ValveResourceFormat.IO.FileExtract, ValveResourceFormat")
-    if not FileExtract:
-        vrf_assembly = System.Reflection.Assembly.Load("ValveResourceFormat")
-    else:
-        vrf_assembly = FileExtract.Assembly
-    NullFileLoaderType = vrf_assembly.GetType("ValveResourceFormat.IO.NullFileLoader")
-    GameFileLoaderType = vrf_assembly.GetType("ValveResourceFormat.IO.GameFileLoader")
-    GltfModelExporterType = vrf_assembly.GetType("ValveResourceFormat.IO.GltfModelExporter")
-    Resource = vrf_assembly.GetType("ValveResourceFormat.Resource")
+        print("Self-check skipped: CS2 or pak01_dir.vpk not found")
 
-    # Build a file loader that resolves the model's external references
-    # (materials, textures, and any non-embedded meshes) the way Source 2 Viewer
-    # does.  GameFileLoader walks up from the current file to find gameinfo.gi and
-    # mounts the core game search paths + VPKs; the addon's own game folder is
-    # added explicitly so addon-local materials/textures resolve too.  Without it
-    # (NullFileLoader) the export has geometry only — untextured, and empty for
-    # models whose mesh lives in a separate .vmesh_c.  Any failure falls back to
-    # NullFileLoader so decompilation still yields geometry.
-    current_file_name = source_fs_path or os.path.join(cs2_path, "game", "csgo", vmdl_c_path)
-    file_loader = None
-    if GameFileLoaderType is not None:
-        try:
-            with _suppress_dotnet_console():
-                file_loader = System.Activator.CreateInstance(GameFileLoaderType, None, current_file_name)
-                # Mount both the model's own addon folder and the active addon folder
-                active_addon = get_addon_name() or "addon"
-                for add_name in set([addon_name, active_addon]):
-                    addon_game_folder = os.path.join(cs2_path, "game", "csgo_addons", add_name)
-                    if os.path.isdir(addon_game_folder):
-                        file_loader.AddDiskPathToSearch(addon_game_folder)
-        except Exception as e:
-            print(f"GameFileLoader unavailable ({e}); falling back to NullFileLoader.")
-            file_loader = None
-    if file_loader is None:
-        file_loader = System.Activator.CreateInstance(NullFileLoaderType)
-
-    resource = System.Activator.CreateInstance(Resource)
-    try:
-        resource.FileName = current_file_name
-    except Exception:
-        pass
-    ms = MemoryStream(data)
-    try:
-        resource.Read(ms)
-        exporter = System.Activator.CreateInstance(GltfModelExporterType, file_loader)
-        
-        # Ensure output folder exists
-        os.makedirs(os.path.dirname(output_glb_path), exist_ok=True)
-        import System.Threading
-        token = getattr(System.Threading.CancellationToken, "None")
-
-        # Try exporting with materials/textures first; VRF's per-reference
-        # Console spam is silenced during the export.
-        with _suppress_dotnet_console():
-            try:
-                exporter.ExportMaterials = True
-                exporter.Export(resource, output_glb_path, token)
-            except Exception as e:
-                print(f"Failed to decompile with materials: {e}. Retrying without materials...")
-                exporter.ExportMaterials = False
-                exporter.Export(resource, output_glb_path, token)
-            
-        if os.path.exists(output_glb_path):
-            return output_glb_path
-        return None
-    except Exception as e:
-        msg = str(e).splitlines()[0] if str(e) else "Error"
-        print(f"[model_browser] Decompilation skipped for {vmdl_path}: {msg}")
-        return None
-    finally:
-        ms.Dispose()
-        if hasattr(resource, 'Dispose'):
-            resource.Dispose()
-
-@synchronized(_decompile_lock)
-def decompile_texture_to_png(vtex_path: str) -> Optional[str]:
-    """
-    Decompiles a compiled texture (.vtex_c) to a .png file.
-    Saves the output .png under userdata/SmartPropEditor/cache/ organized by Addon vs csgo.
-    """
-    import os
-    from pathlib import Path
-    from typing import Optional
-    import System
-    from System.IO import MemoryStream
-    from src.common import get_cs2_path, SmartPropEditor_Path
-    from src.settings.common import get_addon_name
-    
-    # Normalize paths
-    vtex_path = vtex_path.replace("\\", "/").strip("/")
-    if not vtex_path.endswith(".vtex") and not vtex_path.endswith(".vtex_c"):
-        vtex_path += ".vtex"
-        
-    if vtex_path.endswith(".vtex_c"):
-        vtex_c_path = vtex_path
-        vtex_path = vtex_path[:-2]
-    else:
-        vtex_c_path = vtex_path + "_c"
-        
-    cs2_path = get_cs2_path()
-    if not cs2_path:
-        return None
-        
-    addon_name = get_addon_name() or "addon"
-    
-    # Define source paths
-    addon_vtex_c = os.path.join(cs2_path, "game", "csgo_addons", addon_name, vtex_c_path)
-    core_vtex_c = os.path.join(cs2_path, "game", "csgo", vtex_c_path)
-    vpk_path = os.path.join(cs2_path, "game", "csgo", "pak01_dir.vpk")
-    
-    is_addon_texture = False
-    source_fs_path = None
-    in_vpk = False
-    
-    # Locate the texture
-    if os.path.exists(addon_vtex_c):
-        is_addon_texture = True
-        source_fs_path = addon_vtex_c
-    elif os.path.exists(core_vtex_c):
-        is_addon_texture = False
-        source_fs_path = core_vtex_c
-    else:
-        in_vpk = True
-        is_addon_texture = False
-        
-    # Determine target cache path
-    dest_subfolder = os.path.join("cache", addon_name if is_addon_texture else "csgo")
-    png_subpath = vtex_path.rsplit(".", 1)[0] + ".png"
-    output_png_path = os.path.join(str(SmartPropEditor_Path), dest_subfolder, png_subpath)
-    
-    # Check cache validity
-    if os.path.exists(output_png_path):
-        if in_vpk:
-            return output_png_path
-        elif source_fs_path:
-            src_mtime = os.path.getmtime(source_fs_path)
-            dest_mtime = os.path.getmtime(output_png_path)
-            if dest_mtime > src_mtime:
-                return output_png_path
-                
-    # Extract bytes
-    data = None
-    if source_fs_path:
-        try:
-            with open(source_fs_path, "rb") as f:
-                data = f.read()
-        except Exception as e:
-            print(f"Error reading filesystem texture {source_fs_path}: {e}")
-            return None
-    elif in_vpk:
-        from src.dotnet import DotNetInterop, VPKExtractor
-        interop = DotNetInterop()
-        interop._init_pythonnet()
-        extractor = VPKExtractor(interop)
-        extractor._ensure_vrf_loaded()
-        try:
-            data = extractor.extract_file(vpk_path, vtex_c_path)
-        except Exception as e:
-            print(f"Error extracting {vtex_c_path} from VPK: {e}")
-            return None
-            
-    if data is None:
-        return None
-        
-    if not isinstance(data, bytes):
-        data = bytes(data)
-        
-    # Decompile using VRF
-    setup_vrf()
-    
-    FileExtract = System.Type.GetType("ValveResourceFormat.IO.FileExtract, ValveResourceFormat")
-    if not FileExtract:
-        vrf_assembly = System.Reflection.Assembly.Load("ValveResourceFormat")
-        Resource = vrf_assembly.GetType("ValveResourceFormat.Resource")
-        NullFileLoaderType = vrf_assembly.GetType("ValveResourceFormat.IO.NullFileLoader")
-    else:
-        vrf_assembly = FileExtract.Assembly
-        Resource = vrf_assembly.GetType("ValveResourceFormat.Resource")
-        NullFileLoaderType = vrf_assembly.GetType("ValveResourceFormat.IO.NullFileLoader")
-        
-    resource = System.Activator.CreateInstance(Resource)
-    resource.FileName = vtex_path
-    
-    ms = MemoryStream(data)
-    try:
-        resource.Read(ms)
-        
-        # Find FileExtract.Extract method
-        extract_method = None
-        for m in FileExtract.GetMethods():
-            if m.Name == "Extract":
-                extract_method = m
-                break
-        if extract_method is None:
-            print("Could not find FileExtract.Extract method.")
-            return None
-            
-        null_file_loader = System.Activator.CreateInstance(NullFileLoaderType)
-        params = extract_method.GetParameters()
-        args = System.Array.CreateInstance(System.Object, len(params))
-        args[0] = resource
-        args[1] = null_file_loader
-        for i in range(2, len(params)):
-            args[i] = None
-            
-        content_file = extract_method.Invoke(None, args)
-        if content_file:
-            # Check SubFiles first
-            if hasattr(content_file, 'SubFiles') and content_file.SubFiles and content_file.SubFiles.Count > 0:
-                sub = content_file.SubFiles[0]
-                sub_data = sub.Extract()
-                if sub_data:
-                    out_bytes = bytes(sub_data)
-                    os.makedirs(os.path.dirname(output_png_path), exist_ok=True)
-                    with open(output_png_path, "wb") as f:
-                        f.write(out_bytes)
-                    return output_png_path
-            # Fallback to Data property
-            elif hasattr(content_file, 'Data') and content_file.Data:
-                out_bytes = bytes(content_file.Data)
-                os.makedirs(os.path.dirname(output_png_path), exist_ok=True)
-                with open(output_png_path, "wb") as f:
-                    f.write(out_bytes)
-                return output_png_path
-        return None
-    except Exception as e:
-        print(f"Error decompiling texture {vtex_path}: {e}")
-        return None
-    finally:
-        ms.Dispose()
-        if hasattr(resource, 'Dispose'):
-            resource.Dispose()
 
 if __name__ == "__main__":
     from src.settings.main import get_cs2_path

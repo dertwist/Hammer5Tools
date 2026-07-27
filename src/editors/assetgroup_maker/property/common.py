@@ -97,7 +97,7 @@ class PropertyReplacement(PropertyBase):
 
         # Init arrow button
         self.search_button = Button()
-        self.search_button.set_icon(":/icons/arrow_forward_ios_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg")
+        self.search_button.set_icon(":/icons/arrow_forward_ios_24dp.svg")
         self.search_button.set_size(24,24)
         self.search_button.setEnabled(False)
         self.layout().addWidget(self.search_button)

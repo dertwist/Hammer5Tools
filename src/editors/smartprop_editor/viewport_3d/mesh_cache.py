@@ -1,9 +1,10 @@
 """
-Mesh loading, GPU buffer management, and asynchronous model decompilation.
-Handles GLB → CPU mesh data → GPU upload, with caching at every level.
+Mesh data containers, GPU buffer management, and asynchronous model loading.
+Handles compiled model → CPU mesh data → GPU upload, with caching at every level.
+
+The CPU half — reading .vmdl_c/.vmat_c/.vtex_c — lives in :mod:`vmdl_reader`.
 """
 import os
-import traceback
 from typing import Optional, Dict
 from dataclasses import dataclass, field
 
@@ -12,17 +13,18 @@ import numpy as np
 from PySide6.QtCore import QObject, Signal, QRunnable, QThreadPool, Slot
 
 
-# CPU-side mesh data (loaded from GLB, not yet on GPU)
+# CPU-side mesh data (read from compiled assets, not yet on GPU)
 
 @dataclass
 class MaterialData:
-    """CPU-side PBR material extracted from a glTF/GLB material.
+    """CPU-side PBR material built from a Source 2 .vmat_c.
 
     Textures are kept as ready-to-upload RGBA uint8 arrays (already downscaled
     and vertically flipped for OpenGL) so the GL thread only has to call
     glTexImage2D — no PIL decode on upload, and no wasteful PNG re-encode during
     load.  Channel conventions follow the glTF 2.0 metallic-roughness spec, which
-    is what VRF's GltfModelExporter writes:
+    is what the viewport shader expects; :mod:`vmdl_reader` maps Source's own
+    layout onto it:
         base_color_img  — sRGB albedo (may carry alpha for MASK/BLEND)
         normal_img      — tangent-space normal map (linear RGB, +Y up)
         mr_img          — G = roughness, B = metalness (linear)
@@ -42,6 +44,9 @@ class MaterialData:
     alpha_mode: str = "OPAQUE"     # "OPAQUE" | "MASK" | "BLEND"
     alpha_cutoff: float = 0.5
     double_sided: bool = False
+    wrap_u: int = 0
+    wrap_v: int = 0
+
 
 
 @dataclass
@@ -54,7 +59,7 @@ class SubMeshData:
 
 @dataclass
 class MeshData:
-    """CPU-side mesh data extracted from a GLB file."""
+    """CPU-side mesh data, in raw Source space (Z-up, inches)."""
     vertices: np.ndarray          # (N, 3) float32
     normals: np.ndarray           # (N, 3) float32
     indices: np.ndarray           # (M,) uint32
@@ -79,6 +84,8 @@ class GPUMaterial:
     alpha_mode: str = "OPAQUE"
     alpha_cutoff: float = 0.5
     double_sided: bool = False
+    wrap_u: int = 0
+    wrap_v: int = 0
 
     @property
     def is_transparent(self) -> bool:
@@ -110,271 +117,9 @@ class GPUMesh:
         return any(sm.material.base_tex for sm in self.submeshes)
 
 
-# glTF -> Source coordinate conversion
-# VRF's GltfModelExporter writes geometry in glTF space: Y-up and in *metres*
-# (1 Source inch = 0.0254 m).  trimesh preserves that frame, and load_glb() bakes
-# the node transform into the vertices, so the loaded verts are Y-up metres.  The
-# rest of the viewport works in Source space (Z-up, inches) — grid cells, gizmo,
-# positions from the document tree — and only converts to GL at draw time via
-# SOURCE2_TO_GL.  So undo VRF's conversion here and hand back geometry in raw
-# Source space (Z-up, inches).
-#
-# VRF cyclically permutes the axes on export: glTF = (S_Y, S_Z, S_X), i.e. the
-# Source length axis (X) becomes glTF X, width (Y) becomes glTF Z, and up (Z)
-# becomes glTF Y.  The inverse (glTF -> Source) is therefore:
-#       Source = (glTF_Z, glTF_X, glTF_Y) / 0.0254
-# This is a proper rotation (det +1): the model comes back upright (roof up /
-# wheels down) and un-mirrored, with its geometry in the same Source frame as the
-# per-element positions read from the .vsmart tree.  Verified against
-# cargovan_01: the body footprint (Source X ±39, Y [-90,121]) contains all four
-# wheel elements (X ±35, Y +99/-56), so the assembly lines up.  Getting the up
-# sign wrong flips the model upside down; swapping the horizontal axes rotates
-# the body 90° away from the tree-driven wheel positions.
-_VRF_GLTF_SCALE = 0.0254  # Source inch -> glTF metre
-# Axis-swap (proper rotation), used for direction vectors (normals).
-_GLTF_TO_SOURCE_ROT = np.array([
-    [ 0.0,  0.0,  1.0],
-    [ 1.0,  0.0,  0.0],
-    [ 0.0,  1.0,  0.0],
-], dtype=np.float32)
-# Axis-swap + inch scale, used for positions.
-_GLTF_TO_SOURCE = _GLTF_TO_SOURCE_ROT / _VRF_GLTF_SCALE
-
-
-# Material extraction helpers
-
-# Preview textures are capped to this size.  Downscaling on the (background) load
-# thread bounds both VRAM and the per-texture CPU cost.
+# Preview textures are capped to this size.  Downscaling on the (background)
+# load thread bounds both VRAM and the per-texture CPU cost.
 MAX_TEXTURE_DIM = 1024
-
-
-def _image_to_rgba_array(img, max_dim: int = None) -> Optional[np.ndarray]:
-    """Convert a trimesh/PIL image to a GL-ready RGBA uint8 array, or None.
-
-    Downscales to ``max_dim`` (default ``MAX_TEXTURE_DIM``), converts to RGBA and
-    flips vertically so the GL upload can hand the bytes straight to
-    glTexImage2D.  Runs on the load worker thread — deliberately doing all the
-    pixel work here (not a PNG round-trip) is the bulk of the loading speed-up.
-    """
-    if img is None:
-        return None
-    if max_dim is None:
-        max_dim = MAX_TEXTURE_DIM
-    try:
-        from PIL import Image
-        im = img
-        if im.width > max_dim or im.height > max_dim:
-            im = im.copy()
-            # Bilinear is plenty for a preview and far cheaper than Lanczos.
-            im.thumbnail((max_dim, max_dim), Image.BILINEAR)
-        im = im.convert("RGBA").transpose(Image.FLIP_TOP_BOTTOM)  # GL is bottom-up
-        return np.asarray(im, dtype=np.uint8)
-    except Exception:
-        return None
-
-
-def _rgba_factor(value, default):
-    """Normalise a trimesh color factor to a 0..1 float tuple.
-
-    trimesh stores baseColorFactor as uint8 RGBA (0..255) but emissiveFactor as
-    float (0..1); this normalises either form.  ``default`` sets the length.
-    """
-    if value is None:
-        return default
-    try:
-        arr = np.asarray(value, dtype=np.float64).flatten()
-    except Exception:
-        return default
-    if arr.size == 0:
-        return default
-    # Heuristic: any component > 1 means the values are 0..255 integers.
-    if np.max(arr) > 1.0:
-        arr = arr / 255.0
-    out = list(default)
-    for i in range(min(len(out), arr.size)):
-        out[i] = float(arr[i])
-    return tuple(out)
-
-
-def _extract_material(geom, cache: dict, max_texture_dim: int = None,
-                      base_color_only: bool = False) -> MaterialData:
-    """Build a MaterialData for a trimesh geometry, deduped by material identity.
-
-    ``cache`` maps id(trimesh_material) -> MaterialData so instances that share a
-    material don't re-process the same textures.  Translucency comes solely from
-    the glTF material's own ``alphaMode`` / base alpha as written by VRF — no name
-    guessing, which wrongly tagged opaque "window"/"glass"/"blend"-named frame
-    materials as see-through.
-
-    ``base_color_only`` skips the normal/MR/AO/emissive maps entirely, and
-    ``max_texture_dim`` caps the base map.  Callers that shade with albedo alone
-    (the model browser's thumbnails) use these to avoid decoding four extra
-    full-size images per material that they would only throw away.
-    """
-    mat_obj = getattr(getattr(geom, "visual", None), "material", None)
-    key = id(mat_obj)
-    if key in cache:
-        return cache[key]
-
-    md = MaterialData()
-    if mat_obj is not None:
-        md.name = str(getattr(mat_obj, "name", "") or "")
-        # glTF PBRMaterial exposes the named textures; SimpleMaterial only .image.
-        base_img = getattr(mat_obj, "baseColorTexture", None)
-        if base_img is None:
-            base_img = getattr(mat_obj, "image", None)
-        md.base_color_img = _image_to_rgba_array(base_img, max_texture_dim)
-        if not base_color_only:
-            md.normal_img = _image_to_rgba_array(getattr(mat_obj, "normalTexture", None), max_texture_dim)
-            md.mr_img = _image_to_rgba_array(getattr(mat_obj, "metallicRoughnessTexture", None), max_texture_dim)
-            md.ao_img = _image_to_rgba_array(getattr(mat_obj, "occlusionTexture", None), max_texture_dim)
-            md.emissive_img = _image_to_rgba_array(getattr(mat_obj, "emissiveTexture", None), max_texture_dim)
-
-        md.base_color_factor = _rgba_factor(getattr(mat_obj, "baseColorFactor", None), [1.0, 1.0, 1.0, 1.0])
-        mf = getattr(mat_obj, "metallicFactor", None)
-        md.metallic_factor = float(mf) if mf is not None else 1.0
-        rf = getattr(mat_obj, "roughnessFactor", None)
-        md.roughness_factor = float(rf) if rf is not None else 1.0
-        md.emissive_factor = _rgba_factor(getattr(mat_obj, "emissiveFactor", None), [0.0, 0.0, 0.0])
-
-        am = getattr(mat_obj, "alphaMode", None)
-        if isinstance(am, bytes):
-            am = am.decode("ascii", "ignore")
-        md.alpha_mode = str(am).upper() if am else "OPAQUE"
-        ac = getattr(mat_obj, "alphaCutoff", None)
-        md.alpha_cutoff = float(ac) if ac is not None else 0.5
-        ds = getattr(mat_obj, "doubleSided", None)
-        md.double_sided = bool(ds) if ds is not None else False
-
-    cache[key] = md
-    return md
-
-
-# GLB loader (using trimesh)
-
-def load_glb(path: str, max_texture_dim: int = None,
-             base_color_only: bool = False) -> Optional[MeshData]:
-    """Load a .glb file and return MeshData, or None on failure.
-
-    ``max_texture_dim`` / ``base_color_only`` bound the per-material texture work;
-    see :func:`_extract_material`.  The defaults preserve full-quality loading for
-    the viewport.
-    """
-    try:
-        import trimesh
-
-        scene = trimesh.load(path, force='scene', process=False)
-
-        material_cache: dict = {}
-
-        all_vertices = []
-        all_normals = []
-        all_uvs = []
-        all_indices = []
-        submeshes = []       # SubMeshData per instance (index range + material)
-        offset = 0           # running vertex offset
-        index_cursor = 0     # running index (element) offset
-
-        # Pair every geometry *instance* with its world transform via the scene
-        # graph.  Iterating scene.geometry directly and looking transforms up by
-        # geometry key is unreliable — trimesh's node names don't always match
-        # geometry keys (e.g. a mesh split by material yields '.foo' and
-        # '.foo_1', but the graph nodes are '.foo_ab12' / '.foo_cd34').  Any
-        # instance that misses its transform stays in a different coordinate
-        # space/scale from its siblings, so half the model ends up 39x too big.
-        instances = []
-        try:
-            node_names = list(scene.graph.nodes_geometry)
-        except Exception:
-            node_names = []
-        if node_names:
-            for node_name in node_names:
-                try:
-                    transform, geom_name = scene.graph[node_name]
-                except Exception:
-                    continue
-                geom = scene.geometry.get(geom_name)
-                if isinstance(geom, trimesh.Trimesh):
-                    instances.append((geom, np.array(transform, dtype=np.float32)))
-        else:
-            # No usable scene graph — take geometries as-is (identity transform).
-            for geom in scene.geometry.values():
-                if isinstance(geom, trimesh.Trimesh):
-                    instances.append((geom, np.eye(4, dtype=np.float32)))
-
-        # Flatten all instances into one buffer, baking each world transform so
-        # every instance shares the same glTF world space (Y-up, metres).
-        for geom, transform in instances:
-            verts = np.array(geom.vertices, dtype=np.float32)
-            faces = np.array(geom.faces, dtype=np.uint32)
-            norms = (np.array(geom.vertex_normals, dtype=np.float32)
-                     if geom.vertex_normals is not None and len(geom.vertex_normals) > 0
-                     else np.zeros_like(verts))
-
-            if not np.allclose(transform, np.eye(4)):
-                ones = np.ones((len(verts), 1), dtype=np.float32)
-                verts = (np.hstack([verts, ones]) @ transform.T)[:, :3].astype(np.float32)
-                # Rotate normals by the transform's linear part (uniform scale +
-                # rotation); magnitude is fixed up by the final normalize.
-                norms = (norms @ transform[:3, :3].T).astype(np.float32)
-
-            uvs = None
-            if geom.visual and hasattr(geom.visual, 'uv') and geom.visual.uv is not None:
-                uvs = np.array(geom.visual.uv, dtype=np.float32)
-
-            all_vertices.append(verts)
-            all_normals.append(norms)
-            if uvs is not None and len(uvs) == len(verts):
-                all_uvs.append(uvs)
-            else:
-                all_uvs.append(np.zeros((len(verts), 2), dtype=np.float32))
-            all_indices.append(faces + offset)
-
-            # Record this instance as a submesh (index range + its material) so
-            # every material renders with its own textures / blend mode.
-            n_idx = int(faces.size)   # (F, 3) -> F*3 indices
-            material = _extract_material(
-                geom, material_cache, max_texture_dim, base_color_only)
-            submeshes.append(SubMeshData(index_offset=index_cursor,
-                                         index_count=n_idx,
-                                         material=material))
-            index_cursor += n_idx
-            offset += len(verts)
-
-        if not all_vertices:
-            return None
-
-        vertices = np.vstack(all_vertices)
-        normals = np.vstack(all_normals)
-        uvs_arr = np.vstack(all_uvs) if all_uvs else None
-        indices = np.vstack(all_indices).flatten().astype(np.uint32)
-
-        # Undo VRF's glTF (Y-up, metres) frame -> raw Source (Z-up, inches),
-        # so downstream transforms and the grid share one coordinate system.
-        vertices = (vertices @ _GLTF_TO_SOURCE.T).astype(np.float32)
-        normals = (normals @ _GLTF_TO_SOURCE_ROT.T).astype(np.float32)
-        # Renormalize: baking a scaled node transform changed normal lengths.
-        n_len = np.linalg.norm(normals, axis=1, keepdims=True)
-        n_len[n_len < 1e-8] = 1.0
-        normals = (normals / n_len).astype(np.float32)
-
-        bbox_min = vertices.min(axis=0)
-        bbox_max = vertices.max(axis=0)
-
-        return MeshData(
-            vertices=vertices,
-            normals=normals,
-            indices=indices,
-            uvs=uvs_arr,
-            bbox_min=bbox_min,
-            bbox_max=bbox_max,
-            submeshes=submeshes,
-        )
-
-    except Exception as e:
-        print(f"[MeshCache] Failed to load GLB {path}: {e}")
-        traceback.print_exc()
-        return None
 
 
 # Async load worker
@@ -386,19 +131,18 @@ class _ModelLoadSignals(QObject):
 
 
 class _ModelLoadWorker(QRunnable):
-    """Background worker: decompile (if needed) then parse+process the GLB.
+    """Background worker: read the compiled model straight into MeshData.
 
-    Doing the whole heavy path — VRF decompile, trimesh parse, and texture
-    decode/downscale — off the UI thread keeps painting smooth.  Only the final
-    GPU upload happens on the GL thread.  When ``glb_path`` is already known
-    (cache hit) the decompile step is skipped entirely.
+    Doing the whole heavy path — VRF block reads and texture decode/downscale —
+    off the UI thread keeps painting smooth.  Only the final GPU upload happens
+    on the GL thread.  There is no decompile step and no disk cache to consult;
+    see :mod:`vmdl_reader`.
     """
 
-    def __init__(self, model_resource_path: str, context_addon: str = None, glb_path: str = None):
+    def __init__(self, model_resource_path: str, context_addon: str = None):
         super().__init__()
         self.model_resource_path = model_resource_path
         self.context_addon = context_addon
-        self.glb_path = glb_path
         self.signals = _ModelLoadSignals()
         self.setAutoDelete(True)
 
@@ -406,18 +150,8 @@ class _ModelLoadWorker(QRunnable):
     def run(self):
         mesh = None
         try:
-            glb = self.glb_path
-            if not glb:
-                from src.dotnet import decompile_model_to_glb
-                glb = decompile_model_to_glb(self.model_resource_path, self.context_addon)
-            if glb and os.path.exists(glb):
-                mesh = load_glb(glb)   # trimesh parse + texture processing (heavy)
-                if mesh is None:
-                    # Empty/invalid GLB — remove so a later request re-decompiles.
-                    try:
-                        os.remove(glb)
-                    except Exception:
-                        pass
+            from src.editors.smartprop_editor.viewport_3d.vmdl_reader import load_model
+            mesh = load_model(self.model_resource_path, self.context_addon)
         except Exception as e:
             print(f"[MeshCache] Model load failed for {self.model_resource_path}: {e}")
             mesh = None
@@ -428,11 +162,11 @@ class _ModelLoadWorker(QRunnable):
 
 class MeshCache(QObject):
     """
-    Manages model decompilation, GLB loading, GPU upload, and caching.
+    Manages model loading, GPU upload, and caching.
 
     Workflow:
-        1. request_model(resource_path) → queues decompilation if needed
-        2. On decompilation complete → loads GLB into MeshData (CPU)
+        1. request_model(resource_path) → queues a background read
+        2. On read complete → MeshData (CPU) is stashed for upload
         3. On next paint → upload_pending() pushes to GPU (must be in GL context)
         4. get_gpu_mesh(resource_path) → returns GPUMesh or None
     """
@@ -445,12 +179,12 @@ class MeshCache(QObject):
         self._gpu_cache: Dict[str, GPUMesh] = {}
         self._pending_upload: Dict[str, MeshData] = {}    # Waiting for GL context
         self._pending_unload: Dict[str, GPUMesh] = {}     # Waiting to be freed in GL context
-        self._loading: set = set()                         # Currently decompiling/loading
-        self._failed: set = set()                          # Failed decompilations
+        self._loading: set = set()                         # Currently loading
+        self._failed: set = set()                          # Failed loads
         self._thread_pool = QThreadPool()
-        # Cap concurrency: first-time decompiles serialise on VRF's global lock,
-        # but already-cached GLBs are parsed/textured in parallel, so a few worker
-        # threads speed up multi-model scenes without oversubscribing the CPU.
+        # Cap concurrency: reads run fully in parallel (each worker owns its VRF
+        # file loader), so a few worker threads speed up multi-model scenes
+        # without oversubscribing the CPU.
         cpu = os.cpu_count() or 4
         self._thread_pool.setMaxThreadCount(max(2, min(4, cpu - 1)))
 
@@ -468,51 +202,12 @@ class MeshCache(QObject):
         # Previously failed
         if resource_path in self._failed:
             return
-        # Dispatch a background worker that does the whole load (decompile if the
-        # GLB isn't cached, then parse + process textures) off the UI thread.  The
-        # cheap cache lookup happens here so the worker can skip decompilation on a
-        # hit; everything expensive runs in run().
-        glb_path = self._find_cached_glb(resource_path, context_addon)
+        # Dispatch a background worker that does the whole load (VRF block reads
+        # + texture decode) off the UI thread.
         self._loading.add(resource_path)
-        worker = _ModelLoadWorker(resource_path, context_addon, glb_path)
+        worker = _ModelLoadWorker(resource_path, context_addon)
         worker.signals.loaded.connect(self._on_model_loaded)
         self._thread_pool.start(worker)
-
-    def _find_cached_glb(self, resource_path: str, context_addon: str = None) -> Optional[str]:
-        """Check if a GLB file already exists in the cache."""
-        from src.common import SmartPropEditor_Path
-        from src.settings.common import get_addon_name
-
-        import re
-
-        normalized = resource_path.replace("\\", "/").strip("/")
-        
-        # Try to extract the addon name and convert to a relative path
-        addon_match = re.search(r'/csgo_addons/([^/]+)/(.*)$', '/' + normalized, re.IGNORECASE)
-        csgo_match = re.search(r'/csgo/(.*)$', '/' + normalized, re.IGNORECASE)
-        
-        addon_name = context_addon or get_addon_name() or "addon"
-        if addon_match:
-            addon_name = addon_match.group(1)
-            normalized = addon_match.group(2)
-        elif csgo_match:
-            normalized = csgo_match.group(1)
-
-        if not normalized.endswith(".vmdl"):
-            if normalized.endswith(".vmdl_c"):
-                normalized = normalized[:-2]
-            else:
-                normalized += ".vmdl"
-
-        glb_subpath = normalized.rsplit(".", 1)[0] + ".glb"
-
-        # Check addon cache first, then csgo cache
-        for subfolder in [addon_name, "csgo"]:
-            candidate = os.path.join(str(SmartPropEditor_Path), "cache", subfolder, glb_subpath)
-            if os.path.exists(candidate):
-                return candidate
-
-        return None
 
     def _on_model_loaded(self, resource_path: str, mesh_data):
         """Runs on the UI thread when a load worker finishes (queued signal).
@@ -649,11 +344,11 @@ class MeshCache(QObject):
             gpu_mat = gpu_material_cache.get(key)
             if gpu_mat is None:
                 gpu_mat = GPUMaterial(
-                    base_tex=self._upload_texture(mat.base_color_img),
-                    normal_tex=self._upload_texture(mat.normal_img),
-                    mr_tex=self._upload_texture(mat.mr_img),
-                    ao_tex=self._upload_texture(mat.ao_img),
-                    emissive_tex=self._upload_texture(mat.emissive_img),
+                    base_tex=self._upload_texture(mat.base_color_img, mat.wrap_u, mat.wrap_v),
+                    normal_tex=self._upload_texture(mat.normal_img, mat.wrap_u, mat.wrap_v),
+                    mr_tex=self._upload_texture(mat.mr_img, mat.wrap_u, mat.wrap_v),
+                    ao_tex=self._upload_texture(mat.ao_img, mat.wrap_u, mat.wrap_v),
+                    emissive_tex=self._upload_texture(mat.emissive_img, mat.wrap_u, mat.wrap_v),
                     base_color_factor=mat.base_color_factor,
                     metallic_factor=mat.metallic_factor,
                     roughness_factor=mat.roughness_factor,
@@ -661,6 +356,8 @@ class MeshCache(QObject):
                     alpha_mode=mat.alpha_mode,
                     alpha_cutoff=mat.alpha_cutoff,
                     double_sided=mat.double_sided,
+                    wrap_u=mat.wrap_u,
+                    wrap_v=mat.wrap_v,
                 )
                 for tex in (gpu_mat.base_tex, gpu_mat.normal_tex, gpu_mat.mr_tex,
                             gpu_mat.ao_tex, gpu_mat.emissive_tex):
@@ -688,7 +385,7 @@ class MeshCache(QObject):
             bbox_max=mesh_data.bbox_max.copy(),
         )
 
-    def _upload_texture(self, img_data: Optional[np.ndarray]) -> int:
+    def _upload_texture(self, img_data: Optional[np.ndarray], wrap_u: int = 0, wrap_v: int = 0) -> int:
         """Upload a pre-decoded RGBA uint8 array as a 2D texture; 0 if absent.
 
         All the expensive pixel work (decode, downscale, flip) already happened on
@@ -705,14 +402,25 @@ class MeshCache(QObject):
                             0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, img_data)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR_MIPMAP_LINEAR)
             GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_REPEAT)
-            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_REPEAT)
+
+            wrap_modes = {
+                0: GL.GL_REPEAT,
+                1: GL.GL_CLAMP_TO_EDGE,
+                2: GL.GL_MIRRORED_REPEAT,
+                3: GL.GL_CLAMP_TO_BORDER,
+            }
+            gl_wrap_u = wrap_modes.get(wrap_u, GL.GL_REPEAT)
+            gl_wrap_v = wrap_modes.get(wrap_v, GL.GL_REPEAT)
+
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, gl_wrap_u)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, gl_wrap_v)
             GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
             GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
             return int(texture_id)
         except Exception as e:
             print(f"[MeshCache] Texture upload failed: {e}")
             return 0
+
 
     def get_gpu_mesh(self, resource_path: str) -> Optional[GPUMesh]:
         """Get the GPU mesh for a model, or None if not yet loaded."""

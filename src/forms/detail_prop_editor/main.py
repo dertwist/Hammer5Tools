@@ -191,7 +191,7 @@ class DetailPropEditorWidget(QMainWindow):
 
         from PySide6.QtGui import QIcon
         self.save_button = QPushButton("Save")
-        self.save_button.setIcon(QIcon(":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        self.save_button.setIcon(QIcon(":/icons/save_16dp.svg"))
         self.save_button.setToolTip("Save detail prop types (Ctrl+S)")
         self.save_button.clicked.connect(self.save)
         buttons.addWidget(self.save_button)

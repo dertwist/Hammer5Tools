@@ -119,7 +119,7 @@ class Ui_Create_addon_Dialog(object):
 "\n"
 "    }")
         icon = QIcon()
-        icon.addFile(u":/icons/post_add_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/post_add_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.create_addon_button.setIcon(icon)
         self.create_addon_button.setIconSize(QSize(20, 20))
 

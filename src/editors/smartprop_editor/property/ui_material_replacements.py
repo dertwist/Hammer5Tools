@@ -146,7 +146,7 @@ class Ui_Widget(object):
 "        margin-right: 2px;\n"
 "    }")
         icon = QIcon()
-        icon.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/add_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_replacement_widget.setIcon(icon)
 
         self.verticalLayout_3.addWidget(self.add_replacement_widget)

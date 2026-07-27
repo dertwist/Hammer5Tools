@@ -1,10 +1,10 @@
 """
 Thumbnail generation for the model browser.
 
-ValveResourceFormat has no thumbnail API — it decompiles .vmdl_c to glTF and
-stops there. So a thumbnail is produced in two stages:
+ValveResourceFormat has no thumbnail API, so a thumbnail is produced in two
+stages:
 
-    worker thread   VRF decompile (.vmdl_c -> .glb) + trimesh parse -> MeshData
+    worker thread   read .vmdl_c blocks directly -> MeshData (see vmdl_reader)
     GUI thread      render MeshData into an offscreen FBO -> PNG on disk
 
 The render half must run on the thread that owns the GL context, and Qt only
@@ -26,7 +26,7 @@ from PySide6.QtCore import QObject, Signal, QRunnable, QThreadPool, QTimer, Slot
 from PySide6.QtGui import QImage, QPixmap, QOffscreenSurface, QSurfaceFormat
 from PySide6.QtOpenGL import QOpenGLFramebufferObject, QOpenGLFramebufferObjectFormat
 
-from src.editors.smartprop_editor.viewport_3d.mesh_cache import load_glb, MeshData
+from src.editors.smartprop_editor.viewport_3d.mesh_cache import MeshData
 
 
 from collections import OrderedDict
@@ -131,17 +131,16 @@ THUMB_SIZE = 128
 #: normal/MR/AO/emissive maps entirely and cap the base one. Dropping four of
 #: five maps is where the CPU saving comes from; this cap mainly bounds memory
 #: for models that ship 4K albedos.
-THUMB_TEXTURE_DIM = 2048
+THUMB_TEXTURE_DIM = 256
 
 
 def _worker_thread_count() -> int:
     """Loader threads — every core the machine has.
 
-    VRF decompilation is serialised behind dotnet's _decompile_lock, so these
-    threads parallelise the *parse* half (trimesh + texture decode) while one
-    thread holds the decompile lock. Only the tiles actually on screen are ever
-    queued, so a burst is bounded by a screenful of work rather than the whole
-    index — there is nothing long-running here to throttle.
+    Reads run fully in parallel: each worker keeps its own VRF file loader, so
+    unlike the old glTF path there is no global decompile lock to queue behind.
+    Only the tiles actually on screen are ever queued, so a burst is bounded by
+    a screenful of work rather than the whole index.
     """
     try:
         return max(1, os.cpu_count() or 1)
@@ -177,194 +176,6 @@ class _MeshLoadSignals(QObject):
     loaded = Signal(str, object)    # resource path, MeshData | None
 
 
-def load_vrf_mesh_direct(entry) -> Optional[MeshData]:
-    """Direct in-memory extraction of MeshData from .vmdl_c using VRF.
-
-    Extracts vertex/index buffers directly from VRF without glTF export or disk I/O.
-    """
-    import os
-    import numpy as np
-    from src.common import get_cs2_path
-    from src.editors.smartprop_editor.viewport_3d.mesh_cache import MeshData, SubMeshData
-    from src.dotnet import DotNetInterop
-
-    cs2_path = get_cs2_path()
-    if not cs2_path:
-        return None
-
-    vmdl_path = entry.path.replace("\\", "/").strip("/")
-    if vmdl_path.endswith(".vmdl"):
-        vmdl_c_path = vmdl_path + "_c"
-    elif not vmdl_path.endswith(".vmdl_c"):
-        vmdl_c_path = vmdl_path + ".vmdl_c"
-    else:
-        vmdl_c_path = vmdl_path
-
-    mod_name = entry.mod.replace("\\", "/").replace("csgo_addons/", "").strip("/")
-
-    data_bytes = None
-
-    # 1. Try loose filesystem file in game/csgo_addons/<addon> or game/csgo
-    possible_fs_paths = []
-    if getattr(entry, "fs_path", None):
-        if entry.fs_path.endswith(".vmdl_c"):
-            possible_fs_paths.append(entry.fs_path)
-        elif entry.fs_path.endswith(".vmdl"):
-            possible_fs_paths.append(entry.fs_path + "_c")
-            possible_fs_paths.append(entry.fs_path.replace("/content/", "/game/") + "_c")
-
-    if mod_name and mod_name != "csgo":
-        possible_fs_paths.append(os.path.join(cs2_path, "game", "csgo_addons", mod_name, vmdl_c_path))
-        possible_fs_paths.append(os.path.join(cs2_path, "content", "csgo_addons", mod_name, vmdl_c_path))
-
-    possible_fs_paths.append(os.path.join(cs2_path, "game", "csgo", vmdl_c_path))
-
-    for fs_path in possible_fs_paths:
-        if fs_path and os.path.isfile(fs_path):
-            try:
-                with open(fs_path, "rb") as f:
-                    header = f.read(16)
-                    if header and not (header.startswith(b'//') or header.startswith(b'<!--') or header.startswith(b'VKV3')):
-                        f.seek(0)
-                        data_bytes = f.read()
-                        break
-            except Exception:
-                pass
-
-    # 2. Try VPK archive if not found on disk
-    if data_bytes is None:
-        try:
-            vpk_path = os.path.join(cs2_path, "game", "csgo", "pak01_dir.vpk")
-            if os.path.isfile(vpk_path):
-                interop = DotNetInterop()
-                Resource, _, _, _, _, Package = interop.setup_vrf()
-                import System
-                package = System.Activator.CreateInstance(Package)
-                package.Read(vpk_path)
-                try:
-                    pkg_entry = package.FindEntry(vmdl_c_path)
-                    if pkg_entry is not None:
-                        data_bytes = bytes(package.ReadEntry(pkg_entry))
-                finally:
-                    if hasattr(package, "Dispose"):
-                        package.Dispose()
-        except Exception:
-            pass
-
-    if not data_bytes or len(data_bytes) < 16:
-        return None
-
-    # Binary check: skip plain-text KeyValues3 files before passing to VRF
-    if data_bytes.startswith(b'//') or data_bytes.startswith(b'<!--') or data_bytes.startswith(b'VKV3'):
-        return None
-
-    # Parse .vmdl_c via VRF directly in memory
-    ms = None
-    res = None
-    try:
-        interop = DotNetInterop()
-        Resource, _, _, _, _, _ = interop.setup_vrf()
-        import System
-
-        ms = System.IO.MemoryStream(data_bytes)
-        res = System.Activator.CreateInstance(Resource)
-        res.Read(ms)
-        if res.ResourceType != res.ResourceType.Model:
-            return None
-
-        model = res.DataBlock
-        meshes = list(model.GetEmbeddedMeshes())
-        if not meshes:
-            return None
-
-        all_verts, all_norms, all_uvs, all_indices = [], [], [], []
-        vert_offset = 0
-
-        for mesh_tuple in meshes:
-            mesh = mesh_tuple.Item1
-            vbib = mesh.VBIB
-            if vbib is None or vbib.VertexBuffers.Count == 0 or vbib.IndexBuffers.Count == 0:
-                continue
-
-            for i in range(min(vbib.VertexBuffers.Count, vbib.IndexBuffers.Count)):
-                vb = vbib.VertexBuffers[i]
-                ib = vbib.IndexBuffers[i]
-
-                pos_attrs = [a for a in vb.InputLayoutFields if a.SemanticName == 'POSITION']
-                if not pos_attrs:
-                    continue
-                pos_arr = vbib.GetVector3AttributeArray(vb, pos_attrs[0])
-                verts = np.array([(v.X, v.Y, v.Z) for v in pos_arr], dtype=np.float32)
-                if len(verts) == 0:
-                    continue
-
-                norm_attrs = [a for a in vb.InputLayoutFields if a.SemanticName == 'NORMAL']
-                if norm_attrs:
-                    try:
-                        norm_res = vbib.GetNormalTangentArray(vb, norm_attrs[0])
-                        norms = np.array([(n.X, n.Y, n.Z) for n in norm_res.Item1], dtype=np.float32)
-                    except Exception:
-                        norms = np.zeros_like(verts)
-                else:
-                    norms = np.zeros_like(verts)
-
-                uv_attrs = [a for a in vb.InputLayoutFields if a.SemanticName == 'TEXCOORD']
-                if uv_attrs:
-                    try:
-                        uv_arr = vbib.GetVector2AttributeArray(vb, uv_attrs[0])
-                        uvs = np.array([(u.X, u.Y) for u in uv_arr], dtype=np.float32)
-                    except Exception:
-                        uvs = np.zeros((len(verts), 2), dtype=np.float32)
-                else:
-                    uvs = np.zeros((len(verts), 2), dtype=np.float32)
-
-                bytes_data = bytes(ib.Data)
-                dtype = np.uint16 if ib.ElementSizeInBytes == 2 else np.uint32
-                idx = np.frombuffer(bytes_data, dtype=dtype).astype(np.uint32) + vert_offset
-
-                all_verts.append(verts)
-                all_norms.append(norms)
-                all_uvs.append(uvs)
-                all_indices.append(idx)
-                vert_offset += len(verts)
-
-        if not all_verts:
-            return None
-
-        cat_verts = np.vstack(all_verts)
-        cat_norms = np.vstack(all_norms)
-        cat_uvs = np.vstack(all_uvs)
-        cat_idx = np.concatenate(all_indices)
-        bmin = np.min(cat_verts, axis=0)
-        bmax = np.max(cat_verts, axis=0)
-
-        submesh = SubMeshData(index_offset=0, index_count=len(cat_idx))
-        return MeshData(
-            vertices=cat_verts,
-            normals=cat_norms,
-            indices=cat_idx,
-            uvs=cat_uvs,
-            bbox_min=bmin,
-            bbox_max=bmax,
-            submeshes=[submesh]
-        )
-    except Exception as exc:
-        msg = str(exc).splitlines()[0] if str(exc) else "VRF read error"
-        print(f"[model_browser] direct VRF mesh parse skipped for {entry.path}: {msg}")
-        return None
-    finally:
-        if ms is not None and hasattr(ms, "Dispose"):
-            try:
-                ms.Dispose()
-            except Exception:
-                pass
-        if res is not None and hasattr(res, "Dispose"):
-            try:
-                res.Dispose()
-            except Exception:
-                pass
-
-
 class _MeshLoadWorker(QRunnable):
     """High-performance direct VRF in-memory mesh loader off the GUI thread."""
 
@@ -377,13 +188,9 @@ class _MeshLoadWorker(QRunnable):
     def run(self):
         mesh = None
         try:
-            from src.dotnet import decompile_model_to_glb
-            glb = decompile_model_to_glb(self.entry.path, context_addon=self.entry.mod)
-            if glb and os.path.isfile(glb):
-                mesh = load_glb(glb, max_texture_dim=THUMB_TEXTURE_DIM,
-                                base_color_only=True)
-            if mesh is None:
-                mesh = load_vrf_mesh_direct(self.entry)
+            from src.editors.smartprop_editor.viewport_3d.vmdl_reader import load_model
+            mesh = load_model(self.entry.path, context_addon=self.entry.mod,
+                              max_texture_dim=THUMB_TEXTURE_DIM, base_color_only=True)
         except Exception as exc:
             msg = str(exc).splitlines()[0] if str(exc) else "Load error"
             print(f"[model_browser] thumbnail load skipped for {self.entry.path}: {msg}")
@@ -642,7 +449,11 @@ class ThumbnailService(QObject):
             else:
                 for submesh in submeshes:
                     material = submesh.material
-                    texture = _upload_texture(getattr(material, "base_color_img", None))
+                    texture = _upload_texture(
+                        getattr(material, "base_color_img", None),
+                        getattr(material, "wrap_u", 0),
+                        getattr(material, "wrap_v", 0),
+                    )
                     if texture:
                         textures.append(texture)
                         GL.glActiveTexture(GL.GL_TEXTURE0)
@@ -677,7 +488,7 @@ class ThumbnailService(QObject):
             fbo.release()
 
 
-# load_glb() hands back geometry in raw Source space — Z-up, inches — because
+# The loader hands back geometry in raw Source space — Z-up, inches — because
 # that is the frame the viewport works in (it converts to GL only at draw time).
 # Treating those verts as glTF Y-up lays every model on its side, so the swap has
 # to happen here too:
@@ -703,7 +514,7 @@ def _upload_attribute(location: int, data: np.ndarray, components: int):
     return buffer
 
 
-def _upload_texture(image: Optional[np.ndarray]):
+def _upload_texture(image: Optional[np.ndarray], wrap_u: int = 0, wrap_v: int = 0):
     """Upload a GL-oriented RGBA uint8 array from MeshData, or return 0."""
     if image is None or image.size == 0:
         return 0
@@ -711,14 +522,25 @@ def _upload_texture(image: Optional[np.ndarray]):
     height, width = image.shape[0], image.shape[1]
     texture = GL.glGenTextures(1)
     GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
-    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_REPEAT)
-    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_REPEAT)
+
+    wrap_modes = {
+        0: GL.GL_REPEAT,
+        1: GL.GL_CLAMP_TO_EDGE,
+        2: GL.GL_MIRRORED_REPEAT,
+        3: GL.GL_CLAMP_TO_BORDER,
+    }
+    gl_wrap_u = wrap_modes.get(wrap_u, GL.GL_REPEAT)
+    gl_wrap_v = wrap_modes.get(wrap_v, GL.GL_REPEAT)
+
+    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, gl_wrap_u)
+    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, gl_wrap_v)
     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR_MIPMAP_LINEAR)
     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
     GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, width, height, 0,
                     GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, np.ascontiguousarray(image))
     GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
     return texture
+
 
 
 def _fit_camera(mesh: MeshData):

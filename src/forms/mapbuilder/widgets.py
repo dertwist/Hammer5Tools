@@ -190,11 +190,11 @@ class FolderSettingWidget(SettingWidget):
 
         btn_layout = QHBoxLayout()
         self.add_btn = QPushButton("Add vmap")
-        self.add_btn.setIcon(QIcon(":/icons/search_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.add_btn.setIcon(QIcon(":/icons/search_24dp.svg"))
         self.remove_btn = QPushButton("Remove")
-        self.remove_btn.setIcon(QIcon(":/icons/delete_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.remove_btn.setIcon(QIcon(":/icons/delete_24dp.svg"))
         self.save_btn = QPushButton("Save changes")
-        self.save_btn.setIcon(QIcon(":/icons/save_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg"))
+        self.save_btn.setIcon(QIcon(":/icons/save_16dp.svg"))
         self.add_btn.setToolTip("Add .vmap files to the queue")
         self.remove_btn.setToolTip("Remove selected maps from the queue")
         self.save_btn.setToolTip("Save map path changes to current preset")
@@ -337,7 +337,7 @@ class SettingsGroup(QWidget):
         header_frame.setStyleSheet('background-color: #1D1D1F;')
 
         self.collapse_button = QToolButton()
-        self.collapse_button.setIcon(QIcon(":/icons/arrow_drop_down_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+        self.collapse_button.setIcon(QIcon(":/icons/arrow_drop_down_24dp.svg"))
         self.collapse_button.setIconSize(QSize(24, 24))
         self.collapse_button.setStyleSheet('padding: 0px; margin: 0px;')
         self.collapse_button.setFixedSize(24, 24)
@@ -394,9 +394,9 @@ class SettingsGroup(QWidget):
         self.content_frame.setVisible(not self.collapsed)
 
         if self.collapsed:
-            self.collapse_button.setIcon(QIcon(":/icons/arrow_drop_up_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+            self.collapse_button.setIcon(QIcon(":/icons/arrow_drop_up_24dp.svg"))
         else:
-            self.collapse_button.setIcon(QIcon(":/icons/arrow_drop_down_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg"))
+            self.collapse_button.setIcon(QIcon(":/icons/arrow_drop_down_24dp.svg"))
 
     def get_values(self) -> Dict[str, Any]:
         """Get all setting values from this group"""

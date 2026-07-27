@@ -101,7 +101,7 @@ class Ui_Form(object):
 "\n"
 "    }")
         icon = QIcon()
-        icon.addFile(u":/icons/content_paste_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/content_paste_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.paste_variable_button.setIcon(icon)
         self.paste_variable_button.setIconSize(QSize(20, 20))
 
@@ -141,7 +141,7 @@ class Ui_Form(object):
 "\n"
 "    }")
         icon1 = QIcon()
-        icon1.addFile(u":/icons/create_new_folder_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u":/icons/create_new_folder_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_new_category_button.setIcon(icon1)
         self.add_new_category_button.setIconSize(QSize(20, 20))
 
@@ -181,7 +181,7 @@ class Ui_Form(object):
 "\n"
 "    }")
         icon2 = QIcon()
-        icon2.addFile(u":/icons/add_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon2.addFile(u":/icons/add_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_new_variable_button.setIcon(icon2)
         self.add_new_variable_button.setIconSize(QSize(20, 20))
 

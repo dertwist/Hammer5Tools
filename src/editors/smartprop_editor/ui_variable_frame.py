@@ -98,13 +98,13 @@ class Ui_Form(object):
         self.visible_in_editor = QCheckBox(self.frame)
         self.visible_in_editor.setObjectName(u"visible_in_editor")
         self.visible_in_editor.setStyleSheet(u"QCheckBox::indicator:checked {\n"
-"    image: url(://icons/visibility_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png);\n"
+"    image: url(://icons/visibility_24dp.png);\n"
 "	height:16px;\n"
 "	width:16px;\n"
 "}\n"
 "\n"
 "QCheckBox::indicator:unchecked {\n"
-"    image: url(://icons/visibility_off_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png); \n"
+"    image: url(://icons/visibility_off_24dp.png); \n"
 "	height:16px;\n"
 "	width:16px;\n"
 "}\n"
@@ -232,7 +232,7 @@ class Ui_Form(object):
 "border-top: 0px solid black;\n"
 "}")
         icon = QIcon()
-        icon.addFile(u":/icons/edit_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/icons/edit_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.change_class.setIcon(icon)
 
         self.horizontalLayout.addWidget(self.change_class)

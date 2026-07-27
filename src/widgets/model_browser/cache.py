@@ -10,12 +10,33 @@ Two things are cached:
     thumbs/            one PNG per model per tile size (see thumbnails.py)
 
 Both are pure derived data — deleting them costs nothing but the time to rebuild.
-Notably *not* included is cache/<addon>/**.glb, the decompiled geometry, which is
-shared with the SmartProp viewport and expensive to regenerate.
+Geometry is read directly from compiled assets without glTF/GLB decompilation.
 """
 import os
 import shutil
 from typing import List, Tuple
+
+
+def clear_legacy_glb_cache():
+    """One-time purge of legacy decompiled .glb files from old cache directories."""
+    root = cache_root()
+    if not os.path.isdir(root):
+        return
+    for item in os.listdir(root):
+        item_path = os.path.join(root, item)
+        if os.path.isdir(item_path) and item != "thumbs":
+            # Check for legacy glb files in addon/csgo cache folders
+            has_glb = False
+            for dirpath, _, filenames in os.walk(item_path):
+                if any(fn.endswith(".glb") for fn in filenames):
+                    has_glb = True
+                    break
+            if has_glb:
+                try:
+                    shutil.rmtree(item_path)
+                except Exception:
+                    pass
+
 
 
 def cache_root() -> str:

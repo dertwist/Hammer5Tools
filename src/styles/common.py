@@ -105,7 +105,7 @@ qt_stylesheet_classes = {
     
     
     QTreeView::branch:closed:has-children {
-         image: url(:/icons/arrow_right_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg);
+         image: url(:/icons/arrow_right_16dp.svg);
     }
     
     QTreeView::branch:open:has-children {

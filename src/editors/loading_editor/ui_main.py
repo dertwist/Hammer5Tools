@@ -198,7 +198,7 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
         icon2 = QIcon()
-        icon2.addFile(u":/icons/acute_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon2.addFile(u":/icons/acute_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.take_history_shots.setIcon(icon2)
         self.take_history_shots.setIconSize(QSize(20, 20))
 
@@ -237,7 +237,7 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
         icon3 = QIcon()
-        icon3.addFile(u":/icons/data_object_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon3.addFile(u":/icons/data_object_24dp.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.take_loading_screen_shots.setIcon(icon3)
         self.take_loading_screen_shots.setIconSize(QSize(20, 20))
 
@@ -277,7 +277,7 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
         icon4 = QIcon()
-        icon4.addFile(u":/icons/delete_sweep_16dp_9D9D9D_FILL0_wght400_GRAD0_opsz20.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon4.addFile(u":/icons/delete_sweep_16dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.delete_existings.setIcon(icon4)
         self.delete_existings.setIconSize(QSize(20, 20))
         self.delete_existings.setChecked(True)
@@ -311,7 +311,7 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
         icon5 = QIcon()
-        icon5.addFile(u":/icons/colors_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon5.addFile(u":/icons/colors_24dp.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.camera_name_mode.setIcon(icon5)
         self.camera_name_mode.setIconSize(QSize(20, 20))
         self.camera_name_mode.setChecked(False)
@@ -352,7 +352,7 @@ class Ui_Loading_editorMainWindow(object):
 "\n"
 "    }")
         icon6 = QIcon()
-        icon6.addFile(u":/icons/check_24dp_9D9D9D_FILL0_wght400_GRAD0_opsz24.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon6.addFile(u":/icons/check_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.apply_screenshots_button.setIcon(icon6)
         self.apply_screenshots_button.setIconSize(QSize(20, 20))
 

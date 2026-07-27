@@ -253,10 +253,9 @@ class SoundEventEditorPropertyCurve(QWidget):
         self.graph_widget.setBackground(self.BACKGROUND_COLOR)
         self.ui.verticalLayout_4.addWidget(self.graph_widget)
 
-        plot_item = self.graph_widget.getPlotItem()
-        plot_item.setMenuEnabled(False)
-
         self.plot_item = self.graph_widget.getPlotItem()
+        self.plot_item.setMenuEnabled(False)
+        self.plot_item.setMouseEnabled(x=False, y=False)
         self.plot_item.showGrid(x=True, y=True, alpha=self.GRID_ALPHA)
 
         for axis in ["bottom", "left"]:
