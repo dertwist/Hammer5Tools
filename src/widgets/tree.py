@@ -3,8 +3,8 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QTreeWidget, QTreeWidgetItem,
     QPushButton, QVBoxLayout, QWidget, QHBoxLayout, QAbstractItemView
 )
-from PySide6.QtGui import QUndoStack, QUndoCommand, QMouseEvent
-from PySide6.QtCore import Qt
+from PySide6.QtGui import QUndoStack, QUndoCommand, QMouseEvent, QPainter, QPen, QColor, QBrush
+from PySide6.QtCore import Qt, QRect
 try:
     from .commands import AddItemCommand, RemoveItemCommand, MoveItemsCommand, DuplicateItemsCommand, SelectItemsCommand
 except:
@@ -30,6 +30,83 @@ class HierarchyTreeWidget(QTreeWidget):
         self.setDragDropMode(QAbstractItemView.InternalMove)
         self.setDragDropMode(QTreeWidget.InternalMove)
         self.list_mode = list_mode
+        self.setIndentation(18)
+        self.setStyleSheet("HierarchyTreeWidget::branch { background: transparent; }")
+
+    def drawBranches(self, painter: QPainter, rect: QRect, index):
+        if getattr(self, 'list_mode', False):
+            super().drawBranches(painter, rect, index)
+            return
+
+        painter.save()
+
+        line_color = QColor("#555555")
+        pen = QPen(line_color, 1, Qt.SolidLine)
+        painter.setPen(pen)
+
+        indent = self.indentation()
+        if indent <= 0:
+            indent = 18
+
+        cy = rect.center().y()
+
+        ancestors = []
+        curr = index
+        while curr.isValid():
+            ancestors.append(curr)
+            curr = curr.parent()
+        ancestors.reverse()
+
+        depth = len(ancestors) - 1
+
+        # 1. Draw ancestor vertical lines and branch connections
+        for level in range(depth):
+            child_anc = ancestors[level + 1]
+            has_sibling_below = child_anc.sibling(child_anc.row() + 1, 0).isValid()
+            spine_cx = rect.left() + (level + 1) * indent + indent // 2
+
+            if level < depth - 1:
+                if has_sibling_below:
+                    painter.drawLine(spine_cx, rect.top(), spine_cx, rect.bottom())
+            else:
+                top_y = rect.top()
+                bottom_y = rect.bottom() if has_sibling_below else cy
+                painter.drawLine(spine_cx, top_y, spine_cx, bottom_y)
+
+                item_x = rect.left() + (depth + 1) * indent
+                target_x = spine_cx + indent if self.model().hasChildren(child_anc) else item_x
+                painter.drawLine(spine_cx, cy, target_x, cy)
+
+        # 2. Current item's expander & step to next spine
+        has_children = self.model().hasChildren(index)
+        is_expanded = self.isExpanded(index)
+        expander_cx = rect.left() + depth * indent + indent // 2
+
+        if is_expanded and has_children:
+            next_spine_cx = rect.left() + (depth + 1) * indent + indent // 2
+            painter.drawLine(expander_cx, cy, next_spine_cx, cy)
+            painter.drawLine(next_spine_cx, cy, next_spine_cx, rect.bottom())
+
+        if depth == 0:
+            item_x = rect.left() + indent
+            painter.drawLine(expander_cx, cy, item_x, cy)
+
+        # 3. Draw expand/collapse circular button if item has children
+        if has_children:
+            r = 4
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            painter.setBrush(QBrush(QColor("#252525")))
+            painter.setPen(QPen(QColor("#666666"), 1))
+            painter.drawEllipse(expander_cx - r, cy - r, r * 2, r * 2)
+
+            painter.setRenderHint(QPainter.Antialiasing, False)
+            painter.setPen(QPen(QColor("#b0b0b0"), 1))
+            painter.drawLine(expander_cx - 2, cy, expander_cx + 2, cy)
+
+            if not is_expanded:
+                painter.drawLine(expander_cx, cy - 2, expander_cx, cy + 2)
+
+        painter.restore()
 
     def dropEvent(self, event):
         if self._ignore_next_drop:

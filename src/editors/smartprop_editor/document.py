@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QUndoView,
     QScrollArea,
     QTabWidget,
+    QPushButton,
 )
 from PySide6.QtGui import (
     QAction,
@@ -27,6 +28,7 @@ from PySide6.QtGui import (
     QUndoStack,
     QKeySequence,
     QShortcut,
+    QIcon,
 )
 import uuid
 import traceback, ctypes
@@ -221,6 +223,70 @@ class SmartPropDocument(QMainWindow):
                 self._modifiers_scroll_area = w
                 break
             w = w.parentWidget()
+
+        BUTTON_H = 24
+        self.ui.tree_hierarchy_search_bar_widget.setFixedHeight(BUTTON_H)
+        self.ui.tree_hierarchy_search_bar_widget.setPlaceholderText("Filter...")
+        self.ui.tree_hierarchy_filter_bar_widget = self.ui.tree_hierarchy_search_bar_widget
+
+        # ── Hierarchy Top Action Bar (+ Add & Favorites Star Button) ───────────
+        self.hierarchy_top_bar_layout = QHBoxLayout()
+        self.hierarchy_top_bar_layout.setContentsMargins(0, 0, 0, 4)
+        self.hierarchy_top_bar_layout.setSpacing(4)
+
+        self.hierarchy_add_button = QPushButton("  Add")
+        self.hierarchy_add_button.setIcon(QIcon(":/valve_common/icons/tools/common/add_sm.png"))
+        self.hierarchy_add_button.setToolTip("Add SmartProp Element")
+        self.hierarchy_add_button.setFixedHeight(BUTTON_H)
+        self.hierarchy_add_button.setStyleSheet("""
+            QPushButton {
+                background-color: #1C1C1C;
+                color: #E3E3E3;
+                border: 2px solid #505050;
+                border-radius: 0px;
+                padding: 2px 8px;
+                font: 580 9pt "Segoe UI";
+            }
+            QPushButton:hover {
+                background-color: #414956;
+                border-color: #6C6C6C;
+                color: #FFFFFF;
+            }
+            QPushButton:pressed {
+                background-color: #151515;
+                border-color: #505050;
+            }
+        """)
+        self.hierarchy_add_button.clicked.connect(self.add_an_element)
+
+        self.hierarchy_preset_button = QPushButton()
+        self.hierarchy_preset_button.setIcon(QIcon(":/valve_common/icons/tools/common/favorite.png"))
+        self.hierarchy_preset_button.setToolTip("Favorite Elements")
+        self.hierarchy_preset_button.setFixedSize(BUTTON_H, BUTTON_H)
+        self.hierarchy_preset_button.setStyleSheet("""
+            QPushButton {
+                background-color: #1C1C1C;
+                border: 2px solid #505050;
+                border-radius: 0px;
+                padding: 2px;
+            }
+            QPushButton:hover {
+                background-color: #414956;
+                border-color: #6C6C6C;
+            }
+            QPushButton:pressed {
+                background-color: #151515;
+                border-color: #505050;
+            }
+        """)
+        self.hierarchy_preset_button.clicked.connect(self.open_favorite_elements)
+
+        self.hierarchy_top_bar_layout.addWidget(self.hierarchy_add_button)
+        self.hierarchy_top_bar_layout.addWidget(self.hierarchy_preset_button)
+
+        hierarchy_top_bar_widget = QWidget()
+        hierarchy_top_bar_widget.setLayout(self.hierarchy_top_bar_layout)
+        self.ui.frame_2.layout().insertWidget(0, hierarchy_top_bar_widget)
 
         self.ui.tree_hierarchy_search_bar_widget.textChanged.connect(
             lambda text: self.search_hierarchy(text, self.ui.tree_hierarchy_widget.invisibleRootItem())
@@ -1387,6 +1453,23 @@ class SmartPropDocument(QMainWindow):
 
     def add_an_element(self):
         self.popup_menu = PopupMenu(elements_list, add_once=False, window_name="SPE_elements")
+        self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
+        self.popup_menu.show()
+
+    def open_favorite_elements(self):
+        from src.settings.main import get_settings_value
+        saved = get_settings_value('Bookmarks', 'SPE_elements')
+        bookmarked_items = set(saved.split(',')) if saved else set()
+
+        fav_elements = [
+            item for item in elements_list
+            if any(k in bookmarked_items for k in item.keys())
+        ]
+
+        if not fav_elements:
+            fav_elements = elements_list
+
+        self.popup_menu = PopupMenu(fav_elements, add_once=False, window_name="SPE_elements")
         self.popup_menu.add_property_signal.connect(lambda name, value: self.new_element(name, value))
         self.popup_menu.show()
 
