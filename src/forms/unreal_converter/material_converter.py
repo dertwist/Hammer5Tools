@@ -47,9 +47,33 @@ def ue_material_to_vmat_path(ue_path: str, root: str = "materials") -> str:
     return f"{root}/{p}.vmat".lower()
 
 
-def find_bulk_texture(bulk_dir: str, ue_tex_path: str):
-    """Resolve a UE texture reference to its bulk-exported image by stem."""
-    if not bulk_dir or not ue_tex_path:
+_texture_index_cache = {}
+
+
+def get_texture_index(bulk_dir: str) -> dict:
+    """Build or retrieve an in-memory stem->filepath index for bulk_dir to eliminate O(N) disk walks."""
+    if not bulk_dir or not os.path.isdir(bulk_dir):
+        return {}
+    bulk_dir_norm = os.path.abspath(bulk_dir)
+    if bulk_dir_norm in _texture_index_cache:
+        return _texture_index_cache[bulk_dir_norm]
+
+    index = {}
+    for root, _dirs, files in os.walk(bulk_dir_norm):
+        for fn in files:
+            name, ext = os.path.splitext(fn)
+            if ext.lower() in _TEX_EXTS:
+                stem_lower = name.lower()
+                if stem_lower not in index:
+                    index[stem_lower] = os.path.join(root, fn)
+
+    _texture_index_cache[bulk_dir_norm] = index
+    return index
+
+
+def find_bulk_texture(bulk_dir: str, ue_tex_path: str, tex_index: dict = None):
+    """Resolve a UE texture reference to its bulk-exported image by stem using O(1) lookup."""
+    if not ue_tex_path:
         return None
     if "'" in ue_tex_path:
         match = re.search(r"'(.*?)'", ue_tex_path)
@@ -58,11 +82,13 @@ def find_bulk_texture(bulk_dir: str, ue_tex_path: str):
     ue_tex_path = ue_tex_path.strip()
 
     stem = ue_tex_path.split(".", 1)[0].rstrip("/").rsplit("/", 1)[-1].lower()
-    for root, _dirs, files in os.walk(bulk_dir):
-        for fn in files:
-            name, ext = os.path.splitext(fn)
-            if ext.lower() in _TEX_EXTS and name.lower() == stem:
-                return os.path.join(root, fn)
+    if tex_index is not None:
+        return tex_index.get(stem)
+
+    if bulk_dir:
+        idx = get_texture_index(bulk_dir)
+        return idx.get(stem)
+
     return None
 
 
@@ -90,29 +116,56 @@ _SLOT_TOKENS = [
 _COLOR_EXCLUDE = {"var", "variation", "mask", "tint"}
 
 
-def _classify_textures(textures: dict) -> dict:
+def _classify_textures(textures: dict, slot_overrides: dict = None) -> dict:
     """
     Map {ue_param_name: ue_tex_path} -> {slot: (param, path)} choosing the best
     primary texture per slot. A layer index token ("Diffuse 1") is penalised so
     the base layer ("M_Diffuse") wins.
+
+    slot_overrides: optional {param_name (case-insensitive): slot_name or None}
+    — explicit user choices from the slot-mapping dialog. These always win
+    over heuristic scoring. None excludes the parameter.
     """
-    picks = {}  # slot -> (score, param, path)
+    if not textures or not isinstance(textures, dict):
+        return {}
 
-    def consider(slot, score, param, path):
-        if slot not in picks or score > picks[slot][0]:
-            picks[slot] = (score, param, path)
+    overrides = {k.lower(): v for k, v in (slot_overrides or {}).items()}
+    out = {}
+    used_params = set()
 
-    for param, path in (textures or {}).items():
-        toks = _tokens(param)
-        score = 10 - (2 if any(t.isdigit() for t in toks) else 0)
-        for slot, keys in _SLOT_TOKENS:
-            if toks & keys:
-                if slot == "color" and toks & _COLOR_EXCLUDE:
-                    continue   # "Color Var", tint masks, etc. are not base color
-                consider(slot, score, param, path)
-                break          # first (highest-priority) slot for this param
+    # Apply explicit overrides first
+    for param_name, tex_path in textures.items():
+        key = param_name.lower()
+        if key in overrides:
+            forced_slot = overrides[key]
+            used_params.add(param_name)
+            if forced_slot and forced_slot in dict(_SLOT_TOKENS):
+                out[forced_slot] = (param_name, tex_path)
 
-    return {slot: (param, path) for slot, (_s, param, path) in picks.items()}
+    # Heuristic matching for remaining parameters
+    for slot, tokens in _SLOT_TOKENS:
+        if slot in out:
+            continue
+        candidates = []
+        for param_name, tex_path in textures.items():
+            if param_name in used_params:
+                continue
+            p_toks = _tokens(param_name)
+            if slot == "color" and p_toks & _COLOR_EXCLUDE:
+                continue
+            matching = p_toks & tokens
+            if matching:
+                score = len(matching) * 10
+                if re.search(r"\b(layer|uv|v|mask|sub)\d*\b", param_name, re.I):
+                    score -= 5
+                candidates.append((score, param_name, tex_path))
+        if candidates:
+            candidates.sort(key=lambda c: c[0], reverse=True)
+            top_param, top_path = candidates[0][1], candidates[0][2]
+            out[slot] = (top_param, top_path)
+            used_params.add(top_param)
+
+    return out
 
 
 def _pick_tint(vectors: dict):
@@ -151,20 +204,24 @@ def pick_shader(flags: dict) -> str:
 
 
 class MaterialResult:
-    def __init__(self, vmat_rel, textures_written, missing, is_decal=False):
-        self.vmat_rel = vmat_rel
+    def __init__(self, vmat_path: str, textures_written: int, missing: list, is_decal: bool = False):
+        self.vmat_path = vmat_path
         self.textures_written = textures_written
-        self.missing = missing        # slot names whose texture wasn't found
+        self.missing = missing
         self.is_decal = is_decal
 
 
 def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
-                     shader: str = None) -> MaterialResult:
+                     shader: str = None, slot_overrides: dict = None,
+                     tex_index: dict = None) -> MaterialResult:
     """
     Write a vmat (+ converted/split textures) from a dump-material result.
     Returns MaterialResult with the vmat path relative to the output root.
     Shader defaults to csgo_environment.vfx, or csgo_static_overlay.vfx if the
     material's UE domain is MD_DeferredDecal (see pick_shader).
+
+    slot_overrides: optional {param_name: slot_name or None} forwarded to
+    _classify_textures to override its heuristic pick (see slot_mapping.py).
     """
     flags = mat_data.get("flags") or {}
     decal = is_decal(flags)
@@ -183,7 +240,7 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
             img.save(dst)
         return rel
 
-    picks = _classify_textures(mat_data.get("textures"))
+    picks = _classify_textures(mat_data.get("textures"), slot_overrides)
     slots = {}
     written = 0
     missing = []
@@ -192,7 +249,7 @@ def convert_material(mat_data: dict, bulk_dir: str, output_dir: str,
         param_path = picks.get(slot)
         if not param_path:
             return None, None
-        src = find_bulk_texture(bulk_dir, param_path[1])
+        src = find_bulk_texture(bulk_dir, param_path[1], tex_index=tex_index)
         if not src:
             missing.append(slot)
             return None, None

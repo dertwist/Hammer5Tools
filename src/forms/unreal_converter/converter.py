@@ -203,4 +203,261 @@ class MaterialConvertWorker(QThread):
         self.finished.emit(created, skipped)
 
 
+def predict_cs2_shader(master_name: str, mat_flags: dict = None) -> str:
+    """Predict default target CS2 shader for a Master Material."""
+    name_lower = master_name.lower()
+    flags = mat_flags or {}
+    domain = flags.get("domain", "")
+
+    if domain == "MD_DeferredDecal" or "decal" in name_lower or "overlay" in name_lower:
+        return "csgo_static_overlay.vfx"
+    if any(k in name_lower for k in ("foliage", "leaf", "leaves", "grass", "tree", "plant", "vegetation", "bark")):
+        return "csgo_foliage.vfx"
+    if any(k in name_lower for k in ("glass", "window", "translucent", "transparent")):
+        return "csgo_glass.vfx"
+    if any(k in name_lower for k in ("character", "skin", "hero")):
+        return "csgo_character.vfx"
+    return "csgo_environment.vfx"
+
+
+def get_master_material_name(mat_data: dict, mat_key: str = "") -> str:
+    """Extract clean Master Material name from dump_material data or mat_key."""
+    parent = (mat_data or {}).get("parent")
+    if parent:
+        base = os.path.basename(parent).split(".", 1)[0]
+        if base and base.lower() not in ("material", "materialinstanceconstant"):
+            return base
+    if mat_key:
+        return os.path.basename(mat_key).split(".", 1)[0]
+    mat_path = (mat_data or {}).get("material", "")
+    if mat_path:
+        return os.path.basename(mat_path).split(".", 1)[0]
+    return "M_Master_Default"
+
+
+def save_material_swaps_kv3(output_dir: str, swaps: dict, slot_mappings: dict = None):
+    """Saves Master Material -> CS2 Shader swaps and Master Material -> slot mappings
+    into hammer5tools_ue_converter_material_swaps.kv3 in output_dir."""
+    if not output_dir or not os.path.isdir(output_dir):
+        return
+    file_path = os.path.join(output_dir, "hammer5tools_ue_converter_material_swaps.kv3")
+    lines = [
+        "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->",
+        "{",
+        "\tmaster_material_shader_swaps = ",
+        "\t{",
+    ]
+    for master_name, shader_name in sorted(swaps.items()):
+        lines.append(f'\t\t"{master_name}" = "{shader_name}"')
+    lines.append("\t}")
+
+    if slot_mappings:
+        lines.append("\tmaster_material_slot_mappings = ")
+        lines.append("\t{")
+        for master_name, mappings in sorted(slot_mappings.items()):
+            if not mappings:
+                continue
+            lines.append(f'\t\t"{master_name}" = ')
+            lines.append("\t\t{")
+            for param, slot in sorted(mappings.items()):
+                slot_str = "null" if slot is None else f'"{slot}"'
+                lines.append(f'\t\t\t"{param}" = {slot_str}')
+            lines.append("\t\t}")
+        lines.append("\t}")
+
+    lines.append("}")
+    lines.append("")
+
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+    except Exception:
+        pass
+
+
+def load_material_swaps_kv3(output_dir: str) -> tuple:
+    """Reads Master Material -> CS2 Shader swaps and slot mappings from
+    hammer5tools_ue_converter_material_swaps.kv3 if it exists.
+    Returns: (swaps_dict, slot_mappings_dict)
+    """
+    swaps, slot_mappings = {}, {}
+    if not output_dir:
+        return swaps, slot_mappings
+    file_path = os.path.join(output_dir, "hammer5tools_ue_converter_material_swaps.kv3")
+    if not os.path.isfile(file_path):
+        return swaps, slot_mappings
+
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+
+        import re
+        section = None
+        current_master = None
+        for line in lines:
+            line_s = line.strip()
+            if "master_material_shader_swaps" in line_s:
+                section = "shaders"
+                continue
+            elif "master_material_slot_mappings" in line_s:
+                section = "slots"
+                continue
+
+            if section == "shaders":
+                m = re.search(r'"([^"]+)"\s*=\s*"([^"]+)"', line_s)
+                if m:
+                    swaps[m.group(1)] = m.group(2)
+            elif section == "slots":
+                # Check for parameter assignment first: "BaseColor2" = "emissive" or "param" = null
+                m_param = re.search(r'"([^"]+)"\s*=\s*(null|"([^"]+)")', line_s)
+                if m_param and current_master:
+                    param_name = m_param.group(1)
+                    val = m_param.group(2)
+                    slot_mappings[current_master][param_name] = None if val == "null" else val.strip('"')
+                else:
+                    # Otherwise check for master material block header: "M_Master_Architecture" =
+                    m_master = re.search(r'"([^"]+)"\s*=\s*\{?', line_s)
+                    if m_master:
+                        current_master = m_master.group(1)
+                        if current_master not in slot_mappings:
+                            slot_mappings[current_master] = {}
+    except Exception:
+        pass
+    return swaps, slot_mappings
+
+
+def scan_master_materials(project_dir: str, bulk_dir: str = None, bridge=None, output_dir: str = None, log_cb=None, progress_cb=None) -> dict:
+    """
+    Scans project materials and groups them by Master Material.
+    Returns: { master_mat_name: { "shader": predicted_shader, "instances": [(mi_stem, mi_path, mat_data)], "count": N, "textures": {...}, "slot_overrides": {...} } }
+    """
+    groups = {}
+    saved_swaps, saved_slot_mappings = load_material_swaps_kv3(output_dir) if output_dir else ({}, {})
+
+    if bridge and bridge.is_available():
+        try:
+            if log_cb:
+                log_cb("Listing project material assets via CUE4Parse bridge...", "info")
+            mat_keys = bridge.list_materials()
+            total = len(mat_keys)
+            if log_cb:
+                log_cb(f"Found {total} potential material asset(s) under project.", "info")
+
+            for i, key in enumerate(mat_keys):
+                if progress_cb:
+                    progress_cb(i + 1, total)
+                if not key.lower().endswith(".uasset"):
+                    continue
+                path = key[:-len(".uasset")]
+                try:
+                    mat_data = bridge.dump_material(path)
+                except Exception as e:
+                    if log_cb:
+                        log_cb(f"  Skipped {os.path.basename(path)}: {e}", "warn")
+                    continue
+
+                master_name = get_master_material_name(mat_data, path)
+                stem = os.path.basename(path)
+                if master_name not in groups:
+                    shader = saved_swaps.get(master_name) or predict_cs2_shader(master_name, mat_data.get("flags"))
+                    groups[master_name] = {
+                        "shader": shader,
+                        "instances": [],
+                        "textures": {},
+                        "slot_overrides": saved_slot_mappings.get(master_name, {}),
+                    }
+                    if log_cb:
+                        log_cb(f"Discovered Master Material: {master_name} (target CS2 shader: {shader})", "info")
+
+                groups[master_name]["instances"].append((stem, path, mat_data))
+                for p_name, p_path in (mat_data.get("textures") or {}).items():
+                    if p_name not in groups[master_name]["textures"]:
+                        groups[master_name]["textures"][p_name] = p_path
+        except Exception as e:
+            if log_cb:
+                log_cb(f"Bridge material scan failed: {e}", "error")
+
+    if not groups and bulk_dir and os.path.isdir(bulk_dir):
+        if log_cb:
+            log_cb(f"Scanning bulk export directory for textures: {bulk_dir}", "info")
+        raw_groups = scan_and_group(bulk_dir)
+        total = len(raw_groups)
+        for i, (base_name, suffixes) in enumerate(raw_groups.items()):
+            if progress_cb:
+                progress_cb(i + 1, total)
+            master_name = re.sub(r"^(t_|mi_|m_|mm_)", "", base_name, flags=re.IGNORECASE).lower()
+            master_name = f"M_{master_name.title()}" if master_name else "M_Master"
+            if master_name not in groups:
+                shader = saved_swaps.get(master_name) or predict_cs2_shader(master_name)
+                groups[master_name] = {
+                    "shader": shader,
+                    "instances": [],
+                    "textures": {},
+                    "slot_overrides": saved_slot_mappings.get(master_name, {}),
+                }
+            groups[master_name]["instances"].append((base_name, base_name, {"suffixes": suffixes}))
+
+    for master_name in groups:
+        groups[master_name]["count"] = len(groups[master_name]["instances"])
+
+    if log_cb:
+        log_cb(f"Material scan complete: {len(groups)} Master Material group(s) discovered.", "success")
+
+    return groups
+
+
+class MasterMaterialConvertWorker(QThread):
+    progress = Signal(int, int)          # current, total
+    file_done = Signal(str, bool, str)   # name, success, message
+    finished = Signal(list, list)        # created, skipped
+
+    def __init__(self, output_dir, bulk_dir, master_groups, slot_overrides=None, parent=None):
+        super().__init__(parent)
+        self.output_dir = output_dir
+        self.bulk_dir = bulk_dir
+        self.master_groups = master_groups  # { master_name: { "shader": str, "instances": [...], "slot_overrides": {...}, "enabled": bool } }
+
+    def run(self):
+        from .material_converter import convert_material, get_texture_index
+
+        # Save user shader swaps and slot mappings into KV3 in output_dir
+        swaps_to_save = {name: data.get("shader", "csgo_environment.vfx")
+                         for name, data in self.master_groups.items() if data.get("enabled", True)}
+        slot_mappings_to_save = {name: data.get("slot_overrides", {})
+                                 for name, data in self.master_groups.items() if data.get("enabled", True) and data.get("slot_overrides")}
+        save_material_swaps_kv3(self.output_dir, swaps_to_save, slot_mappings_to_save)
+
+        tex_index = get_texture_index(self.bulk_dir)
+        total_instances = sum(len(g.get("instances", [])) for g in self.master_groups.values() if g.get("enabled", True))
+        created, skipped = [], []
+        processed = 0
+
+        for master_name, group_data in self.master_groups.items():
+            if not group_data.get("enabled", True):
+                continue
+            shader = group_data.get("shader", "csgo_environment.vfx")
+            instances = group_data.get("instances", [])
+            master_slot_overrides = group_data.get("slot_overrides", {})
+
+            for stem, path, mat_data in instances:
+                processed += 1
+                self.progress.emit(processed, total_instances)
+                try:
+                    res = convert_material(
+                        mat_data, self.bulk_dir, self.output_dir,
+                        shader=shader, slot_overrides=master_slot_overrides,
+                        tex_index=tex_index
+                    )
+                    created.append(stem)
+                    msg = f"Success ({shader})"
+                    if res.missing:
+                        msg += f" (missing: {', '.join(res.missing)})"
+                    self.file_done.emit(stem, True, msg)
+                except Exception as e:
+                    skipped.append((stem, str(e)))
+                    self.file_done.emit(stem, False, str(e))
+
+        self.finished.emit(created, skipped)
+
+
 UE2SourceWorker = MaterialConvertWorker

@@ -308,10 +308,13 @@ class SceneModelsWorker(QThread):
         material remaps resolve to them by the FBX's embedded material name."""
         from .material_converter import convert_material
         from .fbx_flatten import list_materials
+        from .slot_mapping import load_overrides
+
+        slot_overrides = load_overrides()
 
         # Map MI stem -> UE object path (one bridge call).
         try:
-            mi_keys = self.bridge.list("Material_Instances")
+            mi_keys = self.bridge.list_materials()
         except BridgeError as e:
             self._log(f"Materials — could not list material instances: {e}", "warn")
             return
@@ -333,14 +336,18 @@ class SceneModelsWorker(QThread):
             self._log("Materials — no matching material instances for the scene meshes.", "info")
             return
 
+        from .converter import predict_cs2_shader, get_master_material_name
+
         done, missing_tex = 0, 0
         for i, (stem, path) in enumerate(sorted(targets)):
             self.progress.emit(i + 1, len(targets))
             try:
                 data = self.bridge.dump_material(path)
-                res = convert_material(data, self.bulk_dir, self.output_dir)
+                master_name = get_master_material_name(data, path)
+                shader = predict_cs2_shader(master_name, data.get("flags"))
+                res = convert_material(data, self.bulk_dir, self.output_dir, shader=shader, slot_overrides=slot_overrides)
                 done += 1
-                msg = f"  material {stem}: Success"
+                msg = f"  material {stem}: Success ({shader})"
                 if res.missing:
                     missing_tex += 1
                     msg += f" (missing: {', '.join(res.missing)})"
