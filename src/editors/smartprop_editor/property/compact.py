@@ -27,9 +27,24 @@ _ICON_DIR = os.path.join(
 )
 
 
+_VALVE_ICON_MAP = {
+    "add": ":/valve_common/icons/tools/common/add_sm.png",
+    "paste": ":/valve_common/icons/tools/common/paste_sm.png",
+    "copy": ":/valve_common/icons/tools/common/copy_sm.png",
+    "delete": ":/valve_common/icons/tools/common/delete_sm.png",
+}
+
+
 def cs2_icon(name):
-    """QIcon for a vendored CS2 tool icon (src/icons/cs2_<name>.png)."""
-    return QIcon(os.path.join(_ICON_DIR, "cs2_%s.png" % name))
+    """QIcon for a vendored CS2 / Valve tool icon (using Valve common icons)."""
+    if name in _VALVE_ICON_MAP:
+        icon = QIcon(_VALVE_ICON_MAP[name])
+        if not icon.isNull():
+            return icon
+    file_path = os.path.join(_ICON_DIR, "cs2_%s.png" % name)
+    if os.path.exists(file_path):
+        return QIcon(file_path)
+    return QIcon(":/valve_common/icons/tools/common/%s.png" % name)
 
 
 # geometry

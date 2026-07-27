@@ -470,7 +470,7 @@ border-right:0px;
         </property>
         <property name="icon">
          <iconset resource="../../resources.qrc">
-          <normaloff>:/icons/delete_24dp.svg</normaloff>:/icons/delete_24dp.svg</iconset>
+          <normaloff>:/valve_common/icons/tools/common/delete_sm.png</normaloff>:/valve_common/icons/tools/common/delete_sm.png</iconset>
         </property>
        </widget>
       </item>
@@ -523,7 +523,7 @@ border-right:0px;
         </property>
         <property name="icon">
          <iconset resource="../../resources.qrc">
-          <normaloff>:/icons/content_copy_24dp.svg</normaloff>:/icons/content_copy_24dp.svg</iconset>
+          <normaloff>:/valve_common/icons/tools/common/copy_sm.png</normaloff>:/valve_common/icons/tools/common/copy_sm.png</iconset>
         </property>
        </widget>
       </item>

@@ -72,9 +72,10 @@ class PropertyBrowserWidget(QWidget):
                 border: 1px solid #333333;
                 border-radius: 2px;
                 color: #E0E0E0;
+                font: 580 10pt "Segoe UI";
             }
             QListWidget::item {
-                padding: 4px 6px;
+                padding: 2px 6px;
             }
             QListWidget::item:hover {
                 background-color: #2D333B;
@@ -154,9 +155,10 @@ class PropertyBrowserWidget(QWidget):
                 border: 1px solid #333333;
                 border-radius: 2px;
                 color: #E0E0E0;
+                font: 580 10pt "Segoe UI";
             }
             QListWidget::item {
-                padding: 4px 6px;
+                padding: 2px 6px;
             }
             QListWidget::item:hover {
                 background-color: #2D333B;

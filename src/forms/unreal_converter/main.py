@@ -18,7 +18,7 @@ from src.settings.main import (
     get_settings_bool, set_settings_bool,
 )
 
-from .console import ConsoleWidget
+from src.widgets.console import ConsoleWidget
 from .constants import FILE_TYPES, FILE_TYPE_TARGETS, FILE_TYPE_DESCRIPTIONS, UNSUPPORTED, scan_unsupported
 from .converter import scan_and_group, MaterialConvertWorker
 from .transform import UnitScale

@@ -139,7 +139,7 @@ class Ui_Form(object):
 "	color: #E3E3E3;\n"
 "}")
         icon = QIcon()
-        icon.addFile(u":/icons/add_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/valve_common/icons/tools/common/add_sm.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.add_button.setIcon(icon)
 
         self.horizontalLayout.addWidget(self.add_button)
@@ -217,7 +217,7 @@ class Ui_Form(object):
 "	color: #E3E3E3;\n"
 "}")
         icon1 = QIcon()
-        icon1.addFile(u":/icons/content_paste_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u":/valve_common/icons/tools/common/paste_sm.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.paste_button.setIcon(icon1)
 
         self.horizontalLayout.addWidget(self.paste_button)

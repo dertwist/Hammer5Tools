@@ -580,6 +580,12 @@ def apply_stylesheets(parent: QWidget) -> None:
         if style is None: continue
         # Find all children of this widget type and apply the stylesheet.
         for child in parent.findChildren(widget_type):
+            # A widget that styled itself keeps its own sheet. findChildren is
+            # subclass-inclusive, so QTextEdit/QTextBrowser come back as QFrames
+            # and used to be handed a `.QFrame`-only sheet - which matches
+            # nothing on them, leaving the widget unstyled and white.
+            if child.styleSheet():
+                continue
             child.setStyleSheet(style)
 
 
