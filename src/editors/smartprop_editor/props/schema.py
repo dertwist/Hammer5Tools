@@ -1,0 +1,472 @@
+"""
+Schema — declarative property dispatch tables and resolution logic.
+
+Extracted from PropertyFrame._add_widget_for_property() to enable:
+  - data-driven field resolution (widget-free)
+  - testing (equivalence check vs. old chain)
+  - future schema-driven visibility, grouping, and styling
+
+P1: data tables + FieldDef + resolve() only. Widget instantiation stays in property_frame.py.
+Groups and visibility predicates come in P5.
+
+NOTE: m_VariableValue handling is value-dependent (control choice depends on m_TargetName
+presence and prop_class suffix). resolve() returns 'set_variable' unconditionally; the
+caller uses resolve_variable_value(prop_class, value) to pick the fallback when value
+is not a SetVariable dict.
+"""
+
+import re
+from dataclasses import dataclass
+from src.editors.smartprop_editor.objects import surfaces_list
+
+
+@dataclass(frozen=True)
+class FieldDef:
+    """
+    Immutable schema for a single property field.
+
+    - field: e.g. 'm_flWidth'
+    - control: control-kind string (see CONTROL_KIND_MAP keys)
+    - kwargs: widget-constructor kwargs (items, filter_types, slider_range, int_bool, etc.)
+    - label: prettified display name (derived from field)
+    - icon: IconCache key (derived from control + kwargs)
+    - group: collapsible group name (None in P1; populated in P5)
+    """
+    field: str
+    control: str
+    kwargs: dict
+    label: str
+    icon: str
+    group: str | None = None
+
+
+# Field lists per property class (64 classes, 366 fields; order matches the source).
+_PROP_CLASSES_MAP = {
+    'ModifyState': ['m_nReferenceID', 'm_bEnabled'],
+    'Group': ['m_nReferenceID', 'm_bEnabled'],
+    'SmartProp': ['m_nReferenceID', 'm_bEnabled', 'm_sSmartProp'],
+    'PlaceInSphere': ['m_nReferenceID', 'm_bEnabled', 'm_flRandomness', 'm_nCountMin', 'm_nCountMax', 'm_flPositionRadiusInner', 'm_flPositionRadiusOuter', 'm_bAlignOrientation', 'm_PlacementMode', 'm_DistributionMode', 'm_vAlignDirection', 'm_vPlaneUpDirection'],
+    'PlaceMultiple': ['m_nReferenceID', 'm_bEnabled', 'm_nCount'],
+    'PlaceOnPath': ['m_nReferenceID', 'm_bEnabled', 'm_PathName', 'm_vPathOffset', 'm_flOffsetAlongPath', 'm_PathSpace', 'm_flSpacing', 'm_SpacingSpace', 'm_bContinuousSpline', 'm_bUseFixedUpDirection', 'm_bUseProjectedDistance', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_DefaultPath'],
+    'FitOnLine': ['m_nReferenceID', 'm_bEnabled', 'm_vStart', 'm_vEnd', 'm_PointSpace', 'm_bOrientAlongLine', 'm_vUpDirection', 'm_UpDirectionSpace', 'm_bPrioritizeUp', 'm_nScaleMode', 'm_nPickMode'],
+    'PickOne': ['m_nReferenceID', 'm_bEnabled', 'm_SelectionMode', 'm_SpecificChildIndex', 'm_OutputChoiceVariableName', 'm_bConfigurable', 'm_vHandleOffset', 'm_HandleColor', 'm_HandleSize', 'm_HandleShape'],
+    'Model': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_bForceStatic', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_DetailObjectFadeLevel', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode', 'm_bCastShadows', 'm_flUniformModelScale', 'm_SurfacePropertyOverride'],
+    'ModelEntity': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_bDetailObject', 'm_bRigidDeformation', 'm_nLodLevel', 'm_bCastShadows', 'm_bForceStatic', 'm_nDeformableAttachmentMode', 'm_nDeformableOrientationMode'],
+    'BendDeformer': ['m_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vOrigin', 'm_vAngles', 'm_vSize', 'm_flBendAngle', 'm_flBendPoint', 'm_flBendRadius'],
+    'PropPhysics': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_vModelScale', 'm_MaterialGroupName', 'm_flMass', 'm_bStartAsleep', 'm_nHealth', 'm_bEnableMotion', 'm_sPhysicsType'],
+    'PropDynamic': ['m_nReferenceID', 'm_bEnabled', 'm_sModelName', 'm_sAnimationSequence', 'm_sDefaultAnimation', 'm_vModelScale', 'm_MaterialGroupName'],
+    'MidpointDeformer': ['m_nReferenceID', 'm_bEnabled', 'm_bDeformationEnabled', 'm_vStart', 'm_vEnd', 'm_fRadius', 'm_bContinuousSpline', 'm_vOffset', 'm_vAngles', 'm_vScale', 'm_fFalloff', 'm_OutputVariable'],
+    'Layout2DGrid': ['m_nReferenceID', 'm_bEnabled', 'm_flWidth', 'm_flLength', 'm_bVerticalLength', 'm_GridArrangement', 'm_GridOriginMode', 'm_nCountW', 'm_nCountL', 'm_flSpacingWidth', 'm_flSpacingLength', 'm_bAlternateShift', 'm_flAlternateShiftWidth', 'm_flAlternateShiftLength'],
+    'Grid': ['m_nReferenceID', 'm_bEnabled', 'm_flWidth', 'm_flLength', 'm_bVerticalLength', 'm_GridArrangement', 'm_GridOriginMode', 'm_nCountW', 'm_nCountL', 'm_flSpacingWidth', 'm_flSpacingLength', 'm_bAlternateShift', 'm_flAlternateShiftWidth', 'm_flAlternateShiftLength'],
+    'Rotate': ['m_bEnabled', 'm_vRotation'],
+    'Scale': ['m_bEnabled', 'm_flScale'],
+    'Translate': ['m_bEnabled', 'm_vPosition'],
+    'SetTintColor': ['m_bEnabled', 'm_Mode', 'm_ColorChoices'],
+    'MaterialOverride': ['m_bEnabled', 'm_bClearCurrentOverrides', 'm_MaterialReplacements'],
+    'MaterialTint': ['m_bEnabled', 'm_Material', 'm_SelectionMode', 'm_Color', 'm_ColorPosition'],
+    'RandomOffset': ['m_bEnabled', 'm_vRandomPositionMin', 'm_vRandomPositionMax', 'm_vSnapIncrement'],
+    'RandomScale': ['m_bEnabled', 'm_flRandomScaleMin', 'm_flRandomScaleMax', 'm_flSnapIncrement'],
+    'CreateSizer': ['m_bEnabled', 'm_Name', 'm_bDisplayModel',
+                    'm_flInitialMinX', 'm_flInitialMaxX', 'm_flConstraintMinX', 'm_flConstraintMaxX', 'm_OutputVariableMinX', 'm_OutputVariableMaxX',
+                    'm_flInitialMinY', 'm_flInitialMaxY', 'm_flConstraintMinY', 'm_flConstraintMaxY', 'm_OutputVariableMinY', 'm_OutputVariableMaxY',
+                    'm_flInitialMinZ', 'm_flInitialMaxZ', 'm_flConstraintMinZ', 'm_flConstraintMaxZ', 'm_OutputVariableMinZ', 'm_OutputVariableMaxZ'],
+    'CreateRotator': ['m_bEnabled', 'm_Name', 'm_vOffset', 'm_vRotationAxis', 'm_CoordinateSpace', 'm_flDisplayRadius', 'm_DisplayColor', 'm_bApplyToCurrentTransform', 'm_flSnappingIncrement', 'm_flInitialAngle', 'm_bEnforceLimits', 'm_flMinAngle', 'm_flMaxAngle', 'm_OutputVariable'],
+    'CreateLocator': ['m_bEnabled', 'm_LocatorName', 'm_vOffset', 'm_flDisplayScale', 'm_bConfigurable', 'm_bAllowTranslation', 'm_bAllowRotation', 'm_bAllowScale'],
+    'RestoreState': ['m_bEnabled', 'm_StateName', 'm_bDiscardIfUknown'],
+    'TraceInDirection': ['m_bEnabled', 'm_DirectionSpace', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_flOriginOffset', 'm_flTraceLength'],
+    'SaveState': ['m_bEnabled', 'm_StateName'],
+    'SetVariable': ['m_bEnabled', 'm_VariableValue'],
+    'SetVariableBool': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
+    'SetVariableFloat': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
+    'SetVariableInt': ['m_bEnabled', 'm_VariableName', 'm_VariableValue'],
+    'RandomRotationSnapped': ['m_bEnabled', 'm_vMinAngles', 'm_vMaxAngles', 'm_flSnapIncrement', 'm_RotationAxes'],
+    'ResetRotation': ['m_bEnabled', 'm_bIgnoreObjectRotation', 'm_bResetPitch', 'm_bResetYaw', 'm_bResetRoll'],
+    'ResetScale': ['m_bEnabled', 'm_bIgnoreObjectScale'],
+    'RotateTowards': ['m_bEnabled', 'm_vOriginPos', 'm_vTargetPos', 'm_vUpPos', 'm_flWeight', 'm_OriginSpace', 'm_TargetSpace', 'm_UpSpace'],
+    'SaveColor': ['m_bEnabled', 'm_VariableName'],
+    'SaveDirection': ['m_bEnabled', 'm_DirectionVector', 'm_CoordinateSpace', 'm_VariableName'],
+    'SavePosition': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
+    'SaveScale': ['m_bEnabled', 'm_VariableName'],
+    'SaveSurfaceNormal': ['m_bEnabled', 'm_CoordinateSpace', 'm_VariableName'],
+    'SetMaterialGroupChoice': ['m_bEnabled', 'm_VariableName', 'm_SelectionMode', 'm_ChoiceSelection', 'm_MaterialGroupChoices'],
+    'SetOrientation': ['m_bEnabled', 'm_vForwardVector', 'm_ForwardDirectionSpace', 'm_vUpVector', 'm_UpDirectionSpace', 'm_bPrioritizeUp'],
+    'SetPosition': ['m_bEnabled', 'm_vPosition', 'm_CoordinateSpace'],
+    'Trace': ['m_bEnabled', 'm_Origin', 'm_OriginSpace', 'm_flOriginOffset', 'm_flSurfaceUpInfluence', 'm_nNoHitResult', 'm_bIgnoreToolMaterials', 'm_bIgnoreSky', 'm_bIgnoreNoDraw', 'm_bIgnoreTranslucent', 'm_bIgnoreModels', 'm_bIgnoreEntities', 'm_bIgnoreCables'],
+    'Comment': ['m_bEnabled', 'm_Comment'],
+    'Expression': ['m_bEnabled', 'm_Expression'],
+    'Probability': ['m_bEnabled', 'm_flProbability'],
+    'SurfaceAngle': ['m_bEnabled', 'm_flSurfaceSlopeMin', 'm_flSurfaceSlopeMax'],
+    'SurfaceProperties': ['m_bEnabled', 'm_AllowedSurfaceProperties', 'm_DisallowedSurfaceProperties'],
+    'VariableValue': ['m_bEnabled', 'm_VariableComparison'],
+    'EndCap': ['m_bEnabled', 'm_bStart', 'm_bEnd'],
+    'ChoiceWeight': ['m_bEnabled', 'm_flWeight'],
+    'IsValid': ['m_bEnabled'],
+    'LinearLength': ['m_bEnabled', 'm_flLength', 'm_bAllowScale', 'm_flMinLength', 'm_flMaxLength'],
+    'PathPosition': ['m_bEnabled', 'm_PlaceAtPositions', 'm_nPlaceEveryNthPosition', 'm_nNthPositionIndexOffset', 'm_bAllowAtStart', 'm_bAllowAtEnd'],
+    'ComputeDistance3D': ['m_bEnabled', 'm_OutputVariableName', 'm_OutputCoordinateSpace', 'm_InputPositionA', 'm_CoordinateSpaceA', 'm_InputPositionB', 'm_CoordinateSpaceB'],
+    'ComputeDotProduct3D': ['m_bEnabled', 'm_OutputVariableName', 'm_InputVectorA', 'm_InputVectorB'],
+    'ComputeCrossProduct3D': ['m_bEnabled', 'm_OutputVariableName', 'm_InputVectorA', 'm_InputVectorB'],
+    'ComputeNormalizedVector3D': ['m_bEnabled', 'm_OutputVariableName', 'm_InputVector'],
+    'ComputeProjectVector3D': ['m_bEnabled', 'm_OutputVariableName', 'm_OutputCoordinateSpace', 'm_InputVectorA', 'm_CoordinateSpaceA', 'm_InputVectorB', 'm_CoordinateSpaceB', 'm_bPlane'],
+    'ComputeVectorBetweenPoints3D': ['m_bEnabled', 'm_OutputVariableName', 'm_OutputCoordinateSpace', 'm_bNormalized', 'm_InputPositionA', 'm_CoordinateSpaceA', 'm_InputPositionB', 'm_CoordinateSpaceB'],
+}
+
+SKIP = frozenset({'_class', 'm_sLabel', 'm_nElementID', 'm_sReferenceObjectID', '_WARN_NOT_VERIFIED'})
+
+# Exact-match dispatch: field name -> (control, kwargs_dict)
+_EXACT_PROP_DISPATCH = {
+    'm_bEnabled':              ('bool', {}),
+    'm_nReferenceID':          ('reference', {}),
+    'm_HandleColor':           ('color', {}),
+    'm_HandleSize':            ('float', {}),
+    'm_ColorChoices':          ('colormatch', {}),
+    'm_MaterialReplacements':  ('material_replacements', {}),
+    'm_MaterialGroupChoices':  ('material_group_choices', {}),
+    'm_ChoiceSelection':       ('float', {'int_bool': True}),
+    'm_Color':                 ('color', {}),
+    'm_ColorPosition':         ('float', {'slider_range': [0, 1]}),
+    'm_Material':              ('string', {'expression_bool': False, 'placeholder': 'Material name (.vmat)', 'filter_types': ['String']}),
+    'm_flBendPoint':           ('float', {'slider_range': [0, 1]}),
+    'm_flWidth':               ('float', {'slider_range': [0, 4096]}),
+    'm_flLength':              ('float', {'slider_range': [0, 4096]}),
+    'm_flSpacingWidth':        ('float', {'slider_range': [0, 4096]}),
+    'm_flSpacingLength':       ('float', {'slider_range': [0, 4096]}),
+    'm_flAlternateShiftWidth': ('float', {'slider_range': [0, 4096]}),
+    'm_flAlternateShiftLength':('float', {'slider_range': [0, 4096]}),
+    'm_nCountW':               ('float', {'int_bool': True, 'slider_range': [0, 256]}),
+    'm_nCountL':               ('float', {'int_bool': True, 'slider_range': [0, 256]}),
+    'm_SpecificChildIndex':    ('float', {'int_bool': True}),
+    'm_ColorSelection':        ('float', {'int_bool': True}),
+    'm_sModelName':            ('string', {'expression_bool': False, 'placeholder': 'Model path (models/…/example.vmdl)', 'model_browser': True, 'filter_types': ['String', 'Model']}),
+    'm_MaterialGroupName':     ('string', {'expression_bool': False, 'placeholder': 'Material group name'}),
+    'm_Expression':            ('string', {'expression_bool': True,  'placeholder': 'Expression example: var_bool ? var_sizer * var_multiply'}),
+    'm_StateName':             ('string', {'expression_bool': False, 'only_string': True, 'placeholder': 'State name'}),
+    'm_LocatorName':           ('string', {'expression_bool': False, 'placeholder': 'Locator name'}),
+    'm_VariableName':          ('variable', {'filter_types': ['String', 'Int', 'Float', 'Bool', 'Vector3D', 'Color']}),
+    'm_OutputVariableName':    ('variable', {'filter_types': ['String', 'Int', 'Float', 'Bool', 'Vector3D']}),
+    'm_OutputVariableMaxZ':    ('variable', {}),
+    'm_OutputVariableMinZ':    ('variable', {}),
+    'm_OutputVariableMaxY':    ('variable', {}),
+    'm_OutputVariableMinY':    ('variable', {}),
+    'm_OutputVariableMaxX':    ('variable', {}),
+    'm_OutputVariableMinX':    ('variable', {}),
+    'm_OutputVariable':        ('variable', {}),
+    'm_OutputChoiceVariableName': ('variable', {}),
+    'm_DefaultPath':           ('path_editor', {}),
+    '_WARN_NOT_VERIFIED':      ('warning', {}),
+}
+
+# Combobox substring rules: (substring, items, filter_types) — order matters.
+_COMBOBOX_SUBSTRING_RULES = (
+    ('m_SurfacePropertyOverride', [list(d.keys())[0] for d in surfaces_list], ['SurfaceProperty']),
+    ('m_nPickMode', ['LARGEST_FIRST', 'RANDOM', 'ALL_IN_ORDER'], ['PickMode']),
+    ('m_nScaleMode', ['NONE', 'SCALE_END_TO_FIT', 'SCALE_EQUALLY', 'SCALE_MAXIMAIZE'], ['ScaleMode']),
+    ('m_CoordinateSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_DirectionSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['DirectionSpace']),
+    ('m_GridPlacementMode', ['SEGMENT', 'FILL'], ['GridPlacementMode']),
+    ('m_GridArrangement', ['SEGMENT', 'FILL'], ['GridPlacementMode']),
+    ('m_GridOriginMode', ['CENTER', 'CORNER'], ['GridOriginMode']),
+    ('m_nNoHitResult', ['NOTHING', 'DISCARD', 'MOVE_TO_START', 'MOVE_TO_END'], ['TraceNoHit']),
+    ('m_SelectionMode', ['RANDOM', 'FIRST', 'SPECIFIC'], ['ChoiceSelectionMode']),
+    ('m_PlacementMode', ['SPHERE', 'CIRCLE', 'RING'], ['RadiusPlacementMode']),
+    ('m_DistributionMode', ['RANDOM', 'UNIFORM'], ['DistributionMode']),
+    ('m_SpacingSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_sPhysicsType', ['normal', 'multiplayer'], ['String']),
+    ('m_DetailObjectFadeLevel', ['NONE', 'MOST_AGGRESSIVE', 'MORE_AGGRESSIVE', 'NORMAL', 'LESS_AGGRESSIVE', 'LEAST_AGGRESSIVE'], ['String']),
+    ('m_RotationAxes', ['X', 'Y', 'Z', 'XY', 'XZ', 'YZ', 'XYZ'], ['Axes']),
+    ('m_HandleShape', ['SQUARE', 'DIAMOND', 'CIRCLE'], ['HandleShape']),
+    ('m_nDeformableAttachmentMode', ['RELATIVE', 'SNAP', 'STIFFEN'], ['SmartPropDeformableAttachMode_t']),
+    ('m_nDeformableOrientationMode', ['NONE', 'FORWARD_NORMAL', 'UP_NORMAL', 'BACKWARD_NORMAL', 'MAINTAIN_OFFSET'], ['SmartPropDeformableOrientMode_t']),
+    ('m_PointSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_PathSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_UpDirectionSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_PlaceAtPositions', ['ALL', 'NTH', 'START_AND_END', 'CONTROL_POINTS'], ['PathPositions']),
+    ('m_Mode', ['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'], ['ApplyColorMode']),
+    ('m_ApplyColorMode', ['MULTIPLY_OBJECT', 'MULTIPLY_CURRENT', 'REPLACE'], ['ApplyColorMode']),
+    ('m_OriginSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_TargetSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_UpSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_TargetPointSpace', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_EndPointSpaceA', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+    ('m_EndPointSpaceB', ['ELEMENT', 'OBJECT', 'WORLD'], ['CoordinateSpace']),
+)
+
+# Prefix dispatch: (prefix, control, kwargs) — order matters (most frequent first).
+_PREFIX_DISPATCH = [
+    ('m_fl', 'float', {}),
+    ('m_f', 'float', {}),
+    ('m_n', 'float', {'int_bool': True}),
+    ('m_InputVector', 'vector3d', {}),
+    ('m_Origin', 'vector3d', {}),
+    ('m_TargetPoint', 'vector3d', {}),
+    ('m_EndPoint', 'vector3d', {}),
+    ('m_v', 'vector3d', {}),
+    ('m_b', 'bool', {}),
+    ('m_s', 'string', {'expression_bool': False, 'placeholder': 'String'}),
+    ('m_', 'string', {'expression_bool': False, 'placeholder': 'String'}),
+]
+
+
+def _prettify_label(field: str) -> str:
+    """
+    Strip m_* prefix patterns and split camelCase into readable label.
+    Matches the logic in PropertyFloat.__init__ (lines 69-71).
+    """
+    output = re.sub(r'm_fl|m_n|m_b|m_s|m_v|m_f|m_', '', field)
+    output = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', output)
+    return output
+
+
+def _icon_for_control(control: str, kwargs: dict) -> str:
+    """
+    Map control type + kwargs to IconCache key.
+
+    Rules:
+      - 'float' -> 'float' (or 'number' if int_bool=True)
+      - 'string' -> 'string'
+      - 'bool' -> 'bool'
+      - 'vector3d' -> 'vector'
+      - 'variable' -> 'variablename'
+      - everything else -> 'string'
+    """
+    if control == 'float':
+        return 'number' if kwargs.get('int_bool') else 'float'
+    elif control == 'string':
+        return 'string'
+    elif control == 'bool':
+        return 'bool'
+    elif control == 'vector3d':
+        return 'vector'
+    elif control == 'variable':
+        return 'variablename'
+    else:
+        return 'string'
+
+
+def fields_for(prop_class: str) -> list[str]:
+    """
+    Return the ordered list of field names for a property class.
+    Returns empty list if the class is not in the schema.
+    """
+    return list(_PROP_CLASSES_MAP.get(prop_class, []))
+
+
+def resolve(prop_class: str, field: str) -> FieldDef | None:
+    """
+    Resolve the FieldDef for a single property field.
+
+    Returns None if field is in SKIP or does not match any dispatch rule.
+
+    Resolution order (must match _add_widget_for_property exactly):
+      1. field in SKIP -> None
+      2. exact match in _EXACT_PROP_DISPATCH
+      3. 'm_VariableValue' in field -> 'set_variable' (+ note about fallback to caller)
+      4. 'm_VariableComparison' in field -> 'comparison'
+      5. 'm_AllowedSurfaceProperties' or 'm_DisallowedSurfaceProperties' in field -> 'surface'
+      6. 'm_Comment' in field -> 'comment'
+      7. first matching substring in _COMBOBOX_SUBSTRING_RULES -> 'combobox'
+      8. first matching substring in _PREFIX_DISPATCH -> that control
+      9. fallback -> 'legacy'
+    """
+    # 1. Skip list
+    if field in SKIP:
+        return None
+
+    # 2. Exact match
+    if field in _EXACT_PROP_DISPATCH:
+        control, kwargs = _EXACT_PROP_DISPATCH[field]
+        label = _prettify_label(field)
+        icon = _icon_for_control(control, kwargs)
+        return FieldDef(field=field, control=control, kwargs=kwargs, label=label, icon=icon)
+
+    # 3. m_VariableValue (value-dependent; see resolve_variable_value for fallback)
+    if 'm_VariableValue' in field:
+        kwargs = {}
+        label = _prettify_label(field)
+        icon = _icon_for_control('variable', kwargs)
+        return FieldDef(field=field, control='set_variable', kwargs=kwargs, label=label, icon=icon)
+
+    # 4. m_VariableComparison
+    if 'm_VariableComparison' in field:
+        kwargs = {}
+        label = _prettify_label(field)
+        icon = _icon_for_control('comparison', kwargs)
+        return FieldDef(field=field, control='comparison', kwargs=kwargs, label=label, icon=icon)
+
+    # 5. Surface properties
+    if 'm_AllowedSurfaceProperties' in field or 'm_DisallowedSurfaceProperties' in field:
+        kwargs = {}
+        label = _prettify_label(field)
+        icon = _icon_for_control('surface', kwargs)
+        return FieldDef(field=field, control='surface', kwargs=kwargs, label=label, icon=icon)
+
+    # 6. Comment
+    if 'm_Comment' in field:
+        kwargs = {}
+        label = _prettify_label(field)
+        icon = _icon_for_control('comment', kwargs)
+        return FieldDef(field=field, control='comment', kwargs=kwargs, label=label, icon=icon)
+
+    # 7. Combobox substring rules (order matters)
+    for substring, items, filter_types in _COMBOBOX_SUBSTRING_RULES:
+        if substring in field:
+            kwargs = {'items': list(items), 'filter_types': list(filter_types)}
+            label = _prettify_label(field)
+            icon = _icon_for_control('combobox', kwargs)
+            return FieldDef(field=field, control='combobox', kwargs=kwargs, label=label, icon=icon)
+
+    # 8. Prefix dispatch (order matters)
+    for prefix, control, extra_kwargs in _PREFIX_DISPATCH:
+        if prefix in field:
+            kwargs = dict(extra_kwargs)
+            label = _prettify_label(field)
+            icon = _icon_for_control(control, kwargs)
+            return FieldDef(field=field, control=control, kwargs=kwargs, label=label, icon=icon)
+
+    # 9. Fallback
+    kwargs = {}
+    label = _prettify_label(field)
+    icon = _icon_for_control('legacy', kwargs)
+    return FieldDef(field=field, control='legacy', kwargs=kwargs, label=label, icon=icon)
+
+
+def resolve_variable_value(prop_class: str, value) -> str:
+    """
+    For fields with m_VariableValue in the name, determine the fallback control
+    when the value is NOT a SetVariable dict.
+
+    NOTE: resolve(prop_class, field) returns 'set_variable' unconditionally.
+    This helper is called by the widget layer to pick the actual control when
+    the value doesn't match SetVariable structure.
+
+    Returns:
+      - 'bool' if value is bool or prop_class ends 'Bool'
+      - 'float' if value is numeric or prop_class ends 'Float'/'Int'
+      - 'string' with expression_bool=True otherwise
+    """
+    if isinstance(value, bool) or prop_class.endswith('Bool'):
+        return 'bool'
+    elif isinstance(value, (int, float)) or prop_class.endswith('Float') or prop_class.endswith('Int'):
+        return 'float'
+    else:
+        return 'string'
+
+
+if __name__ == '__main__':
+    """
+    Equivalence check: verify resolve() matches the old dispatch chain for all
+    68 classes × their fields.
+
+    Walks _PROP_CLASSES_MAP and asserts control selection is identical.
+    """
+    from src.editors.smartprop_editor.property_frame import PropertyFrame
+
+    # Re-implement the old chain inline for reference
+    def old_resolve(prop_class: str, field: str) -> str | None:
+        """Reference implementation of the old dispatch chain."""
+        # Skip list
+        if field in PropertyFrame._SKIP_PROPS:
+            return None
+
+        # Exact match
+        PropertyFrame._resolve_dispatch()
+        dispatch = PropertyFrame._EXACT_PROP_DISPATCH
+        if dispatch and field in dispatch:
+            widget_cls, _ = dispatch[field]
+            # Map widget class to control string
+            class_to_control = {
+                'PropertyBool': 'bool',
+                'PropertyReference': 'reference',
+                'PropertyColor': 'color',
+                'PropertyFloat': 'float',
+                'PropertyColorMatch': 'colormatch',
+                'PropertyMaterialReplacements': 'material_replacements',
+                'PropertyMaterialGroupChoices': 'material_group_choices',
+                'PropertyString': 'string',
+                'PropertyVariableOutput': 'variable',
+                'PropertyPathEditor': 'path_editor',
+                'PropertyWarning': 'warning',
+            }
+            return class_to_control.get(widget_cls.__name__, 'unknown')
+
+        # m_VariableValue (returns 'set_variable' regardless of value)
+        if 'm_VariableValue' in field:
+            return 'set_variable'
+
+        # m_VariableComparison
+        if 'm_VariableComparison' in field:
+            return 'comparison'
+
+        # Surface properties
+        if 'm_AllowedSurfaceProperties' in field or 'm_DisallowedSurfaceProperties' in field:
+            return 'surface'
+
+        # Comment
+        if 'm_Comment' in field:
+            return 'comment'
+
+        # Combobox substrings
+        for substring, _, _ in PropertyFrame._COMBOBOX_SUBSTRING_RULES:
+            if substring in field:
+                return 'combobox'
+
+        # Prefix dispatch
+        for prefix, widget_cls, _ in PropertyFrame._PREFIX_DISPATCH:
+            if prefix in field:
+                class_to_control = {
+                    'PropertyFloat': 'float',
+                    'PropertyVector3D': 'vector3d',
+                    'PropertyBool': 'bool',
+                    'PropertyString': 'string',
+                }
+                return class_to_control.get(widget_cls.__name__, 'unknown')
+
+        # Fallback
+        return 'legacy'
+
+    # Walk all classes × fields and verify
+    total_pairs = 0
+    matched_pairs = 0
+    mismatches = []
+
+    for prop_class in sorted(_PROP_CLASSES_MAP.keys()):
+        for field in _PROP_CLASSES_MAP[prop_class]:
+            total_pairs += 1
+
+            new_def = resolve(prop_class, field)
+            old_control = old_resolve(prop_class, field)
+
+            # Skip fields should return None
+            if field in SKIP:
+                if new_def is not None:
+                    mismatches.append(f"  {prop_class}.{field}: SKIP field but resolve returned {new_def.control}")
+                else:
+                    matched_pairs += 1
+                continue
+
+            if new_def is None:
+                mismatches.append(f"  {prop_class}.{field}: new resolve() returned None (old={old_control})")
+                continue
+
+            new_control = new_def.control
+            if new_control == old_control:
+                matched_pairs += 1
+            else:
+                mismatches.append(f"  {prop_class}.{field}: new={new_control} vs old={old_control}")
+
+    # Print table (first 20 rows, last 5)
+    print("Equivalence Check Results")
+    print("=" * 80)
+    print(f"Total pairs checked: {total_pairs}")
+    print(f"Matched: {matched_pairs}")
+    print(f"Mismatches: {len(mismatches)}")
+    print()
+
+    if mismatches:
+        print("MISMATCHES:")
+        for line in mismatches[:25]:
+            print(line)
+        if len(mismatches) > 25:
+            print(f"... and {len(mismatches) - 25} more")
+    else:
+        print("All pairs matched! ✓")
