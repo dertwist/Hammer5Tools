@@ -394,7 +394,7 @@ class PropertySnapshotCommand(QUndoCommand):
         try:
             tree = self.document.ui.tree_hierarchy_widget
             if tree.currentItem() is self.item:
-                self.document._incremental_property_update(
+                self.document.apply_property_data(
                     self.item, self.new_data, self._diff_keys
                 )
             else:
@@ -409,7 +409,7 @@ class PropertySnapshotCommand(QUndoCommand):
         try:
             tree = self.document.ui.tree_hierarchy_widget
             if tree.currentItem() is self.item:
-                self.document._incremental_property_update(
+                self.document.apply_property_data(
                     self.item, self.old_data, self._diff_keys
                 )
             else:

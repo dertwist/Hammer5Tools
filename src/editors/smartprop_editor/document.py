@@ -2802,6 +2802,20 @@ class SmartPropDocument(QMainWindow):
                 p.committed.connect(self._on_slider_committed)
                 layout.insertWidget(0, p)
 
+    def apply_property_data(self, item, new_data, changed_keys):
+        """Apply externally-produced element data to the item and refresh the property panel.
+
+        Single seam used by PropertySnapshotCommand.undo/redo. Today it forwards to the
+        legacy widget-panel updater; in P6 it switches to the new panel's
+        ``apply_external_data()`` (see docs/smartprop_property_rewrite.md). Keeping the
+        indirection here means commands.py never has to know which panel is live.
+        """
+        panel = getattr(self, "property_panel", None)
+        if panel is not None and hasattr(panel, "apply_external_data"):
+            panel.apply_external_data(item, new_data, changed_keys)
+            return
+        self._incremental_property_update(item, new_data, changed_keys)
+
     def _incremental_property_update(self, item, new_data, changed_keys):
         """Update only the changed property widgets instead of full rebuild.
 
