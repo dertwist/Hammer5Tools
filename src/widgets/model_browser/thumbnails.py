@@ -131,7 +131,7 @@ THUMB_SIZE = 128
 #: normal/MR/AO/emissive maps entirely and cap the base one. Dropping four of
 #: five maps is where the CPU saving comes from; this cap mainly bounds memory
 #: for models that ship 4K albedos.
-THUMB_TEXTURE_DIM = 256
+THUMB_TEXTURE_DIM = 512
 
 
 def _worker_thread_count() -> int:
