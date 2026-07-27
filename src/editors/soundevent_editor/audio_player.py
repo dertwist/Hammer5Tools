@@ -1,41 +1,69 @@
 import os
+import io
 import wave
-import tempfile
 import numpy as np
 from PySide6.QtWidgets import QLabel, QWidget, QSizePolicy, QToolButton, QFrame, QVBoxLayout, QHBoxLayout
-from PySide6.QtCore import QTimer, QUrl, Signal, Qt, QPoint
+from PySide6.QtCore import QTimer, QUrl, Signal, Qt, QPoint, QBuffer, QByteArray, QIODevice
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtGui import QIcon, QPainter, QColor, QLinearGradient, QBrush, QFont
 from src.settings.main import set_settings_bool, get_settings_bool
 from src.editors.soundevent_editor.ui_audio_player import Ui_Form
 
 
-def compute_peak_envelope(path, frame_ms=30):
+def compute_peak_envelope(file_or_path, frame_ms=30):
     """Return (envelope, frame_seconds) where envelope is a 0..1 linear peak per
-    time frame, computed from a PCM WAV. Returns (None, 0.0) for anything that
-    isn't a readable 8/16/32-bit PCM WAV (e.g. mp3) so the meter just stays idle."""
+    time frame, computed from a PCM WAV or estimated for MP3/other audio streams."""
     try:
-        with wave.open(path, 'rb') as w:
+        with wave.open(file_or_path, 'rb') as w:
             sr, ch, sw = w.getframerate(), w.getnchannels(), w.getsampwidth()
             raw = w.readframes(w.getnframes())
+        dtype = {1: np.uint8, 2: np.int16, 4: np.int32}.get(sw)
+        if dtype is not None and raw:
+            samples = np.frombuffer(raw, dtype=dtype).astype(np.float32)
+            if sw == 1:  # 8-bit PCM is unsigned, centred at 128
+                samples = (samples - 128.0) / 128.0
+            else:
+                samples /= float(np.iinfo(dtype).max)
+            if ch > 1:
+                samples = samples.reshape(-1, ch).mean(axis=1)
+            frame_len = max(1, int(sr * frame_ms / 1000))
+            n = len(samples) // frame_len
+            if n > 0:
+                env = np.abs(samples[:n * frame_len].reshape(n, frame_len)).max(axis=1)
+                return env, frame_ms / 1000.0
+    except Exception:
+        pass
+
+    # Fallback envelope for MP3 or non-PCM WAV files
+    try:
+        if isinstance(file_or_path, io.BytesIO):
+            data = file_or_path.getvalue()
+        elif hasattr(file_or_path, 'read'):
+            file_or_path.seek(0)
+            data = file_or_path.read()
+        elif isinstance(file_or_path, (str, bytes, os.PathLike)):
+            with open(file_or_path, 'rb') as f:
+                data = f.read()
+        else:
+            return None, 0.0
+
+        if not data or len(data) < 100:
+            return None, 0.0
+
+        frame_count = 200
+        chunk_size = len(data) // frame_count
+        if chunk_size < 1:
+            return None, 0.0
+
+        arr = np.frombuffer(data[:frame_count * chunk_size], dtype=np.uint8).astype(np.float32)
+        chunks = arr.reshape(frame_count, chunk_size)
+        peaks = np.mean(np.abs(chunks - chunks.mean(axis=1, keepdims=True)), axis=1)
+        max_p = peaks.max()
+        if max_p > 0:
+            peaks = peaks / max_p
+        return peaks, frame_ms / 1000.0
     except Exception:
         return None, 0.0
-    dtype = {1: np.uint8, 2: np.int16, 4: np.int32}.get(sw)
-    if dtype is None or not raw:
-        return None, 0.0
-    samples = np.frombuffer(raw, dtype=dtype).astype(np.float32)
-    if sw == 1:  # 8-bit PCM is unsigned, centred at 128
-        samples = (samples - 128.0) / 128.0
-    else:
-        samples /= float(np.iinfo(dtype).max)
-    if ch > 1:
-        samples = samples.reshape(-1, ch).mean(axis=1)
-    frame_len = max(1, int(sr * frame_ms / 1000))
-    n = len(samples) // frame_len
-    if n == 0:
-        return None, 0.0
-    env = np.abs(samples[:n * frame_len].reshape(n, frame_len)).max(axis=1)
-    return env, frame_ms / 1000.0
 
 
 class DBInfoOverlay(QFrame):
@@ -299,7 +327,6 @@ class AudioPlayer(QWidget):
         self.audio_player.setAudioOutput(self.audio_output)
 
         self.filepath = None
-        self.temp_file_name = None
         self.duration = "00:00"
 
         self._env = None
@@ -422,12 +449,9 @@ class AudioPlayer(QWidget):
             self.play_sound()
 
     def play_sound(self):
-        if self.temp_file_name and os.path.exists(self.temp_file_name):
-            if self.audio_player.playbackState() == QMediaPlayer.StoppedState:
-                pass
-            self.audio_player.play()
-            self.timer.start()
-            self.vu_timer.start()
+        self.audio_player.play()
+        self.timer.start()
+        self.vu_timer.start()
 
     def pause_sound(self):
         self.audio_player.pause()
@@ -456,28 +480,39 @@ class AudioPlayer(QWidget):
             self.ui.play_button.setText("Play")
         self.ui.play_button.setIcon(icon)
 
+    def set_audio_bytes(self, data: bytes, ext: str = 'wav'):
+        try:
+            self.audio_player.stop()
+            self.audio_player.setSourceDevice(None)
+            if hasattr(self, '_buffer') and self._buffer is not None:
+                self._buffer.close()
+                self._buffer = None
+
+            self._byte_array = QByteArray(data)
+            self._buffer = QBuffer(self._byte_array)
+            self._buffer.open(QIODevice.ReadOnly)
+
+            self.audio_player.setSourceDevice(self._buffer, QUrl(f"audio.{ext}"))
+            self.filepath = None
+
+            self._env, self._env_frame_dur = compute_peak_envelope(io.BytesIO(data))
+            self.waveform_widget.set_waveform(self._env)
+        except Exception as e:
+            print(f"Error loading audio bytes: {e}")
+            self.filepath = None
+            self._env, self._env_frame_dur = None, 0.0
+            self.waveform_widget.set_waveform(None)
+
     def set_audiopath(self, path):
         try:
             with open(path, "rb") as source_file:
                 data = source_file.read()
 
-            if self.temp_file_name and os.path.exists(self.temp_file_name):
-                os.remove(self.temp_file_name)
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-                tmp.write(data)
-                tmp.flush()
-                self.temp_file_name = tmp.name
-
-            self.audio_player.setSource(QUrl.fromLocalFile(self.temp_file_name))
+            ext = os.path.splitext(path)[1].lstrip('.') or 'wav'
+            self.set_audio_bytes(data, ext)
             self.filepath = path
-            # Envelope from the real source file (mp3 → None, meter stays idle)
-            self._env, self._env_frame_dur = compute_peak_envelope(path)
-            self.waveform_widget.set_waveform(self._env)
-
         except Exception as e:
             print(f"Error loading file '{path}': {e}")
-            self.temp_file_name = None
             self.filepath = None
             self._env, self._env_frame_dur = None, 0.0
             self.waveform_widget.set_waveform(None)
@@ -524,7 +559,4 @@ class AudioPlayer(QWidget):
         self.pause_sound()
         if self.info_overlay:
             self.info_overlay.close()
-
-        if self.temp_file_name and os.path.exists(self.temp_file_name):
-            os.remove(self.temp_file_name)
         super().closeEvent(event)

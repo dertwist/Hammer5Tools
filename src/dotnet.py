@@ -77,6 +77,8 @@ class DotNetInterop:
 
             if runtime_config is None:
                 local_config = Path(__file__).parent / 'external' / 'dotnet' / RUNTIME_CONFIG_NAME
+                if not local_config.exists():
+                    local_config = Path(__file__).parent / 'external' / RUNTIME_CONFIG_NAME
                 if local_config.exists():
                     runtime_config = str(local_config)
 
@@ -327,7 +329,7 @@ class ResourceProcessor:
 
                 if content_file and hasattr(content_file, 'Data') and content_file.Data:
                     # Save main file
-                    data_bytes = bytes([content_file.Data[i] for i in range(content_file.Data.Length)])
+                    data_bytes = bytes(content_file.Data)
                     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
                     Path(output_path).write_bytes(data_bytes)
                     return True
@@ -509,85 +511,98 @@ def setup_keyvalues2():
     return interop.setup_keyvalues()
 
 
-def extract_vsnd_file(output_folder: str = None, export=False, vpk_file: str = None, vpk_path: str = None):
+def decode_vsnd(vpk_path: str, vpk_file: str) -> tuple[bytes | None, str]:
     """
-    Export true will extract the file to the output folder using ValveResourceFormat's FileExtract.
-    False will just return the raw file data.
-    Handles both .wav and .mp3 output from .vsnd_c files.
-    vpk_file: path inside VPK, e.g. 'sounds/items/healthshot_thud_01.vsnd_c'
+    Decodes a .vsnd_c file from a VPK in memory using ValveResourceFormat.
+    Returns (audio_bytes, extension) e.g. (b'...', 'wav') or (b'...', 'mp3').
+    Returns (None, '') on failure.
     """
-    if output_folder is None:
-        export = False
-    if vpk_path is None:
-        raise ValueError("vpk_path must be specified.")
-    if vpk_file is None:
-        raise ValueError("vpk_file must be specified.")
+    if vpk_path is None or vpk_file is None:
+        return None, ''
 
-    # Use static cache for interop and extractor
-    if not hasattr(extract_vsnd_file, "_interop"):
-        extract_vsnd_file._interop = DotNetInterop()
-    interop = extract_vsnd_file._interop
+    if not hasattr(decode_vsnd, "_interop"):
+        decode_vsnd._interop = DotNetInterop()
+    interop = decode_vsnd._interop
     interop._init_pythonnet()  # Ensure pythonnet is loaded before importing System
     import System
     from System.IO import MemoryStream
-    if not hasattr(extract_vsnd_file, "_extractor"):
-        extract_vsnd_file._extractor = VPKExtractor(interop)
-        extract_vsnd_file._extractor._ensure_vrf_loaded()
-    extractor = extract_vsnd_file._extractor
+    if not hasattr(decode_vsnd, "_extractor"):
+        decode_vsnd._extractor = VPKExtractor(interop)
+        decode_vsnd._extractor._ensure_vrf_loaded()
+    extractor = decode_vsnd._extractor
 
     data = extractor.extract_file(vpk_path, vpk_file)
     if data is None:
         print(f"Failed to extract {vpk_file} from {vpk_path}. File not found.")
-        return None
+        return None, ''
     if not isinstance(data, bytes):
-        data = bytes([data[i] for i in range(data.Length)])
+        data = bytes(data)
 
-    if export:
-        Resource, _, _, FileExtract, _, _ = extractor._vrf_types
-        resource = System.Activator.CreateInstance(Resource)
-        ms = MemoryStream(data)
-        try:
-            resource.Read(ms)
-            # Find Extract method only once
-            if not hasattr(extract_vsnd_file, "_extract_method"):
-                extract_method = None
-                for m in FileExtract.GetMethods():
-                    if m.Name == "Extract":
-                        extract_method = m
-                        break
-                extract_vsnd_file._extract_method = extract_method
-            extract_method = extract_vsnd_file._extract_method
-            if extract_method is None:
-                print("Could not find FileExtract.Extract method.")
-                return None
-            params = extract_method.GetParameters()
-            args = System.Array.CreateInstance(System.Object, len(params))
-            args[0] = resource
-            for i in range(1, len(params)):
-                args[i] = None
-            content_file = extract_method.Invoke(None, args)
-            if content_file and hasattr(content_file, 'Data') and content_file.Data:
+    Resource, _, _, FileExtract, _, _ = extractor._vrf_types
+    resource = System.Activator.CreateInstance(Resource)
+    ms = MemoryStream(data)
+    try:
+        resource.Read(ms)
+        if not hasattr(decode_vsnd, "_extract_method"):
+            extract_method = None
+            for m in FileExtract.GetMethods():
+                if m.Name == "Extract":
+                    extract_method = m
+                    break
+            decode_vsnd._extract_method = extract_method
+        extract_method = decode_vsnd._extract_method
+        if extract_method is None:
+            print("Could not find FileExtract.Extract method.")
+            return None, ''
+        params = extract_method.GetParameters()
+        args = System.Array.CreateInstance(System.Object, len(params))
+        args[0] = resource
+        for i in range(1, len(params)):
+            args[i] = None
+        content_file = extract_method.Invoke(None, args)
+        if content_file and hasattr(content_file, 'Data') and content_file.Data:
+            out_bytes = bytes(content_file.Data)
+            ext = 'wav'
+            if out_bytes.startswith(b'ID3') or (len(out_bytes) >= 2 and out_bytes[0] == 0xFF and (out_bytes[1] & 0xE0) == 0xE0):
+                ext = 'mp3'
+            elif out_bytes.startswith(b'RIFF'):
                 ext = 'wav'
-                if hasattr(content_file, 'FileName') and content_file.FileName:
-                    ext = os.path.splitext(str(content_file.FileName))[1][1:] or 'wav'
-                elif hasattr(content_file, 'Type') and str(content_file.Type).lower() == 'mp3':
-                    ext = 'mp3'
-                output_filepath = os.path.join(output_folder, vpk_file.replace('.vsnd_c', f'.{ext}'))
-                os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
-                out_bytes = bytes([content_file.Data[i] for i in range(content_file.Data.Length)])
-                with open(output_filepath, "wb") as f:
-                    f.write(out_bytes)
-                print(f"Decompiled {vpk_file} to {output_filepath}. Size: {len(out_bytes)} bytes.")
-                return output_filepath
-            else:
-                print("Failed to decompile .vsnd_c file using ValveResourceFormat.")
-                return None
-        finally:
-            ms.Dispose()
-            if hasattr(resource, 'Dispose'):
-                resource.Dispose()
-    else:
-        return data
+            elif hasattr(content_file, 'FileName') and content_file.FileName:
+                ext = os.path.splitext(str(content_file.FileName))[1][1:] or 'wav'
+            elif hasattr(content_file, 'Type') and str(content_file.Type).lower() == 'mp3':
+                ext = 'mp3'
+            return out_bytes, ext
+        else:
+            print("Failed to decompile .vsnd_c file using ValveResourceFormat.")
+            return None, ''
+    except Exception as e:
+        print(f"Error decoding .vsnd file {vpk_file}: {e}")
+        return None, ''
+    finally:
+        ms.Dispose()
+        if hasattr(resource, 'Dispose'):
+            resource.Dispose()
+
+
+def extract_vsnd_file(output_folder: str = None, export=False, vpk_file: str = None, vpk_path: str = None):
+    """
+    Extracts a .vsnd_c file from a VPK to the specified output folder.
+    Returns output file path, or None on failure.
+    vpk_file: path inside VPK, e.g. 'sounds/items/healthshot_thud_01.vsnd_c'
+    """
+    if output_folder is None or vpk_path is None or vpk_file is None:
+        return None
+
+    out_bytes, ext = decode_vsnd(vpk_path, vpk_file)
+    if out_bytes is None:
+        return None
+
+    output_filepath = os.path.join(output_folder, vpk_file.replace('.vsnd_c', f'.{ext}'))
+    os.makedirs(os.path.dirname(output_filepath), exist_ok=True)
+    with open(output_filepath, "wb") as f:
+        f.write(out_bytes)
+    print(f"Decompiled {vpk_file} to {output_filepath}. Size: {len(out_bytes)} bytes.")
+    return output_filepath
 
 # Start Extract thumbnail from VMAP file
 
@@ -825,7 +840,7 @@ def decompile_model_to_glb(vmdl_path: str, context_addon: str = None) -> Optiona
         return None
         
     if not isinstance(data, bytes):
-        data = bytes([data[i] for i in range(data.Length)])
+        data = bytes(data)
         
     # Decompile using GltfModelExporter (ensure assemblies loaded first)
     setup_vrf()
@@ -999,7 +1014,7 @@ def decompile_texture_to_png(vtex_path: str) -> Optional[str]:
         return None
         
     if not isinstance(data, bytes):
-        data = bytes([data[i] for i in range(data.Length)])
+        data = bytes(data)
         
     # Decompile using VRF
     setup_vrf()
@@ -1046,14 +1061,14 @@ def decompile_texture_to_png(vtex_path: str) -> Optional[str]:
                 sub = content_file.SubFiles[0]
                 sub_data = sub.Extract()
                 if sub_data:
-                    out_bytes = bytes([sub_data[i] for i in range(sub_data.Length)])
+                    out_bytes = bytes(sub_data)
                     os.makedirs(os.path.dirname(output_png_path), exist_ok=True)
                     with open(output_png_path, "wb") as f:
                         f.write(out_bytes)
                     return output_png_path
             # Fallback to Data property
             elif hasattr(content_file, 'Data') and content_file.Data:
-                out_bytes = bytes([content_file.Data[i] for i in range(content_file.Data.Length)])
+                out_bytes = bytes(content_file.Data)
                 os.makedirs(os.path.dirname(output_png_path), exist_ok=True)
                 with open(output_png_path, "wb") as f:
                     f.write(out_bytes)
@@ -1068,5 +1083,19 @@ def decompile_texture_to_png(vtex_path: str) -> Optional[str]:
             resource.Dispose()
 
 if __name__ == "__main__":
-    pass
+    from src.settings.main import get_cs2_path
+    cs2_path = get_cs2_path()
+    vpk_path = os.path.join(cs2_path, 'game', 'csgo', 'pak01_dir.vpk') if cs2_path else None
+    if vpk_path and os.path.exists(vpk_path):
+        vpk_file = r'sounds\items\healthshot_thud_01.vsnd_c'
+        data, ext = decode_vsnd(vpk_path, vpk_file)
+        if data:
+            assert len(data) > 0, "Decoded data is empty"
+            assert data.startswith(b'RIFF') or data.startswith(b'ID3') or data.startswith(b'\xff\xfb') or data.startswith(b'\xff\xf3') or data.startswith(b'\xff\xf2'), f"Unexpected header: {data[:4]}"
+            print(f"Self-check passed: decoded {vpk_file} -> {len(data)} bytes ({ext})")
+        else:
+            print(f"Self-check skipped: file {vpk_file} not found in VPK")
+    else:
+        print("Self-check skipped: CS2 or pak01_dir.vpk not found")
+
 

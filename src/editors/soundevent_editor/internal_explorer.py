@@ -9,10 +9,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QUrl, QMimeData, QProcess, QThread, Signal
 from PySide6.QtMultimedia import QMediaPlayer
 from PySide6.QtGui import QGuiApplication
-from src.settings.main import get_cs2_path, get_addon_dir, debug, get_settings_value
-from src.common import SoundEventEditor_sounds_path, SoundEventEditor_path
+from src.settings.main import get_cs2_path, get_addon_dir, debug
+from src.common import SoundEventEditor_path
 from src.widgets import exception_handler
-from src.dotnet import extract_vsnd_file
+from src.dotnet import extract_vsnd_file, decode_vsnd
 
 # pak01_dir.vpk is global CS2 content, identical for every addon. Scan it once
 # and reuse the result so switching addons neither re-walks ~130k VPK entries
@@ -49,10 +49,30 @@ class VPKLoaderThread(QThread):
 
 
 @exception_handler
-class InternalSoundFileExplorer(QTreeWidget):
-    play_sound = Signal(str)
+class VSNDDecodeThread(QThread):
+    decoded = Signal(object, str)
 
-    def __init__(self, audio_player: QMediaPlayer):
+    def __init__(self, pak_path: str, internal_path: str, parent=None):
+        super().__init__(parent)
+        self.pak_path = pak_path
+        self.internal_path = internal_path
+
+    def run(self):
+        try:
+            data, ext = decode_vsnd(vpk_path=self.pak_path, vpk_file=self.internal_path)
+            if data is not None:
+                self.decoded.emit(data, ext)
+            else:
+                debug(f"Failed to decode {self.internal_path}")
+        except Exception as e:
+            debug(f"Error decoding {self.internal_path}: {e}")
+
+
+@exception_handler
+class InternalSoundFileExplorer(QTreeWidget):
+    play_audio_data = Signal(object, str)
+
+    def __init__(self, audio_player=None):
         super().__init__()
         self.setHeaderHidden(True)
         self.setDragEnabled(True)
@@ -65,6 +85,7 @@ class InternalSoundFileExplorer(QTreeWidget):
         self.itemClicked.connect(self.on_item_clicked)
         self.audio_player = audio_player
         self.vpk_loader_thread = None
+        self._decode_thread = None
         if _VSND_FOLDERS_CACHE is not None:
             self.populate_tree(_VSND_FOLDERS_CACHE)
         else:
@@ -122,83 +143,19 @@ class InternalSoundFileExplorer(QTreeWidget):
     #  Audio playback helpers
     # ──────────────────────────────────────────────
 
-    def _play_audio_file(self, file_path):
-        debug(f'Playing audio {file_path}')
-        self.play_sound.emit(file_path)
-
-    def maintain_cache_size(self, cache_path, max_cache_bytes):
-        """
-        Check if cache folder exceeds the allowed size and delete oldest files if necessary.
-        """
-        if not os.path.isdir(cache_path):
-            return
-        total_size = 0
-        file_list = []
-        for root, dirs, files in os.walk(cache_path):
-            for file in files:
-                full_path = os.path.join(root, file)
-                try:
-                    file_size = os.path.getsize(full_path)
-                    total_size += file_size
-                    mod_time = os.path.getmtime(full_path)
-                    file_list.append((full_path, mod_time, file_size))
-                except Exception:
-                    continue
-        if total_size <= max_cache_bytes:
-            return
-        # Sort files by modification time (oldest first)
-        file_list.sort(key=lambda x: x[1])
-        while total_size > max_cache_bytes and file_list:
-            file_to_remove, mod_time, file_size = file_list.pop(0)
-            try:
-                os.remove(file_to_remove)
-                total_size -= file_size
-                debug(f"Removed cached file: {file_to_remove}")
-            except Exception as e:
-                debug(f"Failed to remove {file_to_remove}: {e}")
-
     def play_audio_file(self, path):
+        if self._decode_thread is not None and self._decode_thread.isRunning():
+            self._decode_thread.quit()
+            self._decode_thread.wait()
+            self._decode_thread = None
+
         internal_audiopath = os.path.join(
             'sounds', path.replace('vsnd', 'vsnd_c')
         ).replace('/', '\\')
-
-        local_audiopath_wav = os.path.join(
-            SoundEventEditor_sounds_path, path.replace('vsnd', 'wav')
-        ).replace('/', '\\')
-        local_audiopath_mp3 = os.path.join(
-            SoundEventEditor_sounds_path, path.replace('vsnd', 'mp3')
-        ).replace('/', '\\')
-
-        local_audiopath_wav = os.path.abspath(local_audiopath_wav)
-        local_audiopath_mp3 = os.path.abspath(local_audiopath_mp3)
-
-        try:
-            max_cache_mb = float(
-                get_settings_value('SoundEventEditor', 'max_cache_size', 4000)
-            )
-        except ValueError:
-            max_cache_mb = 4000
-        max_cache_bytes = max_cache_mb * 1024 * 1024
-
-        # Before using the cache, ensure the cache folder size is maintained.
-        self.maintain_cache_size(SoundEventEditor_sounds_path, max_cache_bytes)
-
-        if os.path.exists(local_audiopath_wav):
-            self._play_audio_file(local_audiopath_wav)
-        elif os.path.exists(local_audiopath_mp3):
-            self._play_audio_file(local_audiopath_mp3)
-        else:
-            self.decompile_audio(internal_audiopath, local_audiopath_wav, path)
-
-    def decompile_audio(self, internal_path, local_path, assembled_path):
         pak1 = os.path.join(get_cs2_path(), 'game', 'csgo', 'pak01_dir.vpk')
-        extract_vsnd_file(
-            vpk_path=pak1,
-            vpk_file=internal_path,
-            output_folder=SoundEventEditor_path,
-            export=True,
-        )
-        self.play_audio_file(assembled_path)
+        self._decode_thread = VSNDDecodeThread(pak1, internal_audiopath, self)
+        self._decode_thread.decoded.connect(self.play_audio_data.emit)
+        self._decode_thread.start()
 
     # ──────────────────────────────────────────────
     #  Path helpers
