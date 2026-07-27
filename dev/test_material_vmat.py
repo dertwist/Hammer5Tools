@@ -11,6 +11,7 @@ if project_root not in sys.path:
 from src.forms.unreal_converter.converter import scan_and_group
 from src.forms.unreal_converter.texture_utils import unpack_rma
 from src.forms.unreal_converter.vmat_writer import write_vmat
+from src.forms.unreal_converter.material_converter import _classify_textures
 
 
 class TestMaterialConverter(unittest.TestCase):
@@ -78,6 +79,29 @@ class TestMaterialConverter(unittest.TestCase):
         self.assertIn('TextureColor1 "materials/test_color.tga"', content)
         self.assertIn('TextureNormal1 "materials/test_normal.tga"', content)
         self.assertIn('g_vColorTint "[0.800000 0.800000 0.800000 0.000000]"', content)
+
+    def test_classify_textures_heuristic(self):
+        textures = {"BaseColor2": "/Game/T_Wall_BC", "Roughness": "/Game/T_Wall_R"}
+        picks = _classify_textures(textures)
+        # "BaseColor2" tokenizes to {"base","color","2"} -> matches "color" slot,
+        # numeric-suffix penalty just lowers its score vs. an un-numbered rival.
+        self.assertEqual(picks["color"], ("BaseColor2", "/Game/T_Wall_BC"))
+        self.assertEqual(picks["rough"], ("Roughness", "/Game/T_Wall_R"))
+
+    def test_classify_textures_override_wins(self):
+        # "BaseColor2" would heuristically classify as "color"; force it to
+        # "emissive" instead and confirm the override wins and excludes it
+        # from the slot the heuristic would have picked.
+        textures = {"BaseColor2": "/Game/T_Wall_BC"}
+        picks = _classify_textures(textures, slot_overrides={"basecolor2": "emissive"})
+        self.assertEqual(picks["emissive"], ("BaseColor2", "/Game/T_Wall_BC"))
+        self.assertNotIn("color", picks)
+
+    def test_classify_textures_override_skip(self):
+        # Mapping a param to None excludes it entirely instead of forcing a slot.
+        textures = {"BaseColor2": "/Game/T_Wall_BC"}
+        picks = _classify_textures(textures, slot_overrides={"basecolor2": None})
+        self.assertEqual(picks, {})
 
 
 if __name__ == "__main__":
