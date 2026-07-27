@@ -223,7 +223,7 @@
         <item>
          <widget class="QLineEdit" name="tree_hierarchy_search_bar_widget">
           <property name="placeholderText">
-           <string>Search...</string>
+           <string>Filter...</string>
           </property>
          </widget>
         </item>
