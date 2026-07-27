@@ -87,7 +87,7 @@ class HierarchyTreeWidget(QTreeWidget):
             painter.drawLine(expander_cx, cy, next_spine_cx, cy)
             painter.drawLine(next_spine_cx, cy, next_spine_cx, rect.bottom())
 
-        if depth == 0:
+        if depth == 0 and has_children:
             item_x = rect.left() + indent
             painter.drawLine(expander_cx, cy, item_x, cy)
 

@@ -307,7 +307,7 @@ class Ui_Form(object):
 "	color: #E3E3E3;\n"
 "}")
         icon1 = QIcon()
-        icon1.addFile(u":/icons/delete_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon1.addFile(u":/valve_common/icons/tools/common/delete_sm.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.delete_button.setIcon(icon1)
 
         self.horizontalLayout.addWidget(self.delete_button)
@@ -355,7 +355,7 @@ class Ui_Form(object):
 "	color: #E3E3E3;\n"
 "}")
         icon2 = QIcon()
-        icon2.addFile(u":/icons/content_copy_24dp.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon2.addFile(u":/valve_common/icons/tools/common/copy_sm.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.copy_button.setIcon(icon2)
 
         self.horizontalLayout.addWidget(self.copy_button)

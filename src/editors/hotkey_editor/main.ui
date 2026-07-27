@@ -147,11 +147,11 @@ QMenu::indicator {
 }
 
 QMenu::indicator:checked {
-    image: url(:/images/checkmark.png);
+    image: url(:/icons/check_16dp.svg);
 }
 
 QMenu::indicator:unchecked {
-    image: url(:/images/empty.png);
+    image: url(:/icons/check_box_outline_blank_16dp.svg);
 }
 
 
