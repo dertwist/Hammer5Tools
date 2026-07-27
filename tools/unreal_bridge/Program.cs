@@ -641,7 +641,8 @@ static class Program
     // at every level while walking a MaterialInstance parent chain.
     static void CollectInstanceParams(
         CUE4Parse.UE4.Assets.Exports.UObject export,
-        Dictionary<string, string> textures, Dictionary<string, float> scalars, Dictionary<string, object> vectors)
+        Dictionary<string, string> textures, Dictionary<string, float> scalars, Dictionary<string, object> vectors,
+        Dictionary<string, bool> switches)
     {
         var texParams = export.GetOrDefault<FStructFallback[]?>("TextureParameterValues", null);
         if (texParams != null)
@@ -671,6 +672,20 @@ static class Program
                 if (!string.IsNullOrEmpty(name) && val != null && !vectors.ContainsKey(name))
                     vectors[name] = new { r = val.Value.R, g = val.Value.G, b = val.Value.B, a = val.Value.A };
             }
+
+        // Static switches ("Static Switch Parameter" nodes, e.g. "Use Normal Map")
+        // live under the editor-only StaticParameters struct, not as a flat array
+        // like the value params above — only present on uncooked assets, which is
+        // exactly what this bridge reads.
+        var switchParams = export.GetOrDefault<FStructFallback?>("StaticParameters", null)
+            ?.GetOrDefault<FStructFallback[]?>("StaticSwitchParameters", null);
+        if (switchParams != null)
+            foreach (var swp in switchParams)
+            {
+                var name = swp.GetOrDefault<FStructFallback?>("ParameterInfo", null)?.GetOrDefault<FName?>("Name", null)?.Text;
+                if (!string.IsNullOrEmpty(name) && !switches.ContainsKey(name))
+                    switches[name] = swp.GetOrDefault<bool>("Value", false);
+            }
     }
 
     // A base UMaterial has no instance param arrays — its "default" values for
@@ -680,7 +695,8 @@ static class Program
     // walked once the parent chain bottoms out at a real Material.
     static void CollectExpressionDefaults(
         CUE4Parse.UE4.Assets.IPackage pkg,
-        Dictionary<string, string> textures, Dictionary<string, float> scalars, Dictionary<string, object> vectors)
+        Dictionary<string, string> textures, Dictionary<string, float> scalars, Dictionary<string, object> vectors,
+        Dictionary<string, bool> switches)
     {
         foreach (var ex in pkg.GetExports())
         {
@@ -711,6 +727,13 @@ static class Program
                             vectors[name] = new { r = val.Value.R, g = val.Value.G, b = val.Value.B, a = val.Value.A };
                         break;
                     }
+                case "MaterialExpressionStaticBoolParameter":
+                    {
+                        var name = EnumText(ex, "ParameterName");
+                        if (!string.IsNullOrEmpty(name) && !switches.ContainsKey(name))
+                            switches[name] = ex.GetOrDefault<bool>("DefaultValue", false);
+                        break;
+                    }
             }
         }
     }
@@ -738,6 +761,7 @@ static class Program
         var textures = new Dictionary<string, string>();
         var scalars = new Dictionary<string, float>();
         var vectors = new Dictionary<string, object>();
+        var switches = new Dictionary<string, bool>();
         string? parent = null;
         object? flags = null;
 
@@ -766,7 +790,7 @@ static class Program
                 parent = pref?.ResolvedObject?.GetPathName();
             }
 
-            CollectInstanceParams(matExport, textures, scalars, vectors);
+            CollectInstanceParams(matExport, textures, scalars, vectors, switches);
 
             if (flags == null)
             {
@@ -777,14 +801,14 @@ static class Program
             {
                 // Reached the base Material — pull its expression-node defaults
                 // as the lowest-priority fallback layer, then stop.
-                CollectExpressionDefaults(pkg, textures, scalars, vectors);
+                CollectExpressionDefaults(pkg, textures, scalars, vectors, switches);
                 break;
             }
 
             currentPath = ParentPackagePath(matExport);
         }
 
-        var result = new { material = matPath, parent, flags, textures, scalars, vectors };
+        var result = new { material = matPath, parent, flags, textures, scalars, vectors, switches };
         Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
         return 0;
     }

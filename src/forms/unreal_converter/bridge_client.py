@@ -99,6 +99,24 @@ class UnrealBridge:
     def list(self, substring: str = "") -> list:
         return self._run_json("list", self.content_dir, substring)
 
+    def list_materials(self) -> list:
+        """Find all Material / MaterialInstance .uasset keys under the project,
+        regardless of exact subfolder layout (e.g. Materials/ or Environment/...)."""
+        all_keys = self.list("")
+        mat_keys = []
+        for k in all_keys:
+            lk = k.lower()
+            if not lk.endswith(".uasset") or lk.endswith(".umap"):
+                continue
+            filename = os.path.basename(lk)
+            if (any(x in lk for x in ("/materials/", "/material/", "/material_instances/", "/mi/", "/mastermaterials/", "/inst/", "/m/"))
+                or filename.startswith(("mi_", "m_", "mm_", "mat_"))
+                or "material" in filename):
+                mat_keys.append(k)
+        if not mat_keys:
+            mat_keys = [k for k in all_keys if k.lower().endswith(".uasset") and not k.lower().endswith(".umap")]
+        return mat_keys
+
     def dump(self, object_path: str) -> Any:
         # Raw export tree can be huge; allow more time.
         return self._run_json("dump", self.content_dir, object_path, timeout=600)
@@ -272,7 +290,9 @@ class UnrealBridge:
 
     def dump_material(self, mat_path: str) -> dict:
         """Normalized material instance properties: {material, parent, textures,
-        scalars, vectors}."""
+        scalars, vectors, switches}. `switches` are the MI's static-switch bools
+        (e.g. "Use Normal Map") — a signal for whether a param even applies,
+        not currently used to gate slot selection but available for it."""
         try:
             return self._run_json("dump-material", self.content_dir, mat_path, timeout=600)
         except BridgeError as e:
@@ -283,11 +303,12 @@ class UnrealBridge:
     def _parse_dump_as_material(self, mat_path: str) -> dict:
         exports = self.dump(mat_path)
         if not isinstance(exports, list):
-            return {"material": mat_path, "parent": None, "textures": {}, "scalars": {}, "vectors": {}}
+            return {"material": mat_path, "parent": None, "textures": {}, "scalars": {}, "vectors": {}, "switches": {}}
 
         textures = {}
         scalars = {}
         vectors = {}
+        switches = {}
         parent = None
 
         for exp in exports:
@@ -325,6 +346,15 @@ class UnrealBridge:
                             "a": float(val.get("A", 1)),
                         }
 
-        return {"material": mat_path, "parent": parent, "textures": textures, "scalars": scalars, "vectors": vectors}
+            static_params = props.get("StaticParameters") or {}
+            for swp in (static_params.get("StaticSwitchParameters") or []):
+                if isinstance(swp, dict):
+                    name = swp.get("ParameterInfo", {}).get("Name")
+                    val = swp.get("Value")
+                    if name and val is not None:
+                        switches[name] = bool(val)
+
+        return {"material": mat_path, "parent": parent, "textures": textures, "scalars": scalars,
+                "vectors": vectors, "switches": switches}
 
 
