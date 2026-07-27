@@ -233,6 +233,11 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
     if channel == 'stable':
         generate_runtime_config(runtime_config_dir)
 
+    # H5T.UnrealBridge (CUE4Parse) — built separately (see tools/unreal_bridge/README.md).
+    # Bundle its publish output so bridge_client.py's frozen fallback (sys._MEIPASS/unreal_bridge)
+    # finds it. Optional: skipped if nobody built it locally.
+    unreal_bridge_publish = os.path.join(cur_dir, 'tools', 'unreal_bridge', 'publish')
+
     pyinstaller_cmd = [
         sys.executable, '-m', 'PyInstaller',
         '--name=Hammer5Tools_Core',
@@ -275,6 +280,7 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--exclude-module=pandas',
         '--exclude-module=tabulate',
         external,
+        f'--add-data={unreal_bridge_publish};unreal_bridge' if os.path.exists(unreal_bridge_publish) else '',
         *( [f'--add-binary=src{os.sep}external{os.sep}{dll};external{os.sep}{dll}' for dll, _ in dotnet_dlls] if channel == 'stable' else [] ),
         *( get_dotnet_runtime_data() if channel == 'stable' else [] ),
         f'--add-data={runtime_config_path};dotnet' if channel == 'stable' and os.path.exists(runtime_config_path) else '',
