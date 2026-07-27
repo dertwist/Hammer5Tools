@@ -139,7 +139,7 @@ class SmartPropEditorMainWindow(QMainWindow):
         self.action_undo.triggered.connect(self.active_document_undo)
 
         self.action_redo = edit_menu.addAction("Redo")
-        self.action_redo.setShortcut(QKeySequence.Redo)
+        self.action_redo.setShortcuts([QKeySequence.Redo, QKeySequence("Ctrl+Shift+Z")])
         self.action_redo.triggered.connect(self.active_document_redo)
 
         edit_menu.addSeparator()

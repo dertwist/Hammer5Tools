@@ -1252,7 +1252,10 @@ class SmartPropDocument(QMainWindow):
                 if event.matches(QKeySequence.Undo):
                     self.undo_stack.undo()
                     return True
-                if event.matches(QKeySequence.Redo):
+                is_redo = event.matches(QKeySequence.Redo) or (
+                    event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier) and event.key() == Qt.Key_Z
+                )
+                if is_redo:
                     self.undo_stack.redo()
                     return True
                 if source.viewport().underMouse():
