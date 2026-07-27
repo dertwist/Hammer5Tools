@@ -22,9 +22,6 @@ dotnet_dlls = [
     ("ValveResourceFormat.dll", "src\\external"),
     ("ZstdSharp.dll", "src\\external"),
     ("K4os.Compression.LZ4.dll", "src\\external"),
-    ("SharpGLTF.Core.dll", "src\\external"),
-    ("SharpGLTF.Runtime.dll", "src\\external"),
-    ("SharpGLTF.Toolkit.dll", "src\\external"),
     ("SharpZstd.Interop.dll", "src\\external"),
     ("SkiaSharp.dll", "src\\external"),
     ("System.IO.Hashing.dll", "src\\external"),
@@ -38,6 +35,7 @@ dotnet_dlls = [
     ("Vortice.SpirvCross.dll", "src\\external"),
     ("spirv-cross.dll", "src\\external"),
 ]
+
 
 # Create a runtimeconfig.json for the bundled .NET runtime
 def generate_runtime_config(target_dir):
@@ -256,9 +254,8 @@ def build_app_pyinstaller(fast=False, channel='stable') -> None:
         '--collect-all=src',
         '--collect-all=keyvalues3',
         '--collect-all=OpenGL',
-        '--collect-all=trimesh',
-        '--collect-all=pygltflib',
         '--collect-submodules=pycparser',
+
         '--hidden-import=PySide6.QtNetwork',
         '--hidden-import=PySide6.QtMultimedia',
         '--hidden-import=PySide6.QtMultimediaWidgets',
