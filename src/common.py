@@ -191,25 +191,35 @@ for p in [Presets_Path, Hotkeys_Path, SoundEventEditor_Preset_Path, SmartPropEdi
     p.mkdir(parents=True, exist_ok=True)
 
 def get_all_presets(internal_path: Path, user_path: Path) -> list[dict]:
-    """Returns a list of presets from both internal and user paths."""
+    """Returns a list of presets/templates from both internal and user paths."""
     presets = []
+    seen_names = set()
     
+    internal_paths = [internal_path]
+    alt_internal = app_dir / "Hammer5Tools" / "SoundEventEditor" / "Presets"
+    if alt_internal not in internal_paths:
+        internal_paths.append(alt_internal)
+
     # Internal presets (Software) - these will be updated with the app
-    if internal_path.is_dir():
-        for file in internal_path.rglob("*"):
-            if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
-                # Relative path from internal_path to keep structure
-                rel_path = file.relative_to(internal_path)
-                display_name = f"[Software] {rel_path}"
-                presets.append({display_name: str(file.absolute())})
+    for ipath in internal_paths:
+        if ipath.is_dir():
+            for file in ipath.rglob("*"):
+                if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
+                    rel_path = file.relative_to(ipath)
+                    display_name = f"{rel_path.stem}"
+                    if display_name not in seen_names:
+                        seen_names.add(display_name)
+                        presets.append({display_name: str(file.absolute())})
                 
     # User presets - these are persistent in ~/Hammer5Tools
     if user_path.is_dir():
         for file in user_path.rglob("*"):
             if file.suffix in (".kv3", ".vdata", ".vsmart") and file.is_file():
                 rel_path = file.relative_to(user_path)
-                display_name = f"{rel_path}"
-                presets.append({display_name: str(file.absolute())})
+                display_name = f"{rel_path.stem}"
+                if display_name not in seen_names:
+                    seen_names.add(display_name)
+                    presets.append({display_name: str(file.absolute())})
                 
     return presets
 

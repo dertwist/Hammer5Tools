@@ -64,15 +64,17 @@ class PropertyBrowserWidget(QWidget):
 
         # Properties List
         self.prop_list_widget = QListWidget(properties_container)
+        self.prop_list_widget.setAlternatingRowColors(True)
         self.prop_list_widget.setStyleSheet("""
             QListWidget {
-                background-color: #151515;
+                background-color: #1C1C1C;
+                alternate-background-color: #242424;
                 border: 1px solid #333333;
                 border-radius: 2px;
                 color: #E0E0E0;
             }
             QListWidget::item {
-                padding: 3px 6px;
+                padding: 4px 6px;
             }
             QListWidget::item:hover {
                 background-color: #2D333B;
@@ -111,19 +113,25 @@ class PropertyBrowserWidget(QWidget):
         tmpl_bar_layout.addWidget(tmpl_header)
         tmpl_bar_layout.addStretch()
 
+        open_folder_icon = QIcon(":/valve_common/icons/tools/common/open.png")
+        if open_folder_icon.isNull():
+            open_folder_icon = self.style().standardIcon(QStyle.SP_DialogOpenButton)
         open_folder_btn = QPushButton(templates_container)
         open_folder_btn.setToolTip("Open User Templates Folder")
         open_folder_btn.setFlat(True)
         open_folder_btn.setFixedSize(20, 20)
-        open_folder_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogOpenButton))
+        open_folder_btn.setIcon(open_folder_icon)
         open_folder_btn.clicked.connect(self._open_templates_folder)
         tmpl_bar_layout.addWidget(open_folder_btn)
 
+        refresh_icon = QIcon(":/valve_common/icons/tools/common/refresh.png")
+        if refresh_icon.isNull():
+            refresh_icon = self.style().standardIcon(QStyle.SP_BrowserReload)
         refresh_btn = QPushButton(templates_container)
         refresh_btn.setToolTip("Refresh Templates")
         refresh_btn.setFlat(True)
         refresh_btn.setFixedSize(20, 20)
-        refresh_btn.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        refresh_btn.setIcon(refresh_icon)
         refresh_btn.clicked.connect(self.load_templates)
         tmpl_bar_layout.addWidget(refresh_btn)
 
@@ -138,15 +146,17 @@ class PropertyBrowserWidget(QWidget):
 
         # Templates List
         self.tmpl_list_widget = QListWidget(templates_container)
+        self.tmpl_list_widget.setAlternatingRowColors(True)
         self.tmpl_list_widget.setStyleSheet("""
             QListWidget {
-                background-color: #151515;
+                background-color: #1C1C1C;
+                alternate-background-color: #242424;
                 border: 1px solid #333333;
                 border-radius: 2px;
                 color: #E0E0E0;
             }
             QListWidget::item {
-                padding: 3px 6px;
+                padding: 4px 6px;
             }
             QListWidget::item:hover {
                 background-color: #2D333B;
@@ -157,10 +167,11 @@ class PropertyBrowserWidget(QWidget):
             }
         """)
         self.tmpl_list_widget.itemClicked.connect(self._on_template_clicked)
+        self.tmpl_list_widget.itemDoubleClicked.connect(self._on_template_clicked)
         tmpl_layout.addWidget(self.tmpl_list_widget)
 
         splitter.addWidget(templates_container)
-        splitter.setSizes([300, 300])
+        splitter.setSizes([450, 180])
 
     def load_properties(self):
         """Populate property list from soundevent_editor_properties."""
@@ -178,10 +189,53 @@ class PropertyBrowserWidget(QWidget):
             item.setHidden(bool(search and search not in item.text().lower()))
 
     def _on_property_double_clicked(self, item: QListWidgetItem):
+        if not (item.flags() & Qt.ItemIsEnabled):
+            return
         data = item.data(Qt.UserRole)
         if data:
             display_name, val_dict = data
             self.add_property_requested.emit(display_name, val_dict)
+
+    def update_property_states(self, existing_properties=None):
+        """
+        Check existing properties in active sound event.
+        Deactivate single-add properties if they already exist.
+        All properties except 'comment' can be added only once.
+        """
+        if existing_properties is None:
+            existing_properties = set()
+
+        if isinstance(existing_properties, (dict, list)):
+            existing_keys = set(existing_properties)
+        elif isinstance(existing_properties, set):
+            existing_keys = existing_properties
+        else:
+            existing_keys = set()
+
+        existing_keys_lower = {str(k).lower() for k in existing_keys}
+
+        for i in range(self.prop_list_widget.count()):
+            item = self.prop_list_widget.item(i)
+            data = item.data(Qt.UserRole)
+            if not data:
+                continue
+            display_name, val_dict = data
+
+            prop_key = next(iter(val_dict.keys())) if (isinstance(val_dict, dict) and val_dict) else ""
+            prop_key_lower = prop_key.lower()
+
+            # All properties except 'comment' can only be added once
+            is_single_add = (prop_key_lower != "comment")
+            already_exists = prop_key_lower in existing_keys_lower
+
+            if is_single_add and already_exists:
+                item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
+                item.setForeground(Qt.darkGray)
+                item.setToolTip(f"'{display_name}' already exists in active sound event")
+            else:
+                item.setFlags(item.flags() | Qt.ItemIsEnabled)
+                item.setForeground(Qt.NoBrush)
+                item.setToolTip(f"Double-click to add {display_name}")
 
     def load_templates(self):
         """Populate templates list from user and software template directories."""

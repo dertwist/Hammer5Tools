@@ -154,40 +154,89 @@ class SoundEventEditorMainWindow(QMainWindow):
             Qt.DockWidgetArea.RightDockWidgetArea
         )
         self.property_browser_dock.setWidget(self.property_browser_widget)
+        self.property_browser_dock.setMinimumWidth(260)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.property_browser_dock)
-        self.splitDockWidget(self.ui.dockWidget_10, self.property_browser_dock, Qt.Vertical)
+        self.splitDockWidget(self.ui.dockWidget_10, self.property_browser_dock, Qt.Horizontal)
+        self.resizeDocks([self.ui.dockWidget_10, self.property_browser_dock], [220, 360], Qt.Horizontal)
 
         # Property Browser connections
         self.property_browser_widget.add_property_requested.connect(self.on_property_added_from_browser)
         self.property_browser_widget.create_event_from_template_requested.connect(self.on_create_event_from_template)
 
-        # Add "Save as Template" button to properties header
+        # Property Editor Header with program stylesheet
         try:
-            header_layout = QHBoxLayout()
-            header_layout.setContentsMargins(4, 2, 4, 2)
+            from PySide6.QtWidgets import QFrame, QLineEdit, QHBoxLayout
+            self.editor_header_frame = QFrame(self.ui.frame)
+            self.editor_header_frame.setObjectName("editor_header_frame")
+            self.editor_header_frame.setStyleSheet("""
+                QFrame#editor_header_frame {
+                    background-color: #1C1C1C;
+                    border: none;
+                    border-bottom: 2px solid rgba(80, 80, 80, 255);
+                    border-radius: 0px;
+                }
+                QLabel {
+                    font: 580 9pt "Segoe UI";
+                    color: #E3E3E3;
+                    border: none;
+                }
+            """)
+            header_row = QHBoxLayout(self.editor_header_frame)
+            header_row.setContentsMargins(4, 2, 4, 2)
+            header_row.setSpacing(6)
+
+            # Label
             self.ui.verticalLayout_5.removeWidget(self.ui.label)
-            header_layout.addWidget(self.ui.label)
-            header_layout.addStretch()
-            self.save_template_btn = QPushButton("Save as Template", self.ui.frame)
+            header_row.addWidget(self.ui.label)
+
+            # Filterbar in middle
+            self.editor_prop_filter_edit = QLineEdit(self.editor_header_frame)
+            self.editor_prop_filter_edit.setPlaceholderText("Filter properties...")
+            self.editor_prop_filter_edit.setClearButtonEnabled(True)
+            self.editor_prop_filter_edit.setStyleSheet("""
+                QLineEdit {
+                    font: 580 9pt "Segoe UI";
+                    border: 2px solid black;
+                    border-color: rgba(80, 80, 80, 255);
+                    border-radius: 2px;
+                    color: #E3E3E3;
+                    background-color: #1C1C1C;
+                    padding: 2px 4px;
+                }
+                QLineEdit:focus {
+                    border-color: #414956;
+                }
+            """)
+            self.editor_prop_filter_edit.textChanged.connect(self.filter_editor_properties)
+            header_row.addWidget(self.editor_prop_filter_edit, 1)
+
+            # Save as Template button on right
+            self.save_template_btn = QPushButton("Save as Template", self.editor_header_frame)
             self.save_template_btn.setStyleSheet("""
                 QPushButton {
-                    font-size: 11px;
-                    padding: 2px 8px;
-                    border: 1px solid #444;
+                    font: 580 9pt "Segoe UI";
+                    border: 2px solid black;
                     border-radius: 2px;
-                    background-color: #262626;
-                    color: #DDD;
+                    border-color: rgba(80, 80, 80, 255);
+                    height: 22px;
+                    padding: 2px 6px;
+                    color: #E3E3E3;
+                    background-color: #1C1C1C;
                 }
                 QPushButton:hover {
-                    background-color: #3E4B5E;
+                    background-color: #414956;
                     color: white;
+                }
+                QPushButton:pressed {
+                    background-color: #1C1C1C;
                 }
             """)
             self.save_template_btn.clicked.connect(self.save_current_soundevent_as_template)
-            header_layout.addWidget(self.save_template_btn)
-            self.ui.verticalLayout_5.insertLayout(0, header_layout)
+            header_row.addWidget(self.save_template_btn)
+
+            self.ui.verticalLayout_5.insertWidget(0, self.editor_header_frame)
         except Exception as e:
-            debug(f"Failed to add Save as Template button: {e}")
+            debug(f"Failed to setup Property Editor header: {e}")
 
         # Init LoadSoundEvents
         self.load_soundevents(self.filepath_vsndevts)
@@ -365,6 +414,8 @@ class SoundEventEditorMainWindow(QMainWindow):
         _data = self.PropertiesWindow.value
         self.update_hierarchy_item(item, _data)
         self.update_properties_label()
+        if hasattr(self, 'property_browser_widget'):
+            self.property_browser_widget.update_property_states(self.PropertiesWindow.get_properties_value())
 
     def update_properties_label(self):
         """Refresh the Properties header label with the active event name and property count."""
@@ -414,7 +465,10 @@ class SoundEventEditorMainWindow(QMainWindow):
                 if event.matches(QKeySequence.Undo):
                     self.undo_stack.undo()
                     return True
-                if event.matches(QKeySequence.Redo):
+                is_redo = event.matches(QKeySequence.Redo) or (
+                    event.modifiers() == (Qt.ControlModifier | Qt.ShiftModifier) and event.key() == Qt.Key_Z
+                )
+                if is_redo:
                     self.undo_stack.redo()
                     return True
 
@@ -464,7 +518,15 @@ class SoundEventEditorMainWindow(QMainWindow):
         if item is None:
             QMessageBox.information(self, "Property Browser", "Please select a sound event in the hierarchy to add this property.")
             return
+        prop_key = next(iter(val_dict.keys())) if (isinstance(val_dict, dict) and val_dict) else ""
+        if prop_key.lower() != "comment":
+            existing_props = self.PropertiesWindow.get_properties_value()
+            existing_lower = {str(k).lower() for k in existing_props}
+            if prop_key.lower() in existing_lower:
+                return  # Skip duplicate single-add property
         self.PropertiesWindow.new_property(name, val_dict)
+        if hasattr(self, 'property_browser_widget'):
+            self.property_browser_widget.update_property_states(self.PropertiesWindow.get_properties_value())
 
     def on_create_event_from_template(self, template_name: str, template_path: str):
         """Create a new soundevent from selected template file."""
@@ -472,7 +534,15 @@ class SoundEventEditorMainWindow(QMainWindow):
             return
         try:
             with open(template_path, 'r', encoding='utf-8') as f:
-                data = Kv3ToJson(f.read())
+                content = f.read()
+            data = Kv3ToJson(content)
+            if not isinstance(data, dict):
+                data = {}
+            # If KV3 root dict contains a single wrapper key, unwrap it
+            if len(data) == 1:
+                key, val = next(iter(data.items()))
+                if isinstance(val, dict) and key != "editor_info":
+                    data = val
             self.new_soundevent(_data=data, _soundevent_name=template_name)
         except Exception as e:
             debug(f"Failed to load template {template_path}: {e}")
@@ -517,6 +587,27 @@ class SoundEventEditorMainWindow(QMainWindow):
         item.setData(0, Qt.UserRole, _data)
         debug(f"[hier] update: {item.text(0)}")
 
+    def filter_editor_properties(self, text: str):
+        """Filter active property frames in Property Editor by property name."""
+        search = text.strip().lower()
+        if not hasattr(self, 'PropertiesWindow') or not self.PropertiesWindow:
+            return
+        layout = self.PropertiesWindow.ui.properties_layout
+        for index in range(layout.count()):
+            item = layout.itemAt(index)
+            if not item:
+                continue
+            widget = item.widget()
+            from src.editors.soundevent_editor.property.frame import SoundEventEditorPropertyFrame
+            if isinstance(widget, SoundEventEditorPropertyFrame):
+                prop_name = str(getattr(widget, 'name', '') or '').lower()
+                display_label = ""
+                if hasattr(widget, 'ui') and hasattr(widget.ui, 'property_class'):
+                    display_label = widget.ui.property_class.text().lower()
+                
+                match = (search in prop_name) or (search in display_label)
+                widget.setHidden(bool(search and not match))
+
     def on_changed_hierarchy_item(self, current_item: HierarchyItemModel):
         """Handles changes in the hierarchy item by updating the properties window."""
         # Delegate switching logic to PropertiesWindow so it can suppress undo pushes
@@ -527,6 +618,11 @@ class SoundEventEditorMainWindow(QMainWindow):
             # emits 'edited' and PropertiesWindowUpdate runs.
             if not self.PropertiesWindow._restoring_from_undo:
                 self.update_properties_label()
+            if hasattr(self, 'editor_prop_filter_edit') and self.editor_prop_filter_edit.text():
+                self.filter_editor_properties(self.editor_prop_filter_edit.text())
+            if hasattr(self, 'property_browser_widget'):
+                props = self.PropertiesWindow.get_properties_value() if current_item else {}
+                self.property_browser_widget.update_property_states(props)
         except Exception as e:
             debug(f"Error switching properties view: {e}")
             QMessageBox.warning(self, "Properties Error", "Failed to switch properties view for the selected item.")
@@ -758,6 +854,30 @@ class SoundEventEditorMainWindow(QMainWindow):
 
 
 
+    def _apply_default_dock_layout(self):
+        """Ensure default horizontal/vertical dock split and sizes matching reference screenshot."""
+        try:
+            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.ui.dockWidget_10)
+            self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.property_browser_dock)
+            self.splitDockWidget(self.ui.dockWidget_10, self.property_browser_dock, Qt.Horizontal)
+
+            if hasattr(self, '_history_dock'):
+                self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.ui.dockWidget_4)
+                self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._history_dock)
+                self.splitDockWidget(self.ui.dockWidget_4, self._history_dock, Qt.Vertical)
+
+            self.resizeDocks([self.ui.dockWidget_10, self.property_browser_dock], [220, 360], Qt.Horizontal)
+            if hasattr(self, '_history_dock'):
+                self.resizeDocks([self.ui.dockWidget_4, self._history_dock], [650, 200], Qt.Vertical)
+        except Exception as e:
+            debug(f"Failed to apply default dock layout: {e}")
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not getattr(self, '_dock_layout_applied', False):
+            self._dock_layout_applied = True
+            self._apply_default_dock_layout()
+
     # [Window State]
     def _restore_user_prefs(self):
         """Restore window state"""
@@ -767,7 +887,11 @@ class SoundEventEditorMainWindow(QMainWindow):
 
         state = self.settings.value("SoundEventEditorMainWindow/windowState")
         if state:
-            self.restoreState(state)
+            restored = self.restoreState(state)
+            if not restored:
+                self._apply_default_dock_layout()
+        else:
+            self._apply_default_dock_layout()
 
     def _save_user_prefs(self):
         """Save window state"""
