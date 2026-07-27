@@ -39,9 +39,16 @@ or a cooked build.
    ```
    Output: `bin/Release/net10.0/H5T.UnrealBridge.dll` (+ dependencies).
 
-For distribution, `dotnet publish` the output and copy the DLLs into
-`src/external/` so H5T's existing pythonnet/coreclr setup can locate them, or
-invoke the DLL via `dotnet` as a subprocess.
+For distribution, publish straight into `tools/unreal_bridge/publish/` — that's
+where `bridge_client.py` looks for it (both unpackaged and inside the frozen
+PyInstaller build, via `makefile.py`), and where CI (`.github/workflows/*-release.yml`)
+puts it after building CUE4Parse fresh each run:
+```
+dotnet publish tools/unreal_bridge/UnrealBridge.csproj -c Release -r win-x64 --self-contained false -p:CUE4ParsePath=/abs/path/to/CUE4Parse -p:CUE4PARSE_SKIP_NATIVE=true -o tools/unreal_bridge/publish
+```
+`-r win-x64 --self-contained false` trims the `runtimes/` folder down from
+~40MB (every RID NuGet ships) to just win-x64, still running on H5T's bundled
+.NET runtime via `dotnet H5T.UnrealBridge.dll`.
 
 ## Usage
 

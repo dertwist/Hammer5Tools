@@ -38,6 +38,11 @@ jobs:
           dotnet tool install -g vpk
           echo "$HOME\.dotnet\tools" >> $env:GITHUB_PATH
 
+      - name: Build UnrealBridge (CUE4Parse)
+        run: |
+          git clone --depth 1 https://github.com/FabianFG/CUE4Parse.git ../CUE4Parse
+          dotnet publish tools/unreal_bridge/UnrealBridge.csproj -c Release -r win-x64 --self-contained false -p:CUE4ParsePath=../CUE4Parse -p:CUE4PARSE_SKIP_NATIVE=true -o tools/unreal_bridge/publish
+
       - name: Build All
 
         run: python makefile.py --build-all --stable
